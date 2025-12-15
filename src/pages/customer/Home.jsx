@@ -4,13 +4,11 @@ import { getMenu } from '../../config/menuData.js'
 
 // --- SVG ICONS (Render Match - Solid Filled) ---
 
-// --- MENU: Menu Pamphlet (Open Card Style)
+// --- MENU: Round Plate (Solid Dinner Plate)
 const MenuIcon = () => (
     <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM5 19V5H11V19H5ZM19 19H13V5H19V19Z" opacity="0.5" />
-        <path d="M14 7H18V9H14V7ZM14 11H18V13H14V11ZM14 15H18V17H14V15ZM6 7H10V9H6V7ZM6 11H10V13H6V11ZM6 15H10V17H6V15Z" fill="currentColor" />
-        {/* Solid / Filled look wrapper */}
-        <path d="M4 5C4 4.45 4.45 4 5 4H19C19.55 4 20 4.45 20 5V19C20 19.55 19.55 20 19 20H5C4.45 20 4 19.55 4 19V5ZM12 5H5V19H12V5ZM13 19H19V5H13V19Z" fill="currentColor" fillRule="evenodd" />
+        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4Z" />
+        <path d="M12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12C19 8.13401 15.866 5 12 5Z" />
     </svg>
 )
 
