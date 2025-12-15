@@ -81,7 +81,7 @@ function OrderStatus() {
                 marginLeft: 'calc(-1 * var(--space-4))',
                 marginRight: 'calc(-1 * var(--space-4))',
                 marginTop: 'calc(-1 * var(--space-4))',
-                marginBottom: 32,
+                marginBottom: 24,
                 borderBottomLeftRadius: 14,
                 borderBottomRightRadius: 14
             }}>

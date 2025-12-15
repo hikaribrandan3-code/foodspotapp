@@ -179,7 +179,7 @@ function Menu() {
                     <div
                         key={category.id}
                         ref={el => categoryRefs.current[category.id] = el}
-                        style={{ marginBottom: 32 }}
+                        style={{ marginBottom: 24 }}
                     >
                         {/* Section Title */}
                         <h2 style={{

@@ -156,7 +156,7 @@ function Home() {
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: 12,
-                marginBottom: 24
+                marginBottom: 20
             }}>
                 {/* 1. Menu */}
                 <Link to="/menu" style={tileStyle}>
