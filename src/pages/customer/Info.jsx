@@ -61,6 +61,8 @@ function Info() {
     return (
         <div className="page" style={{
             paddingBottom: 'calc(var(--nav-height) + var(--space-4))',
+            paddingLeft: 14,
+            paddingRight: 14,
             background: '#F9F7F5',
             paddingTop: 0
         }}>

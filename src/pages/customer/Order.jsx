@@ -275,7 +275,7 @@ function Order() {
             {/* Slim Identity Strip (same as Menu - mode indicator, not hero) */}
             <div style={{
                 height: 64,
-                margin: '0 16px 16px 16px',
+                margin: '0 14px 16px 14px',
                 borderRadius: 12,
                 background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE8E0 100%)',
                 display: 'flex',
@@ -303,7 +303,7 @@ function Order() {
 
             {/* Tu Pedido Card Container */}
             <div style={{
-                margin: '0 16px',
+                margin: '0 14px',
                 position: 'relative'
             }}>
                 <div style={{

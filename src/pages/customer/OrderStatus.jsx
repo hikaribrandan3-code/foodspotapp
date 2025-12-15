@@ -66,6 +66,8 @@ function OrderStatus() {
     return (
         <div className="page" style={{
             paddingBottom: 'calc(var(--nav-height) + var(--space-4))',
+            paddingLeft: 14,
+            paddingRight: 14,
             background: '#FAFAF8',
             paddingTop: 0
         }}>
