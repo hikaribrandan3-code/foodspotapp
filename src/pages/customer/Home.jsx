@@ -113,9 +113,8 @@ function Home() {
             backgroundColor: '#F7F4EF', // Soft beige background matches reference
             minHeight: '100vh'
         }}>
-            {/* Header */}
             <header style={{
-                padding: '24px 0 32px',
+                padding: '24px 0 22px',
                 textAlign: 'center'
             }}>
                 <h1 style={{
