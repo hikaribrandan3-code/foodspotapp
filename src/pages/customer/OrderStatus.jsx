@@ -66,51 +66,12 @@ function OrderStatus() {
     return (
         <div className="page" style={{
             paddingBottom: 'calc(var(--nav-height) + var(--space-4))',
-            paddingLeft: 14,
-            paddingRight: 14,
+            paddingLeft: 24,
+            paddingRight: 24,
             background: '#FAFAF8',
-            paddingTop: 0
+            paddingTop: 24
         }}>
-            {/* Status Rail Header */}
-            <div style={{
-                height: 64,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(255, 255, 255, 0.65)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                marginLeft: 'calc(-1 * var(--space-4))',
-                marginRight: 'calc(-1 * var(--space-4))',
-                marginTop: 'calc(-1 * var(--space-4))',
-                marginBottom: 24,
-                borderBottomLeftRadius: 14,
-                borderBottomRightRadius: 14
-            }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                }}>
-                    {/* Micro green accent dot */}
-                    <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: greenActive
-                    }} />
-                    <span style={{
-                        fontSize: 16,
-                        fontWeight: 500,
-                        color: '#374151',
-                        letterSpacing: '-0.01em'
-                    }}>
-                        Seguimiento del pedido
-                    </span>
-                </div>
-            </div>
-
-
+            {/* Header removed - Pedido # is now the primary header inside the card */}
             {orders.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                     <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
@@ -133,11 +94,11 @@ function OrderStatus() {
                 </div>
             ) : mostRecentOrder && (
                 <>
-                    {/* 2. Order Card (Primary Focus) */}
+                    {/* Order Card (Primary Focus - wider, no floating header) */}
                     <div style={{
                         background: cardBg,
                         borderRadius: 16,
-                        padding: 20,
+                        padding: '24px 20px 20px 20px',
                         marginBottom: 16
                     }}>
                         {/* Order Number + Status Badge */}
@@ -188,10 +149,10 @@ function OrderStatus() {
                                             alignItems: 'center',
                                             flex: i < 2 ? 1 : 'none'
                                         }}>
-                                            {/* Circle */}
+                                            {/* Circle - increased weight */}
                                             <div style={{
-                                                width: 28,
-                                                height: 28,
+                                                width: 32,
+                                                height: 32,
                                                 borderRadius: '50%',
                                                 background: isCompleted ? greenActive : (isCurrent ? 'white' : grayLight),
                                                 border: isCurrent ? `3px solid ${greenActive}` : 'none',
@@ -203,14 +164,15 @@ function OrderStatus() {
                                             }}>
                                                 {isCompleted && <CheckIcon />}
                                             </div>
-                                            {/* Connecting Line */}
+                                            {/* Connecting Line - increased weight */}
                                             {i < 2 && (
                                                 <div style={{
                                                     flex: 1,
-                                                    height: 3,
+                                                    height: 4,
                                                     background: currentStep > step ? greenActive : grayLight,
                                                     marginLeft: 4,
-                                                    marginRight: 4
+                                                    marginRight: 4,
+                                                    borderRadius: 2
                                                 }} />
                                             )}
                                         </div>
