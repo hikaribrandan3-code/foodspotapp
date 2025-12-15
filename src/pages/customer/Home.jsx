@@ -105,16 +105,16 @@ function Home() {
 
     // Styles for the 2x2 Grid Tiles
     const tileStyle = {
-        backgroundColor: '#FFFFFF', // Clean white cards
-        borderRadius: 24,           // Soft, large radius like reference
+        backgroundColor: '#FFFFFF',
+        borderRadius: 28,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        aspectRatio: '1 / 0.85',    // Slightly rectangular
+        aspectRatio: '1 / 0.85',
         gap: 12,
         textDecoration: 'none',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.02)', // Very subtle lift
+        boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
         padding: 16
     }
 
@@ -125,7 +125,7 @@ function Home() {
         marginTop: 4
     }
 
-    const iconColor = '#5C5448' // Warm neutral icon color
+    const iconColor = '#4A4036'
 
     return (
         <div className="page" style={{
@@ -136,7 +136,7 @@ function Home() {
         }}>
             {/* Header */}
             <header style={{
-                padding: '24px 0 24px',
+                padding: '24px 0 32px',
                 textAlign: 'center'
             }}>
                 <h1 style={{
