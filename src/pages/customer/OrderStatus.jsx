@@ -65,11 +65,11 @@ function OrderStatus() {
 
     return (
         <div className="page" style={{
-            paddingBottom: 'calc(var(--nav-height) + var(--space-4))',
-            paddingLeft: 24,
-            paddingRight: 24,
+            paddingBottom: 'calc(var(--nav-height) + 8px)',
+            paddingLeft: 10,
+            paddingRight: 10,
             background: '#FAFAF8',
-            paddingTop: 24
+            paddingTop: 16
         }}>
             {/* Header removed - Pedido # is now the primary header inside the card */}
             {orders.length === 0 ? (
@@ -94,12 +94,12 @@ function OrderStatus() {
                 </div>
             ) : mostRecentOrder && (
                 <>
-                    {/* Order Card (Primary Focus - wider, no floating header) */}
+                    {/* Order Card (Primary Focus - wider, tighter) */}
                     <div style={{
                         background: cardBg,
                         borderRadius: 16,
-                        padding: '24px 20px 20px 20px',
-                        marginBottom: 16
+                        padding: '20px 16px 16px 16px',
+                        marginBottom: 12
                     }}>
                         {/* Order Number + Status Badge */}
                         <div style={{
@@ -282,12 +282,13 @@ function OrderStatus() {
                         </div>
                     </div>
 
-                    {/* 6. Helper Text */}
+                    {/* Helper Text */}
                     <p style={{
                         textAlign: 'center',
                         fontSize: 13,
                         color: grayMuted,
-                        paddingBottom: 20
+                        paddingBottom: 4,
+                        marginTop: 0
                     }}>
                         Mostrá este pedido en el local si es necesario
                     </p>
