@@ -1,0 +1,106 @@
+/* DraggableElement Styles - CamTech v1.8 */
+
+.draggable-element {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 5;
+}
+
+.draggable-element.dragging {
+    cursor: grabbing;
+    z-index: 100;
+}
+
+.draggable-element.over-delete {
+    opacity: 0.5;
+    transform-origin: center center;
+}
+
+/* Text element styling - Instagram-style wrapping */
+.draggable-text {
+    padding: 8px 12px;
+    font-size: 24px;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    /* Instagram-style wrapping: ~16-18 chars at 24px = ~280px */
+    max-width: 280px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    text-align: center;
+}
+
+/* Sticker element styling */
+.draggable-sticker {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+}
+
+/* Emoji element styling */
+.draggable-emoji {
+    font-size: 48px;
+    line-height: 1;
+}
+
+/* Placeholder styling */
+.draggable-placeholder {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px dashed rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 24px;
+}
+
+/* Delete zone - bottom of screen */
+/* PATCH 14: 120ms pop-in animation */
+/* PATCH 15: Increased hit area by 18% (100 -> 118px) */
+.delete-zone {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 118px;
+    background: linear-gradient(to top, rgba(239, 68, 68, 0.8), transparent);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    color: #fff;
+    z-index: 50;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+    animation: deletePopIn 120ms ease-out;
+}
+
+@keyframes deletePopIn {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+
+    to {
+        opacity: 0.6;
+        transform: translateY(0);
+    }
+}
+
+.delete-zone-active {
+    opacity: 1;
+    background: linear-gradient(to top, rgba(239, 68, 68, 1), transparent);
+}

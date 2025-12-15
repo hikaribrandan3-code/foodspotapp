@@ -1,0 +1,483 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getOrders } from '../../utils/storage.js'
+import { login, logout, getSession } from '../../utils/auth.js'
+import { getConfig, updateConfig } from '../../config/appConfig.js'
+import { getMenu, saveMenu, updateMenuItem } from '../../config/menuData.js'
+
+// Generate seeded demo analytics data (30 days)
+function generateDemoData() {
+    const data = []
+    const today = new Date()
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(today)
+        date.setDate(date.getDate() - i)
+        const baseValue = 1500 + (29 - i) * 80
+        const variation = Math.sin(i * 0.5) * 400 + Math.random() * 300
+        data.push({
+            date: date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }),
+            value: Math.round(baseValue + variation),
+            orders: Math.round(8 + (29 - i) * 0.4 + Math.random() * 5)
+        })
+    }
+    return data
+}
+
+function SuperAdmin() {
+    const navigate = useNavigate()
+    const [config, setConfig] = useState(() => getConfig())
+    const [menu, setMenu] = useState(() => getMenu())
+    const [orders, setOrders] = useState(() => getOrders())
+    const [activeTab, setActiveTab] = useState('resumen')
+    const [demoAnalytics, setDemoAnalytics] = useState(true)
+    const [demoData] = useState(() => generateDemoData())
+    const [username, setUsername] = useState('')
+    const [password, setPassword] = useState('')
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [userRole, setUserRole] = useState('superadmin')
+    const [error, setError] = useState('')
+    const [editingItem, setEditingItem] = useState(null)
+
+    useEffect(() => {
+        const session = getSession()
+        if (session && (session.role === 'superadmin' || session.role === 'owner' || session.role === 'staff')) {
+            setIsAuthenticated(true)
+            setUserRole(session.role)
+        }
+    }, [])
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setConfig(getConfig())
+            setOrders(getOrders())
+            setMenu(getMenu())
+        }, 2000)
+        return () => clearInterval(interval)
+    }, [])
+
+    const handleLogin = (e) => {
+        e.preventDefault()
+        const result = login(username, password)
+        if (result.success) {
+            setIsAuthenticated(true)
+            setUserRole(result.role)
+            setError('')
+        } else {
+            setError('Credenciales incorrectas')
+        }
+    }
+
+    const handleLogout = () => {
+        logout()
+        setIsAuthenticated(false)
+        navigate('/')
+    }
+
+    // Stats calculations
+    const today = new Date().toDateString()
+    const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today)
+    const mpOrders = todayOrders.filter(o => o.paymentMethod === 'mercadopago')
+    const cashOrders = todayOrders.filter(o => o.paymentMethod === 'efectivo' || !o.paymentMethod)
+    const mpTotal = mpOrders.reduce((sum, o) => sum + (o.total || 0), 0)
+    const cashTotal = cashOrders.reduce((sum, o) => sum + (o.total || 0), 0)
+    const totalToday = mpTotal + cashTotal
+
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
+    const monthAgo = new Date(); monthAgo.setMonth(monthAgo.getMonth() - 1)
+    const weekOrders = orders.filter(o => new Date(o.createdAt) >= weekAgo)
+    const monthOrders = orders.filter(o => new Date(o.createdAt) >= monthAgo)
+    const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0)
+
+    const demoTotalSales = demoData.reduce((sum, d) => sum + d.value, 0)
+    const demoTotalOrders = demoData.reduce((sum, d) => sum + d.orders, 0)
+
+    // Update business info
+    const updateBusinessInfo = (field, value) => {
+        const newInfo = { ...config.businessInfo, [field]: value }
+        updateConfig({ businessInfo: newInfo })
+        setConfig(getConfig())
+    }
+
+    // Update menu item
+    const handleUpdateMenuItem = (categoryId, itemId, updates) => {
+        updateMenuItem(categoryId, itemId, updates)
+        setMenu(getMenu())
+    }
+
+    // Login screen
+    if (!isAuthenticated) {
+        return (
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #F8F6F3 0%, #F0EDE8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+                <div style={{ marginBottom: 24 }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ color: '#B8A089' }}>
+                        <rect x="5" y="10" width="14" height="11" rx="2" fill="currentColor" />
+                        <path d="M8 10V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+                    </svg>
+                </div>
+                <h1 style={{ fontSize: 24, fontWeight: 600, color: '#4A4340', marginBottom: 8 }}>Panel Admin</h1>
+                <p style={{ fontSize: 14, color: '#8B8580', marginBottom: 28 }}>Ingresá tus credenciales</p>
+                <form onSubmit={handleLogin} style={{ width: '100%', maxWidth: 300 }}>
+                    <input type="text" placeholder="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} style={{ width: '100%', padding: '14px 18px', fontSize: 15, border: '1px solid #E0DCD6', borderRadius: 24, background: 'white', marginBottom: 10, boxSizing: 'border-box' }} />
+                    <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '14px 18px', fontSize: 15, border: '1px solid #E0DCD6', borderRadius: 24, background: 'white', marginBottom: 14, boxSizing: 'border-box' }} />
+                    {error && <p style={{ color: '#B85450', textAlign: 'center', fontSize: 13, marginBottom: 10 }}>{error}</p>}
+                    <button type="submit" style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 600, color: 'white', background: '#B8956A', border: 'none', borderRadius: 24, cursor: 'pointer', marginBottom: 10 }}>Ingresar</button>
+                    <button type="button" onClick={() => navigate('/')} style={{ width: '100%', padding: '12px', fontSize: 14, color: '#6B6560', background: 'white', border: '1px solid #E0DCD6', borderRadius: 24, cursor: 'pointer' }}>← Volver</button>
+                </form>
+            </div>
+        )
+    }
+
+    const tabs = [
+        { id: 'resumen', label: 'Resumen' },
+        { id: 'info', label: 'Info' },
+        { id: 'menu', label: 'Menú' },
+        { id: 'branding', label: 'Branding' },
+        { id: 'pedidos', label: 'Pedidos' },
+        { id: 'analytics', label: 'Analytics' },
+        { id: 'historial', label: 'Historial' },
+    ]
+
+    const roleLabel = userRole === 'superadmin' ? 'Super Admin' : userRole === 'owner' ? 'Owner' : 'Staff'
+    const canEdit = userRole === 'superadmin' || userRole === 'owner'
+
+    // Card style helper
+    const cardStyle = { background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }
+    const labelStyle = { fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }
+    const inputStyle = { width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', marginBottom: 12 }
+
+    return (
+        <div style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+            {/* Dark Header */}
+            <div style={{ background: '#1F2937', padding: '16px 16px 14px', color: 'white' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'white', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
+                        <div>
+                            <h1 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>Panel de Administración</h1>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', margin: '2px 0 0' }}>{roleLabel} · Gestión del local</p>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {userRole === 'superadmin' && <span style={{ padding: '4px 8px', background: '#22C55E', borderRadius: 5, fontSize: 9, fontWeight: 700, color: 'white' }}>SUPER ADMIN</span>}
+                        {demoAnalytics && userRole === 'superadmin' && <span style={{ padding: '4px 6px', background: '#EAB308', borderRadius: 5, fontSize: 9, fontWeight: 600, color: 'white' }}>DEMO</span>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Tab Navigation */}
+            <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                {tabs.map(tab => (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ flex: 'none', padding: '12px 14px', background: 'none', border: 'none', borderBottom: activeTab === tab.id ? '3px solid #22C55E' : '3px solid transparent', fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400, color: activeTab === tab.id ? '#1F2937' : '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: 16 }}>
+
+                {/* ==================== RESUMEN TAB ==================== */}
+                {activeTab === 'resumen' && (
+                    <>
+                        <h3 style={labelStyle}>💳 PAGOS DEL DÍA</h3>
+                        <div style={cardStyle}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#E0F2F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💳</div>
+                                    <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{mpOrders.length} sesiones</p></div>
+                                </div>
+                                <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>${mpTotal.toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💵</div>
+                                    <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Efectivo</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{cashOrders.length} sesiones</p></div>
+                                </div>
+                                <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>${cashTotal.toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>Total del día</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{todayOrders.length} sesiones</p></div>
+                                <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>${totalToday.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        <h3 style={labelStyle}>SESIONES</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                            <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{weekOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Esta semana</p></div>
+                            <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{monthOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Este mes</p></div>
+                        </div>
+
+                        <button style={{ width: '100%', padding: '14px', background: '#22C55E', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>📄 Exportar PDF del mes</button>
+                    </>
+                )}
+
+                {/* ==================== INFO TAB ==================== */}
+                {activeTab === 'info' && canEdit && (
+                    <>
+                        <h3 style={labelStyle}>📍 INFORMACIÓN DEL LOCAL</h3>
+                        <div style={cardStyle}>
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>WhatsApp (contacto principal)</label>
+                            <input type="text" placeholder="+54 11 1234-5678" value={config.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
+
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección</label>
+                            <input type="text" placeholder="Av. Corrientes 1234" value={config.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={inputStyle} />
+
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Horarios</label>
+                            <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfo('hours', e.target.value)} style={inputStyle} />
+
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps (reseñas)</label>
+                            <input type="text" placeholder="https://maps.google.com/..." value={config.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={inputStyle} />
+
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Indicaciones / Notas</label>
+                            <input type="text" placeholder="Timbre 2A, subir escaleras" value={config.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
+                        </div>
+
+                        <h3 style={labelStyle}>🔗 LINKS EXTERNOS</h3>
+                        <div style={cardStyle}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
+                                <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                            </div>
+                            <input type="text" placeholder="Link de Rappi" value={config.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); setConfig(getConfig()) }} style={{ ...inputStyle, marginBottom: 14 }} />
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
+                                <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                            </div>
+                            <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); setConfig(getConfig()) }} style={inputStyle} />
+                        </div>
+                    </>
+                )}
+
+                {/* ==================== MENU TAB ==================== */}
+                {activeTab === 'menu' && canEdit && (
+                    <>
+                        <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
+                        {menu.categories?.map(category => (
+                            <div key={category.id} style={{ marginBottom: 20 }}>
+                                <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.name}</h4>
+                                {category.items?.map(item => (
+                                    <div key={item.id} style={{ ...cardStyle, marginBottom: 10 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <input type="text" value={item.name} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { name: e.target.value })} style={{ fontSize: 14, fontWeight: 500, border: 'none', padding: 0, width: '100%', marginBottom: 4 }} />
+                                                <input type="number" value={item.price} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { price: parseFloat(e.target.value) || 0 })} style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, border: 'none', padding: 0, width: 80 }} />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                    Agotado
+                                                    <input type="checkbox" checked={item.outOfStock ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { outOfStock: e.target.checked })} style={{ accentColor: '#EF4444' }} />
+                                                </label>
+                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                    Promo
+                                                    <input type="checkbox" checked={item.isPromo ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { isPromo: e.target.checked })} style={{ accentColor: '#22C55E' }} />
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {item.isPromo && (
+                                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
+                                                <div style={{ display: 'flex', gap: 10 }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <label style={{ fontSize: 10, color: '#9CA3AF' }}>Precio promo</label>
+                                                        <input type="number" placeholder="Precio" value={item.promoPrice || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoPrice: parseFloat(e.target.value) || 0 })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <label style={{ fontSize: 10, color: '#9CA3AF' }}>Badge</label>
+                                                        <input type="text" placeholder="Ej: -20%" value={item.promoBadge || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoBadge: e.target.value })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </>
+                )}
+
+                {/* ==================== BRANDING TAB ==================== */}
+                {activeTab === 'branding' && canEdit && (
+                    <>
+                        <h3 style={labelStyle}>🎨 BRANDING</h3>
+                        <div style={cardStyle}>
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
+                            <input type="text" value={config.businessName || ''} onChange={(e) => { updateConfig({ businessName: e.target.value }); setConfig(getConfig()) }} style={inputStyle} />
+
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Colores</label>
+                            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                                <div>
+                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Primario</p>
+                                    <input type="color" value={config.colors?.primary || '#B8956A'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primary: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Secundario</p>
+                                    <input type="color" value={config.colors?.primaryLight || '#A89070'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                </div>
+                            </div>
+
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Logo</label>
+                            <div style={{ border: '2px dashed #E5E7EB', borderRadius: 12, padding: 24, textAlign: 'center', background: '#FAFAF9' }}>
+                                <div style={{ fontSize: 24, color: '#9CA3AF', marginBottom: 6 }}>↑</div>
+                                <p style={{ fontSize: 12, color: '#9CA3AF' }}>Upload a logo</p>
+                            </div>
+                        </div>
+
+                        {/* Featured Photos Controls */}
+                        <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home)</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Seleccioná 4 items del menú para mostrar en la página principal</p>
+                            {[0, 1, 2, 3].map(slotIndex => {
+                                const currentSlot = config.featuredPhotos?.[slotIndex] || {}
+                                const allItems = menu.categories?.flatMap(cat => cat.items?.map(item => ({ ...item, categoryName: cat.name }))) || []
+
+                                return (
+                                    <div key={slotIndex} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, padding: '8px 0', borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
+                                        <span style={{ fontSize: 13, color: '#9CA3AF', width: 20 }}>{slotIndex + 1}.</span>
+                                        <select
+                                            value={currentSlot.menuItemId || ''}
+                                            onChange={(e) => {
+                                                const newPhotos = [...(config.featuredPhotos || [
+                                                    { menuItemId: '', enabled: true },
+                                                    { menuItemId: '', enabled: true },
+                                                    { menuItemId: '', enabled: true },
+                                                    { menuItemId: '', enabled: true },
+                                                ])]
+                                                newPhotos[slotIndex] = { ...newPhotos[slotIndex], menuItemId: e.target.value }
+                                                updateConfig({ featuredPhotos: newPhotos })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={{ flex: 1, padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13 }}
+                                        >
+                                            <option value="">-- Seleccionar item --</option>
+                                            {allItems.map(item => (
+                                                <option key={item.id} value={item.id}>{item.name} ({item.categoryName})</option>
+                                            ))}
+                                        </select>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#6B7280' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={currentSlot.enabled ?? true}
+                                                onChange={(e) => {
+                                                    const newPhotos = [...(config.featuredPhotos || [
+                                                        { menuItemId: '', enabled: true },
+                                                        { menuItemId: '', enabled: true },
+                                                        { menuItemId: '', enabled: true },
+                                                        { menuItemId: '', enabled: true },
+                                                    ])]
+                                                    newPhotos[slotIndex] = { ...newPhotos[slotIndex], enabled: e.target.checked }
+                                                    updateConfig({ featuredPhotos: newPhotos })
+                                                    setConfig(getConfig())
+                                                }}
+                                                style={{ accentColor: '#22C55E' }}
+                                            />
+                                            ON
+                                        </label>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </>
+                )}
+
+                {/* ==================== PEDIDOS TAB ==================== */}
+                {activeTab === 'pedidos' && (
+                    <>
+                        <h3 style={labelStyle}>⚙️ CONFIGURACIÓN DE PEDIDOS</h3>
+                        <div style={cardStyle}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                <span style={{ fontSize: 14, color: '#374151' }}>Pedidos activos</span>
+                                <label className="toggle"><input type="checkbox" checked={config.features?.ordersEnabled ?? true} onChange={() => { updateConfig({ features: { ...config.features, ordersEnabled: !config.features?.ordersEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 14, color: '#374151' }}>Pausar pedidos</span>
+                                <label className="toggle"><input type="checkbox" checked={config.pauseOrders ?? false} onChange={() => { updateConfig({ pauseOrders: !config.pauseOrders }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                            </div>
+                        </div>
+
+                        <h3 style={labelStyle}>📋 MODO DE OPERACIÓN</h3>
+                        <div style={cardStyle}>
+                            <select value={config.orderMode || 'A1'} onChange={(e) => { updateConfig({ orderMode: e.target.value }); setConfig(getConfig()) }} style={{ width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, background: 'white' }}>
+                                <option value="A1">A1: Budoni / Pickup rápido</option>
+                                <option value="A2">A2: Café / Pago antes de preparar</option>
+                                <option value="B">B: Restaurante / Pago al final</option>
+                            </select>
+                        </div>
+                    </>
+                )}
+
+                {/* ==================== ANALYTICS TAB ==================== */}
+                {activeTab === 'analytics' && (
+                    <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <h3 style={{ ...labelStyle, marginBottom: 0 }}>📊 ANALYTICS</h3>
+                            {userRole === 'superadmin' && (
+                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    Demo <input type="checkbox" checked={demoAnalytics} onChange={() => setDemoAnalytics(!demoAnalytics)} style={{ accentColor: '#22C55E' }} />
+                                </label>
+                            )}
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Hoy</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{todayOrders.length}</p></div>
+                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Semana</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{weekOrders.length}</p></div>
+                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Mes</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{monthOrders.length}</p></div>
+                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Total</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{orders.length}</p></div>
+                        </div>
+
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Ingresos totales</p>
+                            <p style={{ fontSize: 28, fontWeight: 700, color: '#22C55E', margin: '4px 0 0' }}>${(demoAnalytics ? demoTotalSales : totalRevenue).toLocaleString()}</p>
+                        </div>
+
+                        {demoAnalytics && (
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Últimos 15 días</p>
+                                <div style={{ height: 60, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
+                                    {demoData.slice(-15).map((d, i) => (
+                                        <div key={i} style={{ flex: 1, height: `${(d.value / Math.max(...demoData.map(x => x.value))) * 100}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
+                                    ))}
+                                </div>
+                                <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Datos de demostración</p>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* ==================== HISTORIAL TAB ==================== */}
+                {activeTab === 'historial' && (
+                    <>
+                        <div style={{ background: '#FEF3C7', borderRadius: 8, padding: 12, marginBottom: 16 }}>
+                            <p style={{ fontSize: 12, color: '#92400E', margin: 0 }}>⚠️ Los registros son de solo lectura. No se pueden modificar pagos confirmados.</p>
+                        </div>
+
+                        <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            {orders.length === 0 ? (
+                                <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF' }}><p style={{ fontSize: 14 }}>No hay registros aún</p></div>
+                            ) : (
+                                orders.slice(0, 15).map((order, i) => (
+                                    <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div>
+                                                <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
+                                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
+                                                    {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
+                                                </span>
+                                                <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </>
+                )}
+
+            </div>
+        </div>
+    )
+}
+
+export default SuperAdmin

@@ -1,0 +1,195 @@
+/* EmojiPicker Styles - Hikari CamTech Engine v3.1 */
+/* Bottom-up card per Gemini mock (Image A) */
+/* z-index: 200 per PATCH 11 z-index audit */
+/* PATCH 14: blur 22px, 20px radius, shadow, 220ms animation */
+
+.emoji-picker-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    animation: fadeIn 180ms ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Picker - 50% height, dark rounded card */
+.emoji-picker {
+    width: 100%;
+    height: 50vh;
+    max-height: 450px;
+    background: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 220ms ease-out;
+    overflow: hidden;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Drag Handle */
+.picker-handle {
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+}
+
+.handle-bar {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+/* Search Container */
+.search-container {
+    display: flex;
+    align-items: center;
+    margin: 0 16px 12px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    gap: 10px;
+}
+
+.search-icon {
+    color: rgba(255, 255, 255, 0.5);
+    flex-shrink: 0;
+}
+
+.search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 16px;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Emoji Grid */
+.emoji-grid {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 12px 12px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 380px) {
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+.emoji-grid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.emoji-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.emoji-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* Emoji Item */
+.emoji-item {
+    aspect-ratio: 1;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.emoji-item:active {
+    transform: scale(1.2);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Empty state */
+.emoji-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+}
+
+/* Category Row */
+.category-row {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.category-button {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.5);
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.category-button-active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.category-button:active {
+    transform: scale(0.95);
+}

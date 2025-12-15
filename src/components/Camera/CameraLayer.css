@@ -1,0 +1,217 @@
+/* CameraLayer Styles - Gemini Mock Structure (IMAGE A) */
+
+.camera-layer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    background: #000;
+}
+
+/* Hidden capture canvas */
+.capture-canvas {
+    display: none;
+}
+
+/* Live camera preview - maintains aspect ratio */
+.camera-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+}
+
+/* Error state overlay */
+.camera-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+    z-index: 10;
+}
+
+.camera-error p {
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+.camera-error-detail {
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+/* Settings button - top right */
+.settings-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    background: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: none;
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 50;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.settings-button:active {
+    background: rgba(0, 0, 0, 0.35);
+    transform: scale(0.95);
+}
+
+/* Toolbar container - vertical pill */
+.toolbar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 8px;
+    background: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border-radius: 22px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    z-index: 50;
+}
+
+.toolbar-left-side {
+    left: 16px;
+}
+
+.toolbar-right-side {
+    right: 16px;
+}
+
+/* Toolbar buttons */
+.toolbar-button {
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.toolbar-button:active {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.toolbar-button-active {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.92);
+}
+
+/* Filter bubbles row - horizontal scroll */
+.filter-row {
+    position: absolute;
+    bottom: 120px;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    padding: 0 16px;
+}
+
+.filter-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 0;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.filter-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+/* Filter bubble */
+.filter-bubble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.filter-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+}
+
+.filter-bubble-active .filter-preview {
+    border-color: #fff;
+}
+
+.filter-label {
+    font-size: 11px;
+    color: #fff;
+    opacity: 0.8;
+    text-transform: capitalize;
+}
+
+.filter-bubble-active .filter-label {
+    opacity: 1;
+}
+
+/* Shutter button - bottom center */
+.shutter-button {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 72px;
+    height: 72px;
+    background: transparent;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    padding: 4px;
+    cursor: pointer;
+    z-index: 100;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.shutter-button:disabled {
+    opacity: 0.5;
+}
+
+.shutter-inner {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: 50%;
+}
+
+.shutter-button:active .shutter-inner {
+    transform: scale(0.9);
+}

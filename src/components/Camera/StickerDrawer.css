@@ -1,0 +1,140 @@
+/* StickerDrawer Styles - Hikari CamTech Engine v3.1 */
+/* Right-side slide-out per Gemini mock (Image A) */
+/* z-index: 200 per PATCH 11 z-index audit */
+/* PATCH 14: blur 22px, 20px radius, shadow, 220ms animation */
+
+.sticker-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 200;
+    display: flex;
+    justify-content: flex-end;
+    animation: fadeIn 180ms ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Drawer - 75% width, dark rounded card */
+.sticker-drawer {
+    width: 75%;
+    max-width: 320px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight 220ms ease-out;
+    overflow: hidden;
+    /* Respect safe-area top */
+    padding-top: env(safe-area-inset-top);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Drawer Header */
+.sticker-drawer-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.drawer-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin-bottom: 12px;
+}
+
+.drawer-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Sticker Grid - Single scrollable grid, NO categories */
+.sticker-grid {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.sticker-grid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sticker-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sticker-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* Sticker Item */
+.sticker-item {
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sticker-item:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Sticker Placeholder - labeled squares per PRD */
+.sticker-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+}
+
+.sticker-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    word-break: break-all;
+}

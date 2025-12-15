@@ -1,0 +1,163 @@
+/* DrawTool Styles - Hikari CamTech Engine v3.1 */
+/* Canvas overlay and drawing UI per Instagram (Image B) */
+/* z-index: 2 for canvas, 150 for UI per PATCH 11 z-index audit */
+
+/* Canvas layer - positioned above frozen photo, below elements */
+.draw-canvas-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 12px;
+    z-index: 2;
+}
+
+.draw-canvas-overlay.draw-active {
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.draw-canvas-overlay.draw-locked {
+    pointer-events: none;
+}
+
+/* Draw Mode UI Container */
+.draw-ui {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 10000;
+    animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Color Row */
+.draw-color-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 4px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.draw-color-row::-webkit-scrollbar {
+    display: none;
+}
+
+.draw-color-button {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+
+.draw-color-button:first-child {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.draw-color-active {
+    transform: scale(1.25);
+    border: 3px solid #fff !important;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+/* Controls Row */
+.draw-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Brush Size Button */
+.draw-brush-button {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.draw-brush-button:active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.brush-preview {
+    border-radius: 50%;
+    transition: all 0.15s ease;
+}
+
+/* Action Buttons */
+.draw-action-button {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s ease;
+}
+
+.draw-action-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.draw-action-button:not(:disabled):active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
+
+/* Done Drawing Button */
+.draw-done-button {
+    width: 44px;
+    height: 44px;
+    background: #4ade80;
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    margin-left: auto;
+}
+
+.draw-done-button:active {
+    transform: scale(0.95);
+}

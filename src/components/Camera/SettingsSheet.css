@@ -1,0 +1,130 @@
+/* SettingsSheet Styles - Hikari CamTech Engine v3.1 */
+/* z-index: 30 per PATCH 11 z-index audit */
+
+.settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+    display: flex;
+    align-items: flex-end;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.settings-sheet {
+    width: 100%;
+    background: rgba(30, 30, 30, 0.98);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 16px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    animation: slideUp 0.25s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.settings-handle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.handle-bar {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.settings-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+    margin: 0 0 24px;
+}
+
+.settings-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.option-label {
+    font-size: 16px;
+    color: #fff;
+}
+
+.option-toggle {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.toggle-button {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-active {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.settings-version {
+    text-align: center;
+    padding: 16px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+}
+
+.settings-close {
+    width: 100%;
+    padding: 16px;
+    background: #4ade80;
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.settings-close:active {
+    transform: scale(0.98);
+}
