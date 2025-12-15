@@ -2,54 +2,33 @@ import { Link } from 'react-router-dom'
 import { getConfig } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 
-// --- SVG ICONS (Matched to Reference) ---
+// --- SVG ICONS (Phosphor Fill Style) ---
 
-// --- MENU: Fork + Knife (clean, modern)
+// --- MENU: ForkKnife (fill)
 const MenuIcon = () => (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        {/* Fork */}
-        <path d="M5 3v4a3 3 0 0 0 3 3 3 3 0 0 0 3-3V3" />
-        <path d="M8 10v11" />
-        {/* Knife */}
-        <path d="M16 3v18" />
-        <path d="M16 3c3 0 4 2 4 5s-1 4-4 5" />
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M72,88V40a8,8,0,0,1,16,0V88a8,8,0,0,1-16,0ZM216,40V224a8,8,0,0,1-16,0V176H152a8,8,0,0,1-8-8,268.75,268.75,0,0,1,7.22-56.88c9.78-40.49,28.32-67.63,53.63-78.47A8,8,0,0,1,216,40ZM56,88V40a8,8,0,0,0-16,0V88a8,8,0,0,0,16,0Zm48-48a8,8,0,0,0-16,0V88a8,8,0,0,0,16,0ZM88,216V120H64a32,32,0,0,1-32-32V40a24,24,0,0,1,48,0V88a24.05,24.05,0,0,1-8,17.89V216a8,8,0,0,1-16,0Z" />
     </svg>
 )
 
-// --- ORDER: Shopping Bag (modern e-commerce style)
+// --- ORDER: ShoppingBag (fill)
 const OrderIcon = () => (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6z" />
-        <path d="M3 6h18" />
-        <path d="M16 10a4 4 0 1 1-8 0" />
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M216,64H176a48,48,0,0,0-96,0H40A16,16,0,0,0,24,80V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V80A16,16,0,0,0,216,64ZM128,32a32,32,0,0,1,32,32H96A32,32,0,0,1,128,32Zm48,80a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Zm-80,0a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z" />
     </svg>
 )
 
-// --- REWARDS: Star Badge (loyalty/achievement)
+// --- REWARDS: Star (fill)
 const RewardsIcon = () => (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        {/* Badge circle */}
-        <circle cx="12" cy="10" r="7" />
-        {/* Star inside */}
-        <path d="M12 6l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5L7 9.5l3.5-.5z" />
-        {/* Ribbon tails */}
-        <path d="M8 16v5l4-2 4 2v-5" />
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z" />
     </svg>
 )
 
-// --- GAME: Gamepad Controller (modern)
+// --- GAME: GameController (fill)
 const GameIcon = () => (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        {/* Controller body */}
-        <rect x="2" y="6" width="20" height="12" rx="3" />
-        {/* D-pad */}
-        <path d="M6 12h4" />
-        <path d="M8 10v4" />
-        {/* Face buttons */}
-        <circle cx="16" cy="10" r="1" />
-        <circle cx="18" cy="12" r="1" />
-        <circle cx="16" cy="14" r="1" />
-        <circle cx="14" cy="12" r="1" />
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M176,112H152a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16ZM104,96H96V88a8,8,0,0,0-16,0v8H72a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0v-8h8a8,8,0,0,0,0-16Zm128,24v36a24,24,0,0,1-24,24H48a24,24,0,0,1-24-24V120A64,64,0,0,1,88,56h80a64,64,0,0,1,64,64Z" />
     </svg>
 )
 
