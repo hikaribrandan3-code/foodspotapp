@@ -129,7 +129,7 @@ function Home() {
 
     return (
         <div className="page" style={{
-            padding: '0 14px',
+            padding: '0 24px',
             paddingBottom: 90,
             backgroundColor: '#F7F4EF', // Soft beige background matches reference
             minHeight: '100vh'
