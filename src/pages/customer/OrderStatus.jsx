@@ -65,11 +65,11 @@ function OrderStatus() {
 
     return (
         <div className="page" style={{
-            paddingBottom: 'calc(var(--nav-height) + 8px)',
-            paddingLeft: 10,
-            paddingRight: 10,
-            background: '#FAFAF8',
-            paddingTop: 16
+            padding: '0 24px',
+            paddingTop: 24,
+            paddingBottom: 90,
+            backgroundColor: '#FAFAF8',
+            minHeight: '100vh'
         }}>
             {/* Header removed - Pedido # is now the primary header inside the card */}
             {orders.length === 0 ? (
