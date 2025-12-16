@@ -315,9 +315,14 @@ function StaffDashboard({ config }) {
                                             </select>
                                         )}
                                         <button
-                                            className={`btn ${order.paymentConfirmed ? 'btn-primary' : 'btn-secondary'}`}
+                                            className="btn"
                                             onClick={() => handlePaymentConfirm(order.id)}
-                                            style={{ minWidth: 120 }}
+                                            style={{
+                                                minWidth: 120,
+                                                background: order.paymentConfirmed ? 'var(--color-primary)' : (appConfig.colors?.confirmation || '#22C55E'),
+                                                color: 'white',
+                                                border: 'none'
+                                            }}
                                         >
                                             {order.paymentConfirmed ? `✅ ${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efe'}` : '💳 Confirmar'}
                                         </button>

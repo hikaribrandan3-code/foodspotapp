@@ -475,7 +475,7 @@ function Order() {
                         style={{
                             width: '100%',
                             padding: '16px 24px',
-                            background: (isSubmitting || config.pauseOrders) ? '#D4B89E' : '#C4856A',
+                            background: (isSubmitting || config.pauseOrders) ? '#D4B89E' : (config.colors?.confirmation || '#22C55E'),
                             color: 'white',
                             border: 'none',
                             borderRadius: 14,
