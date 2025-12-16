@@ -66,6 +66,28 @@ export function updateOrder(orderId, updates) {
     const index = orders.findIndex(o => o.id === orderId);
     if (index !== -1) {
         orders[index] = { ...orders[index], ...updates };
+
+        // ============================================
+        // ORDER LIFECYCLE V1: Auto-archive on entregado
+        // ============================================
+        if (updates.status === 'entregado') {
+            // 1. Archive the completed order
+            const completedOrder = {
+                ...orders[index],
+                archivedAt: new Date().toISOString()
+            };
+            const archive = getItem('orders_archive') || [];
+            archive.unshift(completedOrder);
+            setItem('orders_archive', archive);
+
+            // 2. Remove from active orders
+            orders.splice(index, 1);
+
+            // 3. Clear customer cart (for next order)
+            removeItem(STORAGE_KEYS.CURRENT_ORDER);
+        }
+        // ============================================
+
         return saveOrders(orders);
     }
     return false;

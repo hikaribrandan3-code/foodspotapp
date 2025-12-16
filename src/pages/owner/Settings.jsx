@@ -47,37 +47,8 @@ function Settings() {
         alert('¡Info guardada!')
     }
 
-    const handleArchiveOrders = () => {
-        const orders = getOrders()
-        const completedOrders = orders.filter(o => o.status === 'entregado')
-        const activeOrders = orders.filter(o => o.status !== 'entregado')
-
-        if (completedOrders.length === 0) {
-            alert('No hay pedidos completados para archivar.')
-            return
-        }
-
-        if (!confirm(`¿Archivar ${completedOrders.length} pedidos completados? Esto los moverá al archivo.`)) {
-            return
-        }
-
-        // Get existing archive
-        const existingArchive = getItem('orders_archive') || []
-
-        // Add timestamp to archived orders
-        const archivedOrders = completedOrders.map(o => ({
-            ...o,
-            archivedAt: new Date().toISOString()
-        }))
-
-        // Save to archive
-        setItem('orders_archive', [...existingArchive, ...archivedOrders])
-
-        // Keep only active orders
-        setItem('orders', activeOrders)
-
-        alert(`✅ ${completedOrders.length} pedidos archivados.`)
-    }
+    // NOTE: Orders are now auto-archived on 'entregado' status (Order Lifecycle V1)
+    // See storage.js updateOrder()
 
     return (
         <div className="page" style={{ paddingBottom: 'var(--space-4)' }}>
@@ -147,19 +118,13 @@ function Settings() {
                 </div>
             </div>
 
-            {/* Order Archive */}
+            {/* Order Archive Info */}
             <div className="admin-section">
                 <h3 className="admin-section-title">🗂️ Archivo de pedidos</h3>
                 <div className="admin-card">
-                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
-                        Mover pedidos completados al archivo para limpiar la lista activa.
+                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                        ✅ Los pedidos se archivan automáticamente al marcarlos como entregados.
                     </p>
-                    <button
-                        className="btn btn-secondary btn-block"
-                        onClick={handleArchiveOrders}
-                    >
-                        🗂️ Archivar pedidos del mes
-                    </button>
                 </div>
             </div>
 
