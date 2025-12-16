@@ -338,7 +338,7 @@ function Menu() {
                         style={{
                             width: '100%',
                             padding: '14px 24px',
-                            background: '#C4856A',
+                            background: config.colors?.confirmation || '#22C55E',
                             color: 'white',
                             border: 'none',
                             borderRadius: 12,
