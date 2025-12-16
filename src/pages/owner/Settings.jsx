@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
 import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS } from '../../config/appConfig.js'
+import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 
 function Settings() {
     const navigate = useNavigate()
@@ -334,6 +335,34 @@ function Settings() {
                                 padding: 2
                             }}
                         />
+                    </div>
+
+                    {/* Divider Preset Selector */}
+                    <div className="form-group" style={{ marginTop: 16 }}>
+                        <label className="form-label">Imagen decorativa (Menú/Pedido)</label>
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 8 }}>
+                            Aparece debajo del nombre del negocio
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                            {DIVIDER_PRESETS.map(preset => (
+                                <div
+                                    key={preset.id}
+                                    onClick={() => {
+                                        updateConfig({ dividerPresetId: preset.id })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        cursor: 'pointer',
+                                        borderRadius: 8,
+                                        overflow: 'hidden',
+                                        border: config.dividerPresetId === preset.id ? '3px solid var(--color-success)' : '2px solid var(--color-card)',
+                                        opacity: config.dividerPresetId === preset.id ? 1 : 0.7
+                                    }}
+                                >
+                                    <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>

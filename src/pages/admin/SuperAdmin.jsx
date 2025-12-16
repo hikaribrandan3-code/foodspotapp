@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { login, logout, getSession } from '../../utils/auth.js'
-import { getConfig, updateConfig } from '../../config/appConfig.js'
+import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS } from '../../config/appConfig.js'
 import { getMenu, saveMenu, updateMenuItem } from '../../config/menuData.js'
+import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 
 // Generate seeded demo analytics data (30 days)
 function generateDemoData() {
@@ -303,8 +304,20 @@ function SuperAdmin() {
                             <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
                             <input type="text" value={config.businessName || ''} onChange={(e) => { updateConfig({ businessName: e.target.value }); setConfig(getConfig()) }} style={inputStyle} />
 
+                            {/* Font Selector */}
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Tipografía</label>
+                            <select
+                                value={config.branding?.fontFamily || 'Inter'}
+                                onChange={(e) => { updateConfig({ branding: { ...config.branding, fontFamily: e.target.value } }); setConfig(getConfig()) }}
+                                style={{ ...inputStyle, fontFamily: config.branding?.fontFamily || 'Inter' }}
+                            >
+                                {CURATED_FONTS.map(font => (
+                                    <option key={font.name} value={font.name}>{font.label}</option>
+                                ))}
+                            </select>
+
                             <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Colores</label>
-                            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
                                 <div>
                                     <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Primario</p>
                                     <input type="color" value={config.colors?.primary || '#B8956A'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primary: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
@@ -313,6 +326,14 @@ function SuperAdmin() {
                                     <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Secundario</p>
                                     <input type="color" value={config.colors?.primaryLight || '#A89070'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
                                 </div>
+                                <div>
+                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Confirmación</p>
+                                    <input type="color" value={config.colors?.confirmation || '#22C55E'} onChange={(e) => { updateConfig({ colors: { ...config.colors, confirmation: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Powered by</p>
+                                    <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                </div>
                             </div>
 
                             <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Logo</label>
@@ -320,6 +341,32 @@ function SuperAdmin() {
                                 <div style={{ fontSize: 24, color: '#9CA3AF', marginBottom: 6 }}>↑</div>
                                 <p style={{ fontSize: 12, color: '#9CA3AF' }}>Upload a logo</p>
                             </div>
+                        </div>
+
+                        {/* Divider Preset Selector */}
+                        <h3 style={labelStyle}>🖼️ IMAGEN DECORATIVA (Menú/Pedido)</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Imagen que aparece debajo del nombre en Menú y Pedido</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                                {DIVIDER_PRESETS.map(preset => (
+                                    <div
+                                        key={preset.id}
+                                        onClick={() => { updateConfig({ dividerPresetId: preset.id }); setConfig(getConfig()) }}
+                                        style={{
+                                            cursor: 'pointer',
+                                            borderRadius: 8,
+                                            overflow: 'hidden',
+                                            border: config.dividerPresetId === preset.id ? '3px solid #22C55E' : '2px solid #E5E7EB',
+                                            opacity: config.dividerPresetId === preset.id ? 1 : 0.7
+                                        }}
+                                    >
+                                        <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
+                                    </div>
+                                ))}
+                            </div>
+                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
+                                Actual: {DIVIDER_PRESETS.find(p => p.id === config.dividerPresetId)?.name || 'Ninguna'}
+                            </p>
                         </div>
 
                         {/* Featured Photos Controls */}

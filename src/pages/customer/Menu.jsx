@@ -4,6 +4,7 @@ import { getMenu, formatPrice } from '../../config/menuData.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
 import { getConfig } from '../../config/appConfig.js'
 import PageHeader from '../../components/PageHeader.jsx'
+import { getDividerPreset } from '../../config/dividerPresets.js'
 
 function Menu() {
     const navigate = useNavigate()
@@ -83,34 +84,48 @@ function Menu() {
             {/* Header */}
             <PageHeader businessName={config.businessName} />
 
-            {/* Slim Identity Strip (brand personality, not hero) */}
-            <div style={{
-                height: 64,
-                margin: '0 16px 12px 16px',
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE8E0 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                position: 'relative'
-            }}>
-                {/* Subtle pattern overlay */}
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    opacity: 0.15,
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                    backgroundSize: '30px 30px'
-                }} />
-                {/* Simple line-art decoration */}
-                <svg width="120" height="40" viewBox="0 0 120 40" fill="none" style={{ opacity: 0.3 }}>
-                    <path d="M10 20 Q30 5, 60 20 T110 20" stroke="#8B7355" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                    <circle cx="20" cy="15" r="3" fill="#8B7355" opacity="0.5" />
-                    <circle cx="60" cy="10" r="2" fill="#8B7355" opacity="0.4" />
-                    <circle cx="100" cy="15" r="2.5" fill="#8B7355" opacity="0.5" />
-                </svg>
-            </div>
+            {/* Slim Identity Strip - Uses selected divider preset */}
+            {(() => {
+                const dividerPreset = getDividerPreset(config.dividerPresetId)
+                return (
+                    <div style={{
+                        height: 64,
+                        margin: '0 16px 12px 16px',
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        position: 'relative'
+                    }}>
+                        {dividerPreset ? (
+                            <img
+                                src={dividerPreset.url}
+                                alt=""
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                }}
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE8E0 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <svg width="120" height="40" viewBox="0 0 120 40" fill="none" style={{ opacity: 0.3 }}>
+                                    <path d="M10 20 Q30 5, 60 20 T110 20" stroke="#8B7355" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                                    <circle cx="20" cy="15" r="3" fill="#8B7355" opacity="0.5" />
+                                    <circle cx="60" cy="10" r="2" fill="#8B7355" opacity="0.4" />
+                                    <circle cx="100" cy="15" r="2.5" fill="#8B7355" opacity="0.5" />
+                                </svg>
+                            </div>
+                        )}
+                    </div>
+                )
+            })()}
 
             {/* Wrapped Category Rail */}
             {enabledCategories.length > 1 && (
