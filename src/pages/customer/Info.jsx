@@ -94,6 +94,45 @@ function Info() {
                 </a>
             )}
 
+            {/* Mercado Pago - Copy Alias */}
+            {config.payments?.mercadoPagoAlias && (
+                <button
+                    onClick={async () => {
+                        try {
+                            await navigator.clipboard.writeText(config.payments.mercadoPagoAlias)
+                            // Visual feedback
+                            const btn = document.getElementById('mp-copy-btn')
+                            const originalText = btn.textContent
+                            btn.textContent = '✓ Alias copiado'
+                            setTimeout(() => { btn.textContent = originalText }, 2000)
+                        } catch (err) {
+                            alert(`Alias: ${config.payments.mercadoPagoAlias}`)
+                        }
+                    }}
+                    id="mp-copy-btn"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        width: '100%',
+                        padding: '14px 24px',
+                        backgroundColor: '#FFE600', // Mercado Pago Yellow
+                        color: '#009EE3', // Mercado Pago Blue
+                        borderRadius: 28,
+                        border: 'none',
+                        fontSize: 16,
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                        marginBottom: 12,
+                        cursor: 'pointer',
+                        boxSizing: 'border-box'
+                    }}
+                >
+                    💳 Pagar con Mercado Pago
+                </button>
+            )}
+
             {config.externalOrdering?.rappiEnabled && config.externalOrdering?.rappiUrl && (
                 <a
                     href={config.externalOrdering.rappiUrl}

@@ -319,7 +319,24 @@ function SuperAdmin() {
                                 <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
                                 <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
                             </div>
-                            <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); setConfig(getConfig()) }} style={inputStyle} />
+                            <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); setConfig(getConfig()) }} style={{ ...inputStyle, marginBottom: 14 }} />
+
+                            {/* Mercado Pago Alias */}
+                            <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
+                                <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago (Alias)</span>
+                                <input
+                                    type="text"
+                                    placeholder="ej: grubclub.mp"
+                                    value={config.payments?.mercadoPagoAlias || ''}
+                                    onChange={(e) => {
+                                        const c = config.payments || {};
+                                        updateConfig({ payments: { ...c, mercadoPagoAlias: e.target.value } });
+                                        setConfig(getConfig())
+                                    }}
+                                    style={inputStyle}
+                                />
+                                <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Si está vacío, no aparece en Info</p>
+                            </div>
                         </div>
                     </>
                 )}

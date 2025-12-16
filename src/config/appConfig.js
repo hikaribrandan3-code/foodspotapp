@@ -105,6 +105,11 @@ export const defaultConfig = {
         pedidosYaUrl: '',
     },
 
+    // Payment Methods (Owner/Super can configure)
+    payments: {
+        mercadoPagoAlias: '', // If set, shows "Pagar con Mercado Pago" button in Info
+    },
+
     // Featured Photos (EXACTLY 4 slots - Owner/Super can upload custom images)
     featuredPhotos: [
         { slot: 1, image: null, menuItemId: 'flat-white' },

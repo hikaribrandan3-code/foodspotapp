@@ -472,6 +472,33 @@ function Settings() {
                             />
                         </div>
                     </div>
+
+                    {/* Mercado Pago Alias */}
+                    <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--color-card)' }}>
+                        <span style={{ fontWeight: 'var(--font-weight-semibold)', display: 'block', marginBottom: 'var(--space-2)' }}>💳 Mercado Pago</span>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">Alias Mercado Pago (para copiar)</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={config.payments?.mercadoPagoAlias || ''}
+                                onChange={(e) => {
+                                    const current = config.payments || {}
+                                    updateConfig({
+                                        payments: {
+                                            ...current,
+                                            mercadoPagoAlias: e.target.value
+                                        }
+                                    })
+                                    setConfig(getConfig())
+                                }}
+                                placeholder="ej: grubclub.mp"
+                            />
+                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                                Si está vacío, no aparece el botón en Info
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
