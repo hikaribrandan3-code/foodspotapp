@@ -11,6 +11,13 @@ const CheckIcon = () => (
     </svg>
 )
 
+// Smiley icon for small orders thank-you
+const SmileyIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 256 256" fill="#4A4036">
+        <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM92,96a12,12,0,1,1-12,12A12,12,0,0,1,92,96Zm82.92,60c-10.29,17.79-27.39,28-46.92,28s-36.63-10.2-46.92-28a8,8,0,1,1,13.84-8c7.47,12.91,19.21,20,33.08,20s25.61-7.1,33.08-20a8,8,0,1,1,13.84,8ZM164,120a12,12,0,1,1,12-12A12,12,0,0,1,164,120Z"></path>
+    </svg>
+)
+
 function OrderStatus() {
     const navigate = useNavigate()
     const [orders, setOrders] = useState([])
@@ -281,6 +288,27 @@ function OrderStatus() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Thank You (only for small orders < 5 items) */}
+                    {mostRecentOrder.items.length < 5 && (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            marginTop: 16,
+                            marginBottom: 8
+                        }}>
+                            <SmileyIcon />
+                            <span style={{
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: '#5A4A3A'
+                            }}>
+                                Gracias por tu negocio
+                            </span>
+                        </div>
+                    )}
 
                     {/* Helper Text */}
                     <p style={{
