@@ -129,7 +129,7 @@ function Info() {
                         boxSizing: 'border-box'
                     }}
                 >
-                    💳 Pagar con Mercado Pago
+                    Pagar con Mercado Pago
                 </button>
             )}
 
