@@ -168,9 +168,9 @@ body {
   color: var(--color-text-muted);
 }
 
-/* App Container */
+/* App Container - Edge-to-edge on mobile */
 .app-container {
-  max-width: var(--max-width);
+  width: 100%;
   margin: 0 auto;
   min-height: 100vh;
   min-height: 100dvh;
@@ -178,6 +178,7 @@ body {
   flex-direction: column;
   background-color: var(--color-background);
   position: relative;
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
 }
 
 /* Page Container */
