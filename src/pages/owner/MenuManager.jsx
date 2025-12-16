@@ -1,13 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled } from '../../config/menuData.js'
+import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 
 function MenuManager() {
     const navigate = useNavigate()
     const [menu, setMenu] = useState(() => getMenu())
     const [editingItem, setEditingItem] = useState(null)
-    const [editForm, setEditForm] = useState({ name: '', price: '' })
+    const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
+    const [uploadStatus, setUploadStatus] = useState(null)
+    const [isUploading, setIsUploading] = useState(false)
+    const fileInputRef = useRef(null)
 
     // Check auth
     useEffect(() => {
@@ -24,7 +28,33 @@ function MenuManager() {
 
     const handleEdit = (categoryId, item) => {
         setEditingItem({ categoryId, itemId: item.id })
-        setEditForm({ name: item.name, price: item.price.toString() })
+        setEditForm({ name: item.name, price: item.price.toString(), image: item.image || null })
+        setUploadStatus(null)
+    }
+
+    // Image upload handler with optimization
+    const handleImageUpload = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsUploading(true)
+        setUploadStatus(null)
+
+        try {
+            const result = await processAndStoreImage(file)
+            setEditForm(prev => ({ ...prev, image: result.dataURI }))
+            setUploadStatus({
+                success: true,
+                message: `✔ Imagen optimizada: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
+            })
+        } catch (error) {
+            setUploadStatus({
+                success: false,
+                message: error.message
+            })
+        } finally {
+            setIsUploading(false)
+        }
     }
 
     const handleSave = () => {
@@ -37,11 +67,15 @@ function MenuManager() {
             if (item) {
                 item.name = editForm.name
                 item.price = parseInt(editForm.price) || item.price
+                if (editForm.image) {
+                    item.image = editForm.image
+                }
                 saveMenu(updatedMenu)
                 setMenu(updatedMenu)
             }
         }
         setEditingItem(null)
+        setUploadStatus(null)
     }
 
     const handleToggleAvailability = (categoryId, itemId) => {
@@ -188,6 +222,48 @@ function MenuManager() {
                                 value={editForm.price}
                                 onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
                             />
+                        </div>
+
+                        {/* Image Upload */}
+                        <div className="form-group">
+                            <label className="form-label">Imagen (JPG/PNG)</label>
+                            {editForm.image && (
+                                <div style={{ marginBottom: 8 }}>
+                                    <img
+                                        src={editForm.image}
+                                        alt="Preview"
+                                        style={{
+                                            width: '100%',
+                                            maxHeight: 120,
+                                            objectFit: 'cover',
+                                            borderRadius: 8
+                                        }}
+                                    />
+                                </div>
+                            )}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/jpg"
+                                onChange={handleImageUpload}
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                className="btn btn-secondary btn-block"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                            >
+                                {isUploading ? 'Optimizando...' : (editForm.image ? '📷 Cambiar imagen' : '📷 Subir imagen')}
+                            </button>
+                            {uploadStatus && (
+                                <p style={{
+                                    fontSize: 'var(--font-size-sm)',
+                                    color: uploadStatus.success ? 'var(--color-success)' : 'var(--color-error)',
+                                    marginTop: 6
+                                }}>
+                                    {uploadStatus.message}
+                                </p>
+                            )}
                         </div>
 
                         <button
