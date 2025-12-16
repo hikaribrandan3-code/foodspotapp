@@ -119,11 +119,10 @@ function Home() {
             }}>
                 <h1 style={{
                     fontSize: 36,
-                    fontWeight: 600,
+                    fontWeight: 'var(--font-weight-brand)',
                     color: '#4A4238',
                     margin: 0,
-                    letterSpacing: '-0.02em',
-                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                    letterSpacing: '-0.02em'
                 }}>
                     {config.businessName || 'FoodSpot'}
                 </h1>
@@ -190,7 +189,7 @@ function Home() {
                         <div style={{ padding: '10px 12px' }}>
                             <div style={{
                                 fontSize: 12,
-                                fontWeight: 600,
+                                fontWeight: 'var(--font-weight-brand)',
                                 color: '#4A4238',
                                 marginBottom: 4,
                                 lineHeight: 1.2

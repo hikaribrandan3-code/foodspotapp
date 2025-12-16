@@ -45,6 +45,20 @@ function App() {
         incrementVisit()
     }, [])
 
+    // Apply global typography from config
+    useEffect(() => {
+        const root = document.documentElement
+        const fontFamily = config.branding?.fontFamily || 'Inter'
+        const fontWeight = config.branding?.fontWeight || '400'
+
+        // Set CSS custom properties for global use
+        root.style.setProperty('--font-family-brand', `"${fontFamily}", system-ui, -apple-system, sans-serif`)
+        root.style.setProperty('--font-weight-brand', fontWeight)
+
+        // Also apply to body for immediate effect
+        document.body.style.fontFamily = `"${fontFamily}", system-ui, -apple-system, sans-serif`
+    }, [config.branding?.fontFamily, config.branding?.fontWeight])
+
     // Manual config refresh - call from admin/owner actions when needed
     const refreshConfig = useCallback(() => {
         const newConfig = getConfig()

@@ -17,7 +17,7 @@ function PageHeader({ businessName }) {
         }}>
             <span style={{
                 fontSize: 28,
-                fontWeight: 600,
+                fontWeight: 'var(--font-weight-brand)',
                 color: '#1F2937',
                 letterSpacing: '-0.01em',
                 textAlign: 'center',
