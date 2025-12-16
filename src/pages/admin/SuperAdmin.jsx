@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { login, logout, getSession } from '../../utils/auth.js'
 import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS } from '../../config/appConfig.js'
 import { getMenu, saveMenu, updateMenuItem } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
+import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 
 // Generate seeded demo analytics data (30 days)
 function generateDemoData() {
@@ -38,6 +39,13 @@ function SuperAdmin() {
     const [userRole, setUserRole] = useState('superadmin')
     const [error, setError] = useState('')
     const [editingItem, setEditingItem] = useState(null)
+
+    // Image upload state
+    const [uploadingItemId, setUploadingItemId] = useState(null)
+    const [uploadStatus, setUploadStatus] = useState(null)
+    const [uploadingFeaturedSlot, setUploadingFeaturedSlot] = useState(null)
+    const menuImageInputRef = useRef(null)
+    const featuredImageInputRef = useRef(null)
 
     useEffect(() => {
         const session = getSession()
@@ -103,6 +111,58 @@ function SuperAdmin() {
     const handleUpdateMenuItem = (categoryId, itemId, updates) => {
         updateMenuItem(categoryId, itemId, updates)
         setMenu(getMenu())
+    }
+
+    // Menu item image upload handler
+    const handleMenuImageUpload = async (e, categoryId, itemId) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setUploadingItemId(`${categoryId}-${itemId}`)
+        setUploadStatus(null)
+
+        try {
+            const result = await processAndStoreImage(file)
+            handleUpdateMenuItem(categoryId, itemId, { image: result.dataURI })
+            setUploadStatus({
+                success: true,
+                message: `✔ ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
+            })
+        } catch (error) {
+            setUploadStatus({ success: false, message: error.message })
+        } finally {
+            setUploadingItemId(null)
+        }
+    }
+
+    // Featured image upload handler
+    const handleFeaturedImageUpload = async (e, slotIndex) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setUploadingFeaturedSlot(slotIndex)
+        setUploadStatus(null)
+
+        try {
+            const result = await processAndStoreImage(file)
+            const newPhotos = [...(config.featuredPhotos || [
+                { slot: 1, image: null },
+                { slot: 2, image: null },
+                { slot: 3, image: null },
+                { slot: 4, image: null },
+            ])]
+            newPhotos[slotIndex] = { ...newPhotos[slotIndex], image: result.dataURI }
+            updateConfig({ featuredPhotos: newPhotos })
+            setConfig(getConfig())
+            setUploadStatus({
+                success: true,
+                message: `✔ ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
+            })
+        } catch (error) {
+            setUploadStatus({ success: false, message: error.message })
+        } finally {
+            setUploadingFeaturedSlot(null)
+        }
     }
 
     // Login screen
@@ -259,36 +319,79 @@ function SuperAdmin() {
                                 <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.name}</h4>
                                 {category.items?.map(item => (
                                     <div key={item.id} style={{ ...cardStyle, marginBottom: 10 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div style={{ display: 'flex', gap: 10 }}>
+                                            {/* Image Preview/Upload */}
+                                            <div style={{ width: 60, flexShrink: 0 }}>
+                                                <div
+                                                    onClick={() => {
+                                                        setUploadingItemId(`${category.id}-${item.id}`)
+                                                        document.getElementById(`menu-img-${category.id}-${item.id}`)?.click()
+                                                    }}
+                                                    style={{
+                                                        width: 60,
+                                                        height: 60,
+                                                        borderRadius: 8,
+                                                        background: item.image ? 'none' : '#F3F4F6',
+                                                        border: '2px dashed #D1D5DB',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        cursor: 'pointer',
+                                                        overflow: 'hidden'
+                                                    }}
+                                                >
+                                                    {item.image ? (
+                                                        <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    ) : (
+                                                        <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    id={`menu-img-${category.id}-${item.id}`}
+                                                    type="file"
+                                                    accept="image/jpeg,image/png"
+                                                    onChange={(e) => handleMenuImageUpload(e, category.id, item.id)}
+                                                    style={{ display: 'none' }}
+                                                />
+                                                {uploadingItemId === `${category.id}-${item.id}` && (
+                                                    <p style={{ fontSize: 9, color: '#6B7280', marginTop: 4, textAlign: 'center' }}>...</p>
+                                                )}
+                                            </div>
+
+                                            {/* Item Details */}
                                             <div style={{ flex: 1 }}>
-                                                <input type="text" value={item.name} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { name: e.target.value })} style={{ fontSize: 14, fontWeight: 500, border: 'none', padding: 0, width: '100%', marginBottom: 4 }} />
-                                                <input type="number" value={item.price} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { price: parseFloat(e.target.value) || 0 })} style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, border: 'none', padding: 0, width: 80 }} />
-                                            </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                    Agotado
-                                                    <input type="checkbox" checked={item.outOfStock ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { outOfStock: e.target.checked })} style={{ accentColor: '#EF4444' }} />
-                                                </label>
-                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                    Promo
-                                                    <input type="checkbox" checked={item.isPromo ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { isPromo: e.target.checked })} style={{ accentColor: '#22C55E' }} />
-                                                </label>
-                                            </div>
-                                        </div>
-                                        {item.isPromo && (
-                                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                                                <div style={{ display: 'flex', gap: 10 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                     <div style={{ flex: 1 }}>
-                                                        <label style={{ fontSize: 10, color: '#9CA3AF' }}>Precio promo</label>
-                                                        <input type="number" placeholder="Precio" value={item.promoPrice || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoPrice: parseFloat(e.target.value) || 0 })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
+                                                        <input type="text" value={item.name} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { name: e.target.value })} style={{ fontSize: 14, fontWeight: 500, border: 'none', padding: 0, width: '100%', marginBottom: 4 }} />
+                                                        <input type="number" value={item.price} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { price: parseFloat(e.target.value) || 0 })} style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, border: 'none', padding: 0, width: 80 }} />
                                                     </div>
-                                                    <div style={{ flex: 1 }}>
-                                                        <label style={{ fontSize: 10, color: '#9CA3AF' }}>Badge</label>
-                                                        <input type="text" placeholder="Ej: -20%" value={item.promoBadge || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoBadge: e.target.value })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                            Agotado
+                                                            <input type="checkbox" checked={item.outOfStock ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { outOfStock: e.target.checked })} style={{ accentColor: '#EF4444' }} />
+                                                        </label>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                            Promo
+                                                            <input type="checkbox" checked={item.isPromo ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { isPromo: e.target.checked })} style={{ accentColor: '#22C55E' }} />
+                                                        </label>
                                                     </div>
                                                 </div>
+                                                {item.isPromo && (
+                                                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
+                                                        <div style={{ display: 'flex', gap: 10 }}>
+                                                            <div style={{ flex: 1 }}>
+                                                                <label style={{ fontSize: 10, color: '#9CA3AF' }}>Precio promo</label>
+                                                                <input type="number" placeholder="Precio" value={item.promoPrice || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoPrice: parseFloat(e.target.value) || 0 })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
+                                                            </div>
+                                                            <div style={{ flex: 1 }}>
+                                                                <label style={{ fontSize: 10, color: '#9CA3AF' }}>Badge</label>
+                                                                <input type="text" placeholder="Ej: -20%" value={item.promoBadge || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoBadge: e.target.value })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -370,55 +473,90 @@ function SuperAdmin() {
                         </div>
 
                         {/* Featured Photos Controls */}
-                        <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home)</h3>
+                        <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home) - 4 slots</h3>
                         <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Seleccioná 4 items del menú para mostrar en la página principal</p>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Subí fotos personalizadas o seleccioná del menú</p>
                             {[0, 1, 2, 3].map(slotIndex => {
                                 const currentSlot = config.featuredPhotos?.[slotIndex] || {}
                                 const allItems = menu.categories?.flatMap(cat => cat.items?.map(item => ({ ...item, categoryName: cat.name }))) || []
+                                const selectedItem = allItems.find(i => i.id === currentSlot.menuItemId)
+                                const displayImage = currentSlot.image || selectedItem?.image
 
                                 return (
-                                    <div key={slotIndex} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, padding: '8px 0', borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
-                                        <span style={{ fontSize: 13, color: '#9CA3AF', width: 20 }}>{slotIndex + 1}.</span>
-                                        <select
-                                            value={currentSlot.menuItemId || ''}
-                                            onChange={(e) => {
-                                                const newPhotos = [...(config.featuredPhotos || [
-                                                    { menuItemId: '', enabled: true },
-                                                    { menuItemId: '', enabled: true },
-                                                    { menuItemId: '', enabled: true },
-                                                    { menuItemId: '', enabled: true },
-                                                ])]
-                                                newPhotos[slotIndex] = { ...newPhotos[slotIndex], menuItemId: e.target.value }
-                                                updateConfig({ featuredPhotos: newPhotos })
-                                                setConfig(getConfig())
-                                            }}
-                                            style={{ flex: 1, padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13 }}
-                                        >
-                                            <option value="">-- Seleccionar item --</option>
-                                            {allItems.map(item => (
-                                                <option key={item.id} value={item.id}>{item.name} ({item.categoryName})</option>
-                                            ))}
-                                        </select>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#6B7280' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={currentSlot.enabled ?? true}
-                                                onChange={(e) => {
-                                                    const newPhotos = [...(config.featuredPhotos || [
-                                                        { menuItemId: '', enabled: true },
-                                                        { menuItemId: '', enabled: true },
-                                                        { menuItemId: '', enabled: true },
-                                                        { menuItemId: '', enabled: true },
-                                                    ])]
-                                                    newPhotos[slotIndex] = { ...newPhotos[slotIndex], enabled: e.target.checked }
-                                                    updateConfig({ featuredPhotos: newPhotos })
-                                                    setConfig(getConfig())
+                                    <div key={slotIndex} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
+                                        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                                            {/* Image Preview/Upload */}
+                                            <div
+                                                onClick={() => document.getElementById(`featured-img-${slotIndex}`)?.click()}
+                                                style={{
+                                                    width: 80,
+                                                    height: 80,
+                                                    borderRadius: 12,
+                                                    background: displayImage ? 'none' : '#F3F4F6',
+                                                    border: '2px dashed #D1D5DB',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    overflow: 'hidden',
+                                                    flexShrink: 0
                                                 }}
-                                                style={{ accentColor: '#22C55E' }}
+                                            >
+                                                {displayImage ? (
+                                                    <img src={displayImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <span style={{ fontSize: 24, color: '#9CA3AF' }}>📷</span>
+                                                )}
+                                            </div>
+                                            <input
+                                                id={`featured-img-${slotIndex}`}
+                                                type="file"
+                                                accept="image/jpeg,image/png"
+                                                onChange={(e) => handleFeaturedImageUpload(e, slotIndex)}
+                                                style={{ display: 'none' }}
                                             />
-                                            ON
-                                        </label>
+
+                                            {/* Slot Controls */}
+                                            <div style={{ flex: 1 }}>
+                                                <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Slot {slotIndex + 1}</p>
+                                                <select
+                                                    value={currentSlot.menuItemId || ''}
+                                                    onChange={(e) => {
+                                                        const newPhotos = [...(config.featuredPhotos || [
+                                                            { slot: 1, image: null, menuItemId: '' },
+                                                            { slot: 2, image: null, menuItemId: '' },
+                                                            { slot: 3, image: null, menuItemId: '' },
+                                                            { slot: 4, image: null, menuItemId: '' },
+                                                        ])]
+                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], menuItemId: e.target.value }
+                                                        updateConfig({ featuredPhotos: newPhotos })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12, marginBottom: 6 }}
+                                                >
+                                                    <option value="">-- Usar foto custom --</option>
+                                                    {allItems.map(item => (
+                                                        <option key={item.id} value={item.id}>{item.name}</option>
+                                                    ))}
+                                                </select>
+                                                {uploadingFeaturedSlot === slotIndex && (
+                                                    <p style={{ fontSize: 10, color: '#6B7280' }}>Optimizando...</p>
+                                                )}
+                                                {currentSlot.image && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const newPhotos = [...(config.featuredPhotos || [])]
+                                                            newPhotos[slotIndex] = { ...newPhotos[slotIndex], image: null }
+                                                            updateConfig({ featuredPhotos: newPhotos })
+                                                            setConfig(getConfig())
+                                                        }}
+                                                        style={{ fontSize: 10, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                                    >
+                                                        × Quitar foto custom
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 )
                             })}
