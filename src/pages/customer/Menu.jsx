@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getMenu, formatPrice } from '../../config/menuData.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
 import { getConfig } from '../../config/appConfig.js'
+import PageHeader from '../../components/PageHeader.jsx'
 
 function Menu() {
     const navigate = useNavigate()
@@ -80,25 +81,7 @@ function Menu() {
             paddingBottom: hasItems ? 220 : 100
         }}>
             {/* Header */}
-            <div style={{
-                height: 52,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#FAF9F7',
-                position: 'sticky',
-                top: 0,
-                zIndex: 100
-            }}>
-                <span style={{
-                    fontSize: 19,
-                    fontWeight: 600,
-                    color: '#1F2937',
-                    letterSpacing: '-0.01em'
-                }}>
-                    {config.businessName || 'Grub Club'}
-                </span>
-            </div>
+            <PageHeader businessName={config.businessName} />
 
             {/* Slim Identity Strip (brand personality, not hero) */}
             <div style={{

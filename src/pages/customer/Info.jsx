@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getConfig } from '../../config/appConfig.js'
+import PageHeader from '../../components/PageHeader.jsx'
 
 const WhatsAppIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -62,18 +63,7 @@ function Info() {
             backgroundColor: '#F9F7F5',
             minHeight: '100vh'
         }}>
-            <div style={{
-                textAlign: 'center',
-                marginBottom: 24
-            }}>
-                <span style={{
-                    fontSize: 18,
-                    fontWeight: 600,
-                    color: '#374151'
-                }}>
-                    {config.businessName || 'FoodSpot'}
-                </span>
-            </div>
+            <PageHeader businessName={config.businessName} />
 
             {infoDisplay.showWhatsApp && businessInfo.whatsapp && (
                 <a

@@ -11,6 +11,7 @@ import {
     generateOrderNumber,
     incrementOrderCount
 } from '../../utils/storage.js'
+import PageHeader from '../../components/PageHeader.jsx'
 
 // Placeholder food images for items without images
 const placeholderImages = [
@@ -255,22 +256,7 @@ function Order() {
             paddingBottom: 120
         }}>
             {/* Clean Brand Header */}
-            <div style={{
-                height: 52,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#FAF9F7'
-            }}>
-                <span style={{
-                    fontSize: 20,
-                    fontWeight: 600,
-                    color: '#1F2937',
-                    letterSpacing: '-0.01em'
-                }}>
-                    {config.businessName || 'Grub Club'}
-                </span>
-            </div>
+            <PageHeader businessName={config.businessName} />
 
             {/* Slim Identity Strip (same as Menu - mode indicator, not hero) */}
             <div style={{
