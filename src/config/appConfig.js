@@ -104,13 +104,16 @@ export const defaultConfig = {
         pedidosYaUrl: '',
     },
 
-    // Featured Photos (4 slots - Owner/Super control)
+    // Featured Photos (EXACTLY 4 slots - Owner/Super can upload custom images)
     featuredPhotos: [
-        { menuItemId: 'flat-white', enabled: true },
-        { menuItemId: 'cappuccino', enabled: true },
-        { menuItemId: 'brownie-nuez', enabled: true },
-        { menuItemId: 'medialuna-manteca', enabled: true },
+        { slot: 1, image: null, menuItemId: 'flat-white' },
+        { slot: 2, image: null, menuItemId: 'cappuccino' },
+        { slot: 3, image: null, menuItemId: 'brownie-nuez' },
+        { slot: 4, image: null, menuItemId: 'medialuna-manteca' },
     ],
+
+    // Menu/Pedido Header Divider (preset ID from dividerPresets.js)
+    dividerPresetId: 'coffee-beans',
 
     // Staff Password (simple password protection)
     staffPassword: "staff123",
