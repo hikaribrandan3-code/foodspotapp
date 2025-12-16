@@ -438,12 +438,6 @@ function SuperAdmin() {
                                     <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
                                 </div>
                             </div>
-
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Logo</label>
-                            <div style={{ border: '2px dashed #E5E7EB', borderRadius: 12, padding: 24, textAlign: 'center', background: '#FAFAF9' }}>
-                                <div style={{ fontSize: 24, color: '#9CA3AF', marginBottom: 6 }}>↑</div>
-                                <p style={{ fontSize: 12, color: '#9CA3AF' }}>Upload a logo</p>
-                            </div>
                         </div>
 
                         {/* Divider Preset Selector */}
