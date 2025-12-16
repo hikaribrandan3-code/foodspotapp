@@ -50,12 +50,31 @@ export function logout() {
 /**
  * Get current session
  * Returns { role, authenticated, username } or null
+ * Sessions expire after 20 minutes of inactivity
  */
+const SESSION_DURATION_MS = 20 * 60 * 1000 // 20 minutes
+
 export function getSession() {
     const session = getItem(AUTH_STORAGE_KEY)
     if (!session || !session.authenticated) {
         return null
     }
+
+    // Check session expiry (20 minutes)
+    const now = Date.now()
+    const sessionAge = now - (session.timestamp || 0)
+
+    if (sessionAge > SESSION_DURATION_MS) {
+        // Session expired - clear it
+        removeItem(AUTH_STORAGE_KEY)
+        return null
+    }
+
+    // Optionally refresh timestamp on activity (sliding window)
+    // Uncomment below for sliding window behavior:
+    // session.timestamp = now
+    // setItem(AUTH_STORAGE_KEY, session)
+
     return session
 }
 

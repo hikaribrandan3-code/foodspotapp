@@ -117,6 +117,41 @@ export function updateMenuItem(categoryId, itemId, updates) {
     return false;
 }
 
+// Add a new menu item to a category
+export function addMenuItem(categoryId, newItem) {
+    const menu = getMenu();
+    const category = menu.categories.find(c => c.id === categoryId);
+    if (category) {
+        const id = `item-${Date.now()}`;
+        category.items.push({
+            id,
+            name: newItem.name || 'Nuevo item',
+            price: newItem.price || 0,
+            available: true,
+            featured: false,
+            image: newItem.image || null,
+        });
+        saveMenu(menu);
+        return id;
+    }
+    return null;
+}
+
+// Remove a menu item from a category
+export function removeMenuItem(categoryId, itemId) {
+    const menu = getMenu();
+    const category = menu.categories.find(c => c.id === categoryId);
+    if (category) {
+        const index = category.items.findIndex(i => i.id === itemId);
+        if (index !== -1) {
+            category.items.splice(index, 1);
+            saveMenu(menu);
+            return true;
+        }
+    }
+    return false;
+}
+
 // Toggle item availability
 export function toggleItemAvailability(categoryId, itemId) {
     const menu = getMenu();

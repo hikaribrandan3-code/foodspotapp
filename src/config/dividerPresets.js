@@ -1,5 +1,5 @@
 // Menu/Pedido Header Divider Presets
-// ~12-15 preset landscape slim banners (aspect ~4:1 or 5:1)
+// FOOD-RELATED ONLY - v1 cleanup
 // Owner selects from presets, NO uploads for v1
 
 export const DIVIDER_PRESETS = [
@@ -34,33 +34,15 @@ export const DIVIDER_PRESETS = [
         category: 'food'
     },
     {
-        id: 'wooden-table',
-        name: 'Mesa de madera',
-        url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=200&fit=crop&q=80',
-        category: 'neutral'
-    },
-    {
-        id: 'marble-surface',
-        name: 'Mármol elegante',
-        url: 'https://images.unsplash.com/photo-1558618047-f4b4e200e9b3?w=800&h=200&fit=crop&q=80',
-        category: 'neutral'
-    },
-    {
-        id: 'plants-minimal',
-        name: 'Plantas minimalistas',
-        url: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=800&h=200&fit=crop&q=80',
-        category: 'neutral'
-    },
-    {
         id: 'sandwich-closeup',
         name: 'Sándwich artesanal',
         url: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800&h=200&fit=crop&q=80',
         category: 'food'
     },
     {
-        id: 'juice-fruits',
-        name: 'Jugos y frutas',
-        url: 'https://images.unsplash.com/photo-1622597467836-f3e6707f8c9c?w=800&h=200&fit=crop&q=80',
+        id: 'tropical-juice',
+        name: 'Bebidas tropicales',
+        url: 'https://images.unsplash.com/photo-1546173159-315724a31696?w=800&h=200&fit=crop&q=80',
         category: 'drinks'
     },
     {
@@ -88,10 +70,28 @@ export const DIVIDER_PRESETS = [
         category: 'cafe'
     },
     {
-        id: 'warm-tones',
-        name: 'Tonos cálidos',
-        url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=200&fit=crop&q=80',
-        category: 'neutral'
+        id: 'pizza-slice',
+        name: 'Pizza artesanal',
+        url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=200&fit=crop&q=80',
+        category: 'food'
+    },
+    {
+        id: 'burger-closeup',
+        name: 'Hamburgesa gourmet',
+        url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=200&fit=crop&q=80',
+        category: 'food'
+    },
+    {
+        id: 'empanadas',
+        name: 'Empanadas doradas',
+        url: 'https://images.unsplash.com/photo-1604467715878-83e57e8bc129?w=800&h=200&fit=crop&q=80',
+        category: 'food'
+    },
+    {
+        id: 'fresh-dough',
+        name: 'Masa fresca',
+        url: 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?w=800&h=200&fit=crop&q=80',
+        category: 'bakery'
     }
 ]
 

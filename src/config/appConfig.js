@@ -43,6 +43,7 @@ export const defaultConfig = {
     // Branding Customization (Owner-controlled)
     branding: {
         fontFamily: "Inter", // Selected from curated list
+        fontWeight: "normal", // "light" | "normal" | "semibold" | "bold"
         poweredByColor: "#C4856A", // Separate color for "Powered by @foodspotapp"
     },
 
@@ -282,4 +283,12 @@ export const CONFIRMATION_COLORS = [
     { value: '#EC4899', label: 'Pink' },
     { value: '#F59E0B', label: 'Amber' },
     { value: '#EF4444', label: 'Red' },
+]
+
+// Font weight options
+export const FONT_WEIGHTS = [
+    { value: '300', label: 'Light' },
+    { value: '400', label: 'Normal' },
+    { value: '600', label: 'Semi-bold' },
+    { value: '700', label: 'Bold' },
 ]

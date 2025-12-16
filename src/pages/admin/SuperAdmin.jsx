@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { login, logout, getSession } from '../../utils/auth.js'
-import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS } from '../../config/appConfig.js'
-import { getMenu, saveMenu, updateMenuItem } from '../../config/menuData.js'
+import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS } from '../../config/appConfig.js'
+import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 
@@ -111,6 +111,20 @@ function SuperAdmin() {
     const handleUpdateMenuItem = (categoryId, itemId, updates) => {
         updateMenuItem(categoryId, itemId, updates)
         setMenu(getMenu())
+    }
+
+    // Add new menu item
+    const handleAddMenuItem = (categoryId) => {
+        addMenuItem(categoryId, { name: 'Nuevo item', price: 0 })
+        setMenu(getMenu())
+    }
+
+    // Remove menu item
+    const handleRemoveMenuItem = (categoryId, itemId) => {
+        if (confirm('¿Eliminar este item?')) {
+            removeMenuItem(categoryId, itemId)
+            setMenu(getMenu())
+        }
     }
 
     // Menu item image upload handler
@@ -383,17 +397,49 @@ function SuperAdmin() {
                                                                 <label style={{ fontSize: 10, color: '#9CA3AF' }}>Precio promo</label>
                                                                 <input type="number" placeholder="Precio" value={item.promoPrice || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoPrice: parseFloat(e.target.value) || 0 })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
                                                             </div>
-                                                            <div style={{ flex: 1 }}>
-                                                                <label style={{ fontSize: 10, color: '#9CA3AF' }}>Badge</label>
-                                                                <input type="text" placeholder="Ej: -20%" value={item.promoBadge || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoBadge: e.target.value })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
                                             </div>
+                                            {/* Remove Button */}
+                                            <button
+                                                onClick={() => handleRemoveMenuItem(category.id, item.id)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#EF4444',
+                                                    fontSize: 18,
+                                                    cursor: 'pointer',
+                                                    padding: 4,
+                                                    alignSelf: 'flex-start'
+                                                }}
+                                                title="Eliminar item"
+                                            >
+                                                ×
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
+                                {/* Add Item Button */}
+                                <button
+                                    onClick={() => handleAddMenuItem(category.id)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        background: '#F3F4F6',
+                                        border: '2px dashed #D1D5DB',
+                                        borderRadius: 10,
+                                        fontSize: 13,
+                                        color: '#6B7280',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 6
+                                    }}
+                                >
+                                    <span style={{ fontSize: 16 }}>+</span> Agregar ítem
+                                </button>
                             </div>
                         ))}
                     </>
@@ -419,7 +465,19 @@ function SuperAdmin() {
                                 ))}
                             </select>
 
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Colores</label>
+                            {/* Font Weight Selector */}
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Peso de fuente</label>
+                            <select
+                                value={config.branding?.fontWeight || '400'}
+                                onChange={(e) => { updateConfig({ branding: { ...config.branding, fontWeight: e.target.value } }); setConfig(getConfig()) }}
+                                style={{ ...inputStyle, fontWeight: config.branding?.fontWeight || '400' }}
+                            >
+                                {FONT_WEIGHTS.map(weight => (
+                                    <option key={weight.value} value={weight.value}>{weight.label}</option>
+                                ))}
+                            </select>
+
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8, marginTop: 16 }}>Colores</label>
                             <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
                                 <div>
                                     <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Primario</p>
@@ -466,15 +524,12 @@ function SuperAdmin() {
                             </p>
                         </div>
 
-                        {/* Featured Photos Controls */}
-                        <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home) - 4 slots</h3>
+                        {/* Featured Photos Controls - Standalone System */}
+                        <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home) - 4 slots fijos</h3>
                         <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Subí fotos personalizadas o seleccioná del menú</p>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Estos 4 items aparecen en la página de inicio</p>
                             {[0, 1, 2, 3].map(slotIndex => {
                                 const currentSlot = config.featuredPhotos?.[slotIndex] || {}
-                                const allItems = menu.categories?.flatMap(cat => cat.items?.map(item => ({ ...item, categoryName: cat.name }))) || []
-                                const selectedItem = allItems.find(i => i.id === currentSlot.menuItemId)
-                                const displayImage = currentSlot.image || selectedItem?.image
 
                                 return (
                                     <div key={slotIndex} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
@@ -486,7 +541,7 @@ function SuperAdmin() {
                                                     width: 80,
                                                     height: 80,
                                                     borderRadius: 12,
-                                                    background: displayImage ? 'none' : '#F3F4F6',
+                                                    background: currentSlot.image ? 'none' : '#F3F4F6',
                                                     border: '2px dashed #D1D5DB',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -496,8 +551,8 @@ function SuperAdmin() {
                                                     flexShrink: 0
                                                 }}
                                             >
-                                                {displayImage ? (
-                                                    <img src={displayImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                {currentSlot.image ? (
+                                                    <img src={currentSlot.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 ) : (
                                                     <span style={{ fontSize: 24, color: '#9CA3AF' }}>📷</span>
                                                 )}
@@ -510,44 +565,34 @@ function SuperAdmin() {
                                                 style={{ display: 'none' }}
                                             />
 
-                                            {/* Slot Controls */}
+                                            {/* Slot Controls - Name & Price */}
                                             <div style={{ flex: 1 }}>
-                                                <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Slot {slotIndex + 1}</p>
-                                                <select
-                                                    value={currentSlot.menuItemId || ''}
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nombre del item"
+                                                    value={currentSlot.name || ''}
                                                     onChange={(e) => {
-                                                        const newPhotos = [...(config.featuredPhotos || [
-                                                            { slot: 1, image: null, menuItemId: '' },
-                                                            { slot: 2, image: null, menuItemId: '' },
-                                                            { slot: 3, image: null, menuItemId: '' },
-                                                            { slot: 4, image: null, menuItemId: '' },
-                                                        ])]
-                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], menuItemId: e.target.value }
+                                                        const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
+                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
                                                         updateConfig({ featuredPhotos: newPhotos })
                                                         setConfig(getConfig())
                                                     }}
-                                                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12, marginBottom: 6 }}
-                                                >
-                                                    <option value="">-- Usar foto custom --</option>
-                                                    {allItems.map(item => (
-                                                        <option key={item.id} value={item.id}>{item.name}</option>
-                                                    ))}
-                                                </select>
+                                                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, marginBottom: 6 }}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Precio"
+                                                    value={currentSlot.price || ''}
+                                                    onChange={(e) => {
+                                                        const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
+                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], price: parseFloat(e.target.value) || 0 }
+                                                        updateConfig({ featuredPhotos: newPhotos })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={{ width: 100, padding: '6px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12 }}
+                                                />
                                                 {uploadingFeaturedSlot === slotIndex && (
-                                                    <p style={{ fontSize: 10, color: '#6B7280' }}>Optimizando...</p>
-                                                )}
-                                                {currentSlot.image && (
-                                                    <button
-                                                        onClick={() => {
-                                                            const newPhotos = [...(config.featuredPhotos || [])]
-                                                            newPhotos[slotIndex] = { ...newPhotos[slotIndex], image: null }
-                                                            updateConfig({ featuredPhotos: newPhotos })
-                                                            setConfig(getConfig())
-                                                        }}
-                                                        style={{ fontSize: 10, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                                                    >
-                                                        × Quitar foto custom
-                                                    </button>
+                                                    <p style={{ fontSize: 10, color: '#6B7280', marginTop: 4 }}>Optimizando...</p>
                                                 )}
                                             </div>
                                         </div>
@@ -655,7 +700,7 @@ function SuperAdmin() {
                 )}
 
             </div>
-        </div>
+        </div >
     )
 }
 
