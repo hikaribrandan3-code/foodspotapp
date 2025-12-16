@@ -118,7 +118,7 @@ function Home() {
                 textAlign: 'center'
             }}>
                 <h1 style={{
-                    fontSize: 28,
+                    fontSize: 30,
                     fontWeight: 600,
                     color: '#4A4238',
                     margin: 0,
