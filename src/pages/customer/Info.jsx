@@ -284,7 +284,7 @@ function Info() {
                     style={{
                         fontSize: 28,
                         fontWeight: 700,
-                        color: '#C4856A',
+                        color: config.branding?.poweredByColor || '#C4856A',
                         textDecoration: 'none'
                     }}
                 >

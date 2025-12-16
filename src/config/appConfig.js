@@ -37,6 +37,13 @@ export const defaultConfig = {
         success: "#5A8B55",
         warning: "#B8860B",
         error: "#A85555",
+        confirmation: "#22C55E", // Third color slot: confirmation/success actions
+    },
+
+    // Branding Customization (Owner-controlled)
+    branding: {
+        fontFamily: "Inter", // Selected from curated list
+        poweredByColor: "#C4856A", // Separate color for "Powered by @foodspotapp"
     },
 
     // Feature Toggles
@@ -243,3 +250,33 @@ export function getModifiableFeatures(role) {
     return FEATURE_PERMISSIONS.modify[role] || []
 }
 
+// Curated font list (supports Light, Semi-bold, Bold)
+export const CURATED_FONTS = [
+    { name: 'Inter', label: 'Inter' },
+    { name: 'Outfit', label: 'Outfit' },
+    { name: 'Poppins', label: 'Poppins' },
+    { name: 'Roboto', label: 'Roboto' },
+    { name: 'Open Sans', label: 'Open Sans' },
+    { name: 'Lato', label: 'Lato' },
+    { name: 'Montserrat', label: 'Montserrat' },
+    { name: 'Nunito', label: 'Nunito' },
+    { name: 'Raleway', label: 'Raleway' },
+    { name: 'Source Sans Pro', label: 'Source Sans Pro' },
+    { name: 'Work Sans', label: 'Work Sans' },
+    { name: 'DM Sans', label: 'DM Sans' },
+    { name: 'Manrope', label: 'Manrope' },
+    { name: 'Plus Jakarta Sans', label: 'Plus Jakarta Sans' },
+    { name: 'Figtree', label: 'Figtree' },
+]
+
+// Curated color presets for confirmation actions
+export const CONFIRMATION_COLORS = [
+    { value: '#22C55E', label: 'Green' },
+    { value: '#10B981', label: 'Emerald' },
+    { value: '#14B8A6', label: 'Teal' },
+    { value: '#3B82F6', label: 'Blue' },
+    { value: '#8B5CF6', label: 'Purple' },
+    { value: '#EC4899', label: 'Pink' },
+    { value: '#F59E0B', label: 'Amber' },
+    { value: '#EF4444', label: 'Red' },
+]

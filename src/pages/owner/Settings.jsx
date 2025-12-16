@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
-import { getConfig, updateConfig } from '../../config/appConfig.js'
+import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS } from '../../config/appConfig.js'
 
 function Settings() {
     const navigate = useNavigate()
@@ -242,6 +242,99 @@ function Settings() {
                     >
                         Guardar info
                     </button>
+                </div>
+            </div>
+
+            {/* Branding Customization */}
+            <div className="admin-section">
+                <h3 className="admin-section-title">🎨 Personalización de marca</h3>
+                <div className="admin-card">
+                    {/* Font Selector */}
+                    <div className="form-group">
+                        <label className="form-label">Tipografía</label>
+                        <select
+                            className="form-input"
+                            value={config.branding?.fontFamily || 'Inter'}
+                            onChange={(e) => {
+                                updateConfig({
+                                    branding: {
+                                        ...config.branding,
+                                        fontFamily: e.target.value
+                                    }
+                                })
+                                setConfig(getConfig())
+                            }}
+                            style={{ fontFamily: config.branding?.fontFamily || 'Inter' }}
+                        >
+                            {CURATED_FONTS.map(font => (
+                                <option key={font.name} value={font.name} style={{ fontFamily: font.name }}>
+                                    {font.label}
+                                </option>
+                            ))}
+                        </select>
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                            Aplicado a todo el texto del negocio
+                        </p>
+                    </div>
+
+                    {/* Confirmation Color */}
+                    <div className="form-group">
+                        <label className="form-label">Color de confirmación</label>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {CONFIRMATION_COLORS.map(color => (
+                                <button
+                                    key={color.value}
+                                    onClick={() => {
+                                        updateConfig({
+                                            colors: {
+                                                ...config.colors,
+                                                confirmation: color.value
+                                            }
+                                        })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        width: 36,
+                                        height: 36,
+                                        borderRadius: 8,
+                                        backgroundColor: color.value,
+                                        border: config.colors?.confirmation === color.value ? '3px solid #1F2937' : '2px solid #E5E7EB',
+                                        cursor: 'pointer'
+                                    }}
+                                    title={color.label}
+                                />
+                            ))}
+                        </div>
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                            Para botones de confirmar pedido y acciones positivas
+                        </p>
+                    </div>
+
+                    {/* Powered By Color */}
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Color "Powered by @foodspotapp"</label>
+                        <input
+                            type="color"
+                            value={config.branding?.poweredByColor || '#C4856A'}
+                            onChange={(e) => {
+                                updateConfig({
+                                    branding: {
+                                        ...config.branding,
+                                        poweredByColor: e.target.value
+                                    }
+                                })
+                                setConfig(getConfig())
+                            }}
+                            style={{
+                                width: 60,
+                                height: 36,
+                                border: '2px solid #E5E7EB',
+                                borderRadius: 8,
+                                cursor: 'pointer',
+                                padding: 2
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
 
