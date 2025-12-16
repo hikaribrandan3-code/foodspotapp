@@ -125,7 +125,7 @@ function Home() {
                     letterSpacing: '-0.02em',
                     fontFamily: 'system-ui, -apple-system, sans-serif'
                 }}>
-                    FoodSpot
+                    {config.businessName || 'FoodSpot'}
                 </h1>
             </header>
 
