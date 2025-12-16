@@ -16,7 +16,7 @@ function PageHeader({ businessName }) {
             marginBottom: 0
         }}>
             <span style={{
-                fontSize: 21,
+                fontSize: 23,
                 fontWeight: 600,
                 color: '#1F2937',
                 letterSpacing: '-0.01em',
