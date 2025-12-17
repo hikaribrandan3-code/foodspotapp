@@ -116,16 +116,18 @@ function Order() {
                     textAlign: 'center'
                 }}>
                     {/* Brand Header - Plain text only */}
-                    <p style={{
-                        fontSize: 11,
-                        fontWeight: 500,
-                        color: '#9CA3AF',
-                        letterSpacing: '0.08em',
-                        marginBottom: 24,
-                        textTransform: 'uppercase'
-                    }}>
-                        GRUB CLUB
-                    </p>
+                    {config.businessName && (
+                        <p style={{
+                            fontSize: 11,
+                            fontWeight: 500,
+                            color: '#9CA3AF',
+                            letterSpacing: '0.08em',
+                            marginBottom: 24,
+                            textTransform: 'uppercase'
+                        }}>
+                            {config.businessName}
+                        </p>
+                    )}
 
                     {/* Green Checkmark Icon */}
                     <div style={{
