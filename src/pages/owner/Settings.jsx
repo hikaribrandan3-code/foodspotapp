@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
 import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS } from '../../config/appConfig.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
+import { canChangeDeliveryConfig, recordDeliveryConfigChange, getDeliveryChangesThisMonth } from '../../utils/deliveryUtils.js'
 
 function Settings() {
     const navigate = useNavigate()
@@ -125,6 +126,148 @@ function Settings() {
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
                         ✅ Los pedidos se archivan automáticamente al marcarlos como entregados.
                     </p>
+                </div>
+            </div>
+
+            {/* Delivery Configuration (v1 Minimal) */}
+            <div className="admin-section">
+                <h3 className="admin-section-title">🚴 Configuración de Envíos</h3>
+                <div className="admin-card">
+                    {/* Change Limit Status */}
+                    {(() => {
+                        const { allowed, remaining, message } = canChangeDeliveryConfig()
+                        return (
+                            <div style={{
+                                background: allowed ? '#ECFDF5' : '#FEF2F2',
+                                padding: 10,
+                                borderRadius: 8,
+                                marginBottom: 16,
+                                fontSize: 12
+                            }}>
+                                <p style={{
+                                    color: allowed ? '#065F46' : '#991B1B',
+                                    margin: 0,
+                                    fontWeight: 500
+                                }}>
+                                    📊 {message}
+                                </p>
+                            </div>
+                        )
+                    })()}
+
+                    {/* Origin Address */}
+                    <div className="form-group">
+                        <label className="form-label">Dirección de origen (para radio)</label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={config.delivery?.originAddress || config.businessInfo?.address || ''}
+                            onChange={(e) => {
+                                const { allowed } = canChangeDeliveryConfig()
+                                if (!allowed) {
+                                    alert('❌ Límite de cambios alcanzado (2 por mes)')
+                                    return
+                                }
+                                if (!confirm('¿Confirmar cambio de dirección de origen? (Cuenta como 1 de 2 cambios mensuales)')) {
+                                    return
+                                }
+                                const oldValue = config.delivery?.originAddress || ''
+                                recordDeliveryConfigChange('originAddress', oldValue, e.target.value)
+                                updateConfig({
+                                    delivery: {
+                                        ...config.delivery,
+                                        originAddress: e.target.value
+                                    }
+                                })
+                                setConfig(getConfig())
+                            }}
+                            placeholder="Usar dirección del local"
+                        />
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                            Si está vacío, se usa la dirección del Info del local
+                        </p>
+                    </div>
+
+                    {/* Radius Slider */}
+                    <div className="form-group">
+                        <label className="form-label">Radio de entrega: {config.delivery?.radiusKm || 5} km</label>
+                        <input
+                            type="range"
+                            min="1"
+                            max="15"
+                            value={config.delivery?.radiusKm || 5}
+                            onChange={(e) => {
+                                const { allowed } = canChangeDeliveryConfig()
+                                if (!allowed) {
+                                    alert('❌ Límite de cambios alcanzado (2 por mes)')
+                                    return
+                                }
+                                const newValue = parseInt(e.target.value)
+                                const oldValue = config.delivery?.radiusKm || 5
+                                if (newValue !== oldValue) {
+                                    if (!confirm(`¿Cambiar radio a ${newValue} km? (Cuenta como 1 de 2 cambios mensuales)`)) {
+                                        return
+                                    }
+                                    recordDeliveryConfigChange('radiusKm', oldValue, newValue)
+                                }
+                                updateConfig({
+                                    delivery: {
+                                        ...config.delivery,
+                                        radiusKm: newValue
+                                    }
+                                })
+                                setConfig(getConfig())
+                            }}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+
+                    {/* Flat Delivery Fee */}
+                    <div className="form-group">
+                        <label className="form-label">Tarifa de envío fija ($)</label>
+                        <input
+                            type="number"
+                            className="form-input"
+                            min="0"
+                            step="50"
+                            value={config.delivery?.flatFee || 0}
+                            onChange={(e) => {
+                                updateConfig({
+                                    delivery: {
+                                        ...config.delivery,
+                                        flatFee: parseInt(e.target.value) || 0
+                                    }
+                                })
+                                setConfig(getConfig())
+                            }}
+                            placeholder="0 = gratis"
+                        />
+                    </div>
+
+                    {/* Free Delivery Threshold */}
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Envío gratis desde ($)</label>
+                        <input
+                            type="number"
+                            className="form-input"
+                            min="0"
+                            step="100"
+                            value={config.delivery?.freeDeliveryThreshold || 0}
+                            onChange={(e) => {
+                                updateConfig({
+                                    delivery: {
+                                        ...config.delivery,
+                                        freeDeliveryThreshold: parseInt(e.target.value) || 0
+                                    }
+                                })
+                                setConfig(getConfig())
+                            }}
+                            placeholder="0 = sin umbral"
+                        />
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                            Si el pedido supera este monto, el envío es gratis
+                        </p>
+                    </div>
                 </div>
             </div>
 

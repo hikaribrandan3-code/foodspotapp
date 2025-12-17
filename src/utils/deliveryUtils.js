@@ -1,6 +1,8 @@
 // Delivery Utilities for FoodSpot v1.0
 // Handles delivery-specific logic: payment time windows, validation, confirmation
 
+import { getConfig, updateConfig } from '../config/appConfig.js'
+
 /**
  * Check if cash payment is currently allowed
  * Cash is ONLY allowed between 10:00 and 18:00 local device time
@@ -100,4 +102,129 @@ export function clearDeliveryMode() {
  */
 export function getDeliveryModeLabel() {
     return isDeliveryMode() ? 'Envío' : 'Recoger'
+}
+
+// ============================================
+// DELIVERY CONFIGURATION UTILITIES (v1)
+// ============================================
+
+/**
+ * Get the delivery origin address (from config or businessInfo)
+ * @returns {string}
+ */
+export function getDeliveryOriginAddress() {
+    const config = getConfig()
+    if (config.delivery?.originAddress) {
+        return config.delivery.originAddress
+    }
+    return config.businessInfo?.address || ''
+}
+
+/**
+ * Get configured delivery radius in km
+ * @returns {number}
+ */
+export function getDeliveryRadius() {
+    const config = getConfig()
+    return config.delivery?.radiusKm || 5
+}
+
+/**
+ * Get configured flat delivery fee
+ * @returns {number}
+ */
+export function getDeliveryFee() {
+    const config = getConfig()
+    return config.delivery?.flatFee || 0
+}
+
+/**
+ * Get free delivery threshold
+ * @returns {number}
+ */
+export function getFreeDeliveryThreshold() {
+    const config = getConfig()
+    return config.delivery?.freeDeliveryThreshold || 0
+}
+
+/**
+ * Calculate delivery fee for an order total
+ * @param {number} orderTotal
+ * @returns {number}
+ */
+export function calculateDeliveryFee(orderTotal) {
+    const fee = getDeliveryFee()
+    const threshold = getFreeDeliveryThreshold()
+
+    if (threshold > 0 && orderTotal >= threshold) {
+        return 0 // Free delivery
+    }
+    return fee
+}
+
+/**
+ * Get number of delivery config changes this month
+ * @returns {number}
+ */
+export function getDeliveryChangesThisMonth() {
+    const config = getConfig()
+    const changes = config.delivery?.configChanges || []
+    const now = new Date()
+    const thisMonth = now.getMonth()
+    const thisYear = now.getFullYear()
+
+    return changes.filter(change => {
+        const changeDate = new Date(change.timestamp)
+        return changeDate.getMonth() === thisMonth && changeDate.getFullYear() === thisYear
+    }).length
+}
+
+/**
+ * Check if delivery config can be changed (2× per month limit)
+ * @returns {{ allowed: boolean, remaining: number, message: string }}
+ */
+export function canChangeDeliveryConfig() {
+    const config = getConfig()
+    const max = config.delivery?.maxChangesPerMonth || 2
+    const used = getDeliveryChangesThisMonth()
+    const remaining = Math.max(0, max - used)
+
+    return {
+        allowed: remaining > 0,
+        remaining,
+        message: remaining > 0
+            ? `${remaining} cambio(s) restante(s) este mes`
+            : 'Límite de cambios alcanzado (2 por mes)'
+    }
+}
+
+/**
+ * Record a delivery config change
+ * @param {string} field - Field that was changed
+ * @param {*} oldValue - Previous value
+ * @param {*} newValue - New value
+ * @returns {boolean} - Whether the change was recorded
+ */
+export function recordDeliveryConfigChange(field, oldValue, newValue) {
+    const { allowed } = canChangeDeliveryConfig()
+    if (!allowed) return false
+
+    const config = getConfig()
+    const changes = config.delivery?.configChanges || []
+
+    changes.push({
+        timestamp: new Date().toISOString(),
+        field,
+        oldValue,
+        newValue
+    })
+
+    updateConfig({
+        delivery: {
+            ...config.delivery,
+            configChanges: changes
+        }
+    })
+
+    return true
 }

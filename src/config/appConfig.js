@@ -125,6 +125,27 @@ export const defaultConfig = {
     staffPassword: "staff123",
     ownerPassword: "owner123",
     superAdminPassword: "admin2024",
+
+    // ============================================
+    // DELIVERY CONFIGURATION (v1 Minimal)
+    // ============================================
+    delivery: {
+        // Origin address for delivery radius (defaults to businessInfo.address)
+        originAddress: '', // If empty, uses businessInfo.address
+
+        // Delivery radius in kilometers (0 = unlimited)
+        radiusKm: 5,
+
+        // Flat delivery fee (0 = free)
+        flatFee: 0,
+
+        // Free delivery threshold (0 = no threshold)
+        freeDeliveryThreshold: 0,
+
+        // Change tracking (2× per month limit)
+        configChanges: [], // Array of { timestamp, field, oldValue, newValue }
+        maxChangesPerMonth: 2,
+    },
 };
 
 // Storage key

@@ -17,7 +17,8 @@ import {
     isDeliveryMode,
     isCashPaymentAllowed,
     validateDeliveryInfo,
-    clearDeliveryMode
+    clearDeliveryMode,
+    calculateDeliveryFee
 } from '../../utils/deliveryUtils.js'
 
 // Placeholder food images for items without images
@@ -86,8 +87,17 @@ function Order() {
         return total
     }
 
-    const calculateTotal = () => {
+    const calculateSubtotal = () => {
         return order.items.reduce((sum, item) => sum + calculateItemTotal(item), 0)
+    }
+
+    const getDeliveryFeeAmount = () => {
+        if (!deliveryMode) return 0
+        return calculateDeliveryFee(calculateSubtotal())
+    }
+
+    const calculateTotal = () => {
+        return calculateSubtotal() + getDeliveryFeeAmount()
     }
 
     const handleQuantityChange = (index, delta) => {
@@ -121,6 +131,8 @@ function Order() {
             id: `order-${Date.now()}`,
             orderNumber,
             items: order.items,
+            subtotal: calculateSubtotal(),
+            deliveryFee: getDeliveryFeeAmount(),
             total: calculateTotal(),
             status: 'enviado',
             paymentConfirmed: false,
@@ -755,20 +767,54 @@ function Order() {
                         paddingTop: 16,
                         borderTop: '1px solid #F3F4F6'
                     }}>
-                        <span style={{
-                            fontSize: 16,
-                            fontWeight: 600,
-                            color: '#1F2937'
+                        {/* Subtotal - Only show breakdown in delivery mode with fee */}
+                        {deliveryMode && getDeliveryFeeAmount() >= 0 && (
+                            <>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    marginBottom: 8
+                                }}>
+                                    <span style={{ fontSize: 14, color: '#6B7280' }}>Subtotal</span>
+                                    <span style={{ fontSize: 14, color: '#6B7280' }}>{formatPrice(calculateSubtotal())}</span>
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    marginBottom: 12
+                                }}>
+                                    <span style={{ fontSize: 14, color: '#6B7280' }}>Envío</span>
+                                    <span style={{
+                                        fontSize: 14,
+                                        color: getDeliveryFeeAmount() === 0 ? '#059669' : '#6B7280',
+                                        fontWeight: getDeliveryFeeAmount() === 0 ? 600 : 400
+                                    }}>
+                                        {getDeliveryFeeAmount() === 0 ? '¡Gratis!' : formatPrice(getDeliveryFeeAmount())}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
                         }}>
-                            Total
-                        </span>
-                        <span style={{
-                            fontSize: 20,
-                            fontWeight: 700,
-                            color: '#1F2937'
-                        }}>
-                            {formatPrice(calculateTotal())}
-                        </span>
+                            <span style={{
+                                fontSize: 16,
+                                fontWeight: 600,
+                                color: '#1F2937'
+                            }}>
+                                Total
+                            </span>
+                            <span style={{
+                                fontSize: 20,
+                                fontWeight: 700,
+                                color: '#1F2937'
+                            }}>
+                                {formatPrice(calculateTotal())}
+                            </span>
+                        </div>
                     </div>
 
                     {/* Confirmar Pedido Button */}

@@ -46,7 +46,18 @@ function StaffDashboard({ config }) {
         const orderMode = appConfig.orderMode || 'A1'
 
         // ============================================
-        // MODE-SPECIFIC RULES
+        // PREPAYMENT ENFORCEMENT (P0 - V1 SHIP BLOCKER)
+        // ============================================
+        // ALL delivery orders require payment before preparation and dispatch
+        if (order.orderType === 'delivery') {
+            if ((newStatus === 'preparacion' || newStatus === 'en_camino') && !order.paymentConfirmed) {
+                alert('⚠️ Debe confirmar el pago antes de preparar o enviar el pedido.')
+                return
+            }
+        }
+
+        // ============================================
+        // MODE-SPECIFIC RULES (Pickup orders)
         // ============================================
 
         // MODE A2 (Café/Bakery): MUST have payment before preparing
@@ -55,8 +66,8 @@ function StaffDashboard({ config }) {
             return
         }
 
-        // MODE A1/A2: Warn if delivering without payment
-        if ((orderMode === 'A1' || orderMode === 'A2') && newStatus === 'entregado' && !order.paymentConfirmed) {
+        // MODE A1/A2: Warn if delivering without payment (pickup only, delivery already blocked above)
+        if (order.orderType !== 'delivery' && (orderMode === 'A1' || orderMode === 'A2') && newStatus === 'entregado' && !order.paymentConfirmed) {
             if (!confirm('⚠️ Este pedido NO tiene pago confirmado. ¿Entregar igual?')) {
                 return
             }
@@ -254,6 +265,27 @@ function StaffDashboard({ config }) {
             {/* Orders Tab */}
             {activeTab === 'orders' && (
                 <div>
+                    {/* Business Disclaimers - Shown when delivery orders exist */}
+                    {activeOrders.some(o => o.orderType === 'delivery') && (
+                        <div style={{
+                            background: '#FEF3C7',
+                            padding: 12,
+                            borderRadius: 10,
+                            marginBottom: 16,
+                            fontSize: 12,
+                            lineHeight: 1.5
+                        }}>
+                            <p style={{ fontWeight: 600, marginBottom: 6, color: '#92400E' }}>
+                                📋 Recordatorio FoodSpot:
+                            </p>
+                            <ul style={{ margin: 0, paddingLeft: 16, color: '#78350F' }}>
+                                <li>FoodSpot es software, no una empresa de delivery</li>
+                                <li>El negocio es responsable de repartidores, seguros y habilitaciones</li>
+                                <li>FoodSpot no procesa pagos</li>
+                            </ul>
+                        </div>
+                    )}
+
                     {activeOrders.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-state-icon">📋</div>
