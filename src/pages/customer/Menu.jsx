@@ -5,8 +5,9 @@ import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../ut
 import { getConfig } from '../../config/appConfig.js'
 import PageHeader from '../../components/PageHeader.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
+import { isDeliveryMode } from '../../utils/deliveryUtils.js'
 
-function Menu({ deliveryMode = false }) {
+function Menu({ deliveryMode: deliveryModeProp = false }) {
     const navigate = useNavigate()
     const [menu, setMenu] = useState(() => getMenu())
     const [config] = useState(() => getConfig())
@@ -14,12 +15,21 @@ function Menu({ deliveryMode = false }) {
     const [addedItem, setAddedItem] = useState(null) // For visual feedback
     const categoryRefs = useRef({})
 
-    // Store delivery mode in session for order flow persistence
+    // Delivery mode: session is source of truth, route prop can set it
+    // This ensures persistence across page refresh and back navigation
+    const [deliveryMode, setDeliveryMode] = useState(() => {
+        // Check session first, then route prop
+        if (isDeliveryMode()) return true
+        return deliveryModeProp
+    })
+
+    // If route prop sets delivery mode, persist to session
     useEffect(() => {
-        if (deliveryMode) {
+        if (deliveryModeProp) {
             sessionStorage.setItem('foodspot_delivery_mode', 'true')
+            setDeliveryMode(true)
         }
-    }, [deliveryMode])
+    }, [deliveryModeProp])
 
     // Only show enabled categories with available items
     const enabledCategories = menu.categories.filter(cat =>

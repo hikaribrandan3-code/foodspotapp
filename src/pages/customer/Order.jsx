@@ -50,17 +50,33 @@ function Order() {
     // Check if cash is currently available (10:00-18:00)
     const [cashAvailable, setCashAvailable] = useState(() => isCashPaymentAllowed())
 
+    // Notice when cash becomes unavailable mid-session
+    const [cashFallbackNotice, setCashFallbackNotice] = useState(false)
+
     // Validation errors
     const [validationErrors, setValidationErrors] = useState([])
 
     useEffect(() => {
         const interval = setInterval(() => {
             setOrder(getCurrentOrder())
-            // Re-check cash availability every minute
-            setCashAvailable(isCashPaymentAllowed())
+
+            // Re-check cash availability (Argentina local time)
+            const nowCashAvailable = isCashPaymentAllowed()
+
+            // If cash WAS available but now is NOT, and cash was selected
+            if (cashAvailable && !nowCashAvailable && paymentMethod === 'efectivo') {
+                // Auto-fallback to Mercado Pago
+                setPaymentMethod('mercadopago')
+                // Show brief notice
+                setCashFallbackNotice(true)
+                // Auto-hide notice after 5 seconds
+                setTimeout(() => setCashFallbackNotice(false), 5000)
+            }
+
+            setCashAvailable(nowCashAvailable)
         }, 500)
         return () => clearInterval(interval)
-    }, [])
+    }, [cashAvailable, paymentMethod])
 
     const calculateItemTotal = (item) => {
         let total = item.price * item.quantity
@@ -525,6 +541,21 @@ function Order() {
                             }}>
                                 Método de pago
                             </h3>
+
+                            {/* Cash Fallback Notice - Shows when cash became unavailable */}
+                            {cashFallbackNotice && (
+                                <div style={{
+                                    background: '#FEF3C7',
+                                    padding: 10,
+                                    borderRadius: 8,
+                                    marginBottom: 12,
+                                    fontSize: 13
+                                }}>
+                                    <p style={{ color: '#92400E', margin: 0 }}>
+                                        ⏰ El pago en efectivo ya no está disponible (fuera de horario 10:00-18:00). Se seleccionó Mercado Pago.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Mercado Pago Option - Always available */}
                             <label style={{
