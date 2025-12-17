@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, updateOrder, addStamp } from '../../utils/storage.js'
 import { getMenu, toggleItemAvailability, formatPrice } from '../../config/menuData.js'
 import { getConfig, updateConfig } from '../../config/appConfig.js'
+import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
 
 function StaffDashboard({ config }) {
     const navigate = useNavigate()
@@ -11,6 +12,7 @@ function StaffDashboard({ config }) {
     const [activeTab, setActiveTab] = useState('orders')
     const [appConfig, setAppConfig] = useState(() => getConfig())
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({}) // orderId -> 'cash' | 'mercado_pago'
+    const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({}) // orderId -> 4-digit code
 
     // Check auth
     useEffect(() => {
@@ -141,14 +143,21 @@ function StaffDashboard({ config }) {
         alert('¡Sello agregado!')
     }
 
-    const getStatusInfo = (status) => {
+    const getStatusInfo = (status, orderType = 'pickup') => {
         switch (status) {
             case 'enviado':
                 return { label: 'Enviado', class: 'status-enviado', next: 'preparacion', nextLabel: 'Preparar' }
             case 'preparacion':
                 return { label: 'En preparación', class: 'status-preparacion', next: 'listo', nextLabel: 'Listo' }
             case 'listo':
+                // For delivery orders, next step is "en_camino" (on the way)
+                // For pickup orders, next step is "entregado" (delivered/picked up)
+                if (orderType === 'delivery') {
+                    return { label: '¡Listo!', class: 'status-listo', next: 'en_camino', nextLabel: 'En camino' }
+                }
                 return { label: '¡Listo!', class: 'status-listo', next: 'entregado', nextLabel: 'Entregar' }
+            case 'en_camino':
+                return { label: '🚴 En camino', class: 'status-en-camino', next: 'entregado', nextLabel: 'Confirmar entrega' }
             case 'entregado':
                 return { label: '✅ Entregado', class: 'status-entregado', next: null, nextLabel: null }
             default:
@@ -252,15 +261,51 @@ function StaffDashboard({ config }) {
                         </div>
                     ) : (
                         activeOrders.map(order => {
-                            const statusInfo = getStatusInfo(order.status)
+                            const statusInfo = getStatusInfo(order.status, order.orderType)
+                            const isDeliveryOrder = order.orderType === 'delivery'
                             return (
                                 <div key={order.id} className={`order-card ${statusInfo.class}`}>
                                     <div className="order-card-header">
                                         <span className="order-number" style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)' }}>#{order.orderNumber}</span>
-                                        <span className={`status-badge ${statusInfo.class}`}>
-                                            {statusInfo.label}
-                                        </span>
+                                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                            {isDeliveryOrder && (
+                                                <span style={{
+                                                    fontSize: 10,
+                                                    background: '#DBEAFE',
+                                                    color: '#1D4ED8',
+                                                    padding: '2px 6px',
+                                                    borderRadius: 4,
+                                                    fontWeight: 500
+                                                }}>
+                                                    🚴 Envío
+                                                </span>
+                                            )}
+                                            <span className={`status-badge ${statusInfo.class}`}>
+                                                {statusInfo.label}
+                                            </span>
+                                        </div>
                                     </div>
+
+                                    {/* Delivery Customer Info - Only for delivery orders */}
+                                    {isDeliveryOrder && order.customerInfo && (
+                                        <div style={{
+                                            background: '#F0FDF4',
+                                            padding: 10,
+                                            borderRadius: 8,
+                                            marginBottom: 'var(--space-3)',
+                                            fontSize: 'var(--font-size-sm)'
+                                        }}>
+                                            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                                                📍 {order.customerInfo.name}
+                                            </div>
+                                            <div style={{ color: 'var(--color-text-muted)', marginBottom: 2 }}>
+                                                {order.customerInfo.address}
+                                            </div>
+                                            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+                                                Tel: ***{getPhoneLast4(order.customerInfo.phone)}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Order Items */}
                                     <div style={{ marginBottom: 'var(--space-3)' }}>
@@ -293,10 +338,47 @@ function StaffDashboard({ config }) {
 
                                     {/* Actions */}
                                     <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                                        {/* Delivery Confirmation Code Input - Only for delivery orders in "en_camino" */}
+                                        {isDeliveryOrder && order.status === 'en_camino' && order.customerInfo && (
+                                            <div style={{ width: '100%', marginBottom: 8 }}>
+                                                <label style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>
+                                                    Últimos 4 dígitos del teléfono para confirmar entrega
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    maxLength={4}
+                                                    placeholder="****"
+                                                    value={deliveryConfirmCode[order.id] || ''}
+                                                    onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #E5E7EB',
+                                                        borderRadius: 8,
+                                                        fontSize: 18,
+                                                        textAlign: 'center',
+                                                        letterSpacing: 6
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+
                                         {statusInfo.next && (
                                             <button
                                                 className="btn btn-primary"
-                                                onClick={() => handleStatusChange(order.id, statusInfo.next)}
+                                                onClick={() => {
+                                                    // For delivery orders going to "entregado", verify the confirmation code
+                                                    if (isDeliveryOrder && statusInfo.next === 'entregado' && order.customerInfo) {
+                                                        const code = deliveryConfirmCode[order.id] || ''
+                                                        if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
+                                                            alert('❌ Código incorrecto. Ingresá los últimos 4 dígitos del teléfono del cliente.')
+                                                            return
+                                                        }
+                                                        // Update with confirmation timestamp
+                                                        updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
+                                                    }
+                                                    handleStatusChange(order.id, statusInfo.next)
+                                                }}
                                                 style={{ flex: 1 }}
                                             >
                                                 {statusInfo.nextLabel}

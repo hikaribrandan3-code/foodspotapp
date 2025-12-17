@@ -13,6 +13,12 @@ import {
 } from '../../utils/storage.js'
 import PageHeader from '../../components/PageHeader.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
+import {
+    isDeliveryMode,
+    isCashPaymentAllowed,
+    validateDeliveryInfo,
+    clearDeliveryMode
+} from '../../utils/deliveryUtils.js'
 
 // Placeholder food images for items without images
 const placeholderImages = [
@@ -28,9 +34,30 @@ function Order() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitted, setSubmitted] = useState(false)
 
+    // Delivery mode (from session storage)
+    const [deliveryMode] = useState(() => isDeliveryMode())
+
+    // Customer info for delivery orders
+    const [customerInfo, setCustomerInfo] = useState({
+        name: '',
+        phone: '',
+        address: ''
+    })
+
+    // Payment method selection
+    const [paymentMethod, setPaymentMethod] = useState('mercadopago')
+
+    // Check if cash is currently available (10:00-18:00)
+    const [cashAvailable, setCashAvailable] = useState(() => isCashPaymentAllowed())
+
+    // Validation errors
+    const [validationErrors, setValidationErrors] = useState([])
+
     useEffect(() => {
         const interval = setInterval(() => {
             setOrder(getCurrentOrder())
+            // Re-check cash availability every minute
+            setCashAvailable(isCashPaymentAllowed())
         }, 500)
         return () => clearInterval(interval)
     }, [])
@@ -61,6 +88,16 @@ function Order() {
         if (isSubmitting || submitted || order.items.length === 0) return
         if (config.pauseOrders) return
 
+        // Validate delivery info if in delivery mode
+        if (deliveryMode) {
+            const validation = validateDeliveryInfo(customerInfo)
+            if (!validation.valid) {
+                setValidationErrors(validation.errors)
+                return
+            }
+        }
+
+        setValidationErrors([])
         setIsSubmitting(true)
 
         const orderNumber = generateOrderNumber()
@@ -72,12 +109,22 @@ function Order() {
             status: 'enviado',
             paymentConfirmed: false,
             paidAt: null,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            // Delivery-specific fields
+            orderType: deliveryMode ? 'delivery' : 'pickup',
+            customerInfo: deliveryMode ? customerInfo : null,
+            paymentMethod: deliveryMode ? paymentMethod : null,
+            deliveryConfirmedAt: null
         }
 
         addOrder(newOrder)
         incrementOrderCount()
         clearCurrentOrder()
+
+        // Clear delivery mode session
+        if (deliveryMode) {
+            clearDeliveryMode()
+        }
 
         setTimeout(() => {
             setIsSubmitting(false)
@@ -345,6 +392,214 @@ function Order() {
                             <p style={{ color: '#92400E', fontSize: 14 }}>
                                 ⏸️ {config.pauseOrdersMessage || 'Pedidos pausados temporalmente'}
                             </p>
+                        </div>
+                    )}
+
+                    {/* Browser Continuity Warning - PRD Required */}
+                    {deliveryMode && (
+                        <div style={{
+                            background: '#EFF6FF',
+                            padding: 10,
+                            borderRadius: 10,
+                            marginBottom: 16,
+                            textAlign: 'center'
+                        }}>
+                            <p style={{ color: '#1E40AF', fontSize: 12, margin: 0 }}>
+                                For best service, please continue using the same browser.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Delivery Info Form - Only shown in delivery mode */}
+                    {deliveryMode && (
+                        <div style={{
+                            background: '#F9FAFB',
+                            padding: 16,
+                            borderRadius: 12,
+                            marginBottom: 16
+                        }}>
+                            <h3 style={{
+                                fontSize: 15,
+                                fontWeight: 600,
+                                color: '#374151',
+                                marginBottom: 12
+                            }}>
+                                Datos de envío
+                            </h3>
+
+                            {/* Validation Errors */}
+                            {validationErrors.length > 0 && (
+                                <div style={{
+                                    background: '#FEE2E2',
+                                    padding: 10,
+                                    borderRadius: 8,
+                                    marginBottom: 12
+                                }}>
+                                    {validationErrors.map((err, i) => (
+                                        <p key={i} style={{ color: '#DC2626', fontSize: 13, margin: '2px 0' }}>
+                                            {err}
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Name Field */}
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                    Nombre completo *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customerInfo.name}
+                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Tu nombre"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #E5E7EB',
+                                        borderRadius: 8,
+                                        fontSize: 15,
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            </div>
+
+                            {/* Phone Field */}
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                    Teléfono *
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={customerInfo.phone}
+                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                                    placeholder="+54 11 1234-5678"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #E5E7EB',
+                                        borderRadius: 8,
+                                        fontSize: 15,
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            </div>
+
+                            {/* Address Field */}
+                            <div>
+                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                    Dirección de entrega *
+                                </label>
+                                <textarea
+                                    value={customerInfo.address}
+                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
+                                    placeholder="Calle, número, piso, depto..."
+                                    rows={2}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #E5E7EB',
+                                        borderRadius: 8,
+                                        fontSize: 15,
+                                        resize: 'none',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Payment Method Selection - Only in delivery mode */}
+                    {deliveryMode && (
+                        <div style={{
+                            background: '#F9FAFB',
+                            padding: 16,
+                            borderRadius: 12,
+                            marginBottom: 16
+                        }}>
+                            <h3 style={{
+                                fontSize: 15,
+                                fontWeight: 600,
+                                color: '#374151',
+                                marginBottom: 12
+                            }}>
+                                Método de pago
+                            </h3>
+
+                            {/* Mercado Pago Option - Always available */}
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                padding: '12px',
+                                background: paymentMethod === 'mercadopago' ? '#EFF6FF' : 'white',
+                                border: paymentMethod === 'mercadopago' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                borderRadius: 10,
+                                cursor: 'pointer',
+                                marginBottom: 8
+                            }}>
+                                <input
+                                    type="radio"
+                                    name="paymentMethod"
+                                    value="mercadopago"
+                                    checked={paymentMethod === 'mercadopago'}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    style={{ accentColor: '#3B82F6' }}
+                                />
+                                <div>
+                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>
+                                        Mercado Pago
+                                    </span>
+                                    <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>
+                                        Transferencia o QR
+                                    </p>
+                                </div>
+                            </label>
+
+                            {/* Cash Option - Only 10:00-18:00 */}
+                            {cashAvailable ? (
+                                <label style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                    padding: '12px',
+                                    background: paymentMethod === 'efectivo' ? '#F0FDF4' : 'white',
+                                    border: paymentMethod === 'efectivo' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                    borderRadius: 10,
+                                    cursor: 'pointer'
+                                }}>
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="efectivo"
+                                        checked={paymentMethod === 'efectivo'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                        style={{ accentColor: '#22C55E' }}
+                                    />
+                                    <div>
+                                        <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>
+                                            Efectivo
+                                        </span>
+                                        <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>
+                                            Pago en efectivo al recibir
+                                        </p>
+                                    </div>
+                                </label>
+                            ) : (
+                                <div style={{
+                                    padding: '12px',
+                                    background: '#F3F4F6',
+                                    borderRadius: 10,
+                                    opacity: 0.6
+                                }}>
+                                    <span style={{ fontSize: 14, color: '#6B7280' }}>
+                                        Efectivo
+                                    </span>
+                                    <p style={{ fontSize: 12, color: '#9CA3AF', margin: '2px 0 0' }}>
+                                        Solo disponible de 10:00 a 18:00
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
 

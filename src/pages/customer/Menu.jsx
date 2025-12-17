@@ -6,13 +6,20 @@ import { getConfig } from '../../config/appConfig.js'
 import PageHeader from '../../components/PageHeader.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 
-function Menu() {
+function Menu({ deliveryMode = false }) {
     const navigate = useNavigate()
     const [menu, setMenu] = useState(() => getMenu())
     const [config] = useState(() => getConfig())
     const [cart, setCart] = useState(() => getCurrentOrder())
     const [addedItem, setAddedItem] = useState(null) // For visual feedback
     const categoryRefs = useRef({})
+
+    // Store delivery mode in session for order flow persistence
+    useEffect(() => {
+        if (deliveryMode) {
+            sessionStorage.setItem('foodspot_delivery_mode', 'true')
+        }
+    }, [deliveryMode])
 
     // Only show enabled categories with available items
     const enabledCategories = menu.categories.filter(cat =>
@@ -81,8 +88,8 @@ function Menu() {
             background: '#FAF9F7',
             paddingBottom: hasItems ? 220 : 100
         }}>
-            {/* Header */}
-            <PageHeader businessName={config.businessName} />
+            {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
+            <PageHeader businessName={deliveryMode ? 'FoodSpot · Envíos' : config.businessName} />
 
             {/* Slim Identity Strip - Uses selected divider preset */}
             {(() => {

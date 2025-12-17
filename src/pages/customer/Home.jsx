@@ -142,7 +142,7 @@ function Home() {
                 </Link>
 
                 {/* 2. Envíos */}
-                <Link to="/order" style={tileStyle}>
+                <Link to="/envios" style={tileStyle}>
                     <span style={{ color: iconColor }}><OrderIcon /></span>
                     <span style={tileTextStyle}>Envíos</span>
                 </Link>

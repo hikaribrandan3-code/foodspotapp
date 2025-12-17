@@ -104,6 +104,7 @@ function App() {
                 {/* Customer Routes */}
                 <Route path="/" element={<Home config={config} />} />
                 <Route path="/menu" element={<Menu config={config} />} />
+                <Route path="/envios" element={<Menu config={config} deliveryMode={true} />} />
                 <Route path="/order" element={<Order config={config} />} />
 
                 <Route path="/status" element={<OrderStatus />} />
