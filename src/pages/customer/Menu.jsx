@@ -80,6 +80,10 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
 
         longPressTimerRef.current = setTimeout(() => {
             // Haptic feedback if supported
+            console.log('EDIT MODE ACTIVATED — VIBRATE FIRED', {
+                hasVibrate: !!navigator.vibrate,
+                duration: LONG_PRESS_DURATION
+            })
             if (navigator.vibrate) {
                 navigator.vibrate(50)
             }
