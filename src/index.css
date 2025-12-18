@@ -1104,3 +1104,22 @@ body {
 .tab.active:hover {
   background-color: var(--color-primary-dark);
 }
+
+/* =============================================
+   Owner Edit Mode - Menu Item Wiggle Animation
+   ============================================= */
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(-0.5deg);
+  }
+
+  50% {
+    transform: rotate(0.5deg);
+  }
+}
+
+.menu-item-wiggle {
+  animation: wiggle 0.3s ease-in-out infinite;
+}

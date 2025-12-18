@@ -25,6 +25,27 @@ function generateDemoData() {
     return data
 }
 
+// User mode storage key
+const USER_MODE_KEY = 'grub_user_mode'
+
+// Get/set user mode (owner/staff/customer)
+export function getUserMode() {
+    try {
+        return localStorage.getItem(USER_MODE_KEY) || null
+    } catch (e) {
+        return null
+    }
+}
+
+export function setUserMode(mode) {
+    try {
+        localStorage.setItem(USER_MODE_KEY, mode)
+        return true
+    } catch (e) {
+        return false
+    }
+}
+
 function SuperAdmin() {
     const navigate = useNavigate()
     const [config, setConfig] = useState(() => getConfig())
@@ -40,6 +61,9 @@ function SuperAdmin() {
     const [error, setError] = useState('')
     const [editingItem, setEditingItem] = useState(null)
 
+    // Mode selector state
+    const [selectedMode, setSelectedMode] = useState(() => getUserMode() || 'owner')
+
     // Image upload state
     const [uploadingItemId, setUploadingItemId] = useState(null)
     const [uploadStatus, setUploadStatus] = useState(null)
@@ -52,6 +76,10 @@ function SuperAdmin() {
         if (session && (session.role === 'superadmin' || session.role === 'owner' || session.role === 'staff')) {
             setIsAuthenticated(true)
             setUserRole(session.role)
+            // Show mode selector for superadmin if no mode selected
+            if (session.role === 'superadmin' && !getUserMode()) {
+                setShowModeSelector(true)
+            }
         }
     }, [])
 
@@ -201,6 +229,18 @@ function SuperAdmin() {
             </div>
         )
     }
+    // Mode options for dropdown (superadmin only)
+    const modeOptions = [
+        { value: 'owner', label: '👑 Owner', color: '#22C55E' },
+        { value: 'staff', label: '👤 Staff', color: '#6366F1' },
+        { value: 'customer', label: '🛒 Customer', color: '#F59E0B' }
+    ]
+
+    // Handle mode change from dropdown
+    const handleModeChange = (mode) => {
+        setUserMode(mode)
+        setSelectedMode(mode)
+    }
 
     const tabs = [
         { id: 'resumen', label: 'Resumen' },
@@ -235,6 +275,32 @@ function SuperAdmin() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         {userRole === 'superadmin' && <span style={{ padding: '4px 8px', background: '#22C55E', borderRadius: 5, fontSize: 9, fontWeight: 700, color: 'white' }}>SUPER ADMIN</span>}
                         {demoAnalytics && userRole === 'superadmin' && <span style={{ padding: '4px 6px', background: '#EAB308', borderRadius: 5, fontSize: 9, fontWeight: 600, color: 'white' }}>DEMO</span>}
+                        {/* Mode Switcher Dropdown (superadmin only) */}
+                        {userRole === 'superadmin' && (
+                            <select
+                                value={selectedMode || 'owner'}
+                                onChange={(e) => handleModeChange(e.target.value)}
+                                style={{
+                                    padding: '4px 20px 4px 8px',
+                                    fontSize: 10,
+                                    fontWeight: 600,
+                                    border: 'none',
+                                    borderRadius: 5,
+                                    cursor: 'pointer',
+                                    background: `${modeOptions.find(m => m.value === selectedMode)?.color || '#22C55E'} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='white' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 6px center`,
+                                    color: 'white',
+                                    position: 'relative',
+                                    zIndex: 10,
+                                    pointerEvents: 'auto',
+                                    WebkitTapHighlightColor: 'transparent',
+                                    minWidth: 70
+                                }}
+                            >
+                                {modeOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        )}
                     </div>
                 </div>
             </div>

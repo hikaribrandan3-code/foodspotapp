@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMenu, formatPrice } from '../../config/menuData.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
@@ -6,6 +6,7 @@ import { getConfig } from '../../config/appConfig.js'
 import PageHeader from '../../components/PageHeader.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode } from '../../utils/deliveryUtils.js'
+import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 
 function Menu({ deliveryMode: deliveryModeProp = false }) {
     const navigate = useNavigate()
@@ -14,6 +15,14 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     const [cart, setCart] = useState(() => getCurrentOrder())
     const [addedItem, setAddedItem] = useState(null) // For visual feedback
     const categoryRefs = useRef({})
+
+    // Owner mode detection (from localStorage)
+    const isOwnerMode = getUserMode() === 'owner'
+
+    // Edit mode state (owner only)
+    const [isEditMode, setIsEditMode] = useState(false)
+    const longPressTimerRef = useRef(null)
+    const longPressStartRef = useRef(null)
 
     // Delivery mode: session is source of truth, route prop can set it
     // This ensures persistence across page refresh and back navigation
@@ -45,6 +54,52 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             setCart(getCurrentOrder())
         }, 2000)
         return () => clearInterval(interval)
+    }, [])
+
+    // Long-press handlers for edit mode (owner only)
+    const handleLongPressStart = useCallback((e) => {
+        if (!isOwnerMode || isEditMode) return
+
+        longPressStartRef.current = { x: e.touches?.[0]?.clientX || e.clientX, y: e.touches?.[0]?.clientY || e.clientY }
+
+        longPressTimerRef.current = setTimeout(() => {
+            // Haptic feedback if supported
+            if (navigator.vibrate) {
+                navigator.vibrate(50)
+            }
+            setIsEditMode(true)
+        }, 2000) // 2 second long-press
+    }, [isOwnerMode, isEditMode])
+
+    const handleLongPressEnd = useCallback(() => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current)
+            longPressTimerRef.current = null
+        }
+    }, [])
+
+    const handleLongPressMove = useCallback((e) => {
+        // Cancel if moved too far (> 10px)
+        if (longPressStartRef.current && longPressTimerRef.current) {
+            const currentX = e.touches?.[0]?.clientX || e.clientX
+            const currentY = e.touches?.[0]?.clientY || e.clientY
+            const deltaX = Math.abs(currentX - longPressStartRef.current.x)
+            const deltaY = Math.abs(currentY - longPressStartRef.current.y)
+
+            if (deltaX > 10 || deltaY > 10) {
+                clearTimeout(longPressTimerRef.current)
+                longPressTimerRef.current = null
+            }
+        }
+    }, [])
+
+    // Cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (longPressTimerRef.current) {
+                clearTimeout(longPressTimerRef.current)
+            }
+        }
     }, [])
 
     // Tap-to-add: instantly add item
@@ -100,6 +155,44 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
         }}>
             {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
             <PageHeader businessName={deliveryMode ? 'FoodSpot · Envíos' : config.businessName} />
+
+            {/* Edit Mode Done Button (Owner only) */}
+            {isEditMode && (
+                <div style={{
+                    position: 'fixed',
+                    top: 'env(safe-area-inset-top, 0px)',
+                    left: 0,
+                    right: 0,
+                    zIndex: 1000,
+                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#22C55E' }}>
+                        ✏️ Modo Edición
+                    </span>
+                    <button
+                        onClick={() => setIsEditMode(false)}
+                        style={{
+                            padding: '8px 20px',
+                            background: '#22C55E',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 20,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Done
+                    </button>
+                </div>
+            )}
 
             {/* Slim Identity Strip - Uses selected divider preset */}
             {(() => {
@@ -217,12 +310,21 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                                 .map((item, index) => (
                                     <div
                                         key={item.id}
-                                        onClick={() => handleTapToAdd(item)}
+                                        onClick={() => !isEditMode && handleTapToAdd(item)}
+                                        onTouchStart={handleLongPressStart}
+                                        onTouchEnd={handleLongPressEnd}
+                                        onTouchMove={handleLongPressMove}
+                                        onMouseDown={handleLongPressStart}
+                                        onMouseUp={handleLongPressEnd}
+                                        onMouseLeave={handleLongPressEnd}
+                                        className={isEditMode ? 'menu-item-wiggle' : ''}
                                         style={{
-                                            cursor: 'pointer',
+                                            cursor: isEditMode ? 'grab' : 'pointer',
                                             transform: addedItem === item.id ? 'scale(0.95)' : 'scale(1)',
-                                            transition: 'transform 0.15s ease',
-                                            opacity: addedItem === item.id ? 0.7 : 1
+                                            transition: isEditMode ? 'none' : 'transform 0.15s ease',
+                                            opacity: addedItem === item.id ? 0.7 : 1,
+                                            boxShadow: isEditMode ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                            borderRadius: isEditMode ? 8 : 0
                                         }}
                                     >
                                         {/* Item Image */}
@@ -240,7 +342,8 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                                                 style={{
                                                     width: '100%',
                                                     height: '100%',
-                                                    objectFit: 'cover'
+                                                    objectFit: 'cover',
+                                                    pointerEvents: 'none'
                                                 }}
                                                 onError={(e) => {
                                                     e.target.style.display = 'none'
