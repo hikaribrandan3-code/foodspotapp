@@ -132,14 +132,19 @@ function Home() {
         }, LONG_PRESS_DURATION)
     }, [isOwnerMode, isEditMode])
 
-    const handleLongPressEnd = useCallback(() => {
+    const handleLongPressEnd = useCallback((e) => {
         if (longPressTimerRef.current) {
             clearTimeout(longPressTimerRef.current)
             longPressTimerRef.current = null
         }
+        // Block navigation on Chrome by preventing default during long-press detection
+        if (shouldBlockClickRef.current && isOwnerMode) {
+            e?.preventDefault?.()
+            e?.stopPropagation?.()
+        }
         // Allow clicks again after a short delay
-        setTimeout(() => { shouldBlockClickRef.current = false }, 50)
-    }, [])
+        setTimeout(() => { shouldBlockClickRef.current = false }, 100)
+    }, [isOwnerMode])
 
     const handleLongPressMove = useCallback((e) => {
         if (longPressStartRef.current && longPressTimerRef.current) {
