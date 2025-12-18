@@ -487,27 +487,22 @@ function Home() {
                     )
 
                     // Owner mode: always use div (no Link navigation issues)
+                    // NOTE: Featured drag disabled per spec - only Top 4 dragable for now
                     if (isOwnerMode) {
                         return (
                             <div
                                 key={item.id || index}
-                                onTouchStart={(e) => isEditMode
-                                    ? handleDragStart(e, 'featured', item.id, index, featuredItems)
-                                    : handleLongPressStart(e)
-                                }
+                                onTouchStart={!isEditMode ? handleLongPressStart : undefined}
                                 onTouchEnd={!isEditMode ? handleLongPressEnd : undefined}
                                 onTouchMove={!isEditMode ? handleLongPressMove : undefined}
-                                onMouseDown={(e) => isEditMode
-                                    ? handleDragStart(e, 'featured', item.id, index, featuredItems)
-                                    : handleLongPressStart(e)
-                                }
+                                onMouseDown={!isEditMode ? handleLongPressStart : undefined}
                                 onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
                                 onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
                                 onClick={() => !isEditMode && !shouldBlockClickRef.current && navigate('/menu')}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...cardStyle,
-                                    cursor: isEditMode ? 'grab' : 'pointer'
+                                    cursor: isEditMode ? 'default' : 'pointer'
                                 }}
                             >
                                 {cardContent}
