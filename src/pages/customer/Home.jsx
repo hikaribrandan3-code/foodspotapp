@@ -80,15 +80,21 @@ function Home() {
     }
 
     // Resolve featured items from IDs
+    // Image priority: 1) Branding override (featuredPhotos) → 2) Menu item → 3) Placeholder
+    const featuredPhotos = config.featuredPhotos || []
     const featuredItems = featuredItemIds
         .map(itemId => {
             for (const cat of (menu.categories || [])) {
                 const item = cat.items?.find(i => i.id === itemId)
                 if (item) {
+                    // Check for branding image override first
+                    const brandingOverride = featuredPhotos.find(fp => fp.menuItemId === itemId)
+                    const brandingImage = brandingOverride?.image || null
+
                     return {
                         ...item,
                         categoryName: cat.name,
-                        image: item.image || placeholderImages[item.id] || null
+                        image: brandingImage || item.image || placeholderImages[item.id] || null
                     }
                 }
             }
