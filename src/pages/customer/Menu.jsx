@@ -8,6 +8,17 @@ import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 
+// ===== AUTO-SCROLL SAFETY TOGGLE =====
+// Set to false to disable auto-scroll and revert to 2A behavior
+const ENABLE_AUTO_SCROLL = true
+
+// Auto-scroll config
+const AUTO_SCROLL_ZONE_PERCENT = 0.10 // Top/bottom 10% of viewport
+const AUTO_SCROLL_SPEED = 4 // Pixels per frame (slow and controlled)
+
+// Long-press timing (1.8 seconds)
+const LONG_PRESS_DURATION = 1800
+
 function Menu({ deliveryMode: deliveryModeProp = false }) {
     const navigate = useNavigate()
     const [menu, setMenu] = useState(() => getMenu())
@@ -27,6 +38,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     // Drag state (for edit mode reordering)
     const [dragState, setDragState] = useState(null) // { categoryId, itemId, itemIndex, startX, startY, currentX, currentY, items }
     const dragItemRef = useRef(null)
+    const autoScrollRef = useRef(null) // For auto-scroll interval
 
     // Delivery mode: session is source of truth, route prop can set it
     // This ensures persistence across page refresh and back navigation
@@ -72,7 +84,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                 navigator.vibrate(50)
             }
             setIsEditMode(true)
-        }, 2000) // 2 second long-press
+        }, LONG_PRESS_DURATION)
     }, [isOwnerMode, isEditMode])
 
     const handleLongPressEnd = useCallback(() => {
@@ -145,6 +157,38 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
 
         e.preventDefault()
         const touch = e.touches?.[0] || e
+        const touchY = touch.clientY
+
+        // ===== HOT ZONE AUTO-SCROLL =====
+        if (ENABLE_AUTO_SCROLL) {
+            const viewportHeight = window.innerHeight
+            const topZone = viewportHeight * AUTO_SCROLL_ZONE_PERCENT
+            const bottomZone = viewportHeight * (1 - AUTO_SCROLL_ZONE_PERCENT)
+
+            // Clear any existing auto-scroll
+            if (autoScrollRef.current) {
+                cancelAnimationFrame(autoScrollRef.current)
+                autoScrollRef.current = null
+            }
+
+            // Check if in hot zone
+            if (touchY < topZone) {
+                // Scroll UP
+                const scrollUp = () => {
+                    window.scrollBy(0, -AUTO_SCROLL_SPEED)
+                    autoScrollRef.current = requestAnimationFrame(scrollUp)
+                }
+                autoScrollRef.current = requestAnimationFrame(scrollUp)
+            } else if (touchY > bottomZone) {
+                // Scroll DOWN
+                const scrollDown = () => {
+                    window.scrollBy(0, AUTO_SCROLL_SPEED)
+                    autoScrollRef.current = requestAnimationFrame(scrollDown)
+                }
+                autoScrollRef.current = requestAnimationFrame(scrollDown)
+            }
+            // If in middle zone (80%), no scrolling - autoScrollRef stays null
+        }
 
         // Get container bounds
         const container = categoryRefs.current[dragState.categoryId]
@@ -155,9 +199,9 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
 
         const gridRect = grid.getBoundingClientRect()
 
-        // Clamp to grid bounds
+        // Clamp to grid bounds for target index calculation
         const clampedX = Math.max(gridRect.left, Math.min(touch.clientX, gridRect.right))
-        const clampedY = Math.max(gridRect.top, Math.min(touch.clientY, gridRect.bottom))
+        const clampedY = Math.max(gridRect.top, Math.min(touchY, gridRect.bottom))
 
         // Calculate target index based on position
         const gridItems = grid.children
@@ -165,8 +209,6 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
 
         for (let i = 0; i < gridItems.length; i++) {
             const itemRect = gridItems[i].getBoundingClientRect()
-            const itemCenterX = itemRect.left + itemRect.width / 2
-            const itemCenterY = itemRect.top + itemRect.height / 2
 
             if (clampedX > itemRect.left && clampedX < itemRect.right &&
                 clampedY > itemRect.top && clampedY < itemRect.bottom) {
@@ -175,16 +217,23 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             }
         }
 
+        // Use raw touch position for floating card (not clamped)
         setDragState(prev => ({
             ...prev,
-            currentX: clampedX,
-            currentY: clampedY,
+            currentX: touch.clientX,
+            currentY: touchY,
             targetIndex
         }))
     }, [dragState])
 
     const handleDragEnd = useCallback(() => {
         if (!dragState) return
+
+        // Stop auto-scroll if active
+        if (autoScrollRef.current) {
+            cancelAnimationFrame(autoScrollRef.current)
+            autoScrollRef.current = null
+        }
 
         // Re-enable page scroll
         document.body.style.overflow = ''
