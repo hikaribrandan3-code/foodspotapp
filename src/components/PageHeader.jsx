@@ -6,7 +6,7 @@
 function getModeColor() {
     try {
         const mode = localStorage.getItem('grub_user_mode')
-        return { owner: '#22C55E', staff: '#EAB308', customer: '#3B82F6' }[mode] || null
+        return { owner: '#22C55E', staff: '#EAB308' }[mode] || null
     } catch (e) {
         return null
     }
