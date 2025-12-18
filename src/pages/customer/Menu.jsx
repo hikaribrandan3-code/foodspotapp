@@ -5,7 +5,7 @@ import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../ut
 import { getConfig } from '../../config/appConfig.js'
 import PageHeader from '../../components/PageHeader.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
-import { isDeliveryMode } from '../../utils/deliveryUtils.js'
+import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
@@ -768,7 +768,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                     justifyContent: 'center'
                 }}>
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => { clearDeliveryMode(); navigate('/') }}
                         style={{
                             background: '#22C55E',
                             color: '#FFFFFF',
