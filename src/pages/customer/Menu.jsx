@@ -762,7 +762,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             {/* Bottom Exit for Envíos (deliveryMode) */}
             {deliveryMode && (
                 <div
-                    onClick={() => navigate('/menu')}
+                    onClick={() => navigate('/')}
                     style={{
                         marginTop: 32,
                         marginBottom: 24,
@@ -776,7 +776,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                         fontWeight: 500,
                         color: '#6B7280'
                     }}>
-                        ← Volver al Menú
+                        ← Volver al Inicio
                     </span>
                 </div>
             )}
