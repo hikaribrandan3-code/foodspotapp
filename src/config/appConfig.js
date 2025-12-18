@@ -146,6 +146,19 @@ export const defaultConfig = {
         configChanges: [], // Array of { timestamp, field, oldValue, newValue }
         maxChangesPerMonth: 2,
     },
+
+    // ============================================
+    // HOME SCREEN CONFIGURATION (Owner-reorderable)
+    // ============================================
+    homeConfig: {
+        // Primary action icons (exactly 4, order matters)
+        // IDs: 'menu', 'envios', 'rewards', 'game'
+        primaryActions: ['menu', 'envios', 'rewards', 'game'],
+
+        // Featured items (exactly 4 menu item IDs, order matters)
+        // These reference menu items by ID, decoupled from menu order
+        featuredItems: ['flat-white', 'cappuccino', 'brownie-nuez', 'medialuna-manteca'],
+    },
 };
 
 // Storage key
@@ -187,6 +200,26 @@ export function updateConfig(updates) {
 export function resetConfig() {
     localStorage.removeItem(CONFIG_STORAGE_KEY);
     return defaultConfig;
+}
+
+// ============================================
+// HOME SCREEN REORDER FUNCTIONS
+// ============================================
+
+// Reorder primary actions on Home screen (exactly 4 action IDs)
+export function reorderPrimaryActions(orderedIds) {
+    const config = getConfig();
+    config.homeConfig = config.homeConfig || defaultConfig.homeConfig;
+    config.homeConfig.primaryActions = orderedIds;
+    return saveConfig(config);
+}
+
+// Reorder featured items on Home screen (exactly 4 menu item IDs)
+export function reorderFeaturedItems(orderedIds) {
+    const config = getConfig();
+    config.homeConfig = config.homeConfig || defaultConfig.homeConfig;
+    config.homeConfig.featuredItems = orderedIds;
+    return saveConfig(config);
 }
 
 // Get dynamic greeting based on time of day
