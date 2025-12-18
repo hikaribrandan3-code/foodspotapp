@@ -133,19 +133,14 @@ function Home() {
         }, LONG_PRESS_DURATION)
     }, [isOwnerMode, isEditMode])
 
-    const handleLongPressEnd = useCallback((e) => {
+    const handleLongPressEnd = useCallback(() => {
         if (longPressTimerRef.current) {
             clearTimeout(longPressTimerRef.current)
             longPressTimerRef.current = null
         }
-        // Block navigation on Chrome by preventing default during long-press detection
-        if (shouldBlockClickRef.current && isOwnerMode) {
-            e?.preventDefault?.()
-            e?.stopPropagation?.()
-        }
-        // Allow clicks again after a short delay
-        setTimeout(() => { shouldBlockClickRef.current = false }, 100)
-    }, [isOwnerMode])
+        // Reset click blocker immediately - click will fire after touchend
+        shouldBlockClickRef.current = false
+    }, [])
 
     const handleLongPressMove = useCallback((e) => {
         if (longPressStartRef.current && longPressTimerRef.current) {
@@ -404,7 +399,7 @@ function Home() {
                                 }
                                 onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
                                 onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
-                                onClick={() => !isEditMode && !shouldBlockClickRef.current && navigate(action.path)}
+                                onClick={() => { if (!isEditMode && !shouldBlockClickRef.current) navigate(action.path) }}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...tileStyle,
@@ -507,7 +502,7 @@ function Home() {
                                 }
                                 onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
                                 onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
-                                onClick={() => !isEditMode && !shouldBlockClickRef.current && navigate('/menu')}
+                                onClick={() => { if (!isEditMode && !shouldBlockClickRef.current) navigate('/menu') }}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...cardStyle,
