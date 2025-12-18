@@ -487,22 +487,31 @@ function Home() {
                     )
 
                     // Owner mode: always use div (no Link navigation issues)
-                    // NOTE: Featured drag disabled per spec - only Top 4 dragable for now
                     if (isOwnerMode) {
                         return (
                             <div
                                 key={item.id || index}
-                                onTouchStart={!isEditMode ? handleLongPressStart : undefined}
+                                onTouchStart={(e) => isEditMode
+                                    ? handleDragStart(e, 'featured', item.id, index, featuredItems)
+                                    : handleLongPressStart(e)
+                                }
                                 onTouchEnd={!isEditMode ? handleLongPressEnd : undefined}
                                 onTouchMove={!isEditMode ? handleLongPressMove : undefined}
-                                onMouseDown={!isEditMode ? handleLongPressStart : undefined}
+                                onMouseDown={(e) => isEditMode
+                                    ? handleDragStart(e, 'featured', item.id, index, featuredItems)
+                                    : handleLongPressStart(e)
+                                }
                                 onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
                                 onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
                                 onClick={() => !isEditMode && !shouldBlockClickRef.current && navigate('/menu')}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...cardStyle,
-                                    cursor: isEditMode ? 'default' : 'pointer'
+                                    cursor: isEditMode ? 'grab' : 'pointer',
+                                    opacity: isDragging ? 0.3 : 1,
+                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : cardStyle.backgroundColor,
+                                    border: isPlaceholder ? '2px dashed #22C55E' : 'none',
+                                    touchAction: isEditMode ? 'none' : 'auto'
                                 }}
                             >
                                 {cardContent}
