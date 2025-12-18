@@ -76,9 +76,10 @@ function SuperAdmin() {
         if (session && (session.role === 'superadmin' || session.role === 'owner' || session.role === 'staff')) {
             setIsAuthenticated(true)
             setUserRole(session.role)
-            // Show mode selector for superadmin if no mode selected
+            // Default to owner mode for superadmin if not set
             if (session.role === 'superadmin' && !getUserMode()) {
-                setShowModeSelector(true)
+                setUserMode('owner')
+                setSelectedMode('owner')
             }
         }
     }, [])
