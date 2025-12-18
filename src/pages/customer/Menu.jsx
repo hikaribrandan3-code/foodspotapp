@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getMenu, formatPrice } from '../../config/menuData.js'
+import { getMenu, formatPrice, reorderCategoryItems } from '../../config/menuData.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
 import { getConfig } from '../../config/appConfig.js'
 import PageHeader from '../../components/PageHeader.jsx'
@@ -23,6 +23,10 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     const [isEditMode, setIsEditMode] = useState(false)
     const longPressTimerRef = useRef(null)
     const longPressStartRef = useRef(null)
+
+    // Drag state (for edit mode reordering)
+    const [dragState, setDragState] = useState(null) // { categoryId, itemId, itemIndex, startX, startY, currentX, currentY, items }
+    const dragItemRef = useRef(null)
 
     // Delivery mode: session is source of truth, route prop can set it
     // This ensures persistence across page refresh and back navigation
@@ -101,6 +105,126 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             }
         }
     }, [])
+
+    // ===== DRAG & DROP HANDLERS (Edit Mode Only) =====
+    const handleDragStart = useCallback((e, categoryId, item, itemIndex, availableItems) => {
+        if (!isOwnerMode || !isEditMode) return
+
+        // Haptic feedback
+        if (navigator.vibrate) {
+            navigator.vibrate(30)
+        }
+
+        // Disable page scroll
+        document.body.style.overflow = 'hidden'
+
+        const touch = e.touches?.[0] || e
+        const rect = e.currentTarget.getBoundingClientRect()
+
+        setDragState({
+            categoryId,
+            itemId: item.id,
+            itemIndex,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            currentX: touch.clientX,
+            currentY: touch.clientY,
+            offsetX: touch.clientX - rect.left,
+            offsetY: touch.clientY - rect.top,
+            itemWidth: rect.width,
+            itemHeight: rect.height,
+            items: availableItems.map(i => i.id), // Current order
+            targetIndex: itemIndex
+        })
+
+        dragItemRef.current = e.currentTarget
+    }, [isOwnerMode, isEditMode])
+
+    const handleDragMove = useCallback((e) => {
+        if (!dragState) return
+
+        e.preventDefault()
+        const touch = e.touches?.[0] || e
+
+        // Get container bounds
+        const container = categoryRefs.current[dragState.categoryId]
+        if (!container) return
+
+        const grid = container.querySelector('.menu-grid')
+        if (!grid) return
+
+        const gridRect = grid.getBoundingClientRect()
+
+        // Clamp to grid bounds
+        const clampedX = Math.max(gridRect.left, Math.min(touch.clientX, gridRect.right))
+        const clampedY = Math.max(gridRect.top, Math.min(touch.clientY, gridRect.bottom))
+
+        // Calculate target index based on position
+        const gridItems = grid.children
+        let targetIndex = dragState.itemIndex
+
+        for (let i = 0; i < gridItems.length; i++) {
+            const itemRect = gridItems[i].getBoundingClientRect()
+            const itemCenterX = itemRect.left + itemRect.width / 2
+            const itemCenterY = itemRect.top + itemRect.height / 2
+
+            if (clampedX > itemRect.left && clampedX < itemRect.right &&
+                clampedY > itemRect.top && clampedY < itemRect.bottom) {
+                targetIndex = i
+                break
+            }
+        }
+
+        setDragState(prev => ({
+            ...prev,
+            currentX: clampedX,
+            currentY: clampedY,
+            targetIndex
+        }))
+    }, [dragState])
+
+    const handleDragEnd = useCallback(() => {
+        if (!dragState) return
+
+        // Re-enable page scroll
+        document.body.style.overflow = ''
+
+        // If position changed, reorder and save
+        if (dragState.itemIndex !== dragState.targetIndex) {
+            const newOrder = [...dragState.items]
+            const [movedItem] = newOrder.splice(dragState.itemIndex, 1)
+            newOrder.splice(dragState.targetIndex, 0, movedItem)
+
+            // Save to backend
+            reorderCategoryItems(dragState.categoryId, newOrder)
+
+            // Refresh menu
+            setMenu(getMenu())
+        }
+
+        setDragState(null)
+        dragItemRef.current = null
+    }, [dragState])
+
+    // Global touch/mouse event listeners for drag
+    useEffect(() => {
+        if (dragState) {
+            const handleMove = (e) => handleDragMove(e)
+            const handleEnd = () => handleDragEnd()
+
+            document.addEventListener('touchmove', handleMove, { passive: false })
+            document.addEventListener('touchend', handleEnd)
+            document.addEventListener('mousemove', handleMove)
+            document.addEventListener('mouseup', handleEnd)
+
+            return () => {
+                document.removeEventListener('touchmove', handleMove)
+                document.removeEventListener('touchend', handleEnd)
+                document.removeEventListener('mousemove', handleMove)
+                document.removeEventListener('mouseup', handleEnd)
+            }
+        }
+    }, [dragState, handleDragMove, handleDragEnd])
 
     // Tap-to-add: instantly add item
     const handleTapToAdd = (item) => {
@@ -300,76 +424,105 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                         </h2>
 
                         {/* 3-Column Grid */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(3, 1fr)',
-                            gap: 12
-                        }}>
-                            {category.items
-                                .filter(item => item.available)
-                                .map((item, index) => (
-                                    <div
-                                        key={item.id}
-                                        onClick={() => !isEditMode && handleTapToAdd(item)}
-                                        onTouchStart={handleLongPressStart}
-                                        onTouchEnd={handleLongPressEnd}
-                                        onTouchMove={handleLongPressMove}
-                                        onMouseDown={handleLongPressStart}
-                                        onMouseUp={handleLongPressEnd}
-                                        onMouseLeave={handleLongPressEnd}
-                                        className={isEditMode ? 'menu-item-wiggle' : ''}
-                                        style={{
-                                            cursor: isEditMode ? 'grab' : 'pointer',
-                                            transform: addedItem === item.id ? 'scale(0.95)' : 'scale(1)',
-                                            transition: isEditMode ? 'none' : 'transform 0.15s ease',
-                                            opacity: addedItem === item.id ? 0.7 : 1,
-                                            boxShadow: isEditMode ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
-                                            borderRadius: isEditMode ? 8 : 0
-                                        }}
-                                    >
-                                        {/* Item Image */}
-                                        <div style={{
-                                            width: '100%',
-                                            aspectRatio: '1',
-                                            borderRadius: 12,
-                                            overflow: 'hidden',
-                                            background: '#E8E4DD',
-                                            marginBottom: 8
-                                        }}>
-                                            <img
-                                                src={getItemImage(item, index)}
-                                                alt={item.name}
+                        {(() => {
+                            const availableItems = category.items.filter(item => item.available)
+                            const isDraggingInCategory = dragState?.categoryId === category.id
+
+                            return (
+                                <div
+                                    className="menu-grid"
+                                    style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(3, 1fr)',
+                                        gap: 12,
+                                        position: 'relative'
+                                    }}
+                                >
+                                    {availableItems.map((item, index) => {
+                                        const isDragging = dragState?.itemId === item.id
+                                        const isPlaceholder = isDraggingInCategory && dragState.targetIndex === index && !isDragging
+
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => !isEditMode && !dragState && handleTapToAdd(item)}
+                                                onTouchStart={(e) => {
+                                                    if (isEditMode) {
+                                                        handleDragStart(e, category.id, item, index, availableItems)
+                                                    } else {
+                                                        handleLongPressStart(e)
+                                                    }
+                                                }}
+                                                onTouchEnd={!isEditMode ? handleLongPressEnd : undefined}
+                                                onTouchMove={!isEditMode ? handleLongPressMove : undefined}
+                                                onMouseDown={(e) => {
+                                                    if (isEditMode) {
+                                                        handleDragStart(e, category.id, item, index, availableItems)
+                                                    } else {
+                                                        handleLongPressStart(e)
+                                                    }
+                                                }}
+                                                onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
+                                                onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
+                                                className={isEditMode && !isDragging ? 'menu-item-wiggle' : ''}
                                                 style={{
+                                                    cursor: isEditMode ? 'grab' : 'pointer',
+                                                    transform: addedItem === item.id ? 'scale(0.95)' : 'scale(1)',
+                                                    transition: isEditMode ? 'none' : 'transform 0.15s ease',
+                                                    opacity: isDragging ? 0.3 : (addedItem === item.id ? 0.7 : 1),
+                                                    boxShadow: isEditMode && !isDragging ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                                    borderRadius: isEditMode ? 8 : 0,
+                                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : 'transparent',
+                                                    border: isPlaceholder ? '2px dashed #22C55E' : 'none',
+                                                    touchAction: isEditMode ? 'none' : 'auto'
+                                                }}
+                                            >
+                                                {/* Item Image */}
+                                                <div style={{
                                                     width: '100%',
-                                                    height: '100%',
-                                                    objectFit: 'cover',
-                                                    pointerEvents: 'none'
-                                                }}
-                                                onError={(e) => {
-                                                    e.target.style.display = 'none'
-                                                }}
-                                            />
-                                        </div>
-                                        {/* Item Name */}
-                                        <p style={{
-                                            fontSize: 13,
-                                            fontWeight: 500,
-                                            color: '#1F2937',
-                                            marginBottom: 2,
-                                            lineHeight: 1.3
-                                        }}>
-                                            {item.name}
-                                        </p>
-                                        {/* Price */}
-                                        <p style={{
-                                            fontSize: 12,
-                                            color: '#6B7280'
-                                        }}>
-                                            {formatPrice(item.price)}
-                                        </p>
-                                    </div>
-                                ))}
-                        </div>
+                                                    aspectRatio: '1',
+                                                    borderRadius: 12,
+                                                    overflow: 'hidden',
+                                                    background: '#E8E4DD',
+                                                    marginBottom: 8
+                                                }}>
+                                                    <img
+                                                        src={getItemImage(item, index)}
+                                                        alt={item.name}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover',
+                                                            pointerEvents: 'none'
+                                                        }}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none'
+                                                        }}
+                                                    />
+                                                </div>
+                                                {/* Item Name */}
+                                                <p style={{
+                                                    fontSize: 13,
+                                                    fontWeight: 500,
+                                                    color: '#1F2937',
+                                                    marginBottom: 2,
+                                                    lineHeight: 1.3
+                                                }}>
+                                                    {item.name}
+                                                </p>
+                                                {/* Price */}
+                                                <p style={{
+                                                    fontSize: 12,
+                                                    color: '#6B7280'
+                                                }}>
+                                                    {formatPrice(item.price)}
+                                                </p>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )
+                        })()}
                     </div>
                 ))}
             </div>
@@ -487,6 +640,71 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                     </button>
                 </div>
             )}
+
+            {/* Floating Drag Card */}
+            {dragState && (() => {
+                // Find the dragged item
+                const category = enabledCategories.find(c => c.id === dragState.categoryId)
+                const item = category?.items.find(i => i.id === dragState.itemId)
+                if (!item) return null
+
+                return (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            left: dragState.currentX - dragState.offsetX,
+                            top: dragState.currentY - dragState.offsetY,
+                            width: dragState.itemWidth,
+                            zIndex: 9999,
+                            pointerEvents: 'none',
+                            transform: 'scale(1.05)',
+                            opacity: 0.95
+                        }}
+                    >
+                        <div style={{
+                            background: 'white',
+                            borderRadius: 12,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                            overflow: 'hidden'
+                        }}>
+                            <div style={{
+                                width: '100%',
+                                aspectRatio: '1',
+                                borderRadius: 12,
+                                overflow: 'hidden',
+                                background: '#E8E4DD'
+                            }}>
+                                <img
+                                    src={getItemImage(item, dragState.itemIndex)}
+                                    alt={item.name}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}
+                                />
+                            </div>
+                            <div style={{ padding: '8px 4px' }}>
+                                <p style={{
+                                    fontSize: 13,
+                                    fontWeight: 500,
+                                    color: '#1F2937',
+                                    marginBottom: 2,
+                                    lineHeight: 1.3
+                                }}>
+                                    {item.name}
+                                </p>
+                                <p style={{
+                                    fontSize: 12,
+                                    color: '#6B7280'
+                                }}>
+                                    {formatPrice(item.price)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )
+            })()}
         </div>
     )
 }

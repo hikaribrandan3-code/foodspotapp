@@ -152,6 +152,39 @@ export function removeMenuItem(categoryId, itemId) {
     return false;
 }
 
+// Reorder items within a category (full array dump)
+// orderedItemIds: array of item IDs in desired order
+export function reorderCategoryItems(categoryId, orderedItemIds) {
+    const menu = getMenu();
+    const category = menu.categories.find(c => c.id === categoryId);
+    if (category) {
+        // Create a map of existing items
+        const itemMap = {};
+        category.items.forEach(item => {
+            itemMap[item.id] = item;
+        });
+
+        // Rebuild items array in new order
+        const reorderedItems = [];
+        orderedItemIds.forEach(itemId => {
+            if (itemMap[itemId]) {
+                reorderedItems.push(itemMap[itemId]);
+                delete itemMap[itemId];
+            }
+        });
+
+        // Append any items not in the ordered list (safety)
+        Object.values(itemMap).forEach(item => {
+            reorderedItems.push(item);
+        });
+
+        category.items = reorderedItems;
+        saveMenu(menu);
+        return true;
+    }
+    return false;
+}
+
 // Toggle item availability
 export function toggleItemAvailability(categoryId, itemId) {
     const menu = getMenu();
