@@ -761,23 +761,45 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
 
             {/* Bottom Exit for Envíos (deliveryMode) */}
             {deliveryMode && (
-                <div
-                    onClick={() => navigate('/')}
-                    style={{
-                        marginTop: 32,
-                        marginBottom: 24,
-                        padding: '16px 0',
-                        textAlign: 'center',
-                        cursor: 'pointer'
-                    }}
-                >
-                    <span style={{
-                        fontSize: 15,
-                        fontWeight: 500,
-                        color: '#6B7280'
-                    }}>
-                        ← Volver al Inicio
-                    </span>
+                <div style={{
+                    marginTop: 32,
+                    marginBottom: 24,
+                    display: 'flex',
+                    justifyContent: 'center'
+                }}>
+                    <button
+                        onClick={() => navigate('/')}
+                        style={{
+                            background: '#22C55E',
+                            color: '#FFFFFF',
+                            fontSize: 15,
+                            fontWeight: 600,
+                            padding: '14px 32px',
+                            borderRadius: 50,
+                            border: 'none',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(34, 197, 94, 0.3)',
+                            transition: 'transform 0.1s ease, box-shadow 0.1s ease'
+                        }}
+                        onTouchStart={(e) => {
+                            e.currentTarget.style.transform = 'scale(0.96)'
+                            e.currentTarget.style.boxShadow = '0 1px 4px rgba(34, 197, 94, 0.2)'
+                        }}
+                        onTouchEnd={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.3)'
+                        }}
+                        onMouseDown={(e) => {
+                            e.currentTarget.style.transform = 'scale(0.96)'
+                            e.currentTarget.style.boxShadow = '0 1px 4px rgba(34, 197, 94, 0.2)'
+                        }}
+                        onMouseUp={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.3)'
+                        }}
+                    >
+                        Salir de Envíos
+                    </button>
                 </div>
             )}
         </div>
