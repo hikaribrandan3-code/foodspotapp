@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getConfig, reorderPrimaryActions, reorderFeaturedItems, defaultConfig } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
@@ -48,6 +48,7 @@ const ACTION_DEFINITIONS = {
 // --- MAIN COMPONENT ---
 
 function Home() {
+    const navigate = useNavigate()
     const [config, setConfig] = useState(() => getConfig())
     const menu = getMenu()
 
@@ -382,35 +383,45 @@ function Home() {
                         </>
                     )
 
-                    return isEditMode ? (
-                        <div
-                            key={actionId}
-                            onTouchStart={(e) => handleDragStart(e, 'actions', actionId, index, primaryActions)}
-                            onMouseDown={(e) => handleDragStart(e, 'actions', actionId, index, primaryActions)}
-                            className="menu-item-wiggle"
-                            style={{
-                                ...tileStyle,
-                                cursor: 'grab',
-                                opacity: isDragging ? 0.3 : 1,
-                                background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : '#FFFFFF',
-                                border: isPlaceholder ? '2px dashed #22C55E' : 'none',
-                                touchAction: 'none'
-                            }}
-                        >
-                            {tileContent}
-                        </div>
-                    ) : (
+                    // Owner mode: always use div (no Link navigation issues)
+                    if (isOwnerMode) {
+                        return (
+                            <div
+                                key={actionId}
+                                onTouchStart={(e) => isEditMode
+                                    ? handleDragStart(e, 'actions', actionId, index, primaryActions)
+                                    : handleLongPressStart(e)
+                                }
+                                onTouchEnd={!isEditMode ? handleLongPressEnd : undefined}
+                                onTouchMove={!isEditMode ? handleLongPressMove : undefined}
+                                onMouseDown={(e) => isEditMode
+                                    ? handleDragStart(e, 'actions', actionId, index, primaryActions)
+                                    : handleLongPressStart(e)
+                                }
+                                onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
+                                onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
+                                onClick={() => !isEditMode && !shouldBlockClickRef.current && navigate(action.path)}
+                                className={isEditMode ? 'menu-item-wiggle' : ''}
+                                style={{
+                                    ...tileStyle,
+                                    cursor: isEditMode ? 'grab' : 'pointer',
+                                    opacity: isDragging ? 0.3 : 1,
+                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : '#FFFFFF',
+                                    border: isPlaceholder ? '2px dashed #22C55E' : 'none',
+                                    touchAction: isEditMode ? 'none' : 'auto'
+                                }}
+                            >
+                                {tileContent}
+                            </div>
+                        )
+                    }
+
+                    // Non-owner: standard Link
+                    return (
                         <Link
                             key={actionId}
                             to={action.path}
                             style={tileStyle}
-                            onClick={(e) => { if (shouldBlockClickRef.current || isEditMode) e.preventDefault() }}
-                            onTouchStart={handleLongPressStart}
-                            onTouchEnd={handleLongPressEnd}
-                            onTouchMove={handleLongPressMove}
-                            onMouseDown={handleLongPressStart}
-                            onMouseUp={handleLongPressEnd}
-                            onMouseLeave={handleLongPressEnd}
                         >
                             {tileContent}
                         </Link>
@@ -475,28 +486,41 @@ function Home() {
                         </>
                     )
 
-                    return isEditMode ? (
-                        <div
-                            key={item.id || index}
-                            onTouchStart={(e) => handleDragStart(e, 'featured', item.id, index, featuredItems)}
-                            onMouseDown={(e) => handleDragStart(e, 'featured', item.id, index, featuredItems)}
-                            className="menu-item-wiggle"
-                            style={{ ...cardStyle, cursor: 'grab' }}
-                        >
-                            {cardContent}
-                        </div>
-                    ) : (
+                    // Owner mode: always use div (no Link navigation issues)
+                    if (isOwnerMode) {
+                        return (
+                            <div
+                                key={item.id || index}
+                                onTouchStart={(e) => isEditMode
+                                    ? handleDragStart(e, 'featured', item.id, index, featuredItems)
+                                    : handleLongPressStart(e)
+                                }
+                                onTouchEnd={!isEditMode ? handleLongPressEnd : undefined}
+                                onTouchMove={!isEditMode ? handleLongPressMove : undefined}
+                                onMouseDown={(e) => isEditMode
+                                    ? handleDragStart(e, 'featured', item.id, index, featuredItems)
+                                    : handleLongPressStart(e)
+                                }
+                                onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
+                                onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
+                                onClick={() => !isEditMode && !shouldBlockClickRef.current && navigate('/menu')}
+                                className={isEditMode ? 'menu-item-wiggle' : ''}
+                                style={{
+                                    ...cardStyle,
+                                    cursor: isEditMode ? 'grab' : 'pointer'
+                                }}
+                            >
+                                {cardContent}
+                            </div>
+                        )
+                    }
+
+                    // Non-owner: standard Link
+                    return (
                         <Link
                             key={item.id || index}
                             to="/menu"
                             style={cardStyle}
-                            onClick={(e) => { if (shouldBlockClickRef.current || isEditMode) e.preventDefault() }}
-                            onTouchStart={handleLongPressStart}
-                            onTouchEnd={handleLongPressEnd}
-                            onTouchMove={handleLongPressMove}
-                            onMouseDown={handleLongPressStart}
-                            onMouseUp={handleLongPressEnd}
-                            onMouseLeave={handleLongPressEnd}
                         >
                             {cardContent}
                         </Link>
