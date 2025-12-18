@@ -758,6 +758,28 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                     </div>
                 )
             })()}
+
+            {/* Bottom Exit for Envíos (deliveryMode) */}
+            {deliveryMode && (
+                <div
+                    onClick={() => navigate('/menu')}
+                    style={{
+                        marginTop: 32,
+                        marginBottom: 24,
+                        padding: '16px 0',
+                        textAlign: 'center',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <span style={{
+                        fontSize: 15,
+                        fontWeight: 500,
+                        color: '#6B7280'
+                    }}>
+                        ← Volver al Menú
+                    </span>
+                </div>
+            )}
         </div>
     )
 }
