@@ -58,6 +58,7 @@ function Home() {
     const [isEditMode, setIsEditMode] = useState(false)
     const longPressTimerRef = useRef(null)
     const longPressStartRef = useRef(null)
+    const shouldBlockClickRef = useRef(false) // Prevent Chrome navigation on long-press
 
     // Drag state
     const [dragState, setDragState] = useState(null)
@@ -120,6 +121,7 @@ function Home() {
             x: e.touches?.[0]?.clientX || e.clientX,
             y: e.touches?.[0]?.clientY || e.clientY
         }
+        shouldBlockClickRef.current = true // Block navigation during long-press
 
         longPressTimerRef.current = setTimeout(() => {
             console.log('HOME EDIT MODE ACTIVATED — VIBRATE FIRED')
@@ -135,6 +137,8 @@ function Home() {
             clearTimeout(longPressTimerRef.current)
             longPressTimerRef.current = null
         }
+        // Allow clicks again after a short delay
+        setTimeout(() => { shouldBlockClickRef.current = false }, 50)
     }, [])
 
     const handleLongPressMove = useCallback((e) => {
@@ -395,6 +399,7 @@ function Home() {
                             key={actionId}
                             to={action.path}
                             style={tileStyle}
+                            onClick={(e) => { if (shouldBlockClickRef.current || isEditMode) e.preventDefault() }}
                             onTouchStart={handleLongPressStart}
                             onTouchEnd={handleLongPressEnd}
                             onTouchMove={handleLongPressMove}
@@ -480,6 +485,7 @@ function Home() {
                             key={item.id || index}
                             to="/menu"
                             style={cardStyle}
+                            onClick={(e) => { if (shouldBlockClickRef.current || isEditMode) e.preventDefault() }}
                             onTouchStart={handleLongPressStart}
                             onTouchEnd={handleLongPressEnd}
                             onTouchMove={handleLongPressMove}
