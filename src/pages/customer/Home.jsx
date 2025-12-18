@@ -299,12 +299,16 @@ function Home() {
     const iconColor = '#4A4036'
 
     return (
-        <div className="page" style={{
-            padding: '0 24px',
-            paddingBottom: 90,
-            backgroundColor: '#F7F4EF',
-            minHeight: '100vh'
-        }}>
+        <div
+            className={`page ${isEditMode ? 'home-edit-mode' : ''}`}
+            onContextMenu={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation() } }}
+            style={{
+                padding: '0 24px',
+                paddingBottom: 90,
+                backgroundColor: '#F7F4EF',
+                minHeight: '100vh'
+            }}
+        >
             <header style={{
                 padding: '24px 0 22px',
                 textAlign: 'center'

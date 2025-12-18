@@ -1123,3 +1123,16 @@ body {
 .menu-item-wiggle {
   animation: wiggle 0.3s ease-in-out infinite;
 }
+
+/* =============================================
+   Home Edit Mode - Chrome Context Menu Lock
+   ============================================= */
+.home-edit-mode {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.home-edit-mode img {
+  pointer-events: none;
+}
