@@ -585,55 +585,65 @@ function SuperAdmin() {
                         </div>
 
                         {/* Phase 1 Navbar Branding - Color Picker Component */}
-                        <BrandingColorPicker
-                            primaryColor={config.branding?.primaryColor || '#8B7355'}
-                            iconColorMode={config.branding?.iconColorMode || 'white'}
-                            onColorChange={(color) => {
-                                updateConfig({ branding: { ...config.branding, primaryColor: color } })
-                                setConfig(getConfig())
-                            }}
-                            onIconModeChange={(mode) => {
-                                updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
-                                setConfig(getConfig())
-                            }}
-                        />
+                        <div style={{
+                            opacity: config.layoutPreset && config.layoutPreset !== 'minimal' ? 0.4 : 1,
+                            pointerEvents: config.layoutPreset && config.layoutPreset !== 'minimal' ? 'none' : 'auto'
+                        }}>
+                            <BrandingColorPicker
+                                primaryColor={config.branding?.primaryColor || '#8B7355'}
+                                iconColorMode={config.branding?.iconColorMode || 'white'}
+                                onColorChange={(color) => {
+                                    updateConfig({ branding: { ...config.branding, primaryColor: color } })
+                                    setConfig(getConfig())
+                                }}
+                                onIconModeChange={(mode) => {
+                                    updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
+                                    setConfig(getConfig())
+                                }}
+                            />
+                        </div>
 
                         {/* Hero Icons Customization (v2 - Fully Isolated) */}
                         <h3 style={labelStyle}>🎯 HERO ICONS (INICIO)</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo e ícono para cada tile (Independiente de la navegación)</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
-                                    const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
-                                    const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
-                                    return (
-                                        <HeroIconPicker
-                                            key={iconId}
-                                            label={labels[iconId]}
-                                            iconId={iconId}
-                                            color={iconConfig.color}
-                                            iconColorMode={iconConfig.iconColorMode}
-                                            onColorChange={(newColor) => {
-                                                updateConfig({
-                                                    heroIcons: {
-                                                        ...config.heroIcons,
-                                                        [iconId]: { ...iconConfig, color: newColor }
-                                                    }
-                                                })
-                                                setConfig(getConfig())
-                                            }}
-                                            onIconModeChange={(mode) => {
-                                                updateConfig({
-                                                    heroIcons: {
-                                                        ...config.heroIcons,
-                                                        [iconId]: { ...iconConfig, iconColorMode: mode }
-                                                    }
-                                                })
-                                                setConfig(getConfig())
-                                            }}
-                                        />
-                                    )
-                                })}
+                        <div style={{
+                            opacity: config.layoutPreset && config.layoutPreset !== 'hero-color' ? 0.4 : 1,
+                            pointerEvents: config.layoutPreset && config.layoutPreset !== 'hero-color' ? 'none' : 'auto'
+                        }}>
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo e ícono para cada tile (Independiente de la navegación)</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                    {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                                        const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
+                                        const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
+                                        return (
+                                            <HeroIconPicker
+                                                key={iconId}
+                                                label={labels[iconId]}
+                                                iconId={iconId}
+                                                color={iconConfig.color}
+                                                iconColorMode={iconConfig.iconColorMode}
+                                                onColorChange={(newColor) => {
+                                                    updateConfig({
+                                                        heroIcons: {
+                                                            ...config.heroIcons,
+                                                            [iconId]: { ...iconConfig, color: newColor }
+                                                        }
+                                                    })
+                                                    setConfig(getConfig())
+                                                }}
+                                                onIconModeChange={(mode) => {
+                                                    updateConfig({
+                                                        heroIcons: {
+                                                            ...config.heroIcons,
+                                                            [iconId]: { ...iconConfig, iconColorMode: mode }
+                                                        }
+                                                    })
+                                                    setConfig(getConfig())
+                                                }}
+                                            />
+                                        )
+                                    })}
+                                </div>
                             </div>
                         </div>
 
@@ -652,7 +662,7 @@ function SuperAdmin() {
                                     fontSize: 12,
                                     color: '#92400E'
                                 }}>
-                                    ⚠️ Preset Active — Individual controls disabled
+                                    ⚠️ Preset Active — Individual styling is locked to maintain consistency.
                                 </div>
                             )}
                             <div style={{ display: 'flex', gap: 8 }}>
