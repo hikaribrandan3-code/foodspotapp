@@ -1142,3 +1142,21 @@ body {
 .home-edit-mode img {
   pointer-events: none;
 }
+
+/* =============================================
+   iPad Enhancement - Phase 1 Polish
+   Only affects screens 768px+ (iPad mini and up)
+   Does NOT affect iPhone layouts
+   ============================================= */
+@media (min-width: 768px) {
+  :root {
+    /* Slightly relax container width for iPad */
+    --max-width: 520px;
+  }
+
+  /* Restore square-like proportions for action cards */
+  .quick-action {
+    aspect-ratio: 1 / 1;
+    min-height: unset;
+  }
+}
