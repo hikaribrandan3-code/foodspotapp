@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
-import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, NAV_COLOR_PRESETS } from '../../config/appConfig.js'
+import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS } from '../../config/appConfig.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { canChangeDeliveryConfig, recordDeliveryConfigChange, getDeliveryChangesThisMonth } from '../../utils/deliveryUtils.js'
+import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 
 function Settings() {
     const navigate = useNavigate()
@@ -386,92 +387,19 @@ function Settings() {
                         </p>
                     </div>
 
-                    {/* Navbar Color - Phase 1 Branding */}
-                    <div className="form-group">
-                        <label className="form-label">🎨 Color de navegación</label>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {NAV_COLOR_PRESETS.map(color => (
-                                <button
-                                    key={color.value}
-                                    onClick={() => {
-                                        updateConfig({
-                                            branding: {
-                                                ...config.branding,
-                                                primaryColor: color.value
-                                            }
-                                        })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        width: 36,
-                                        height: 36,
-                                        borderRadius: 8,
-                                        backgroundColor: color.value,
-                                        border: config.branding?.primaryColor === color.value
-                                            ? '3px solid #1F2937'
-                                            : '2px solid #E5E7EB',
-                                        cursor: 'pointer'
-                                    }}
-                                    title={color.label}
-                                />
-                            ))}
-                        </div>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 4 }}>
-                            Color de fondo del menú inferior
-                        </p>
-                    </div>
-
-                    {/* Icon Color Toggle - Phase 1 Branding */}
-                    <div className="form-group">
-                        <label className="form-label">Color de íconos</label>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            <button
-                                onClick={() => {
-                                    updateConfig({
-                                        branding: { ...config.branding, iconColorMode: 'white' }
-                                    })
-                                    setConfig(getConfig())
-                                }}
-                                style={{
-                                    padding: '8px 16px',
-                                    borderRadius: 8,
-                                    border: config.branding?.iconColorMode !== 'black'
-                                        ? '2px solid #1F2937'
-                                        : '2px solid #E5E7EB',
-                                    background: '#1F2937',
-                                    color: '#FFFFFF',
-                                    cursor: 'pointer',
-                                    fontWeight: 500
-                                }}
-                            >
-                                Blanco
-                            </button>
-                            <button
-                                onClick={() => {
-                                    updateConfig({
-                                        branding: { ...config.branding, iconColorMode: 'black' }
-                                    })
-                                    setConfig(getConfig())
-                                }}
-                                style={{
-                                    padding: '8px 16px',
-                                    borderRadius: 8,
-                                    border: config.branding?.iconColorMode === 'black'
-                                        ? '2px solid #1F2937'
-                                        : '2px solid #E5E7EB',
-                                    background: '#FFFFFF',
-                                    color: '#1F2937',
-                                    cursor: 'pointer',
-                                    fontWeight: 500
-                                }}
-                            >
-                                Negro
-                            </button>
-                        </div>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 4 }}>
-                            Usa negro si el color de navegación es claro
-                        </p>
-                    </div>
+                    {/* Phase 1 Navbar Branding - Color Picker Component */}
+                    <BrandingColorPicker
+                        primaryColor={config.branding?.primaryColor || '#8B7355'}
+                        iconColorMode={config.branding?.iconColorMode || 'white'}
+                        onColorChange={(color) => {
+                            updateConfig({ branding: { ...config.branding, primaryColor: color } })
+                            setConfig(getConfig())
+                        }}
+                        onIconModeChange={(mode) => {
+                            updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
+                            setConfig(getConfig())
+                        }}
+                    />
 
                     {/* Confirmation Color */}
                     <div className="form-group">

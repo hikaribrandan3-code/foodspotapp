@@ -67,6 +67,13 @@ function App() {
 
         root.style.setProperty('--nav-primary-color', primaryColor)
         root.style.setProperty('--nav-icon-color', iconColor)
+
+        // Safari repaint workaround - force WebKit to recalculate styles
+        const nav = document.querySelector('.bottom-nav')
+        if (nav) {
+            nav.style.transform = 'translateZ(0)'
+            void nav.offsetHeight // Force reflow
+        }
     }, [config.branding?.primaryColor, config.branding?.iconColorMode])
 
     // Manual config refresh - call from admin/owner actions when needed
