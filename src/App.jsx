@@ -105,6 +105,49 @@ function App() {
         root.style.setProperty('--hero-game-icon', gameConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
     }, [config.heroIcons])
 
+    // Apply canvas mode from config (isolated from nav and hero)
+    useEffect(() => {
+        const root = document.documentElement
+        const canvasMode = config.canvasMode || 'light'
+        const headerMode = config.headerMode || 'auto'
+
+        // Canvas colors
+        const CANVAS_LIGHT = '#F5F0E8'
+        const CANVAS_DARK = '#1F2937'
+
+        // Header colors
+        const HEADER_LIGHT_BG = '#FFFFFF'
+        const HEADER_LIGHT_TEXT = '#1F2937'
+        const HEADER_DARK_BG = '#1F2937'
+        const HEADER_DARK_TEXT = '#FFFFFF'
+
+        // Set canvas background
+        const canvasBg = canvasMode === 'dark' ? CANVAS_DARK : CANVAS_LIGHT
+        root.style.setProperty('--canvas-bg', canvasBg)
+
+        // Determine header colors
+        let headerBg, headerText
+        if (headerMode === 'locked-light') {
+            headerBg = HEADER_LIGHT_BG
+            headerText = HEADER_LIGHT_TEXT
+        } else if (headerMode === 'locked-dark') {
+            headerBg = HEADER_DARK_BG
+            headerText = HEADER_DARK_TEXT
+        } else {
+            // Auto: opposite of canvas
+            if (canvasMode === 'dark') {
+                headerBg = HEADER_LIGHT_BG
+                headerText = HEADER_LIGHT_TEXT
+            } else {
+                headerBg = HEADER_DARK_BG
+                headerText = HEADER_DARK_TEXT
+            }
+        }
+
+        root.style.setProperty('--header-bg', headerBg)
+        root.style.setProperty('--header-text', headerText)
+    }, [config.canvasMode, config.headerMode])
+
     // Manual config refresh - call from admin/owner actions when needed
     const refreshConfig = useCallback(() => {
         const newConfig = getConfig()

@@ -65,6 +65,20 @@ export const defaultConfig = {
         game: { color: "#FFFFFF", iconColorMode: "black" },
     },
 
+    // ============================================
+    // CANVAS V1 (Light/Dark)
+    // ============================================
+    // Applies to outer app container only
+    // 'light' = warm beige (#F5F0E8)
+    // 'dark' = dark grey (#1F2937)
+    canvasMode: "light",
+
+    // Header shield mode (determines header background)
+    // 'auto' = opposite of canvas (default)
+    // 'locked-light' = always light header
+    // 'locked-dark' = always dark header
+    headerMode: "auto",
+
     // Feature Toggles
     features: {
         ordersEnabled: true,
