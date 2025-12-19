@@ -42,7 +42,7 @@ function AppHeader() {
                         src={logo}
                         alt={businessName}
                         style={{
-                            maxHeight: 32,
+                            maxHeight: 48,
                             width: 'auto',
                             pointerEvents: 'none'
                         }}
