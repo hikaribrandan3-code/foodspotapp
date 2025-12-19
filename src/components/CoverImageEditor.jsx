@@ -1,23 +1,24 @@
 /**
  * CoverImageEditor.jsx - Full-Screen Cover Image Editor
  * 
- * PATCH 4.6: Wizard flow with frozen preview
+ * PATCH 4.7: True WYSIWYG — renders actual Home.jsx frozen
  * 
  * 3-Step Flow:
  * - Step A: Image Selection (auto-advances)
- * - Step B: Live Edit on Frozen Preview (drag to pan, pinch to zoom)
+ * - Step B: Live Edit on REAL frozen Home preview
  * - Step C: Done/Save
  * 
  * Features:
- * - Frozen Home preview (non-interactive)
+ * - Actual Home.jsx rendered frozen (pointer-events: none)
  * - Drag to pan cover image
  * - Pinch to zoom cover image
- * - Clear crop boundaries (dimmed outside area)
+ * - Clear crop boundaries (dimmed outside area + green frame)
  * - Responsive breakpoints (mobile/tablet)
  */
 
 import { useState, useRef, useEffect } from 'react'
 import { getConfig } from '../config/appConfig.js'
+import Home from '../pages/customer/Home.jsx'
 
 // Breakpoint cover heights
 const COVER_HEIGHTS = {
@@ -45,7 +46,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     const coverRef = useRef(null)
     const fileInputRef = useRef(null)
 
-    const config = getConfig()
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // Update breakpoint on resize
@@ -54,6 +54,17 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
     }, [])
+
+    // Reset state when opening
+    useEffect(() => {
+        if (isOpen) {
+            setImage(initialData?.image || null)
+            setScale(initialData?.scale || 1)
+            setOffsetX(initialData?.offsetX || 0)
+            setOffsetY(initialData?.offsetY || 0)
+            setStep(initialData?.image ? 'edit' : 'select')
+        }
+    }, [isOpen, initialData])
 
     // Auto-open file picker on mount if no image
     useEffect(() => {
@@ -152,13 +163,15 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
             display: 'flex',
             flexDirection: 'column'
         }}>
-            {/* Header */}
+            {/* Header Bar */}
             <div style={{
-                padding: '16px 20px',
+                padding: '12px 16px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '1px solid #333'
+                background: 'rgba(0,0,0,0.9)',
+                borderBottom: '1px solid #333',
+                zIndex: 10
             }}>
                 <button
                     onClick={onClose}
@@ -166,17 +179,18 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                         background: 'none',
                         border: 'none',
                         color: '#EF4444',
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: 600,
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        padding: '8px 12px'
                     }}
                 >
                     ✕ Cancel
                 </button>
                 <span style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>
-                    {step === 'select' ? 'Select Image' : 'Adjust Cover'}
+                    {step === 'select' ? 'Select Cover Image' : 'Position Cover'}
                 </span>
-                {step === 'edit' && (
+                {step === 'edit' ? (
                     <button
                         onClick={handleSave}
                         style={{
@@ -192,8 +206,9 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                     >
                         ✓ Done
                     </button>
+                ) : (
+                    <div style={{ width: 80 }} />
                 )}
-                {step === 'select' && <div style={{ width: 80 }} />}
             </div>
 
             {/* Step A: Select Image */}
@@ -236,50 +251,34 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                 </div>
             )}
 
-            {/* Step B: Live Edit */}
+            {/* Step B: Live Edit with REAL Home Preview */}
             {step === 'edit' && (
                 <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-                    {/* Frozen Home Preview Background */}
+
+                    {/* ===== FROZEN HOME PREVIEW (ACTUAL COMPONENT) ===== */}
                     <div style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'var(--canvas-bg, #fff)',
-                        opacity: 0.3,
-                        pointerEvents: 'none'
+                        pointerEvents: 'none',
+                        overflow: 'hidden'
                     }}>
-                        {/* Simulated Home UI */}
-                        <div style={{ padding: 16 }}>
-                            {/* Hero tiles placeholder */}
-                            <div style={{
-                                marginTop: coverHeight + 20,
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(2, 1fr)',
-                                gap: 12
-                            }}>
-                                {[1, 2, 3, 4].map(i => (
-                                    <div key={i} style={{
-                                        height: 80,
-                                        background: '#E5E7EB',
-                                        borderRadius: 12
-                                    }} />
-                                ))}
-                            </div>
-                        </div>
+                        {/* Render actual Home component */}
+                        <Home />
                     </div>
 
-                    {/* Dimmed overlay ABOVE cover area */}
+                    {/* ===== DIMMED OVERLAY BELOW COVER ===== */}
                     <div style={{
                         position: 'absolute',
                         top: coverHeight,
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'rgba(0,0,0,0.6)',
+                        background: 'rgba(0,0,0,0.65)',
                         pointerEvents: 'none',
-                        zIndex: 2
+                        zIndex: 5
                     }} />
 
-                    {/* Cover Frame - THE EDIT ZONE */}
+                    {/* ===== COVER EDIT FRAME ===== */}
                     <div
                         ref={coverRef}
                         onMouseDown={handlePointerDown}
@@ -297,58 +296,58 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                             height: coverHeight,
                             overflow: 'hidden',
                             cursor: 'move',
-                            zIndex: 3,
-                            border: '2px solid #22C55E',
-                            boxShadow: '0 0 0 4px rgba(34,197,94,0.3)'
+                            zIndex: 6,
+                            border: '3px solid #22C55E',
+                            boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 40px rgba(0,0,0,0.3)'
                         }}
                     >
-                        {/* Cover Image */}
+                        {/* Cover Image (Draggable) */}
                         <div
                             style={{
                                 position: 'absolute',
                                 width: '200%',
                                 height: '200%',
+                                left: '-50%',
+                                top: '-50%',
                                 backgroundImage: `url(${image})`,
                                 backgroundSize: `${scale * 100}%`,
                                 backgroundPosition: 'center',
                                 backgroundRepeat: 'no-repeat',
-                                transform: `translate(${offsetX}px, ${offsetY}px)`,
-                                transformOrigin: 'center center',
-                                left: '-50%',
-                                top: '-50%'
+                                transform: `translate(${offsetX}px, ${offsetY}px)`
                             }}
                         />
                     </div>
 
-                    {/* Frame Label */}
+                    {/* ===== INSTRUCTION PILL ===== */}
                     <div style={{
                         position: 'absolute',
-                        top: coverHeight + 8,
+                        top: coverHeight + 12,
                         left: '50%',
                         transform: 'translateX(-50%)',
                         background: '#22C55E',
                         color: '#fff',
                         fontSize: 11,
                         fontWeight: 600,
-                        padding: '4px 12px',
+                        padding: '6px 14px',
                         borderRadius: 20,
-                        zIndex: 4
+                        zIndex: 10,
+                        whiteSpace: 'nowrap'
                     }}>
                         ↕ Drag to position • Pinch to zoom
                     </div>
 
-                    {/* Zoom indicator */}
+                    {/* ===== ZOOM INDICATOR ===== */}
                     <div style={{
                         position: 'absolute',
-                        bottom: 80,
+                        bottom: 24,
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        background: 'rgba(0,0,0,0.7)',
+                        background: 'rgba(0,0,0,0.8)',
                         color: '#fff',
                         fontSize: 12,
                         padding: '8px 16px',
                         borderRadius: 20,
-                        zIndex: 4
+                        zIndex: 10
                     }}>
                         Zoom: {Math.round(scale * 100)}%
                     </div>
