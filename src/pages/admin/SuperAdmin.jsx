@@ -782,33 +782,44 @@ function SuperAdmin() {
                                             </label>
                                             <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Upload PNG/JPG for Facebook-style header</p>
 
-                                            {/* Upload Dropbox */}
-                                            <div
-                                                onClick={() => document.getElementById('cover-image-upload')?.click()}
-                                                style={{
-                                                    border: '2px dashed #D1D5DB',
-                                                    borderRadius: 8,
-                                                    height: 64,
-                                                    overflow: 'hidden',
-                                                    cursor: 'pointer',
-                                                    background: '#FAFAFA',
-                                                    position: 'relative'
-                                                }}
-                                            >
-                                                {config.headerCover?.image ? (
-                                                    <div style={{
-                                                        position: 'absolute',
-                                                        inset: 0,
-                                                        backgroundImage: `url(${config.headerCover.image})`,
-                                                        backgroundSize: `${(config.headerCover?.scale || 1) * 100}%`,
-                                                        backgroundPosition: `${50 + (config.headerCover?.offsetX || 0)}% ${50 + (config.headerCover?.offsetY || 0)}%`,
-                                                        backgroundRepeat: 'no-repeat'
-                                                    }} />
-                                                ) : (
-                                                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload</span>
-                                                    </div>
-                                                )}
+                                            {/* Upload Dropbox - Dark Frame for Visibility */}
+                                            <div style={{
+                                                background: '#111827',
+                                                borderRadius: 12,
+                                                padding: 12,
+                                                marginBottom: 4
+                                            }}>
+                                                <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 8, textAlign: 'center' }}>
+                                                    📱 HEADER PREVIEW — 64px height
+                                                </p>
+                                                <div
+                                                    onClick={() => document.getElementById('cover-image-upload')?.click()}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: 64,
+                                                        border: '2px solid #374151',
+                                                        borderRadius: 4,
+                                                        overflow: 'hidden',
+                                                        cursor: 'pointer',
+                                                        background: '#1F2937',
+                                                        position: 'relative'
+                                                    }}
+                                                >
+                                                    {config.headerCover?.image ? (
+                                                        <div style={{
+                                                            position: 'absolute',
+                                                            inset: 0,
+                                                            backgroundImage: `url(${config.headerCover.image})`,
+                                                            backgroundSize: `${(config.headerCover?.scale || 1) * 100}%`,
+                                                            backgroundPosition: `${50 + (config.headerCover?.offsetX || 0)}% ${50 + (config.headerCover?.offsetY || 0)}%`,
+                                                            backgroundRepeat: 'no-repeat'
+                                                        }} />
+                                                    ) : (
+                                                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                             <input
                                                 id="cover-image-upload"
