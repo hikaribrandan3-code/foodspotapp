@@ -57,12 +57,13 @@ export const defaultConfig = {
     },
 
     // Hero Icons Customization (per-icon color + iconColorMode)
-    // Fully isolated from nav — no shared config keys
+    // color: "auto" = inherits from canvas surface
+    // color: "#HEXVAL" = explicit override
     heroIcons: {
-        menu: { color: "#FFFFFF", iconColorMode: "black" },
-        delivery: { color: "#FFFFFF", iconColorMode: "black" },
-        rewards: { color: "#FFFFFF", iconColorMode: "black" },
-        game: { color: "#FFFFFF", iconColorMode: "black" },
+        menu: { color: "auto", iconColorMode: "auto" },
+        delivery: { color: "auto", iconColorMode: "auto" },
+        rewards: { color: "auto", iconColorMode: "auto" },
+        game: { color: "auto", iconColorMode: "auto" },
     },
 
     // ============================================
@@ -386,7 +387,7 @@ export const FONT_WEIGHTS = [
 
 // Hero Icon Constants (Single Source of Truth)
 export const HERO_ICON_DARK = '#4A4036'
-export const HERO_DEFAULT = { color: '#FFFFFF', iconColorMode: 'black' }
+export const HERO_DEFAULT = { color: 'auto', iconColorMode: 'auto' }
 
 // Phase 1 Branding - Navbar color presets
 export const NAV_COLOR_PRESETS = [

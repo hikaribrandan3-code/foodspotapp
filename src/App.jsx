@@ -80,30 +80,49 @@ function App() {
     }, [config.branding?.primaryColor, config.branding?.iconColorMode])
 
     // Apply hero icon colors from config (fully isolated from nav)
+    // color: "auto" = use canvas-surface, otherwise use explicit override
     useEffect(() => {
         const root = document.documentElement
         const heroIcons = config.heroIcons || {}
 
+        const getHeroBg = (heroConfig) => {
+            const color = heroConfig?.color
+            // "auto" or undefined/null = use canvas surface
+            if (!color || color === 'auto') {
+                return 'var(--canvas-surface)'
+            }
+            return color
+        }
+
+        const getHeroIcon = (heroConfig) => {
+            const mode = heroConfig?.iconColorMode
+            // "auto" or undefined/null = use canvas surface text
+            if (!mode || mode === 'auto') {
+                return 'var(--canvas-surface-text)'
+            }
+            return mode === 'white' ? '#FFFFFF' : HERO_ICON_DARK
+        }
+
         // Menu
         const menuConfig = heroIcons.menu || HERO_DEFAULT
-        root.style.setProperty('--hero-menu-bg', menuConfig.color)
-        root.style.setProperty('--hero-menu-icon', menuConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
+        root.style.setProperty('--hero-menu-bg', getHeroBg(menuConfig))
+        root.style.setProperty('--hero-menu-icon', getHeroIcon(menuConfig))
 
         // Delivery 
         const deliveryConfig = heroIcons.delivery || HERO_DEFAULT
-        root.style.setProperty('--hero-delivery-bg', deliveryConfig.color)
-        root.style.setProperty('--hero-delivery-icon', deliveryConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
+        root.style.setProperty('--hero-delivery-bg', getHeroBg(deliveryConfig))
+        root.style.setProperty('--hero-delivery-icon', getHeroIcon(deliveryConfig))
 
         // Rewards
         const rewardsConfig = heroIcons.rewards || HERO_DEFAULT
-        root.style.setProperty('--hero-rewards-bg', rewardsConfig.color)
-        root.style.setProperty('--hero-rewards-icon', rewardsConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
+        root.style.setProperty('--hero-rewards-bg', getHeroBg(rewardsConfig))
+        root.style.setProperty('--hero-rewards-icon', getHeroIcon(rewardsConfig))
 
         // Game
         const gameConfig = heroIcons.game || HERO_DEFAULT
-        root.style.setProperty('--hero-game-bg', gameConfig.color)
-        root.style.setProperty('--hero-game-icon', gameConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
-    }, [config.heroIcons])
+        root.style.setProperty('--hero-game-bg', getHeroBg(gameConfig))
+        root.style.setProperty('--hero-game-icon', getHeroIcon(gameConfig))
+    }, [config.heroIcons, config.canvasMode])
 
     // Apply canvas mode from config (isolated from nav and hero)
     useEffect(() => {
@@ -135,9 +154,15 @@ function App() {
         if (canvasMode === 'dark') {
             root.style.setProperty('--canvas-text', TEXT_DARK_PRIMARY)
             root.style.setProperty('--canvas-text-muted', TEXT_DARK_MUTED)
+            // Canvas surface for hero tiles (elevated cards on dark bg)
+            root.style.setProperty('--canvas-surface', '#374151')
+            root.style.setProperty('--canvas-surface-text', '#FFFFFF')
         } else {
             root.style.setProperty('--canvas-text', TEXT_LIGHT_PRIMARY)
             root.style.setProperty('--canvas-text-muted', TEXT_LIGHT_MUTED)
+            // Canvas surface for hero tiles (elevated cards on light bg)
+            root.style.setProperty('--canvas-surface', '#FFFFFF')
+            root.style.setProperty('--canvas-surface-text', '#1F2937')
         }
 
         // Determine header colors
