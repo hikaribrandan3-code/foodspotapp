@@ -11,7 +11,7 @@ import {
     generateOrderNumber,
     incrementOrderCount
 } from '../../utils/storage.js'
-import AppHeader from '../../components/AppHeader.jsx'
+import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import {
     isDeliveryMode,
@@ -332,7 +332,7 @@ function Order() {
             paddingBottom: 120
         }}>
             {/* Clean Brand Header */}
-            <AppHeader />
+            <HeaderClamp />
 
             {/* Slim Identity Strip - Uses selected divider preset */}
             {(() => {

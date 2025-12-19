@@ -26,6 +26,12 @@ export const defaultConfig = {
         offsetY: 0          // Vertical offset (%)
     },
     // ============================================
+    // EXPERIMENTAL FLAGS (Super Admin Only)
+    // ============================================
+    experimental: {
+        headerClampMobile: true  // Invisible mobile header padding reducer
+    },
+    // ============================================
     // ORDER MODE
     // ============================================
     // "A1" = Budoni / Pre-Made Food

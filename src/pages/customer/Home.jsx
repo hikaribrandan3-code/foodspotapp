@@ -4,7 +4,7 @@ import { getConfig, reorderPrimaryActions, reorderFeaturedItems, defaultConfig, 
 import { getMenu } from '../../config/menuData.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
-import AppHeader from '../../components/AppHeader.jsx'
+import HeaderClamp from '../../components/HeaderClamp.jsx'
 
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
@@ -289,7 +289,7 @@ function Home() {
                 minHeight: '100vh'
             }}
         >
-            <AppHeader />
+            <HeaderClamp />
 
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (

@@ -97,6 +97,27 @@
   --transition-slow: 350ms ease;
 }
 
+/* =============================================
+   MOBILE HEADER CLAMP (Super Admin Only)
+   Visually reduces header padding on mobile
+   without modifying header component
+   ============================================= */
+@media (max-width: 768px) {
+  .header-clamp-mobile {
+    height: 60px;
+    /* tuned for landscape logos + 5px comfort */
+    overflow: hidden;
+    position: relative;
+  }
+
+  .header-clamp-mobile>header,
+  .header-clamp-mobile>.app-header {
+    position: relative;
+    top: -4px;
+    /* trims visual padding safely */
+  }
+}
+
 /* Reset & Base Styles */
 *,
 *::before,
