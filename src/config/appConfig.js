@@ -9,6 +9,15 @@ export const defaultConfig = {
     logoDark: null, // Logo for dark mode (light logo on dark bg)
 
     // ============================================
+    // HEADER BRANDING (PATCH 4.0)
+    // ============================================
+    // mode: "text" = header renders app name only (default)
+    // mode: "logo" = header renders logo only
+    // Text and logo NEVER render together
+    headerBranding: {
+        mode: "text" // "text" | "logo"
+    },
+    // ============================================
     // ORDER MODE
     // ============================================
     // "A1" = Budoni / Pre-Made Food

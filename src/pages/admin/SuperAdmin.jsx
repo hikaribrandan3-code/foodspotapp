@@ -709,388 +709,442 @@ function SuperAdmin() {
                                         ⚠️ System-level controls. Changes affect all instances.
                                     </p>
 
-                                    {/* Logo Light Upload */}
+                                    {/* Header Branding Mode Toggle */}
                                     <div style={{ marginBottom: 16 }}>
                                         <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                            Logo (Light Mode)
+                                            Header Branding
                                         </label>
-                                        <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
-                                            Dark logo for white/light backgrounds
-                                        </p>
-                                        <input
-                                            type="text"
-                                            placeholder="URL or base64 data URI"
-                                            value={config.logoLight || ''}
-                                            onChange={(e) => {
-                                                updateConfig({ logoLight: e.target.value || null })
-                                                setConfig(getConfig())
-                                            }}
-                                            style={inputStyle}
-                                        />
-                                        {config.logoLight && (
-                                            <div style={{ padding: 12, background: '#FFFFFF', borderRadius: 8, border: '1px solid #E5E7EB', marginTop: 8 }}>
-                                                <img src={config.logoLight} alt="Logo Light" style={{ maxHeight: 32, width: 'auto' }} />
-                                            </div>
-                                        )}
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            <button
+                                                onClick={() => {
+                                                    updateConfig({ headerBranding: { mode: 'text' } })
+                                                    setConfig(getConfig())
+                                                }}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '10px 12px',
+                                                    borderRadius: 8,
+                                                    border: (config.headerBranding?.mode || 'text') === 'text' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
+                                                    background: (config.headerBranding?.mode || 'text') === 'text' ? '#FAF5FF' : 'white',
+                                                    color: '#374151',
+                                                    fontSize: 12,
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                📝 Text
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (!config.logoLight && !config.logoDark) {
+                                                        alert('Please configure logos first before switching to logo mode.')
+                                                        return
+                                                    }
+                                                    updateConfig({ headerBranding: { mode: 'logo' } })
+                                                    setConfig(getConfig())
+                                                }}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '10px 12px',
+                                                    borderRadius: 8,
+                                                    border: config.headerBranding?.mode === 'logo' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
+                                                    background: config.headerBranding?.mode === 'logo' ? '#FAF5FF' : 'white',
+                                                    color: '#374151',
+                                                    fontSize: 12,
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                🖼️ Logo
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    {/* Logo Dark Upload */}
-                                    <div>
-                                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                            Logo (Dark Mode)
-                                        </label>
-                                        <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
-                                            Light/white logo for dark backgrounds
-                                        </p>
-                                        <input
-                                            type="text"
-                                            placeholder="URL or base64 data URI"
-                                            value={config.logoDark || ''}
-                                            onChange={(e) => {
-                                                updateConfig({ logoDark: e.target.value || null })
+                                    {/* Logo inputs only show when mode is "logo" */}
+                                    {config.headerBranding?.mode === 'logo' && (
+                                        <>
+                                            {/* Logo Light Upload */}
+                                            <div style={{ marginBottom: 16 }}>
+                                                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                                    Logo (Light Mode)
+                                                </label>
+                                                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
+                                                    Dark logo for white/light backgrounds
+                                                </p>
+                                                <input
+                                                    type="text"
+                                                    placeholder="URL or base64 data URI"
+                                                    value={config.logoLight || ''}
+                                                    onChange={(e) => {
+                                                        updateConfig({ logoLight: e.target.value || null })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={inputStyle}
+                                                />
+                                                {config.logoLight && (
+                                                    <div style={{ padding: 12, background: '#FFFFFF', borderRadius: 8, border: '1px solid #E5E7EB', marginTop: 8 }}>
+                                                        <img src={config.logoLight} alt="Logo Light" style={{ maxHeight: 32, width: 'auto' }} />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Logo Dark Upload */}
+                                            <div>
+                                                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                                    Logo (Dark Mode)
+                                                </label>
+                                                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
+                                                    Light/white logo for dark backgrounds
+                                                </p>
+                                                <input
+                                                    type="text"
+                                                    placeholder="URL or base64 data URI"
+                                                    value={config.logoDark || ''}
+                                                    onChange={(e) => {
+                                                        updateConfig({ logoDark: e.target.value || null })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={inputStyle}
+                                                />
+                                                {config.logoDark && (
+                                                    <div style={{ padding: 12, background: '#1F2937', borderRadius: 8, marginTop: 8 }}>
+                                                        <img src={config.logoDark} alt="Logo Dark" style={{ maxHeight: 32, width: 'auto' }} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                </>
+                        )}
+
+                                {/* PATCH 3.7: Layout Presets - One-Click System */}
+                                <h3 style={labelStyle}>⚡ LAYOUT PRESET</h3>
+                                <div style={cardStyle}>
+                                    <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>
+                                        One-click layout. Disables individual controls when active.
+                                    </p>
+                                    {config.layoutPreset && config.layoutPreset !== 'none' && (
+                                        <div style={{
+                                            padding: '8px 12px',
+                                            background: '#FEF3C7',
+                                            borderRadius: 8,
+                                            marginBottom: 12,
+                                            fontSize: 12,
+                                            color: '#92400E'
+                                        }}>
+                                            ⚠️ Preset Active — Individual styling is locked to maintain consistency.
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ layoutPreset: 'minimal' })
                                                 setConfig(getConfig())
                                             }}
-                                            style={inputStyle}
-                                        />
-                                        {config.logoDark && (
-                                            <div style={{ padding: 12, background: '#1F2937', borderRadius: 8, marginTop: 8 }}>
-                                                <img src={config.logoDark} alt="Logo Dark" style={{ maxHeight: 32, width: 'auto' }} />
-                                            </div>
-                                        )}
+                                            style={{
+                                                flex: 1,
+                                                padding: '12px 8px',
+                                                borderRadius: 10,
+                                                border: config.layoutPreset === 'minimal' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                background: '#FFFFFF',
+                                                color: '#1F2937',
+                                                fontSize: 12,
+                                                fontWeight: 600,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Minimal
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ layoutPreset: 'accent-nav' })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: '12px 8px',
+                                                borderRadius: 10,
+                                                border: config.layoutPreset === 'accent-nav' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                background: '#FFFFFF',
+                                                color: '#1F2937',
+                                                fontSize: 12,
+                                                fontWeight: 600,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Accent Nav
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ layoutPreset: 'hero-color' })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: '12px 8px',
+                                                borderRadius: 10,
+                                                border: config.layoutPreset === 'hero-color' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                background: '#FFFFFF',
+                                                color: '#1F2937',
+                                                fontSize: 12,
+                                                fontWeight: 600,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Hero Color
+                                        </button>
                                     </div>
+                                </div>
+
+                                {/* Canvas V1 - Light/Dark */}
+                                <h3 style={labelStyle}>🎨 CANVAS (FONDO)</h3>
+                                <div style={cardStyle}>
+                                    <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo general de la app</p>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ canvasMode: 'light' })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: '12px 16px',
+                                                borderRadius: 10,
+                                                border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                background: '#FFFFFF',
+                                                color: '#1F2937',
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            ☀️ Claro
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ canvasMode: 'dark' })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: '12px 16px',
+                                                borderRadius: 10,
+                                                border: config.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                background: '#1F2937',
+                                                color: '#FFFFFF',
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            🌙 Oscuro
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Divider Preset Selector */}
+                                <h3 style={labelStyle}>🖼️ IMAGEN DECORATIVA (Menú/Pedido)</h3>
+                                <div style={cardStyle}>
+                                    <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Imagen que aparece debajo del nombre en Menú y Pedido</p>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                                        {DIVIDER_PRESETS.map(preset => (
+                                            <div
+                                                key={preset.id}
+                                                onClick={() => { updateConfig({ dividerPresetId: preset.id }); setConfig(getConfig()) }}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    borderRadius: 8,
+                                                    overflow: 'hidden',
+                                                    border: config.dividerPresetId === preset.id ? '3px solid #22C55E' : '2px solid #E5E7EB',
+                                                    opacity: config.dividerPresetId === preset.id ? 1 : 0.7
+                                                }}
+                                            >
+                                                <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
+                                        Actual: {DIVIDER_PRESETS.find(p => p.id === config.dividerPresetId)?.name || 'Ninguna'}
+                                    </p>
+                                </div>
+
+                                {/* Featured Photos Controls - Standalone System */}
+                                <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home) - 4 slots fijos</h3>
+                                <div style={cardStyle}>
+                                    <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Estos 4 items aparecen en la página de inicio</p>
+                                    {[0, 1, 2, 3].map(slotIndex => {
+                                        const currentSlot = config.featuredPhotos?.[slotIndex] || {}
+
+                                        return (
+                                            <div key={slotIndex} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
+                                                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                                                    {/* Image Preview/Upload */}
+                                                    <div
+                                                        onClick={() => document.getElementById(`featured-img-${slotIndex}`)?.click()}
+                                                        style={{
+                                                            width: 80,
+                                                            height: 80,
+                                                            borderRadius: 12,
+                                                            background: currentSlot.image ? 'none' : '#F3F4F6',
+                                                            border: '2px dashed #D1D5DB',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            cursor: 'pointer',
+                                                            overflow: 'hidden',
+                                                            flexShrink: 0
+                                                        }}
+                                                    >
+                                                        {currentSlot.image ? (
+                                                            <img src={currentSlot.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                            <span style={{ fontSize: 24, color: '#9CA3AF' }}>📷</span>
+                                                        )}
+                                                    </div>
+                                                    <input
+                                                        id={`featured-img-${slotIndex}`}
+                                                        type="file"
+                                                        accept="image/jpeg,image/png"
+                                                        onChange={(e) => handleFeaturedImageUpload(e, slotIndex)}
+                                                        style={{ display: 'none' }}
+                                                    />
+
+                                                    {/* Slot Controls - Name & Price */}
+                                                    <div style={{ flex: 1 }}>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nombre del item"
+                                                            value={currentSlot.name || ''}
+                                                            onChange={(e) => {
+                                                                const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
+                                                                newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
+                                                                updateConfig({ featuredPhotos: newPhotos })
+                                                                setConfig(getConfig())
+                                                            }}
+                                                            style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, marginBottom: 6 }}
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Precio"
+                                                            value={currentSlot.price || ''}
+                                                            onChange={(e) => {
+                                                                const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
+                                                                newPhotos[slotIndex] = { ...newPhotos[slotIndex], price: parseFloat(e.target.value) || 0 }
+                                                                updateConfig({ featuredPhotos: newPhotos })
+                                                                setConfig(getConfig())
+                                                            }}
+                                                            style={{ width: 100, padding: '6px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12 }}
+                                                        />
+                                                        {uploadingFeaturedSlot === slotIndex && (
+                                                            <p style={{ fontSize: 10, color: '#6B7280', marginTop: 4 }}>Optimizando...</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </>
                         )}
 
-                        {/* PATCH 3.7: Layout Presets - One-Click System */}
-                        <h3 style={labelStyle}>⚡ LAYOUT PRESET</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>
-                                One-click layout. Disables individual controls when active.
-                            </p>
-                            {config.layoutPreset && config.layoutPreset !== 'none' && (
-                                <div style={{
-                                    padding: '8px 12px',
-                                    background: '#FEF3C7',
-                                    borderRadius: 8,
-                                    marginBottom: 12,
-                                    fontSize: 12,
-                                    color: '#92400E'
-                                }}>
-                                    ⚠️ Preset Active — Individual styling is locked to maintain consistency.
-                                </div>
-                            )}
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ layoutPreset: 'minimal' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 8px',
-                                        borderRadius: 10,
-                                        border: config.layoutPreset === 'minimal' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#FFFFFF',
-                                        color: '#1F2937',
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Minimal
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ layoutPreset: 'accent-nav' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 8px',
-                                        borderRadius: 10,
-                                        border: config.layoutPreset === 'accent-nav' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#FFFFFF',
-                                        color: '#1F2937',
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Accent Nav
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ layoutPreset: 'hero-color' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 8px',
-                                        borderRadius: 10,
-                                        border: config.layoutPreset === 'hero-color' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#FFFFFF',
-                                        color: '#1F2937',
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Hero Color
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Canvas V1 - Light/Dark */}
-                        <h3 style={labelStyle}>🎨 CANVAS (FONDO)</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo general de la app</p>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ canvasMode: 'light' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 16px',
-                                        borderRadius: 10,
-                                        border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#FFFFFF',
-                                        color: '#1F2937',
-                                        fontSize: 14,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    ☀️ Claro
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ canvasMode: 'dark' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 16px',
-                                        borderRadius: 10,
-                                        border: config.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#1F2937',
-                                        color: '#FFFFFF',
-                                        fontSize: 14,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    🌙 Oscuro
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Divider Preset Selector */}
-                        <h3 style={labelStyle}>🖼️ IMAGEN DECORATIVA (Menú/Pedido)</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Imagen que aparece debajo del nombre en Menú y Pedido</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                                {DIVIDER_PRESETS.map(preset => (
-                                    <div
-                                        key={preset.id}
-                                        onClick={() => { updateConfig({ dividerPresetId: preset.id }); setConfig(getConfig()) }}
-                                        style={{
-                                            cursor: 'pointer',
-                                            borderRadius: 8,
-                                            overflow: 'hidden',
-                                            border: config.dividerPresetId === preset.id ? '3px solid #22C55E' : '2px solid #E5E7EB',
-                                            opacity: config.dividerPresetId === preset.id ? 1 : 0.7
-                                        }}
-                                    >
-                                        <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
+                        {/* ==================== PEDIDOS TAB ==================== */}
+                        {activeTab === 'pedidos' && (
+                            <>
+                                <h3 style={labelStyle}>⚙️ CONFIGURACIÓN DE PEDIDOS</h3>
+                                <div style={cardStyle}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                        <span style={{ fontSize: 14, color: '#374151' }}>Pedidos activos</span>
+                                        <label className="toggle"><input type="checkbox" checked={config.features?.ordersEnabled ?? true} onChange={() => { updateConfig({ features: { ...config.features, ordersEnabled: !config.features?.ordersEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
                                     </div>
-                                ))}
-                            </div>
-                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
-                                Actual: {DIVIDER_PRESETS.find(p => p.id === config.dividerPresetId)?.name || 'Ninguna'}
-                            </p>
-                        </div>
-
-                        {/* Featured Photos Controls - Standalone System */}
-                        <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home) - 4 slots fijos</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Estos 4 items aparecen en la página de inicio</p>
-                            {[0, 1, 2, 3].map(slotIndex => {
-                                const currentSlot = config.featuredPhotos?.[slotIndex] || {}
-
-                                return (
-                                    <div key={slotIndex} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
-                                        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                                            {/* Image Preview/Upload */}
-                                            <div
-                                                onClick={() => document.getElementById(`featured-img-${slotIndex}`)?.click()}
-                                                style={{
-                                                    width: 80,
-                                                    height: 80,
-                                                    borderRadius: 12,
-                                                    background: currentSlot.image ? 'none' : '#F3F4F6',
-                                                    border: '2px dashed #D1D5DB',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    cursor: 'pointer',
-                                                    overflow: 'hidden',
-                                                    flexShrink: 0
-                                                }}
-                                            >
-                                                {currentSlot.image ? (
-                                                    <img src={currentSlot.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <span style={{ fontSize: 24, color: '#9CA3AF' }}>📷</span>
-                                                )}
-                                            </div>
-                                            <input
-                                                id={`featured-img-${slotIndex}`}
-                                                type="file"
-                                                accept="image/jpeg,image/png"
-                                                onChange={(e) => handleFeaturedImageUpload(e, slotIndex)}
-                                                style={{ display: 'none' }}
-                                            />
-
-                                            {/* Slot Controls - Name & Price */}
-                                            <div style={{ flex: 1 }}>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Nombre del item"
-                                                    value={currentSlot.name || ''}
-                                                    onChange={(e) => {
-                                                        const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
-                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
-                                                        updateConfig({ featuredPhotos: newPhotos })
-                                                        setConfig(getConfig())
-                                                    }}
-                                                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, marginBottom: 6 }}
-                                                />
-                                                <input
-                                                    type="number"
-                                                    placeholder="Precio"
-                                                    value={currentSlot.price || ''}
-                                                    onChange={(e) => {
-                                                        const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
-                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], price: parseFloat(e.target.value) || 0 }
-                                                        updateConfig({ featuredPhotos: newPhotos })
-                                                        setConfig(getConfig())
-                                                    }}
-                                                    style={{ width: 100, padding: '6px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12 }}
-                                                />
-                                                {uploadingFeaturedSlot === slotIndex && (
-                                                    <p style={{ fontSize: 10, color: '#6B7280', marginTop: 4 }}>Optimizando...</p>
-                                                )}
-                                            </div>
-                                        </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: 14, color: '#374151' }}>Pausar pedidos</span>
+                                        <label className="toggle"><input type="checkbox" checked={config.pauseOrders ?? false} onChange={() => { updateConfig({ pauseOrders: !config.pauseOrders }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
                                     </div>
-                                )
-                            })}
-                        </div>
-                    </>
-                )}
-
-                {/* ==================== PEDIDOS TAB ==================== */}
-                {activeTab === 'pedidos' && (
-                    <>
-                        <h3 style={labelStyle}>⚙️ CONFIGURACIÓN DE PEDIDOS</h3>
-                        <div style={cardStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                <span style={{ fontSize: 14, color: '#374151' }}>Pedidos activos</span>
-                                <label className="toggle"><input type="checkbox" checked={config.features?.ordersEnabled ?? true} onChange={() => { updateConfig({ features: { ...config.features, ordersEnabled: !config.features?.ordersEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 14, color: '#374151' }}>Pausar pedidos</span>
-                                <label className="toggle"><input type="checkbox" checked={config.pauseOrders ?? false} onChange={() => { updateConfig({ pauseOrders: !config.pauseOrders }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
-                            </div>
-                        </div>
-
-                        <h3 style={labelStyle}>📋 MODO DE OPERACIÓN</h3>
-                        <div style={cardStyle}>
-                            <select value={config.orderMode || 'A1'} onChange={(e) => { updateConfig({ orderMode: e.target.value }); setConfig(getConfig()) }} style={{ width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, background: 'white' }}>
-                                <option value="A1">A1: Budoni / Pickup rápido</option>
-                                <option value="A2">A2: Café / Pago antes de preparar</option>
-                                <option value="B">B: Restaurante / Pago al final</option>
-                            </select>
-                        </div>
-                    </>
-                )}
-
-                {/* ==================== ANALYTICS TAB ==================== */}
-                {activeTab === 'analytics' && (
-                    <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <h3 style={{ ...labelStyle, marginBottom: 0 }}>📊 ANALYTICS</h3>
-                            {userRole === 'superadmin' && (
-                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    Demo <input type="checkbox" checked={demoAnalytics} onChange={() => setDemoAnalytics(!demoAnalytics)} style={{ accentColor: '#22C55E' }} />
-                                </label>
-                            )}
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Hoy</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{todayOrders.length}</p></div>
-                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Semana</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{weekOrders.length}</p></div>
-                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Mes</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{monthOrders.length}</p></div>
-                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Total</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{orders.length}</p></div>
-                        </div>
-
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Ingresos totales</p>
-                            <p style={{ fontSize: 28, fontWeight: 700, color: '#22C55E', margin: '4px 0 0' }}>${(demoAnalytics ? demoTotalSales : totalRevenue).toLocaleString()}</p>
-                        </div>
-
-                        {demoAnalytics && (
-                            <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Últimos 15 días</p>
-                                <div style={{ height: 60, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
-                                    {demoData.slice(-15).map((d, i) => (
-                                        <div key={i} style={{ flex: 1, height: `${(d.value / Math.max(...demoData.map(x => x.value))) * 100}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
-                                    ))}
                                 </div>
-                                <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Datos de demostración</p>
-                            </div>
+
+                                <h3 style={labelStyle}>📋 MODO DE OPERACIÓN</h3>
+                                <div style={cardStyle}>
+                                    <select value={config.orderMode || 'A1'} onChange={(e) => { updateConfig({ orderMode: e.target.value }); setConfig(getConfig()) }} style={{ width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, background: 'white' }}>
+                                        <option value="A1">A1: Budoni / Pickup rápido</option>
+                                        <option value="A2">A2: Café / Pago antes de preparar</option>
+                                        <option value="B">B: Restaurante / Pago al final</option>
+                                    </select>
+                                </div>
+                            </>
                         )}
-                    </>
-                )}
 
-                {/* ==================== HISTORIAL TAB ==================== */}
-                {activeTab === 'historial' && (
-                    <>
-                        <div style={{ background: '#FEF3C7', borderRadius: 8, padding: 12, marginBottom: 16 }}>
-                            <p style={{ fontSize: 12, color: '#92400E', margin: 0 }}>⚠️ Los registros son de solo lectura. No se pueden modificar pagos confirmados.</p>
-                        </div>
+                        {/* ==================== ANALYTICS TAB ==================== */}
+                        {activeTab === 'analytics' && (
+                            <>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                    <h3 style={{ ...labelStyle, marginBottom: 0 }}>📊 ANALYTICS</h3>
+                                    {userRole === 'superadmin' && (
+                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            Demo <input type="checkbox" checked={demoAnalytics} onChange={() => setDemoAnalytics(!demoAnalytics)} style={{ accentColor: '#22C55E' }} />
+                                        </label>
+                                    )}
+                                </div>
 
-                        <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                            {orders.length === 0 ? (
-                                <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF' }}><p style={{ fontSize: 14 }}>No hay registros aún</p></div>
-                            ) : (
-                                orders.slice(0, 15).map((order, i) => (
-                                    <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                            <div>
-                                                <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
-                                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
-                                            </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
-                                                    {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
-                                                </span>
-                                                <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
-                                            </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                                    <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Hoy</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{todayOrders.length}</p></div>
+                                    <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Semana</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{weekOrders.length}</p></div>
+                                    <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Mes</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{monthOrders.length}</p></div>
+                                    <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Total</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{orders.length}</p></div>
+                                </div>
+
+                                <div style={cardStyle}>
+                                    <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Ingresos totales</p>
+                                    <p style={{ fontSize: 28, fontWeight: 700, color: '#22C55E', margin: '4px 0 0' }}>${(demoAnalytics ? demoTotalSales : totalRevenue).toLocaleString()}</p>
+                                </div>
+
+                                {demoAnalytics && (
+                                    <div style={cardStyle}>
+                                        <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Últimos 15 días</p>
+                                        <div style={{ height: 60, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
+                                            {demoData.slice(-15).map((d, i) => (
+                                                <div key={i} style={{ flex: 1, height: `${(d.value / Math.max(...demoData.map(x => x.value))) * 100}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
+                                            ))}
                                         </div>
+                                        <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Datos de demostración</p>
                                     </div>
-                                ))
-                            )}
-                        </div>
-                    </>
-                )}
+                                )}
+                            </>
+                        )}
 
-            </div>
-        </div >
-    )
+                        {/* ==================== HISTORIAL TAB ==================== */}
+                        {activeTab === 'historial' && (
+                            <>
+                                <div style={{ background: '#FEF3C7', borderRadius: 8, padding: 12, marginBottom: 16 }}>
+                                    <p style={{ fontSize: 12, color: '#92400E', margin: 0 }}>⚠️ Los registros son de solo lectura. No se pueden modificar pagos confirmados.</p>
+                                </div>
+
+                                <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                                    {orders.length === 0 ? (
+                                        <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF' }}><p style={{ fontSize: 14 }}>No hay registros aún</p></div>
+                                    ) : (
+                                        orders.slice(0, 15).map((order, i) => (
+                                            <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <div>
+                                                        <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
+                                                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
+                                                            {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
+                                                        </span>
+                                                        <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </>
+                        )}
+
+                    </div>
+            </div >
+            )
 }
 
-export default SuperAdmin
+            export default SuperAdmin
