@@ -1152,11 +1152,50 @@ body {
   :root {
     /* Slightly relax container width for iPad */
     --max-width: 520px;
+    /* Increase nav height by ~50% for iPad (56px → 84px) */
+    --nav-height: 84px;
   }
 
   /* Restore square-like proportions for action cards */
   .quick-action {
     aspect-ratio: 1 / 1;
     min-height: unset;
+  }
+
+  /* Full-width bottom navigation on iPad */
+  .bottom-nav {
+    max-width: none;
+    left: 0;
+    transform: none;
+    border-radius: 0;
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+
+  /* Slightly larger icons on iPad */
+  .nav-icon {
+    width: 26px;
+    height: 26px;
+    margin-bottom: 4px;
+  }
+
+  /* Slightly larger labels on iPad */
+  .nav-label {
+    font-size: var(--font-size-sm);
+  }
+
+  /* Adjust camera button lift for taller nav */
+  .camera-button {
+    top: -28px;
+  }
+
+  .camera-inner {
+    width: 70px;
+    height: 70px;
+  }
+
+  .camera-icon {
+    width: 28px;
+    height: 28px;
   }
 }
