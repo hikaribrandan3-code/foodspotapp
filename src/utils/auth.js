@@ -30,7 +30,9 @@ export function login(username, password) {
                 role,
                 authenticated: true,
                 timestamp: Date.now(),
-                username
+                username,
+                // PATCH 3.9: Add email for Super Admin identity check
+                email: role === 'superadmin' ? 'superadmin@foodspot.app' : null
             }
             setItem(AUTH_STORAGE_KEY, session)
             return { success: true, role }
