@@ -8,6 +8,7 @@ import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
+import CoverImageEditor from '../../components/CoverImageEditor.jsx'
 
 // Generate seeded demo analytics data (30 days)
 function generateDemoData() {
@@ -98,6 +99,7 @@ function SuperAdmin() {
     const [userRole, setUserRole] = useState('superadmin')
     const [error, setError] = useState('')
     const [editingItem, setEditingItem] = useState(null)
+    const [showCoverEditor, setShowCoverEditor] = useState(false)
 
     // Mode selector state
     const [selectedMode, setSelectedMode] = useState(() => getUserMode() || 'owner')
@@ -300,1070 +302,1131 @@ function SuperAdmin() {
     const inputStyle = { width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', marginBottom: 12 }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-            {/* Dark Header */}
-            <div style={{ background: '#1F2937', padding: '16px 16px 14px', color: 'white' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'white', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
-                        <div>
-                            <h1 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>Panel de Administración</h1>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', margin: '2px 0 0' }}>{roleLabel} · Gestión del local</p>
+        <>
+            <div style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                {/* Dark Header */}
+                <div style={{ background: '#1F2937', padding: '16px 16px 14px', color: 'white' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'white', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
+                            <div>
+                                <h1 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>Panel de Administración</h1>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', margin: '2px 0 0' }}>{roleLabel} · Gestión del local</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {userRole === 'superadmin' && <span style={{ padding: '4px 8px', background: '#22C55E', borderRadius: 5, fontSize: 9, fontWeight: 700, color: 'white' }}>SUPER ADMIN</span>}
+                            {demoAnalytics && userRole === 'superadmin' && <span style={{ padding: '4px 6px', background: '#EAB308', borderRadius: 5, fontSize: 9, fontWeight: 600, color: 'white' }}>DEMO</span>}
+                            {/* Mode Switcher Dropdown (superadmin only) */}
+                            {userRole === 'superadmin' && (
+                                <select
+                                    value={selectedMode || 'owner'}
+                                    onChange={(e) => handleModeChange(e.target.value)}
+                                    style={{
+                                        padding: '4px 20px 4px 8px',
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                        border: 'none',
+                                        borderRadius: 5,
+                                        cursor: 'pointer',
+                                        background: `${modeOptions.find(m => m.value === selectedMode)?.color || '#22C55E'} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='white' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 6px center`,
+                                        color: 'white',
+                                        position: 'relative',
+                                        zIndex: 10,
+                                        pointerEvents: 'auto',
+                                        WebkitTapHighlightColor: 'transparent',
+                                        minWidth: 70
+                                    }}
+                                >
+                                    {modeOptions.map(opt => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {userRole === 'superadmin' && <span style={{ padding: '4px 8px', background: '#22C55E', borderRadius: 5, fontSize: 9, fontWeight: 700, color: 'white' }}>SUPER ADMIN</span>}
-                        {demoAnalytics && userRole === 'superadmin' && <span style={{ padding: '4px 6px', background: '#EAB308', borderRadius: 5, fontSize: 9, fontWeight: 600, color: 'white' }}>DEMO</span>}
-                        {/* Mode Switcher Dropdown (superadmin only) */}
-                        {userRole === 'superadmin' && (
-                            <select
-                                value={selectedMode || 'owner'}
-                                onChange={(e) => handleModeChange(e.target.value)}
-                                style={{
-                                    padding: '4px 20px 4px 8px',
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    border: 'none',
-                                    borderRadius: 5,
-                                    cursor: 'pointer',
-                                    background: `${modeOptions.find(m => m.value === selectedMode)?.color || '#22C55E'} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='white' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 6px center`,
-                                    color: 'white',
-                                    position: 'relative',
-                                    zIndex: 10,
-                                    pointerEvents: 'auto',
-                                    WebkitTapHighlightColor: 'transparent',
-                                    minWidth: 70
-                                }}
-                            >
-                                {modeOptions.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </select>
-                        )}
+                </div>
+
+                {/* Tab Navigation */}
+                <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    {tabs.map(tab => (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ flex: 'none', padding: '12px 14px', background: 'none', border: 'none', borderBottom: activeTab === tab.id ? '3px solid #22C55E' : '3px solid transparent', fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400, color: activeTab === tab.id ? '#1F2937' : '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* PATCH 3.9: Super Admin Mode Banner */}
+                {isTrueSuperAdmin() && (
+                    <div style={{
+                        background: SUPER_ADMIN_COLOR,
+                        color: 'white',
+                        padding: '10px 16px',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        textAlign: 'center',
+                        letterSpacing: '0.05em'
+                    }}>
+                        🔒 SUPER ADMIN MODE — SYSTEM CONTROLS ENABLED
                     </div>
-                </div>
-            </div>
-
-            {/* Tab Navigation */}
-            <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                {tabs.map(tab => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ flex: 'none', padding: '12px 14px', background: 'none', border: 'none', borderBottom: activeTab === tab.id ? '3px solid #22C55E' : '3px solid transparent', fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400, color: activeTab === tab.id ? '#1F2937' : '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
-
-            {/* PATCH 3.9: Super Admin Mode Banner */}
-            {isTrueSuperAdmin() && (
-                <div style={{
-                    background: SUPER_ADMIN_COLOR,
-                    color: 'white',
-                    padding: '10px 16px',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    letterSpacing: '0.05em'
-                }}>
-                    🔒 SUPER ADMIN MODE — SYSTEM CONTROLS ENABLED
-                </div>
-            )}
-
-            {/* Content */}
-            <div style={{ padding: 16 }}>
-
-                {/* ==================== RESUMEN TAB ==================== */}
-                {activeTab === 'resumen' && (
-                    <>
-                        <h3 style={labelStyle}>💳 PAGOS DEL DÍA</h3>
-                        <div style={cardStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#E0F2F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💳</div>
-                                    <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{mpOrders.length} sesiones</p></div>
-                                </div>
-                                <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>${mpTotal.toLocaleString()}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💵</div>
-                                    <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Efectivo</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{cashOrders.length} sesiones</p></div>
-                                </div>
-                                <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>${cashTotal.toLocaleString()}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                                <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>Total del día</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{todayOrders.length} sesiones</p></div>
-                                <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>${totalToday.toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        <h3 style={labelStyle}>SESIONES</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                            <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{weekOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Esta semana</p></div>
-                            <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{monthOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Este mes</p></div>
-                        </div>
-
-                        <button style={{ width: '100%', padding: '14px', background: '#22C55E', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>📄 Exportar PDF del mes</button>
-                    </>
                 )}
 
-                {/* ==================== INFO TAB ==================== */}
-                {activeTab === 'info' && canEdit && (
-                    <>
-                        <h3 style={labelStyle}>📍 INFORMACIÓN DEL LOCAL</h3>
-                        <div style={cardStyle}>
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>WhatsApp (contacto principal)</label>
-                            <input type="text" placeholder="+54 11 1234-5678" value={config.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
+                {/* Content */}
+                <div style={{ padding: 16 }}>
 
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección</label>
-                            <input type="text" placeholder="Av. Corrientes 1234" value={config.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={inputStyle} />
-
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Horarios</label>
-                            <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfo('hours', e.target.value)} style={inputStyle} />
-
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps (reseñas)</label>
-                            <input type="text" placeholder="https://maps.google.com/..." value={config.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={inputStyle} />
-
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Indicaciones / Notas</label>
-                            <input type="text" placeholder="Timbre 2A, subir escaleras" value={config.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
-                        </div>
-
-                        <h3 style={labelStyle}>🔗 LINKS EXTERNOS</h3>
-                        <div style={cardStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
-                                <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                    {/* ==================== RESUMEN TAB ==================== */}
+                    {activeTab === 'resumen' && (
+                        <>
+                            <h3 style={labelStyle}>💳 PAGOS DEL DÍA</h3>
+                            <div style={cardStyle}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ width: 32, height: 32, borderRadius: 8, background: '#E0F2F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💳</div>
+                                        <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{mpOrders.length} sesiones</p></div>
+                                    </div>
+                                    <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>${mpTotal.toLocaleString()}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ width: 32, height: 32, borderRadius: 8, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💵</div>
+                                        <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Efectivo</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{cashOrders.length} sesiones</p></div>
+                                    </div>
+                                    <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>${cashTotal.toLocaleString()}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                    <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>Total del día</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{todayOrders.length} sesiones</p></div>
+                                    <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>${totalToday.toLocaleString()}</span>
+                                </div>
                             </div>
-                            <input type="text" placeholder="Link de Rappi" value={config.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); setConfig(getConfig()) }} style={{ ...inputStyle, marginBottom: 14 }} />
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
-                                <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                            <h3 style={labelStyle}>SESIONES</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                                <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{weekOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Esta semana</p></div>
+                                <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{monthOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Este mes</p></div>
                             </div>
-                            <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); setConfig(getConfig()) }} style={{ ...inputStyle, marginBottom: 14 }} />
 
-                            {/* Mercado Pago Alias */}
-                            <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                                <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago (Alias)</span>
-                                <input
-                                    type="text"
-                                    placeholder="ej: grubclub.mp"
-                                    value={config.payments?.mercadoPagoAlias || ''}
-                                    onChange={(e) => {
-                                        const c = config.payments || {};
-                                        updateConfig({ payments: { ...c, mercadoPagoAlias: e.target.value } });
+                            <button style={{ width: '100%', padding: '14px', background: '#22C55E', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>📄 Exportar PDF del mes</button>
+                        </>
+                    )}
+
+                    {/* ==================== INFO TAB ==================== */}
+                    {activeTab === 'info' && canEdit && (
+                        <>
+                            <h3 style={labelStyle}>📍 INFORMACIÓN DEL LOCAL</h3>
+                            <div style={cardStyle}>
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>WhatsApp (contacto principal)</label>
+                                <input type="text" placeholder="+54 11 1234-5678" value={config.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
+
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección</label>
+                                <input type="text" placeholder="Av. Corrientes 1234" value={config.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={inputStyle} />
+
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Horarios</label>
+                                <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfo('hours', e.target.value)} style={inputStyle} />
+
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps (reseñas)</label>
+                                <input type="text" placeholder="https://maps.google.com/..." value={config.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={inputStyle} />
+
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Indicaciones / Notas</label>
+                                <input type="text" placeholder="Timbre 2A, subir escaleras" value={config.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
+                            </div>
+
+                            <h3 style={labelStyle}>🔗 LINKS EXTERNOS</h3>
+                            <div style={cardStyle}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                    <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
+                                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                                </div>
+                                <input type="text" placeholder="Link de Rappi" value={config.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); setConfig(getConfig()) }} style={{ ...inputStyle, marginBottom: 14 }} />
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                    <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
+                                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                                </div>
+                                <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); setConfig(getConfig()) }} style={{ ...inputStyle, marginBottom: 14 }} />
+
+                                {/* Mercado Pago Alias */}
+                                <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
+                                    <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago (Alias)</span>
+                                    <input
+                                        type="text"
+                                        placeholder="ej: grubclub.mp"
+                                        value={config.payments?.mercadoPagoAlias || ''}
+                                        onChange={(e) => {
+                                            const c = config.payments || {};
+                                            updateConfig({ payments: { ...c, mercadoPagoAlias: e.target.value } });
+                                            setConfig(getConfig())
+                                        }}
+                                        style={inputStyle}
+                                    />
+                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Si está vacío, no aparece en Info</p>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* ==================== MENU TAB ==================== */}
+                    {activeTab === 'menu' && canEdit && (
+                        <>
+                            <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
+                            {menu.categories?.map(category => (
+                                <div key={category.id} style={{ marginBottom: 20 }}>
+                                    <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.name}</h4>
+                                    {category.items?.map(item => (
+                                        <div key={item.id} style={{ ...cardStyle, marginBottom: 10 }}>
+                                            <div style={{ display: 'flex', gap: 10 }}>
+                                                {/* Image Preview/Upload */}
+                                                <div style={{ width: 60, flexShrink: 0 }}>
+                                                    <div
+                                                        onClick={() => {
+                                                            setUploadingItemId(`${category.id}-${item.id}`)
+                                                            document.getElementById(`menu-img-${category.id}-${item.id}`)?.click()
+                                                        }}
+                                                        style={{
+                                                            width: 60,
+                                                            height: 60,
+                                                            borderRadius: 8,
+                                                            background: item.image ? 'none' : '#F3F4F6',
+                                                            border: '2px dashed #D1D5DB',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            cursor: 'pointer',
+                                                            overflow: 'hidden'
+                                                        }}
+                                                    >
+                                                        {item.image ? (
+                                                            <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                            <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
+                                                        )}
+                                                    </div>
+                                                    <input
+                                                        id={`menu-img-${category.id}-${item.id}`}
+                                                        type="file"
+                                                        accept="image/jpeg,image/png"
+                                                        onChange={(e) => handleMenuImageUpload(e, category.id, item.id)}
+                                                        style={{ display: 'none' }}
+                                                    />
+                                                    {uploadingItemId === `${category.id}-${item.id}` && (
+                                                        <p style={{ fontSize: 9, color: '#6B7280', marginTop: 4, textAlign: 'center' }}>...</p>
+                                                    )}
+                                                </div>
+
+                                                {/* Item Details */}
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                        <div style={{ flex: 1 }}>
+                                                            <input type="text" value={item.name} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { name: e.target.value })} style={{ fontSize: 14, fontWeight: 500, border: 'none', padding: 0, width: '100%', marginBottom: 4 }} />
+                                                            <input type="number" value={item.price} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { price: parseFloat(e.target.value) || 0 })} style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, border: 'none', padding: 0, width: 80 }} />
+                                                        </div>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                Agotado
+                                                                <input type="checkbox" checked={item.outOfStock ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { outOfStock: e.target.checked })} style={{ accentColor: '#EF4444' }} />
+                                                            </label>
+                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                Promo
+                                                                <input type="checkbox" checked={item.isPromo ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { isPromo: e.target.checked })} style={{ accentColor: '#22C55E' }} />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    {item.isPromo && (
+                                                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
+                                                            <div style={{ display: 'flex', gap: 10 }}>
+                                                                <div style={{ flex: 1 }}>
+                                                                    <label style={{ fontSize: 10, color: '#9CA3AF' }}>Precio promo</label>
+                                                                    <input type="number" placeholder="Precio" value={item.promoPrice || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoPrice: parseFloat(e.target.value) || 0 })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {/* Remove Button */}
+                                                <button
+                                                    onClick={() => handleRemoveMenuItem(category.id, item.id)}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: '#EF4444',
+                                                        fontSize: 18,
+                                                        cursor: 'pointer',
+                                                        padding: 4,
+                                                        alignSelf: 'flex-start'
+                                                    }}
+                                                    title="Eliminar item"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {/* Add Item Button */}
+                                    <button
+                                        onClick={() => handleAddMenuItem(category.id)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            background: '#F3F4F6',
+                                            border: '2px dashed #D1D5DB',
+                                            borderRadius: 10,
+                                            fontSize: 13,
+                                            color: '#6B7280',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 6
+                                        }}
+                                    >
+                                        <span style={{ fontSize: 16 }}>+</span> Agregar ítem
+                                    </button>
+                                </div>
+                            ))}
+                        </>
+                    )}
+
+                    {/* ==================== BRANDING TAB ==================== */}
+                    {activeTab === 'branding' && canEdit && (
+                        <>
+                            <h3 style={labelStyle}>🎨 BRANDING</h3>
+                            <div style={cardStyle}>
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
+                                <input type="text" value={config.businessName || ''} onChange={(e) => { updateConfig({ businessName: e.target.value }); setConfig(getConfig()) }} style={inputStyle} />
+
+                                {/* Font Selector */}
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Tipografía</label>
+                                <select
+                                    value={config.branding?.fontFamily || 'Inter'}
+                                    onChange={(e) => { updateConfig({ branding: { ...config.branding, fontFamily: e.target.value } }); setConfig(getConfig()) }}
+                                    style={{ ...inputStyle, fontFamily: config.branding?.fontFamily || 'Inter' }}
+                                >
+                                    {CURATED_FONTS.map(font => (
+                                        <option key={font.name} value={font.name}>{font.label}</option>
+                                    ))}
+                                </select>
+
+                                {/* Font Weight Selector */}
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Peso de fuente</label>
+                                <select
+                                    value={config.branding?.fontWeight || '400'}
+                                    onChange={(e) => { updateConfig({ branding: { ...config.branding, fontWeight: e.target.value } }); setConfig(getConfig()) }}
+                                    style={{ ...inputStyle, fontWeight: config.branding?.fontWeight || '400' }}
+                                >
+                                    {FONT_WEIGHTS.map(weight => (
+                                        <option key={weight.value} value={weight.value}>{weight.label}</option>
+                                    ))}
+                                </select>
+
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8, marginTop: 16 }}>Colores</label>
+                                <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                                    <div>
+                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Primario</p>
+                                        <input type="color" value={config.colors?.primary || '#B8956A'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primary: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Secundario</p>
+                                        <input type="color" value={config.colors?.primaryLight || '#A89070'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Confirmación</p>
+                                        <input type="color" value={config.colors?.confirmation || '#22C55E'} onChange={(e) => { updateConfig({ colors: { ...config.colors, confirmation: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Powered by</p>
+                                        <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Phase 1 Navbar Branding - Color Picker Component */}
+                            <div style={{
+                                opacity: config.layoutPreset !== 'accent-nav' ? 0.4 : 1,
+                                pointerEvents: config.layoutPreset !== 'accent-nav' ? 'none' : 'auto'
+                            }}>
+                                <BrandingColorPicker
+                                    primaryColor={config.branding?.primaryColor || '#8B7355'}
+                                    iconColorMode={config.branding?.iconColorMode || 'white'}
+                                    onColorChange={(color) => {
+                                        updateConfig({ branding: { ...config.branding, primaryColor: color } })
                                         setConfig(getConfig())
                                     }}
-                                    style={inputStyle}
+                                    onIconModeChange={(mode) => {
+                                        updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
+                                        setConfig(getConfig())
+                                    }}
                                 />
-                                <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Si está vacío, no aparece en Info</p>
                             </div>
-                        </div>
-                    </>
-                )}
 
-                {/* ==================== MENU TAB ==================== */}
-                {activeTab === 'menu' && canEdit && (
-                    <>
-                        <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
-                        {menu.categories?.map(category => (
-                            <div key={category.id} style={{ marginBottom: 20 }}>
-                                <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.name}</h4>
-                                {category.items?.map(item => (
-                                    <div key={item.id} style={{ ...cardStyle, marginBottom: 10 }}>
-                                        <div style={{ display: 'flex', gap: 10 }}>
-                                            {/* Image Preview/Upload */}
-                                            <div style={{ width: 60, flexShrink: 0 }}>
-                                                <div
+                            {/* Hero Icons Customization (v2 - Fully Isolated) */}
+                            <h3 style={labelStyle}>🎯 HERO ICONS (INICIO)</h3>
+                            <div style={{
+                                opacity: config.layoutPreset && config.layoutPreset !== 'hero-color' ? 0.4 : 1,
+                                pointerEvents: config.layoutPreset && config.layoutPreset !== 'hero-color' ? 'none' : 'auto'
+                            }}>
+                                <div style={cardStyle}>
+                                    <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo e ícono para cada tile (Independiente de la navegación)</p>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                        {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                                            const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
+                                            const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
+                                            return (
+                                                <HeroIconPicker
+                                                    key={iconId}
+                                                    label={labels[iconId]}
+                                                    iconId={iconId}
+                                                    color={iconConfig.color}
+                                                    iconColorMode={iconConfig.iconColorMode}
+                                                    onColorChange={(newColor) => {
+                                                        updateConfig({
+                                                            heroIcons: {
+                                                                ...config.heroIcons,
+                                                                [iconId]: { ...iconConfig, color: newColor }
+                                                            }
+                                                        })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    onIconModeChange={(mode) => {
+                                                        updateConfig({
+                                                            heroIcons: {
+                                                                ...config.heroIcons,
+                                                                [iconId]: { ...iconConfig, iconColorMode: mode }
+                                                            }
+                                                        })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                />
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ============================================ */}
+                            {/* SYSTEM / SUPER ADMIN (PATCH 3.9) */}
+                            {/* ============================================ */}
+                            {isTrueSuperAdmin() && (
+                                <>
+                                    <h3 style={{
+                                        ...labelStyle,
+                                        color: SUPER_ADMIN_COLOR,
+                                        borderLeft: `3px solid ${SUPER_ADMIN_COLOR}`,
+                                        paddingLeft: 8,
+                                        marginLeft: -8
+                                    }}>🔒 SYSTEM / SUPER ADMIN</h3>
+                                    <div style={{
+                                        ...cardStyle,
+                                        border: `2px solid ${SUPER_ADMIN_COLOR}`,
+                                        background: '#FAF5FF'
+                                    }}>
+                                        <p style={{ fontSize: 12, color: '#7C3AED', marginBottom: 16, fontWeight: 500 }}>
+                                            ⚠️ System-level controls. Changes affect all instances.
+                                        </p>
+
+                                        {/* Header Branding Mode Toggle */}
+                                        <div style={{ marginBottom: 16 }}>
+                                            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                                Header Branding
+                                            </label>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <button
                                                     onClick={() => {
-                                                        setUploadingItemId(`${category.id}-${item.id}`)
-                                                        document.getElementById(`menu-img-${category.id}-${item.id}`)?.click()
+                                                        updateConfig({ headerBranding: { mode: 'cover' } })
+                                                        setConfig(getConfig())
                                                     }}
                                                     style={{
-                                                        width: 60,
-                                                        height: 60,
-                                                        borderRadius: 8,
-                                                        background: item.image ? 'none' : '#F3F4F6',
+                                                        flex: 1, padding: '10px 12px', borderRadius: 8,
+                                                        border: (config.headerBranding?.mode || 'cover') === 'cover' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
+                                                        background: (config.headerBranding?.mode || 'cover') === 'cover' ? '#FAF5FF' : 'white',
+                                                        color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    🖼️ Cover
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        updateConfig({ headerBranding: { mode: 'text' } })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={{
+                                                        flex: 1, padding: '10px 12px', borderRadius: 8,
+                                                        border: config.headerBranding?.mode === 'text' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
+                                                        background: config.headerBranding?.mode === 'text' ? '#FAF5FF' : 'white',
+                                                        color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    📝 Text
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (!config.logoLight && !config.logoDark) {
+                                                            alert('Please configure logos first before switching to logo mode.')
+                                                            return
+                                                        }
+                                                        updateConfig({ headerBranding: { mode: 'logo' } })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={{
+                                                        flex: 1, padding: '10px 12px', borderRadius: 8,
+                                                        border: config.headerBranding?.mode === 'logo' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
+                                                        background: config.headerBranding?.mode === 'logo' ? '#FAF5FF' : 'white',
+                                                        color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    🏷️ Logo
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Cover Editor - only show when mode is "cover" */}
+                                        {(config.headerBranding?.mode === 'cover' || !config.headerBranding?.mode) && (
+                                            <div style={{ marginBottom: 16 }}>
+                                                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                                    Cover Image
+                                                </label>
+                                                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>Facebook-style header with drag and zoom</p>
+
+                                                {/* Upload Dropbox - Dark Frame for Visibility */}
+                                                <div style={{
+                                                    background: '#111827',
+                                                    borderRadius: 12,
+                                                    padding: 12,
+                                                    marginBottom: 4
+                                                }}>
+                                                    <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 8, textAlign: 'center' }}>
+                                                        📱 HEADER PREVIEW — 64px height
+                                                    </p>
+                                                    <div
+                                                        onClick={() => document.getElementById('cover-image-upload')?.click()}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: 64,
+                                                            border: '2px solid #374151',
+                                                            borderRadius: 4,
+                                                            overflow: 'hidden',
+                                                            cursor: 'pointer',
+                                                            background: '#1F2937',
+                                                            position: 'relative'
+                                                        }}
+                                                    >
+                                                        {config.headerCover?.image ? (
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                inset: 0,
+                                                                backgroundImage: `url(${config.headerCover.image})`,
+                                                                backgroundSize: `${(config.headerCover?.scale || 1) * 100}%`,
+                                                                backgroundPosition: `${50 + (config.headerCover?.offsetX || 0)}% ${50 + (config.headerCover?.offsetY || 0)}%`,
+                                                                backgroundRepeat: 'no-repeat'
+                                                            }} />
+                                                        ) : (
+                                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    id="cover-image-upload"
+                                                    type="file"
+                                                    accept="image/png,image/jpeg"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0]
+                                                        if (!file) return
+                                                        const reader = new FileReader()
+                                                        reader.onload = (ev) => {
+                                                            updateConfig({
+                                                                headerCover: {
+                                                                    ...config.headerCover,
+                                                                    image: ev.target.result
+                                                                }
+                                                            })
+                                                            setConfig(getConfig())
+                                                        }
+                                                        reader.readAsDataURL(file)
+                                                    }}
+                                                />
+
+                                                {/* Add Cover button when no image */}
+                                                {!config.headerCover?.image && (
+                                                    <button
+                                                        onClick={() => setShowCoverEditor(true)}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '14px 16px',
+                                                            background: SUPER_ADMIN_COLOR,
+                                                            color: '#fff',
+                                                            border: 'none',
+                                                            borderRadius: 8,
+                                                            fontSize: 13,
+                                                            fontWeight: 600,
+                                                            cursor: 'pointer',
+                                                            marginTop: 8
+                                                        }}
+                                                    >
+                                                        📷 Add Cover Photo
+                                                    </button>
+                                                )}
+
+                                                {/* Controls - only show when image exists */}
+                                                {config.headerCover?.image && (
+                                                    <>
+                                                        {/* Scale Slider */}
+                                                        <div style={{ marginTop: 12 }}>
+                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                                                Scale: {Math.round((config.headerCover?.scale || 1) * 100)}%
+                                                            </label>
+                                                            <input
+                                                                type="range"
+                                                                min="50"
+                                                                max="300"
+                                                                value={(config.headerCover?.scale || 1) * 100}
+                                                                onChange={(e) => {
+                                                                    updateConfig({
+                                                                        headerCover: {
+                                                                            ...config.headerCover,
+                                                                            scale: parseInt(e.target.value) / 100
+                                                                        }
+                                                                    })
+                                                                    setConfig(getConfig())
+                                                                }}
+                                                                style={{ width: '100%' }}
+                                                            />
+                                                        </div>
+
+                                                        {/* X Offset Slider */}
+                                                        <div style={{ marginTop: 8 }}>
+                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                                                X Offset: {config.headerCover?.offsetX || 0}%
+                                                            </label>
+                                                            <input
+                                                                type="range"
+                                                                min="-50"
+                                                                max="50"
+                                                                value={config.headerCover?.offsetX || 0}
+                                                                onChange={(e) => {
+                                                                    updateConfig({
+                                                                        headerCover: {
+                                                                            ...config.headerCover,
+                                                                            offsetX: parseInt(e.target.value)
+                                                                        }
+                                                                    })
+                                                                    setConfig(getConfig())
+                                                                }}
+                                                                style={{ width: '100%' }}
+                                                            />
+                                                        </div>
+
+                                                        {/* Y Offset Slider */}
+                                                        <div style={{ marginTop: 8 }}>
+                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                                                Y Offset: {config.headerCover?.offsetY || 0}%
+                                                            </label>
+                                                            <input
+                                                                type="range"
+                                                                min="-50"
+                                                                max="50"
+                                                                value={config.headerCover?.offsetY || 0}
+                                                                onChange={(e) => {
+                                                                    updateConfig({
+                                                                        headerCover: {
+                                                                            ...config.headerCover,
+                                                                            offsetY: parseInt(e.target.value)
+                                                                        }
+                                                                    })
+                                                                    setConfig(getConfig())
+                                                                }}
+                                                                style={{ width: '100%' }}
+                                                            />
+                                                        </div>
+
+                                                        {/* Action Buttons */}
+                                                        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                                                            <button
+                                                                onClick={() => setShowCoverEditor(true)}
+                                                                style={{
+                                                                    flex: 1,
+                                                                    padding: '10px 14px',
+                                                                    background: SUPER_ADMIN_COLOR,
+                                                                    color: '#fff',
+                                                                    border: 'none',
+                                                                    borderRadius: 8,
+                                                                    fontSize: 12,
+                                                                    fontWeight: 600,
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                            >
+                                                                ✏️ Edit Cover
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    updateConfig({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } })
+                                                                    setConfig(getConfig())
+                                                                }}
+                                                                style={{
+                                                                    padding: '10px 14px',
+                                                                    background: 'none',
+                                                                    color: '#DC2626',
+                                                                    border: '1px solid #DC2626',
+                                                                    borderRadius: 8,
+                                                                    fontSize: 12,
+                                                                    fontWeight: 600,
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Logo inputs only show when mode is "logo" */}
+                                        {config.headerBranding?.mode === 'logo' && (
+                                            <>
+                                                {/* Logo Light Upload */}
+                                                <div style={{ marginBottom: 16 }}>
+                                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                                        Logo (Light Mode)
+                                                    </label>
+                                                    <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Dark logo for white/light backgrounds</p>
+                                                    <div
+                                                        onClick={() => document.getElementById('logo-light-upload')?.click()}
+                                                        style={{
+                                                            border: '2px dashed #D1D5DB',
+                                                            borderRadius: 8,
+                                                            padding: 20,
+                                                            textAlign: 'center',
+                                                            cursor: 'pointer',
+                                                            background: '#FAFAFA'
+                                                        }}
+                                                    >
+                                                        {config.logoLight ? (
+                                                            <img src={config.logoLight} alt="Logo Light" style={{ maxHeight: 48, width: 'auto' }} />
+                                                        ) : (
+                                                            <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload PNG/JPG</span>
+                                                        )}
+                                                    </div>
+                                                    <input
+                                                        id="logo-light-upload"
+                                                        type="file"
+                                                        accept="image/png,image/jpeg"
+                                                        style={{ display: 'none' }}
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0]
+                                                            if (!file) return
+                                                            const reader = new FileReader()
+                                                            reader.onload = (ev) => {
+                                                                updateConfig({ logoLight: ev.target.result })
+                                                                setConfig(getConfig())
+                                                            }
+                                                            reader.readAsDataURL(file)
+                                                        }}
+                                                    />
+                                                    {config.logoLight && (
+                                                        <button
+                                                            onClick={() => { updateConfig({ logoLight: null }); setConfig(getConfig()) }}
+                                                            style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                        >
+                                                            ✕ Remove
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* Logo Dark Upload */}
+                                                <div>
+                                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                                        Logo (Dark Mode)
+                                                    </label>
+                                                    <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Light/white logo for dark backgrounds</p>
+                                                    <div
+                                                        onClick={() => document.getElementById('logo-dark-upload')?.click()}
+                                                        style={{
+                                                            border: '2px dashed #D1D5DB',
+                                                            borderRadius: 8,
+                                                            padding: 20,
+                                                            textAlign: 'center',
+                                                            cursor: 'pointer',
+                                                            background: '#1F2937'
+                                                        }}
+                                                    >
+                                                        {config.logoDark ? (
+                                                            <img src={config.logoDark} alt="Logo Dark" style={{ maxHeight: 48, width: 'auto' }} />
+                                                        ) : (
+                                                            <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload PNG/JPG</span>
+                                                        )}
+                                                    </div>
+                                                    <input
+                                                        id="logo-dark-upload"
+                                                        type="file"
+                                                        accept="image/png,image/jpeg"
+                                                        style={{ display: 'none' }}
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0]
+                                                            if (!file) return
+                                                            const reader = new FileReader()
+                                                            reader.onload = (ev) => {
+                                                                updateConfig({ logoDark: ev.target.result })
+                                                                setConfig(getConfig())
+                                                            }
+                                                            reader.readAsDataURL(file)
+                                                        }}
+                                                    />
+                                                    {config.logoDark && (
+                                                        <button
+                                                            onClick={() => { updateConfig({ logoDark: null }); setConfig(getConfig()) }}
+                                                            style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                        >
+                                                            ✕ Remove
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* PATCH 3.7: Layout Presets - One-Click System */}
+                            <h3 style={labelStyle}>⚡ LAYOUT PRESET</h3>
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>
+                                    One-click layout. Disables individual controls when active.
+                                </p>
+                                {config.layoutPreset && config.layoutPreset !== 'none' && (
+                                    <div style={{
+                                        padding: '8px 12px',
+                                        background: '#FEF3C7',
+                                        borderRadius: 8,
+                                        marginBottom: 12,
+                                        fontSize: 12,
+                                        color: '#92400E'
+                                    }}>
+                                        ⚠️ Preset Active — Individual styling is locked to maintain consistency.
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <button
+                                        onClick={() => {
+                                            updateConfig({ layoutPreset: 'minimal' })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px 8px',
+                                            borderRadius: 10,
+                                            border: config.layoutPreset === 'minimal' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                            background: '#FFFFFF',
+                                            color: '#1F2937',
+                                            fontSize: 12,
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Minimal
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            updateConfig({ layoutPreset: 'accent-nav' })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px 8px',
+                                            borderRadius: 10,
+                                            border: config.layoutPreset === 'accent-nav' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                            background: '#FFFFFF',
+                                            color: '#1F2937',
+                                            fontSize: 12,
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Accent Nav
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            updateConfig({ layoutPreset: 'hero-color' })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px 8px',
+                                            borderRadius: 10,
+                                            border: config.layoutPreset === 'hero-color' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                            background: '#FFFFFF',
+                                            color: '#1F2937',
+                                            fontSize: 12,
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Hero Color
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Canvas V1 - Light/Dark */}
+                            <h3 style={labelStyle}>🎨 CANVAS (FONDO)</h3>
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo general de la app</p>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <button
+                                        onClick={() => {
+                                            updateConfig({ canvasMode: 'light' })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px 16px',
+                                            borderRadius: 10,
+                                            border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                            background: '#FFFFFF',
+                                            color: '#1F2937',
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        ☀️ Claro
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            updateConfig({ canvasMode: 'dark' })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px 16px',
+                                            borderRadius: 10,
+                                            border: config.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                            background: '#1F2937',
+                                            color: '#FFFFFF',
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        🌙 Oscuro
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Divider Preset Selector */}
+                            <h3 style={labelStyle}>🖼️ IMAGEN DECORATIVA (Menú/Pedido)</h3>
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Imagen que aparece debajo del nombre en Menú y Pedido</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                                    {DIVIDER_PRESETS.map(preset => (
+                                        <div
+                                            key={preset.id}
+                                            onClick={() => { updateConfig({ dividerPresetId: preset.id }); setConfig(getConfig()) }}
+                                            style={{
+                                                cursor: 'pointer',
+                                                borderRadius: 8,
+                                                overflow: 'hidden',
+                                                border: config.dividerPresetId === preset.id ? '3px solid #22C55E' : '2px solid #E5E7EB',
+                                                opacity: config.dividerPresetId === preset.id ? 1 : 0.7
+                                            }}
+                                        >
+                                            <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
+                                        </div>
+                                    ))}
+                                </div>
+                                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
+                                    Actual: {DIVIDER_PRESETS.find(p => p.id === config.dividerPresetId)?.name || 'Ninguna'}
+                                </p>
+                            </div>
+
+                            {/* Featured Photos Controls - Standalone System */}
+                            <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home) - 4 slots fijos</h3>
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Estos 4 items aparecen en la página de inicio</p>
+                                {[0, 1, 2, 3].map(slotIndex => {
+                                    const currentSlot = config.featuredPhotos?.[slotIndex] || {}
+
+                                    return (
+                                        <div key={slotIndex} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
+                                            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                                                {/* Image Preview/Upload */}
+                                                <div
+                                                    onClick={() => document.getElementById(`featured-img-${slotIndex}`)?.click()}
+                                                    style={{
+                                                        width: 80,
+                                                        height: 80,
+                                                        borderRadius: 12,
+                                                        background: currentSlot.image ? 'none' : '#F3F4F6',
                                                         border: '2px dashed #D1D5DB',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
                                                         cursor: 'pointer',
-                                                        overflow: 'hidden'
+                                                        overflow: 'hidden',
+                                                        flexShrink: 0
                                                     }}
                                                 >
-                                                    {item.image ? (
-                                                        <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    {currentSlot.image ? (
+                                                        <img src={currentSlot.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     ) : (
-                                                        <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
+                                                        <span style={{ fontSize: 24, color: '#9CA3AF' }}>📷</span>
                                                     )}
                                                 </div>
                                                 <input
-                                                    id={`menu-img-${category.id}-${item.id}`}
+                                                    id={`featured-img-${slotIndex}`}
                                                     type="file"
                                                     accept="image/jpeg,image/png"
-                                                    onChange={(e) => handleMenuImageUpload(e, category.id, item.id)}
+                                                    onChange={(e) => handleFeaturedImageUpload(e, slotIndex)}
                                                     style={{ display: 'none' }}
                                                 />
-                                                {uploadingItemId === `${category.id}-${item.id}` && (
-                                                    <p style={{ fontSize: 9, color: '#6B7280', marginTop: 4, textAlign: 'center' }}>...</p>
-                                                )}
-                                            </div>
 
-                                            {/* Item Details */}
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                    <div style={{ flex: 1 }}>
-                                                        <input type="text" value={item.name} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { name: e.target.value })} style={{ fontSize: 14, fontWeight: 500, border: 'none', padding: 0, width: '100%', marginBottom: 4 }} />
-                                                        <input type="number" value={item.price} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { price: parseFloat(e.target.value) || 0 })} style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, border: 'none', padding: 0, width: 80 }} />
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                            Agotado
-                                                            <input type="checkbox" checked={item.outOfStock ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { outOfStock: e.target.checked })} style={{ accentColor: '#EF4444' }} />
-                                                        </label>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                            Promo
-                                                            <input type="checkbox" checked={item.isPromo ?? false} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { isPromo: e.target.checked })} style={{ accentColor: '#22C55E' }} />
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                {item.isPromo && (
-                                                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                                                        <div style={{ display: 'flex', gap: 10 }}>
-                                                            <div style={{ flex: 1 }}>
-                                                                <label style={{ fontSize: 10, color: '#9CA3AF' }}>Precio promo</label>
-                                                                <input type="number" placeholder="Precio" value={item.promoPrice || ''} onChange={(e) => handleUpdateMenuItem(category.id, item.id, { promoPrice: parseFloat(e.target.value) || 0 })} style={{ width: '100%', padding: '6px 8px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12 }} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {/* Remove Button */}
-                                            <button
-                                                onClick={() => handleRemoveMenuItem(category.id, item.id)}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    color: '#EF4444',
-                                                    fontSize: 18,
-                                                    cursor: 'pointer',
-                                                    padding: 4,
-                                                    alignSelf: 'flex-start'
-                                                }}
-                                                title="Eliminar item"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                {/* Add Item Button */}
-                                <button
-                                    onClick={() => handleAddMenuItem(category.id)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        background: '#F3F4F6',
-                                        border: '2px dashed #D1D5DB',
-                                        borderRadius: 10,
-                                        fontSize: 13,
-                                        color: '#6B7280',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 6
-                                    }}
-                                >
-                                    <span style={{ fontSize: 16 }}>+</span> Agregar ítem
-                                </button>
-                            </div>
-                        ))}
-                    </>
-                )}
-
-                {/* ==================== BRANDING TAB ==================== */}
-                {activeTab === 'branding' && canEdit && (
-                    <>
-                        <h3 style={labelStyle}>🎨 BRANDING</h3>
-                        <div style={cardStyle}>
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
-                            <input type="text" value={config.businessName || ''} onChange={(e) => { updateConfig({ businessName: e.target.value }); setConfig(getConfig()) }} style={inputStyle} />
-
-                            {/* Font Selector */}
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Tipografía</label>
-                            <select
-                                value={config.branding?.fontFamily || 'Inter'}
-                                onChange={(e) => { updateConfig({ branding: { ...config.branding, fontFamily: e.target.value } }); setConfig(getConfig()) }}
-                                style={{ ...inputStyle, fontFamily: config.branding?.fontFamily || 'Inter' }}
-                            >
-                                {CURATED_FONTS.map(font => (
-                                    <option key={font.name} value={font.name}>{font.label}</option>
-                                ))}
-                            </select>
-
-                            {/* Font Weight Selector */}
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Peso de fuente</label>
-                            <select
-                                value={config.branding?.fontWeight || '400'}
-                                onChange={(e) => { updateConfig({ branding: { ...config.branding, fontWeight: e.target.value } }); setConfig(getConfig()) }}
-                                style={{ ...inputStyle, fontWeight: config.branding?.fontWeight || '400' }}
-                            >
-                                {FONT_WEIGHTS.map(weight => (
-                                    <option key={weight.value} value={weight.value}>{weight.label}</option>
-                                ))}
-                            </select>
-
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8, marginTop: 16 }}>Colores</label>
-                            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-                                <div>
-                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Primario</p>
-                                    <input type="color" value={config.colors?.primary || '#B8956A'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primary: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Secundario</p>
-                                    <input type="color" value={config.colors?.primaryLight || '#A89070'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Confirmación</p>
-                                    <input type="color" value={config.colors?.confirmation || '#22C55E'} onChange={(e) => { updateConfig({ colors: { ...config.colors, confirmation: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Powered by</p>
-                                    <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Phase 1 Navbar Branding - Color Picker Component */}
-                        <div style={{
-                            opacity: config.layoutPreset !== 'accent-nav' ? 0.4 : 1,
-                            pointerEvents: config.layoutPreset !== 'accent-nav' ? 'none' : 'auto'
-                        }}>
-                            <BrandingColorPicker
-                                primaryColor={config.branding?.primaryColor || '#8B7355'}
-                                iconColorMode={config.branding?.iconColorMode || 'white'}
-                                onColorChange={(color) => {
-                                    updateConfig({ branding: { ...config.branding, primaryColor: color } })
-                                    setConfig(getConfig())
-                                }}
-                                onIconModeChange={(mode) => {
-                                    updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
-                                    setConfig(getConfig())
-                                }}
-                            />
-                        </div>
-
-                        {/* Hero Icons Customization (v2 - Fully Isolated) */}
-                        <h3 style={labelStyle}>🎯 HERO ICONS (INICIO)</h3>
-                        <div style={{
-                            opacity: config.layoutPreset && config.layoutPreset !== 'hero-color' ? 0.4 : 1,
-                            pointerEvents: config.layoutPreset && config.layoutPreset !== 'hero-color' ? 'none' : 'auto'
-                        }}>
-                            <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo e ícono para cada tile (Independiente de la navegación)</p>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                    {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
-                                        const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
-                                        const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
-                                        return (
-                                            <HeroIconPicker
-                                                key={iconId}
-                                                label={labels[iconId]}
-                                                iconId={iconId}
-                                                color={iconConfig.color}
-                                                iconColorMode={iconConfig.iconColorMode}
-                                                onColorChange={(newColor) => {
-                                                    updateConfig({
-                                                        heroIcons: {
-                                                            ...config.heroIcons,
-                                                            [iconId]: { ...iconConfig, color: newColor }
-                                                        }
-                                                    })
-                                                    setConfig(getConfig())
-                                                }}
-                                                onIconModeChange={(mode) => {
-                                                    updateConfig({
-                                                        heroIcons: {
-                                                            ...config.heroIcons,
-                                                            [iconId]: { ...iconConfig, iconColorMode: mode }
-                                                        }
-                                                    })
-                                                    setConfig(getConfig())
-                                                }}
-                                            />
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ============================================ */}
-                        {/* SYSTEM / SUPER ADMIN (PATCH 3.9) */}
-                        {/* ============================================ */}
-                        {isTrueSuperAdmin() && (
-                            <>
-                                <h3 style={{
-                                    ...labelStyle,
-                                    color: SUPER_ADMIN_COLOR,
-                                    borderLeft: `3px solid ${SUPER_ADMIN_COLOR}`,
-                                    paddingLeft: 8,
-                                    marginLeft: -8
-                                }}>🔒 SYSTEM / SUPER ADMIN</h3>
-                                <div style={{
-                                    ...cardStyle,
-                                    border: `2px solid ${SUPER_ADMIN_COLOR}`,
-                                    background: '#FAF5FF'
-                                }}>
-                                    <p style={{ fontSize: 12, color: '#7C3AED', marginBottom: 16, fontWeight: 500 }}>
-                                        ⚠️ System-level controls. Changes affect all instances.
-                                    </p>
-
-                                    {/* Header Branding Mode Toggle */}
-                                    <div style={{ marginBottom: 16 }}>
-                                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                            Header Branding
-                                        </label>
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            <button
-                                                onClick={() => {
-                                                    updateConfig({ headerBranding: { mode: 'cover' } })
-                                                    setConfig(getConfig())
-                                                }}
-                                                style={{
-                                                    flex: 1, padding: '10px 12px', borderRadius: 8,
-                                                    border: (config.headerBranding?.mode || 'cover') === 'cover' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
-                                                    background: (config.headerBranding?.mode || 'cover') === 'cover' ? '#FAF5FF' : 'white',
-                                                    color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
-                                                }}
-                                            >
-                                                🖼️ Cover
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    updateConfig({ headerBranding: { mode: 'text' } })
-                                                    setConfig(getConfig())
-                                                }}
-                                                style={{
-                                                    flex: 1, padding: '10px 12px', borderRadius: 8,
-                                                    border: config.headerBranding?.mode === 'text' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
-                                                    background: config.headerBranding?.mode === 'text' ? '#FAF5FF' : 'white',
-                                                    color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
-                                                }}
-                                            >
-                                                📝 Text
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (!config.logoLight && !config.logoDark) {
-                                                        alert('Please configure logos first before switching to logo mode.')
-                                                        return
-                                                    }
-                                                    updateConfig({ headerBranding: { mode: 'logo' } })
-                                                    setConfig(getConfig())
-                                                }}
-                                                style={{
-                                                    flex: 1, padding: '10px 12px', borderRadius: 8,
-                                                    border: config.headerBranding?.mode === 'logo' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
-                                                    background: config.headerBranding?.mode === 'logo' ? '#FAF5FF' : 'white',
-                                                    color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
-                                                }}
-                                            >
-                                                🏷️ Logo
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Cover Editor - only show when mode is "cover" */}
-                                    {(config.headerBranding?.mode === 'cover' || !config.headerBranding?.mode) && (
-                                        <div style={{ marginBottom: 16 }}>
-                                            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                                Cover Image
-                                            </label>
-                                            <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Upload PNG/JPG for Facebook-style header</p>
-
-                                            {/* Upload Dropbox - Dark Frame for Visibility */}
-                                            <div style={{
-                                                background: '#111827',
-                                                borderRadius: 12,
-                                                padding: 12,
-                                                marginBottom: 4
-                                            }}>
-                                                <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 8, textAlign: 'center' }}>
-                                                    📱 HEADER PREVIEW — 64px height
-                                                </p>
-                                                <div
-                                                    onClick={() => document.getElementById('cover-image-upload')?.click()}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: 64,
-                                                        border: '2px solid #374151',
-                                                        borderRadius: 4,
-                                                        overflow: 'hidden',
-                                                        cursor: 'pointer',
-                                                        background: '#1F2937',
-                                                        position: 'relative'
-                                                    }}
-                                                >
-                                                    {config.headerCover?.image ? (
-                                                        <div style={{
-                                                            position: 'absolute',
-                                                            inset: 0,
-                                                            backgroundImage: `url(${config.headerCover.image})`,
-                                                            backgroundSize: `${(config.headerCover?.scale || 1) * 100}%`,
-                                                            backgroundPosition: `${50 + (config.headerCover?.offsetX || 0)}% ${50 + (config.headerCover?.offsetY || 0)}%`,
-                                                            backgroundRepeat: 'no-repeat'
-                                                        }} />
-                                                    ) : (
-                                                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <input
-                                                id="cover-image-upload"
-                                                type="file"
-                                                accept="image/png,image/jpeg"
-                                                style={{ display: 'none' }}
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0]
-                                                    if (!file) return
-                                                    const reader = new FileReader()
-                                                    reader.onload = (ev) => {
-                                                        updateConfig({
-                                                            headerCover: {
-                                                                ...config.headerCover,
-                                                                image: ev.target.result
-                                                            }
-                                                        })
-                                                        setConfig(getConfig())
-                                                    }
-                                                    reader.readAsDataURL(file)
-                                                }}
-                                            />
-
-                                            {/* Controls - only show when image exists */}
-                                            {config.headerCover?.image && (
-                                                <>
-                                                    {/* Scale Slider */}
-                                                    <div style={{ marginTop: 12 }}>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
-                                                            Scale: {Math.round((config.headerCover?.scale || 1) * 100)}%
-                                                        </label>
-                                                        <input
-                                                            type="range"
-                                                            min="50"
-                                                            max="300"
-                                                            value={(config.headerCover?.scale || 1) * 100}
-                                                            onChange={(e) => {
-                                                                updateConfig({
-                                                                    headerCover: {
-                                                                        ...config.headerCover,
-                                                                        scale: parseInt(e.target.value) / 100
-                                                                    }
-                                                                })
-                                                                setConfig(getConfig())
-                                                            }}
-                                                            style={{ width: '100%' }}
-                                                        />
-                                                    </div>
-
-                                                    {/* X Offset Slider */}
-                                                    <div style={{ marginTop: 8 }}>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
-                                                            X Offset: {config.headerCover?.offsetX || 0}%
-                                                        </label>
-                                                        <input
-                                                            type="range"
-                                                            min="-50"
-                                                            max="50"
-                                                            value={config.headerCover?.offsetX || 0}
-                                                            onChange={(e) => {
-                                                                updateConfig({
-                                                                    headerCover: {
-                                                                        ...config.headerCover,
-                                                                        offsetX: parseInt(e.target.value)
-                                                                    }
-                                                                })
-                                                                setConfig(getConfig())
-                                                            }}
-                                                            style={{ width: '100%' }}
-                                                        />
-                                                    </div>
-
-                                                    {/* Y Offset Slider */}
-                                                    <div style={{ marginTop: 8 }}>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
-                                                            Y Offset: {config.headerCover?.offsetY || 0}%
-                                                        </label>
-                                                        <input
-                                                            type="range"
-                                                            min="-50"
-                                                            max="50"
-                                                            value={config.headerCover?.offsetY || 0}
-                                                            onChange={(e) => {
-                                                                updateConfig({
-                                                                    headerCover: {
-                                                                        ...config.headerCover,
-                                                                        offsetY: parseInt(e.target.value)
-                                                                    }
-                                                                })
-                                                                setConfig(getConfig())
-                                                            }}
-                                                            style={{ width: '100%' }}
-                                                        />
-                                                    </div>
-
-                                                    {/* Remove Button */}
-                                                    <button
-                                                        onClick={() => {
-                                                            updateConfig({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } })
+                                                {/* Slot Controls - Name & Price */}
+                                                <div style={{ flex: 1 }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nombre del item"
+                                                        value={currentSlot.name || ''}
+                                                        onChange={(e) => {
+                                                            const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
+                                                            newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
+                                                            updateConfig({ featuredPhotos: newPhotos })
                                                             setConfig(getConfig())
                                                         }}
-                                                        style={{ marginTop: 12, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
-                                                    >
-                                                        ✕ Remove Cover
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Logo inputs only show when mode is "logo" */}
-                                    {config.headerBranding?.mode === 'logo' && (
-                                        <>
-                                            {/* Logo Light Upload */}
-                                            <div style={{ marginBottom: 16 }}>
-                                                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                                    Logo (Light Mode)
-                                                </label>
-                                                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Dark logo for white/light backgrounds</p>
-                                                <div
-                                                    onClick={() => document.getElementById('logo-light-upload')?.click()}
-                                                    style={{
-                                                        border: '2px dashed #D1D5DB',
-                                                        borderRadius: 8,
-                                                        padding: 20,
-                                                        textAlign: 'center',
-                                                        cursor: 'pointer',
-                                                        background: '#FAFAFA'
-                                                    }}
-                                                >
-                                                    {config.logoLight ? (
-                                                        <img src={config.logoLight} alt="Logo Light" style={{ maxHeight: 48, width: 'auto' }} />
-                                                    ) : (
-                                                        <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload PNG/JPG</span>
+                                                        style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, marginBottom: 6 }}
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Precio"
+                                                        value={currentSlot.price || ''}
+                                                        onChange={(e) => {
+                                                            const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
+                                                            newPhotos[slotIndex] = { ...newPhotos[slotIndex], price: parseFloat(e.target.value) || 0 }
+                                                            updateConfig({ featuredPhotos: newPhotos })
+                                                            setConfig(getConfig())
+                                                        }}
+                                                        style={{ width: 100, padding: '6px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12 }}
+                                                    />
+                                                    {uploadingFeaturedSlot === slotIndex && (
+                                                        <p style={{ fontSize: 10, color: '#6B7280', marginTop: 4 }}>Optimizando...</p>
                                                     )}
                                                 </div>
-                                                <input
-                                                    id="logo-light-upload"
-                                                    type="file"
-                                                    accept="image/png,image/jpeg"
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => {
-                                                        const file = e.target.files?.[0]
-                                                        if (!file) return
-                                                        const reader = new FileReader()
-                                                        reader.onload = (ev) => {
-                                                            updateConfig({ logoLight: ev.target.result })
-                                                            setConfig(getConfig())
-                                                        }
-                                                        reader.readAsDataURL(file)
-                                                    }}
-                                                />
-                                                {config.logoLight && (
-                                                    <button
-                                                        onClick={() => { updateConfig({ logoLight: null }); setConfig(getConfig()) }}
-                                                        style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
-                                                    >
-                                                        ✕ Remove
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            {/* Logo Dark Upload */}
-                                            <div>
-                                                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                                    Logo (Dark Mode)
-                                                </label>
-                                                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Light/white logo for dark backgrounds</p>
-                                                <div
-                                                    onClick={() => document.getElementById('logo-dark-upload')?.click()}
-                                                    style={{
-                                                        border: '2px dashed #D1D5DB',
-                                                        borderRadius: 8,
-                                                        padding: 20,
-                                                        textAlign: 'center',
-                                                        cursor: 'pointer',
-                                                        background: '#1F2937'
-                                                    }}
-                                                >
-                                                    {config.logoDark ? (
-                                                        <img src={config.logoDark} alt="Logo Dark" style={{ maxHeight: 48, width: 'auto' }} />
-                                                    ) : (
-                                                        <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload PNG/JPG</span>
-                                                    )}
-                                                </div>
-                                                <input
-                                                    id="logo-dark-upload"
-                                                    type="file"
-                                                    accept="image/png,image/jpeg"
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => {
-                                                        const file = e.target.files?.[0]
-                                                        if (!file) return
-                                                        const reader = new FileReader()
-                                                        reader.onload = (ev) => {
-                                                            updateConfig({ logoDark: ev.target.result })
-                                                            setConfig(getConfig())
-                                                        }
-                                                        reader.readAsDataURL(file)
-                                                    }}
-                                                />
-                                                {config.logoDark && (
-                                                    <button
-                                                        onClick={() => { updateConfig({ logoDark: null }); setConfig(getConfig()) }}
-                                                        style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
-                                                    >
-                                                        ✕ Remove
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </>
-                        )}
-
-                        {/* PATCH 3.7: Layout Presets - One-Click System */}
-                        <h3 style={labelStyle}>⚡ LAYOUT PRESET</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>
-                                One-click layout. Disables individual controls when active.
-                            </p>
-                            {config.layoutPreset && config.layoutPreset !== 'none' && (
-                                <div style={{
-                                    padding: '8px 12px',
-                                    background: '#FEF3C7',
-                                    borderRadius: 8,
-                                    marginBottom: 12,
-                                    fontSize: 12,
-                                    color: '#92400E'
-                                }}>
-                                    ⚠️ Preset Active — Individual styling is locked to maintain consistency.
-                                </div>
-                            )}
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ layoutPreset: 'minimal' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 8px',
-                                        borderRadius: 10,
-                                        border: config.layoutPreset === 'minimal' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#FFFFFF',
-                                        color: '#1F2937',
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Minimal
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ layoutPreset: 'accent-nav' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 8px',
-                                        borderRadius: 10,
-                                        border: config.layoutPreset === 'accent-nav' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#FFFFFF',
-                                        color: '#1F2937',
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Accent Nav
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ layoutPreset: 'hero-color' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 8px',
-                                        borderRadius: 10,
-                                        border: config.layoutPreset === 'hero-color' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#FFFFFF',
-                                        color: '#1F2937',
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Hero Color
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Canvas V1 - Light/Dark */}
-                        <h3 style={labelStyle}>🎨 CANVAS (FONDO)</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo general de la app</p>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ canvasMode: 'light' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 16px',
-                                        borderRadius: 10,
-                                        border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#FFFFFF',
-                                        color: '#1F2937',
-                                        fontSize: 14,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    ☀️ Claro
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        updateConfig({ canvasMode: 'dark' })
-                                        setConfig(getConfig())
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 16px',
-                                        borderRadius: 10,
-                                        border: config.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                        background: '#1F2937',
-                                        color: '#FFFFFF',
-                                        fontSize: 14,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    🌙 Oscuro
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Divider Preset Selector */}
-                        <h3 style={labelStyle}>🖼️ IMAGEN DECORATIVA (Menú/Pedido)</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Imagen que aparece debajo del nombre en Menú y Pedido</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                                {DIVIDER_PRESETS.map(preset => (
-                                    <div
-                                        key={preset.id}
-                                        onClick={() => { updateConfig({ dividerPresetId: preset.id }); setConfig(getConfig()) }}
-                                        style={{
-                                            cursor: 'pointer',
-                                            borderRadius: 8,
-                                            overflow: 'hidden',
-                                            border: config.dividerPresetId === preset.id ? '3px solid #22C55E' : '2px solid #E5E7EB',
-                                            opacity: config.dividerPresetId === preset.id ? 1 : 0.7
-                                        }}
-                                    >
-                                        <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
-                                    </div>
-                                ))}
-                            </div>
-                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
-                                Actual: {DIVIDER_PRESETS.find(p => p.id === config.dividerPresetId)?.name || 'Ninguna'}
-                            </p>
-                        </div>
-
-                        {/* Featured Photos Controls - Standalone System */}
-                        <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home) - 4 slots fijos</h3>
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Estos 4 items aparecen en la página de inicio</p>
-                            {[0, 1, 2, 3].map(slotIndex => {
-                                const currentSlot = config.featuredPhotos?.[slotIndex] || {}
-
-                                return (
-                                    <div key={slotIndex} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
-                                        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                                            {/* Image Preview/Upload */}
-                                            <div
-                                                onClick={() => document.getElementById(`featured-img-${slotIndex}`)?.click()}
-                                                style={{
-                                                    width: 80,
-                                                    height: 80,
-                                                    borderRadius: 12,
-                                                    background: currentSlot.image ? 'none' : '#F3F4F6',
-                                                    border: '2px dashed #D1D5DB',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    cursor: 'pointer',
-                                                    overflow: 'hidden',
-                                                    flexShrink: 0
-                                                }}
-                                            >
-                                                {currentSlot.image ? (
-                                                    <img src={currentSlot.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <span style={{ fontSize: 24, color: '#9CA3AF' }}>📷</span>
-                                                )}
-                                            </div>
-                                            <input
-                                                id={`featured-img-${slotIndex}`}
-                                                type="file"
-                                                accept="image/jpeg,image/png"
-                                                onChange={(e) => handleFeaturedImageUpload(e, slotIndex)}
-                                                style={{ display: 'none' }}
-                                            />
-
-                                            {/* Slot Controls - Name & Price */}
-                                            <div style={{ flex: 1 }}>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Nombre del item"
-                                                    value={currentSlot.name || ''}
-                                                    onChange={(e) => {
-                                                        const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
-                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
-                                                        updateConfig({ featuredPhotos: newPhotos })
-                                                        setConfig(getConfig())
-                                                    }}
-                                                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, marginBottom: 6 }}
-                                                />
-                                                <input
-                                                    type="number"
-                                                    placeholder="Precio"
-                                                    value={currentSlot.price || ''}
-                                                    onChange={(e) => {
-                                                        const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
-                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], price: parseFloat(e.target.value) || 0 }
-                                                        updateConfig({ featuredPhotos: newPhotos })
-                                                        setConfig(getConfig())
-                                                    }}
-                                                    style={{ width: 100, padding: '6px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12 }}
-                                                />
-                                                {uploadingFeaturedSlot === slotIndex && (
-                                                    <p style={{ fontSize: 10, color: '#6B7280', marginTop: 4 }}>Optimizando...</p>
-                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </>
-                )}
-
-                {/* ==================== PEDIDOS TAB ==================== */}
-                {activeTab === 'pedidos' && (
-                    <>
-                        <h3 style={labelStyle}>⚙️ CONFIGURACIÓN DE PEDIDOS</h3>
-                        <div style={cardStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                <span style={{ fontSize: 14, color: '#374151' }}>Pedidos activos</span>
-                                <label className="toggle"><input type="checkbox" checked={config.features?.ordersEnabled ?? true} onChange={() => { updateConfig({ features: { ...config.features, ordersEnabled: !config.features?.ordersEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                                    )
+                                })}
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 14, color: '#374151' }}>Pausar pedidos</span>
-                                <label className="toggle"><input type="checkbox" checked={config.pauseOrders ?? false} onChange={() => { updateConfig({ pauseOrders: !config.pauseOrders }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
-                            </div>
-                        </div>
+                        </>
+                    )}
 
-                        <h3 style={labelStyle}>📋 MODO DE OPERACIÓN</h3>
-                        <div style={cardStyle}>
-                            <select value={config.orderMode || 'A1'} onChange={(e) => { updateConfig({ orderMode: e.target.value }); setConfig(getConfig()) }} style={{ width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, background: 'white' }}>
-                                <option value="A1">A1: Budoni / Pickup rápido</option>
-                                <option value="A2">A2: Café / Pago antes de preparar</option>
-                                <option value="B">B: Restaurante / Pago al final</option>
-                            </select>
-                        </div>
-                    </>
-                )}
-
-                {/* ==================== ANALYTICS TAB ==================== */}
-                {activeTab === 'analytics' && (
-                    <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <h3 style={{ ...labelStyle, marginBottom: 0 }}>📊 ANALYTICS</h3>
-                            {userRole === 'superadmin' && (
-                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    Demo <input type="checkbox" checked={demoAnalytics} onChange={() => setDemoAnalytics(!demoAnalytics)} style={{ accentColor: '#22C55E' }} />
-                                </label>
-                            )}
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Hoy</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{todayOrders.length}</p></div>
-                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Semana</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{weekOrders.length}</p></div>
-                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Mes</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{monthOrders.length}</p></div>
-                            <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Total</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{orders.length}</p></div>
-                        </div>
-
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Ingresos totales</p>
-                            <p style={{ fontSize: 28, fontWeight: 700, color: '#22C55E', margin: '4px 0 0' }}>${(demoAnalytics ? demoTotalSales : totalRevenue).toLocaleString()}</p>
-                        </div>
-
-                        {demoAnalytics && (
+                    {/* ==================== PEDIDOS TAB ==================== */}
+                    {activeTab === 'pedidos' && (
+                        <>
+                            <h3 style={labelStyle}>⚙️ CONFIGURACIÓN DE PEDIDOS</h3>
                             <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Últimos 15 días</p>
-                                <div style={{ height: 60, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
-                                    {demoData.slice(-15).map((d, i) => (
-                                        <div key={i} style={{ flex: 1, height: `${(d.value / Math.max(...demoData.map(x => x.value))) * 100}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
-                                    ))}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                    <span style={{ fontSize: 14, color: '#374151' }}>Pedidos activos</span>
+                                    <label className="toggle"><input type="checkbox" checked={config.features?.ordersEnabled ?? true} onChange={() => { updateConfig({ features: { ...config.features, ordersEnabled: !config.features?.ordersEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
                                 </div>
-                                <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Datos de demostración</p>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: 14, color: '#374151' }}>Pausar pedidos</span>
+                                    <label className="toggle"><input type="checkbox" checked={config.pauseOrders ?? false} onChange={() => { updateConfig({ pauseOrders: !config.pauseOrders }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                                </div>
                             </div>
-                        )}
-                    </>
-                )}
 
-                {/* ==================== HISTORIAL TAB ==================== */}
-                {activeTab === 'historial' && (
-                    <>
-                        <div style={{ background: '#FEF3C7', borderRadius: 8, padding: 12, marginBottom: 16 }}>
-                            <p style={{ fontSize: 12, color: '#92400E', margin: 0 }}>⚠️ Los registros son de solo lectura. No se pueden modificar pagos confirmados.</p>
-                        </div>
+                            <h3 style={labelStyle}>📋 MODO DE OPERACIÓN</h3>
+                            <div style={cardStyle}>
+                                <select value={config.orderMode || 'A1'} onChange={(e) => { updateConfig({ orderMode: e.target.value }); setConfig(getConfig()) }} style={{ width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, background: 'white' }}>
+                                    <option value="A1">A1: Budoni / Pickup rápido</option>
+                                    <option value="A2">A2: Café / Pago antes de preparar</option>
+                                    <option value="B">B: Restaurante / Pago al final</option>
+                                </select>
+                            </div>
+                        </>
+                    )}
 
-                        <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                            {orders.length === 0 ? (
-                                <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF' }}><p style={{ fontSize: 14 }}>No hay registros aún</p></div>
-                            ) : (
-                                orders.slice(0, 15).map((order, i) => (
-                                    <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                            <div>
-                                                <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
-                                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
-                                            </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
-                                                    {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
-                                                </span>
-                                                <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
+                    {/* ==================== ANALYTICS TAB ==================== */}
+                    {activeTab === 'analytics' && (
+                        <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                <h3 style={{ ...labelStyle, marginBottom: 0 }}>📊 ANALYTICS</h3>
+                                {userRole === 'superadmin' && (
+                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        Demo <input type="checkbox" checked={demoAnalytics} onChange={() => setDemoAnalytics(!demoAnalytics)} style={{ accentColor: '#22C55E' }} />
+                                    </label>
+                                )}
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                                <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Hoy</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{todayOrders.length}</p></div>
+                                <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Semana</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{weekOrders.length}</p></div>
+                                <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Mes</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{monthOrders.length}</p></div>
+                                <div style={cardStyle}><p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>Total</p><p style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', margin: '4px 0 0' }}>{orders.length}</p></div>
+                            </div>
+
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Ingresos totales</p>
+                                <p style={{ fontSize: 28, fontWeight: 700, color: '#22C55E', margin: '4px 0 0' }}>${(demoAnalytics ? demoTotalSales : totalRevenue).toLocaleString()}</p>
+                            </div>
+
+                            {demoAnalytics && (
+                                <div style={cardStyle}>
+                                    <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Últimos 15 días</p>
+                                    <div style={{ height: 60, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
+                                        {demoData.slice(-15).map((d, i) => (
+                                            <div key={i} style={{ flex: 1, height: `${(d.value / Math.max(...demoData.map(x => x.value))) * 100}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
+                                        ))}
+                                    </div>
+                                    <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Datos de demostración</p>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* ==================== HISTORIAL TAB ==================== */}
+                    {activeTab === 'historial' && (
+                        <>
+                            <div style={{ background: '#FEF3C7', borderRadius: 8, padding: 12, marginBottom: 16 }}>
+                                <p style={{ fontSize: 12, color: '#92400E', margin: 0 }}>⚠️ Los registros son de solo lectura. No se pueden modificar pagos confirmados.</p>
+                            </div>
+
+                            <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                                {orders.length === 0 ? (
+                                    <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF' }}><p style={{ fontSize: 14 }}>No hay registros aún</p></div>
+                                ) : (
+                                    orders.slice(0, 15).map((order, i) => (
+                                        <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <div>
+                                                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
+                                                    <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
+                                                </div>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
+                                                        {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
+                                                    </span>
+                                                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </>
-                )}
+                                    ))
+                                )}
+                            </div>
+                        </>
+                    )}
 
-            </div>
-        </div >
+                </div>
+            </div >
+
+            {/* Cover Image Editor Modal */}
+            <CoverImageEditor
+                isOpen={showCoverEditor}
+                onClose={() => setShowCoverEditor(false)}
+                onSave={(data) => {
+                    updateConfig({ headerCover: data })
+                    setConfig(getConfig())
+                }}
+                initialData={config.headerCover}
+            />
+        </>
     )
 }
 

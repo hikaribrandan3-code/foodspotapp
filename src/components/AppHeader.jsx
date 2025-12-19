@@ -15,11 +15,24 @@
 
 import { getConfig } from '../config/appConfig.js'
 
+// Cover heights by breakpoint
+const COVER_HEIGHTS = {
+    mobile: 220,
+    tablet: 280
+}
+
+function getBreakpoint() {
+    if (typeof window === 'undefined') return 'mobile'
+    return window.innerWidth >= 768 ? 'tablet' : 'mobile'
+}
+
 function AppHeader() {
     const config = getConfig()
     const canvasMode = config.canvasMode || 'light'
     const businessName = config.businessName || 'FoodSpot'
     const headerMode = config.headerBranding?.mode || 'cover'
+    const breakpoint = getBreakpoint()
+    const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
     // COVER MODE (V1 Default)
@@ -32,7 +45,7 @@ function AppHeader() {
 
         return (
             <header style={{
-                height: 64,
+                height: coverHeight,
                 position: 'relative',
                 overflow: 'hidden',
                 background: 'var(--canvas-bg)',
@@ -41,11 +54,15 @@ function AppHeader() {
                 {cover.image ? (
                     <div style={{
                         position: 'absolute',
-                        inset: 0,
+                        width: '200%',
+                        height: '200%',
+                        left: '-50%',
+                        top: '-50%',
                         backgroundImage: `url(${cover.image})`,
                         backgroundSize: `${scale * 100}%`,
-                        backgroundPosition: `${50 + offsetX}% ${50 + offsetY}%`,
-                        backgroundRepeat: 'no-repeat'
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        transform: `translate(${offsetX}px, ${offsetY}px)`
                     }} />
                 ) : (
                     // No cover image — show placeholder
