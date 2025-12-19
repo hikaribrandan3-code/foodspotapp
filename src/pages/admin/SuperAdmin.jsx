@@ -586,8 +586,8 @@ function SuperAdmin() {
 
                         {/* Phase 1 Navbar Branding - Color Picker Component */}
                         <div style={{
-                            opacity: config.layoutPreset && config.layoutPreset !== 'minimal' ? 0.4 : 1,
-                            pointerEvents: config.layoutPreset && config.layoutPreset !== 'minimal' ? 'none' : 'auto'
+                            opacity: config.layoutPreset !== 'accent-nav' ? 0.4 : 1,
+                            pointerEvents: config.layoutPreset !== 'accent-nav' ? 'none' : 'auto'
                         }}>
                             <BrandingColorPicker
                                 primaryColor={config.branding?.primaryColor || '#8B7355'}
