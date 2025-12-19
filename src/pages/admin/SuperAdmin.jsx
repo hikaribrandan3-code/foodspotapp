@@ -637,6 +637,52 @@ function SuperAdmin() {
                             </div>
                         </div>
 
+                        {/* Canvas V1 - Light/Dark */}
+                        <h3 style={labelStyle}>🎨 CANVAS (FONDO)</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo general de la app</p>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({ canvasMode: 'light' })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 16px',
+                                        borderRadius: 10,
+                                        border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                        background: '#FFFFFF',
+                                        color: '#1F2937',
+                                        fontSize: 14,
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    ☀️ Claro
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({ canvasMode: 'dark' })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 16px',
+                                        borderRadius: 10,
+                                        border: config.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                        background: '#1F2937',
+                                        color: '#FFFFFF',
+                                        fontSize: 14,
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    🌙 Oscuro
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Divider Preset Selector */}
                         <h3 style={labelStyle}>🖼️ IMAGEN DECORATIVA (Menú/Pedido)</h3>
                         <div style={cardStyle}>

@@ -443,6 +443,54 @@ function Settings() {
                         </div>
                     </div>
 
+                    {/* Canvas V1 - Light/Dark */}
+                    <div className="form-group">
+                        <label className="form-label">🎨 Canvas (Fondo)</label>
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 12 }}>
+                            Color de fondo general de la app
+                        </p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                                onClick={() => {
+                                    updateConfig({ canvasMode: 'light' })
+                                    setConfig(getConfig())
+                                }}
+                                style={{
+                                    flex: 1,
+                                    padding: '12px 16px',
+                                    borderRadius: 10,
+                                    border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                    background: '#FFFFFF',
+                                    color: '#1F2937',
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                ☀️ Claro
+                            </button>
+                            <button
+                                onClick={() => {
+                                    updateConfig({ canvasMode: 'dark' })
+                                    setConfig(getConfig())
+                                }}
+                                style={{
+                                    flex: 1,
+                                    padding: '12px 16px',
+                                    borderRadius: 10,
+                                    border: config.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                    background: '#1F2937',
+                                    color: '#FFFFFF',
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                🌙 Oscuro
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Confirmation Color */}
                     <div className="form-group">
                         <label className="form-label">Color de confirmación</label>
