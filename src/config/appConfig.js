@@ -45,6 +45,9 @@ export const defaultConfig = {
         fontFamily: "Inter", // Selected from curated list
         fontWeight: "normal", // "light" | "normal" | "semibold" | "bold"
         poweredByColor: "#C4856A", // Separate color for "Powered by @foodspotapp"
+        // Phase 1 Branding - Navbar
+        primaryColor: "#8B7355", // Navbar background color
+        iconColorMode: "white", // "white" | "black" - navbar icon color
     },
 
     // Feature Toggles
@@ -350,4 +353,16 @@ export const FONT_WEIGHTS = [
     { value: '400', label: 'Normal' },
     { value: '600', label: 'Semi-bold' },
     { value: '700', label: 'Bold' },
+]
+
+// Phase 1 Branding - Navbar color presets
+export const NAV_COLOR_PRESETS = [
+    { value: '#8B7355', label: 'Café' },
+    { value: '#2D3436', label: 'Carbón' },
+    { value: '#1E3A5F', label: 'Marino' },
+    { value: '#5D4E6D', label: 'Uva' },
+    { value: '#1E5631', label: 'Bosque' },
+    { value: '#8B0000', label: 'Vino' },
+    { value: '#C4856A', label: 'Terracota' },
+    { value: '#4A4A4A', label: 'Grafito' },
 ]

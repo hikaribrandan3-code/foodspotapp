@@ -59,6 +59,16 @@ function App() {
         document.body.style.fontFamily = `"${fontFamily}", system-ui, -apple-system, sans-serif`
     }, [config.branding?.fontFamily, config.branding?.fontWeight])
 
+    // Apply navbar branding colors from config (Phase 1 Branding)
+    useEffect(() => {
+        const root = document.documentElement
+        const primaryColor = config.branding?.primaryColor || '#8B7355'
+        const iconColor = config.branding?.iconColorMode === 'black' ? '#000000' : '#FFFFFF'
+
+        root.style.setProperty('--nav-primary-color', primaryColor)
+        root.style.setProperty('--nav-icon-color', iconColor)
+    }, [config.branding?.primaryColor, config.branding?.iconColorMode])
+
     // Manual config refresh - call from admin/owner actions when needed
     const refreshConfig = useCallback(() => {
         const newConfig = getConfig()
