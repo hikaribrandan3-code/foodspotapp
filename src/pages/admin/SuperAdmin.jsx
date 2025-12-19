@@ -785,7 +785,7 @@ function SuperAdmin() {
                                                 </label>
                                                 <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>Facebook-style header with drag and zoom</p>
 
-                                                {/* Upload Dropbox - Dark Frame for Visibility */}
+                                                {/* Cover Preview (Read-Only) */}
                                                 <div style={{
                                                     background: '#111827',
                                                     borderRadius: 12,
@@ -793,17 +793,15 @@ function SuperAdmin() {
                                                     marginBottom: 4
                                                 }}>
                                                     <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 8, textAlign: 'center' }}>
-                                                        📱 HEADER PREVIEW — 64px height
+                                                        📱 HEADER PREVIEW — {config.headerCover?.image ? 'Cover Mode' : 'No cover set'}
                                                     </p>
                                                     <div
-                                                        onClick={() => document.getElementById('cover-image-upload')?.click()}
                                                         style={{
                                                             width: '100%',
                                                             height: 64,
                                                             border: '2px solid #374151',
                                                             borderRadius: 4,
                                                             overflow: 'hidden',
-                                                            cursor: 'pointer',
                                                             background: '#1F2937',
                                                             position: 'relative'
                                                         }}
@@ -819,53 +817,32 @@ function SuperAdmin() {
                                                             }} />
                                                         ) : (
                                                             <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                                <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload</span>
+                                                                <span style={{ color: '#9CA3AF', fontSize: 13 }}>No cover image</span>
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
-                                                <input
-                                                    id="cover-image-upload"
-                                                    type="file"
-                                                    accept="image/png,image/jpeg"
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => {
-                                                        const file = e.target.files?.[0]
-                                                        if (!file) return
-                                                        const reader = new FileReader()
-                                                        reader.onload = (ev) => {
-                                                            updateConfig({
-                                                                headerCover: {
-                                                                    ...config.headerCover,
-                                                                    image: ev.target.result
-                                                                }
-                                                            })
-                                                            setConfig(getConfig())
-                                                        }
-                                                        reader.readAsDataURL(file)
-                                                    }}
-                                                />
 
-                                                {/* Add Cover button when no image */}
-                                                {!config.headerCover?.image && (
-                                                    <button
-                                                        onClick={() => setShowCoverEditor(true)}
-                                                        style={{
-                                                            width: '100%',
-                                                            padding: '14px 16px',
-                                                            background: SUPER_ADMIN_COLOR,
-                                                            color: '#fff',
-                                                            border: 'none',
-                                                            borderRadius: 8,
-                                                            fontSize: 13,
-                                                            fontWeight: 600,
-                                                            cursor: 'pointer',
-                                                            marginTop: 8
-                                                        }}
-                                                    >
-                                                        📷 Add Cover Photo
-                                                    </button>
-                                                )}
+                                                {/* Single Add/Edit Cover Button */}
+                                                <button
+                                                    onClick={() => setShowCoverEditor(true)}
+                                                    onTouchEnd={(e) => { e.preventDefault(); setShowCoverEditor(true); }}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '14px 16px',
+                                                        background: SUPER_ADMIN_COLOR,
+                                                        color: '#fff',
+                                                        border: 'none',
+                                                        borderRadius: 8,
+                                                        fontSize: 13,
+                                                        fontWeight: 600,
+                                                        cursor: 'pointer',
+                                                        marginTop: 8,
+                                                        touchAction: 'manipulation'
+                                                    }}
+                                                >
+                                                    {config.headerCover?.image ? '✏️ Edit Cover' : '📷 Add Cover Photo'}
+                                                </button>
 
                                                 {/* Controls - only show when image exists */}
                                                 {config.headerCover?.image && (
