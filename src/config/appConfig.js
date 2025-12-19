@@ -4,7 +4,9 @@
 export const defaultConfig = {
     // Business Identity
     businessName: "Grub Club",
-    logo: null, // URL or base64 data URI
+    logo: null, // Deprecated - use logoLight/logoDark instead
+    logoLight: null, // Logo for light mode (dark logo on light bg)
+    logoDark: null, // Logo for dark mode (light logo on dark bg)
 
     // ============================================
     // ORDER MODE
