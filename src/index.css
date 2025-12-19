@@ -212,6 +212,17 @@ body {
   padding-top: var(--space-5);
   padding-bottom: calc(var(--nav-height) + var(--space-4));
   overflow-y: auto;
+  background: var(--canvas-bg);
+}
+
+/* Canvas V1 Propagation - Override any hardcoded page backgrounds */
+.home-root,
+.menu-root,
+.order-root,
+.info-root,
+.rewards-root,
+.status-root {
+  background: var(--canvas-bg) !important;
 }
 
 .page-header {
