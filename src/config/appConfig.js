@@ -50,6 +50,14 @@ export const defaultConfig = {
         iconColorMode: "white", // "white" | "black" - navbar icon color
     },
 
+    // Hero Icons Customization (per-icon color + iconColorMode)
+    heroIcons: {
+        menu: { bgColor: "#FFFFFF", iconColorMode: "dark" },
+        envios: { bgColor: "#FFFFFF", iconColorMode: "dark" },
+        rewards: { bgColor: "#FFFFFF", iconColorMode: "dark" },
+        game: { bgColor: "#FFFFFF", iconColorMode: "dark" },
+    },
+
     // Feature Toggles
     features: {
         ordersEnabled: true,

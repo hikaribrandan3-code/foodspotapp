@@ -275,9 +275,17 @@ function Home() {
         }
     }, [])
 
-    // Styles
+    // Styles - base tile style (colors applied per-icon)
+    const getIconColor = (actionId) => {
+        const iconConfig = config.heroIcons?.[actionId]
+        return iconConfig?.iconColorMode === 'light' ? '#FFFFFF' : '#4A4036'
+    }
+
+    const getTileBgColor = (actionId) => {
+        return config.heroIcons?.[actionId]?.bgColor || '#FFFFFF'
+    }
+
     const tileStyle = {
-        backgroundColor: '#FFFFFF',
         borderRadius: 28,
         display: 'flex',
         flexDirection: 'column',
@@ -290,14 +298,12 @@ function Home() {
         padding: 16
     }
 
-    const tileTextStyle = {
+    const getTileTextStyle = (actionId) => ({
         fontSize: 14,
         fontWeight: 500,
-        color: '#4A4238',
+        color: config.heroIcons?.[actionId]?.iconColorMode === 'light' ? '#FFFFFF' : '#4A4238',
         marginTop: 4
-    }
-
-    const iconColor = '#4A4036'
+    })
 
     return (
         <div
@@ -384,8 +390,8 @@ function Home() {
 
                     const tileContent = (
                         <>
-                            <span style={{ color: iconColor }}><Icon /></span>
-                            <span style={tileTextStyle}>{action.label}</span>
+                            <span style={{ color: getIconColor(actionId) }}><Icon /></span>
+                            <span style={getTileTextStyle(actionId)}>{action.label}</span>
                         </>
                     )
 
@@ -410,9 +416,10 @@ function Home() {
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...tileStyle,
+                                    backgroundColor: getTileBgColor(actionId),
                                     cursor: isEditMode ? 'grab' : 'pointer',
                                     opacity: isDragging ? 0.3 : 1,
-                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : '#FFFFFF',
+                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getTileBgColor(actionId),
                                     border: isPlaceholder ? '2px dashed #22C55E' : 'none',
                                     touchAction: isEditMode ? 'none' : 'auto'
                                 }}
@@ -427,7 +434,7 @@ function Home() {
                         <Link
                             key={actionId}
                             to={action.path}
-                            style={tileStyle}
+                            style={{ ...tileStyle, backgroundColor: getTileBgColor(actionId) }}
                         >
                             {tileContent}
                         </Link>

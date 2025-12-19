@@ -401,6 +401,114 @@ function Settings() {
                         }}
                     />
 
+                    {/* Hero Icons Customization */}
+                    <div className="form-group">
+                        <label className="form-label">🎯 Hero Icons (Inicio)</label>
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 12 }}>
+                            Color de fondo e ícono para cada tile
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            {['menu', 'envios', 'rewards', 'game'].map(iconId => {
+                                const iconConfig = config.heroIcons?.[iconId] || { bgColor: '#FFFFFF', iconColorMode: 'dark' }
+                                const labels = { menu: 'Menu', envios: 'Envíos', rewards: 'Rewards', game: 'Game' }
+                                return (
+                                    <div key={iconId} style={{
+                                        background: 'white',
+                                        borderRadius: 12,
+                                        padding: 12,
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                                    }}>
+                                        <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
+                                            {labels[iconId]}
+                                        </p>
+                                        {/* Color Preview */}
+                                        <div style={{
+                                            width: '100%',
+                                            height: 40,
+                                            borderRadius: 8,
+                                            backgroundColor: iconConfig.bgColor,
+                                            marginBottom: 8,
+                                            border: '1px solid #E5E7EB',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: iconConfig.iconColorMode === 'light' ? '#FFFFFF' : '#4A4036',
+                                            fontSize: 20
+                                        }}>
+                                            ●
+                                        </div>
+                                        {/* Color Input */}
+                                        <input
+                                            type="color"
+                                            value={iconConfig.bgColor}
+                                            onChange={(e) => {
+                                                updateConfig({
+                                                    heroIcons: {
+                                                        ...config.heroIcons,
+                                                        [iconId]: { ...iconConfig, bgColor: e.target.value }
+                                                    }
+                                                })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={{ width: '100%', height: 32, border: 'none', cursor: 'pointer', marginBottom: 8 }}
+                                        />
+                                        {/* Icon Mode Toggle */}
+                                        <div style={{ display: 'flex', gap: 4 }}>
+                                            <button
+                                                onClick={() => {
+                                                    updateConfig({
+                                                        heroIcons: {
+                                                            ...config.heroIcons,
+                                                            [iconId]: { ...iconConfig, iconColorMode: 'dark' }
+                                                        }
+                                                    })
+                                                    setConfig(getConfig())
+                                                }}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '6px 8px',
+                                                    borderRadius: 6,
+                                                    border: iconConfig.iconColorMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                    background: '#FFFFFF',
+                                                    color: '#1F2937',
+                                                    fontSize: 11,
+                                                    fontWeight: 500,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                Oscuro
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    updateConfig({
+                                                        heroIcons: {
+                                                            ...config.heroIcons,
+                                                            [iconId]: { ...iconConfig, iconColorMode: 'light' }
+                                                        }
+                                                    })
+                                                    setConfig(getConfig())
+                                                }}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '6px 8px',
+                                                    borderRadius: 6,
+                                                    border: iconConfig.iconColorMode === 'light' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                    background: '#1F2937',
+                                                    color: '#FFFFFF',
+                                                    fontSize: 11,
+                                                    fontWeight: 500,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                Claro
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
                     {/* Confirmation Color */}
                     <div className="form-group">
                         <label className="form-label">Color de confirmación</label>
