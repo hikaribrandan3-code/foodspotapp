@@ -48,6 +48,24 @@ export function setUserMode(mode) {
     }
 }
 
+// ============================================
+// SUPER ADMIN MODE (PATCH 3.9)
+// ============================================
+// Hardcoded identity - cannot be assigned via UI
+// This is the ONLY way to access system-level controls
+const SUPERADMIN_EMAIL = 'superadmin@foodspot.app'
+const SUPER_ADMIN_COLOR = '#7C3AED' // Neon purple
+
+// Check if current session is TRUE Super Admin
+function isTrueSuperAdmin() {
+    try {
+        const session = getSession()
+        return session?.email === SUPERADMIN_EMAIL
+    } catch (e) {
+        return false
+    }
+}
+
 function SuperAdmin() {
     const navigate = useNavigate()
     const [config, setConfig] = useState(() => getConfig())
@@ -307,6 +325,28 @@ function SuperAdmin() {
                     </div>
                 </div>
             </div>
+
+            {/* SUPER ADMIN MODE BANNER (PATCH 3.9) - Only visible to true Super Admin */}
+            {isTrueSuperAdmin() && (
+                <div style={{
+                    background: SUPER_ADMIN_COLOR,
+                    padding: '8px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8
+                }}>
+                    <span style={{ fontSize: 14 }}>🔒</span>
+                    <span style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'white',
+                        letterSpacing: '0.05em'
+                    }}>
+                        SUPER ADMIN MODE — SYSTEM CONTROLS ENABLED
+                    </span>
+                </div>
+            )}
 
             {/* Tab Navigation */}
             <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
@@ -646,6 +686,81 @@ function SuperAdmin() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* ============================================ */}
+                        {/* SYSTEM / SUPER ADMIN (PATCH 3.9) */}
+                        {/* Hidden from all non-Super-Admin users */}
+                        {/* ============================================ */}
+                        {isTrueSuperAdmin() && (
+                            <>
+                                <h3 style={{
+                                    ...labelStyle,
+                                    color: SUPER_ADMIN_COLOR,
+                                    borderLeft: `3px solid ${SUPER_ADMIN_COLOR}`,
+                                    paddingLeft: 8,
+                                    marginLeft: -8
+                                }}>🔒 SYSTEM / SUPER ADMIN</h3>
+                                <div style={{
+                                    ...cardStyle,
+                                    border: `2px solid ${SUPER_ADMIN_COLOR}`,
+                                    background: '#FAF5FF'
+                                }}>
+                                    <p style={{ fontSize: 12, color: '#7C3AED', marginBottom: 16, fontWeight: 500 }}>
+                                        ⚠️ System-level controls. Changes affect all instances.
+                                    </p>
+
+                                    {/* Logo Light Upload */}
+                                    <div style={{ marginBottom: 16 }}>
+                                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                            Logo (Light Mode)
+                                        </label>
+                                        <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
+                                            Dark logo for white/light backgrounds
+                                        </p>
+                                        <input
+                                            type="text"
+                                            placeholder="URL or base64 data URI"
+                                            value={config.logoLight || ''}
+                                            onChange={(e) => {
+                                                updateConfig({ logoLight: e.target.value || null })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={inputStyle}
+                                        />
+                                        {config.logoLight && (
+                                            <div style={{ padding: 12, background: '#FFFFFF', borderRadius: 8, border: '1px solid #E5E7EB', marginTop: 8 }}>
+                                                <img src={config.logoLight} alt="Logo Light" style={{ maxHeight: 32, width: 'auto' }} />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Logo Dark Upload */}
+                                    <div>
+                                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                            Logo (Dark Mode)
+                                        </label>
+                                        <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
+                                            Light/white logo for dark backgrounds
+                                        </p>
+                                        <input
+                                            type="text"
+                                            placeholder="URL or base64 data URI"
+                                            value={config.logoDark || ''}
+                                            onChange={(e) => {
+                                                updateConfig({ logoDark: e.target.value || null })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={inputStyle}
+                                        />
+                                        {config.logoDark && (
+                                            <div style={{ padding: 12, background: '#1F2937', borderRadius: 8, marginTop: 8 }}>
+                                                <img src={config.logoDark} alt="Logo Dark" style={{ maxHeight: 32, width: 'auto' }} />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         {/* PATCH 3.7: Layout Presets - One-Click System */}
                         <h3 style={labelStyle}>⚡ LAYOUT PRESET</h3>
