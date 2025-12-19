@@ -1,12 +1,12 @@
 /**
  * CoverImageEditor.jsx - Full-Screen Cover Image Editor
  * 
- * PATCH 4.8: FINAL — 3-State Editor with Live Preview
+ * PATCH 4.9: TRUE WYSIWYG with Nav Bar + Final Preview
  * 
  * States:
- * - State A: EDIT — Greyed surroundings, visible crop frame, drag/zoom
- * - State B: PREVIEW — Real Home, no overlays, visual confirmation
- * - State C: DONE — Save and exit
+ * - State A: SELECT — Image picker
+ * - State B: EDIT — Greyed surroundings, crop frame, drag/zoom
+ * - State C: PREVIEW — Real Home + Nav, no overlays, visual confirmation
  * 
  * Cover Heights (LOCKED):
  * - Mobile (<768px): 220px
@@ -27,8 +27,78 @@ function getBreakpoint() {
     return window.innerWidth >= 768 ? 'tablet' : 'mobile'
 }
 
+// Static Nav Bar for Preview (matches real BottomNav exactly)
+function StaticBottomNav() {
+    return (
+        <nav style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 64,
+            background: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            borderTop: '1px solid #E5E7EB',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            zIndex: 1
+        }}>
+            {/* Home */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 1 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span style={{ fontSize: 10, color: '#111', marginTop: 2 }}>Home</span>
+            </div>
+            {/* Menú */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <span style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Menú</span>
+            </div>
+            {/* Camera (center button) */}
+            <div style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                background: '#111',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: -20
+            }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+            </div>
+            {/* Estado */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                <span style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Estado</span>
+            </div>
+            {/* Info */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Info</span>
+            </div>
+        </nav>
+    )
+}
+
 function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
-    // States: 'select' | 'edit' | 'preview'
     const [step, setStep] = useState('select')
     const [image, setImage] = useState(initialData?.image || null)
     const [scale, setScale] = useState(initialData?.scale || 1)
@@ -36,7 +106,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     const [offsetY, setOffsetY] = useState(initialData?.offsetY || 0)
     const [breakpoint, setBreakpoint] = useState(getBreakpoint())
 
-    // Gesture refs
     const isDragging = useRef(false)
     const lastTouch = useRef({ x: 0, y: 0 })
     const initialPinchDistance = useRef(0)
@@ -45,14 +114,12 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
-    // Update breakpoint on resize
     useEffect(() => {
         const handleResize = () => setBreakpoint(getBreakpoint())
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    // Reset state when opening
     useEffect(() => {
         if (isOpen) {
             setImage(initialData?.image || null)
@@ -63,14 +130,12 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
         }
     }, [isOpen, initialData])
 
-    // Auto-open file picker if no image
     useEffect(() => {
         if (isOpen && step === 'select' && !image) {
             setTimeout(() => fileInputRef.current?.click(), 100)
         }
     }, [isOpen, step, image])
 
-    // Handle file selection
     const handleFileSelect = (e) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -85,7 +150,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
         reader.readAsDataURL(file)
     }
 
-    // ===== DRAG TO PAN =====
     const handlePointerDown = (e) => {
         if (e.touches && e.touches.length > 1) return
         isDragging.current = true
@@ -106,7 +170,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
         isDragging.current = false
     }
 
-    // ===== PINCH TO ZOOM =====
     const handleTouchStart = (e) => {
         if (e.touches.length === 2) {
             const dx = e.touches[0].clientX - e.touches[1].clientX
@@ -130,24 +193,16 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
         }
     }
 
-    // ===== PREVIEW: Temporarily apply cover to see real result =====
     const enterPreview = () => {
-        // Temporarily save current cover state so Home renders with it
-        updateConfig({
-            headerCover: { image, scale, offsetX, offsetY, breakpoint }
-        })
+        updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint } })
         setStep('preview')
     }
 
     const exitPreview = () => {
-        // Revert to initial data
-        updateConfig({
-            headerCover: initialData || { image: null, scale: 1, offsetX: 0, offsetY: 0 }
-        })
+        updateConfig({ headerCover: initialData || { image: null, scale: 1, offsetX: 0, offsetY: 0 } })
         setStep('edit')
     }
 
-    // ===== SAVE =====
     const handleSave = () => {
         onSave({ image, scale, offsetX, offsetY, breakpoint })
         onClose()
@@ -160,100 +215,40 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     // =============================================
     if (step === 'select') {
         return (
-            <div style={{
-                position: 'fixed',
-                inset: 0,
-                background: '#000',
-                zIndex: 9999,
-                display: 'flex',
-                flexDirection: 'column'
-            }}>
-                <Header
-                    left={<CancelBtn onClick={onClose} />}
-                    title="Select Cover Image"
-                    right={<Spacer />}
-                />
-                <div style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 40
-                }}>
+            <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
+                <EditorHeader left={<CancelBtn onClick={onClose} />} title="Select Cover Image" right={<Spacer />} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
                     <div
                         onClick={() => fileInputRef.current?.click()}
-                        style={{
-                            width: '100%',
-                            maxWidth: 300,
-                            height: 200,
-                            border: '3px dashed #444',
-                            borderRadius: 16,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            background: '#111'
-                        }}
+                        style={{ width: '100%', maxWidth: 300, height: 200, border: '3px dashed #444', borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#111' }}
                     >
                         <span style={{ fontSize: 48, marginBottom: 16 }}>📷</span>
                         <span style={{ color: '#888', fontSize: 14 }}>Tap to select image</span>
                         <span style={{ color: '#666', fontSize: 12, marginTop: 8 }}>PNG or JPG</span>
                     </div>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg"
-                        onChange={handleFileSelect}
-                        style={{ display: 'none' }}
-                    />
+                    <input ref={fileInputRef} type="file" accept="image/png,image/jpeg" onChange={handleFileSelect} style={{ display: 'none' }} />
                 </div>
             </div>
         )
     }
 
     // =============================================
-    // STATE B: EDIT MODE (Crop Frame + Gestures)
+    // STATE B: EDIT MODE
     // =============================================
     if (step === 'edit') {
         return (
-            <div style={{
-                position: 'fixed',
-                inset: 0,
-                background: '#000',
-                zIndex: 9999,
-                display: 'flex',
-                flexDirection: 'column'
-            }}>
-                <Header
-                    left={<CancelBtn onClick={onClose} />}
-                    title="Position Cover"
-                    right={<PreviewBtn onClick={enterPreview} />}
-                />
+            <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
+                <EditorHeader left={<CancelBtn onClick={onClose} />} title="Position Cover" right={<PreviewBtn onClick={enterPreview} />} />
 
                 <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-                    {/* Frozen Home (behind) */}
-                    <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        pointerEvents: 'none',
-                        opacity: 0.4
-                    }}>
+                    {/* Frozen Home + Nav */}
+                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.35 }}>
                         <Home />
+                        <StaticBottomNav />
                     </div>
 
-                    {/* Dimmed overlay BELOW cover area */}
-                    <div style={{
-                        position: 'absolute',
-                        top: coverHeight,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.7)',
-                        pointerEvents: 'none',
-                        zIndex: 5
-                    }} />
+                    {/* Dark overlay below cover */}
+                    <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', pointerEvents: 'none', zIndex: 5 }} />
 
                     {/* Cover Edit Frame */}
                     <div
@@ -277,53 +272,27 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                             boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.4)'
                         }}
                     >
-                        <div
-                            style={{
-                                position: 'absolute',
-                                width: '200%',
-                                height: '200%',
-                                left: '-50%',
-                                top: '-50%',
-                                backgroundImage: `url(${image})`,
-                                backgroundSize: `${scale * 100}%`,
-                                backgroundPosition: 'center',
-                                backgroundRepeat: 'no-repeat',
-                                transform: `translate(${offsetX}px, ${offsetY}px)`
-                            }}
-                        />
+                        <div style={{
+                            position: 'absolute',
+                            width: '200%',
+                            height: '200%',
+                            left: '-50%',
+                            top: '-50%',
+                            backgroundImage: `url(${image})`,
+                            backgroundSize: `${scale * 100}%`,
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            transform: `translate(${offsetX}px, ${offsetY}px)`
+                        }} />
                     </div>
 
-                    {/* Instruction Pill */}
-                    <div style={{
-                        position: 'absolute',
-                        top: coverHeight + 12,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: '#22C55E',
-                        color: '#fff',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        padding: '6px 14px',
-                        borderRadius: 20,
-                        zIndex: 10,
-                        whiteSpace: 'nowrap'
-                    }}>
+                    {/* Instructions */}
+                    <div style={{ position: 'absolute', top: coverHeight + 12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 11, fontWeight: 600, padding: '6px 14px', borderRadius: 20, zIndex: 10, whiteSpace: 'nowrap' }}>
                         ↕ Drag to position • Pinch to zoom
                     </div>
 
-                    {/* Zoom Indicator */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: 24,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: 'rgba(0,0,0,0.8)',
-                        color: '#fff',
-                        fontSize: 12,
-                        padding: '8px 16px',
-                        borderRadius: 20,
-                        zIndex: 10
-                    }}>
+                    {/* Zoom */}
+                    <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.8)', color: '#fff', fontSize: 12, padding: '8px 16px', borderRadius: 20, zIndex: 10 }}>
                         Zoom: {Math.round(scale * 100)}%
                     </div>
                 </div>
@@ -332,89 +301,66 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     }
 
     // =============================================
-    // STATE C: PREVIEW MODE (Real Home, No Overlays)
+    // STATE C: FINAL PREVIEW (TRUE 1:1 — Screenshot-Indistinguishable)
     // =============================================
     if (step === 'preview') {
         return (
-            <div style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'var(--canvas-bg, #fff)',
-                zIndex: 9999,
-                display: 'flex',
-                flexDirection: 'column'
-            }}>
-                {/* Real Home Preview (with cover applied) */}
-                <div style={{
-                    flex: 1,
-                    overflow: 'hidden',
-                    pointerEvents: 'none'
-                }}>
+            <div style={{ position: 'fixed', inset: 0, background: 'var(--canvas-bg, #fff)', zIndex: 9999 }}>
+                {/* Real Home (cover already applied) — TRUE SIZE */}
+                <div style={{ position: 'absolute', inset: 0, overflow: 'auto' }}>
                     <Home />
                 </div>
 
-                {/* Preview Action Bar */}
+                {/* Static Nav Bar */}
+                <StaticBottomNav />
+
+                {/* Minimal Action Buttons — Top Right */}
                 <div style={{
                     position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    padding: '16px 20px',
-                    paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-                    background: 'rgba(0,0,0,0.9)',
+                    top: 12,
+                    right: 12,
                     display: 'flex',
-                    gap: 12,
-                    zIndex: 10
+                    gap: 8,
+                    zIndex: 100
                 }}>
                     <button
                         onClick={exitPreview}
                         style={{
-                            flex: 1,
-                            padding: '14px',
-                            background: '#374151',
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            background: 'rgba(0,0,0,0.6)',
                             color: '#fff',
                             border: 'none',
-                            borderRadius: 10,
-                            fontSize: 14,
-                            fontWeight: 600,
-                            cursor: 'pointer'
+                            fontSize: 16,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                         }}
                     >
-                        ← Back to Edit
+                        ←
                     </button>
                     <button
                         onClick={handleSave}
                         style={{
-                            flex: 1,
-                            padding: '14px',
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
                             background: '#22C55E',
                             color: '#fff',
                             border: 'none',
-                            borderRadius: 10,
-                            fontSize: 14,
-                            fontWeight: 600,
-                            cursor: 'pointer'
+                            fontSize: 18,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(34,197,94,0.4)'
                         }}
                     >
-                        ✓ Done
+                        ✓
                     </button>
-                </div>
-
-                {/* Preview Label */}
-                <div style={{
-                    position: 'absolute',
-                    top: 16,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(0,0,0,0.8)',
-                    color: '#fff',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: '8px 16px',
-                    borderRadius: 20,
-                    zIndex: 10
-                }}>
-                    👁 LIVE PREVIEW
                 </div>
             </div>
         )
@@ -423,19 +369,9 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     return null
 }
 
-// ===== UI Components =====
-
-function Header({ left, title, right }) {
+function EditorHeader({ left, title, right }) {
     return (
-        <div style={{
-            padding: '12px 16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: 'rgba(0,0,0,0.95)',
-            borderBottom: '1px solid #333',
-            zIndex: 10
-        }}>
+        <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.95)', borderBottom: '1px solid #333', zIndex: 10 }}>
             {left}
             <span style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>{title}</span>
             {right}
@@ -445,18 +381,7 @@ function Header({ left, title, right }) {
 
 function CancelBtn({ onClick }) {
     return (
-        <button
-            onClick={onClick}
-            style={{
-                background: 'none',
-                border: 'none',
-                color: '#EF4444',
-                fontSize: 15,
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: '8px 12px'
-            }}
-        >
+        <button onClick={onClick} style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 15, fontWeight: 600, cursor: 'pointer', padding: '8px 12px' }}>
             ✕ Cancel
         </button>
     )
@@ -464,19 +389,7 @@ function CancelBtn({ onClick }) {
 
 function PreviewBtn({ onClick }) {
     return (
-        <button
-            onClick={onClick}
-            style={{
-                background: '#3B82F6',
-                border: 'none',
-                color: '#fff',
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '8px 14px',
-                borderRadius: 8,
-                cursor: 'pointer'
-            }}
-        >
+        <button onClick={onClick} style={{ background: '#3B82F6', border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, padding: '8px 14px', borderRadius: 8, cursor: 'pointer' }}>
             👁 Preview
         </button>
     )
