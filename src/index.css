@@ -117,6 +117,16 @@
   }
 }
 
+/* Safari / iOS only — extra breathing room for logos */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px) {
+    .cover-viewport {
+      height: 65px;
+      /* +5px for Safari/iOS */
+    }
+  }
+}
+
 /* Reset & Base Styles */
 *,
 *::before,
