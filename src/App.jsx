@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
-import { getConfig } from './config/appConfig.js'
+import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
 import { incrementVisit, isDemoMode } from './utils/storage.js'
 
 // Components
@@ -78,6 +78,32 @@ function App() {
             })
         }
     }, [config.branding?.primaryColor, config.branding?.iconColorMode])
+
+    // Apply hero icon colors from config (fully isolated from nav)
+    useEffect(() => {
+        const root = document.documentElement
+        const heroIcons = config.heroIcons || {}
+
+        // Menu
+        const menuConfig = heroIcons.menu || HERO_DEFAULT
+        root.style.setProperty('--hero-menu-bg', menuConfig.color)
+        root.style.setProperty('--hero-menu-icon', menuConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
+
+        // Delivery 
+        const deliveryConfig = heroIcons.delivery || HERO_DEFAULT
+        root.style.setProperty('--hero-delivery-bg', deliveryConfig.color)
+        root.style.setProperty('--hero-delivery-icon', deliveryConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
+
+        // Rewards
+        const rewardsConfig = heroIcons.rewards || HERO_DEFAULT
+        root.style.setProperty('--hero-rewards-bg', rewardsConfig.color)
+        root.style.setProperty('--hero-rewards-icon', rewardsConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
+
+        // Game
+        const gameConfig = heroIcons.game || HERO_DEFAULT
+        root.style.setProperty('--hero-game-bg', gameConfig.color)
+        root.style.setProperty('--hero-game-icon', gameConfig.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK)
+    }, [config.heroIcons])
 
     // Manual config refresh - call from admin/owner actions when needed
     const refreshConfig = useCallback(() => {

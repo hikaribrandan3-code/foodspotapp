@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { login, logout, getSession } from '../../utils/auth.js'
-import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS } from '../../config/appConfig.js'
+import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
+import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 
 // Generate seeded demo analytics data (30 days)
 function generateDemoData() {
@@ -597,106 +598,40 @@ function SuperAdmin() {
                             }}
                         />
 
-                        {/* Hero Icons Customization */}
+                        {/* Hero Icons Customization (v2 - Fully Isolated) */}
                         <h3 style={labelStyle}>🎯 HERO ICONS (INICIO)</h3>
                         <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo e ícono para cada tile</p>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo e ícono para cada tile (Independiente de la navegación)</p>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                {['menu', 'envios', 'rewards', 'game'].map(iconId => {
-                                    const iconConfig = config.heroIcons?.[iconId] || { bgColor: '#FFFFFF', iconColorMode: 'dark' }
-                                    const labels = { menu: 'Menu', envios: 'Envíos', rewards: 'Rewards', game: 'Game' }
+                                {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                                    const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
+                                    const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
                                     return (
-                                        <div key={iconId} style={{
-                                            background: '#F9FAFB',
-                                            borderRadius: 8,
-                                            padding: 10
-                                        }}>
-                                            <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#374151' }}>
-                                                {labels[iconId]}
-                                            </p>
-                                            {/* Color Preview */}
-                                            <div style={{
-                                                width: '100%',
-                                                height: 32,
-                                                borderRadius: 6,
-                                                backgroundColor: iconConfig.bgColor,
-                                                marginBottom: 6,
-                                                border: '1px solid #E5E7EB',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: iconConfig.iconColorMode === 'light' ? '#FFFFFF' : '#4A4036',
-                                                fontSize: 16
-                                            }}>
-                                                ●
-                                            </div>
-                                            {/* Color Input */}
-                                            <input
-                                                type="color"
-                                                value={iconConfig.bgColor}
-                                                onChange={(e) => {
-                                                    updateConfig({
-                                                        heroIcons: {
-                                                            ...config.heroIcons,
-                                                            [iconId]: { ...iconConfig, bgColor: e.target.value }
-                                                        }
-                                                    })
-                                                    setConfig(getConfig())
-                                                }}
-                                                style={{ width: '100%', height: 28, border: 'none', cursor: 'pointer', marginBottom: 6 }}
-                                            />
-                                            {/* Icon Mode Toggle */}
-                                            <div style={{ display: 'flex', gap: 4 }}>
-                                                <button
-                                                    onClick={() => {
-                                                        updateConfig({
-                                                            heroIcons: {
-                                                                ...config.heroIcons,
-                                                                [iconId]: { ...iconConfig, iconColorMode: 'dark' }
-                                                            }
-                                                        })
-                                                        setConfig(getConfig())
-                                                    }}
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '4px 6px',
-                                                        borderRadius: 4,
-                                                        border: iconConfig.iconColorMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                                        background: '#FFFFFF',
-                                                        color: '#1F2937',
-                                                        fontSize: 10,
-                                                        fontWeight: 500,
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    Oscuro
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        updateConfig({
-                                                            heroIcons: {
-                                                                ...config.heroIcons,
-                                                                [iconId]: { ...iconConfig, iconColorMode: 'light' }
-                                                            }
-                                                        })
-                                                        setConfig(getConfig())
-                                                    }}
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '4px 6px',
-                                                        borderRadius: 4,
-                                                        border: iconConfig.iconColorMode === 'light' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                                        background: '#1F2937',
-                                                        color: '#FFFFFF',
-                                                        fontSize: 10,
-                                                        fontWeight: 500,
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    Claro
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <HeroIconPicker
+                                            key={iconId}
+                                            label={labels[iconId]}
+                                            iconId={iconId}
+                                            color={iconConfig.color}
+                                            iconColorMode={iconConfig.iconColorMode}
+                                            onColorChange={(newColor) => {
+                                                updateConfig({
+                                                    heroIcons: {
+                                                        ...config.heroIcons,
+                                                        [iconId]: { ...iconConfig, color: newColor }
+                                                    }
+                                                })
+                                                setConfig(getConfig())
+                                            }}
+                                            onIconModeChange={(mode) => {
+                                                updateConfig({
+                                                    heroIcons: {
+                                                        ...config.heroIcons,
+                                                        [iconId]: { ...iconConfig, iconColorMode: mode }
+                                                    }
+                                                })
+                                                setConfig(getConfig())
+                                            }}
+                                        />
                                     )
                                 })}
                             </div>

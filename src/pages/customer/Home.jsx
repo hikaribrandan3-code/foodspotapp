@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getConfig, reorderPrimaryActions, reorderFeaturedItems, defaultConfig } from '../../config/appConfig.js'
+import { getConfig, reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 
@@ -275,15 +275,17 @@ function Home() {
         }
     }, [])
 
-    // Styles - base tile style (colors applied per-icon)
-    const getIconColor = (actionId) => {
-        const iconConfig = config.heroIcons?.[actionId]
-        return iconConfig?.iconColorMode === 'light' ? '#FFFFFF' : '#4A4036'
+    // Styles - use CSS variables for hero icons (fully isolated from nav)
+    // Map actionId to CSS variable names
+    const heroVarMap = {
+        menu: { bg: '--hero-menu-bg', icon: '--hero-menu-icon' },
+        envios: { bg: '--hero-delivery-bg', icon: '--hero-delivery-icon' }, // envios maps to delivery
+        rewards: { bg: '--hero-rewards-bg', icon: '--hero-rewards-icon' },
+        game: { bg: '--hero-game-bg', icon: '--hero-game-icon' },
     }
 
-    const getTileBgColor = (actionId) => {
-        return config.heroIcons?.[actionId]?.bgColor || '#FFFFFF'
-    }
+    const getTileBgVar = (actionId) => `var(${heroVarMap[actionId]?.bg || '--hero-menu-bg'})`
+    const getTileIconVar = (actionId) => `var(${heroVarMap[actionId]?.icon || '--hero-menu-icon'})`
 
     const tileStyle = {
         borderRadius: 28,
@@ -301,7 +303,7 @@ function Home() {
     const getTileTextStyle = (actionId) => ({
         fontSize: 14,
         fontWeight: 500,
-        color: config.heroIcons?.[actionId]?.iconColorMode === 'light' ? '#FFFFFF' : '#4A4238',
+        color: getTileIconVar(actionId),
         marginTop: 4
     })
 
@@ -390,7 +392,7 @@ function Home() {
 
                     const tileContent = (
                         <>
-                            <span style={{ color: getIconColor(actionId) }}><Icon /></span>
+                            <span style={{ color: getTileIconVar(actionId) }}><Icon /></span>
                             <span style={getTileTextStyle(actionId)}>{action.label}</span>
                         </>
                     )
@@ -416,10 +418,10 @@ function Home() {
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...tileStyle,
-                                    backgroundColor: getTileBgColor(actionId),
+                                    backgroundColor: getTileBgVar(actionId),
                                     cursor: isEditMode ? 'grab' : 'pointer',
                                     opacity: isDragging ? 0.3 : 1,
-                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getTileBgColor(actionId),
+                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getTileBgVar(actionId),
                                     border: isPlaceholder ? '2px dashed #22C55E' : 'none',
                                     touchAction: isEditMode ? 'none' : 'auto'
                                 }}
@@ -434,7 +436,7 @@ function Home() {
                         <Link
                             key={actionId}
                             to={action.path}
-                            style={{ ...tileStyle, backgroundColor: getTileBgColor(actionId) }}
+                            style={{ ...tileStyle, backgroundColor: getTileBgVar(actionId) }}
                         >
                             {tileContent}
                         </Link>

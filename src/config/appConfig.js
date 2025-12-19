@@ -24,6 +24,12 @@ export const defaultConfig = {
     // ============================================
     orderMode: "A1",
 
+    // ============================================
+    // HERO ICONS CONSTANTS (Fully Isolated)
+    // ============================================
+    // Single source of truth for hero icon defaults
+    // Used by App.jsx, Home.jsx, Settings.jsx, SuperAdmin.jsx
+
     // Color Theme (matches warm beige/brown palette)
     colors: {
         primary: "#8B7355",
@@ -51,11 +57,12 @@ export const defaultConfig = {
     },
 
     // Hero Icons Customization (per-icon color + iconColorMode)
+    // Fully isolated from nav — no shared config keys
     heroIcons: {
-        menu: { bgColor: "#FFFFFF", iconColorMode: "dark" },
-        envios: { bgColor: "#FFFFFF", iconColorMode: "dark" },
-        rewards: { bgColor: "#FFFFFF", iconColorMode: "dark" },
-        game: { bgColor: "#FFFFFF", iconColorMode: "dark" },
+        menu: { color: "#FFFFFF", iconColorMode: "black" },
+        delivery: { color: "#FFFFFF", iconColorMode: "black" },
+        rewards: { color: "#FFFFFF", iconColorMode: "black" },
+        game: { color: "#FFFFFF", iconColorMode: "black" },
     },
 
     // Feature Toggles
@@ -362,6 +369,10 @@ export const FONT_WEIGHTS = [
     { value: '600', label: 'Semi-bold' },
     { value: '700', label: 'Bold' },
 ]
+
+// Hero Icon Constants (Single Source of Truth)
+export const HERO_ICON_DARK = '#4A4036'
+export const HERO_DEFAULT = { color: '#FFFFFF', iconColorMode: 'black' }
 
 // Phase 1 Branding - Navbar color presets
 export const NAV_COLOR_PRESETS = [
