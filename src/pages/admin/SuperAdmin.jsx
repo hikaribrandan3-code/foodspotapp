@@ -763,58 +763,101 @@ function SuperAdmin() {
                                     {/* Logo inputs only show when mode is "logo" */}
                                     {config.headerBranding?.mode === 'logo' && (
                                         <>
+                                            {/* Logo Light Upload */}
                                             <div style={{ marginBottom: 16 }}>
                                                 <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
                                                     Logo (Light Mode)
                                                 </label>
                                                 <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Dark logo for white/light backgrounds</p>
-                                                <input
-                                                    type="text"
-                                                    placeholder="https://example.com/logo-dark.svg"
-                                                    value={config.logoLight || ''}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value
-                                                        const validation = isValidLogoUrl(value)
-                                                        if (validation === true || validation.valid) {
-                                                            updateConfig({ logoLight: value || null })
-                                                            setConfig(getConfig())
-                                                        } else {
-                                                            alert(validation.error)
-                                                        }
+                                                <div
+                                                    onClick={() => document.getElementById('logo-light-upload')?.click()}
+                                                    style={{
+                                                        border: '2px dashed #D1D5DB',
+                                                        borderRadius: 8,
+                                                        padding: 20,
+                                                        textAlign: 'center',
+                                                        cursor: 'pointer',
+                                                        background: '#FAFAFA'
                                                     }}
-                                                    style={inputStyle}
+                                                >
+                                                    {config.logoLight ? (
+                                                        <img src={config.logoLight} alt="Logo Light" style={{ maxHeight: 48, width: 'auto' }} />
+                                                    ) : (
+                                                        <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload PNG/JPG</span>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    id="logo-light-upload"
+                                                    type="file"
+                                                    accept="image/png,image/jpeg"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0]
+                                                        if (!file) return
+                                                        const reader = new FileReader()
+                                                        reader.onload = (ev) => {
+                                                            updateConfig({ logoLight: ev.target.result })
+                                                            setConfig(getConfig())
+                                                        }
+                                                        reader.readAsDataURL(file)
+                                                    }}
                                                 />
                                                 {config.logoLight && (
-                                                    <div style={{ padding: 12, background: '#FFFFFF', borderRadius: 8, border: '1px solid #E5E7EB', marginTop: 8 }}>
-                                                        <img src={config.logoLight} alt="Logo Light" style={{ maxHeight: 32, width: 'auto' }} />
-                                                    </div>
+                                                    <button
+                                                        onClick={() => { updateConfig({ logoLight: null }); setConfig(getConfig()) }}
+                                                        style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                    >
+                                                        ✕ Remove
+                                                    </button>
                                                 )}
                                             </div>
+
+                                            {/* Logo Dark Upload */}
                                             <div>
                                                 <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
                                                     Logo (Dark Mode)
                                                 </label>
                                                 <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Light/white logo for dark backgrounds</p>
-                                                <input
-                                                    type="text"
-                                                    placeholder="https://example.com/logo-light.svg"
-                                                    value={config.logoDark || ''}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value
-                                                        const validation = isValidLogoUrl(value)
-                                                        if (validation === true || validation.valid) {
-                                                            updateConfig({ logoDark: value || null })
-                                                            setConfig(getConfig())
-                                                        } else {
-                                                            alert(validation.error)
-                                                        }
+                                                <div
+                                                    onClick={() => document.getElementById('logo-dark-upload')?.click()}
+                                                    style={{
+                                                        border: '2px dashed #D1D5DB',
+                                                        borderRadius: 8,
+                                                        padding: 20,
+                                                        textAlign: 'center',
+                                                        cursor: 'pointer',
+                                                        background: '#1F2937'
                                                     }}
-                                                    style={inputStyle}
+                                                >
+                                                    {config.logoDark ? (
+                                                        <img src={config.logoDark} alt="Logo Dark" style={{ maxHeight: 48, width: 'auto' }} />
+                                                    ) : (
+                                                        <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload PNG/JPG</span>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    id="logo-dark-upload"
+                                                    type="file"
+                                                    accept="image/png,image/jpeg"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0]
+                                                        if (!file) return
+                                                        const reader = new FileReader()
+                                                        reader.onload = (ev) => {
+                                                            updateConfig({ logoDark: ev.target.result })
+                                                            setConfig(getConfig())
+                                                        }
+                                                        reader.readAsDataURL(file)
+                                                    }}
                                                 />
                                                 {config.logoDark && (
-                                                    <div style={{ padding: 12, background: '#1F2937', borderRadius: 8, marginTop: 8 }}>
-                                                        <img src={config.logoDark} alt="Logo Dark" style={{ maxHeight: 32, width: 'auto' }} />
-                                                    </div>
+                                                    <button
+                                                        onClick={() => { updateConfig({ logoDark: null }); setConfig(getConfig()) }}
+                                                        style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                    >
+                                                        ✕ Remove
+                                                    </button>
                                                 )}
                                             </div>
                                         </>
