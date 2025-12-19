@@ -105,16 +105,27 @@
 @media (max-width: 768px) {
   .header-clamp-mobile {
     height: 60px;
-    /* tuned for landscape logos + 5px comfort */
     overflow: hidden;
     position: relative;
+    /* Content inside clamp — shift up to hide top padding */
   }
 
   .header-clamp-mobile>header,
   .header-clamp-mobile>.app-header {
     position: relative;
-    top: -4px;
-    /* trims visual padding safely */
+    top: -2px;
+    width: 100%;
+  }
+
+  /* Restore spacing after clamp to prevent hero overlap */
+  .header-clamp-mobile+* {
+    margin-top: 8px;
+  }
+
+  /* Hero grid specific fix */
+  .header-clamp-mobile+.actions-grid,
+  .header-clamp-mobile~.actions-grid {
+    margin-top: 12px;
   }
 }
 
