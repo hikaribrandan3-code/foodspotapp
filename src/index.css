@@ -1209,4 +1209,25 @@ body {
     flex: 1;
     min-height: 0;
   }
+
+  /* Scale up action icons on iPad for visual dominance */
+  .actions-grid {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .actions-grid>* {
+    padding: 24px 20px;
+    border-radius: 32px;
+  }
+
+  .actions-grid svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .actions-grid span:last-child {
+    font-size: 15px;
+    margin-top: 8px;
+  }
 }

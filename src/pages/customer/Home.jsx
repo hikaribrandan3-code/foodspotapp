@@ -366,6 +366,7 @@ function Home() {
             {/* Main 2x2 Navigation Grid */}
             <div
                 ref={actionsGridRef}
+                className="actions-grid"
                 style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
