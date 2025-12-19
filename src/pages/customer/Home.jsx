@@ -437,6 +437,7 @@ function Home() {
             {/* Featured Feed Section */}
             <div
                 ref={featuredGridRef}
+                className="featured-grid"
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}
             >
                 {featuredItems.slice(0, 4).map((item, index) => {

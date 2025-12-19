@@ -1198,4 +1198,15 @@ body {
     width: 28px;
     height: 28px;
   }
+
+  /* Square proportions for featured cards on iPad */
+  .featured-grid>* {
+    aspect-ratio: 1 / 1;
+  }
+
+  .featured-grid>*>div:first-child {
+    /* Image container - take more vertical space */
+    flex: 1;
+    min-height: 0;
+  }
 }
