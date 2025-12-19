@@ -1,12 +1,11 @@
 /**
  * CoverImageEditor.jsx - Full-Screen Cover Image Editor
  * 
- * PATCH 4.9: TRUE WYSIWYG with Nav Bar + Final Preview
+ * FINAL: 1:1 WYSIWYG with Header Restore
  * 
  * States:
- * - State A: SELECT — Image picker
- * - State B: EDIT — Greyed surroundings, crop frame, drag/zoom
- * - State C: PREVIEW — Real Home + Nav, no overlays, visual confirmation
+ * - State A: EDIT — Crop frame at top:0, floating controls, drag/zoom
+ * - State B: PREVIEW — True 1:1 Home render, no overlays
  * 
  * Cover Heights (LOCKED):
  * - Mobile (<768px): 220px
@@ -17,7 +16,6 @@ import { useState, useRef, useEffect } from 'react'
 import { getConfig, updateConfig } from '../config/appConfig.js'
 import Home from '../pages/customer/Home.jsx'
 
-// Breakpoint cover heights (LOCKED — do not change)
 const COVER_HEIGHTS = {
     mobile: 220,
     tablet: 280
@@ -27,7 +25,7 @@ function getBreakpoint() {
     return window.innerWidth >= 768 ? 'tablet' : 'mobile'
 }
 
-// Static Nav Bar for Preview (matches real BottomNav exactly)
+// Static Nav Bar (matches real BottomNav)
 function StaticBottomNav() {
     return (
         <nav style={{
@@ -44,62 +42,40 @@ function StaticBottomNav() {
             paddingBottom: 'env(safe-area-inset-bottom)',
             zIndex: 1
         }}>
-            {/* Home */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 1 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-                <span style={{ fontSize: 10, color: '#111', marginTop: 2 }}>Home</span>
-            </div>
-            {/* Menú */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-                <span style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Menú</span>
-            </div>
-            {/* Camera (center button) */}
-            <div style={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                background: '#111',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: -20
-            }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                    <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-            </div>
-            {/* Estado */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 11l3 3L22 4"></path>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                </svg>
-                <span style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Estado</span>
-            </div>
-            {/* Info */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                <span style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Info</span>
-            </div>
+            <NavItem icon="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10" label="Home" active />
+            <NavItem icon="M3 6h18 M3 12h18 M3 18h18" label="Menú" />
+            <CameraButton />
+            <NavItem icon="M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" label="Estado" />
+            <NavItem icon="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M12 16v-4 M12 8h.01" label="Info" />
         </nav>
     )
 }
 
+function NavItem({ icon, label, active }) {
+    const paths = icon.split(' M').map((p, i) => i === 0 ? p : 'M' + p)
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: active ? 1 : 0.5 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#111' : 'currentColor'} strokeWidth="2">
+                {paths.map((d, i) => <path key={i} d={d} />)}
+            </svg>
+            <span style={{ fontSize: 10, color: active ? '#111' : '#666', marginTop: 2 }}>{label}</span>
+        </div>
+    )
+}
+
+function CameraButton() {
+    return (
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: -20 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+            </svg>
+        </div>
+    )
+}
+
 function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
-    const [step, setStep] = useState('select')
+    const [step, setStep] = useState('edit')
     const [image, setImage] = useState(initialData?.image || null)
     const [scale, setScale] = useState(initialData?.scale || 1)
     const [offsetX, setOffsetX] = useState(initialData?.offsetX || 0)
@@ -126,15 +102,13 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
             setScale(initialData?.scale || 1)
             setOffsetX(initialData?.offsetX || 0)
             setOffsetY(initialData?.offsetY || 0)
-            setStep(initialData?.image ? 'edit' : 'select')
+            setStep('edit')
+            // Auto-open file picker if no image
+            if (!initialData?.image) {
+                setTimeout(() => fileInputRef.current?.click(), 100)
+            }
         }
     }, [isOpen, initialData])
-
-    useEffect(() => {
-        if (isOpen && step === 'select' && !image) {
-            setTimeout(() => fileInputRef.current?.click(), 100)
-        }
-    }, [isOpen, step, image])
 
     const handleFileSelect = (e) => {
         const file = e.target.files?.[0]
@@ -145,11 +119,11 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
             setScale(1)
             setOffsetX(0)
             setOffsetY(0)
-            setStep('edit')
         }
         reader.readAsDataURL(file)
     }
 
+    // Drag to pan
     const handlePointerDown = (e) => {
         if (e.touches && e.touches.length > 1) return
         isDragging.current = true
@@ -170,6 +144,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
         isDragging.current = false
     }
 
+    // Pinch to zoom
     const handleTouchStart = (e) => {
         if (e.touches.length === 2) {
             const dx = e.touches[0].clientX - e.touches[1].clientX
@@ -211,67 +186,59 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     if (!isOpen) return null
 
     // =============================================
-    // STATE A: SELECT IMAGE
-    // =============================================
-    if (step === 'select') {
-        return (
-            <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
-                <EditorHeader left={<CancelBtn onClick={onClose} />} title="Select Cover Image" right={<Spacer />} />
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-                    <div
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{ width: '100%', maxWidth: 300, height: 200, border: '3px dashed #444', borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#111' }}
-                    >
-                        <span style={{ fontSize: 48, marginBottom: 16 }}>📷</span>
-                        <span style={{ color: '#888', fontSize: 14 }}>Tap to select image</span>
-                        <span style={{ color: '#666', fontSize: 12, marginTop: 8 }}>PNG or JPG</span>
-                    </div>
-                    <input ref={fileInputRef} type="file" accept="image/png,image/jpeg" onChange={handleFileSelect} style={{ display: 'none' }} />
-                </div>
-            </div>
-        )
-    }
-
-    // =============================================
-    // STATE B: EDIT MODE
+    // STATE A: EDIT MODE — Crop frame at top:0
     // =============================================
     if (step === 'edit') {
         return (
-            <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
-                <EditorHeader left={<CancelBtn onClick={onClose} />} title="Position Cover" right={<PreviewBtn onClick={enterPreview} />} />
+            <div style={{
+                position: 'fixed',
+                inset: 0,
+                background: '#000',
+                zIndex: 9999,
+                touchAction: 'none'
+            }}>
+                {/* Frozen Home (dimmed, behind crop) */}
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.3 }}>
+                    <Home />
+                    <StaticBottomNav />
+                </div>
 
-                <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-                    {/* Frozen Home + Nav */}
-                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.35 }}>
-                        <Home />
-                        <StaticBottomNav />
-                    </div>
+                {/* Dark overlay BELOW crop frame */}
+                <div style={{
+                    position: 'absolute',
+                    top: coverHeight,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.75)',
+                    pointerEvents: 'none',
+                    zIndex: 5
+                }} />
 
-                    {/* Dark overlay below cover */}
-                    <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', pointerEvents: 'none', zIndex: 5 }} />
-
-                    {/* Cover Edit Frame */}
-                    <div
-                        onMouseDown={handlePointerDown}
-                        onMouseMove={handlePointerMove}
-                        onMouseUp={handlePointerUp}
-                        onMouseLeave={handlePointerUp}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handlePointerUp}
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: coverHeight,
-                            overflow: 'hidden',
-                            cursor: 'move',
-                            zIndex: 6,
-                            border: '3px solid #22C55E',
-                            boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.4)'
-                        }}
-                    >
+                {/* Crop Frame — STARTS AT TOP:0 */}
+                <div
+                    onMouseDown={handlePointerDown}
+                    onMouseMove={handlePointerMove}
+                    onMouseUp={handlePointerUp}
+                    onMouseLeave={handlePointerUp}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handlePointerUp}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: coverHeight,
+                        overflow: 'hidden',
+                        cursor: 'move',
+                        zIndex: 6,
+                        border: '3px solid #22C55E',
+                        boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
+                        touchAction: 'none'
+                    }}
+                >
+                    {image ? (
                         <div style={{
                             position: 'absolute',
                             width: '200%',
@@ -284,31 +251,121 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                             backgroundRepeat: 'no-repeat',
                             transform: `translate(${offsetX}px, ${offsetY}px)`
                         }} />
-                    </div>
+                    ) : (
+                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap to select image</span>
+                        </div>
+                    )}
+                </div>
 
-                    {/* Instructions */}
-                    <div style={{ position: 'absolute', top: coverHeight + 12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 11, fontWeight: 600, padding: '6px 14px', borderRadius: 20, zIndex: 10, whiteSpace: 'nowrap' }}>
-                        ↕ Drag to position • Pinch to zoom
-                    </div>
+                {/* Hidden file input */}
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                />
 
-                    {/* Zoom */}
-                    <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.8)', color: '#fff', fontSize: 12, padding: '8px 16px', borderRadius: 20, zIndex: 10 }}>
-                        Zoom: {Math.round(scale * 100)}%
-                    </div>
+                {/* FLOATING CONTROLS — Safe area aware */}
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    paddingTop: 'max(12px, env(safe-area-inset-top))',
+                    paddingLeft: 12,
+                    paddingRight: 12,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    zIndex: 100,
+                    pointerEvents: 'none'
+                }}>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            padding: '8px 14px',
+                            background: 'rgba(0,0,0,0.7)',
+                            color: '#EF4444',
+                            border: 'none',
+                            borderRadius: 10,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            pointerEvents: 'auto'
+                        }}
+                    >
+                        ✕ Cancel
+                    </button>
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            padding: '8px 14px',
+                            background: 'rgba(0,0,0,0.7)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 10,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            pointerEvents: 'auto'
+                        }}
+                    >
+                        📷
+                    </button>
+                    <button
+                        onClick={enterPreview}
+                        disabled={!image}
+                        style={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            padding: '8px 14px',
+                            background: image ? '#3B82F6' : 'rgba(59,130,246,0.4)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 10,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: image ? 'pointer' : 'not-allowed',
+                            pointerEvents: 'auto'
+                        }}
+                    >
+                        Continue →
+                    </button>
+                </div>
+
+                {/* Instruction + Zoom Indicator */}
+                <div style={{
+                    position: 'absolute',
+                    top: coverHeight + 12,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: '#22C55E',
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    zIndex: 10,
+                    whiteSpace: 'nowrap'
+                }}>
+                    ↕ Drag • Pinch to zoom • {Math.round(scale * 100)}%
                 </div>
             </div>
         )
     }
 
     // =============================================
-    // STATE C: FINAL PREVIEW (TRUE 1:1 — Zero Layout Interference)
+    // STATE B: PREVIEW — True 1:1 Home render
     // =============================================
     if (step === 'preview') {
-        // Home already has cover applied via updateConfig in enterPreview()
-        // Render Home at root level with NO wrapper affecting layout
         return (
             <>
-                {/* Real Home — DIRECT RENDER, no wrapper affecting layout */}
+                {/* Real Home — Direct render, no wrappers */}
                 <div style={{
                     position: 'fixed',
                     inset: 0,
@@ -319,11 +376,13 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                     <StaticBottomNav />
                 </div>
 
-                {/* Floating Action Buttons — Absolutely positioned, no layout impact */}
+                {/* Floating buttons — top right */}
                 <div style={{
                     position: 'fixed',
-                    top: 12,
-                    right: 12,
+                    top: 0,
+                    right: 0,
+                    paddingTop: 'max(12px, env(safe-area-inset-top))',
+                    paddingRight: 12,
                     display: 'flex',
                     gap: 8,
                     zIndex: 10000
@@ -331,13 +390,13 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                     <button
                         onClick={exitPreview}
                         style={{
-                            width: 40,
-                            height: 40,
+                            width: 44,
+                            height: 44,
                             borderRadius: '50%',
                             background: 'rgba(0,0,0,0.6)',
                             color: '#fff',
                             border: 'none',
-                            fontSize: 16,
+                            fontSize: 18,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -349,13 +408,13 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                     <button
                         onClick={handleSave}
                         style={{
-                            width: 40,
-                            height: 40,
+                            width: 44,
+                            height: 44,
                             borderRadius: '50%',
                             background: '#22C55E',
                             color: '#fff',
                             border: 'none',
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: 700,
                             cursor: 'pointer',
                             display: 'flex',
@@ -372,36 +431,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     }
 
     return null
-}
-
-function EditorHeader({ left, title, right }) {
-    return (
-        <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.95)', borderBottom: '1px solid #333', zIndex: 10 }}>
-            {left}
-            <span style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>{title}</span>
-            {right}
-        </div>
-    )
-}
-
-function CancelBtn({ onClick }) {
-    return (
-        <button onClick={onClick} style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 15, fontWeight: 600, cursor: 'pointer', padding: '8px 12px' }}>
-            ✕ Cancel
-        </button>
-    )
-}
-
-function PreviewBtn({ onClick }) {
-    return (
-        <button onClick={onClick} style={{ background: '#3B82F6', border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, padding: '8px 14px', borderRadius: 8, cursor: 'pointer' }}>
-            👁 Preview
-        </button>
-    )
-}
-
-function Spacer() {
-    return <div style={{ width: 80 }} />
 }
 
 export default CoverImageEditor
