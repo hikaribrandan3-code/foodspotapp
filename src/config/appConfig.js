@@ -9,13 +9,21 @@ export const defaultConfig = {
     logoDark: null, // Logo for dark mode (light logo on dark bg)
 
     // ============================================
-    // HEADER BRANDING (PATCH 4.0)
+    // HEADER BRANDING (PATCH 4.0 → 4.5)
     // ============================================
-    // mode: "text" = header renders app name only (default)
+    // V1: Cover mode is default (Facebook-style header image)
+    // mode: "cover" = header renders cover image (default)
+    // mode: "text" = header renders app name only
     // mode: "logo" = header renders logo only
-    // Text and logo NEVER render together
     headerBranding: {
-        mode: "text" // "text" | "logo"
+        mode: "cover" // "cover" | "text" | "logo"
+    },
+    // Cover image settings (used when mode === "cover")
+    headerCover: {
+        image: null,        // Base64 data URI or URL
+        scale: 1.0,         // 1.0 = 100%, range: 0.5–3.0
+        offsetX: 0,         // Horizontal offset (%)
+        offsetY: 0          // Vertical offset (%)
     },
     // ============================================
     // ORDER MODE

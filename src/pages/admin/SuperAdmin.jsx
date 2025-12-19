@@ -727,13 +727,27 @@ function SuperAdmin() {
                                         <div style={{ display: 'flex', gap: 8 }}>
                                             <button
                                                 onClick={() => {
+                                                    updateConfig({ headerBranding: { mode: 'cover' } })
+                                                    setConfig(getConfig())
+                                                }}
+                                                style={{
+                                                    flex: 1, padding: '10px 12px', borderRadius: 8,
+                                                    border: (config.headerBranding?.mode || 'cover') === 'cover' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
+                                                    background: (config.headerBranding?.mode || 'cover') === 'cover' ? '#FAF5FF' : 'white',
+                                                    color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                                                }}
+                                            >
+                                                🖼️ Cover
+                                            </button>
+                                            <button
+                                                onClick={() => {
                                                     updateConfig({ headerBranding: { mode: 'text' } })
                                                     setConfig(getConfig())
                                                 }}
                                                 style={{
                                                     flex: 1, padding: '10px 12px', borderRadius: 8,
-                                                    border: (config.headerBranding?.mode || 'text') === 'text' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
-                                                    background: (config.headerBranding?.mode || 'text') === 'text' ? '#FAF5FF' : 'white',
+                                                    border: config.headerBranding?.mode === 'text' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
+                                                    background: config.headerBranding?.mode === 'text' ? '#FAF5FF' : 'white',
                                                     color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
                                                 }}
                                             >
@@ -755,10 +769,155 @@ function SuperAdmin() {
                                                     color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
                                                 }}
                                             >
-                                                🖼️ Logo
+                                                🏷️ Logo
                                             </button>
                                         </div>
                                     </div>
+
+                                    {/* Cover Editor - only show when mode is "cover" */}
+                                    {(config.headerBranding?.mode === 'cover' || !config.headerBranding?.mode) && (
+                                        <div style={{ marginBottom: 16 }}>
+                                            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                                Cover Image
+                                            </label>
+                                            <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Upload PNG/JPG for Facebook-style header</p>
+
+                                            {/* Upload Dropbox */}
+                                            <div
+                                                onClick={() => document.getElementById('cover-image-upload')?.click()}
+                                                style={{
+                                                    border: '2px dashed #D1D5DB',
+                                                    borderRadius: 8,
+                                                    height: 64,
+                                                    overflow: 'hidden',
+                                                    cursor: 'pointer',
+                                                    background: '#FAFAFA',
+                                                    position: 'relative'
+                                                }}
+                                            >
+                                                {config.headerCover?.image ? (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        inset: 0,
+                                                        backgroundImage: `url(${config.headerCover.image})`,
+                                                        backgroundSize: `${(config.headerCover?.scale || 1) * 100}%`,
+                                                        backgroundPosition: `${50 + (config.headerCover?.offsetX || 0)}% ${50 + (config.headerCover?.offsetY || 0)}%`,
+                                                        backgroundRepeat: 'no-repeat'
+                                                    }} />
+                                                ) : (
+                                                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <input
+                                                id="cover-image-upload"
+                                                type="file"
+                                                accept="image/png,image/jpeg"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0]
+                                                    if (!file) return
+                                                    const reader = new FileReader()
+                                                    reader.onload = (ev) => {
+                                                        updateConfig({
+                                                            headerCover: {
+                                                                ...config.headerCover,
+                                                                image: ev.target.result
+                                                            }
+                                                        })
+                                                        setConfig(getConfig())
+                                                    }
+                                                    reader.readAsDataURL(file)
+                                                }}
+                                            />
+
+                                            {/* Controls - only show when image exists */}
+                                            {config.headerCover?.image && (
+                                                <>
+                                                    {/* Scale Slider */}
+                                                    <div style={{ marginTop: 12 }}>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                                            Scale: {Math.round((config.headerCover?.scale || 1) * 100)}%
+                                                        </label>
+                                                        <input
+                                                            type="range"
+                                                            min="50"
+                                                            max="300"
+                                                            value={(config.headerCover?.scale || 1) * 100}
+                                                            onChange={(e) => {
+                                                                updateConfig({
+                                                                    headerCover: {
+                                                                        ...config.headerCover,
+                                                                        scale: parseInt(e.target.value) / 100
+                                                                    }
+                                                                })
+                                                                setConfig(getConfig())
+                                                            }}
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                    </div>
+
+                                                    {/* X Offset Slider */}
+                                                    <div style={{ marginTop: 8 }}>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                                            X Offset: {config.headerCover?.offsetX || 0}%
+                                                        </label>
+                                                        <input
+                                                            type="range"
+                                                            min="-50"
+                                                            max="50"
+                                                            value={config.headerCover?.offsetX || 0}
+                                                            onChange={(e) => {
+                                                                updateConfig({
+                                                                    headerCover: {
+                                                                        ...config.headerCover,
+                                                                        offsetX: parseInt(e.target.value)
+                                                                    }
+                                                                })
+                                                                setConfig(getConfig())
+                                                            }}
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Y Offset Slider */}
+                                                    <div style={{ marginTop: 8 }}>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                                            Y Offset: {config.headerCover?.offsetY || 0}%
+                                                        </label>
+                                                        <input
+                                                            type="range"
+                                                            min="-50"
+                                                            max="50"
+                                                            value={config.headerCover?.offsetY || 0}
+                                                            onChange={(e) => {
+                                                                updateConfig({
+                                                                    headerCover: {
+                                                                        ...config.headerCover,
+                                                                        offsetY: parseInt(e.target.value)
+                                                                    }
+                                                                })
+                                                                setConfig(getConfig())
+                                                            }}
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Remove Button */}
+                                                    <button
+                                                        onClick={() => {
+                                                            updateConfig({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } })
+                                                            setConfig(getConfig())
+                                                        }}
+                                                        style={{ marginTop: 12, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                    >
+                                                        ✕ Remove Cover
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Logo inputs only show when mode is "logo" */}
                                     {config.headerBranding?.mode === 'logo' && (
