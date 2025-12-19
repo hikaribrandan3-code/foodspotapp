@@ -327,7 +327,6 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#FAF9F7',
             paddingBottom: hasItems ? 220 : 100
         }}>
             {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
@@ -557,7 +556,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
                                                 <p style={{
                                                     fontSize: 13,
                                                     fontWeight: 500,
-                                                    color: '#1F2937',
+                                                    color: 'var(--canvas-text)',
                                                     marginBottom: 2,
                                                     lineHeight: 1.3
                                                 }}>

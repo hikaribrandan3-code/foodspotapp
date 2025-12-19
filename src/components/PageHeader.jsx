@@ -26,12 +26,13 @@ function PageHeader({ businessName }) {
             paddingLeft: 16,
             paddingRight: 16,
             marginBottom: 0,
-            position: 'relative'
+            position: 'relative',
+            background: 'var(--header-bg)'
         }}>
             <span style={{
                 fontSize: 28,
                 fontWeight: 'var(--font-weight-brand)',
-                color: '#1F2937',
+                color: 'var(--header-text)',
                 letterSpacing: '-0.01em',
                 textAlign: 'center',
                 lineHeight: 1.3

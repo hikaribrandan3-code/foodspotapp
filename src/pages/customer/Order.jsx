@@ -173,7 +173,6 @@ function Order() {
         return (
             <div style={{
                 minHeight: '100vh',
-                background: '#FAF9F7',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -330,7 +329,6 @@ function Order() {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#FAF9F7',
             paddingBottom: 120
         }}>
             {/* Clean Brand Header */}

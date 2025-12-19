@@ -115,6 +115,12 @@ function App() {
         const CANVAS_LIGHT = '#F5F0E8'
         const CANVAS_DARK = '#1F2937'
 
+        // Canvas text colors
+        const TEXT_LIGHT_PRIMARY = '#1F2937'
+        const TEXT_LIGHT_MUTED = '#6B7280'
+        const TEXT_DARK_PRIMARY = '#FFFFFF'
+        const TEXT_DARK_MUTED = '#9CA3AF'
+
         // Header colors
         const HEADER_LIGHT_BG = '#FFFFFF'
         const HEADER_LIGHT_TEXT = '#1F2937'
@@ -125,6 +131,15 @@ function App() {
         const canvasBg = canvasMode === 'dark' ? CANVAS_DARK : CANVAS_LIGHT
         root.style.setProperty('--canvas-bg', canvasBg)
 
+        // Set canvas text colors
+        if (canvasMode === 'dark') {
+            root.style.setProperty('--canvas-text', TEXT_DARK_PRIMARY)
+            root.style.setProperty('--canvas-text-muted', TEXT_DARK_MUTED)
+        } else {
+            root.style.setProperty('--canvas-text', TEXT_LIGHT_PRIMARY)
+            root.style.setProperty('--canvas-text-muted', TEXT_LIGHT_MUTED)
+        }
+
         // Determine header colors
         let headerBg, headerText
         if (headerMode === 'locked-light') {
@@ -134,13 +149,13 @@ function App() {
             headerBg = HEADER_DARK_BG
             headerText = HEADER_DARK_TEXT
         } else {
-            // Auto: opposite of canvas
+            // Auto: same as canvas (light canvas = light header)
             if (canvasMode === 'dark') {
-                headerBg = HEADER_LIGHT_BG
-                headerText = HEADER_LIGHT_TEXT
-            } else {
                 headerBg = HEADER_DARK_BG
                 headerText = HEADER_DARK_TEXT
+            } else {
+                headerBg = HEADER_LIGHT_BG
+                headerText = HEADER_LIGHT_TEXT
             }
         }
 

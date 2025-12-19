@@ -36,6 +36,8 @@
 
   /* Canvas V1 - Isolated from nav and hero (injected from config) */
   --canvas-bg: #F5F0E8;
+  --canvas-text: #1F2937;
+  --canvas-text-muted: #6B7280;
   --header-bg: #FFFFFF;
   --header-text: #1F2937;
 
@@ -420,6 +422,7 @@ body {
   border-radius: var(--radius-xl);
   padding: var(--space-4);
   margin-bottom: var(--space-2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .card-header {

@@ -285,18 +285,18 @@ function Home() {
             style={{
                 padding: '0 24px',
                 paddingBottom: 90,
-                backgroundColor: '#F7F4EF',
                 minHeight: '100vh'
             }}
         >
             <header style={{
                 padding: '24px 0 22px',
-                textAlign: 'center'
+                textAlign: 'center',
+                background: 'var(--header-bg)'
             }}>
                 <h1 style={{
                     fontSize: 36,
                     fontWeight: 'var(--font-weight-brand)',
-                    color: '#4A4238',
+                    color: 'var(--header-text)',
                     margin: 0,
                     letterSpacing: '-0.02em'
                 }}>
