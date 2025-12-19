@@ -32,6 +32,7 @@ import Analytics from './pages/owner/Analytics.jsx'
 
 // Admin Pages
 import SuperAdmin from './pages/admin/SuperAdmin.jsx'
+import CoverPreview from './components/CoverPreview.jsx'
 
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
@@ -276,6 +277,7 @@ function App() {
 
                 {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
                 <Route path="/admin" element={<SuperAdmin />} />
+                <Route path="/admin/cover-preview" element={<CoverPreview />} />
 
                 {/* Camera Suite */}
                 <Route path="/camera" element={<Camera />} />
