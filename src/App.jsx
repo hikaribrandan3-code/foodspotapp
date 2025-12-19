@@ -130,39 +130,39 @@ function App() {
         const canvasMode = config.canvasMode || 'light'
         const headerMode = config.headerMode || 'auto'
 
-        // Canvas colors
-        const CANVAS_LIGHT = '#F5F0E8'
-        const CANVAS_DARK = '#1F2937'
+        // PATCH 3.5: Binary theme (pure white/black)
+        const CANVAS_LIGHT = '#FFFFFF'
+        const CANVAS_DARK = '#000000'
 
-        // Canvas text colors
-        const TEXT_LIGHT_PRIMARY = '#1F2937'
-        const TEXT_LIGHT_MUTED = '#6B7280'
+        // Canvas text colors (pure contrast)
+        const TEXT_LIGHT_PRIMARY = '#000000'
+        const TEXT_LIGHT_MUTED = '#666666'
         const TEXT_DARK_PRIMARY = '#FFFFFF'
-        const TEXT_DARK_MUTED = '#9CA3AF'
+        const TEXT_DARK_MUTED = '#999999'
 
-        // Header colors
+        // Header = same as canvas (no separation)
         const HEADER_LIGHT_BG = '#FFFFFF'
-        const HEADER_LIGHT_TEXT = '#1F2937'
-        const HEADER_DARK_BG = '#1F2937'
+        const HEADER_LIGHT_TEXT = '#000000'
+        const HEADER_DARK_BG = '#000000'
         const HEADER_DARK_TEXT = '#FFFFFF'
 
         // Set canvas background
         const canvasBg = canvasMode === 'dark' ? CANVAS_DARK : CANVAS_LIGHT
         root.style.setProperty('--canvas-bg', canvasBg)
 
-        // Set canvas text colors
+        // Set canvas text colors and surfaces
         if (canvasMode === 'dark') {
             root.style.setProperty('--canvas-text', TEXT_DARK_PRIMARY)
             root.style.setProperty('--canvas-text-muted', TEXT_DARK_MUTED)
-            // Canvas surface for hero tiles (elevated cards on dark bg)
-            root.style.setProperty('--canvas-surface', '#374151')
+            // Surface = same as canvas for binary mode
+            root.style.setProperty('--canvas-surface', '#000000')
             root.style.setProperty('--canvas-surface-text', '#FFFFFF')
         } else {
             root.style.setProperty('--canvas-text', TEXT_LIGHT_PRIMARY)
             root.style.setProperty('--canvas-text-muted', TEXT_LIGHT_MUTED)
-            // Canvas surface for hero tiles (elevated cards on light bg)
+            // Surface = same as canvas for binary mode
             root.style.setProperty('--canvas-surface', '#FFFFFF')
-            root.style.setProperty('--canvas-surface-text', '#1F2937')
+            root.style.setProperty('--canvas-surface-text', '#000000')
         }
 
         // Determine header colors

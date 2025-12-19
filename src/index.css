@@ -219,14 +219,37 @@ body {
   background: var(--canvas-bg);
 }
 
-/* Canvas V1 Propagation - Override any hardcoded page backgrounds */
+/* PATCH 3.5: Binary Canvas Theme - Full Coverage */
+/* Apply --canvas-bg to ALL surfaces with !important for verification */
 .home-root,
 .menu-root,
 .order-root,
 .info-root,
 .rewards-root,
-.status-root {
+.status-root,
+.page,
+.app-container,
+.card,
+.admin-card,
+header,
+.page-header {
   background: var(--canvas-bg) !important;
+}
+
+/* Hero tiles use canvas-surface (same as canvas in binary mode) */
+.hero-tile,
+[class*="hero"],
+[class*="tile"] {
+  background: var(--canvas-surface) !important;
+}
+
+/* Text uses canvas-text */
+.page-title,
+.card-title,
+h1,
+h2,
+h3 {
+  color: var(--canvas-text) !important;
 }
 
 .page-header {
