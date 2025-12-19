@@ -301,27 +301,32 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     }
 
     // =============================================
-    // STATE C: FINAL PREVIEW (TRUE 1:1 — Screenshot-Indistinguishable)
+    // STATE C: FINAL PREVIEW (TRUE 1:1 — Zero Layout Interference)
     // =============================================
     if (step === 'preview') {
+        // Home already has cover applied via updateConfig in enterPreview()
+        // Render Home at root level with NO wrapper affecting layout
         return (
-            <div style={{ position: 'fixed', inset: 0, background: 'var(--canvas-bg, #fff)', zIndex: 9999 }}>
-                {/* Real Home (cover already applied) — TRUE SIZE */}
-                <div style={{ position: 'absolute', inset: 0, overflow: 'auto' }}>
+            <>
+                {/* Real Home — DIRECT RENDER, no wrapper affecting layout */}
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 9999,
+                    background: 'var(--canvas-bg, #fff)'
+                }}>
                     <Home />
+                    <StaticBottomNav />
                 </div>
 
-                {/* Static Nav Bar */}
-                <StaticBottomNav />
-
-                {/* Minimal Action Buttons — Top Right */}
+                {/* Floating Action Buttons — Absolutely positioned, no layout impact */}
                 <div style={{
-                    position: 'absolute',
+                    position: 'fixed',
                     top: 12,
                     right: 12,
                     display: 'flex',
                     gap: 8,
-                    zIndex: 100
+                    zIndex: 10000
                 }}>
                     <button
                         onClick={exitPreview}
@@ -362,7 +367,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                         ✓
                     </button>
                 </div>
-            </div>
+            </>
         )
     }
 
