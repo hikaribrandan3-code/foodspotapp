@@ -68,11 +68,14 @@ function App() {
         root.style.setProperty('--nav-primary-color', primaryColor)
         root.style.setProperty('--nav-icon-color', iconColor)
 
-        // Safari repaint workaround - force WebKit to recalculate styles
+        // Safari repaint workaround - use opacity toggle instead of transform
+        // (transform breaks position: fixed in WebKit by creating new containing block)
         const nav = document.querySelector('.bottom-nav')
         if (nav) {
-            nav.style.transform = 'translateZ(0)'
-            void nav.offsetHeight // Force reflow
+            nav.style.opacity = '0.99'
+            requestAnimationFrame(() => {
+                nav.style.opacity = '1'
+            })
         }
     }, [config.branding?.primaryColor, config.branding?.iconColorMode])
 
