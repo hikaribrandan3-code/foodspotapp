@@ -1,48 +1,10 @@
 import { useState } from 'react'
 import ColorPickerModal from './ColorPickerModal.jsx'
-
-// Icons matching Home.jsx exactly
-const HERO_ICONS = {
-    menu: (
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-        </svg>
-    ),
-    delivery: (
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="18.5" cy="17.5" r="3.5" />
-            <circle cx="5.5" cy="17.5" r="3.5" />
-            <polyline points="15 6 15 10 20 10 20 14" />
-            <path d="M6 10v4H2V9a1 1 0 0 1 1-1h13V6H6" />
-        </svg>
-    ),
-    rewards: (
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-    ),
-    game: (
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="6" width="20" height="12" rx="2" />
-            <line x1="6" y1="12" x2="10" y2="12" />
-            <line x1="8" y1="10" x2="8" y2="14" />
-            <circle cx="17" cy="10" r="1" fill="currentColor" />
-            <circle cx="17" cy="14" r="1" fill="currentColor" />
-        </svg>
-    )
-}
-
-const LABELS = {
-    menu: 'Menú',
-    delivery: 'Envíos',
-    rewards: 'Rewards',
-    game: 'Juego'
-}
+import { HERO_ICONS, HERO_LABELS } from './HeroIcons.jsx'
 
 /**
  * HeroIconPicker - Visual parity with Home hero tiles
- * Shows exact mini tile preview + Oscuro/Claro toggle only
+ * Uses shared HeroIcons.jsx (same source as Home.jsx)
  */
 export default function HeroIconPicker({
     iconId = 'menu',
@@ -55,8 +17,8 @@ export default function HeroIconPicker({
 
     const displayColor = color || '#FFFFFF'
     const iconColor = iconColorMode === 'white' ? '#FFFFFF' : '#4A4036'
-    const Icon = HERO_ICONS[iconId] || HERO_ICONS.menu
-    const label = LABELS[iconId] || 'Menú'
+    const Icon = HERO_ICONS[iconId]
+    const label = HERO_LABELS[iconId]
 
     return (
         <div>
@@ -82,7 +44,7 @@ export default function HeroIconPicker({
                     marginBottom: 8
                 }}
             >
-                {Icon}
+                {Icon && <Icon />}
                 <span style={{ fontSize: 14, fontWeight: 500, marginTop: 4 }}>{label}</span>
             </button>
 
