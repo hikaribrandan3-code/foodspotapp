@@ -4,6 +4,7 @@ import { getConfig, reorderPrimaryActions, reorderFeaturedItems, defaultConfig, 
 import { getMenu } from '../../config/menuData.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
+import AppHeader from '../../components/AppHeader.jsx'
 
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
@@ -288,21 +289,7 @@ function Home() {
                 minHeight: '100vh'
             }}
         >
-            <header style={{
-                padding: '24px 0 22px',
-                textAlign: 'center',
-                background: 'var(--header-bg)'
-            }}>
-                <h1 style={{
-                    fontSize: 36,
-                    fontWeight: 'var(--font-weight-brand)',
-                    color: 'var(--header-text)',
-                    margin: 0,
-                    letterSpacing: '-0.02em'
-                }}>
-                    {config.businessName || 'FoodSpot'}
-                </h1>
-            </header>
+            <AppHeader />
 
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (

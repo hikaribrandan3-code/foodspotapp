@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getMenu, formatPrice, reorderCategoryItems } from '../../config/menuData.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
 import { getConfig } from '../../config/appConfig.js'
-import PageHeader from '../../components/PageHeader.jsx'
+import AppHeader from '../../components/AppHeader.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
@@ -330,7 +330,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             paddingBottom: hasItems ? 220 : 100
         }}>
             {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
-            <PageHeader businessName={deliveryMode ? 'FoodSpot · Envíos' : config.businessName} />
+            <AppHeader />
 
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (

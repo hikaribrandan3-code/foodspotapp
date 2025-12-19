@@ -637,6 +637,85 @@ function SuperAdmin() {
                             </div>
                         </div>
 
+                        {/* PATCH 3.7: Layout Presets - One-Click System */}
+                        <h3 style={labelStyle}>⚡ LAYOUT PRESET</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>
+                                One-click layout. Disables individual controls when active.
+                            </p>
+                            {config.layoutPreset && config.layoutPreset !== 'none' && (
+                                <div style={{
+                                    padding: '8px 12px',
+                                    background: '#FEF3C7',
+                                    borderRadius: 8,
+                                    marginBottom: 12,
+                                    fontSize: 12,
+                                    color: '#92400E'
+                                }}>
+                                    ⚠️ Preset Active — Individual controls disabled
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({ layoutPreset: 'minimal' })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 8px',
+                                        borderRadius: 10,
+                                        border: config.layoutPreset === 'minimal' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                        background: '#FFFFFF',
+                                        color: '#1F2937',
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Minimal
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({ layoutPreset: 'accent-nav' })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 8px',
+                                        borderRadius: 10,
+                                        border: config.layoutPreset === 'accent-nav' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                        background: '#FFFFFF',
+                                        color: '#1F2937',
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Accent Nav
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({ layoutPreset: 'hero-color' })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 8px',
+                                        borderRadius: 10,
+                                        border: config.layoutPreset === 'hero-color' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                        background: '#FFFFFF',
+                                        color: '#1F2937',
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Hero Color
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Canvas V1 - Light/Dark */}
                         <h3 style={labelStyle}>🎨 CANVAS (FONDO)</h3>
                         <div style={cardStyle}>
