@@ -66,6 +66,37 @@ function isTrueSuperAdmin() {
     }
 }
 
+// ============================================
+// LOGO VALIDATION (PATCH 4.1)
+// ============================================
+// SVG logos must be URL-based assets, not data URIs or inline SVG
+function isValidLogoUrl(value) {
+    if (!value || value.trim() === '') return true // Empty is valid (no logo)
+    const trimmed = value.trim()
+
+    // Reject data URIs
+    if (trimmed.startsWith('data:')) {
+        return { valid: false, error: 'SVG logos must be uploaded as image files (URL-based), not data URIs.' }
+    }
+
+    // Reject base64 content
+    if (trimmed.match(/^[A-Za-z0-9+/=]{50,}$/)) {
+        return { valid: false, error: 'SVG logos must be uploaded as image files (URL-based), not base64 content.' }
+    }
+
+    // Reject raw SVG markup
+    if (trimmed.startsWith('<svg') || trimmed.startsWith('<?xml')) {
+        return { valid: false, error: 'SVG logos must be uploaded as image files (URL-based), not raw SVG markup.' }
+    }
+
+    // Must be a URL (http/https)
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+        return { valid: false, error: 'Logo must be a valid HTTPS URL.' }
+    }
+
+    return { valid: true }
+}
+
 function SuperAdmin() {
     const navigate = useNavigate()
     const [config, setConfig] = useState(() => getConfig())
@@ -773,11 +804,17 @@ function SuperAdmin() {
                                                 </p>
                                                 <input
                                                     type="text"
-                                                    placeholder="URL or base64 data URI"
+                                                    placeholder="https://example.com/logo-dark.svg"
                                                     value={config.logoLight || ''}
                                                     onChange={(e) => {
-                                                        updateConfig({ logoLight: e.target.value || null })
-                                                        setConfig(getConfig())
+                                                        const value = e.target.value
+                                                        const validation = isValidLogoUrl(value)
+                                                        if (validation === true || validation.valid) {
+                                                            updateConfig({ logoLight: value || null })
+                                                            setConfig(getConfig())
+                                                        } else {
+                                                            alert(validation.error)
+                                                        }
                                                     }}
                                                     style={inputStyle}
                                                 />
@@ -798,11 +835,17 @@ function SuperAdmin() {
                                                 </p>
                                                 <input
                                                     type="text"
-                                                    placeholder="URL or base64 data URI"
+                                                    placeholder="https://example.com/logo-light.svg"
                                                     value={config.logoDark || ''}
                                                     onChange={(e) => {
-                                                        updateConfig({ logoDark: e.target.value || null })
-                                                        setConfig(getConfig())
+                                                        const value = e.target.value
+                                                        const validation = isValidLogoUrl(value)
+                                                        if (validation === true || validation.valid) {
+                                                            updateConfig({ logoDark: value || null })
+                                                            setConfig(getConfig())
+                                                        } else {
+                                                            alert(validation.error)
+                                                        }
                                                     }}
                                                     style={inputStyle}
                                                 />
