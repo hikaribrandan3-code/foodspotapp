@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { login, logout, getSession } from '../../utils/auth.js'
-import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS } from '../../config/appConfig.js'
+import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, NAV_COLOR_PRESETS } from '../../config/appConfig.js'
 import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
@@ -580,6 +580,86 @@ function SuperAdmin() {
                                     <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Phase 1 Navbar Branding */}
+                        <h3 style={labelStyle}>🎨 COLOR DE NAVEGACIÓN</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo del menú inferior</p>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                                {NAV_COLOR_PRESETS.map(color => (
+                                    <button
+                                        key={color.value}
+                                        onClick={() => {
+                                            updateConfig({
+                                                branding: {
+                                                    ...config.branding,
+                                                    primaryColor: color.value
+                                                }
+                                            })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            width: 40,
+                                            height: 40,
+                                            borderRadius: 8,
+                                            backgroundColor: color.value,
+                                            border: config.branding?.primaryColor === color.value
+                                                ? '3px solid #22C55E'
+                                                : '2px solid #E5E7EB',
+                                            cursor: 'pointer'
+                                        }}
+                                        title={color.label}
+                                    />
+                                ))}
+                            </div>
+
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Color de íconos</label>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({
+                                            branding: { ...config.branding, iconColorMode: 'white' }
+                                        })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: 8,
+                                        border: config.branding?.iconColorMode !== 'black'
+                                            ? '2px solid #22C55E'
+                                            : '2px solid #E5E7EB',
+                                        background: '#1F2937',
+                                        color: '#FFFFFF',
+                                        cursor: 'pointer',
+                                        fontWeight: 500
+                                    }}
+                                >
+                                    Blanco
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({
+                                            branding: { ...config.branding, iconColorMode: 'black' }
+                                        })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: 8,
+                                        border: config.branding?.iconColorMode === 'black'
+                                            ? '2px solid #22C55E'
+                                            : '2px solid #E5E7EB',
+                                        background: '#FFFFFF',
+                                        color: '#1F2937',
+                                        cursor: 'pointer',
+                                        fontWeight: 500
+                                    }}
+                                >
+                                    Negro
+                                </button>
+                            </div>
+                            <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 8 }}>Usa negro si el color de navegación es claro</p>
                         </div>
 
                         {/* Divider Preset Selector */}
