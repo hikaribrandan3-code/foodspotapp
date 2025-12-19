@@ -1,36 +1,17 @@
 /**
- * HeaderClamp.jsx - Invisible Mobile Header Padding Reducer
+ * HeaderClamp.jsx - Header Component Passthrough
  * 
- * SUPER ADMIN ONLY — End users never see this
+ * REFACTORED: Clamp logic moved inside AppHeader.jsx
+ * HeaderClamp now simply renders AppHeader.
  * 
- * Wraps the header without modifying it.
- * Uses CSS clamp to visually reduce padding on mobile only.
- * 
- * Rules:
- * - Does NOT modify header component
- * - Does NOT change logo size
- * - Does NOT use negative margins on body/root
- * - ONLY affects mobile (<768px)
- * - Safari-safe, PWA-safe
+ * Kept for backward compatibility with pages that import HeaderClamp.
  */
 
-import { getConfig } from '../config/appConfig.js'
 import AppHeader from './AppHeader.jsx'
 
 function HeaderClamp() {
-    const config = getConfig()
-    const useClamp = config.experimental?.headerClampMobile
-
-    // Mobile clamp enabled via experimental flag
-    if (useClamp) {
-        return (
-            <div className="header-clamp-mobile">
-                <AppHeader />
-            </div>
-        )
-    }
-
-    // Default: render header without wrapper
+    // Clamp logic is now internal to AppHeader
+    // This component is a passthrough for backward compatibility
     return <AppHeader />
 }
 

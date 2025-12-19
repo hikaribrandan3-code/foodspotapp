@@ -5,12 +5,12 @@
  * PATCH 3.8: Dual logo support (logoLight/logoDark auto-switch)
  * PATCH 4.0: Header Branding mode (text OR logo, never both)
  * PATCH 4.5: Cover mode (Facebook-style header image) — V1 default
+ * PATCH 5.0: Cover viewport clamp (internal, mobile only)
  * 
  * Rules:
- * - Fixed height: 64px
- * - headerBranding.mode === "cover" → render cover image (V1 default)
- * - headerBranding.mode === "logo" → render logo only
- * - headerBranding.mode === "text" → render text only
+ * - Header height determined by mode (64px for logo/text, 220/280px for cover)
+ * - Cover viewport clamps internally on mobile (60px)
+ * - Header stays in normal document flow
  */
 
 import { getConfig } from '../config/appConfig.js'
@@ -33,6 +33,7 @@ function AppHeader() {
     const headerMode = config.headerBranding?.mode || 'cover'
     const breakpoint = getBreakpoint()
     const coverHeight = COVER_HEIGHTS[breakpoint]
+    const useClamp = config.experimental?.headerClampMobile
 
     // ============================================
     // COVER MODE (V1 Default)
@@ -43,40 +44,50 @@ function AppHeader() {
         const offsetX = cover.offsetX || 0
         const offsetY = cover.offsetY || 0
 
+        const coverContent = (
+            <div className="cover-content" style={{
+                position: 'absolute',
+                width: '200%',
+                height: '200%',
+                left: '-50%',
+                top: '-50%',
+                backgroundImage: cover.image ? `url(${cover.image})` : 'none',
+                backgroundSize: `${scale * 100}%`,
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                transform: `translate(${offsetX}px, ${offsetY}px)`
+            }} />
+        )
+
+        const placeholder = (
+            <div className="cover-content" style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <span style={{ color: 'var(--canvas-text)', opacity: 0.5, fontSize: 12 }}>
+                    No cover image
+                </span>
+            </div>
+        )
+
         return (
             <header style={{
-                height: coverHeight,
                 position: 'relative',
-                overflow: 'hidden',
                 background: 'var(--canvas-bg)',
                 flexShrink: 0
             }}>
-                {cover.image ? (
-                    <div style={{
-                        position: 'absolute',
-                        width: '200%',
-                        height: '200%',
-                        left: '-50%',
-                        top: '-50%',
-                        backgroundImage: `url(${cover.image})`,
-                        backgroundSize: `${scale * 100}%`,
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
-                        transform: `translate(${offsetX}px, ${offsetY}px)`
-                    }} />
-                ) : (
-                    // No cover image — show placeholder
-                    <div style={{
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <span style={{ color: 'var(--canvas-text)', opacity: 0.5, fontSize: 12 }}>
-                            No cover image
-                        </span>
-                    </div>
-                )}
+                <div
+                    className={useClamp ? 'cover-viewport' : undefined}
+                    style={{
+                        height: useClamp ? undefined : coverHeight,
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}
+                >
+                    {cover.image ? coverContent : placeholder}
+                </div>
             </header>
         )
     }
@@ -89,15 +100,12 @@ function AppHeader() {
             ? (config.logoDark || config.logoLight || config.logo)
             : (config.logoLight || config.logoDark || config.logo)
 
-        return (
-            <header style={{
-                height: 64,
+        const logoContent = (
+            <div className="cover-content" style={{
+                height: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--canvas-bg)',
-                position: 'relative',
-                flexShrink: 0
+                justifyContent: 'center'
             }}>
                 {logo ? (
                     <img
@@ -116,6 +124,26 @@ function AppHeader() {
                         No logo configured
                     </span>
                 )}
+            </div>
+        )
+
+        return (
+            <header style={{
+                position: 'relative',
+                background: 'var(--canvas-bg)',
+                flexShrink: 0
+            }}>
+                <div
+                    className={useClamp ? 'cover-viewport' : undefined}
+                    style={{
+                        height: useClamp ? undefined : 64,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    {logoContent}
+                </div>
             </header>
         )
     }
@@ -123,15 +151,12 @@ function AppHeader() {
     // ============================================
     // TEXT MODE
     // ============================================
-    return (
-        <header style={{
-            height: 64,
+    const textContent = (
+        <div className="cover-content" style={{
+            height: '100%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--canvas-bg)',
-            position: 'relative',
-            flexShrink: 0
+            justifyContent: 'center'
         }}>
             <span style={{
                 fontSize: 24,
@@ -142,6 +167,26 @@ function AppHeader() {
             }}>
                 {businessName}
             </span>
+        </div>
+    )
+
+    return (
+        <header style={{
+            position: 'relative',
+            background: 'var(--canvas-bg)',
+            flexShrink: 0
+        }}>
+            <div
+                className={useClamp ? 'cover-viewport' : undefined}
+                style={{
+                    height: useClamp ? undefined : 64,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                {textContent}
+            </div>
         </header>
     )
 }

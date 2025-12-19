@@ -98,34 +98,22 @@
 }
 
 /* =============================================
-   MOBILE HEADER CLAMP (Super Admin Only)
-   Visually reduces header padding on mobile
-   without modifying header component
+   COVER VIEWPORT CLAMP (Internal to AppHeader)
+   Clamps only the cover/logo content, not the header
+   Header stays in normal document flow
    ============================================= */
 @media (max-width: 768px) {
-  .header-clamp-mobile {
+  .cover-viewport {
     height: 60px;
     overflow: hidden;
     position: relative;
-    /* Content inside clamp — shift up to hide top padding */
   }
 
-  .header-clamp-mobile>header,
-  .header-clamp-mobile>.app-header {
+  .cover-content {
     position: relative;
     top: -2px;
     width: 100%;
-  }
-
-  /* Restore spacing after clamp to prevent hero overlap */
-  .header-clamp-mobile+* {
-    margin-top: 8px;
-  }
-
-  /* Hero grid specific fix */
-  .header-clamp-mobile+.actions-grid,
-  .header-clamp-mobile~.actions-grid {
-    margin-top: 12px;
+    height: 100%;
   }
 }
 
