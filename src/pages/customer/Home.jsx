@@ -523,10 +523,6 @@ function Home() {
                                     e.stopPropagation()
                                 }}
                                 onTouchStart={(e) => {
-                                    // CRITICAL: Prevent browser link preview behavior
-                                    if (!isEditMode) {
-                                        e.preventDefault()
-                                    }
                                     if (isEditMode) {
                                         handleDragStart(e, 'actions', actionId, index, primaryActions)
                                     } else {
@@ -569,10 +565,10 @@ function Home() {
                                     opacity: isDragging ? 0.3 : 1,
                                     background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getHeroBg(actionId),
                                     border: isPlaceholder ? '2px dashed #22C55E' : 'none',
-                                    touchAction: 'none',
+                                    touchAction: isEditMode ? 'none' : 'auto',
                                     userSelect: 'none',
                                     WebkitUserSelect: 'none',
-                                    WebkitTouchCallout: 'none'
+                                    WebkitTouchCallout: isEditMode ? 'none' : 'default'
                                 }}
                             >
                                 {tileContent}
@@ -663,9 +659,6 @@ function Home() {
                                     e.stopPropagation()
                                 }}
                                 onTouchStart={(e) => {
-                                    if (!isEditMode) {
-                                        e.preventDefault()
-                                    }
                                     if (isEditMode) {
                                         handleDragStart(e, 'featured', item.id, index, featuredItems)
                                     } else {
@@ -704,8 +697,8 @@ function Home() {
                                 style={{
                                     ...cardStyle,
                                     cursor: isEditMode ? 'grab' : 'pointer',
-                                    touchAction: 'none',
-                                    WebkitTouchCallout: 'none'
+                                    touchAction: isEditMode ? 'none' : 'auto',
+                                    WebkitTouchCallout: isEditMode ? 'none' : 'default'
                                 }}
                             >
                                 {cardContent}
