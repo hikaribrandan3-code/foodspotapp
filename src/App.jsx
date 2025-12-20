@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
 import { incrementVisit, isDemoMode } from './utils/storage.js'
+import { AdminIntentProvider } from './contexts/AdminIntentContext.jsx'
+import AdminLensBar from './components/AdminLensBar.jsx'
 
 // Components
 import BottomNav from './components/BottomNav.jsx'
@@ -224,71 +226,74 @@ function App() {
     }
 
     return (
-        <div className="app-container">
-            {/* Demo Mode Indicator */}
-            {demoMode && (
-                <div className="demo-indicator">DEMO — datos simulados</div>
-            )}
+        <AdminIntentProvider>
+            <AdminLensBar />
+            <div className="app-container">
+                {/* Demo Mode Indicator */}
+                {demoMode && (
+                    <div className="demo-indicator">DEMO — datos simulados</div>
+                )}
 
-            <Routes>
-                {/* Customer Routes */}
-                <Route path="/" element={<Home config={config} />} />
-                <Route path="/menu" element={<Menu config={config} />} />
-                <Route path="/envios" element={<Menu config={config} deliveryMode={true} />} />
-                <Route path="/order" element={<Order config={config} />} />
+                <Routes>
+                    {/* Customer Routes */}
+                    <Route path="/" element={<Home config={config} />} />
+                    <Route path="/menu" element={<Menu config={config} />} />
+                    <Route path="/envios" element={<Menu config={config} deliveryMode={true} />} />
+                    <Route path="/order" element={<Order config={config} />} />
 
-                <Route path="/status" element={<OrderStatus />} />
-                <Route path="/rewards" element={<Rewards config={config} />} />
-                <Route path="/share" element={<ShareFood config={config} />} />
-                <Route path="/game" element={<PerfectPour />} />
-                <Route path="/info" element={<Info />} />
-                <Route path="/promos" element={<Promos />} />
+                    <Route path="/status" element={<OrderStatus />} />
+                    <Route path="/rewards" element={<Rewards config={config} />} />
+                    <Route path="/share" element={<ShareFood config={config} />} />
+                    <Route path="/game" element={<PerfectPour />} />
+                    <Route path="/info" element={<Info />} />
+                    <Route path="/promos" element={<Promos />} />
 
-                {/* Staff Routes */}
-                <Route path="/staff" element={<StaffLogin />} />
-                <Route path="/staff/dashboard" element={
-                    <ProtectedRoute requiredRole="staff">
-                        <StaffDashboard config={config} />
-                    </ProtectedRoute>
-                } />
+                    {/* Staff Routes */}
+                    <Route path="/staff" element={<StaffLogin />} />
+                    <Route path="/staff/dashboard" element={
+                        <ProtectedRoute requiredRole="staff">
+                            <StaffDashboard config={config} />
+                        </ProtectedRoute>
+                    } />
 
-                {/* Owner Routes */}
-                <Route path="/owner" element={<OwnerLogin />} />
-                <Route path="/owner/menu" element={
-                    <ProtectedRoute requiredRole="owner">
-                        <MenuManager />
-                    </ProtectedRoute>
-                } />
-                <Route path="/owner/rewards" element={
-                    <ProtectedRoute requiredRole="owner">
-                        <RewardsManager />
-                    </ProtectedRoute>
-                } />
-                <Route path="/owner/settings" element={
-                    <ProtectedRoute requiredRole="owner">
-                        <Settings />
-                    </ProtectedRoute>
-                } />
-                <Route path="/owner/analytics" element={
-                    <ProtectedRoute requiredRole="owner">
-                        <Analytics />
-                    </ProtectedRoute>
-                } />
+                    {/* Owner Routes */}
+                    <Route path="/owner" element={<OwnerLogin />} />
+                    <Route path="/owner/menu" element={
+                        <ProtectedRoute requiredRole="owner">
+                            <MenuManager />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/owner/rewards" element={
+                        <ProtectedRoute requiredRole="owner">
+                            <RewardsManager />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/owner/settings" element={
+                        <ProtectedRoute requiredRole="owner">
+                            <Settings />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/owner/analytics" element={
+                        <ProtectedRoute requiredRole="owner">
+                            <Analytics />
+                        </ProtectedRoute>
+                    } />
 
-                {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
-                <Route path="/admin" element={<SuperAdmin />} />
-                <Route path="/admin/cover-preview" element={<CoverPreview />} />
+                    {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
+                    <Route path="/admin" element={<SuperAdmin />} />
+                    <Route path="/admin/cover-preview" element={<CoverPreview />} />
 
-                {/* Camera Suite */}
-                <Route path="/camera" element={<Camera />} />
+                    {/* Camera Suite */}
+                    <Route path="/camera" element={<Camera />} />
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                    {/* Fallback */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
 
-            {/* Bottom Navigation (visible on main customer pages) */}
-            <BottomNav />
-        </div>
+                {/* Bottom Navigation (visible on main customer pages) */}
+                <BottomNav />
+            </div>
+        </AdminIntentProvider>
     )
 }
 

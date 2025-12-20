@@ -3,10 +3,23 @@ import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled } from '../../config/menuData.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
+import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 
 function MenuManager() {
     const navigate = useNavigate()
-    const [menu, setMenu] = useState(() => getMenu())
+    const { isSimulated, impersonatingBusinessId } = useAdminIntent()
+
+    // In a real implementation with a backend, we would use user.businessId
+    // For V1 LocalStorage pattern, we just demonstrate valid access and intent.
+    const currentUser = getAuth() // Current "Logged in" user (Admin or Owner)
+
+    // Resolve target business identifier
+    const targetBusinessId = isSimulated ? impersonatingBusinessId : currentUser?.businessId
+
+    // We pass this ID to getMenu. Currently getMenu is synchronous and ignores it in V1, 
+    // but this proves the pattern for V2.
+    const [menu, setMenu] = useState(() => getMenu(targetBusinessId))
+
     const [editingItem, setEditingItem] = useState(null)
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
     const [uploadStatus, setUploadStatus] = useState(null)
@@ -16,6 +29,7 @@ function MenuManager() {
     // Check auth
     useEffect(() => {
         const auth = getAuth()
+        // Allow if owner OR if superadmin (implicitly allowed by hierarchy, but explicit check is good)
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
             navigate('/owner')
         }
@@ -93,12 +107,12 @@ function MenuManager() {
 
     const handleSetFeatured = (categoryId, itemId) => {
         setFeaturedItem(categoryId, itemId)
-        setMenu(getMenu())
+        setMenu(getMenu(targetBusinessId))
     }
 
     const handleToggleCategory = (categoryId) => {
         toggleCategoryEnabled(categoryId)
-        setMenu(getMenu())
+        setMenu(getMenu(targetBusinessId))
     }
 
     return (
@@ -110,9 +124,27 @@ function MenuManager() {
                 alignItems: 'center',
                 marginBottom: 'var(--space-4)'
             }}>
-                <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
-                    📋 Menú
-                </h1>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
+                        📋 Menú
+                    </h1>
+                    {/* Visual proof of context injection */}
+                    {isSimulated && (
+                        <span style={{
+                            fontSize: '12px',
+                            color: '#FF6B00',
+                            fontWeight: 'bold',
+                            backgroundColor: '#fff3e0',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            border: '1px solid #FF6B00',
+                            marginTop: '4px'
+                        }}>
+                            👁 VIEWING AS: {targetBusinessId}
+                        </span>
+                    )}
+                </div>
+
                 <button
                     className="btn btn-secondary"
                     onClick={handleLogout}
