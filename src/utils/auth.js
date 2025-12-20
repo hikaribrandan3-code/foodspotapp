@@ -1,7 +1,7 @@
 // Auth utilities for FoodSpot
 // Simple role-based authentication using localStorage
 
-import { getItem, setItem, removeItem } from './storage.js'
+import { getItem, setItem, removeItem, STORAGE_KEYS } from './storage.js'
 
 // ============================================
 // MVP CREDENTIALS - HARDCODED FOR NOW
@@ -16,7 +16,7 @@ const CREDENTIALS = {
 // Role hierarchy: higher index = more access
 const ROLE_HIERARCHY = ['staff', 'owner', 'superadmin']
 
-const AUTH_STORAGE_KEY = 'session'
+const AUTH_STORAGE_KEY = STORAGE_KEYS.AUTH
 
 /**
  * Attempt to login with username/password

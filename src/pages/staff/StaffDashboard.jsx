@@ -17,7 +17,7 @@ function StaffDashboard({ config }) {
     // Check auth
     useEffect(() => {
         const auth = getAuth()
-        if (!auth.authenticated || auth.role !== 'staff') {
+        if (!auth.authenticated || (auth.role !== 'staff' && auth.role !== 'superadmin')) {
             navigate('/staff')
         }
     }, [navigate])
