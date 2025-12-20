@@ -33,7 +33,7 @@ function AppHeader() {
     const headerMode = config.headerBranding?.mode || 'cover'
     const breakpoint = getBreakpoint()
     const coverHeight = COVER_HEIGHTS[breakpoint]
-    const useClamp = config.experimental?.headerClampMobile
+    const useClamp = config.experimental?.headerClampMobile && breakpoint === 'mobile'
 
     // ============================================
     // COVER MODE (V1 Default)

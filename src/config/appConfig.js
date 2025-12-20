@@ -105,14 +105,7 @@ export const defaultConfig = {
     // 'locked-dark' = always dark header
     headerMode: "auto",
 
-    // ============================================
-    // LAYOUT PRESETS (PATCH 3.7)
-    // ============================================
-    // One-click layout system. When active, disables individual controls.
-    // "minimal" = binary only, no accents, no hero colors
-    // "accent-nav" = nav uses brand color, rest binary
-    // "hero-color" = hero tiles custom colors, rest binary
-    layoutPreset: "minimal",
+
 
     // Feature Toggles
     features: {

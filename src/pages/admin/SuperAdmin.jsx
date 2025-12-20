@@ -644,10 +644,7 @@ function SuperAdmin() {
                             </div>
 
                             {/* Phase 1 Navbar Branding - Color Picker Component */}
-                            <div style={{
-                                opacity: config.layoutPreset !== 'accent-nav' ? 0.4 : 1,
-                                pointerEvents: config.layoutPreset !== 'accent-nav' ? 'none' : 'auto'
-                            }}>
+                            <div>
                                 <BrandingColorPicker
                                     primaryColor={config.branding?.primaryColor || '#8B7355'}
                                     iconColorMode={config.branding?.iconColorMode || 'white'}
@@ -664,10 +661,7 @@ function SuperAdmin() {
 
                             {/* Hero Icons Customization (v2 - Fully Isolated) */}
                             <h3 style={labelStyle}>🎯 HERO ICONS (INICIO)</h3>
-                            <div style={{
-                                opacity: config.layoutPreset && config.layoutPreset !== 'hero-color' ? 0.4 : 1,
-                                pointerEvents: config.layoutPreset && config.layoutPreset !== 'hero-color' ? 'none' : 'auto'
-                            }}>
+                            <div>
                                 <div style={cardStyle}>
                                     <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo e ícono para cada tile (Independiente de la navegación)</p>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -1057,84 +1051,7 @@ function SuperAdmin() {
                                 </>
                             )}
 
-                            {/* PATCH 3.7: Layout Presets - One-Click System */}
-                            <h3 style={labelStyle}>⚡ LAYOUT PRESET</h3>
-                            <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>
-                                    One-click layout. Disables individual controls when active.
-                                </p>
-                                {config.layoutPreset && config.layoutPreset !== 'none' && (
-                                    <div style={{
-                                        padding: '8px 12px',
-                                        background: '#FEF3C7',
-                                        borderRadius: 8,
-                                        marginBottom: 12,
-                                        fontSize: 12,
-                                        color: '#92400E'
-                                    }}>
-                                        ⚠️ Preset Active — Individual styling is locked to maintain consistency.
-                                    </div>
-                                )}
-                                <div style={{ display: 'flex', gap: 8 }}>
-                                    <button
-                                        onClick={() => {
-                                            updateConfig({ layoutPreset: 'minimal' })
-                                            setConfig(getConfig())
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '12px 8px',
-                                            borderRadius: 10,
-                                            border: config.layoutPreset === 'minimal' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                            background: '#FFFFFF',
-                                            color: '#1F2937',
-                                            fontSize: 12,
-                                            fontWeight: 600,
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Minimal
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            updateConfig({ layoutPreset: 'accent-nav' })
-                                            setConfig(getConfig())
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '12px 8px',
-                                            borderRadius: 10,
-                                            border: config.layoutPreset === 'accent-nav' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                            background: '#FFFFFF',
-                                            color: '#1F2937',
-                                            fontSize: 12,
-                                            fontWeight: 600,
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Accent Nav
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            updateConfig({ layoutPreset: 'hero-color' })
-                                            setConfig(getConfig())
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '12px 8px',
-                                            borderRadius: 10,
-                                            border: config.layoutPreset === 'hero-color' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                            background: '#FFFFFF',
-                                            color: '#1F2937',
-                                            fontSize: 12,
-                                            fontWeight: 600,
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Hero Color
-                                    </button>
-                                </div>
-                            </div>
+
 
                             {/* Canvas V1 - Light/Dark */}
                             <h3 style={labelStyle}>🎨 CANVAS (FONDO)</h3>
