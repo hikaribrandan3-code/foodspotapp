@@ -405,7 +405,8 @@ function SuperAdmin() {
                                 <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{monthOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Este mes</p></div>
                             </div>
 
-                            <button style={{ width: '100%', padding: '14px', background: '#22C55E', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>📄 Exportar PDF del mes</button>
+                            {/* PDF Export disabled for v1 — pushing to v2 */}
+                            {/* <button style={{ width: '100%', padding: '14px', background: '#22C55E', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>📄 Exportar PDF del mes</button> */}
                         </>
                     )}
 
