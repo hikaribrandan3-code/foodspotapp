@@ -280,10 +280,10 @@ function SuperAdmin() {
     }
     // Mode options for dropdown (superadmin only)
     const modeOptions = [
-        { value: 'superadmin', label: '🔐 Super Admin', color: '#7C3AED' },
-        { value: 'owner', label: '👑 Owner', color: '#22C55E' },
-        { value: 'staff', label: '👤 Staff', color: '#6366F1' },
-        { value: 'customer', label: '🛒 Customer', color: '#F59E0B' }
+        { value: 'superadmin', label: '👑 Super Admin', color: '#7C3AED' },
+        { value: 'owner', label: 'Owner', color: '#22C55E' },
+        { value: 'staff', label: 'Staff', color: '#6366F1' },
+        { value: 'customer', label: 'Customer', color: '#F59E0B' }
     ]
 
     // Handle mode change & NAVIGATION
@@ -305,15 +305,15 @@ function SuperAdmin() {
         }
     }
 
-    // Full Super Admin Navigation (No Filtering)
+    // Full Super Admin Navigation (No Filtering) - ENGLISH ONLY
     const tabs = [
-        { id: 'resumen', label: 'Resumen' },
+        { id: 'resumen', label: 'Summary' },
         { id: 'info', label: 'Info' },
-        { id: 'menu', label: 'Menú' },
+        { id: 'menu', label: 'Menu' },
         { id: 'branding', label: 'Branding' },
-        { id: 'pedidos', label: 'Pedidos' },
+        { id: 'pedidos', label: 'Orders' },
         { id: 'analytics', label: 'Analytics' },
-        { id: 'historial', label: 'Historial' },
+        { id: 'historial', label: 'History' },
         { id: 'tenants', label: 'Tenants' },
         { id: 'system', label: 'System' },
     ]
@@ -329,18 +329,17 @@ function SuperAdmin() {
     return (
         <>
             <div style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                {/* Dark Header */}
+                {/* Dark Header - SUPER ADMIN ENGLISH ONLY */}
                 <div style={{ background: '#1F2937', padding: '16px 16px 14px', color: 'white' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'white', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
                             <div>
-                                <h1 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>Panel de Administración</h1>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', margin: '2px 0 0' }}>{roleLabel} · Gestión del local</p>
+                                <h1 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>👑 King Hikari — Software Engineer</h1>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', margin: '2px 0 0' }}>Platform Administration</p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {userRole === 'superadmin' && <span style={{ padding: '4px 8px', background: '#22C55E', borderRadius: 5, fontSize: 9, fontWeight: 700, color: 'white' }}>SUPER ADMIN</span>}
                             {demoAnalytics && userRole === 'superadmin' && <span style={{ padding: '4px 6px', background: '#EAB308', borderRadius: 5, fontSize: 9, fontWeight: 600, color: 'white' }}>DEMO</span>}
                             {/* Mode Switcher Dropdown (superadmin only) */}
                             {userRole === 'superadmin' && (
@@ -380,21 +379,6 @@ function SuperAdmin() {
                         </button>
                     ))}
                 </div>
-
-                {/* PATCH 3.9: Super Admin Mode Banner */}
-                {isTrueSuperAdmin() && (
-                    <div style={{
-                        background: SUPER_ADMIN_COLOR,
-                        color: 'white',
-                        padding: '10px 16px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        textAlign: 'center',
-                        letterSpacing: '0.05em'
-                    }}>
-                        🔒 SUPER ADMIN MODE — SYSTEM CONTROLS ENABLED
-                    </div>
-                )}
 
                 {/* Content */}
                 <div style={{ padding: 16 }}>

@@ -266,16 +266,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                         navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
                         onClose()
                     } else {
-                        // Block navigation, show message
-                        // PATCH: Detect Safari Browser specifically to give helpful guidance
-                        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
-                        const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
-
-                        if (isSafari && !isPWA) {
-                            alert('Safari Browser limit reached. Please use "Add to Home Screen" for reliable editing.')
-                        } else {
-                            alert('Saving image… please wait and try again.')
-                        }
+                        // Generic message for all browsers
+                        alert('Saving image… please wait and try again.')
                     }
                 }, 100)
             }
@@ -424,7 +416,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
             <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png,image/jpeg"
+                accept="image/*"
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
             />
