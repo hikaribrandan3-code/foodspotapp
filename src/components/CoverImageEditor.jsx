@@ -81,6 +81,9 @@ function CameraButton() {
     )
 }
 
+// Snap assist constants
+const SNAP_THRESHOLD = 4 // ±4px for gentle snap
+
 function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     const navigate = useNavigate()
 
@@ -89,6 +92,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     const [offsetX, setOffsetX] = useState(initialData?.offsetX || 0)
     const [offsetY, setOffsetY] = useState(initialData?.offsetY || 0)
     const [breakpoint, setBreakpoint] = useState(getBreakpoint())
+    const [snappedX, setSnappedX] = useState(false)
+    const [snappedY, setSnappedY] = useState(false)
 
     // Gesture refs (no auto-zoom/snapback)
     const isDragging = useRef(false)
@@ -98,6 +103,30 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     const fileInputRef = useRef(null)
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
+
+    // Snap assist helper — gently snaps to center when within threshold
+    const applySnapAssist = (newOffsetX, newOffsetY) => {
+        let finalX = newOffsetX
+        let finalY = newOffsetY
+        let isSnappedX = false
+        let isSnappedY = false
+
+        // Snap X to center (0) if within threshold
+        if (Math.abs(newOffsetX) <= SNAP_THRESHOLD) {
+            finalX = 0
+            isSnappedX = true
+        }
+
+        // Snap Y to center (0) if within threshold
+        if (Math.abs(newOffsetY) <= SNAP_THRESHOLD) {
+            finalY = 0
+            isSnappedY = true
+        }
+
+        setSnappedX(isSnappedX)
+        setSnappedY(isSnappedY)
+        return { finalX, finalY }
+    }
 
     // Breakpoint resize listener
     useEffect(() => {
@@ -162,11 +191,14 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
             const newScale = Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current)))
             setScale(newScale)
         } else if (e.touches.length === 1 && isDragging.current) {
-            // Drag pan — NO snapback, position LOCKS
+            // Drag pan with snap assist
             const dx = e.touches[0].clientX - lastTouch.current.x
             const dy = e.touches[0].clientY - lastTouch.current.y
-            setOffsetX(prev => prev + dx)
-            setOffsetY(prev => prev + dy)
+            const newX = offsetX + dx
+            const newY = offsetY + dy
+            const { finalX, finalY } = applySnapAssist(newX, newY)
+            setOffsetX(finalX)
+            setOffsetY(finalY)
             lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         }
     }
@@ -184,8 +216,13 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
 
     const handleMouseMove = (e) => {
         if (!isDragging.current) return
-        setOffsetX(prev => prev + (e.clientX - lastTouch.current.x))
-        setOffsetY(prev => prev + (e.clientY - lastTouch.current.y))
+        const dx = e.clientX - lastTouch.current.x
+        const dy = e.clientY - lastTouch.current.y
+        const newX = offsetX + dx
+        const newY = offsetY + dy
+        const { finalX, finalY } = applySnapAssist(newX, newY)
+        setOffsetX(finalX)
+        setOffsetY(finalY)
         lastTouch.current = { x: e.clientX, y: e.clientY }
     }
 
@@ -274,7 +311,58 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                         transform: `translate(${offsetX}px, ${offsetY}px)`,
                         willChange: 'transform'
                     }} />
-                ) : (
+                ) : null}
+
+                {/* Center Guidelines (Editor Only) */}
+                {image && (
+                    <>
+                        {/* Vertical center line */}
+                        <div style={{
+                            position: 'absolute',
+                            left: '50%',
+                            top: 0,
+                            bottom: 0,
+                            width: snappedX ? 2 : 1,
+                            background: snappedX ? '#22C55E' : 'rgba(255,255,255,0.3)',
+                            transform: 'translateX(-50%)',
+                            pointerEvents: 'none',
+                            zIndex: 10,
+                            transition: 'all 0.1s ease'
+                        }} />
+                        {/* Horizontal center line */}
+                        <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: 0,
+                            right: 0,
+                            height: snappedY ? 2 : 1,
+                            background: snappedY ? '#22C55E' : 'rgba(255,255,255,0.3)',
+                            transform: 'translateY(-50%)',
+                            pointerEvents: 'none',
+                            zIndex: 10,
+                            transition: 'all 0.1s ease'
+                        }} />
+                        {/* Center crosshair indicator */}
+                        {(snappedX && snappedY) && (
+                            <div style={{
+                                position: 'absolute',
+                                left: '50%',
+                                top: '50%',
+                                width: 12,
+                                height: 12,
+                                borderRadius: '50%',
+                                background: '#22C55E',
+                                transform: 'translate(-50%, -50%)',
+                                pointerEvents: 'none',
+                                zIndex: 11,
+                                boxShadow: '0 0 8px rgba(34,197,94,0.6)'
+                            }} />
+                        )}
+                    </>
+                )}
+
+                {/* No image placeholder */}
+                {!image && (
                     <div
                         onClick={() => fileInputRef.current?.click()}
                         onTouchEnd={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}
