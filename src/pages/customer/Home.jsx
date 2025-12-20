@@ -58,59 +58,18 @@ function Home() {
         'medialuna-manteca': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80'
     }
 
-    // Resolve featured items from IDs with slot-indexed branding overrides
+    // Featured items - read DIRECTLY from Branding → Fotos destacadas (Home)
+    // Source of truth: config.featuredPhotos ONLY (no menu linkage)
     const featuredPhotos = config.featuredPhotos || []
-    const featuredItems = featuredItemIds
-        .map((itemId, slotIndex) => {
-            // Get branding override for this slot (indexed by position, not menuItemId)
-            const brandingOverride = featuredPhotos[slotIndex] || {}
-
-            for (const cat of (menu.categories || [])) {
-                const item = cat.items?.find(i => i.id === itemId)
-                if (item) {
-                    return {
-                        ...item,
-                        categoryName: cat.name,
-                        // Use branding override name if set, otherwise menu item name
-                        name: brandingOverride.name || item.name,
-                        // Use branding override image if set, otherwise menu item image
-                        image: brandingOverride.image || item.image || placeholderImages[item.id] || null,
-                        // Include price override if set
-                        price: brandingOverride.price || item.price
-                    }
-                }
-            }
-            // If no menu item found, use branding slot data directly (standalone mode)
-            if (brandingOverride.name || brandingOverride.image) {
-                return {
-                    id: `featured-slot-${slotIndex}`,
-                    name: brandingOverride.name || '',
-                    image: brandingOverride.image || null,
-                    price: brandingOverride.price || 0,
-                    categoryName: 'Featured'
-                }
-            }
-            return null
-        })
-        .filter(Boolean)
-        .slice(0, 4)
-
-    // Fill remaining slots if needed
-    if (featuredItems.length < 4) {
-        const allItems = menu.categories?.flatMap(cat =>
-            cat.items?.slice(0, 2).map(item => ({
-                ...item,
-                categoryName: cat.name,
-                image: item.image || placeholderImages[item.id] || null
-            }))
-        ) || []
-        for (const item of allItems) {
-            if (featuredItems.length >= 4) break
-            if (!featuredItems.find(f => f.id === item.id)) {
-                featuredItems.push(item)
-            }
+    const featuredItems = [0, 1, 2, 3].map(slotIndex => {
+        const slot = featuredPhotos[slotIndex] || {}
+        return {
+            id: `featured-slot-${slotIndex}`,
+            name: slot.name || '',        // Empty if not set in Branding
+            image: slot.image || null,    // Image from Branding upload
+            price: slot.price || 0
         }
-    }
+    })
 
     // CRITICAL: Reset drag state on route change
     useEffect(() => {
