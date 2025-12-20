@@ -136,7 +136,7 @@ function AppHeader() {
                 <div
                     className={useClamp ? 'cover-viewport' : undefined}
                     style={{
-                        height: useClamp ? undefined : 64,
+                        height: useClamp ? undefined : (breakpoint === 'tablet' ? 96 : 64),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
@@ -179,7 +179,7 @@ function AppHeader() {
             <div
                 className={useClamp ? 'cover-viewport' : undefined}
                 style={{
-                    height: useClamp ? undefined : 64,
+                    height: useClamp ? undefined : (breakpoint === 'tablet' ? 96 : 64),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'

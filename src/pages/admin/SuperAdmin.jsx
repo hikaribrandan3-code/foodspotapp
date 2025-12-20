@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { login, logout, getSession } from '../../utils/auth.js'
+
 import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
@@ -87,10 +88,12 @@ function isValidLogoUrl(value) {
 
 function SuperAdmin() {
     const navigate = useNavigate()
+    const location = useLocation()
     const [config, setConfig] = useState(() => getConfig())
     const [menu, setMenu] = useState(() => getMenu())
     const [orders, setOrders] = useState(() => getOrders())
-    const [activeTab, setActiveTab] = useState('resumen')
+    // PATCH: Restore active tab from navigation state if present
+    const [activeTab, setActiveTab] = useState(() => location.state?.activeTab || 'resumen')
     const [demoAnalytics, setDemoAnalytics] = useState(true)
     const [demoData] = useState(() => generateDemoData())
     const [username, setUsername] = useState('')
@@ -99,7 +102,8 @@ function SuperAdmin() {
     const [userRole, setUserRole] = useState('superadmin')
     const [error, setError] = useState('')
     const [editingItem, setEditingItem] = useState(null)
-    const [showCoverEditor, setShowCoverEditor] = useState(false)
+    // PATCH: Restore editor modal state from navigation state if present
+    const [showCoverEditor, setShowCoverEditor] = useState(() => location.state?.returnToEditor || false)
 
     // Mode selector state
     const [selectedMode, setSelectedMode] = useState(() => getUserMode() || 'owner')
@@ -1390,7 +1394,7 @@ function SuperAdmin() {
                     updateConfig({ headerCover: data })
                     setConfig(getConfig())
                 }}
-                initialData={config.headerCover}
+                initialData={{ ...config.headerCover, returnState: { activeTab: 'branding' } }}
             />
         </>
     )

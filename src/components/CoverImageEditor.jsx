@@ -16,6 +16,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getConfig, updateConfig } from '../config/appConfig.js'
+import { processAndStoreImage } from '../utils/imageOptimizer.js'
 import Home from '../pages/customer/Home.jsx'
 
 const COVER_HEIGHTS = {
@@ -151,18 +152,22 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
     }, [isOpen]) // Intentionally exclude initialData to prevent resets
 
     // File selection
-    const handleFileSelect = (e) => {
+    const handleFileSelect = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
-        const reader = new FileReader()
-        reader.onload = (ev) => {
-            setImage(ev.target.result)
+
+        try {
+            // PATCH: Optimize image before loading to prevent localStorage quota errors in Safari
+            const { dataURI } = await processAndStoreImage(file)
+            setImage(dataURI)
             // Reset position for new image only
             setScale(1)
             setOffsetX(0)
             setOffsetY(0)
+        } catch (error) {
+            console.error('Error optimizing image:', error)
+            alert('Error loading image. Please try a smaller file.')
         }
-        reader.readAsDataURL(file)
     }
 
     // ===== DRAG TO PAN (Safari + Chrome) =====
@@ -244,7 +249,9 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
             // Verify cover image was persisted
             if (savedConfig.headerCover?.image) {
                 // Success — navigate to preview
-                navigate('/admin/cover-preview')
+                // PATCH: Pass return state if provided (for correct exit navigation)
+                const returnState = initialData?.returnState || {}
+                navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
                 onClose()
             } else {
                 // Retry save once
@@ -255,11 +262,20 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
                 setTimeout(() => {
                     const retryConfig = getConfig()
                     if (retryConfig.headerCover?.image) {
-                        navigate('/admin/cover-preview')
+                        const returnState = initialData?.returnState || {}
+                        navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
                         onClose()
                     } else {
                         // Block navigation, show message
-                        alert('Saving image… please wait and try again.')
+                        // PATCH: Detect Safari Browser specifically to give helpful guidance
+                        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+                        const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+
+                        if (isSafari && !isPWA) {
+                            alert('Safari Browser limit reached. Please use "Add to Home Screen" for reliable editing.')
+                        } else {
+                            alert('Saving image… please wait and try again.')
+                        }
                     }
                 }, 100)
             }

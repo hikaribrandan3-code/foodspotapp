@@ -8,7 +8,7 @@
  * Persistent until user taps Back or Done.
  */
 
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { getConfig } from '../config/appConfig.js'
 import Home from '../pages/customer/Home.jsx'
 
@@ -68,17 +68,21 @@ function CameraButton() {
 
 function CoverPreview() {
     const navigate = useNavigate()
+    const location = useLocation()
     const config = getConfig()
 
     // NO TIMERS, NO AUTO-NAVIGATION
     // Preview persists until user action
+    const returnTo = location.state?.returnTo || '/admin'
+    // Filter out returnTo from state to avoid clutter, keep other state (like activeTab)
+    const { returnTo: _, ...restState } = location.state || {}
 
     const handleBack = () => {
-        navigate('/admin', { state: { returnToEditor: true } })
+        navigate(returnTo, { state: { ...restState, returnToEditor: true } })
     }
 
     const handleDone = () => {
-        navigate('/admin')
+        navigate(returnTo, { state: restState })
     }
 
     return (
