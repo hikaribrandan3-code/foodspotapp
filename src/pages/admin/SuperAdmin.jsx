@@ -756,6 +756,7 @@ function SuperAdmin() {
                                                 >
                                                     📝 Text
                                                 </button>
+                                                {/* Logo mode hidden — using Cover/Text only
                                                 <button
                                                     onClick={() => {
                                                         if (!config.logoLight && !config.logoDark) {
@@ -774,6 +775,7 @@ function SuperAdmin() {
                                                 >
                                                     🏷️ Logo
                                                 </button>
+                                                */}
                                             </div>
                                         </div>
 
@@ -917,29 +919,15 @@ function SuperAdmin() {
                                                         </div>
 
                                                         {/* Action Buttons */}
-                                                        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                                                            <button
-                                                                onClick={() => setShowCoverEditor(true)}
-                                                                style={{
-                                                                    flex: 1,
-                                                                    padding: '10px 14px',
-                                                                    background: SUPER_ADMIN_COLOR,
-                                                                    color: '#fff',
-                                                                    border: 'none',
-                                                                    borderRadius: 8,
-                                                                    fontSize: 12,
-                                                                    fontWeight: 600,
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                            >
-                                                                ✏️ Edit Cover
-                                                            </button>
+                                                        {/* Remove Cover Button */}
+                                                        <div style={{ marginTop: 12 }}>
                                                             <button
                                                                 onClick={() => {
                                                                     updateConfig({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } })
                                                                     setConfig(getConfig())
                                                                 }}
                                                                 style={{
+                                                                    width: '100%',
                                                                     padding: '10px 14px',
                                                                     background: 'none',
                                                                     color: '#DC2626',
@@ -950,7 +938,7 @@ function SuperAdmin() {
                                                                     cursor: 'pointer'
                                                                 }}
                                                             >
-                                                                ✕
+                                                                ✕ Remove Cover
                                                             </button>
                                                         </div>
                                                     </>

@@ -236,9 +236,34 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
         updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint } })
         // Save to parent
         onSave({ image, scale, offsetX, offsetY, breakpoint })
-        // Navigate to static preview route
-        navigate('/admin/cover-preview')
-        onClose()
+
+        // Safari-safe: verify save completed, retry once if needed
+        setTimeout(() => {
+            const savedConfig = getConfig()
+
+            // Verify cover image was persisted
+            if (savedConfig.headerCover?.image) {
+                // Success — navigate to preview
+                navigate('/admin/cover-preview')
+                onClose()
+            } else {
+                // Retry save once
+                console.warn('Safari: Cover image not persisted, retrying...')
+                updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint } })
+
+                // Second verification after retry
+                setTimeout(() => {
+                    const retryConfig = getConfig()
+                    if (retryConfig.headerCover?.image) {
+                        navigate('/admin/cover-preview')
+                        onClose()
+                    } else {
+                        // Block navigation, show message
+                        alert('Saving image… please wait and try again.')
+                    }
+                }, 100)
+            }
+        }, 50)
     }
 
     if (!isOpen) return null
