@@ -58,21 +58,36 @@ function Home() {
         'medialuna-manteca': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80'
     }
 
-    // Resolve featured items from IDs
+    // Resolve featured items from IDs with slot-indexed branding overrides
     const featuredPhotos = config.featuredPhotos || []
     const featuredItems = featuredItemIds
-        .map(itemId => {
+        .map((itemId, slotIndex) => {
+            // Get branding override for this slot (indexed by position, not menuItemId)
+            const brandingOverride = featuredPhotos[slotIndex] || {}
+
             for (const cat of (menu.categories || [])) {
                 const item = cat.items?.find(i => i.id === itemId)
                 if (item) {
-                    const brandingOverride = featuredPhotos.find(fp => fp.menuItemId === itemId)
-                    const brandingImage = brandingOverride?.image || null
-
                     return {
                         ...item,
                         categoryName: cat.name,
-                        image: brandingImage || item.image || placeholderImages[item.id] || null
+                        // Use branding override name if set, otherwise menu item name
+                        name: brandingOverride.name || item.name,
+                        // Use branding override image if set, otherwise menu item image
+                        image: brandingOverride.image || item.image || placeholderImages[item.id] || null,
+                        // Include price override if set
+                        price: brandingOverride.price || item.price
                     }
+                }
+            }
+            // If no menu item found, use branding slot data directly (standalone mode)
+            if (brandingOverride.name || brandingOverride.image) {
+                return {
+                    id: `featured-slot-${slotIndex}`,
+                    name: brandingOverride.name || '',
+                    image: brandingOverride.image || null,
+                    price: brandingOverride.price || 0,
+                    categoryName: 'Featured'
                 }
             }
             return null
