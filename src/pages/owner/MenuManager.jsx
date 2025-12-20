@@ -128,21 +128,6 @@ function MenuManager() {
                     <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
                         📋 Menú
                     </h1>
-                    {/* Visual proof of context injection */}
-                    {isSimulated && (
-                        <span style={{
-                            fontSize: '12px',
-                            color: '#FF6B00',
-                            fontWeight: 'bold',
-                            backgroundColor: '#fff3e0',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            border: '1px solid #FF6B00',
-                            marginTop: '4px'
-                        }}>
-                            👁 VIEWING AS: {targetBusinessId}
-                        </span>
-                    )}
                 </div>
 
                 <button
