@@ -10,6 +10,7 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
+import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 
 // Generate seeded demo analytics data (30 days)
 function generateDemoData() {
@@ -114,6 +115,9 @@ function SuperAdmin() {
     const [uploadingFeaturedSlot, setUploadingFeaturedSlot] = useState(null)
     const menuImageInputRef = useRef(null)
     const featuredImageInputRef = useRef(null)
+
+    // Role Lens Hooks
+    const { enterOwnerView, enterStaffView, exitSimulation } = useAdminIntent()
 
     useEffect(() => {
         const session = getSession()
@@ -276,17 +280,32 @@ function SuperAdmin() {
     }
     // Mode options for dropdown (superadmin only)
     const modeOptions = [
+        { value: 'superadmin', label: '🔐 Super Admin', color: '#7C3AED' },
         { value: 'owner', label: '👑 Owner', color: '#22C55E' },
         { value: 'staff', label: '👤 Staff', color: '#6366F1' },
         { value: 'customer', label: '🛒 Customer', color: '#F59E0B' }
     ]
 
-    // Handle mode change from dropdown
+    // Handle mode change & NAVIGATION
     const handleModeChange = (mode) => {
         setUserMode(mode)
         setSelectedMode(mode)
+
+        if (mode === 'superadmin') {
+            exitSimulation()
+            navigate('/admin') // Explicitly return to admin dashboard
+        } else if (mode === 'owner') {
+            enterOwnerView('business-001')
+            navigate('/owner/menu') // Go to real Owner page
+        } else if (mode === 'staff') {
+            enterStaffView('staff-user-001', 'business-001')
+            navigate('/staff/dashboard') // Go to real Staff page
+        } else if (mode === 'customer') {
+            navigate('/') // Frontend only
+        }
     }
 
+    // Full Super Admin Navigation (No Filtering)
     const tabs = [
         { id: 'resumen', label: 'Resumen' },
         { id: 'info', label: 'Info' },
@@ -295,10 +314,12 @@ function SuperAdmin() {
         { id: 'pedidos', label: 'Pedidos' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'historial', label: 'Historial' },
+        { id: 'tenants', label: 'Tenants' },
+        { id: 'system', label: 'System' },
     ]
 
-    const roleLabel = userRole === 'superadmin' ? 'Super Admin' : userRole === 'owner' ? 'Owner' : 'Staff'
-    const canEdit = userRole === 'superadmin' || userRole === 'owner'
+    const roleLabel = 'Super Admin'
+    const canEdit = true
 
     // Card style helper
     const cardStyle = { background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }
@@ -324,7 +345,7 @@ function SuperAdmin() {
                             {/* Mode Switcher Dropdown (superadmin only) */}
                             {userRole === 'superadmin' && (
                                 <select
-                                    value={selectedMode || 'owner'}
+                                    value={selectedMode || 'superadmin'}
                                     onChange={(e) => handleModeChange(e.target.value)}
                                     style={{
                                         padding: '4px 20px 4px 8px',
