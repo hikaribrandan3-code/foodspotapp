@@ -141,10 +141,11 @@ function Home() {
         }
     }, [])
 
-    // Safe navigation wrapper - only navigate if not dragging
+    // Safe navigation wrapper - only navigate if not in edit/drag mode
     const safeNavigate = useCallback((path) => {
-        if (isDraggingRef.current || navigationBlockedRef.current || isEditMode) {
-            console.log('[DRAG SAFETY] Navigation blocked - drag in progress')
+        // Only block if actively dragging or in edit mode
+        if (isDraggingRef.current || isEditMode) {
+            console.log('[DRAG SAFETY] Navigation blocked - drag/edit in progress')
             return false
         }
         navigate(path)
@@ -152,15 +153,10 @@ function Home() {
     }, [navigate, isEditMode])
 
     // Long-press handlers for edit mode (owner only)
+    // CRITICAL: Do NOT call preventDefault or block navigation here
+    // Just start the timer - navigation happens via onClick if timer doesn't fire
     const handleLongPressStart = useCallback((e) => {
         if (!isOwnerMode || isEditMode) return
-
-        // CRITICAL: Prevent browser link preview on long-press
-        e.preventDefault()
-        e.stopPropagation()
-
-        // Block navigation during long press detection
-        navigationBlockedRef.current = true
 
         longPressStartRef.current = {
             x: e.touches?.[0]?.clientX || e.clientX,
@@ -173,7 +169,8 @@ function Home() {
                 navigator.vibrate(50)
             }
             setIsEditMode(true)
-            navigationBlockedRef.current = false
+            // Now block navigation since we're in edit mode
+            navigationBlockedRef.current = true
         }, LONG_PRESS_DURATION)
     }, [isOwnerMode, isEditMode])
 
@@ -182,12 +179,10 @@ function Home() {
             clearTimeout(longPressTimerRef.current)
             longPressTimerRef.current = null
         }
-        // Only unblock after a brief delay to prevent accidental navigation
-        setTimeout(() => {
-            if (!isDraggingRef.current && !isEditMode) {
-                navigationBlockedRef.current = false
-            }
-        }, 100)
+        // Reset navigation block if timer didn't fire
+        if (!isEditMode) {
+            navigationBlockedRef.current = false
+        }
     }, [isEditMode])
 
     const handleLongPressMove = useCallback((e) => {
@@ -420,15 +415,16 @@ function Home() {
 
     // CRITICAL: Click handler that respects drag lock
     const handleTileClick = useCallback((e, path) => {
-        // Always check drag lock first
-        if (isDraggingRef.current || navigationBlockedRef.current || isEditMode) {
+        // Only block if actively dragging or in edit mode
+        if (isDraggingRef.current || isEditMode) {
             e.preventDefault()
             e.stopPropagation()
-            console.log('[DRAG SAFETY] Click blocked')
+            console.log('[DRAG SAFETY] Click blocked - edit/drag mode active')
             return
         }
-        safeNavigate(path)
-    }, [safeNavigate, isEditMode])
+        // Navigate immediately
+        navigate(path)
+    }, [navigate, isEditMode])
 
     return (
         <div
