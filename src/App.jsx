@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
 import { incrementVisit, isDemoMode } from './utils/storage.js'
 import { AdminIntentProvider } from './contexts/AdminIntentContext.jsx'
-import AdminLensBar from './components/AdminLensBar.jsx'
 
 // Components
 import BottomNav from './components/BottomNav.jsx'
@@ -227,7 +226,6 @@ function App() {
 
     return (
         <AdminIntentProvider>
-            <AdminLensBar />
             <div className="app-container">
                 {/* Demo Mode Indicator */}
                 {demoMode && (
