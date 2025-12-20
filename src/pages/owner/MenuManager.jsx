@@ -1,35 +1,112 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled } from '../../config/menuData.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 
+// Shared Owner Header Component
+function OwnerHeader({ title, subtitle, onLogout }) {
+    return (
+        <div style={{
+            background: '#1E293B',
+            padding: '14px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+        }}>
+            <div>
+                <h1 style={{
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: '#FFFFFF',
+                    margin: 0,
+                    letterSpacing: '-0.01em'
+                }}>{title}</h1>
+                {subtitle && (
+                    <p style={{
+                        fontSize: 12,
+                        color: '#94A3B8',
+                        margin: '2px 0 0'
+                    }}>{subtitle}</p>
+                )}
+            </div>
+            <button
+                onClick={onLogout}
+                style={{
+                    padding: '6px 14px',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: '#94A3B8',
+                    background: 'transparent',
+                    border: '1px solid #475569',
+                    borderRadius: 6,
+                    cursor: 'pointer'
+                }}
+            >
+                Salir
+            </button>
+        </div>
+    )
+}
+
+// Shared Owner Tab Navigation
+function OwnerTabs({ activeTab }) {
+    const tabs = [
+        { id: 'settings', path: '/owner/settings', label: 'Config' },
+        { id: 'menu', path: '/owner/menu', label: 'Menú' },
+        { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
+        { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
+    ]
+
+    return (
+        <div style={{
+            background: '#FFFFFF',
+            borderBottom: '1px solid #E2E8F0',
+            display: 'flex',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch'
+        }}>
+            {tabs.map(tab => (
+                <Link
+                    key={tab.id}
+                    to={tab.path}
+                    style={{
+                        flex: 1,
+                        padding: '12px 16px',
+                        fontSize: 13,
+                        fontWeight: activeTab === tab.id ? 600 : 500,
+                        color: activeTab === tab.id ? '#1E293B' : '#64748B',
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                        borderBottom: activeTab === tab.id ? '2px solid #3B82F6' : '2px solid transparent',
+                        background: 'transparent',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    {tab.label}
+                </Link>
+            ))}
+        </div>
+    )
+}
+
 function MenuManager() {
     const navigate = useNavigate()
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
 
-    // In a real implementation with a backend, we would use user.businessId
-    // For V1 LocalStorage pattern, we just demonstrate valid access and intent.
-    const currentUser = getAuth() // Current "Logged in" user (Admin or Owner)
-
-    // Resolve target business identifier
+    const currentUser = getAuth()
     const targetBusinessId = isSimulated ? impersonatingBusinessId : currentUser?.businessId
 
-    // We pass this ID to getMenu. Currently getMenu is synchronous and ignores it in V1, 
-    // but this proves the pattern for V2.
     const [menu, setMenu] = useState(() => getMenu(targetBusinessId))
-
     const [editingItem, setEditingItem] = useState(null)
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
     const fileInputRef = useRef(null)
 
-    // Check auth
     useEffect(() => {
         const auth = getAuth()
-        // Allow if owner OR if superadmin (implicitly allowed by hierarchy, but explicit check is good)
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
             navigate('/owner')
         }
@@ -46,7 +123,6 @@ function MenuManager() {
         setUploadStatus(null)
     }
 
-    // Image upload handler with optimization
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -116,104 +192,137 @@ function MenuManager() {
     }
 
     return (
-        <div className="page" style={{ paddingBottom: 'var(--space-4)' }}>
-            {/* Header */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 'var(--space-4)'
-            }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
-                        📋 Menú
-                    </h1>
-                </div>
+        <div style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+            <OwnerHeader
+                title="Menú"
+                subtitle="Gestión de productos"
+                onLogout={handleLogout}
+            />
+            <OwnerTabs activeTab="menu" />
 
-                <button
-                    className="btn btn-secondary"
-                    onClick={handleLogout}
-                    style={{ padding: 'var(--space-2) var(--space-3)' }}
-                >
-                    Salir
-                </button>
-            </div>
+            <div style={{ padding: 16 }}>
+                {menu.categories.map(category => {
+                    const isEnabled = category.enabled !== false
+                    return (
+                        <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: 8
+                            }}>
+                                <h3 style={{
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    color: '#374151',
+                                    margin: 0
+                                }}>
+                                    {category.icon} {category.name}
+                                    {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444' }}>(oculta)</span>}
+                                </h3>
+                                <label className="toggle">
+                                    <input
+                                        type="checkbox"
+                                        checked={isEnabled}
+                                        onChange={() => handleToggleCategory(category.id)}
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                            </div>
 
-            {/* Owner Navigation */}
-            <div className="tabs" style={{ marginBottom: 'var(--space-4)' }}>
-                <Link to="/owner/menu" className="tab active">Menú</Link>
-                <Link to="/owner/rewards" className="tab">Recompensas</Link>
-                <Link to="/owner/settings" className="tab">Config</Link>
-                <Link to="/owner/analytics" className="tab">Stats</Link>
-            </div>
-
-            {/* Menu Categories */}
-            {menu.categories.map(category => {
-                const isEnabled = category.enabled !== false
-                return (
-                    <div key={category.id} className="admin-section" style={{ opacity: isEnabled ? 1 : 0.5 }}>
-                        {/* Category Header with Toggle */}
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: 'var(--space-2)'
-                        }}>
-                            <h3 className="admin-section-title" style={{ marginBottom: 0 }}>
-                                {category.icon} {category.name}
-                                {!isEnabled && <span style={{ fontSize: 'var(--font-size-xs)', marginLeft: 'var(--space-2)', color: 'var(--color-error)' }}>(oculta)</span>}
-                            </h3>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={isEnabled}
-                                    onChange={() => handleToggleCategory(category.id)}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-
-                        <div className="admin-card">
-                            {category.items.map(item => (
-                                <div key={item.id} className="admin-row">
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{item.name}</p>
-                                            {item.featured && <span style={{ fontSize: 'var(--font-size-sm)' }}>⭐</span>}
+                            <div style={{
+                                background: '#FFFFFF',
+                                borderRadius: 10,
+                                border: '1px solid #E2E8F0',
+                                overflow: 'hidden'
+                            }}>
+                                {category.items.map((item, idx) => (
+                                    <div key={item.id} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '12px 14px',
+                                        borderBottom: idx < category.items.length - 1 ? '1px solid #F1F5F9' : 'none'
+                                    }}>
+                                        {item.image && (
+                                            <div style={{ width: 40, height: 40, flexShrink: 0, marginRight: 12 }}>
+                                                <img
+                                                    src={item.image}
+                                                    alt=""
+                                                    style={{
+                                                        width: 40,
+                                                        height: 40,
+                                                        borderRadius: 6,
+                                                        objectFit: 'cover'
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <p style={{
+                                                    fontWeight: 500,
+                                                    fontSize: 14,
+                                                    color: '#1E293B',
+                                                    margin: 0,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}>{item.name}</p>
+                                                {item.featured && <span style={{ fontSize: 12 }}>⭐</span>}
+                                            </div>
+                                            <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>
+                                                {formatPrice(item.price)} · {item.available ? '✓ Stock' : '✗ Agotado'}
+                                            </p>
                                         </div>
-                                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                                            {formatPrice(item.price)} · {item.available ? '✅' : '❌'}
-                                        </p>
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                            <button
+                                                onClick={() => handleEdit(category.id, item)}
+                                                style={{
+                                                    padding: '6px 10px',
+                                                    fontSize: 12,
+                                                    background: '#F1F5F9',
+                                                    border: 'none',
+                                                    borderRadius: 5,
+                                                    cursor: 'pointer',
+                                                    color: '#475569'
+                                                }}
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleAvailability(category.id, item.id)}
+                                                style={{
+                                                    padding: '6px 10px',
+                                                    fontSize: 12,
+                                                    background: item.available ? '#FEE2E2' : '#DCFCE7',
+                                                    border: 'none',
+                                                    borderRadius: 5,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                {item.available ? '🔴' : '🟢'}
+                                            </button>
+                                            <button
+                                                onClick={() => handleSetFeatured(category.id, item.id)}
+                                                style={{
+                                                    padding: '6px 10px',
+                                                    fontSize: 12,
+                                                    background: item.featured ? '#FEF3C7' : '#F1F5F9',
+                                                    border: 'none',
+                                                    borderRadius: 5,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                ⭐
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                                        <button
-                                            className="btn btn-secondary"
-                                            style={{ padding: 'var(--space-1) var(--space-2)', fontSize: 'var(--font-size-sm)' }}
-                                            onClick={() => handleEdit(category.id, item)}
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            className="btn btn-secondary"
-                                            style={{ padding: 'var(--space-1) var(--space-2)', fontSize: 'var(--font-size-sm)' }}
-                                            onClick={() => handleToggleAvailability(category.id, item.id)}
-                                        >
-                                            {item.available ? '🔴' : '🟢'}
-                                        </button>
-                                        <button
-                                            className="btn btn-secondary"
-                                            style={{ padding: 'var(--space-1) var(--space-2)', fontSize: 'var(--font-size-sm)' }}
-                                            onClick={() => handleSetFeatured(category.id, item.id)}
-                                        >
-                                            ⭐
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )
-            })}
+                    )
+                })}
+            </div>
 
             {/* Edit Modal */}
             {editingItem && (
@@ -241,7 +350,6 @@ function MenuManager() {
                             />
                         </div>
 
-                        {/* Image Upload */}
                         <div className="form-group">
                             <label className="form-label">Imagen (JPG/PNG)</label>
                             {editForm.image && (
@@ -270,12 +378,12 @@ function MenuManager() {
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isUploading}
                             >
-                                {isUploading ? 'Optimizando...' : (editForm.image ? '📷 Cambiar imagen' : '📷 Subir imagen')}
+                                {isUploading ? 'Optimizando...' : (editForm.image ? 'Cambiar imagen' : 'Subir imagen')}
                             </button>
                             {uploadStatus && (
                                 <p style={{
-                                    fontSize: 'var(--font-size-sm)',
-                                    color: uploadStatus.success ? 'var(--color-success)' : 'var(--color-error)',
+                                    fontSize: 12,
+                                    color: uploadStatus.success ? '#22C55E' : '#EF4444',
                                     marginTop: 6
                                 }}>
                                     {uploadStatus.message}
@@ -291,7 +399,7 @@ function MenuManager() {
                         </button>
                         <button
                             className="btn btn-secondary btn-block"
-                            style={{ marginTop: 'var(--space-2)' }}
+                            style={{ marginTop: 8 }}
                             onClick={() => setEditingItem(null)}
                         >
                             Cancelar

@@ -229,7 +229,29 @@ export function getConfig() {
     try {
         const stored = localStorage.getItem(CONFIG_STORAGE_KEY);
         if (stored) {
-            return { ...defaultConfig, ...JSON.parse(stored) };
+            const parsed = JSON.parse(stored);
+            // Deep merge nested objects to preserve both defaults and stored values
+            return {
+                ...defaultConfig,
+                ...parsed,
+                // Deep merge heroIcons (each icon config individually)
+                heroIcons: {
+                    ...defaultConfig.heroIcons,
+                    ...(parsed.heroIcons || {}),
+                    // Ensure each icon's config is also deep merged
+                    menu: { ...defaultConfig.heroIcons.menu, ...(parsed.heroIcons?.menu || {}) },
+                    delivery: { ...defaultConfig.heroIcons.delivery, ...(parsed.heroIcons?.delivery || {}) },
+                    rewards: { ...defaultConfig.heroIcons.rewards, ...(parsed.heroIcons?.rewards || {}) },
+                    game: { ...defaultConfig.heroIcons.game, ...(parsed.heroIcons?.game || {}) },
+                },
+                // Deep merge other nested objects
+                branding: { ...defaultConfig.branding, ...(parsed.branding || {}) },
+                colors: { ...defaultConfig.colors, ...(parsed.colors || {}) },
+                features: { ...defaultConfig.features, ...(parsed.features || {}) },
+                businessInfo: { ...defaultConfig.businessInfo, ...(parsed.businessInfo || {}) },
+                delivery: { ...defaultConfig.delivery, ...(parsed.delivery || {}) },
+                homeConfig: { ...defaultConfig.homeConfig, ...(parsed.homeConfig || {}) },
+            };
         }
         return defaultConfig;
     } catch (e) {
@@ -249,11 +271,26 @@ export function saveConfig(config) {
     }
 }
 
-// Update specific config values
+// Update specific config values (with deep merge for nested objects)
 export function updateConfig(updates) {
     const current = getConfig();
-    const updated = { ...current, ...updates };
-    return saveConfig(updated);
+
+    // Deep merge for known nested objects
+    const deepMergeKeys = ['heroIcons', 'branding', 'colors', 'features', 'businessInfo', 'infoDisplay', 'externalOrdering', 'payments', 'delivery', 'homeConfig', 'headerCover', 'headerBranding', 'rewards', 'openingHours'];
+
+    const merged = { ...current };
+
+    for (const key of Object.keys(updates)) {
+        if (deepMergeKeys.includes(key) && typeof updates[key] === 'object' && updates[key] !== null) {
+            // Deep merge nested object
+            merged[key] = { ...current[key], ...updates[key] };
+        } else {
+            // Shallow assign for primitives and non-nested objects
+            merged[key] = updates[key];
+        }
+    }
+
+    return saveConfig(merged);
 }
 
 // Reset config to defaults

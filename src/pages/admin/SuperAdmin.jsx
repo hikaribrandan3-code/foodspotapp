@@ -124,11 +124,22 @@ function SuperAdmin() {
         if (session && (session.role === 'superadmin' || session.role === 'owner' || session.role === 'staff')) {
             setIsAuthenticated(true)
             setUserRole(session.role)
-            // Default to owner mode for superadmin if not set
-            if (session.role === 'superadmin' && !getUserMode()) {
-                setUserMode('owner')
-                setSelectedMode('owner')
+
+            const currentMode = getUserMode()
+
+            // CRITICAL FIX: Correct stale userMode
+            // If session is superadmin but userMode is 'owner' (from old bug), correct it
+            if (session.role === 'superadmin' && currentMode === 'owner') {
+                setUserMode('superadmin')
             }
+
+            // First login - set mode to actual role
+            if (!currentMode) {
+                setUserMode(session.role)
+            }
+
+            // UI lens starts as owner view for superadmin
+            setSelectedMode(session.role === 'superadmin' ? 'owner' : (currentMode || session.role))
         }
     }, [])
 
@@ -329,37 +340,36 @@ function SuperAdmin() {
     return (
         <>
             <div style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                {/* Dark Header - SUPER ADMIN ENGLISH ONLY */}
-                <div style={{ background: '#1F2937', padding: '16px 16px 14px', color: 'white' }}>
+                {/* Light Neutral Header - BLACK/WHITE ONLY */}
+                <div style={{ background: '#FFFFFF', padding: '16px 16px 12px', borderBottom: '1px solid #E5E7EB' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'white', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
-                            <div>
-                                <h1 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>👑 King Hikari — Software Engineer</h1>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', margin: '2px 0 0' }}>Platform Administration</p>
+                            <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: '#1F2937', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                {/* Neutral Logo */}
+                                <div style={{ width: 36, height: 36, background: '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span style={{ color: '#FFFFFF', fontSize: 18 }}>🍽</span>
+                                </div>
+                                <span style={{ fontSize: 20, fontWeight: 700, color: '#1F2937' }}>FoodSpot</span>
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {demoAnalytics && userRole === 'superadmin' && <span style={{ padding: '4px 6px', background: '#EAB308', borderRadius: 5, fontSize: 9, fontWeight: 600, color: 'white' }}>DEMO</span>}
+                            {demoAnalytics && userRole === 'superadmin' && <span style={{ padding: '4px 8px', background: '#EF4444', borderRadius: 5, fontSize: 10, fontWeight: 600, color: 'white' }}>DEMO</span>}
                             {/* Mode Switcher Dropdown (superadmin only) */}
                             {userRole === 'superadmin' && (
                                 <select
                                     value={selectedMode || 'superadmin'}
                                     onChange={(e) => handleModeChange(e.target.value)}
                                     style={{
-                                        padding: '4px 20px 4px 8px',
-                                        fontSize: 10,
+                                        padding: '6px 24px 6px 10px',
+                                        fontSize: 11,
                                         fontWeight: 600,
                                         border: 'none',
                                         borderRadius: 5,
                                         cursor: 'pointer',
-                                        background: `${modeOptions.find(m => m.value === selectedMode)?.color || '#22C55E'} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='white' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 6px center`,
+                                        background: `${modeOptions.find(m => m.value === selectedMode)?.color || '#22C55E'} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='white' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 8px center`,
                                         color: 'white',
-                                        position: 'relative',
-                                        zIndex: 10,
-                                        pointerEvents: 'auto',
-                                        WebkitTapHighlightColor: 'transparent',
-                                        minWidth: 70
+                                        minWidth: 80
                                     }}
                                 >
                                     {modeOptions.map(opt => (
@@ -369,6 +379,38 @@ function SuperAdmin() {
                             )}
                         </div>
                     </div>
+
+                    {/* Refresh Frontend Button - FULL WIDTH UNDER HEADER */}
+                    <button
+                        onClick={() => {
+                            // Dispatch global sync event
+                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                            // Also refresh local state
+                            setConfig(getConfig())
+                            setMenu(getMenu())
+                            setOrders(getOrders())
+                            // Visual feedback
+                            alert('✅ Frontend synced!')
+                        }}
+                        style={{
+                            width: '100%',
+                            marginTop: 12,
+                            padding: '10px 16px',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            border: 'none',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            background: '#3B82F6',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8
+                        }}
+                    >
+                        🔄 Refresh Frontend
+                    </button>
                 </div>
 
                 {/* Tab Navigation */}

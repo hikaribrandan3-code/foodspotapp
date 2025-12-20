@@ -1,11 +1,161 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
-import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.js'
+import { getConfig, updateConfig, CURATED_FONTS, FONT_WEIGHTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { canChangeDeliveryConfig, recordDeliveryConfigChange, getDeliveryChangesThisMonth } from '../../utils/deliveryUtils.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
+import CoverImageEditor from '../../components/CoverImageEditor.jsx'
+
+// Shared Owner Header Component
+function OwnerHeader({ title, subtitle, onLogout, onSync }) {
+    return (
+        <div style={{
+            background: '#FFFFFF',
+            padding: '16px 20px 12px',
+            borderBottom: '1px solid #E5E7EB'
+        }}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {/* Neutral Logo */}
+                    <div style={{ width: 36, height: 36, background: '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ color: '#FFFFFF', fontSize: 18 }}>🍽</span>
+                    </div>
+                    <div>
+                        <h1 style={{
+                            fontSize: 17,
+                            fontWeight: 600,
+                            color: '#1F2937',
+                            margin: 0,
+                            letterSpacing: '-0.01em'
+                        }}>{title}</h1>
+                        {subtitle && (
+                            <p style={{
+                                fontSize: 12,
+                                color: '#64748B',
+                                margin: '2px 0 0'
+                            }}>{subtitle}</p>
+                        )}
+                    </div>
+                </div>
+                <button
+                    onClick={onLogout}
+                    style={{
+                        padding: '6px 14px',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: '#64748B',
+                        background: 'transparent',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: 6,
+                        cursor: 'pointer'
+                    }}
+                >
+                    Salir
+                </button>
+            </div>
+
+            {/* Refresh Frontend Button - FULL WIDTH UNDER HEADER */}
+            <button
+                onClick={onSync}
+                style={{
+                    width: '100%',
+                    marginTop: 12,
+                    padding: '10px 16px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    background: '#3B82F6',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8
+                }}
+            >
+                🔄 Refresh Frontend
+            </button>
+        </div>
+    )
+}
+
+// Shared Owner Tab Navigation
+function OwnerTabs({ activeTab }) {
+    const tabs = [
+        { id: 'settings', path: '/owner/settings', label: 'Config' },
+        { id: 'menu', path: '/owner/menu', label: 'Menú' },
+        { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
+        { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
+    ]
+
+    return (
+        <div style={{
+            background: '#FFFFFF',
+            borderBottom: '1px solid #E2E8F0',
+            display: 'flex',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch'
+        }}>
+            {tabs.map(tab => (
+                <Link
+                    key={tab.id}
+                    to={tab.path}
+                    style={{
+                        flex: 1,
+                        padding: '12px 16px',
+                        fontSize: 13,
+                        fontWeight: activeTab === tab.id ? 600 : 500,
+                        color: activeTab === tab.id ? '#1E293B' : '#64748B',
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                        borderBottom: activeTab === tab.id ? '2px solid #3B82F6' : '2px solid transparent',
+                        background: 'transparent',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    {tab.label}
+                </Link>
+            ))}
+        </div>
+    )
+}
+
+// Section Header Component
+function SectionHeader({ title }) {
+    return (
+        <h3 style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: '#64748B',
+            marginBottom: 10,
+            marginTop: 0,
+            textTransform: 'uppercase',
+            letterSpacing: '0.025em'
+        }}>{title}</h3>
+    )
+}
+
+// Card Component
+function Card({ children, style = {} }) {
+    return (
+        <div style={{
+            background: '#FFFFFF',
+            borderRadius: 10,
+            border: '1px solid #E2E8F0',
+            padding: 16,
+            ...style
+        }}>
+            {children}
+        </div>
+    )
+}
 
 function Settings() {
     const navigate = useNavigate()
@@ -13,8 +163,8 @@ function Settings() {
     const [maintenanceMessage, setMaintenanceMessage] = useState(config.maintenanceMessage || '')
     const [pauseMessage, setPauseMessage] = useState(config.pauseOrdersMessage || '')
     const [businessInfo, setBusinessInfo] = useState(config.businessInfo || {})
+    const [showCoverEditor, setShowCoverEditor] = useState(false)
 
-    // Check auth
     useEffect(() => {
         const auth = getAuth()
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
@@ -50,670 +200,768 @@ function Settings() {
         alert('¡Info guardada!')
     }
 
-    // NOTE: Orders are now auto-archived on 'entregado' status (Order Lifecycle V1)
-    // See storage.js updateOrder()
-
     return (
-        <div className="page" style={{ paddingBottom: 'var(--space-4)' }}>
-            {/* Header */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 'var(--space-4)'
-            }}>
-                <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
-                    ⚙️ Configuración
-                </h1>
-                <button
-                    className="btn btn-secondary"
-                    onClick={handleLogout}
-                    style={{ padding: 'var(--space-2) var(--space-3)' }}
-                >
-                    Salir
-                </button>
-            </div>
+        <div style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+            <OwnerHeader
+                title="Configuración"
+                subtitle="Ajustes del negocio"
+                onLogout={handleLogout}
+                onSync={() => {
+                    // Dispatch global sync event
+                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                    // Refresh local state
+                    setConfig(getConfig())
+                    // Visual feedback
+                    alert('✅ Frontend synced!')
+                }}
+            />
+            <OwnerTabs activeTab="settings" />
 
-            {/* Owner Navigation */}
-            <div className="tabs" style={{ marginBottom: 'var(--space-4)' }}>
-                <Link to="/owner/menu" className="tab">Menú</Link>
-                <Link to="/owner/rewards" className="tab">Recompensas</Link>
-                <Link to="/owner/settings" className="tab active">Config</Link>
-                <Link to="/owner/analytics" className="tab">Stats</Link>
-            </div>
-
-            {/* Status Controls */}
-            <div className="admin-section">
-                <h3 className="admin-section-title">🔧 Estado del local</h3>
-                <div className="admin-card">
-                    <div className="admin-row">
-                        <div>
-                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>Modo mantenimiento</p>
-                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                                Cierra todo el local
-                            </p>
-                        </div>
-                        <label className="toggle">
-                            <input
-                                type="checkbox"
-                                checked={config.maintenanceMode}
-                                onChange={handleToggleMaintenance}
-                            />
-                            <span className="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div className="admin-row">
-                        <div>
-                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>Pausar pedidos</p>
-                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                                Solo desactiva pedidos
-                            </p>
-                        </div>
-                        <label className="toggle">
-                            <input
-                                type="checkbox"
-                                checked={config.pauseOrders}
-                                onChange={handleTogglePause}
-                            />
-                            <span className="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            {/* Order Archive Info */}
-            <div className="admin-section">
-                <h3 className="admin-section-title">🗂️ Archivo de pedidos</h3>
-                <div className="admin-card">
-                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                        ✅ Los pedidos se archivan automáticamente al marcarlos como entregados.
-                    </p>
-                </div>
-            </div>
-
-            {/* Delivery Configuration (v1 Minimal) */}
-            <div className="admin-section">
-                <h3 className="admin-section-title">🚴 Configuración de Envíos</h3>
-                <div className="admin-card">
-                    {/* Change Limit Status */}
-                    {(() => {
-                        const { allowed, remaining, message } = canChangeDeliveryConfig()
-                        return (
-                            <div style={{
-                                background: allowed ? '#ECFDF5' : '#FEF2F2',
-                                padding: 10,
-                                borderRadius: 8,
-                                marginBottom: 16,
-                                fontSize: 12
-                            }}>
-                                <p style={{
-                                    color: allowed ? '#065F46' : '#991B1B',
-                                    margin: 0,
-                                    fontWeight: 500
-                                }}>
-                                    📊 {message}
-                                </p>
+            <div style={{ padding: 16 }}>
+                {/* Status Controls */}
+                <div style={{ marginBottom: 20 }}>
+                    <SectionHeader title="Estado del local" />
+                    <Card>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            paddingBottom: 12,
+                            borderBottom: '1px solid #F1F5F9'
+                        }}>
+                            <div>
+                                <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>Modo mantenimiento</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Cierra todo el local</p>
                             </div>
-                        )
-                    })()}
+                            <label className="toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={config.maintenanceMode}
+                                    onChange={handleToggleMaintenance}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            paddingTop: 12
+                        }}>
+                            <div>
+                                <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>Pausar pedidos</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Solo desactiva pedidos</p>
+                            </div>
+                            <label className="toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={config.pauseOrders}
+                                    onChange={handleTogglePause}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </Card>
+                </div>
 
-                    {/* Origin Address */}
-                    <div className="form-group">
-                        <label className="form-label">Dirección de origen (para radio)</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={config.delivery?.originAddress || config.businessInfo?.address || ''}
-                            onChange={(e) => {
-                                const { allowed } = canChangeDeliveryConfig()
-                                if (!allowed) {
-                                    alert('❌ Límite de cambios alcanzado (2 por mes)')
-                                    return
-                                }
-                                if (!confirm('¿Confirmar cambio de dirección de origen? (Cuenta como 1 de 2 cambios mensuales)')) {
-                                    return
-                                }
-                                const oldValue = config.delivery?.originAddress || ''
-                                recordDeliveryConfigChange('originAddress', oldValue, e.target.value)
-                                updateConfig({
-                                    delivery: {
-                                        ...config.delivery,
-                                        originAddress: e.target.value
-                                    }
-                                })
-                                setConfig(getConfig())
-                            }}
-                            placeholder="Usar dirección del local"
-                        />
-                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
-                            Si está vacío, se usa la dirección del Info del local
+                {/* Order Archive Info */}
+                <div style={{ marginBottom: 20 }}>
+                    <SectionHeader title="Archivo de pedidos" />
+                    <Card>
+                        <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>
+                            ✓ Los pedidos se archivan automáticamente al marcarlos como entregados.
                         </p>
-                    </div>
+                    </Card>
+                </div>
 
-                    {/* Radius Slider */}
-                    <div className="form-group">
-                        <label className="form-label">Radio de entrega: {config.delivery?.radiusKm || 5} km</label>
-                        <input
-                            type="range"
-                            min="1"
-                            max="15"
-                            value={config.delivery?.radiusKm || 5}
-                            onChange={(e) => {
-                                const { allowed } = canChangeDeliveryConfig()
-                                if (!allowed) {
-                                    alert('❌ Límite de cambios alcanzado (2 por mes)')
-                                    return
-                                }
-                                const newValue = parseInt(e.target.value)
-                                const oldValue = config.delivery?.radiusKm || 5
-                                if (newValue !== oldValue) {
-                                    if (!confirm(`¿Cambiar radio a ${newValue} km? (Cuenta como 1 de 2 cambios mensuales)`)) {
+                {/* Delivery Configuration */}
+                <div style={{ marginBottom: 20 }}>
+                    <SectionHeader title="Configuración de Envíos" />
+                    <Card>
+                        {(() => {
+                            const { allowed, remaining, message } = canChangeDeliveryConfig()
+                            return (
+                                <div style={{
+                                    background: allowed ? '#ECFDF5' : '#FEF2F2',
+                                    padding: 10,
+                                    borderRadius: 8,
+                                    marginBottom: 16,
+                                    fontSize: 12
+                                }}>
+                                    <p style={{
+                                        color: allowed ? '#065F46' : '#991B1B',
+                                        margin: 0,
+                                        fontWeight: 500
+                                    }}>
+                                        {message}
+                                    </p>
+                                </div>
+                            )
+                        })()}
+
+                        <div className="form-group">
+                            <label className="form-label">Dirección de origen (para radio)</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={config.delivery?.originAddress || config.businessInfo?.address || ''}
+                                onChange={(e) => {
+                                    const { allowed } = canChangeDeliveryConfig()
+                                    if (!allowed) {
+                                        alert('❌ Límite de cambios alcanzado (2 por mes)')
                                         return
                                     }
-                                    recordDeliveryConfigChange('radiusKm', oldValue, newValue)
-                                }
-                                updateConfig({
-                                    delivery: {
-                                        ...config.delivery,
-                                        radiusKm: newValue
+                                    if (!confirm('¿Confirmar cambio de dirección de origen? (Cuenta como 1 de 2 cambios mensuales)')) {
+                                        return
                                     }
-                                })
-                                setConfig(getConfig())
-                            }}
-                            style={{ width: '100%' }}
-                        />
-                    </div>
+                                    const oldValue = config.delivery?.originAddress || ''
+                                    recordDeliveryConfigChange('originAddress', oldValue, e.target.value)
+                                    updateConfig({
+                                        delivery: {
+                                            ...config.delivery,
+                                            originAddress: e.target.value
+                                        }
+                                    })
+                                    setConfig(getConfig())
+                                }}
+                                placeholder="Usar dirección del local"
+                            />
+                            <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                                Si está vacío, se usa la dirección del Info del local
+                            </p>
+                        </div>
 
-                    {/* Flat Delivery Fee */}
-                    <div className="form-group">
-                        <label className="form-label">Tarifa de envío fija ($)</label>
-                        <input
-                            type="number"
-                            className="form-input"
-                            min="0"
-                            step="50"
-                            value={config.delivery?.flatFee || 0}
-                            onChange={(e) => {
-                                updateConfig({
-                                    delivery: {
-                                        ...config.delivery,
-                                        flatFee: parseInt(e.target.value) || 0
+                        <div className="form-group">
+                            <label className="form-label">Radio de entrega: {config.delivery?.radiusKm || 5} km</label>
+                            <input
+                                type="range"
+                                min="1"
+                                max="15"
+                                value={config.delivery?.radiusKm || 5}
+                                onChange={(e) => {
+                                    const { allowed } = canChangeDeliveryConfig()
+                                    if (!allowed) {
+                                        alert('❌ Límite de cambios alcanzado (2 por mes)')
+                                        return
                                     }
-                                })
-                                setConfig(getConfig())
-                            }}
-                            placeholder="0 = gratis"
-                        />
-                    </div>
+                                    const newValue = parseInt(e.target.value)
+                                    const oldValue = config.delivery?.radiusKm || 5
+                                    if (newValue !== oldValue) {
+                                        if (!confirm(`¿Cambiar radio a ${newValue} km? (Cuenta como 1 de 2 cambios mensuales)`)) {
+                                            return
+                                        }
+                                        recordDeliveryConfigChange('radiusKm', oldValue, newValue)
+                                    }
+                                    updateConfig({
+                                        delivery: {
+                                            ...config.delivery,
+                                            radiusKm: newValue
+                                        }
+                                    })
+                                    setConfig(getConfig())
+                                }}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
 
-                    {/* Free Delivery Threshold */}
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Envío gratis desde ($)</label>
-                        <input
-                            type="number"
-                            className="form-input"
-                            min="0"
-                            step="100"
-                            value={config.delivery?.freeDeliveryThreshold || 0}
-                            onChange={(e) => {
-                                updateConfig({
-                                    delivery: {
-                                        ...config.delivery,
-                                        freeDeliveryThreshold: parseInt(e.target.value) || 0
-                                    }
-                                })
-                                setConfig(getConfig())
-                            }}
-                            placeholder="0 = sin umbral"
-                        />
-                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
-                            Si el pedido supera este monto, el envío es gratis
-                        </p>
-                    </div>
+                        <div className="form-group">
+                            <label className="form-label">Tarifa de envío fija ($)</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                min="0"
+                                step="50"
+                                value={config.delivery?.flatFee || 0}
+                                onChange={(e) => {
+                                    updateConfig({
+                                        delivery: {
+                                            ...config.delivery,
+                                            flatFee: parseInt(e.target.value) || 0
+                                        }
+                                    })
+                                    setConfig(getConfig())
+                                }}
+                                placeholder="0 = gratis"
+                            />
+                        </div>
+
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">Envío gratis desde ($)</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                min="0"
+                                step="100"
+                                value={config.delivery?.freeDeliveryThreshold || 0}
+                                onChange={(e) => {
+                                    updateConfig({
+                                        delivery: {
+                                            ...config.delivery,
+                                            freeDeliveryThreshold: parseInt(e.target.value) || 0
+                                        }
+                                    })
+                                    setConfig(getConfig())
+                                }}
+                                placeholder="0 = sin umbral"
+                            />
+                            <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                                Si el pedido supera este monto, el envío es gratis
+                            </p>
+                        </div>
+                    </Card>
                 </div>
-            </div>
 
-            {/* Messages */}
-            <div className="admin-section">
-                <h3 className="admin-section-title">💬 Mensajes</h3>
-                <div className="admin-card">
-                    <div className="form-group">
-                        <label className="form-label">Mensaje de mantenimiento</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={maintenanceMessage}
-                            onChange={(e) => setMaintenanceMessage(e.target.value)}
-                            placeholder="Ej: Volvemos a las 17:00"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Mensaje de pausa</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={pauseMessage}
-                            onChange={(e) => setPauseMessage(e.target.value)}
-                            placeholder="Ej: Estamos con muchos pedidos"
-                        />
-                    </div>
-                    <button
-                        className="btn btn-primary btn-block"
-                        onClick={handleSaveMessages}
-                    >
-                        Guardar mensajes
-                    </button>
-                </div>
-            </div>
-
-            {/* Business Info */}
-            <div className="admin-section">
-                <h3 className="admin-section-title">📍 Info del local</h3>
-                <div className="admin-card">
-                    <div className="form-group">
-                        <label className="form-label">Dirección</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={businessInfo.address || ''}
-                            onChange={(e) => setBusinessInfo({ ...businessInfo, address: e.target.value })}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Teléfono</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={businessInfo.phone || ''}
-                            onChange={(e) => setBusinessInfo({ ...businessInfo, phone: e.target.value })}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Instagram</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={businessInfo.instagram || ''}
-                            onChange={(e) => setBusinessInfo({ ...businessInfo, instagram: e.target.value })}
-                            placeholder="@usuario"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Descripción</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={businessInfo.description || ''}
-                            onChange={(e) => setBusinessInfo({ ...businessInfo, description: e.target.value })}
-                        />
-                    </div>
-                    <button
-                        className="btn btn-primary btn-block"
-                        onClick={handleSaveBusinessInfo}
-                    >
-                        Guardar info
-                    </button>
-                </div>
-            </div>
-
-            {/* Branding Customization */}
-            <div className="admin-section">
-                <h3 className="admin-section-title">🎨 Personalización de marca</h3>
-                <div className="admin-card">
-                    {/* Font Selector */}
-                    <div className="form-group">
-                        <label className="form-label">Tipografía</label>
-                        <select
-                            className="form-input"
-                            value={config.branding?.fontFamily || 'Inter'}
-                            onChange={(e) => {
-                                updateConfig({
-                                    branding: {
-                                        ...config.branding,
-                                        fontFamily: e.target.value
-                                    }
-                                })
-                                setConfig(getConfig())
-                            }}
-                            style={{ fontFamily: config.branding?.fontFamily || 'Inter' }}
+                {/* Messages */}
+                <div style={{ marginBottom: 20 }}>
+                    <SectionHeader title="Mensajes" />
+                    <Card>
+                        <div className="form-group">
+                            <label className="form-label">Mensaje de mantenimiento</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={maintenanceMessage}
+                                onChange={(e) => setMaintenanceMessage(e.target.value)}
+                                placeholder="Ej: Volvemos a las 17:00"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Mensaje de pausa</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={pauseMessage}
+                                onChange={(e) => setPauseMessage(e.target.value)}
+                                placeholder="Ej: Estamos con muchos pedidos"
+                            />
+                        </div>
+                        <button
+                            className="btn btn-primary btn-block"
+                            onClick={handleSaveMessages}
                         >
-                            {CURATED_FONTS.map(font => (
-                                <option key={font.name} value={font.name} style={{ fontFamily: font.name }}>
-                                    {font.label}
-                                </option>
-                            ))}
-                        </select>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 4 }}>
-                            Aplicado a todo el texto del negocio
-                        </p>
-                    </div>
+                            Guardar mensajes
+                        </button>
+                    </Card>
+                </div>
 
-                    {/* Phase 1 Navbar Branding - Color Picker Component */}
-                    <BrandingColorPicker
-                        primaryColor={config.branding?.primaryColor || '#8B7355'}
-                        iconColorMode={config.branding?.iconColorMode || 'white'}
-                        onColorChange={(color) => {
-                            updateConfig({ branding: { ...config.branding, primaryColor: color } })
-                            setConfig(getConfig())
-                        }}
-                        onIconModeChange={(mode) => {
-                            updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
-                            setConfig(getConfig())
-                        }}
-                    />
-
-                    {/* Hero Icons Customization (v2 - Fully Isolated) */}
-                    <div className="form-group">
-                        <label className="form-label">🎯 Hero Icons (Inicio)</label>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 12 }}>
-                            Color de fondo e ícono para cada tile (Independiente de la navegación)
-                        </p>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
-                                const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
-                                const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
-                                return (
-                                    <HeroIconPicker
-                                        key={iconId}
-                                        label={labels[iconId]}
-                                        iconId={iconId}
-                                        color={iconConfig.color}
-                                        iconColorMode={iconConfig.iconColorMode}
-                                        onColorChange={(newColor) => {
-                                            updateConfig({
-                                                heroIcons: {
-                                                    ...config.heroIcons,
-                                                    [iconId]: { ...iconConfig, color: newColor }
-                                                }
-                                            })
-                                            setConfig(getConfig())
-                                        }}
-                                        onIconModeChange={(mode) => {
-                                            updateConfig({
-                                                heroIcons: {
-                                                    ...config.heroIcons,
-                                                    [iconId]: { ...iconConfig, iconColorMode: mode }
-                                                }
-                                            })
-                                            setConfig(getConfig())
-                                        }}
-                                    />
-                                )
-                            })}
+                {/* Business Info */}
+                <div style={{ marginBottom: 20 }}>
+                    <SectionHeader title="Info del local" />
+                    <Card>
+                        <div className="form-group">
+                            <label className="form-label">Dirección</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={businessInfo.address || ''}
+                                onChange={(e) => setBusinessInfo({ ...businessInfo, address: e.target.value })}
+                            />
                         </div>
-                    </div>
+                        <div className="form-group">
+                            <label className="form-label">Teléfono</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={businessInfo.phone || ''}
+                                onChange={(e) => setBusinessInfo({ ...businessInfo, phone: e.target.value })}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Instagram</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={businessInfo.instagram || ''}
+                                onChange={(e) => setBusinessInfo({ ...businessInfo, instagram: e.target.value })}
+                                placeholder="@usuario"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Descripción</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={businessInfo.description || ''}
+                                onChange={(e) => setBusinessInfo({ ...businessInfo, description: e.target.value })}
+                            />
+                        </div>
+                        <button
+                            className="btn btn-primary btn-block"
+                            onClick={handleSaveBusinessInfo}
+                        >
+                            Guardar info
+                        </button>
+                    </Card>
+                </div>
 
-                    {/* Canvas V1 - Light/Dark */}
-                    <div className="form-group">
-                        <label className="form-label">🎨 Canvas (Fondo)</label>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 12 }}>
-                            Color de fondo general de la app
-                        </p>
-                        <div style={{ display: 'flex', gap: 8 }}>
+                {/* Branding Customization */}
+                <div style={{ marginBottom: 20 }}>
+                    <SectionHeader title="Personalización de marca" />
+                    <Card>
+                        {/* Edit Cover Button (Parity with Super Admin) */}
+                        <div className="form-group">
+                            <label className="form-label">Imagen de portada</label>
                             <button
-                                onClick={() => {
-                                    updateConfig({ canvasMode: 'light' })
-                                    setConfig(getConfig())
-                                }}
+                                onClick={() => setShowCoverEditor(true)}
                                 style={{
-                                    flex: 1,
+                                    width: '100%',
                                     padding: '12px 16px',
-                                    borderRadius: 10,
-                                    border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                    background: '#FFFFFF',
-                                    color: '#1F2937',
-                                    fontSize: 14,
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                ☀️ Claro
-                            </button>
-                            <button
-                                onClick={() => {
-                                    updateConfig({ canvasMode: 'dark' })
-                                    setConfig(getConfig())
-                                }}
-                                style={{
-                                    flex: 1,
-                                    padding: '12px 16px',
-                                    borderRadius: 10,
-                                    border: config.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                    background: '#1F2937',
+                                    background: '#3B82F6',
                                     color: '#FFFFFF',
+                                    border: 'none',
+                                    borderRadius: 8,
                                     fontSize: 14,
-                                    fontWeight: 600,
+                                    fontWeight: 500,
                                     cursor: 'pointer'
                                 }}
                             >
-                                🌙 Oscuro
+                                Editar Portada
                             </button>
+                            <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                                Configura la imagen de cabecera del negocio
+                            </p>
                         </div>
-                    </div>
 
-                    {/* Confirmation Color */}
-                    <div className="form-group">
-                        <label className="form-label">Color de confirmación</label>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {CONFIRMATION_COLORS.map(color => (
+                        <div className="form-group">
+                            <label className="form-label">Tipografía</label>
+                            <select
+                                className="form-input"
+                                value={config.branding?.fontFamily || 'Inter'}
+                                onChange={(e) => {
+                                    updateConfig({
+                                        branding: {
+                                            ...config.branding,
+                                            fontFamily: e.target.value
+                                        }
+                                    })
+                                    setConfig(getConfig())
+                                }}
+                                style={{ fontFamily: config.branding?.fontFamily || 'Inter' }}
+                            >
+                                {CURATED_FONTS.map(font => (
+                                    <option key={font.name} value={font.name} style={{ fontFamily: font.name }}>
+                                        {font.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                                Aplicado a todo el texto del negocio
+                            </p>
+                        </div>
+
+                        {/* Font Weight Selector (Parity with Super Admin) */}
+                        <div className="form-group">
+                            <label className="form-label">Peso de fuente</label>
+                            <select
+                                className="form-input"
+                                value={config.branding?.fontWeight || '400'}
+                                onChange={(e) => {
+                                    updateConfig({
+                                        branding: {
+                                            ...config.branding,
+                                            fontWeight: e.target.value
+                                        }
+                                    })
+                                    setConfig(getConfig())
+                                }}
+                                style={{ fontWeight: config.branding?.fontWeight || '400' }}
+                            >
+                                {FONT_WEIGHTS.map(weight => (
+                                    <option key={weight.value} value={weight.value}>
+                                        {weight.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Color Pickers (Parity with Super Admin) */}
+                        <div className="form-group">
+                            <label className="form-label">Colores del tema</label>
+                            <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+                                <div>
+                                    <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Primario</p>
+                                    <input
+                                        type="color"
+                                        value={config.colors?.primary || '#B8956A'}
+                                        onChange={(e) => {
+                                            updateConfig({ colors: { ...config.colors, primary: e.target.value } })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Secundario</p>
+                                    <input
+                                        type="color"
+                                        value={config.colors?.primaryLight || '#A89070'}
+                                        onChange={(e) => {
+                                            updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Confirmación</p>
+                                    <input
+                                        type="color"
+                                        value={config.colors?.confirmation || '#22C55E'}
+                                        onChange={(e) => {
+                                            updateConfig({ colors: { ...config.colors, confirmation: e.target.value } })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Powered by</p>
+                                    <input
+                                        type="color"
+                                        value={config.branding?.poweredByColor || '#C4856A'}
+                                        onChange={(e) => {
+                                            updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <BrandingColorPicker
+                            primaryColor={config.branding?.primaryColor || '#8B7355'}
+                            iconColorMode={config.branding?.iconColorMode || 'white'}
+                            onColorChange={(color) => {
+                                updateConfig({ branding: { ...config.branding, primaryColor: color } })
+                                setConfig(getConfig())
+                            }}
+                            onIconModeChange={(mode) => {
+                                updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
+                                setConfig(getConfig())
+                            }}
+                        />
+
+                        <div className="form-group">
+                            <label className="form-label">Hero Icons (Inicio)</label>
+                            <p style={{ fontSize: 11, color: '#64748B', marginBottom: 12 }}>
+                                Color de fondo e ícono para cada tile
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                                    const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
+                                    const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
+                                    return (
+                                        <HeroIconPicker
+                                            key={iconId}
+                                            label={labels[iconId]}
+                                            iconId={iconId}
+                                            color={iconConfig.color}
+                                            iconColorMode={iconConfig.iconColorMode}
+                                            onColorChange={(newColor) => {
+                                                updateConfig({
+                                                    heroIcons: {
+                                                        ...config.heroIcons,
+                                                        [iconId]: { ...iconConfig, color: newColor }
+                                                    }
+                                                })
+                                                setConfig(getConfig())
+                                            }}
+                                            onIconModeChange={(mode) => {
+                                                updateConfig({
+                                                    heroIcons: {
+                                                        ...config.heroIcons,
+                                                        [iconId]: { ...iconConfig, iconColorMode: mode }
+                                                    }
+                                                })
+                                                setConfig(getConfig())
+                                            }}
+                                        />
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Canvas (Fondo)</label>
+                            <p style={{ fontSize: 11, color: '#64748B', marginBottom: 12 }}>
+                                Color de fondo general de la app
+                            </p>
+                            <div style={{ display: 'flex', gap: 8 }}>
                                 <button
-                                    key={color.value}
                                     onClick={() => {
+                                        updateConfig({ canvasMode: 'light' })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 16px',
+                                        borderRadius: 8,
+                                        border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+                                        background: '#FFFFFF',
+                                        color: '#1E293B',
+                                        fontSize: 13,
+                                        fontWeight: 500,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Claro
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({ canvasMode: 'dark' })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 16px',
+                                        borderRadius: 8,
+                                        border: config.canvasMode === 'dark' ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+                                        background: '#1E293B',
+                                        color: '#FFFFFF',
+                                        fontSize: 13,
+                                        fontWeight: 500,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Oscuro
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Color de confirmación</label>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                {CONFIRMATION_COLORS.map(color => (
+                                    <button
+                                        key={color.value}
+                                        onClick={() => {
+                                            updateConfig({
+                                                colors: {
+                                                    ...config.colors,
+                                                    confirmation: color.value
+                                                }
+                                            })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            width: 36,
+                                            height: 36,
+                                            borderRadius: 8,
+                                            backgroundColor: color.value,
+                                            border: config.colors?.confirmation === color.value ? '3px solid #1E293B' : '2px solid #E2E8F0',
+                                            cursor: 'pointer'
+                                        }}
+                                        title={color.label}
+                                    />
+                                ))}
+                            </div>
+                            <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                                Para botones de confirmar pedido y acciones positivas
+                            </p>
+                        </div>
+
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">Color "Powered by"</label>
+                            <input
+                                type="color"
+                                value={config.branding?.poweredByColor || '#C4856A'}
+                                onChange={(e) => {
+                                    updateConfig({
+                                        branding: {
+                                            ...config.branding,
+                                            poweredByColor: e.target.value
+                                        }
+                                    })
+                                    setConfig(getConfig())
+                                }}
+                                style={{
+                                    width: 60,
+                                    height: 36,
+                                    border: '2px solid #E2E8F0',
+                                    borderRadius: 8,
+                                    cursor: 'pointer',
+                                    padding: 2
+                                }}
+                            />
+                        </div>
+
+                        <div className="form-group" style={{ marginTop: 16 }}>
+                            <label className="form-label">Imagen decorativa (Menú/Pedido)</label>
+                            <p style={{ fontSize: 11, color: '#64748B', marginBottom: 8 }}>
+                                Aparece debajo del nombre del negocio
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                                {DIVIDER_PRESETS.map(preset => (
+                                    <div
+                                        key={preset.id}
+                                        onClick={() => {
+                                            updateConfig({ dividerPresetId: preset.id })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            cursor: 'pointer',
+                                            borderRadius: 8,
+                                            overflow: 'hidden',
+                                            border: config.dividerPresetId === preset.id ? '3px solid #3B82F6' : '2px solid #E2E8F0',
+                                            opacity: config.dividerPresetId === preset.id ? 1 : 0.7
+                                        }}
+                                    >
+                                        <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
+                {/* External Ordering Links */}
+                <div style={{ marginBottom: 20 }}>
+                    <SectionHeader title="Pedidos externos" />
+                    <Card>
+                        <p style={{ fontSize: 12, color: '#64748B', marginBottom: 16, marginTop: 0 }}>
+                            Links externos para delivery. Aparecen en la pestaña Info.
+                        </p>
+
+                        {/* Rappi */}
+                        <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #F1F5F9' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <span style={{ fontWeight: 500, fontSize: 14, color: '#1E293B' }}>Rappi</span>
+                                <button
+                                    onClick={() => {
+                                        const current = config.externalOrdering || {}
                                         updateConfig({
-                                            colors: {
-                                                ...config.colors,
-                                                confirmation: color.value
+                                            externalOrdering: {
+                                                ...current,
+                                                rappiEnabled: !current.rappiEnabled
                                             }
                                         })
                                         setConfig(getConfig())
                                     }}
                                     style={{
-                                        width: 36,
-                                        height: 36,
-                                        borderRadius: 8,
-                                        backgroundColor: color.value,
-                                        border: config.colors?.confirmation === color.value ? '3px solid #1F2937' : '2px solid #E5E7EB',
+                                        padding: '4px 12px',
+                                        borderRadius: 12,
+                                        border: 'none',
+                                        background: config.externalOrdering?.rappiEnabled ? '#22C55E' : '#E2E8F0',
+                                        color: config.externalOrdering?.rappiEnabled ? 'white' : '#64748B',
+                                        fontSize: 11,
+                                        fontWeight: 500,
                                         cursor: 'pointer'
                                     }}
-                                    title={color.label}
+                                >
+                                    {config.externalOrdering?.rappiEnabled ? 'ON' : 'OFF'}
+                                </button>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={config.externalOrdering?.rappiUrl || ''}
+                                    onChange={(e) => {
+                                        const current = config.externalOrdering || {}
+                                        updateConfig({
+                                            externalOrdering: {
+                                                ...current,
+                                                rappiUrl: e.target.value
+                                            }
+                                        })
+                                        setConfig(getConfig())
+                                    }}
+                                    placeholder="https://..."
                                 />
-                            ))}
+                            </div>
                         </div>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 4 }}>
-                            Para botones de confirmar pedido y acciones positivas
-                        </p>
-                    </div>
 
-                    {/* Powered By Color */}
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Color "Powered by @foodspotapp"</label>
-                        <input
-                            type="color"
-                            value={config.branding?.poweredByColor || '#C4856A'}
-                            onChange={(e) => {
-                                updateConfig({
-                                    branding: {
-                                        ...config.branding,
-                                        poweredByColor: e.target.value
-                                    }
-                                })
-                                setConfig(getConfig())
-                            }}
-                            style={{
-                                width: 60,
-                                height: 36,
-                                border: '2px solid #E5E7EB',
-                                borderRadius: 8,
-                                cursor: 'pointer',
-                                padding: 2
-                            }}
-                        />
-                    </div>
-
-                    {/* Divider Preset Selector */}
-                    <div className="form-group" style={{ marginTop: 16 }}>
-                        <label className="form-label">Imagen decorativa (Menú/Pedido)</label>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 8 }}>
-                            Aparece debajo del nombre del negocio
-                        </p>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                            {DIVIDER_PRESETS.map(preset => (
-                                <div
-                                    key={preset.id}
+                        {/* PedidosYa */}
+                        <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #F1F5F9' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <span style={{ fontWeight: 500, fontSize: 14, color: '#1E293B' }}>PedidosYa</span>
+                                <button
                                     onClick={() => {
-                                        updateConfig({ dividerPresetId: preset.id })
+                                        const current = config.externalOrdering || {}
+                                        updateConfig({
+                                            externalOrdering: {
+                                                ...current,
+                                                pedidosYaEnabled: !current.pedidosYaEnabled
+                                            }
+                                        })
                                         setConfig(getConfig())
                                     }}
                                     style={{
-                                        cursor: 'pointer',
-                                        borderRadius: 8,
-                                        overflow: 'hidden',
-                                        border: config.dividerPresetId === preset.id ? '3px solid var(--color-success)' : '2px solid var(--color-card)',
-                                        opacity: config.dividerPresetId === preset.id ? 1 : 0.7
+                                        padding: '4px 12px',
+                                        borderRadius: 12,
+                                        border: 'none',
+                                        background: config.externalOrdering?.pedidosYaEnabled ? '#22C55E' : '#E2E8F0',
+                                        color: config.externalOrdering?.pedidosYaEnabled ? 'white' : '#64748B',
+                                        fontSize: 11,
+                                        fontWeight: 500,
+                                        cursor: 'pointer'
                                     }}
                                 >
-                                    <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
-                                </div>
-                            ))}
+                                    {config.externalOrdering?.pedidosYaEnabled ? 'ON' : 'OFF'}
+                                </button>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={config.externalOrdering?.pedidosYaUrl || ''}
+                                    onChange={(e) => {
+                                        const current = config.externalOrdering || {}
+                                        updateConfig({
+                                            externalOrdering: {
+                                                ...current,
+                                                pedidosYaUrl: e.target.value
+                                            }
+                                        })
+                                        setConfig(getConfig())
+                                    }}
+                                    placeholder="https://..."
+                                />
+                            </div>
                         </div>
-                    </div>
+
+                        {/* Mercado Pago Alias */}
+                        <div>
+                            <span style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', display: 'block', marginBottom: 8 }}>Mercado Pago</span>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Alias (para copiar)</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={config.payments?.mercadoPagoAlias || ''}
+                                    onChange={(e) => {
+                                        const current = config.payments || {}
+                                        updateConfig({
+                                            payments: {
+                                                ...current,
+                                                mercadoPagoAlias: e.target.value
+                                            }
+                                        })
+                                        setConfig(getConfig())
+                                    }}
+                                    placeholder="ej: grubclub.mp"
+                                />
+                                <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                                    Si está vacío, no aparece el botón en Info
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
                 </div>
             </div>
 
-            {/* External Ordering Links */}
-            <div className="admin-section">
-                <h3 className="admin-section-title">🔗 Pedidos externos</h3>
-                <div className="admin-card">
-                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
-                        Links externos para delivery. Aparecen en la pestaña Info.
-                    </p>
-
-                    {/* Rappi */}
-                    <div style={{ marginBottom: 'var(--space-4)', paddingBottom: 'var(--space-3)', borderBottom: '1px solid var(--color-card)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-                            <span style={{ fontWeight: 'var(--font-weight-semibold)' }}>Rappi</span>
-                            <button
-                                onClick={() => {
-                                    const current = config.externalOrdering || {}
-                                    updateConfig({
-                                        externalOrdering: {
-                                            ...current,
-                                            rappiEnabled: !current.rappiEnabled
-                                        }
-                                    })
-                                    setConfig(getConfig())
-                                }}
-                                style={{
-                                    padding: '6px 14px',
-                                    borderRadius: 16,
-                                    border: 'none',
-                                    background: config.externalOrdering?.rappiEnabled ? 'var(--color-success)' : 'var(--color-card)',
-                                    color: config.externalOrdering?.rappiEnabled ? 'white' : 'var(--color-text-muted)',
-                                    fontSize: 'var(--font-size-sm)',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {config.externalOrdering?.rappiEnabled ? 'ON' : 'OFF'}
-                            </button>
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Rappi link (external)</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={config.externalOrdering?.rappiUrl || ''}
-                                onChange={(e) => {
-                                    const current = config.externalOrdering || {}
-                                    updateConfig({
-                                        externalOrdering: {
-                                            ...current,
-                                            rappiUrl: e.target.value
-                                        }
-                                    })
-                                    setConfig(getConfig())
-                                }}
-                                placeholder="https://..."
-                            />
-                        </div>
-                    </div>
-
-                    {/* PedidosYa */}
-                    <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-                            <span style={{ fontWeight: 'var(--font-weight-semibold)' }}>PedidosYa</span>
-                            <button
-                                onClick={() => {
-                                    const current = config.externalOrdering || {}
-                                    updateConfig({
-                                        externalOrdering: {
-                                            ...current,
-                                            pedidosYaEnabled: !current.pedidosYaEnabled
-                                        }
-                                    })
-                                    setConfig(getConfig())
-                                }}
-                                style={{
-                                    padding: '6px 14px',
-                                    borderRadius: 16,
-                                    border: 'none',
-                                    background: config.externalOrdering?.pedidosYaEnabled ? 'var(--color-success)' : 'var(--color-card)',
-                                    color: config.externalOrdering?.pedidosYaEnabled ? 'white' : 'var(--color-text-muted)',
-                                    fontSize: 'var(--font-size-sm)',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {config.externalOrdering?.pedidosYaEnabled ? 'ON' : 'OFF'}
-                            </button>
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">PedidosYa link (external)</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={config.externalOrdering?.pedidosYaUrl || ''}
-                                onChange={(e) => {
-                                    const current = config.externalOrdering || {}
-                                    updateConfig({
-                                        externalOrdering: {
-                                            ...current,
-                                            pedidosYaUrl: e.target.value
-                                        }
-                                    })
-                                    setConfig(getConfig())
-                                }}
-                                placeholder="https://..."
-                            />
-                        </div>
-                    </div>
-
-                    {/* Mercado Pago Alias */}
-                    <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--color-card)' }}>
-                        <span style={{ fontWeight: 'var(--font-weight-semibold)', display: 'block', marginBottom: 'var(--space-2)' }}>💳 Mercado Pago</span>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Alias Mercado Pago (para copiar)</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={config.payments?.mercadoPagoAlias || ''}
-                                onChange={(e) => {
-                                    const current = config.payments || {}
-                                    updateConfig({
-                                        payments: {
-                                            ...current,
-                                            mercadoPagoAlias: e.target.value
-                                        }
-                                    })
-                                    setConfig(getConfig())
-                                }}
-                                placeholder="ej: grubclub.mp"
-                            />
-                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
-                                Si está vacío, no aparece el botón en Info
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* Cover Image Editor Modal (Parity with Super Admin) */}
+            <CoverImageEditor
+                isOpen={showCoverEditor}
+                onClose={() => setShowCoverEditor(false)}
+                onSave={(coverData) => {
+                    updateConfig({ headerCover: coverData })
+                    setConfig(getConfig())
+                    setShowCoverEditor(false)
+                }}
+                initialData={config.headerCover}
+            />
         </div>
     )
 }

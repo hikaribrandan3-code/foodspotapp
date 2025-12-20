@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { getConfig, reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK } from '../../config/appConfig.js'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { getConfig, reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
+import { getSession } from '../../utils/auth.js'
 import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
@@ -21,17 +22,23 @@ const ACTION_DEFINITIONS = {
 
 function Home() {
     const navigate = useNavigate()
+    const location = useLocation()
     const [config, setConfig] = useState(() => getConfig())
     const menu = getMenu()
 
-    // Owner mode detection
-    const isOwnerMode = getUserMode() === 'owner'
+    // Owner/SuperAdmin mode detection - both can edit home icons
+    const userMode = getUserMode()
+    const session = getSession()
+    const isOwnerMode = userMode === 'owner' || userMode === 'superadmin' || session?.role === 'superadmin' || session?.role === 'owner'
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false)
     const longPressTimerRef = useRef(null)
     const longPressStartRef = useRef(null)
-    const shouldBlockClickRef = useRef(false) // Prevent Chrome navigation on long-press
+
+    // CRITICAL: Global drag lock to prevent navigation corruption
+    const isDraggingRef = useRef(false)
+    const navigationBlockedRef = useRef(false)
 
     // Drag state
     const [dragState, setDragState] = useState(null)
@@ -52,14 +59,12 @@ function Home() {
     }
 
     // Resolve featured items from IDs
-    // Image priority: 1) Branding override (featuredPhotos) → 2) Menu item → 3) Placeholder
     const featuredPhotos = config.featuredPhotos || []
     const featuredItems = featuredItemIds
         .map(itemId => {
             for (const cat of (menu.categories || [])) {
                 const item = cat.items?.find(i => i.id === itemId)
                 if (item) {
-                    // Check for branding image override first
                     const brandingOverride = featuredPhotos.find(fp => fp.menuItemId === itemId)
                     const brandingImage = brandingOverride?.image || null
 
@@ -92,15 +97,75 @@ function Home() {
         }
     }
 
+    // CRITICAL: Reset drag state on route change
+    useEffect(() => {
+        // Force reset all drag state when route changes
+        isDraggingRef.current = false
+        navigationBlockedRef.current = false
+        setDragState(null)
+        setIsEditMode(false)
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current)
+            longPressTimerRef.current = null
+        }
+    }, [location.pathname])
+
+    // Polling for config changes (hero colors, etc.)
+    useEffect(() => {
+        const refreshAll = () => {
+            const newConfig = getConfig()
+            setConfig(newConfig)
+        }
+
+        const pollInterval = setInterval(() => {
+            const newConfig = getConfig()
+            setConfig(prev => {
+                if (JSON.stringify(prev.heroIcons) !== JSON.stringify(newConfig.heroIcons) ||
+                    JSON.stringify(prev.canvasMode) !== JSON.stringify(newConfig.canvasMode)) {
+                    return newConfig
+                }
+                return prev
+            })
+        }, 500)
+
+        // GLOBAL SYNC: Listen for manual sync from Super Admin/Owner Sync button
+        const handleFrontendSync = () => {
+            console.log('[HOME] Frontend sync triggered')
+            refreshAll()
+        }
+        window.addEventListener('frontendSync', handleFrontendSync)
+
+        return () => {
+            clearInterval(pollInterval)
+            window.removeEventListener('frontendSync', handleFrontendSync)
+        }
+    }, [])
+
+    // Safe navigation wrapper - only navigate if not dragging
+    const safeNavigate = useCallback((path) => {
+        if (isDraggingRef.current || navigationBlockedRef.current || isEditMode) {
+            console.log('[DRAG SAFETY] Navigation blocked - drag in progress')
+            return false
+        }
+        navigate(path)
+        return true
+    }, [navigate, isEditMode])
+
     // Long-press handlers for edit mode (owner only)
     const handleLongPressStart = useCallback((e) => {
         if (!isOwnerMode || isEditMode) return
+
+        // CRITICAL: Prevent browser link preview on long-press
+        e.preventDefault()
+        e.stopPropagation()
+
+        // Block navigation during long press detection
+        navigationBlockedRef.current = true
 
         longPressStartRef.current = {
             x: e.touches?.[0]?.clientX || e.clientX,
             y: e.touches?.[0]?.clientY || e.clientY
         }
-        shouldBlockClickRef.current = true // Block navigation during long-press
 
         longPressTimerRef.current = setTimeout(() => {
             console.log('HOME EDIT MODE ACTIVATED — VIBRATE FIRED')
@@ -108,17 +173,22 @@ function Home() {
                 navigator.vibrate(50)
             }
             setIsEditMode(true)
+            navigationBlockedRef.current = false
         }, LONG_PRESS_DURATION)
     }, [isOwnerMode, isEditMode])
 
-    const handleLongPressEnd = useCallback(() => {
+    const handleLongPressEnd = useCallback((e) => {
         if (longPressTimerRef.current) {
             clearTimeout(longPressTimerRef.current)
             longPressTimerRef.current = null
         }
-        // Reset click blocker immediately - click will fire after touchend
-        shouldBlockClickRef.current = false
-    }, [])
+        // Only unblock after a brief delay to prevent accidental navigation
+        setTimeout(() => {
+            if (!isDraggingRef.current && !isEditMode) {
+                navigationBlockedRef.current = false
+            }
+        }, 100)
+    }, [isEditMode])
 
     const handleLongPressMove = useCallback((e) => {
         if (longPressStartRef.current && longPressTimerRef.current) {
@@ -130,22 +200,30 @@ function Home() {
             if (deltaX > 10 || deltaY > 10) {
                 clearTimeout(longPressTimerRef.current)
                 longPressTimerRef.current = null
+                navigationBlockedRef.current = false
             }
         }
     }, [])
 
-    // Drag handlers
+    // CRITICAL: Drag handlers with proper event blocking
     const handleDragStart = useCallback((e, gridType, itemId, itemIndex, items) => {
         if (!isOwnerMode || !isEditMode) return
 
-        // Haptic not on drag start (only on edit mode entry)
+        // CRITICAL: Set drag lock IMMEDIATELY
+        isDraggingRef.current = true
+        navigationBlockedRef.current = true
+
+        // Prevent default to stop any link/navigation behavior
+        e.preventDefault()
+        e.stopPropagation()
+
         document.body.style.overflow = 'hidden'
 
         const touch = e.touches?.[0] || e
         const rect = e.currentTarget.getBoundingClientRect()
 
         setDragState({
-            gridType, // 'actions' or 'featured'
+            gridType,
             itemId,
             itemIndex,
             startX: touch.clientX,
@@ -162,18 +240,16 @@ function Home() {
     }, [isOwnerMode, isEditMode])
 
     const handleDragMove = useCallback((e) => {
-        if (!dragState) return
+        if (!dragState || !isDraggingRef.current) return
 
+        // CRITICAL: Always prevent default during drag
         e.preventDefault()
-        const touch = e.touches?.[0] || e
+        e.stopPropagation()
 
-        // Get grid reference
+        const touch = e.touches?.[0] || e
         const grid = dragState.gridType === 'actions' ? actionsGridRef.current : featuredGridRef.current
         if (!grid) return
 
-        const gridRect = grid.getBoundingClientRect()
-
-        // Calculate target index based on position
         const gridItems = grid.children
         let targetIndex = dragState.itemIndex
 
@@ -194,8 +270,18 @@ function Home() {
         }))
     }, [dragState])
 
-    const handleDragEnd = useCallback(() => {
-        if (!dragState) return
+    const handleDragEnd = useCallback((e) => {
+        if (!dragState) {
+            isDraggingRef.current = false
+            navigationBlockedRef.current = false
+            return
+        }
+
+        // CRITICAL: Prevent any navigation events
+        if (e) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
 
         document.body.style.overflow = ''
 
@@ -204,39 +290,76 @@ function Home() {
             const [movedItem] = newOrder.splice(dragState.itemIndex, 1)
             newOrder.splice(dragState.targetIndex, 0, movedItem)
 
-            // Save based on grid type
             if (dragState.gridType === 'actions') {
                 reorderPrimaryActions(newOrder)
             } else {
                 reorderFeaturedItems(newOrder)
             }
 
-            // Refresh config
             setConfig(getConfig())
         }
 
         setDragState(null)
+
+        // CRITICAL: Delay unblocking to prevent ghost clicks
+        setTimeout(() => {
+            isDraggingRef.current = false
+            navigationBlockedRef.current = false
+        }, 150)
     }, [dragState])
+
+    // CRITICAL: Cancel handler for edge cases
+    const handleDragCancel = useCallback(() => {
+        document.body.style.overflow = ''
+        setDragState(null)
+        isDraggingRef.current = false
+        navigationBlockedRef.current = false
+    }, [])
 
     // Global event listeners for drag
     useEffect(() => {
         if (dragState) {
-            const handleMove = (e) => handleDragMove(e)
-            const handleEnd = () => handleDragEnd()
+            const handleMove = (e) => {
+                e.preventDefault()
+                handleDragMove(e)
+            }
+            const handleEnd = (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleDragEnd(e)
+            }
+            const handleCancel = () => {
+                handleDragCancel()
+            }
 
-            document.addEventListener('touchmove', handleMove, { passive: false })
-            document.addEventListener('touchend', handleEnd)
-            document.addEventListener('mousemove', handleMove)
-            document.addEventListener('mouseup', handleEnd)
+            // Add listeners with capture phase to intercept before any other handlers
+            document.addEventListener('touchmove', handleMove, { passive: false, capture: true })
+            document.addEventListener('touchend', handleEnd, { passive: false, capture: true })
+            document.addEventListener('touchcancel', handleCancel, { capture: true })
+            document.addEventListener('mousemove', handleMove, { capture: true })
+            document.addEventListener('mouseup', handleEnd, { capture: true })
+
+            // Block clicks globally during drag
+            const blockClick = (e) => {
+                if (isDraggingRef.current) {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    e.stopImmediatePropagation()
+                    return false
+                }
+            }
+            document.addEventListener('click', blockClick, { capture: true })
 
             return () => {
-                document.removeEventListener('touchmove', handleMove)
-                document.removeEventListener('touchend', handleEnd)
-                document.removeEventListener('mousemove', handleMove)
-                document.removeEventListener('mouseup', handleEnd)
+                document.removeEventListener('touchmove', handleMove, { capture: true })
+                document.removeEventListener('touchend', handleEnd, { capture: true })
+                document.removeEventListener('touchcancel', handleCancel, { capture: true })
+                document.removeEventListener('mousemove', handleMove, { capture: true })
+                document.removeEventListener('mouseup', handleEnd, { capture: true })
+                document.removeEventListener('click', blockClick, { capture: true })
             }
         }
-    }, [dragState, handleDragMove, handleDragEnd])
+    }, [dragState, handleDragMove, handleDragEnd, handleDragCancel])
 
     // Cleanup timer on unmount
     useEffect(() => {
@@ -244,20 +367,36 @@ function Home() {
             if (longPressTimerRef.current) {
                 clearTimeout(longPressTimerRef.current)
             }
+            isDraggingRef.current = false
+            navigationBlockedRef.current = false
         }
     }, [])
 
-    // Styles - use CSS variables for hero icons (fully isolated from nav)
-    // Map actionId to CSS variable names
-    const heroVarMap = {
-        menu: { bg: '--hero-menu-bg', icon: '--hero-menu-icon' },
-        envios: { bg: '--hero-delivery-bg', icon: '--hero-delivery-icon' }, // envios maps to delivery
-        rewards: { bg: '--hero-rewards-bg', icon: '--hero-rewards-icon' },
-        game: { bg: '--hero-game-bg', icon: '--hero-game-icon' },
-    }
+    // Direct hero color helpers (read from config, not CSS variables)
+    const getHeroBg = useCallback((actionId) => {
+        // Map actionId to heroIcons key
+        const iconKey = actionId === 'envios' ? 'delivery' : actionId
+        const heroConfig = config.heroIcons?.[iconKey] || HERO_DEFAULT
+        const color = heroConfig?.color
 
-    const getTileBgVar = (actionId) => `var(${heroVarMap[actionId]?.bg || '--hero-menu-bg'})`
-    const getTileIconVar = (actionId) => `var(${heroVarMap[actionId]?.icon || '--hero-menu-icon'})`
+        // 'auto' or empty = use canvas surface color
+        if (!color || color === 'auto') {
+            return config.canvasMode === 'dark' ? '#000000' : '#FFFFFF'
+        }
+        return color
+    }, [config.heroIcons, config.canvasMode])
+
+    const getHeroIcon = useCallback((actionId) => {
+        const iconKey = actionId === 'envios' ? 'delivery' : actionId
+        const heroConfig = config.heroIcons?.[iconKey] || HERO_DEFAULT
+        const mode = heroConfig?.iconColorMode
+
+        // 'auto' or empty = use canvas surface text color
+        if (!mode || mode === 'auto') {
+            return config.canvasMode === 'dark' ? '#FFFFFF' : '#000000'
+        }
+        return mode === 'white' ? '#FFFFFF' : HERO_ICON_DARK
+    }, [config.heroIcons, config.canvasMode])
 
     const tileStyle = {
         borderRadius: 28,
@@ -275,9 +414,21 @@ function Home() {
     const getTileTextStyle = (actionId) => ({
         fontSize: 14,
         fontWeight: 500,
-        color: getTileIconVar(actionId),
+        color: getHeroIcon(actionId),
         marginTop: 4
     })
+
+    // CRITICAL: Click handler that respects drag lock
+    const handleTileClick = useCallback((e, path) => {
+        // Always check drag lock first
+        if (isDraggingRef.current || navigationBlockedRef.current || isEditMode) {
+            e.preventDefault()
+            e.stopPropagation()
+            console.log('[DRAG SAFETY] Click blocked')
+            return
+        }
+        safeNavigate(path)
+    }, [safeNavigate, isEditMode])
 
     return (
         <div
@@ -312,7 +463,13 @@ function Home() {
                         ✏️ Modo Edición
                     </span>
                     <button
-                        onClick={() => setIsEditMode(false)}
+                        onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setIsEditMode(false)
+                            isDraggingRef.current = false
+                            navigationBlockedRef.current = false
+                        }}
                         style={{
                             padding: '8px 20px',
                             background: '#22C55E',
@@ -350,7 +507,7 @@ function Home() {
 
                     const tileContent = (
                         <>
-                            <span style={{ color: getTileIconVar(actionId) }}><Icon /></span>
+                            <span style={{ color: getHeroIcon(actionId) }}><Icon /></span>
                             <span style={getTileTextStyle(actionId)}>{action.label}</span>
                         </>
                     )
@@ -360,28 +517,62 @@ function Home() {
                         return (
                             <div
                                 key={actionId}
-                                onTouchStart={(e) => isEditMode
-                                    ? handleDragStart(e, 'actions', actionId, index, primaryActions)
-                                    : handleLongPressStart(e)
-                                }
-                                onTouchEnd={!isEditMode ? handleLongPressEnd : undefined}
-                                onTouchMove={!isEditMode ? handleLongPressMove : undefined}
-                                onMouseDown={(e) => isEditMode
-                                    ? handleDragStart(e, 'actions', actionId, index, primaryActions)
-                                    : handleLongPressStart(e)
-                                }
-                                onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
-                                onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
-                                onClick={() => { if (!isEditMode && !shouldBlockClickRef.current) navigate(action.path) }}
+                                onContextMenu={(e) => {
+                                    // Prevent browser context menu on long-press
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                }}
+                                onTouchStart={(e) => {
+                                    // CRITICAL: Prevent browser link preview behavior
+                                    if (!isEditMode) {
+                                        e.preventDefault()
+                                    }
+                                    if (isEditMode) {
+                                        handleDragStart(e, 'actions', actionId, index, primaryActions)
+                                    } else {
+                                        handleLongPressStart(e)
+                                    }
+                                }}
+                                onTouchEnd={(e) => {
+                                    if (!isEditMode) {
+                                        handleLongPressEnd(e)
+                                    }
+                                }}
+                                onTouchMove={(e) => {
+                                    if (!isEditMode) {
+                                        handleLongPressMove(e)
+                                    }
+                                }}
+                                onMouseDown={(e) => {
+                                    if (isEditMode) {
+                                        handleDragStart(e, 'actions', actionId, index, primaryActions)
+                                    } else {
+                                        handleLongPressStart(e)
+                                    }
+                                }}
+                                onMouseUp={(e) => {
+                                    if (!isEditMode) {
+                                        handleLongPressEnd(e)
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!isEditMode) {
+                                        handleLongPressEnd(e)
+                                    }
+                                }}
+                                onClick={(e) => handleTileClick(e, action.path)}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...tileStyle,
-                                    backgroundColor: getTileBgVar(actionId),
+                                    backgroundColor: getHeroBg(actionId),
                                     cursor: isEditMode ? 'grab' : 'pointer',
                                     opacity: isDragging ? 0.3 : 1,
-                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getTileBgVar(actionId),
+                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getHeroBg(actionId),
                                     border: isPlaceholder ? '2px dashed #22C55E' : 'none',
-                                    touchAction: isEditMode ? 'none' : 'auto'
+                                    touchAction: 'none',
+                                    userSelect: 'none',
+                                    WebkitUserSelect: 'none',
+                                    WebkitTouchCallout: 'none'
                                 }}
                             >
                                 {tileContent}
@@ -394,7 +585,7 @@ function Home() {
                         <Link
                             key={actionId}
                             to={action.path}
-                            style={{ ...tileStyle, backgroundColor: getTileBgVar(actionId) }}
+                            style={{ ...tileStyle, backgroundColor: getHeroBg(actionId) }}
                         >
                             {tileContent}
                         </Link>
@@ -422,7 +613,9 @@ function Home() {
                         boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                         opacity: isDragging ? 0.3 : 1,
                         border: isPlaceholder ? '2px dashed #22C55E' : 'none',
-                        touchAction: isEditMode ? 'none' : 'auto'
+                        touchAction: isEditMode ? 'none' : 'auto',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none'
                     }
 
                     const cardContent = (
@@ -460,32 +653,59 @@ function Home() {
                         </>
                     )
 
-                    // Owner mode: always use div (no Link navigation issues)
+                    // Owner mode: always use div
                     if (isOwnerMode) {
                         return (
                             <div
                                 key={item.id || index}
-                                onTouchStart={(e) => isEditMode
-                                    ? handleDragStart(e, 'featured', item.id, index, featuredItems)
-                                    : handleLongPressStart(e)
-                                }
-                                onTouchEnd={!isEditMode ? handleLongPressEnd : undefined}
-                                onTouchMove={!isEditMode ? handleLongPressMove : undefined}
-                                onMouseDown={(e) => isEditMode
-                                    ? handleDragStart(e, 'featured', item.id, index, featuredItems)
-                                    : handleLongPressStart(e)
-                                }
-                                onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
-                                onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
-                                onClick={() => { if (!isEditMode && !shouldBlockClickRef.current) navigate('/menu') }}
+                                onContextMenu={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                }}
+                                onTouchStart={(e) => {
+                                    if (!isEditMode) {
+                                        e.preventDefault()
+                                    }
+                                    if (isEditMode) {
+                                        handleDragStart(e, 'featured', item.id, index, featuredItems)
+                                    } else {
+                                        handleLongPressStart(e)
+                                    }
+                                }}
+                                onTouchEnd={(e) => {
+                                    if (!isEditMode) {
+                                        handleLongPressEnd(e)
+                                    }
+                                }}
+                                onTouchMove={(e) => {
+                                    if (!isEditMode) {
+                                        handleLongPressMove(e)
+                                    }
+                                }}
+                                onMouseDown={(e) => {
+                                    if (isEditMode) {
+                                        handleDragStart(e, 'featured', item.id, index, featuredItems)
+                                    } else {
+                                        handleLongPressStart(e)
+                                    }
+                                }}
+                                onMouseUp={(e) => {
+                                    if (!isEditMode) {
+                                        handleLongPressEnd(e)
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!isEditMode) {
+                                        handleLongPressEnd(e)
+                                    }
+                                }}
+                                onClick={(e) => handleTileClick(e, '/menu')}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...cardStyle,
                                     cursor: isEditMode ? 'grab' : 'pointer',
-                                    opacity: isDragging ? 0.3 : 1,
-                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : cardStyle.backgroundColor,
-                                    border: isPlaceholder ? '2px dashed #22C55E' : 'none',
-                                    touchAction: isEditMode ? 'none' : 'auto'
+                                    touchAction: 'none',
+                                    WebkitTouchCallout: 'none'
                                 }}
                             >
                                 {cardContent}
@@ -517,11 +737,12 @@ function Home() {
                     draggedContent = (
                         <div style={{
                             ...tileStyle,
+                            backgroundColor: getHeroBg(dragState.itemId),
                             width: dragState.itemWidth,
                             boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
                         }}>
-                            <span style={{ color: iconColor }}><Icon /></span>
-                            <span style={tileTextStyle}>{action.label}</span>
+                            <span style={{ color: getHeroIcon(dragState.itemId) }}><Icon /></span>
+                            <span style={getTileTextStyle(dragState.itemId)}>{action.label}</span>
                         </div>
                     )
                 } else {

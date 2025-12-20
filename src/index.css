@@ -266,12 +266,8 @@ header,
   background: var(--canvas-bg) !important;
 }
 
-/* Hero tiles use canvas-surface (same as canvas in binary mode) */
-.hero-tile,
-[class*="hero"],
-[class*="tile"] {
-  background: var(--canvas-surface) !important;
-}
+/* Hero tiles use dynamic CSS variables set by App.jsx */
+/* DO NOT add !important overrides here - colors are set programmatically */
 
 /* Text uses canvas-text */
 .page-title,

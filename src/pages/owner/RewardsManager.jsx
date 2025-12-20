@@ -3,13 +3,98 @@ import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { getConfig, updateConfig } from '../../config/appConfig.js'
 
+// Shared Owner Header Component
+function OwnerHeader({ title, subtitle, onLogout }) {
+    return (
+        <div style={{
+            background: '#1E293B',
+            padding: '14px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+        }}>
+            <div>
+                <h1 style={{
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: '#FFFFFF',
+                    margin: 0,
+                    letterSpacing: '-0.01em'
+                }}>{title}</h1>
+                {subtitle && (
+                    <p style={{
+                        fontSize: 12,
+                        color: '#94A3B8',
+                        margin: '2px 0 0'
+                    }}>{subtitle}</p>
+                )}
+            </div>
+            <button
+                onClick={onLogout}
+                style={{
+                    padding: '6px 14px',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: '#94A3B8',
+                    background: 'transparent',
+                    border: '1px solid #475569',
+                    borderRadius: 6,
+                    cursor: 'pointer'
+                }}
+            >
+                Salir
+            </button>
+        </div>
+    )
+}
+
+// Shared Owner Tab Navigation
+function OwnerTabs({ activeTab }) {
+    const tabs = [
+        { id: 'settings', path: '/owner/settings', label: 'Config' },
+        { id: 'menu', path: '/owner/menu', label: 'Menú' },
+        { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
+        { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
+    ]
+
+    return (
+        <div style={{
+            background: '#FFFFFF',
+            borderBottom: '1px solid #E2E8F0',
+            display: 'flex',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch'
+        }}>
+            {tabs.map(tab => (
+                <Link
+                    key={tab.id}
+                    to={tab.path}
+                    style={{
+                        flex: 1,
+                        padding: '12px 16px',
+                        fontSize: 13,
+                        fontWeight: activeTab === tab.id ? 600 : 500,
+                        color: activeTab === tab.id ? '#1E293B' : '#64748B',
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                        borderBottom: activeTab === tab.id ? '2px solid #3B82F6' : '2px solid transparent',
+                        background: 'transparent',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    {tab.label}
+                </Link>
+            ))}
+        </div>
+    )
+}
+
 function RewardsManager() {
     const navigate = useNavigate()
     const [config, setConfig] = useState(() => getConfig())
     const [stampsRequired, setStampsRequired] = useState(config.rewards?.stampsRequired || 10)
     const [rewardDescription, setRewardDescription] = useState(config.rewards?.rewardDescription || '')
 
-    // Check auth
     useEffect(() => {
         const auth = getAuth()
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
@@ -44,97 +129,101 @@ function RewardsManager() {
     }
 
     return (
-        <div className="page" style={{ paddingBottom: 'var(--space-4)' }}>
-            {/* Header */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 'var(--space-4)'
-            }}>
-                <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
-                    ⭐ Recompensas
-                </h1>
-                <button
-                    className="btn btn-secondary"
-                    onClick={handleLogout}
-                    style={{ padding: 'var(--space-2) var(--space-3)' }}
-                >
-                    Salir
-                </button>
-            </div>
+        <div style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+            <OwnerHeader
+                title="Recompensas"
+                subtitle="Programa de fidelidad"
+                onLogout={handleLogout}
+            />
+            <OwnerTabs activeTab="rewards" />
 
-            {/* Owner Navigation */}
-            <div className="tabs" style={{ marginBottom: 'var(--space-4)' }}>
-                <Link to="/owner/menu" className="tab">Menú</Link>
-                <Link to="/owner/rewards" className="tab active">Recompensas</Link>
-                <Link to="/owner/settings" className="tab">Config</Link>
-                <Link to="/owner/analytics" className="tab">Stats</Link>
-            </div>
-
-            {/* Enable/Disable */}
-            <div className="admin-card" style={{ marginBottom: 'var(--space-4)' }}>
-                <div className="admin-row" style={{ paddingTop: 0, paddingBottom: 0 }}>
-                    <div>
-                        <p style={{ fontWeight: 'var(--font-weight-medium)' }}>Recompensas activas</p>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                            {config.features?.rewardsEnabled ? '✅ Activo' : '❌ Inactivo'}
-                        </p>
+            <div style={{ padding: 16 }}>
+                {/* Enable/Disable */}
+                <div style={{
+                    background: '#FFFFFF',
+                    borderRadius: 10,
+                    border: '1px solid #E2E8F0',
+                    padding: 16,
+                    marginBottom: 16
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <div>
+                            <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>Recompensas activas</p>
+                            <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>
+                                {config.features?.rewardsEnabled ? '✓ Activo' : '✗ Inactivo'}
+                            </p>
+                        </div>
+                        <label className="toggle">
+                            <input
+                                type="checkbox"
+                                checked={config.features?.rewardsEnabled}
+                                onChange={handleToggleRewards}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
                     </div>
-                    <label className="toggle">
+                </div>
+
+                {/* Configuration */}
+                <div style={{
+                    background: '#FFFFFF',
+                    borderRadius: 10,
+                    border: '1px solid #E2E8F0',
+                    padding: 16
+                }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16, marginTop: 0 }}>Configuración</h3>
+
+                    <div className="form-group">
+                        <label className="form-label">Sellos necesarios</label>
                         <input
-                            type="checkbox"
-                            checked={config.features?.rewardsEnabled}
-                            onChange={handleToggleRewards}
+                            type="number"
+                            className="form-input"
+                            value={stampsRequired}
+                            onChange={(e) => setStampsRequired(e.target.value)}
+                            min="1"
+                            max="20"
                         />
-                        <span className="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
+                    </div>
 
-            {/* Configuration */}
-            <div className="admin-card">
-                <h3 style={{ marginBottom: 'var(--space-4)' }}>Configuración</h3>
+                    <div className="form-group">
+                        <label className="form-label">Descripción del premio</label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={rewardDescription}
+                            onChange={(e) => setRewardDescription(e.target.value)}
+                            placeholder="Ej: ¡Café gratis!"
+                        />
+                    </div>
 
-                <div className="form-group">
-                    <label className="form-label">Sellos necesarios</label>
-                    <input
-                        type="number"
-                        className="form-input"
-                        value={stampsRequired}
-                        onChange={(e) => setStampsRequired(e.target.value)}
-                        min="1"
-                        max="20"
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label className="form-label">Descripción del premio</label>
-                    <input
-                        type="text"
-                        className="form-input"
-                        value={rewardDescription}
-                        onChange={(e) => setRewardDescription(e.target.value)}
-                        placeholder="Ej: ¡Café gratis!"
-                    />
+                    <button
+                        className="btn btn-primary btn-block"
+                        onClick={handleSave}
+                    >
+                        Guardar cambios
+                    </button>
                 </div>
 
-                <button
-                    className="btn btn-primary btn-block"
-                    onClick={handleSave}
-                >
-                    Guardar cambios
-                </button>
-            </div>
-
-            {/* Preview */}
-            <div className="card" style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>
-                    Vista previa
-                </p>
-                <p style={{ fontWeight: 'var(--font-weight-semibold)' }}>
-                    🎁 Juntá {stampsRequired} sellos = {rewardDescription || '¡Café gratis!'}
-                </p>
+                {/* Preview */}
+                <div style={{
+                    background: '#FFFFFF',
+                    borderRadius: 10,
+                    border: '1px solid #E2E8F0',
+                    padding: 16,
+                    marginTop: 16,
+                    textAlign: 'center'
+                }}>
+                    <p style={{ color: '#64748B', fontSize: 12, marginBottom: 8, marginTop: 0 }}>
+                        Vista previa
+                    </p>
+                    <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>
+                        Juntá {stampsRequired} sellos = {rewardDescription || '¡Café gratis!'}
+                    </p>
+                </div>
             </div>
         </div>
     )

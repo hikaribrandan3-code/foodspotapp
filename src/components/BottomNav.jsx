@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { getConfig } from '../config/appConfig.js'
 
 // Icons as SVG components for crisp rendering
 const HomeIcon = () => (
@@ -40,6 +42,37 @@ const CameraIcon = () => (
 
 function BottomNav() {
     const location = useLocation()
+    const [config, setConfig] = useState(() => getConfig())
+
+    // Poll for branding changes (same as App.jsx for consistency)
+    useEffect(() => {
+        const refreshAll = () => {
+            setConfig(getConfig())
+        }
+
+        const pollInterval = setInterval(() => {
+            const newConfig = getConfig()
+            setConfig(prev => {
+                // Only update if branding changed
+                if (JSON.stringify(prev.branding) !== JSON.stringify(newConfig.branding)) {
+                    return newConfig
+                }
+                return prev
+            })
+        }, 500)
+
+        // GLOBAL SYNC: Listen for manual sync from Super Admin/Owner Sync button
+        const handleFrontendSync = () => {
+            console.log('[NAV] Frontend sync triggered')
+            refreshAll()
+        }
+        window.addEventListener('frontendSync', handleFrontendSync)
+
+        return () => {
+            clearInterval(pollInterval)
+            window.removeEventListener('frontendSync', handleFrontendSync)
+        }
+    }, [])
 
     // Hide nav on certain pages
     const hiddenPaths = ['/staff', '/owner', '/admin', '/game', '/receipt', '/camera']
@@ -47,31 +80,54 @@ function BottomNav() {
 
     if (shouldHide) return null
 
+    // Direct branding values from config
+    const navBgColor = config.branding?.primaryColor || '#8B7355'
+    const navIconColor = config.branding?.iconColorMode === 'black' ? '#000000' : '#FFFFFF'
+
     return (
-        <nav className="bottom-nav">
-            <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+        <nav
+            className="bottom-nav"
+            style={{ backgroundColor: navBgColor }}
+        >
+            <NavLink
+                to="/"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                style={{ color: navIconColor }}
+            >
                 <HomeIcon />
                 <span className="nav-label">Home</span>
             </NavLink>
 
-            <NavLink to="/menu" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <NavLink
+                to="/menu"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                style={{ color: navIconColor }}
+            >
                 <MenuIcon />
                 <span className="nav-label">Menú</span>
             </NavLink>
 
             {/* CENTER CAMERA BUTTON - Always accessible */}
             <NavLink to="/camera" className="camera-button">
-                <div className="camera-inner">
-                    <CameraIcon />
+                <div className="camera-inner" style={{ backgroundColor: navBgColor }}>
+                    <CameraIcon style={{ color: navIconColor }} />
                 </div>
             </NavLink>
 
-            <NavLink to="/status" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <NavLink
+                to="/status"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                style={{ color: navIconColor }}
+            >
                 <StatusIcon />
                 <span className="nav-label">Estado</span>
             </NavLink>
 
-            <NavLink to="/info" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <NavLink
+                to="/info"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                style={{ color: navIconColor }}
+            >
                 <InfoIcon />
                 <span className="nav-label">Info</span>
             </NavLink>
@@ -80,5 +136,3 @@ function BottomNav() {
 }
 
 export default BottomNav
-
-

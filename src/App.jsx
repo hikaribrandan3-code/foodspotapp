@@ -211,6 +211,52 @@ function App() {
         })
     }, [])
 
+    // AUTO-SYNC: Listen for localStorage changes from other tabs/windows (Super Admin)
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            // Config key changed - refresh
+            if (e.key === 'grub_config' || e.key === null) {
+                refreshConfig()
+            }
+        }
+
+        // Listen for storage events (cross-tab sync)
+        window.addEventListener('storage', handleStorageChange)
+
+        // Also refresh on visibility change (same-tab sync when returning from admin)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                refreshConfig()
+            }
+        }
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        // Focus event for PWA standalone mode
+        const handleFocus = () => {
+            refreshConfig()
+        }
+        window.addEventListener('focus', handleFocus)
+
+        // GLOBAL SYNC: Listen for manual sync from Super Admin/Owner Sync button
+        const handleFrontendSync = () => {
+            console.log('[GLOBAL SYNC] Frontend sync triggered')
+            refreshConfig()
+        }
+        window.addEventListener('frontendSync', handleFrontendSync)
+
+        // Polling fallback for same-tab changes (PWA needs faster polling)
+        // 500ms ensures near-instant updates in PWA standalone mode
+        const pollInterval = setInterval(refreshConfig, 500)
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange)
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+            window.removeEventListener('focus', handleFocus)
+            window.removeEventListener('frontendSync', handleFrontendSync)
+            clearInterval(pollInterval)
+        }
+    }, [refreshConfig])
+
     // Maintenance mode overlay
     if (config.maintenanceMode) {
         return (
