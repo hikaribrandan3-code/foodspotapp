@@ -19,6 +19,7 @@ import {
 } from '../../utils/demoSession.js'
 import { getConfig, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
+import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 
 // Import existing branding components (REUSE)
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
@@ -544,6 +545,81 @@ function DemoBackend() {
                                     )
                                 })}
                             </div>
+                        </div>
+
+                        {/* Canvas Mode (Light/Dark) - REUSE EXISTING PATTERN */}
+                        <h3 style={labelStyle}>🎨 CANVAS (Background)</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Overall app background color</p>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                    onClick={() => handleConfigChange({ canvasMode: 'light' })}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 16px',
+                                        borderRadius: 10,
+                                        border: (demoConfig.canvasMode === 'light' || !demoConfig.canvasMode) ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                        background: '#FFFFFF',
+                                        color: '#1F2937',
+                                        fontSize: 14,
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    ☀️ Light
+                                </button>
+                                <button
+                                    onClick={() => handleConfigChange({ canvasMode: 'dark' })}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 16px',
+                                        borderRadius: 10,
+                                        border: demoConfig.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                        background: '#1F2937',
+                                        color: '#FFFFFF',
+                                        fontSize: 14,
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    🌙 Dark
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Divider Preset (Menu/Orders header image) - REUSE EXISTING */}
+                        <h3 style={labelStyle}>🖼️ HEADER IMAGE (Menu/Orders)</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Decorative image below business name on Menu and Orders pages</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                                {DIVIDER_PRESETS.slice(0, 9).map(preset => (
+                                    <div
+                                        key={preset.id}
+                                        onClick={() => handleConfigChange({ dividerPresetId: preset.id })}
+                                        style={{
+                                            cursor: 'pointer',
+                                            borderRadius: 8,
+                                            overflow: 'hidden',
+                                            border: demoConfig.dividerPresetId === preset.id ? '3px solid #22C55E' : '2px solid #E5E7EB',
+                                            opacity: demoConfig.dividerPresetId === preset.id ? 1 : 0.7
+                                        }}
+                                    >
+                                        <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
+                                    </div>
+                                ))}
+                            </div>
+                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
+                                Selected: {DIVIDER_PRESETS.find(p => p.id === demoConfig.dividerPresetId)?.name || 'None'}
+                            </p>
+                            {/* Option to clear/remove */}
+                            {demoConfig.dividerPresetId && (
+                                <button
+                                    onClick={() => handleConfigChange({ dividerPresetId: null })}
+                                    style={{ marginTop: 8, padding: '6px 12px', fontSize: 11, background: '#EF4444', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                                >
+                                    Remove Header Image
+                                </button>
+                            )}
                         </div>
                     </>
                 )}

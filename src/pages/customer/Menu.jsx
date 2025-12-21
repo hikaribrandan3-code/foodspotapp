@@ -7,7 +7,7 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
-import { isInDemoMode, getActiveDemoMenu } from '../../utils/demoSession.js'
+import { isInDemoMode, getActiveDemoMenu, getActiveDemoBranding } from '../../utils/demoSession.js'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
@@ -31,9 +31,12 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     // Demo mode detection - use state for reactive updates on frontendSync
     const inDemoMode = isInDemoMode()
     const [demoMenu, setDemoMenu] = useState(() => inDemoMode ? getActiveDemoMenu() : null)
+    const [demoBranding, setDemoBranding] = useState(() => inDemoMode ? getActiveDemoBranding() : null)
 
     // Use demo menu overlay if in demo mode and demo menu exists
     const effectiveMenu = (inDemoMode && demoMenu) ? demoMenu : menu
+    // Use demo dividerPresetId if in demo mode
+    const effectiveDividerPresetId = (inDemoMode && demoBranding?.dividerPresetId) || config.dividerPresetId
 
     // Owner mode detection (from localStorage)
     const isOwnerMode = getUserMode() === 'owner'
@@ -79,11 +82,12 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             setCart(getCurrentOrder())
         }, 2000)
 
-        // Listen for frontendSync to re-read demo menu
+        // Listen for frontendSync to re-read demo menu and branding
         const handleFrontendSync = () => {
             setMenu(getMenu())
             if (isInDemoMode()) {
                 setDemoMenu(getActiveDemoMenu())
+                setDemoBranding(getActiveDemoBranding())
             }
         }
         window.addEventListener('frontendSync', handleFrontendSync)
@@ -394,7 +398,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
 
             {/* Slim Identity Strip - Uses selected divider preset */}
             {(() => {
-                const dividerPreset = getDividerPreset(config.dividerPresetId)
+                const dividerPreset = getDividerPreset(effectiveDividerPresetId)
                 return (
                     <div style={{
                         height: 64,

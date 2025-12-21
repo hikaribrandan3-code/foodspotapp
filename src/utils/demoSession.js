@@ -220,6 +220,8 @@ export function applyDemoToFrontend() {
         businessInfo: demoConfig.businessInfo,
         poweredByColor: demoConfig.poweredByColor,
         featuredPhotos: demoConfig.featuredPhotos,
+        canvasMode: demoConfig.canvasMode,
+        dividerPresetId: demoConfig.dividerPresetId,
         appliedAt: Date.now()
     }))
 

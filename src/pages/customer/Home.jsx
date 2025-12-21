@@ -36,6 +36,7 @@ function Home() {
         ...config,
         heroIcons: demoBranding.heroIcons || config.heroIcons,
         featuredPhotos: demoBranding.featuredPhotos || config.featuredPhotos,
+        canvasMode: demoBranding.canvasMode || config.canvasMode,
         branding: {
             ...config.branding,
             primaryColor: demoBranding.primaryColor || config.branding?.primaryColor
