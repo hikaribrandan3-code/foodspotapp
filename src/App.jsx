@@ -272,20 +272,10 @@ function App() {
         const newConfig = getConfig()
         const newDemo = isDemoMode()
 
-        // Only update state if values actually changed
-        setConfig(prev => {
-            if (JSON.stringify(prev) !== JSON.stringify(newConfig)) {
-                return newConfig
-            }
-            return prev
-        })
-
-        setDemoMode(prev => {
-            if (prev !== newDemo) {
-                return newDemo
-            }
-            return prev
-        })
+        // Always update state to ensure CSS variable re-application
+        // The useEffect dependencies will handle actual DOM updates
+        setConfig(newConfig)
+        setDemoMode(newDemo)
     }, [])
 
     // AUTO-SYNC: Listen for localStorage changes from other tabs/windows (Super Admin)

@@ -243,6 +243,9 @@ export function applyDemoToFrontend() {
         featuredPhotos: demoConfig.featuredPhotos,
         canvasMode: demoConfig.canvasMode,
         dividerPresetId: demoConfig.dividerPresetId,
+        // CRITICAL: Include camera and infoPills for complete branding parity
+        camera: demoConfig.camera,
+        infoPills: demoConfig.infoPills,
         appliedAt: Date.now()
     }))
 
