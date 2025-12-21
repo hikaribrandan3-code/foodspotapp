@@ -427,6 +427,25 @@ function DemoBackend() {
                                 })}
                             </div>
                         </div>
+
+                        {/* Powered By Color - REUSE EXISTING PATTERN */}
+                        <h3 style={labelStyle}>✨ POWERED BY BUTTON</h3>
+                        <div style={cardStyle}>
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>"Powered by FoodSpot" Button Color</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <input
+                                    type="color"
+                                    value={demoConfig.poweredByColor || '#C4856A'}
+                                    onChange={(e) => handleConfigChange({ poweredByColor: e.target.value })}
+                                    style={{ width: 60, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                />
+                                <div>
+                                    <p style={{ fontSize: 14, fontWeight: 500, color: demoConfig.poweredByColor || '#C4856A', margin: 0 }}>@foodspotapp</p>
+                                    <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{demoConfig.poweredByColor?.toUpperCase() || '#C4856A'}</p>
+                                </div>
+                            </div>
+                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Color only — text and position cannot be changed</p>
+                        </div>
                     </>
                 )}
 
@@ -469,6 +488,39 @@ function DemoBackend() {
                                                     />
                                                     <span style={{ fontSize: 12, color: '#6B7280' }}>Out of stock</span>
                                                 </div>
+                                            </div>
+                                        </div>
+                                        {/* Pill Image - Menu Item Image */}
+                                        <div style={{ marginTop: 8 }}>
+                                            <label style={{ fontSize: 11, color: '#9CA3AF' }}>Item Image (Pill)</label>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                                                {item.image ? (
+                                                    <>
+                                                        <img src={item.image} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
+                                                        <button
+                                                            onClick={() => handleMenuItemEdit(category.id, item.id, { image: null })}
+                                                            style={{ padding: '4px 8px', fontSize: 11, background: '#EF4444', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0]
+                                                            if (file) {
+                                                                const reader = new FileReader()
+                                                                reader.onload = (event) => {
+                                                                    handleMenuItemEdit(category.id, item.id, { image: event.target?.result })
+                                                                }
+                                                                reader.readAsDataURL(file)
+                                                            }
+                                                        }}
+                                                        style={{ fontSize: 11 }}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     </div>
