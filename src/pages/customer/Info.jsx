@@ -78,7 +78,7 @@ function Info() {
         mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3' },
         rappi: { bgColor: '#FF5A00', textColor: 'white' },
         pedidosYa: { bgColor: '#E31837', textColor: 'white' },
-        adminAccess: { bgColor: '#FFFFFF', textColor: '#9CA3AF', borderColor: '#E5E7EB' },
+        adminAccess: { bgColor: 'var(--surface-alt-bg)', textColor: 'var(--canvas-text)', borderColor: 'var(--border-subtle)' },
         demo: { bgColor: '#84CC16', textColor: 'white' },
         custom: { bgColor: '#6366F1', textColor: 'white' }
     }
@@ -91,12 +91,15 @@ function Info() {
         }
     }
 
+    // Theme-aware colors (use CSS tokens that switch for light/dark mode)
+    const primaryColor = 'var(--icon-primary)'
+    const textMuted = 'var(--icon-muted)'
+
     return (
-        <div className="page" style={{
+        <div className="page info-root" style={{
             padding: '0 24px',
             paddingTop: 24,
             paddingBottom: 90,
-            backgroundColor: '#F9F7F5',
             minHeight: '100vh'
         }}>
             <HeaderClamp />
@@ -274,11 +277,11 @@ function Info() {
 
             {hasBusinessInfo && (
                 <div style={{
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: 'var(--surface-bg)',
                     borderRadius: 16,
                     padding: 20,
                     marginBottom: 20,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                    boxShadow: 'var(--shadow-card)'
                 }}>
                     {infoDisplay.showAddress && businessInfo.address && (
                         <div style={{
@@ -287,7 +290,7 @@ function Info() {
                             gap: 12,
                             paddingBottom: 16,
                             marginBottom: 16,
-                            borderBottom: '1px solid #F3F4F6'
+                            borderBottom: '1px solid var(--border-subtle)'
                         }}>
                             <div style={{ color: textMuted, marginTop: 2 }}>
                                 <LocationIcon />
@@ -296,12 +299,12 @@ function Info() {
                                 <p style={{
                                     fontWeight: 600,
                                     fontSize: 15,
-                                    color: '#374151',
+                                    color: 'var(--canvas-text)',
                                     marginBottom: 4
                                 }}>
                                     Dirección:
                                 </p>
-                                <p style={{ fontSize: 14, color: '#6B7280', margin: 0 }}>
+                                <p style={{ fontSize: 14, color: 'var(--canvas-text-muted)', margin: 0 }}>
                                     {businessInfo.address}
                                 </p>
                             </div>
@@ -315,7 +318,7 @@ function Info() {
                             gap: 12,
                             paddingBottom: 16,
                             marginBottom: 16,
-                            borderBottom: '1px solid #F3F4F6'
+                            borderBottom: '1px solid var(--border-subtle)'
                         }}>
                             <div style={{ color: textMuted, marginTop: 2 }}>
                                 <ClockIcon />
@@ -324,15 +327,15 @@ function Info() {
                                 <p style={{
                                     fontWeight: 600,
                                     fontSize: 15,
-                                    color: '#374151',
+                                    color: 'var(--canvas-text)',
                                     marginBottom: 4
                                 }}>
                                     Horarios:
                                 </p>
-                                <p style={{ fontSize: 14, color: '#6B7280', margin: 0, marginBottom: 2 }}>
+                                <p style={{ fontSize: 14, color: 'var(--canvas-text-muted)', margin: 0, marginBottom: 2 }}>
                                     Lun-Sáb 9:00-22:00
                                 </p>
-                                <p style={{ fontSize: 14, color: '#6B7280', margin: 0 }}>
+                                <p style={{ fontSize: 14, color: 'var(--canvas-text-muted)', margin: 0 }}>
                                     Dom 10:00-20:00
                                 </p>
                             </div>
@@ -371,7 +374,7 @@ function Info() {
                 <p style={{
                     fontSize: 20,
                     fontWeight: 600,
-                    color: '#4A4036',
+                    color: 'var(--canvas-text)',
                     margin: 0,
                     marginBottom: 4
                 }}>
