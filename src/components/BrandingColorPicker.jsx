@@ -132,13 +132,16 @@ export default function BrandingColorPicker({
                 </button>
             </div>
 
-            {/* Shared Picker Modal */}
+            {/* Shared Picker Modal - UPGRADED: Live preview via onLiveChange */}
             {showPicker && (
                 <ColorPickerModal
                     title="Selector de color"
                     initialColor={primaryColor}
-                    onApply={handleApply}
-                    onCancel={handleCancel}
+                    onLiveChange={onColorChange}  // Live preview: updates as user picks
+                    onApply={(color) => {
+                        onColorChange?.(color)    // Final confirmation
+                        setShowPicker(false)
+                    }}
                 />
             )}
 

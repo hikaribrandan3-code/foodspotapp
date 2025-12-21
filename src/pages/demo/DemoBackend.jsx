@@ -1646,6 +1646,190 @@ function DemoBackend() {
                             <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Color only — text and position cannot be changed</p>
                         </div>
 
+                        {/* INFO PILL COLORS — Demo sandbox for pill customization */}
+                        <h3 style={labelStyle}>🔘 INFO PILL COLORS</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Customize button colors on the Info page. Tap a pill to edit.</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                {[
+                                    { id: 'whatsapp', label: 'WhatsApp', icon: '💬' },
+                                    { id: 'mercadoPago', label: 'Mercado Pago', icon: '💳' },
+                                    { id: 'rappi', label: 'Rappi', icon: '🛵' },
+                                    { id: 'pedidosYa', label: 'PedidosYa', icon: '🍕' },
+                                    { id: 'demo', label: 'Demo', icon: '🎮' },
+                                    { id: 'adminAccess', label: 'Admin', icon: '🔒' },
+                                ].map(pill => {
+                                    const pillConfig = demoConfig.infoPills?.[pill.id] || {}
+                                    const bgColor = pillConfig.bgColor || (pill.id === 'whatsapp' ? '#C4856A' : pill.id === 'mercadoPago' ? '#FFE600' : pill.id === 'rappi' ? '#FF5A00' : pill.id === 'pedidosYa' ? '#E31837' : pill.id === 'demo' ? '#84CC16' : '#FFFFFF')
+                                    const textColor = pillConfig.textColor || (pill.id === 'mercadoPago' ? '#009EE3' : pill.id === 'adminAccess' ? '#9CA3AF' : '#FFFFFF')
+                                    return (
+                                        <button
+                                            key={pill.id}
+                                            onClick={() => {
+                                                // Toggle simple color picker for this pill
+                                                const input = document.getElementById(`pill-color-${pill.id}`)
+                                                if (input) input.click()
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: 6,
+                                                padding: '10px 12px',
+                                                backgroundColor: bgColor,
+                                                color: textColor,
+                                                borderRadius: 20,
+                                                border: pill.id === 'adminAccess' ? '1px solid #E5E7EB' : 'none',
+                                                fontSize: 12,
+                                                fontWeight: 500,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <span>{pill.icon}</span>
+                                            <span>{pill.label}</span>
+                                            {/* Hidden color input */}
+                                            <input
+                                                id={`pill-color-${pill.id}`}
+                                                type="color"
+                                                value={bgColor}
+                                                onChange={(e) => handleConfigChange({
+                                                    infoPills: {
+                                                        ...demoConfig.infoPills,
+                                                        [pill.id]: { ...pillConfig, bgColor: e.target.value }
+                                                    }
+                                                })}
+                                                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                                            />
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Tap any pill to change its background color</p>
+                        </div>
+
+                        {/* CAMERA BRANDING — Icon and color customization */}
+                        <h3 style={labelStyle}>📷 CAMERA BUTTON</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Customize the center camera button in the navigation bar</p>
+
+                            {/* Enable toggle */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                <label style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>Custom camera styling</label>
+                                <button
+                                    onClick={() => handleConfigChange({
+                                        camera: { ...demoConfig.camera, enabled: !demoConfig.camera?.enabled }
+                                    })}
+                                    style={{
+                                        padding: '6px 12px',
+                                        borderRadius: 16,
+                                        border: 'none',
+                                        backgroundColor: demoConfig.camera?.enabled ? '#22C55E' : '#E5E7EB',
+                                        color: demoConfig.camera?.enabled ? 'white' : '#6B7280',
+                                        fontSize: 12,
+                                        fontWeight: 500,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {demoConfig.camera?.enabled ? 'ON' : 'OFF'}
+                                </button>
+                            </div>
+
+                            {/* Icon selector (only when enabled) */}
+                            {demoConfig.camera?.enabled && (
+                                <>
+                                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Camera Icon</label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+                                        {[
+                                            { id: 'default', label: 'Default' },
+                                            { id: 'camera', label: 'Camera' },
+                                            { id: 'aperture', label: 'Aperture' },
+                                            { id: 'webcam', label: 'Webcam' }
+                                        ].map(icon => {
+                                            const isSelected = (demoConfig.camera?.icon || 'default') === icon.id
+                                            return (
+                                                <button
+                                                    key={icon.id}
+                                                    onClick={() => handleConfigChange({
+                                                        camera: { ...demoConfig.camera, icon: icon.id }
+                                                    })}
+                                                    style={{
+                                                        padding: '12px 8px',
+                                                        borderRadius: 12,
+                                                        border: isSelected ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                        backgroundColor: isSelected ? '#F0FDF4' : '#FFFFFF',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        gap: 4
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: 20 }}>
+                                                        {icon.id === 'default' ? '📷' : icon.id === 'camera' ? '📸' : icon.id === 'aperture' ? '🎯' : '🖥️'}
+                                                    </span>
+                                                    <span style={{ fontSize: 10, color: '#6B7280' }}>{icon.label}</span>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+
+                                    {/* Color picker */}
+                                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Camera Button Color</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                                        <input
+                                            type="color"
+                                            value={demoConfig.camera?.color || '#8B7355'}
+                                            onChange={(e) => handleConfigChange({
+                                                camera: { ...demoConfig.camera, color: e.target.value }
+                                            })}
+                                            style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                        />
+                                        <div style={{
+                                            width: 48, height: 48, borderRadius: '50%',
+                                            backgroundColor: demoConfig.camera?.color || '#8B7355',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                        }}>
+                                            <span style={{ fontSize: 20 }}>📷</span>
+                                        </div>
+                                        <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'monospace' }}>
+                                            {(demoConfig.camera?.color || '#8B7355').toUpperCase()}
+                                        </span>
+                                    </div>
+
+                                    {/* Text color toggle */}
+                                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Icon Color</label>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        {['auto', 'white', 'black'].map(mode => {
+                                            const isSelected = (demoConfig.camera?.textColor || 'auto') === mode
+                                            return (
+                                                <button
+                                                    key={mode}
+                                                    onClick={() => handleConfigChange({
+                                                        camera: { ...demoConfig.camera, textColor: mode }
+                                                    })}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '8px 12px',
+                                                        borderRadius: 8,
+                                                        border: isSelected ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                        backgroundColor: mode === 'black' ? '#1F2937' : mode === 'white' ? '#FFFFFF' : '#F3F4F6',
+                                                        color: mode === 'black' ? '#FFFFFF' : mode === 'white' ? '#1F2937' : '#6B7280',
+                                                        fontSize: 12,
+                                                        fontWeight: 500,
+                                                        cursor: 'pointer',
+                                                        textTransform: 'capitalize'
+                                                    }}
+                                                >
+                                                    {mode}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
                         {/* Featured Food Photos - 4 SLOTS */}
                         <h3 style={labelStyle}>📸 FEATURED PHOTOS (Home)</h3>
                         <div style={cardStyle}>
@@ -1722,10 +1906,10 @@ function DemoBackend() {
                             </div>
                         </div>
 
-                        {/* Canvas Mode (Light/Dark) - REUSE EXISTING PATTERN */}
-                        <h3 style={labelStyle}>🎨 CANVAS (Background)</h3>
+                        {/* Modo Oscuro - Light/Dark Toggle */}
+                        <h3 style={labelStyle}>🌙 MODO OSCURO</h3>
                         <div style={cardStyle}>
-                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Overall app background color</p>
+                            <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Tema de la aplicación</p>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <button
                                     onClick={() => handleConfigChange({ canvasMode: 'light' })}
@@ -1741,7 +1925,7 @@ function DemoBackend() {
                                         cursor: 'pointer'
                                     }}
                                 >
-                                    ☀️ Light
+                                    ☀️ Claro
                                 </button>
                                 <button
                                     onClick={() => handleConfigChange({ canvasMode: 'dark' })}
@@ -1757,7 +1941,7 @@ function DemoBackend() {
                                         cursor: 'pointer'
                                     }}
                                 >
-                                    🌙 Dark
+                                    🌙 Oscuro
                                 </button>
                             </div>
                         </div>

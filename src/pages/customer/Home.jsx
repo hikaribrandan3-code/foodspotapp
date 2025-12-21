@@ -103,7 +103,12 @@ function Home() {
     }, [location.pathname])
 
     // Polling for config changes (hero colors, etc.)
+    // SNAPBACK FIX: Pause polling during drag/edit to prevent cascade re-renders
     useEffect(() => {
+        // SNAPBACK FIX: Skip polling if in edit mode or actively dragging
+        // This prevents React reconciliation issues during item manipulation
+        if (isEditMode || dragState) return
+
         const refreshAll = () => {
             const newConfig = getConfig()
             setConfig(newConfig)
@@ -121,7 +126,10 @@ function Home() {
         }, 500)
 
         // GLOBAL SYNC: Listen for manual sync from Super Admin/Owner Sync button
+        // SNAPBACK FIX: Also skip during edit/drag
         const handleFrontendSync = () => {
+            // SNAPBACK FIX: Don't re-render during edits
+            if (isEditMode || dragState) return
             console.log('[HOME] Frontend sync triggered')
             refreshAll()
             // Also re-read demo branding if in demo mode
@@ -135,7 +143,7 @@ function Home() {
             clearInterval(pollInterval)
             window.removeEventListener('frontendSync', handleFrontendSync)
         }
-    }, [])
+    }, [isEditMode, dragState]) // SNAPBACK FIX: Re-run effect when edit/drag state changes
 
     // Safe navigation wrapper - only navigate if not in edit/drag mode
     const safeNavigate = useCallback((path) => {

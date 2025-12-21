@@ -683,9 +683,9 @@ function Settings() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Canvas (Fondo)</label>
+                            <label className="form-label">🌙 Modo Oscuro</label>
                             <p style={{ fontSize: 11, color: '#64748B', marginBottom: 12 }}>
-                                Color de fondo general de la app
+                                Tema de la aplicación
                             </p>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <button
@@ -705,7 +705,7 @@ function Settings() {
                                         cursor: 'pointer'
                                     }}
                                 >
-                                    Claro
+                                    ☀️ Claro
                                 </button>
                                 <button
                                     onClick={() => {
@@ -724,7 +724,7 @@ function Settings() {
                                         cursor: 'pointer'
                                     }}
                                 >
-                                    Oscuro
+                                    🌙 Oscuro
                                 </button>
                             </div>
                         </div>

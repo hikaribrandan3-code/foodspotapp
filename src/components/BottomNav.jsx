@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { getConfig } from '../config/appConfig.js'
+import { getCameraIcon } from './CameraIcons.jsx'
 
 // Icons as SVG components for crisp rendering
 const HomeIcon = () => (
@@ -33,12 +34,7 @@ const InfoIcon = () => (
     </svg>
 )
 
-const CameraIcon = () => (
-    <svg className="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-        <circle cx="12" cy="13" r="4"></circle>
-    </svg>
-)
+// CAMERA ICON: Removed - now imported from CameraIcons.jsx
 
 function BottomNav() {
     const location = useLocation()
@@ -84,6 +80,27 @@ function BottomNav() {
     const navBgColor = config.branding?.primaryColor || '#8B7355'
     const navIconColor = config.branding?.iconColorMode === 'black' ? '#000000' : '#FFFFFF'
 
+    // CAMERA BRANDING: Use camera-specific styling when enabled
+    const cameraConfig = config.camera || {}
+    const cameraEnabled = cameraConfig.enabled === true
+    const cameraBgColor = cameraEnabled ? (cameraConfig.color || navBgColor) : navBgColor
+    const cameraIconColor = cameraEnabled
+        ? (cameraConfig.textColor === 'auto'
+            ? (isLightColor(cameraBgColor) ? '#000000' : '#FFFFFF')
+            : cameraConfig.textColor === 'black' ? '#000000' : '#FFFFFF')
+        : navIconColor
+    const CameraIconComponent = getCameraIcon(cameraConfig.icon || 'default')
+
+    // Helper: Determine if color is light (for auto contrast)
+    function isLightColor(hex) {
+        const c = hex.replace('#', '')
+        const r = parseInt(c.substr(0, 2), 16)
+        const g = parseInt(c.substr(2, 2), 16)
+        const b = parseInt(c.substr(4, 2), 16)
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        return luminance > 0.5
+    }
+
     return (
         <nav
             className="bottom-nav"
@@ -107,10 +124,10 @@ function BottomNav() {
                 <span className="nav-label">Menú</span>
             </NavLink>
 
-            {/* CENTER CAMERA BUTTON - Always accessible */}
+            {/* CENTER CAMERA BUTTON - Customizable icon and color */}
             <NavLink to="/camera" className="camera-button">
-                <div className="camera-inner" style={{ backgroundColor: navBgColor }}>
-                    <CameraIcon style={{ color: navIconColor }} />
+                <div className="camera-inner" style={{ backgroundColor: cameraBgColor }}>
+                    <CameraIconComponent style={{ color: cameraIconColor }} />
                 </div>
             </NavLink>
 

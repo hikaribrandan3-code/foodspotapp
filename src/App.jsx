@@ -135,39 +135,106 @@ function App() {
         const canvasMode = config.canvasMode || 'light'
         const headerMode = config.headerMode || 'auto'
 
-        // PATCH 3.5: Binary theme (pure white/black)
-        const CANVAS_LIGHT = '#FFFFFF'
-        const CANVAS_DARK = '#000000'
+        // ============================================
+        // DARK MODE SURFACE TOKENS (LOCKED)
+        // ============================================
+        // High-end dark mode uses layered surfaces, not pure black
+        // Contrast comes from depth layering, not borders
+        const DARK_TOKENS = {
+            root: '#0E0E0F',           // App canvas background
+            surface: '#161618',        // Cards, tiles
+            surfaceRaised: '#1C1C1F',  // Modals, sheets, bottom drawers
+            surfaceAlt: '#202024'      // Secondary groupings
+        }
+
+        // Light mode stays simple (white everywhere)
+        const LIGHT_TOKENS = {
+            root: '#FFFFFF',
+            surface: '#FFFFFF',
+            surfaceRaised: '#FFFFFF',
+            surfaceAlt: '#F9FAFB'
+        }
 
         // Canvas text colors (pure contrast)
         const TEXT_LIGHT_PRIMARY = '#000000'
         const TEXT_LIGHT_MUTED = '#666666'
         const TEXT_DARK_PRIMARY = '#FFFFFF'
-        const TEXT_DARK_MUTED = '#999999'
+        const TEXT_DARK_MUTED = '#A0A0A5'
 
-        // Header = same as canvas (no separation)
+        // Header colors
         const HEADER_LIGHT_BG = '#FFFFFF'
         const HEADER_LIGHT_TEXT = '#000000'
-        const HEADER_DARK_BG = '#000000'
+        const HEADER_DARK_BG = DARK_TOKENS.root  // Match root, not pure black
         const HEADER_DARK_TEXT = '#FFFFFF'
 
-        // Set canvas background
-        const canvasBg = canvasMode === 'dark' ? CANVAS_DARK : CANVAS_LIGHT
-        root.style.setProperty('--canvas-bg', canvasBg)
+        // Select token set based on mode
+        const tokens = canvasMode === 'dark' ? DARK_TOKENS : LIGHT_TOKENS
 
-        // Set canvas text colors and surfaces
+        // Apply surface tokens as CSS variables
+        root.style.setProperty('--canvas-bg', tokens.root)
+        root.style.setProperty('--surface-bg', tokens.surface)
+        root.style.setProperty('--surface-raised-bg', tokens.surfaceRaised)
+        root.style.setProperty('--surface-alt-bg', tokens.surfaceAlt)
+
+        // Set canvas text colors and legacy surface variables
         if (canvasMode === 'dark') {
             root.style.setProperty('--canvas-text', TEXT_DARK_PRIMARY)
             root.style.setProperty('--canvas-text-muted', TEXT_DARK_MUTED)
-            // Surface = same as canvas for binary mode
-            root.style.setProperty('--canvas-surface', '#000000')
+            // Legacy surface variables (for backwards compatibility)
+            root.style.setProperty('--canvas-surface', tokens.surface)
             root.style.setProperty('--canvas-surface-text', '#FFFFFF')
+
+            // ============================================
+            // ELEVATION SHADOWS (DARK MODE ONLY)
+            // ============================================
+            // Shadows replace borders in dark mode
+            // Cards feel "heavier" than background via depth
+            root.style.setProperty('--shadow-card', '0px 6px 18px rgba(0,0,0,0.45)')
+            root.style.setProperty('--shadow-raised', '0px 12px 32px rgba(0,0,0,0.6)')
+            root.style.setProperty('--shadow-none', 'none')
+
+            // Border tokens (subtle, optional)
+            root.style.setProperty('--border-subtle', 'rgba(255,255,255,0.04)')
+            root.style.setProperty('--border-visible', 'rgba(255,255,255,0.06)')
+
+            // Radius tokens (consistent across UI)
+            root.style.setProperty('--radius-sm', '12px')
+            root.style.setProperty('--radius-card', '16px')
+            root.style.setProperty('--radius-modal', '20px')
+
+            // ============================================
+            // ICON COLOR TOKENS (DARK MODE ONLY)
+            // ============================================
+            // Neutral greys for non-branded icons
+            // Ensures visual calm and hierarchy clarity
+            root.style.setProperty('--icon-primary', '#E5E7EB')    // Primary icons (nav)
+            root.style.setProperty('--icon-secondary', '#9CA3AF')  // Secondary icons
+            root.style.setProperty('--icon-muted', '#6B7280')      // Muted/utility icons
         } else {
             root.style.setProperty('--canvas-text', TEXT_LIGHT_PRIMARY)
             root.style.setProperty('--canvas-text-muted', TEXT_LIGHT_MUTED)
-            // Surface = same as canvas for binary mode
+            // Legacy surface variables
             root.style.setProperty('--canvas-surface', '#FFFFFF')
             root.style.setProperty('--canvas-surface-text', '#000000')
+
+            // Light mode: softer shadows
+            root.style.setProperty('--shadow-card', '0px 2px 8px rgba(0,0,0,0.08)')
+            root.style.setProperty('--shadow-raised', '0px 8px 24px rgba(0,0,0,0.12)')
+            root.style.setProperty('--shadow-none', 'none')
+
+            // Border tokens (more visible in light mode)
+            root.style.setProperty('--border-subtle', 'rgba(0,0,0,0.06)')
+            root.style.setProperty('--border-visible', 'rgba(0,0,0,0.10)')
+
+            // Radius tokens (same in both modes)
+            root.style.setProperty('--radius-sm', '12px')
+            root.style.setProperty('--radius-card', '16px')
+            root.style.setProperty('--radius-modal', '20px')
+
+            // Icon color tokens (light mode - darker for contrast)
+            root.style.setProperty('--icon-primary', '#374151')    // Primary icons (nav)
+            root.style.setProperty('--icon-secondary', '#6B7280')  // Secondary icons
+            root.style.setProperty('--icon-muted', '#9CA3AF')      // Muted/utility icons
         }
 
         // Determine header colors
@@ -191,6 +258,13 @@ function App() {
 
         root.style.setProperty('--header-bg', headerBg)
         root.style.setProperty('--header-text', headerText)
+
+        // ============================================
+        // DATA-THEME ATTRIBUTE (STEP 4)
+        // ============================================
+        // Enables CSS selectors like [data-theme="dark"]
+        // Used for header normalization and hero sections
+        root.setAttribute('data-theme', canvasMode)
     }, [config.canvasMode, config.headerMode])
 
     // Manual config refresh - call from admin/owner actions when needed

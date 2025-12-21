@@ -132,6 +132,23 @@ export function getDemoConfig() {
             address: '',
             phone: '',
             whatsapp: ''
+        },
+        // INFO PILL COLORS — Demo sandbox can customize these
+        infoPills: {
+            whatsapp: { bgColor: '#C4856A', textColor: 'white' },
+            mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3' },
+            rappi: { bgColor: '#FF5A00', textColor: 'white' },
+            pedidosYa: { bgColor: '#E31837', textColor: 'white' },
+            adminAccess: { bgColor: '#FFFFFF', textColor: '#9CA3AF', borderColor: '#E5E7EB' },
+            demo: { bgColor: '#84CC16', textColor: 'white' },
+            custom: { enabled: false, label: '', url: '', bgColor: '#6366F1', textColor: 'white' }
+        },
+        // CAMERA BRANDING — Demo sandbox can customize camera button
+        camera: {
+            enabled: false,
+            icon: 'default',
+            color: '#8B7355',
+            textColor: 'auto'
         }
     }
 }

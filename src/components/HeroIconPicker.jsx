@@ -48,16 +48,16 @@ export default function HeroIconPicker({
                 <span style={{ fontSize: 14, fontWeight: 500, marginTop: 4 }}>{label}</span>
             </button>
 
-            {/* Color Modal (Same as BrandingColorPicker) */}
+            {/* Color Modal - UPGRADED: Live preview via onLiveChange */}
             {showPicker && (
                 <ColorPickerModal
                     title={`Color: ${label}`}
                     initialColor={displayColor}
+                    onLiveChange={onColorChange}  // Live preview: updates as user picks
                     onApply={(newColor) => {
-                        onColorChange?.(newColor)
+                        onColorChange?.(newColor)  // Final confirmation
                         setShowPicker(false)
                     }}
-                    onCancel={() => setShowPicker(false)}
                 />
             )}
 

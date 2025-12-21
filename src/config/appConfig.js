@@ -170,6 +170,34 @@ export const defaultConfig = {
         mercadoPagoAlias: '', // If set, shows "Pagar con Mercado Pago" button in Info
     },
 
+    // ============================================
+    // INFO PILL BRANDING (Per-pill colors)
+    // ============================================
+    // Each pill can have custom bg/text colors
+    // textColor: 'white' | 'black' | 'auto'
+    infoPills: {
+        whatsapp: { bgColor: '#C4856A', textColor: 'white' },
+        mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3' },
+        rappi: { bgColor: '#FF5A00', textColor: 'white' },
+        pedidosYa: { bgColor: '#E31837', textColor: 'white' },
+        adminAccess: { bgColor: '#FFFFFF', textColor: '#9CA3AF', borderColor: '#E5E7EB' },
+        demo: { bgColor: '#84CC16', textColor: 'white' },
+        // Extra custom pill (limit: 1)
+        custom: { enabled: false, label: '', url: '', bgColor: '#6366F1', textColor: 'white' }
+    },
+
+    // ============================================
+    // CAMERA BRANDING
+    // ============================================
+    // Customize camera button icon and color in nav bar
+    // icon: 'default' | 'camera' | 'aperture' | 'webcam'
+    camera: {
+        enabled: false,        // If false, inherit nav bar styling
+        icon: 'default',       // Which camera icon to display
+        color: '#8B7355',      // Camera button background color
+        textColor: 'auto'      // 'auto' | 'white' | 'black'
+    },
+
     // Featured Photos (EXACTLY 4 slots - Owner/Super can upload custom images)
     featuredPhotos: [
         { slot: 1, image: null, menuItemId: 'flat-white' },
@@ -251,6 +279,19 @@ export function getConfig() {
                 businessInfo: { ...defaultConfig.businessInfo, ...(parsed.businessInfo || {}) },
                 delivery: { ...defaultConfig.delivery, ...(parsed.delivery || {}) },
                 homeConfig: { ...defaultConfig.homeConfig, ...(parsed.homeConfig || {}) },
+                infoDisplay: { ...defaultConfig.infoDisplay, ...(parsed.infoDisplay || {}) },
+                infoPills: {
+                    ...defaultConfig.infoPills,
+                    ...(parsed.infoPills || {}),
+                    whatsapp: { ...defaultConfig.infoPills.whatsapp, ...(parsed.infoPills?.whatsapp || {}) },
+                    mercadoPago: { ...defaultConfig.infoPills.mercadoPago, ...(parsed.infoPills?.mercadoPago || {}) },
+                    rappi: { ...defaultConfig.infoPills.rappi, ...(parsed.infoPills?.rappi || {}) },
+                    pedidosYa: { ...defaultConfig.infoPills.pedidosYa, ...(parsed.infoPills?.pedidosYa || {}) },
+                    adminAccess: { ...defaultConfig.infoPills.adminAccess, ...(parsed.infoPills?.adminAccess || {}) },
+                    demo: { ...defaultConfig.infoPills.demo, ...(parsed.infoPills?.demo || {}) },
+                    custom: { ...defaultConfig.infoPills.custom, ...(parsed.infoPills?.custom || {}) },
+                },
+                camera: { ...defaultConfig.camera, ...(parsed.camera || {}) },
             };
         }
         return defaultConfig;
@@ -276,7 +317,7 @@ export function updateConfig(updates) {
     const current = getConfig();
 
     // Deep merge for known nested objects
-    const deepMergeKeys = ['heroIcons', 'branding', 'colors', 'features', 'businessInfo', 'infoDisplay', 'externalOrdering', 'payments', 'delivery', 'homeConfig', 'headerCover', 'headerBranding', 'rewards', 'openingHours'];
+    const deepMergeKeys = ['heroIcons', 'branding', 'colors', 'features', 'businessInfo', 'infoDisplay', 'externalOrdering', 'payments', 'delivery', 'homeConfig', 'headerCover', 'headerBranding', 'rewards', 'openingHours', 'infoPills', 'camera'];
 
     const merged = { ...current };
 

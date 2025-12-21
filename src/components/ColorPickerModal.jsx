@@ -1,7 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { HERO_ICON_DARK } from '../config/appConfig.js'
 
-// Preset colors (Shared)
+// VIBRANT PRESETS — For sandbox play and demo experimentation
+// Bright, fun colors that encourage creativity
+const VIBRANT_PRESETS = [
+    { value: '#FF6B6B', label: 'Coral' },
+    { value: '#FF8E53', label: 'Mango' },
+    { value: '#FFC93C', label: 'Sunshine' },
+    { value: '#6BCB77', label: 'Mint' },
+    { value: '#4D96FF', label: 'Sky' },
+    { value: '#8B5CF6', label: 'Violet' },
+    { value: '#EC4899', label: 'Fuchsia' },
+    { value: '#14B8A6', label: 'Teal' },
+]
+
+// SUBDUED PRESETS — For professional brand colors
 const COLOR_PRESETS = [
     { value: '#8B7355', label: 'Café' },
     { value: '#2D3436', label: 'Carbón' },
@@ -50,34 +62,55 @@ function hexToHsv(hex) {
     return { h, s, v }
 }
 
+/**
+ * ColorPickerModal - Bottom Sheet with Live Preview
+ * 
+ * UX UPGRADE:
+ * - Bottom sheet (slides up, top 60% visible for context)
+ * - Live preview (onLiveChange fires on every color change)
+ * - Eyedropper support (Chrome/Edge only)
+ * - Single "Done" button (no Apply/Cancel)
+ */
 export default function ColorPickerModal({
     initialColor,
-    onApply,
-    onCancel,
+    onApply,          // Called when user closes the sheet (Done or backdrop tap)
+    onLiveChange,     // NEW: Called on every color change for instant preview
+    onCancel,         // Deprecated but kept for backwards compatibility
     title = 'Selector de color'
 }) {
     const [tempColor, setTempColor] = useState(initialColor)
     const [hsv, setHsv] = useState(() => hexToHsv(initialColor))
     const [hexInput, setHexInput] = useState(initialColor)
+    const [isVisible, setIsVisible] = useState(false) // For slide-up animation
 
     const spectrumRef = useRef(null)
     const hueRef = useRef(null)
     const isDraggingSpectrum = useRef(false)
     const isDraggingHue = useRef(false)
 
-    // Sync state when initialColor changes (if modal re-opens with new color)
+    // Eyedropper API detection
+    const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window
+
+    // Slide-in animation on mount
+    useEffect(() => {
+        requestAnimationFrame(() => setIsVisible(true))
+    }, [])
+
+    // Sync state when initialColor changes
     useEffect(() => {
         setTempColor(initialColor)
         setHexInput(initialColor)
         setHsv(hexToHsv(initialColor))
     }, [initialColor])
 
-    // Update temp color when HSV changes
+    // Update temp color when HSV changes + trigger live preview
     useEffect(() => {
         const newColor = hsvToHex(hsv.h, hsv.s, hsv.v)
         setTempColor(newColor)
         setHexInput(newColor)
-    }, [hsv])
+        // LIVE PREVIEW: Notify parent immediately
+        onLiveChange?.(newColor)
+    }, [hsv, onLiveChange])
 
     // Draw spectrum canvas
     const drawSpectrum = useCallback(() => {
@@ -166,11 +199,36 @@ export default function ColorPickerModal({
         }
     }
 
-    const applyColor = () => {
-        onApply(tempColor)
+    // Eyedropper handler
+    const handleEyeDropper = async () => {
+        if (!hasEyeDropper) return
+        try {
+            const eyeDropper = new window.EyeDropper()
+            const result = await eyeDropper.open()
+            const color = result.sRGBHex.toUpperCase()
+            setHsv(hexToHsv(color))
+        } catch {
+            // User cancelled or error - ignore
+        }
     }
 
-    // Event handlers
+    // Close handler (Done or backdrop tap)
+    const handleClose = () => {
+        setIsVisible(false)
+        // Delay to allow slide-out animation
+        setTimeout(() => {
+            onApply?.(tempColor)
+        }, 150)
+    }
+
+    // Backdrop tap = close with current color
+    const handleBackdropClick = (e) => {
+        if (e.target === e.currentTarget) {
+            handleClose()
+        }
+    }
+
+    // Event handlers for dragging
     const onSpectrumDown = (e) => { isDraggingSpectrum.current = true; handleSpectrumInteraction(e) }
     const onSpectrumMove = (e) => { if (isDraggingSpectrum.current) handleSpectrumInteraction(e) }
     const onSpectrumUp = () => { isDraggingSpectrum.current = false }
@@ -193,36 +251,134 @@ export default function ColorPickerModal({
     }, [])
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: 16
-        }}>
+        <div
+            onClick={handleBackdropClick}
+            style={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(0,0,0,0.4)',
+                display: 'flex',
+                alignItems: 'flex-end', // BOTTOM SHEET: Align to bottom
+                justifyContent: 'center',
+                zIndex: 9999
+            }}
+        >
             <div style={{
-                background: 'white',
-                borderRadius: 16,
-                padding: 20,
+                background: 'var(--surface-raised-bg, white)',
+                borderRadius: 'var(--radius-modal, 20px) var(--radius-modal, 20px) 0 0',
+                boxShadow: 'var(--shadow-raised, 0 -8px 32px rgba(0,0,0,0.12))',
+                padding: '12px 20px 24px',
                 width: '100%',
-                maxWidth: 320,
-                boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                maxWidth: 400,
+                transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
+                transition: 'transform 0.2s ease-out',
+                maxHeight: '60vh', // Top 40% visible for context
+                overflow: 'auto'
             }}>
-                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', marginBottom: 16 }}>
-                    {title}
-                </h3>
+                {/* Drag Handle (visual) */}
+                <div style={{
+                    width: 36,
+                    height: 4,
+                    background: '#E5E7EB',
+                    borderRadius: 2,
+                    margin: '0 auto 12px'
+                }} />
 
-                {/* Spectrum */}
+                {/* Header: Title + Done */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 16
+                }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', margin: 0 }}>
+                        {title}
+                    </h3>
+                    <button
+                        onClick={handleClose}
+                        style={{
+                            padding: '8px 16px',
+                            background: '#22C55E',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 8,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Done
+                    </button>
+                </div>
+
+                {/* VIBRANT PRESETS — Sandbox play (first row) */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                    {VIBRANT_PRESETS.map(preset => (
+                        <button
+                            key={preset.value}
+                            onClick={() => handleHexChange(preset.value)}
+                            style={{
+                                width: 28, height: 28, borderRadius: 6,
+                                backgroundColor: preset.value,
+                                border: tempColor === preset.value
+                                    ? '3px solid #22C55E'
+                                    : '2px solid rgba(255,255,255,0.3)',
+                                cursor: 'pointer',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.15)'
+                            }}
+                            title={preset.label}
+                        />
+                    ))}
+                </div>
+
+                {/* SUBDUED PRESETS — Brand colors (second row) */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+                    {COLOR_PRESETS.map(preset => (
+                        <button
+                            key={preset.value}
+                            onClick={() => handleHexChange(preset.value)}
+                            style={{
+                                width: 28, height: 28, borderRadius: 6,
+                                backgroundColor: preset.value,
+                                border: tempColor === preset.value
+                                    ? '3px solid #22C55E'
+                                    : '2px solid #E5E7EB',
+                                cursor: 'pointer'
+                            }}
+                            title={preset.label}
+                        />
+                    ))}
+                </div>
+
+                {/* Hue Strip (rainbow for fast targeting) */}
+                <canvas
+                    ref={hueRef}
+                    width={280}
+                    height={24}
+                    style={{
+                        width: '100%',
+                        height: 24,
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        marginBottom: 12,
+                        touchAction: 'none'
+                    }}
+                    onMouseDown={onHueDown}
+                    onMouseMove={onHueMove}
+                    onMouseUp={onHueUp}
+                    onTouchStart={onHueDown}
+                    onTouchMove={onHueMove}
+                    onTouchEnd={onHueUp}
+                />
+
+                {/* Spectrum (S/V) */}
                 <canvas
                     ref={spectrumRef}
                     width={280}
-                    height={150}
+                    height={120}
                     style={{
                         width: '100%',
-                        height: 150,
+                        height: 120,
                         borderRadius: 8,
                         cursor: 'crosshair',
                         marginBottom: 12,
@@ -236,75 +392,50 @@ export default function ColorPickerModal({
                     onTouchEnd={onSpectrumUp}
                 />
 
-                {/* Hue */}
-                <canvas
-                    ref={hueRef}
-                    width={280}
-                    height={20}
-                    style={{
-                        width: '100%',
-                        height: 20,
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        marginBottom: 16,
-                        touchAction: 'none'
-                    }}
-                    onMouseDown={onHueDown}
-                    onMouseMove={onHueMove}
-                    onMouseUp={onHueUp}
-                    onTouchStart={onHueDown}
-                    onTouchMove={onHueMove}
-                    onTouchEnd={onHueUp}
-                />
-
-                {/* Presets */}
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                    {COLOR_PRESETS.map(preset => (
+                {/* HEX Input + Eyedropper */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                        type="text"
+                        value={hexInput}
+                        onChange={(e) => handleHexChange(e.target.value.toUpperCase())}
+                        style={{
+                            flex: 1,
+                            padding: '10px 12px',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: 8,
+                            fontFamily: 'monospace',
+                            fontSize: 14
+                        }}
+                    />
+                    {/* Color preview swatch */}
+                    <div style={{
+                        width: 40, height: 40,
+                        borderRadius: 8,
+                        backgroundColor: tempColor,
+                        border: '2px solid #E5E7EB',
+                        flexShrink: 0
+                    }} />
+                    {/* Eyedropper (only if supported) */}
+                    {hasEyeDropper && (
                         <button
-                            key={preset.value}
-                            onClick={() => handleHexChange(preset.value)}
+                            onClick={handleEyeDropper}
+                            title="Seleccionar color de pantalla"
                             style={{
-                                width: 24, height: 24, borderRadius: 4,
-                                backgroundColor: preset.value,
+                                width: 40, height: 40,
+                                borderRadius: 8,
                                 border: '1px solid #E5E7EB',
-                                cursor: 'pointer'
+                                background: '#F9FAFB',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 18,
+                                flexShrink: 0
                             }}
-                        />
-                    ))}
-                </div>
-
-                {/* HEX Input */}
-                <input
-                    type="text"
-                    value={hexInput}
-                    onChange={(e) => handleHexChange(e.target.value.toUpperCase())}
-                    style={{
-                        width: '100%', padding: '10px',
-                        border: '1px solid #E5E7EB', borderRadius: 8,
-                        marginBottom: 16, fontFamily: 'monospace'
-                    }}
-                />
-
-                {/* Actions */}
-                <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                        onClick={onCancel}
-                        style={{
-                            flex: 1, padding: '12px', background: '#F3F4F6',
-                            border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer'
-                        }}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={applyColor}
-                        style={{
-                            flex: 1, padding: '12px', background: '#22C55E', color: 'white',
-                            border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer'
-                        }}
-                    >
-                        Aplicar
-                    </button>
+                        >
+                            💧
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

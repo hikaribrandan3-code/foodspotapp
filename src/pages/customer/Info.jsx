@@ -71,8 +71,25 @@ function Info() {
     const businessInfo = config.businessInfo || {}
     const hasBusinessInfo = infoDisplay.showAddress || infoDisplay.showHours || infoDisplay.showMapLink
 
-    const primaryColor = '#C4856A'
-    const textMuted = '#9CA3AF'
+    // INFO PILL COLORS — Read from config (supports demo branding override)
+    const pillColors = (inDemoMode && demoBranding?.infoPills) || config.infoPills || {}
+    const defaultPillColors = {
+        whatsapp: { bgColor: '#C4856A', textColor: 'white' },
+        mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3' },
+        rappi: { bgColor: '#FF5A00', textColor: 'white' },
+        pedidosYa: { bgColor: '#E31837', textColor: 'white' },
+        adminAccess: { bgColor: '#FFFFFF', textColor: '#9CA3AF', borderColor: '#E5E7EB' },
+        demo: { bgColor: '#84CC16', textColor: 'white' },
+        custom: { bgColor: '#6366F1', textColor: 'white' }
+    }
+    const getPillStyle = (pillId) => {
+        const pill = pillColors[pillId] || defaultPillColors[pillId] || {}
+        return {
+            backgroundColor: pill.bgColor || defaultPillColors[pillId]?.bgColor,
+            color: pill.textColor || defaultPillColors[pillId]?.textColor,
+            borderColor: pill.borderColor || 'transparent'
+        }
+    }
 
     return (
         <div className="page" style={{
@@ -96,8 +113,8 @@ function Info() {
                         gap: 10,
                         width: '100%',
                         padding: '14px 24px',
-                        backgroundColor: '#C4856A',
-                        color: '#FFFFFF',
+                        backgroundColor: getPillStyle('whatsapp').backgroundColor,
+                        color: getPillStyle('whatsapp').color,
                         borderRadius: 28,
                         border: 'none',
                         fontSize: 16,
@@ -119,7 +136,6 @@ function Info() {
                     onClick={async () => {
                         try {
                             await navigator.clipboard.writeText(config.payments.mercadoPagoAlias)
-                            // Visual feedback
                             const btn = document.getElementById('mp-copy-btn')
                             const originalText = btn.textContent
                             btn.textContent = '✓ Alias copiado'
@@ -136,8 +152,8 @@ function Info() {
                         gap: 8,
                         width: '100%',
                         padding: '14px 24px',
-                        backgroundColor: '#FFE600', // Mercado Pago Yellow
-                        color: '#009EE3', // Mercado Pago Blue
+                        backgroundColor: getPillStyle('mercadoPago').backgroundColor,
+                        color: getPillStyle('mercadoPago').color,
                         borderRadius: 28,
                         border: 'none',
                         fontSize: 16,
@@ -163,8 +179,8 @@ function Info() {
                         justifyContent: 'center',
                         width: '100%',
                         padding: '13px 24px',
-                        backgroundColor: '#FF5A00',
-                        color: '#FFFFFF',
+                        backgroundColor: getPillStyle('rappi').backgroundColor,
+                        color: getPillStyle('rappi').color,
                         borderRadius: 28,
                         border: 'none',
                         fontSize: 15,
@@ -190,8 +206,8 @@ function Info() {
                         justifyContent: 'center',
                         width: '100%',
                         padding: '13px 24px',
-                        backgroundColor: '#E31837',
-                        color: '#FFFFFF',
+                        backgroundColor: getPillStyle('pedidosYa').backgroundColor,
+                        color: getPillStyle('pedidosYa').color,
                         borderRadius: 28,
                         border: 'none',
                         fontSize: 15,
@@ -215,10 +231,10 @@ function Info() {
                     gap: 8,
                     width: '100%',
                     padding: '12px 24px',
-                    backgroundColor: '#FFFFFF',
-                    color: '#9CA3AF',
+                    backgroundColor: getPillStyle('adminAccess').backgroundColor,
+                    color: getPillStyle('adminAccess').color,
                     borderRadius: 28,
-                    border: '1px solid #E5E7EB',
+                    border: `1px solid ${getPillStyle('adminAccess').borderColor}`,
                     fontSize: 14,
                     fontWeight: 400,
                     cursor: 'pointer',
@@ -242,8 +258,8 @@ function Info() {
                     justifyContent: 'center',
                     width: '100%',
                     padding: '12px 24px',
-                    backgroundColor: '#84CC16',
-                    color: '#FFFFFF',
+                    backgroundColor: getPillStyle('demo').backgroundColor,
+                    color: getPillStyle('demo').color,
                     borderRadius: 28,
                     border: 'none',
                     fontSize: 14,

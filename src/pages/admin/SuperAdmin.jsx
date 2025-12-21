@@ -1100,10 +1100,10 @@ function SuperAdmin() {
 
 
 
-                            {/* Canvas V1 - Light/Dark */}
-                            <h3 style={labelStyle}>🎨 CANVAS (FONDO)</h3>
+                            {/* Modo Oscuro - Light/Dark Toggle */}
+                            <h3 style={labelStyle}>🌙 MODO OSCURO</h3>
                             <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo general de la app</p>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Tema de la aplicación</p>
                                 <div style={{ display: 'flex', gap: 8 }}>
                                     <button
                                         onClick={() => {
