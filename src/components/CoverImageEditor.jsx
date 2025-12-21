@@ -85,7 +85,7 @@ function CameraButton() {
 // Snap assist constants
 const SNAP_THRESHOLD = 4 // ±4px for gentle snap
 
-function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
+function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false }) {
     const navigate = useNavigate()
 
     const [image, setImage] = useState(initialData?.image || null)
@@ -235,8 +235,16 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData }) {
         isDragging.current = false
     }
 
-    // ===== CONTINUE → ROUTE TO PREVIEW =====
+    // ===== CONTINUE → ROUTE TO PREVIEW (or save directly in demo mode) =====
     const handleContinue = () => {
+        // DEMO MODE: Save directly without navigation or production config update
+        if (demoMode) {
+            onSave({ image, scale, offsetX, offsetY, breakpoint })
+            onClose()
+            return
+        }
+
+        // PRODUCTION MODE: Save to config and navigate to preview
         // Save current state to config
         updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint } })
         // Save to parent

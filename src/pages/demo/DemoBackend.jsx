@@ -23,6 +23,7 @@ import { getMenu } from '../../config/menuData.js'
 // Import existing branding components (REUSE)
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
+import CoverImageEditor from '../../components/CoverImageEditor.jsx'
 
 // Mock data for demo (inline to avoid touching production services)
 const MOCK_ORDERS = [
@@ -75,6 +76,7 @@ function DemoBackend() {
     const [demoMenu, setDemoMenu] = useState(() => getDemoMenu() || getMenu())
     const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false)
     const [applyFeedback, setApplyFeedback] = useState('')
+    const [coverEditorOpen, setCoverEditorOpen] = useState(false)
 
     // Redirect if no valid demo session
     useEffect(() => {
@@ -350,38 +352,58 @@ function DemoBackend() {
                             />
                         </div>
 
-                        {/* Hero Cover Image - Simplified uploader */}
+                        {/* Hero Cover Image - FULL EDITOR (same as Owner/SuperAdmin) */}
                         <div style={cardStyle}>
                             <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Hero Cover Image</label>
                             {demoConfig.coverImage ? (
                                 <div style={{ marginBottom: 12 }}>
                                     <img src={demoConfig.coverImage} alt="Cover" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8 }} />
-                                    <button
-                                        onClick={() => handleConfigChange({ coverImage: null })}
-                                        style={{ marginTop: 8, padding: '6px 12px', fontSize: 12, background: '#EF4444', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                                    >
-                                        Remove
-                                    </button>
+                                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                                        <button
+                                            onClick={() => setCoverEditorOpen(true)}
+                                            style={{ flex: 1, padding: '8px 12px', fontSize: 12, background: '#3B82F6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                                        >
+                                            ✏️ Edit Position
+                                        </button>
+                                        <button
+                                            onClick={() => handleConfigChange({ coverImage: null })}
+                                            style={{ padding: '8px 12px', fontSize: 12, background: '#EF4444', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0]
-                                        if (file) {
-                                            const reader = new FileReader()
-                                            reader.onload = (event) => {
-                                                handleConfigChange({ coverImage: event.target?.result })
-                                            }
-                                            reader.readAsDataURL(file)
-                                        }
+                                <button
+                                    onClick={() => setCoverEditorOpen(true)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px',
+                                        background: '#F3F4F6',
+                                        border: '2px dashed #D1D5DB',
+                                        borderRadius: 8,
+                                        cursor: 'pointer',
+                                        fontSize: 13,
+                                        color: '#6B7280'
                                     }}
-                                    style={{ fontSize: 13 }}
-                                />
+                                >
+                                    📷 Add Cover Image (with guide points)
+                                </button>
                             )}
-                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Upload a hero image for the home screen</p>
+                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Same editor as Owner/SuperAdmin — drag to position, pinch to zoom</p>
                         </div>
+
+                        {/* CoverImageEditor Modal - SAME AS PRODUCTION */}
+                        <CoverImageEditor
+                            isOpen={coverEditorOpen}
+                            onClose={() => setCoverEditorOpen(false)}
+                            onSave={(data) => {
+                                handleConfigChange({ coverImage: data.image })
+                                setCoverEditorOpen(false)
+                            }}
+                            initialData={{ image: demoConfig.coverImage }}
+                            demoMode={true}
+                        />
 
                         {/* Color Picker - REUSE EXISTING */}
                         <BrandingColorPicker
