@@ -96,3 +96,185 @@ export function toggleDemoRole() {
     updateDemoSession({ role: newRole })
     return newRole
 }
+
+// ============================================
+// DEMO CONFIG UTILITIES (localStorage-based)
+// ============================================
+
+const DEMO_CONFIG_KEY = 'foodspot_demo_config'
+const DEMO_MENU_KEY = 'foodspot_demo_menu'
+const ACTIVE_BRANDING_KEY = 'foodspot_active_branding'
+const ACTIVE_MENU_KEY = 'foodspot_active_menu'
+
+/**
+ * Get demo-specific config (branding customizations)
+ * @returns {Object} Demo config or default
+ */
+export function getDemoConfig() {
+    try {
+        const stored = localStorage.getItem(DEMO_CONFIG_KEY)
+        if (stored) {
+            return JSON.parse(stored)
+        }
+    } catch (e) {
+        console.error('Error reading demo config:', e)
+    }
+    // Return default demo config
+    return {
+        businessName: 'Mi Negocio Demo',
+        primaryColor: '#8B7355',
+        accentColor: '#22C55E',
+        iconColorMode: 'white',
+        coverImage: null,
+        heroIcons: {},
+        businessInfo: {
+            hours: '',
+            address: '',
+            phone: '',
+            whatsapp: ''
+        }
+    }
+}
+
+/**
+ * Update demo config (merges updates)
+ * @param {Object} updates - Fields to update
+ */
+export function updateDemoConfig(updates) {
+    const current = getDemoConfig()
+    const updated = { ...current, ...updates }
+    localStorage.setItem(DEMO_CONFIG_KEY, JSON.stringify(updated))
+    return updated
+}
+
+/**
+ * Get demo-specific menu
+ * @returns {Object} Demo menu or null (falls back to real menu)
+ */
+export function getDemoMenu() {
+    try {
+        const stored = localStorage.getItem(DEMO_MENU_KEY)
+        if (stored) {
+            return JSON.parse(stored)
+        }
+    } catch (e) {
+        console.error('Error reading demo menu:', e)
+    }
+    return null
+}
+
+/**
+ * Save full demo menu
+ * @param {Object} menu - Full menu object to save
+ */
+export function saveDemoMenu(menu) {
+    localStorage.setItem(DEMO_MENU_KEY, JSON.stringify(menu))
+    return menu
+}
+
+/**
+ * Update a single demo menu item
+ * @param {Object} menu - Current menu
+ * @param {string} categoryId - Category ID
+ * @param {string} itemId - Item ID
+ * @param {Object} updates - Fields to update (name, price, etc.)
+ */
+export function updateDemoMenuItem(menu, categoryId, itemId, updates) {
+    const updatedMenu = {
+        ...menu,
+        categories: menu.categories.map(cat => {
+            if (cat.id === categoryId) {
+                return {
+                    ...cat,
+                    items: cat.items.map(item => {
+                        if (item.id === itemId) {
+                            return { ...item, ...updates }
+                        }
+                        return item
+                    })
+                }
+            }
+            return cat
+        })
+    }
+    saveDemoMenu(updatedMenu)
+    return updatedMenu
+}
+
+/**
+ * Apply demo edits to frontend (Commit/Publish)
+ * This promotes draft state to active state
+ */
+export function applyDemoToFrontend() {
+    const demoConfig = getDemoConfig()
+    const demoMenu = getDemoMenu()
+
+    // Promote config to active branding
+    localStorage.setItem(ACTIVE_BRANDING_KEY, JSON.stringify({
+        businessName: demoConfig.businessName,
+        primaryColor: demoConfig.primaryColor,
+        accentColor: demoConfig.accentColor,
+        iconColorMode: demoConfig.iconColorMode,
+        coverImage: demoConfig.coverImage,
+        heroIcons: demoConfig.heroIcons,
+        businessInfo: demoConfig.businessInfo,
+        appliedAt: Date.now()
+    }))
+
+    // Promote menu to active menu
+    if (demoMenu) {
+        localStorage.setItem(ACTIVE_MENU_KEY, JSON.stringify(demoMenu))
+    }
+
+    console.log('✅ Demo changes applied to frontend')
+    return true
+}
+
+/**
+ * Get active (published) demo branding for frontend consumption
+ */
+export function getActiveDemoBranding() {
+    try {
+        const stored = localStorage.getItem(ACTIVE_BRANDING_KEY)
+        if (stored) {
+            return JSON.parse(stored)
+        }
+    } catch (e) {
+        console.error('Error reading active branding:', e)
+    }
+    return null
+}
+
+/**
+ * Get active (published) demo menu for frontend consumption
+ */
+export function getActiveDemoMenu() {
+    try {
+        const stored = localStorage.getItem(ACTIVE_MENU_KEY)
+        if (stored) {
+            return JSON.parse(stored)
+        }
+    } catch (e) {
+        console.error('Error reading active menu:', e)
+    }
+    return null
+}
+
+/**
+ * Clear ALL demo data (full reset)
+ */
+export function clearAllDemoData() {
+    // Clear session
+    sessionStorage.removeItem('demo_session')
+
+    // Clear draft state
+    localStorage.removeItem(DEMO_CONFIG_KEY)
+    localStorage.removeItem(DEMO_MENU_KEY)
+
+    // Clear active (published) state
+    localStorage.removeItem(ACTIVE_BRANDING_KEY)
+    localStorage.removeItem(ACTIVE_MENU_KEY)
+
+    console.log('✅ All demo data cleared')
+    return true
+}
