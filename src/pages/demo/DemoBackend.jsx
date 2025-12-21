@@ -147,6 +147,48 @@ function groupEventsByOrder(events) {
     return groups
 }
 
+/**
+ * Camera Icon SVG component for backend preview
+ * Renders professional SVG icons instead of emojis
+ */
+function CameraIcon({ type = 'default', size = 20, color = '#FFFFFF' }) {
+    const icons = {
+        default: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+            </svg>
+        ),
+        camera: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+                <circle cx="18" cy="8" r="1" fill={color} />
+            </svg>
+        ),
+        aperture: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="14.31" y1="8" x2="20.05" y2="17.94" />
+                <line x1="9.69" y1="8" x2="21.17" y2="8" />
+                <line x1="7.38" y1="12" x2="13.12" y2="2.06" />
+                <line x1="9.69" y1="16" x2="3.95" y2="6.06" />
+                <line x1="14.31" y1="16" x2="2.83" y2="16" />
+                <line x1="16.62" y1="12" x2="10.88" y2="21.94" />
+            </svg>
+        ),
+        webcam: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="10" r="8" />
+                <circle cx="12" cy="10" r="3" />
+                <path d="M7 22h10" />
+                <path d="M12 18v4" />
+            </svg>
+        )
+    }
+    return icons[type] || icons.default
+}
+
 // Event Log Item Component - Displays a single webhook event
 function EventLogItem({ event, compact = false }) {
     const [expanded, setExpanded] = useState(false)
@@ -1663,13 +1705,9 @@ function DemoBackend() {
                                     const bgColor = pillConfig.bgColor || (pill.id === 'whatsapp' ? '#C4856A' : pill.id === 'mercadoPago' ? '#FFE600' : pill.id === 'rappi' ? '#FF5A00' : pill.id === 'pedidosYa' ? '#E31837' : pill.id === 'demo' ? '#84CC16' : '#FFFFFF')
                                     const textColor = pillConfig.textColor || (pill.id === 'mercadoPago' ? '#009EE3' : pill.id === 'adminAccess' ? '#9CA3AF' : '#FFFFFF')
                                     return (
-                                        <button
+                                        <label
                                             key={pill.id}
-                                            onClick={() => {
-                                                // Toggle simple color picker for this pill
-                                                const input = document.getElementById(`pill-color-${pill.id}`)
-                                                if (input) input.click()
-                                            }}
+                                            htmlFor={`pill-color-${pill.id}`}
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -1687,7 +1725,7 @@ function DemoBackend() {
                                         >
                                             <span>{pill.icon}</span>
                                             <span>{pill.label}</span>
-                                            {/* Hidden color input */}
+                                            {/* Color input - use visibility hidden to maintain layout but still be clickable via label */}
                                             <input
                                                 id={`pill-color-${pill.id}`}
                                                 type="color"
@@ -1698,9 +1736,18 @@ function DemoBackend() {
                                                         [pill.id]: { ...pillConfig, bgColor: e.target.value }
                                                     }
                                                 })}
-                                                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    width: 1,
+                                                    height: 1,
+                                                    padding: 0,
+                                                    margin: -1,
+                                                    overflow: 'hidden',
+                                                    clip: 'rect(0,0,0,0)',
+                                                    border: 0
+                                                }}
                                             />
-                                        </button>
+                                        </label>
                                     )
                                 })}
                             </div>
@@ -1764,9 +1811,7 @@ function DemoBackend() {
                                                         gap: 4
                                                     }}
                                                 >
-                                                    <span style={{ fontSize: 20 }}>
-                                                        {icon.id === 'default' ? '📷' : icon.id === 'camera' ? '📸' : icon.id === 'aperture' ? '🎯' : '🖥️'}
-                                                    </span>
+                                                    <CameraIcon type={icon.id} size={20} color="#6B7280" />
                                                     <span style={{ fontSize: 10, color: '#6B7280' }}>{icon.label}</span>
                                                 </button>
                                             )
@@ -1790,7 +1835,11 @@ function DemoBackend() {
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                                         }}>
-                                            <span style={{ fontSize: 20 }}>📷</span>
+                                            <CameraIcon
+                                                type={demoConfig.camera?.icon || 'default'}
+                                                size={22}
+                                                color={demoConfig.camera?.textColor === 'black' ? '#1F2937' : demoConfig.camera?.textColor === 'white' ? '#FFFFFF' : '#FFFFFF'}
+                                            />
                                         </div>
                                         <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'monospace' }}>
                                             {(demoConfig.camera?.color || '#8B7355').toUpperCase()}
