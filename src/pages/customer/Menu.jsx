@@ -7,7 +7,7 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
-import { isInDemoMode, getActiveDemoMenu, getActiveDemoBranding } from '../../utils/demoSession.js'
+import { isInDemoMode, getActiveDemoMenu, getActiveDemoBranding, getDemoMenu, saveDemoMenu, applyDemoToFrontend } from '../../utils/demoSession.js'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
@@ -281,11 +281,46 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             const [movedItem] = newOrder.splice(dragState.itemIndex, 1)
             newOrder.splice(dragState.targetIndex, 0, movedItem)
 
-            // Save to backend
-            reorderCategoryItems(dragState.categoryId, newOrder)
+            if (isInDemoMode()) {
+                // DEMO MODE PERSISTENCE FIX
+                // 1. Get current demo/draft menu
+                const draftMenu = getDemoMenu() || getActiveDemoMenu()
 
-            // Refresh menu
-            setMenu(getMenu())
+                if (draftMenu) {
+                    const category = draftMenu.categories.find(c => c.id === dragState.categoryId)
+                    if (category) {
+                        // 2. Rebuild category items respecting new order + hidden items
+                        const itemMap = {}
+                        category.items.forEach(item => itemMap[item.id] = item)
+
+                        const reorderedItems = []
+                        newOrder.forEach(item => {
+                            if (itemMap[item.id]) {
+                                reorderedItems.push(itemMap[item.id])
+                                delete itemMap[item.id]
+                            }
+                        })
+
+                        // Append any hidden/unavailable items not in the grid
+                        Object.values(itemMap).forEach(item => reorderedItems.push(item))
+
+                        category.items = reorderedItems
+
+                        // 3. Save and Sync
+                        saveDemoMenu(draftMenu)
+                        applyDemoToFrontend()
+
+                        // 4. Instant State Update (avoids snapback race)
+                        setDemoMenu(getActiveDemoMenu())
+                    }
+                }
+            } else {
+                // Save to backend (Production)
+                reorderCategoryItems(dragState.categoryId, newOrder)
+
+                // Refresh menu
+                setMenu(getMenu())
+            }
         }
 
         setDragState(null)
@@ -364,6 +399,32 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
         }}>
             {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
             <HeaderClamp />
+
+            {/* Delivery Mode Context Badge */}
+            {deliveryMode && !isEditMode && (
+                <div style={{
+                    position: 'fixed',
+                    top: 'calc(16px + env(safe-area-inset-top, 0px))',
+                    right: 16,
+                    zIndex: 800, // Keep below modals
+                    background: '#22C55E',
+                    color: 'white',
+                    padding: '6px 12px',
+                    borderRadius: 20,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    pointerEvents: 'none',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)'
+                }}>
+                    <span style={{ fontSize: 14 }}>🛵</span>
+                    <span>Envíos</span>
+                </div>
+            )}
 
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (
