@@ -25,6 +25,16 @@ import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
+import DemoEmailPopup from '../../components/DemoEmailPopup.jsx'
+
+// Timer utilities for email popup
+import {
+    startDemoTimer,
+    pauseDemoTimer,
+    resumeDemoTimer,
+    shouldShowPopup,
+    markPopupShown
+} from '../../utils/demoTimer.js'
 
 // Mock data for demo (inline to avoid touching production services)
 const MOCK_ORDERS = [
@@ -78,6 +88,10 @@ function DemoBackend() {
     const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false)
     const [applyFeedback, setApplyFeedback] = useState('')
     const [coverEditorOpen, setCoverEditorOpen] = useState(false)
+    const [showEmailPopup, setShowEmailPopup] = useState(false)
+
+    // Derived editing state (add more editors here if needed)
+    const isEditing = coverEditorOpen
 
     // Redirect if no valid demo session
     useEffect(() => {
@@ -96,6 +110,31 @@ function DemoBackend() {
         }, 5000)
         return () => clearInterval(interval)
     }, [navigate])
+
+    // Start demo timer on mount
+    useEffect(() => {
+        startDemoTimer()
+    }, [])
+
+    // Pause/resume timer when editing state changes
+    useEffect(() => {
+        if (isEditing) {
+            pauseDemoTimer()
+        } else {
+            resumeDemoTimer()
+        }
+    }, [isEditing])
+
+    // Poll for popup eligibility
+    useEffect(() => {
+        const checkPopup = setInterval(() => {
+            if (!isEditing && shouldShowPopup()) {
+                setShowEmailPopup(true)
+                markPopupShown()
+            }
+        }, 1000)
+        return () => clearInterval(checkPopup)
+    }, [isEditing])
 
     const handleExitDemo = () => {
         clearDemoSession()
@@ -923,6 +962,12 @@ function DemoBackend() {
                     🔒 Demo Mode — Demo data resets automatically
                 </p>
             </div>
+
+            {/* Email Popup (shows after 5 minutes) */}
+            <DemoEmailPopup
+                isOpen={showEmailPopup}
+                onClose={() => setShowEmailPopup(false)}
+            />
         </div>
     )
 }
