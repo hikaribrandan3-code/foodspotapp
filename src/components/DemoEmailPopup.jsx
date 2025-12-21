@@ -121,6 +121,18 @@ export default function DemoEmailPopup({ isOpen, onClose }) {
                 {showConfirmation ? (
                     // Confirmation state
                     <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                        {/* Promo image */}
+                        <img
+                            src="https://files.catbox.moe/l6o7ug.png"
+                            alt="FoodSpot"
+                            style={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                height: 'auto',
+                                borderRadius: 12,
+                                marginBottom: 20
+                            }}
+                        />
                         <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
                         <p style={{
                             fontSize: 18,
@@ -134,6 +146,18 @@ export default function DemoEmailPopup({ isOpen, onClose }) {
                 ) : showEmailInput ? (
                     // Email input state
                     <>
+                        {/* Promo image */}
+                        <img
+                            src="https://files.catbox.moe/l6o7ug.png"
+                            alt="FoodSpot"
+                            style={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                height: 'auto',
+                                borderRadius: 12,
+                                marginBottom: 20
+                            }}
+                        />
                         <h2 style={{
                             fontSize: 24,
                             fontWeight: 700,
@@ -215,7 +239,18 @@ export default function DemoEmailPopup({ isOpen, onClose }) {
                 ) : (
                     // Initial state - show main CTA
                     <>
-                        <div style={{ fontSize: 48, marginBottom: 16, textAlign: 'center' }}>🚀</div>
+                        {/* Promo image */}
+                        <img
+                            src="https://files.catbox.moe/l6o7ug.png"
+                            alt="FoodSpot"
+                            style={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                height: 'auto',
+                                borderRadius: 12,
+                                marginBottom: 20
+                            }}
+                        />
 
                         <h2 style={{
                             fontSize: 24,
