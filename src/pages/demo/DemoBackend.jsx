@@ -446,6 +446,82 @@ function DemoBackend() {
                             </div>
                             <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Color only — text and position cannot be changed</p>
                         </div>
+
+                        {/* Featured Food Photos - 4 SLOTS */}
+                        <h3 style={labelStyle}>📸 FEATURED PHOTOS (Home)</h3>
+                        <div style={cardStyle}>
+                            <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>These 4 images appear on the Home screen below the hero tiles</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                {[0, 1, 2, 3].map(slotIndex => {
+                                    const slot = demoConfig.featuredPhotos?.[slotIndex] || {}
+                                    return (
+                                        <div key={slotIndex} style={{ background: '#F9FAFB', borderRadius: 12, padding: 12 }}>
+                                            {/* Image Preview */}
+                                            <div style={{
+                                                width: '100%',
+                                                height: 80,
+                                                borderRadius: 8,
+                                                overflow: 'hidden',
+                                                background: slot.image ? 'none' : '#E5E7EB',
+                                                marginBottom: 8,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}>
+                                                {slot.image ? (
+                                                    <img src={slot.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <span style={{ fontSize: 24, color: '#9CA3AF' }}>📷</span>
+                                                )}
+                                            </div>
+                                            {/* Name Input */}
+                                            <input
+                                                type="text"
+                                                value={slot.name || ''}
+                                                onChange={(e) => {
+                                                    const newPhotos = [...(demoConfig.featuredPhotos || [{}, {}, {}, {}])]
+                                                    newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
+                                                    handleConfigChange({ featuredPhotos: newPhotos })
+                                                }}
+                                                placeholder="Item name"
+                                                style={{ ...inputStyle, fontSize: 12, marginBottom: 6 }}
+                                            />
+                                            {/* Upload / Remove */}
+                                            {slot.image ? (
+                                                <button
+                                                    onClick={() => {
+                                                        const newPhotos = [...(demoConfig.featuredPhotos || [{}, {}, {}, {}])]
+                                                        newPhotos[slotIndex] = { ...newPhotos[slotIndex], image: null }
+                                                        handleConfigChange({ featuredPhotos: newPhotos })
+                                                    }}
+                                                    style={{ padding: '4px 8px', fontSize: 11, background: '#EF4444', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', width: '100%' }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            ) : (
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0]
+                                                        if (file) {
+                                                            const reader = new FileReader()
+                                                            reader.onload = (event) => {
+                                                                const newPhotos = [...(demoConfig.featuredPhotos || [{}, {}, {}, {}])]
+                                                                newPhotos[slotIndex] = { ...newPhotos[slotIndex], image: event.target?.result }
+                                                                handleConfigChange({ featuredPhotos: newPhotos })
+                                                            }
+                                                            reader.readAsDataURL(file)
+                                                        }
+                                                    }}
+                                                    style={{ fontSize: 10, width: '100%' }}
+                                                />
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
                     </>
                 )}
 

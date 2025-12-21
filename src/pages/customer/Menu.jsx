@@ -7,6 +7,7 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
+import { isInDemoMode, getActiveDemoMenu } from '../../utils/demoSession.js'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
@@ -26,6 +27,13 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     const [cart, setCart] = useState(() => getCurrentOrder())
     const [addedItem, setAddedItem] = useState(null) // For visual feedback
     const categoryRefs = useRef({})
+
+    // Demo mode detection - overlay demo menu if available
+    const inDemoMode = isInDemoMode()
+    const demoMenu = inDemoMode ? getActiveDemoMenu() : null
+
+    // Use demo menu overlay if in demo mode and demo menu exists
+    const effectiveMenu = (inDemoMode && demoMenu) ? demoMenu : menu
 
     // Owner mode detection (from localStorage)
     const isOwnerMode = getUserMode() === 'owner'
@@ -57,7 +65,8 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     }, [deliveryModeProp])
 
     // Only show enabled categories with available items
-    const enabledCategories = menu.categories.filter(cat =>
+    // In demo mode, use effectiveMenu (which may be demo overlay)
+    const enabledCategories = effectiveMenu.categories.filter(cat =>
         cat.enabled !== false && cat.items.some(item => item.available)
     )
 

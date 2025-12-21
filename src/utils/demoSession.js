@@ -219,6 +219,7 @@ export function applyDemoToFrontend() {
         heroIcons: demoConfig.heroIcons,
         businessInfo: demoConfig.businessInfo,
         poweredByColor: demoConfig.poweredByColor,
+        featuredPhotos: demoConfig.featuredPhotos,
         appliedAt: Date.now()
     }))
 

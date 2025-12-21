@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getConfig } from '../../config/appConfig.js'
-import { createDemoSession } from '../../utils/demoSession.js'
+import { createDemoSession, isInDemoMode, getActiveDemoBranding } from '../../utils/demoSession.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
 const WhatsAppIcon = () => (
@@ -48,6 +48,11 @@ function Info() {
         }, 2000)
         return () => clearInterval(interval)
     }, [])
+
+    // Demo mode detection - overlay demo branding if available
+    const inDemoMode = isInDemoMode()
+    const demoBranding = inDemoMode ? getActiveDemoBranding() : null
+    const effectivePoweredByColor = (inDemoMode && demoBranding?.poweredByColor) || config.branding?.poweredByColor || '#C4856A'
 
     const infoDisplay = config.infoDisplay || {}
     const businessInfo = config.businessInfo || {}
@@ -350,7 +355,7 @@ function Info() {
                     style={{
                         fontSize: 28,
                         fontWeight: 700,
-                        color: config.branding?.poweredByColor || '#C4856A',
+                        color: effectivePoweredByColor,
                         textDecoration: 'none'
                     }}
                 >

@@ -6,6 +6,7 @@ import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 import { getSession } from '../../utils/auth.js'
 import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { isInDemoMode, getActiveDemoBranding, getActiveDemoMenu } from '../../utils/demoSession.js'
 
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
@@ -25,6 +26,21 @@ function Home() {
     const location = useLocation()
     const [config, setConfig] = useState(() => getConfig())
     const menu = getMenu()
+
+    // Demo mode detection
+    const inDemoMode = isInDemoMode()
+    const demoBranding = inDemoMode ? getActiveDemoBranding() : null
+
+    // Merge demo branding with config when in demo mode
+    const effectiveConfig = inDemoMode && demoBranding ? {
+        ...config,
+        heroIcons: demoBranding.heroIcons || config.heroIcons,
+        featuredPhotos: demoBranding.featuredPhotos || config.featuredPhotos,
+        branding: {
+            ...config.branding,
+            primaryColor: demoBranding.primaryColor || config.branding?.primaryColor
+        }
+    } : config
 
     // Owner/SuperAdmin mode detection - both can edit home icons
     const userMode = getUserMode()
@@ -60,7 +76,8 @@ function Home() {
 
     // Featured items - read DIRECTLY from Branding → Fotos destacadas (Home)
     // Source of truth: config.featuredPhotos ONLY (no menu linkage)
-    const featuredPhotos = config.featuredPhotos || []
+    // In demo mode, use demoBranding.featuredPhotos if available
+    const featuredPhotos = (inDemoMode && demoBranding?.featuredPhotos) || effectiveConfig.featuredPhotos || []
     const featuredItems = [0, 1, 2, 3].map(slotIndex => {
         const slot = featuredPhotos[slotIndex] || {}
         return {
@@ -342,30 +359,31 @@ function Home() {
     }, [])
 
     // Direct hero color helpers (read from config, not CSS variables)
+    // In demo mode, use effectiveConfig to pick up demo branding
     const getHeroBg = useCallback((actionId) => {
         // Map actionId to heroIcons key
         const iconKey = actionId === 'envios' ? 'delivery' : actionId
-        const heroConfig = config.heroIcons?.[iconKey] || HERO_DEFAULT
+        const heroConfig = effectiveConfig.heroIcons?.[iconKey] || HERO_DEFAULT
         const color = heroConfig?.color
 
         // 'auto' or empty = use canvas surface color
         if (!color || color === 'auto') {
-            return config.canvasMode === 'dark' ? '#000000' : '#FFFFFF'
+            return effectiveConfig.canvasMode === 'dark' ? '#000000' : '#FFFFFF'
         }
         return color
-    }, [config.heroIcons, config.canvasMode])
+    }, [effectiveConfig.heroIcons, effectiveConfig.canvasMode])
 
     const getHeroIcon = useCallback((actionId) => {
         const iconKey = actionId === 'envios' ? 'delivery' : actionId
-        const heroConfig = config.heroIcons?.[iconKey] || HERO_DEFAULT
+        const heroConfig = effectiveConfig.heroIcons?.[iconKey] || HERO_DEFAULT
         const mode = heroConfig?.iconColorMode
 
         // 'auto' or empty = use canvas surface text color
         if (!mode || mode === 'auto') {
-            return config.canvasMode === 'dark' ? '#FFFFFF' : '#000000'
+            return effectiveConfig.canvasMode === 'dark' ? '#FFFFFF' : '#000000'
         }
         return mode === 'white' ? '#FFFFFF' : HERO_ICON_DARK
-    }, [config.heroIcons, config.canvasMode])
+    }, [effectiveConfig.heroIcons, effectiveConfig.canvasMode])
 
     const tileStyle = {
         borderRadius: 28,
