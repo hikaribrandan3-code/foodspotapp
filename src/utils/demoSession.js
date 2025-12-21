@@ -1,6 +1,8 @@
 // Demo Session Utilities
 // ISOLATED from production auth - uses sessionStorage (clears on tab close)
 
+import { emitDemoEvent } from './demoEvents.js'
+
 const DEMO_SESSION_KEY = 'demo_session'
 
 /**
@@ -223,9 +225,6 @@ export function updateDemoMenuItem(menu, categoryId, itemId, updates) {
  * This promotes draft state to active state
  */
 export function applyDemoToFrontend() {
-    // Import dynamically to avoid circular dependency
-    const { emitDemoEvent } = require('./demoEvents.js')
-
     const demoConfig = getDemoConfig()
     const demoMenu = getDemoMenu()
 
