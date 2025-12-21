@@ -1378,3 +1378,25 @@ h3 {
 [data-theme="dark"] .form-input::placeholder {
   color: var(--icon-muted);
 }
+
+/* =============================================
+   BACKEND SURFACE - Forces light mode on admin/backend routes
+   Applies to: Owner, Staff, Demo, SuperAdmin
+   Overrides dark mode inheritance for readability
+   ============================================= */
+.backend-surface,
+.backend-surface * {
+  --canvas-bg: #FFFFFF !important;
+  --canvas-text: #1F2937 !important;
+  --canvas-text-muted: #6B7280 !important;
+  --surface-bg: #F9FAFB !important;
+  --surface-alt-bg: #F3F4F6 !important;
+  --border-subtle: #E5E7EB !important;
+  --icon-primary: #374151 !important;
+  --icon-muted: #9CA3AF !important;
+}
+
+.backend-surface {
+  background: #FFFFFF !important;
+  color: #1F2937 !important;
+}

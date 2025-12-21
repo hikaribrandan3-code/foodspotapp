@@ -1344,7 +1344,7 @@ function DemoBackend() {
     const todayOrders = orders
 
     return (
-        <div style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: 80 }}>
+        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: 80 }}>
             {/* Header - Matching Super Admin */}
             <div style={{ background: '#FFFFFF', padding: '16px 16px 12px', borderBottom: '1px solid #E5E7EB' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1352,7 +1352,7 @@ function DemoBackend() {
                         <button onClick={handleExitDemo} style={{ background: 'none', border: 'none', color: '#1F2937', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 36, height: 36, background: demoConfig.primaryColor || '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span style={{ color: '#FFFFFF', fontSize: 18 }}>🍽</span>
+                                <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>FS</span>
                             </div>
                             <span style={{ fontSize: 20, fontWeight: 700, color: '#1F2937' }}>{demoConfig.businessName || 'FoodSpot'}</span>
                         </div>

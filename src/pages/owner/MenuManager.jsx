@@ -192,7 +192,7 @@ function MenuManager() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <OwnerHeader
                 title="Menú"
                 subtitle="Gestión de productos"

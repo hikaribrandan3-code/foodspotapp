@@ -183,7 +183,7 @@ function StaffDashboard({ config }) {
     })
 
     return (
-        <div className="page" style={{ paddingBottom: 'var(--space-4)' }}>
+        <div className="page backend-surface" style={{ paddingBottom: 'var(--space-4)' }}>
             {/* Header */}
             <div style={{
                 display: 'flex',
@@ -193,7 +193,7 @@ function StaffDashboard({ config }) {
             }}>
                 <div>
                     <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
-                        👷 Staff
+                        Staff
                     </h1>
                     <span style={{
                         fontSize: 'var(--font-size-xs)',
@@ -240,25 +240,25 @@ function StaffDashboard({ config }) {
                     className={`tab ${activeTab === 'orders' ? 'active' : ''}`}
                     onClick={() => setActiveTab('orders')}
                 >
-                    📋 Pedidos ({activeOrders.length})
+                    Pedidos ({activeOrders.length})
                 </button>
                 <button
                     className={`tab ${activeTab === 'pagos' ? 'active' : ''}`}
                     onClick={() => setActiveTab('pagos')}
                 >
-                    💳 Pagos
+                    Pagos
                 </button>
                 <button
                     className={`tab ${activeTab === 'items' ? 'active' : ''}`}
                     onClick={() => setActiveTab('items')}
                 >
-                    🍽️ Stock
+                    Stock
                 </button>
                 <button
                     className={`tab ${activeTab === 'rewards' ? 'active' : ''}`}
                     onClick={() => setActiveTab('rewards')}
                 >
-                    ⭐ Sellos
+                    Sellos
                 </button>
             </div>
 

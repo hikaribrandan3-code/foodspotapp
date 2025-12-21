@@ -339,7 +339,7 @@ function SuperAdmin() {
 
     return (
         <>
-            <div style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+            <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 {/* Light Neutral Header - BLACK/WHITE ONLY */}
                 <div style={{ background: '#FFFFFF', padding: '16px 16px 12px', borderBottom: '1px solid #E5E7EB' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -348,7 +348,7 @@ function SuperAdmin() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                 {/* Neutral Logo */}
                                 <div style={{ width: 36, height: 36, background: '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <span style={{ color: '#FFFFFF', fontSize: 18 }}>🍽</span>
+                                    <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>FS</span>
                                 </div>
                                 <span style={{ fontSize: 20, fontWeight: 700, color: '#1F2937' }}>FoodSpot</span>
                             </div>

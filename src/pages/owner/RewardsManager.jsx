@@ -129,7 +129,7 @@ function RewardsManager() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <OwnerHeader
                 title="Recompensas"
                 subtitle="Programa de fidelidad"

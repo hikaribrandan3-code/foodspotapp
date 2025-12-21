@@ -24,7 +24,7 @@ function OwnerHeader({ title, subtitle, onLogout, onSync }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {/* Neutral Logo */}
                     <div style={{ width: 36, height: 36, background: '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ color: '#FFFFFF', fontSize: 18 }}>🍽</span>
+                        <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>FS</span>
                     </div>
                     <div>
                         <h1 style={{
@@ -201,7 +201,7 @@ function Settings() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <OwnerHeader
                 title="Configuración"
                 subtitle="Ajustes del negocio"
