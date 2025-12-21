@@ -252,14 +252,21 @@ export const defaultConfig = {
 // Storage key
 export const CONFIG_STORAGE_KEY = "grub_config";
 
+// Demo branding storage key (must match demoSession.js)
+const ACTIVE_BRANDING_KEY = 'foodspot_active_branding';
+const DEMO_SESSION_KEY = 'foodspot_demo_session';
+
 // Get current config from storage or return default
+// In demo mode, also merges active demo branding
 export function getConfig() {
     try {
         const stored = localStorage.getItem(CONFIG_STORAGE_KEY);
+        let config;
+
         if (stored) {
             const parsed = JSON.parse(stored);
             // Deep merge nested objects to preserve both defaults and stored values
-            return {
+            config = {
                 ...defaultConfig,
                 ...parsed,
                 // Deep merge heroIcons (each icon config individually)
@@ -293,8 +300,63 @@ export function getConfig() {
                 },
                 camera: { ...defaultConfig.camera, ...(parsed.camera || {}) },
             };
+        } else {
+            config = defaultConfig;
         }
-        return defaultConfig;
+
+        // ============================================
+        // DEMO MODE BRANDING OVERLAY (CRITICAL)
+        // ============================================
+        // When in demo mode, merge active demo branding on top of production config
+        // This allows backend changes to propagate immediately to frontend
+        const demoSession = sessionStorage.getItem(DEMO_SESSION_KEY);
+        if (demoSession) {
+            try {
+                const activeBranding = localStorage.getItem(ACTIVE_BRANDING_KEY);
+                if (activeBranding) {
+                    const demoBranding = JSON.parse(activeBranding);
+
+                    // Overlay demo branding onto config
+                    config = {
+                        ...config,
+                        // Business name
+                        businessName: demoBranding.businessName || config.businessName,
+                        // Canvas mode
+                        canvasMode: demoBranding.canvasMode || config.canvasMode,
+                        // Branding (primaryColor, iconColorMode, poweredByColor)
+                        branding: {
+                            ...config.branding,
+                            primaryColor: demoBranding.primaryColor || config.branding.primaryColor,
+                            iconColorMode: demoBranding.iconColorMode || config.branding.iconColorMode,
+                            poweredByColor: demoBranding.poweredByColor || config.branding.poweredByColor,
+                        },
+                        // Hero icons 
+                        heroIcons: demoBranding.heroIcons || config.heroIcons,
+                        // Header cover
+                        headerCover: demoBranding.coverImage ? {
+                            ...config.headerCover,
+                            image: demoBranding.coverImage
+                        } : config.headerCover,
+                        // Featured photos
+                        homeConfig: demoBranding.featuredPhotos ? {
+                            ...config.homeConfig,
+                            featuredPhotos: demoBranding.featuredPhotos
+                        } : config.homeConfig,
+                        // Camera branding
+                        camera: demoBranding.camera || config.camera,
+                        // Info pills
+                        infoPills: demoBranding.infoPills ? {
+                            ...config.infoPills,
+                            ...demoBranding.infoPills
+                        } : config.infoPills
+                    };
+                }
+            } catch (e) {
+                console.error('Error merging demo branding:', e);
+            }
+        }
+
+        return config;
     } catch (e) {
         console.error("Error loading config:", e);
         return defaultConfig;
