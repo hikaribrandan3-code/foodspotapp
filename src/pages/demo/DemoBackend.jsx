@@ -2,7 +2,7 @@
 // Uses SAME UI layout as production, but with demo session + mock data
 // NO authentication required - only demo session check
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     getDemoSession,
@@ -17,6 +17,7 @@ import {
     applyDemoToFrontend,
     clearAllDemoData
 } from '../../utils/demoSession.js'
+import { getDemoEvents, clearDemoEvents } from '../../utils/demoEvents.js'
 import { getConfig, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
@@ -75,6 +76,1134 @@ const MOCK_ANALYTICS = {
     month: { orders: 245, revenue: 612000 }
 }
 
+// ============================================
+// EVENT LOG UI HELPERS (Presentation-layer only)
+// ============================================
+
+/**
+ * Get human-readable relative time from timestamp
+ * Computed at render time, no timers needed
+ */
+function getRelativeTime(timestamp) {
+    const now = Date.now()
+    const then = new Date(timestamp).getTime()
+    const diffMs = now - then
+    const diffSec = Math.floor(diffMs / 1000)
+    const diffMin = Math.floor(diffSec / 60)
+    const diffHour = Math.floor(diffMin / 60)
+    const diffDay = Math.floor(diffHour / 24)
+
+    if (diffSec < 10) return 'just now'
+    if (diffSec < 60) return `${diffSec}s ago`
+    if (diffMin < 60) return `${diffMin} min ago`
+    if (diffHour < 24) return `${diffHour}h ago`
+    return `${diffDay}d ago`
+}
+
+/**
+ * Group events by orderId for UI display
+ * Only groups consecutive events with the same orderId
+ * Returns array of { type: 'group'|'single', orderId?, orderNumber?, events: [] }
+ */
+function groupEventsByOrder(events) {
+    if (!events || events.length === 0) return []
+
+    const groups = []
+    let currentGroup = null
+
+    events.forEach(event => {
+        const orderId = event.payload?.orderId
+        const orderNumber = event.payload?.orderNumber
+
+        // Check if this event has an orderId and can be grouped
+        if (orderId) {
+            // If current group has same orderId, add to it
+            if (currentGroup && currentGroup.orderId === orderId) {
+                currentGroup.events.push(event)
+            } else {
+                // Close previous group if exists
+                if (currentGroup) groups.push(currentGroup)
+                // Start new group
+                currentGroup = {
+                    type: 'group',
+                    orderId,
+                    orderNumber,
+                    events: [event]
+                }
+            }
+        } else {
+            // Non-order event - close current group and add as single
+            if (currentGroup) {
+                groups.push(currentGroup)
+                currentGroup = null
+            }
+            groups.push({ type: 'single', events: [event] })
+        }
+    })
+
+    // Don't forget the last group
+    if (currentGroup) groups.push(currentGroup)
+
+    return groups
+}
+
+// Event Log Item Component - Displays a single webhook event
+function EventLogItem({ event, compact = false }) {
+    const [expanded, setExpanded] = useState(false)
+
+    const eventTypeColors = {
+        'order.created': '#22C55E',
+        'order.status_updated': '#3B82F6',
+        'order.completed': '#8B5CF6',
+        'menu.updated': '#F59E0B'
+    }
+
+    const formatTimestamp = (ts) => {
+        const date = new Date(ts)
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        }) + ' ' + date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        })
+    }
+
+    return (
+        <div style={{
+            background: compact ? '#FAFAFA' : 'white',
+            borderRadius: compact ? 8 : 10,
+            marginBottom: compact ? 4 : 8,
+            border: `1px solid ${compact ? '#F3F4F6' : '#E5E7EB'}`,
+            overflow: 'hidden'
+        }}>
+            {/* Event Header */}
+            <div
+                onClick={() => setExpanded(!expanded)}
+                style={{
+                    padding: compact ? '8px 12px' : '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    background: expanded ? '#F9FAFB' : 'transparent'
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    {/* Event Type Badge */}
+                    <span style={{
+                        padding: '3px 6px',
+                        background: eventTypeColors[event.type] || '#6B7280',
+                        color: 'white',
+                        borderRadius: 4,
+                        fontSize: compact ? 10 : 11,
+                        fontWeight: 600,
+                        fontFamily: 'monospace'
+                    }}>
+                        {event.type}
+                    </span>
+
+                    {/* Relative Time (Primary) */}
+                    <span style={{ fontSize: 11, color: '#6B7280', fontWeight: 500 }}>
+                        {getRelativeTime(event.timestamp)}
+                    </span>
+
+                    {/* Exact Timestamp (Secondary) */}
+                    <span style={{ fontSize: 10, color: '#D1D5DB' }}>
+                        {formatTimestamp(event.timestamp)}
+                    </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {/* Status Badge */}
+                    <span style={{
+                        padding: '2px 5px',
+                        background: '#DCFCE7',
+                        color: '#166534',
+                        borderRadius: 4,
+                        fontSize: 9,
+                        fontWeight: 600
+                    }}>
+                        {event.delivery?.status || 200} OK
+                    </span>
+
+                    {/* Expand Icon */}
+                    <span style={{ fontSize: 10, color: '#9CA3AF' }}>
+                        {expanded ? '▲' : '▼'}
+                    </span>
+                </div>
+            </div>
+
+            {/* Payload Preview (Expanded) */}
+            {expanded && (
+                <div style={{
+                    padding: '10px 12px',
+                    background: '#1F2937',
+                    borderTop: '1px solid #E5E7EB'
+                }}>
+                    <pre style={{
+                        margin: 0,
+                        fontSize: 10,
+                        color: '#A5F3FC',
+                        fontFamily: 'monospace',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-all',
+                        lineHeight: 1.4
+                    }}>
+                        {JSON.stringify(event.payload, null, 2)}
+                    </pre>
+                </div>
+            )}
+        </div>
+    )
+}
+
+// Event Group Component - Collapsible group of events for same order
+function EventGroup({ group }) {
+    const [expanded, setExpanded] = useState(true) // Default expanded for visibility
+
+    // Single event in group = don't show group header
+    if (group.events.length === 1) {
+        return <EventLogItem event={group.events[0]} />
+    }
+
+    return (
+        <div style={{
+            background: 'white',
+            borderRadius: 10,
+            marginBottom: 10,
+            border: '1px solid #E5E7EB',
+            overflow: 'hidden'
+        }}>
+            {/* Group Header */}
+            <div
+                onClick={() => setExpanded(!expanded)}
+                style={{
+                    padding: '10px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    background: '#F9FAFB',
+                    borderBottom: expanded ? '1px solid #E5E7EB' : 'none'
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 14 }}>📦</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                        Order #{group.orderNumber || '—'}
+                    </span>
+                    <span style={{
+                        padding: '2px 6px',
+                        background: '#E5E7EB',
+                        color: '#6B7280',
+                        borderRadius: 10,
+                        fontSize: 10,
+                        fontWeight: 500
+                    }}>
+                        {group.events.length} events
+                    </span>
+                </div>
+                <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                    {expanded ? '▼' : '▶'}
+                </span>
+            </div>
+
+            {/* Grouped Events */}
+            {expanded && (
+                <div style={{ padding: '8px 10px' }}>
+                    {group.events.map(event => (
+                        <EventLogItem key={event.id} event={event} compact />
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
+// ============================================
+// ORDER LIFECYCLE PLAYBACK (Demo-only, Read-only)
+// ============================================
+
+/**
+ * Get order events from demo events, filtered by orderId
+ * Returns events sorted ascending by timestamp
+ */
+function getOrderEvents(orderId) {
+    if (!orderId) return []
+    const allEvents = getDemoEvents()
+    return allEvents
+        .filter(e => e.payload?.orderId === orderId)
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+}
+
+/**
+ * Check if an order has any demo events
+ */
+function orderHasEvents(orderId) {
+    return getOrderEvents(orderId).length > 0
+}
+
+/**
+ * Map event types to timeline steps
+ */
+const TIMELINE_STEPS = [
+    { id: 'created', label: 'Order Placed', eventType: 'order.created', icon: '📝' },
+    { id: 'preparing', label: 'Preparing', eventType: 'order.status_updated', statusValue: 'preparacion', icon: '👨‍🍳' },
+    { id: 'ready', label: 'Ready', eventType: 'order.status_updated', statusValue: 'listo', icon: '✅' },
+    { id: 'delivery', label: 'Out for Delivery', eventType: 'order.status_updated', statusValue: 'en_camino', icon: '🚗', deliveryOnly: true },
+    { id: 'completed', label: 'Delivered', eventType: 'order.completed', icon: '🎉' }
+]
+
+/**
+ * OrderPlaybackModal - Shows animated timeline of order lifecycle
+ * Read-only, uses existing demo events only
+ */
+function OrderPlaybackModal({ order, isOpen, onClose }) {
+    const [currentStepIndex, setCurrentStepIndex] = useState(-1)
+    const [isPlaying, setIsPlaying] = useState(false)
+    const [playbackComplete, setPlaybackComplete] = useState(false)
+    const timerRef = useRef(null)
+
+    // Get events for this order
+    const orderEvents = getOrderEvents(order?.id)
+
+    // Determine which steps apply based on events
+    const applicableSteps = TIMELINE_STEPS.filter(step => {
+        // Skip delivery step if not a delivery order
+        if (step.deliveryOnly && !order?.deliveryMode) return false
+
+        // Check if we have an event matching this step
+        return orderEvents.some(event => {
+            if (event.type === step.eventType) {
+                if (step.statusValue) {
+                    return event.payload?.newStatus === step.statusValue
+                }
+                return true
+            }
+            return false
+        })
+    })
+
+    // Start playback
+    const startPlayback = () => {
+        setCurrentStepIndex(0)
+        setIsPlaying(true)
+        setPlaybackComplete(false)
+    }
+
+    // Auto-advance steps
+    useEffect(() => {
+        if (!isPlaying || currentStepIndex >= applicableSteps.length) {
+            if (currentStepIndex >= applicableSteps.length && isPlaying) {
+                setIsPlaying(false)
+                setPlaybackComplete(true)
+            }
+            return
+        }
+
+        timerRef.current = setTimeout(() => {
+            setCurrentStepIndex(prev => prev + 1)
+        }, 1000) // 1 second per step
+
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
+    }, [isPlaying, currentStepIndex, applicableSteps.length])
+
+    // Cleanup on close
+    useEffect(() => {
+        if (!isOpen) {
+            setCurrentStepIndex(-1)
+            setIsPlaying(false)
+            setPlaybackComplete(false)
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
+    }, [isOpen])
+
+    // Start playback automatically when modal opens
+    useEffect(() => {
+        if (isOpen && applicableSteps.length > 0 && !isPlaying && !playbackComplete) {
+            setTimeout(startPlayback, 500) // Small delay for visual effect
+        }
+    }, [isOpen])
+
+    if (!isOpen || !order) return null
+
+    const formatTime = (ts) => {
+        return new Date(ts).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    }
+
+    return (
+        <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 16
+        }}>
+            <div style={{
+                background: 'white',
+                borderRadius: 16,
+                width: '100%',
+                maxWidth: 380,
+                maxHeight: '85vh',
+                overflow: 'auto',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+            }}>
+                {/* Header */}
+                <div style={{
+                    padding: '16px 20px',
+                    borderBottom: '1px solid #E5E7EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <div>
+                        <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', margin: 0 }}>
+                            Order Journey
+                        </h3>
+                        <p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>
+                            Order #{order.orderNumber}
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: 20,
+                            color: '#9CA3AF',
+                            cursor: 'pointer',
+                            padding: 4
+                        }}
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                {/* Order Summary */}
+                <div style={{
+                    padding: '16px 20px',
+                    background: '#F9FAFB',
+                    borderBottom: '1px solid #E5E7EB'
+                }}>
+                    <div style={{ marginBottom: 12 }}>
+                        {order.items.map((item, idx) => (
+                            <div key={idx} style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                fontSize: 13,
+                                color: '#374151',
+                                marginBottom: 4
+                            }}>
+                                <span>{item.quantity}× {item.name}</span>
+                                <span>${(item.price * item.quantity).toLocaleString()}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        paddingTop: 8,
+                        borderTop: '1px dashed #D1D5DB'
+                    }}>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>Total</span>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: '#22C55E' }}>
+                            ${order.total.toLocaleString()}
+                        </span>
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 11, color: '#9CA3AF' }}>
+                        {order.deliveryMode ? '🚗 Delivery' : '🏠 Pickup'} • {formatTime(order.createdAt)}
+                    </div>
+                </div>
+
+                {/* Timeline */}
+                <div style={{ padding: '20px 20px 16px' }}>
+                    <h4 style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 16, letterSpacing: 0.5 }}>
+                        ORDER TIMELINE
+                    </h4>
+
+                    {applicableSteps.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: 20, color: '#9CA3AF' }}>
+                            <p>No events recorded for this order</p>
+                        </div>
+                    ) : (
+                        <div style={{ position: 'relative' }}>
+                            {/* Vertical line */}
+                            <div style={{
+                                position: 'absolute',
+                                left: 15,
+                                top: 8,
+                                bottom: 8,
+                                width: 2,
+                                background: '#E5E7EB'
+                            }} />
+
+                            {/* Steps */}
+                            {applicableSteps.map((step, idx) => {
+                                const isActive = idx <= currentStepIndex
+                                const isCurrent = idx === currentStepIndex
+                                const event = orderEvents.find(e => {
+                                    if (e.type === step.eventType) {
+                                        if (step.statusValue) {
+                                            return e.payload?.newStatus === step.statusValue
+                                        }
+                                        return true
+                                    }
+                                    return false
+                                })
+
+                                return (
+                                    <div
+                                        key={step.id}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'flex-start',
+                                            gap: 14,
+                                            marginBottom: idx === applicableSteps.length - 1 ? 0 : 20,
+                                            position: 'relative',
+                                            opacity: isActive ? 1 : 0.4,
+                                            transform: isCurrent ? 'scale(1.02)' : 'scale(1)',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        {/* Step indicator */}
+                                        <div style={{
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: '50%',
+                                            background: isActive ? '#22C55E' : '#E5E7EB',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: 14,
+                                            flexShrink: 0,
+                                            boxShadow: isCurrent ? '0 0 0 4px rgba(34, 197, 94, 0.2)' : 'none',
+                                            transition: 'all 0.3s ease',
+                                            zIndex: 1
+                                        }}>
+                                            {step.icon}
+                                        </div>
+
+                                        {/* Step content */}
+                                        <div style={{ flex: 1, paddingTop: 4 }}>
+                                            <p style={{
+                                                fontSize: 14,
+                                                fontWeight: isActive ? 600 : 400,
+                                                color: isActive ? '#1F2937' : '#9CA3AF',
+                                                margin: 0
+                                            }}>
+                                                {step.label}
+                                            </p>
+                                            {event && isActive && (
+                                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0' }}>
+                                                    {formatTime(event.timestamp)}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div style={{
+                    padding: '12px 20px 20px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: 12
+                }}>
+                    {playbackComplete && (
+                        <button
+                            onClick={startPlayback}
+                            style={{
+                                padding: '10px 20px',
+                                background: '#3B82F6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 8,
+                                fontSize: 13,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}
+                        >
+                            ▶ Replay
+                        </button>
+                    )}
+                    <button
+                        onClick={onClose}
+                        style={{
+                            padding: '10px 20px',
+                            background: '#F3F4F6',
+                            color: '#374151',
+                            border: 'none',
+                            borderRadius: 8,
+                            fontSize: 13,
+                            fontWeight: 500,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// Event Log Tab Component - Contains full event log UI with auto-scroll
+function EventLogTab({ cardStyle, labelStyle }) {
+    const scrollContainerRef = useRef(null)
+    const events = getDemoEvents()
+    const prevEventCountRef = useRef(events.length)
+
+    // Auto-scroll to top when new events arrive
+    useEffect(() => {
+        if (events.length > prevEventCountRef.current) {
+            scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+        prevEventCountRef.current = events.length
+    }, [events.length])
+
+    // Group events by orderId at render time
+    const groupedEvents = groupEventsByOrder(events)
+
+    return (
+        <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={labelStyle}>🔗 WEBHOOK EVENT LOG</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {events.length > 0 && (
+                        <span style={{ fontSize: 11, color: '#6B7280' }}>
+                            {events.length} event{events.length !== 1 ? 's' : ''}
+                        </span>
+                    )}
+                    <button
+                        onClick={() => {
+                            clearDemoEvents()
+                            alert('✅ Event log cleared')
+                        }}
+                        style={{
+                            padding: '6px 12px',
+                            fontSize: 11,
+                            background: '#EF4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 6,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Clear Log
+                    </button>
+                </div>
+            </div>
+
+            <div style={cardStyle}>
+                <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 0 }}>
+                    Simulated webhook events — what your backend would receive in production
+                </p>
+            </div>
+
+            {/* Scrollable Event Container */}
+            <div
+                ref={scrollContainerRef}
+                style={{
+                    maxHeight: 'calc(100vh - 380px)',
+                    overflowY: 'auto',
+                    paddingTop: 8,
+                    WebkitOverflowScrolling: 'touch'
+                }}
+            >
+                {events.length === 0 ? (
+                    <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
+                        <p style={{ fontSize: 14, color: '#9CA3AF', margin: 0 }}>No events yet</p>
+                        <p style={{ fontSize: 12, color: '#D1D5DB', margin: '8px 0 0' }}>
+                            Place an order or update menu to see events
+                        </p>
+                    </div>
+                ) : (
+                    groupedEvents.map((group, idx) => (
+                        group.type === 'group' ? (
+                            <EventGroup key={group.orderId + '-' + idx} group={group} />
+                        ) : (
+                            <EventLogItem key={group.events[0].id} event={group.events[0]} />
+                        )
+                    ))
+                )}
+            </div>
+        </>
+    )
+}
+
+// ============================================
+// ACTIVITY DASHBOARD (Demo-only, Read-only)
+// ============================================
+
+/**
+ * Compute activity metrics from demo events and orders
+ * All computations are read-only and derived at render time
+ */
+function computeActivityMetrics(events, orders) {
+    const now = Date.now()
+    const todayStart = new Date().setHours(0, 0, 0, 0)
+
+    // Filter today's events
+    const todayEvents = events.filter(e => new Date(e.timestamp).getTime() >= todayStart)
+
+    // Order counts
+    const ordersToday = todayEvents.filter(e => e.type === 'order.created').length
+    const completedOrders = todayEvents.filter(e => e.type === 'order.completed').length
+
+    // Revenue from completed orders
+    const completedOrderPayloads = todayEvents
+        .filter(e => e.type === 'order.completed')
+        .map(e => e.payload)
+    const totalRevenue = completedOrderPayloads.reduce((sum, p) => sum + (p.total || 0), 0)
+    const avgOrderValue = completedOrders > 0 ? Math.round(totalRevenue / completedOrders) : 0
+
+    // Prep time calculation (order.created → first order.status_updated)
+    const prepTimes = []
+    const createdEvents = todayEvents.filter(e => e.type === 'order.created')
+
+    createdEvents.forEach(created => {
+        const orderId = created.payload?.orderId
+        const firstUpdate = todayEvents.find(e =>
+            e.type === 'order.status_updated' &&
+            e.payload?.orderId === orderId
+        )
+        if (firstUpdate) {
+            const prepMs = new Date(firstUpdate.timestamp) - new Date(created.timestamp)
+            prepTimes.push(prepMs)
+        }
+    })
+
+    const avgPrepTimeMs = prepTimes.length > 0
+        ? prepTimes.reduce((a, b) => a + b, 0) / prepTimes.length
+        : 0
+    const avgPrepTimeMin = Math.round(avgPrepTimeMs / 60000)
+
+    // Delivery vs Pickup split
+    const deliveryCount = createdEvents.filter(e => e.payload?.deliveryMode).length
+    const pickupCount = createdEvents.filter(e => !e.payload?.deliveryMode).length
+
+    return {
+        ordersToday,
+        completedOrders,
+        totalRevenue,
+        avgOrderValue,
+        avgPrepTimeMin,
+        deliveryCount,
+        pickupCount
+    }
+}
+
+/**
+ * ActivityTab - Demo-only activity dashboard
+ * Read-only metrics derived from demo events
+ */
+function ActivityTab({ cardStyle, labelStyle, orders }) {
+    const events = getDemoEvents()
+    const metrics = computeActivityMetrics(events, orders)
+
+    // Metric Card Component
+    const MetricCard = ({ icon, label, value, subtext, color = '#22C55E' }) => (
+        <div style={{
+            background: 'white',
+            borderRadius: 12,
+            padding: 16,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 18 }}>{icon}</span>
+                <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 500 }}>{label}</span>
+            </div>
+            <p style={{ fontSize: 28, fontWeight: 700, color, margin: 0 }}>
+                {value}
+            </p>
+            {subtext && (
+                <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0' }}>
+                    {subtext}
+                </p>
+            )}
+        </div>
+    )
+
+    return (
+        <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={labelStyle}>📊 ACTIVITY DASHBOARD</h3>
+                <span style={{
+                    padding: '4px 8px',
+                    background: '#FEF3C7',
+                    color: '#92400E',
+                    borderRadius: 4,
+                    fontSize: 10,
+                    fontWeight: 600
+                }}>
+                    DEMO DATA
+                </span>
+            </div>
+
+            <div style={{ ...cardStyle, marginBottom: 16 }}>
+                <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>
+                    Today's activity summary — derived from demo events
+                </p>
+            </div>
+
+            {/* Orders Section */}
+            <h4 style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginBottom: 10, letterSpacing: 0.5 }}>
+                ORDERS
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                <MetricCard
+                    icon="📋"
+                    label="Orders Today"
+                    value={metrics.ordersToday}
+                    color="#3B82F6"
+                />
+                <MetricCard
+                    icon="✅"
+                    label="Completed"
+                    value={metrics.completedOrders}
+                    color="#22C55E"
+                />
+            </div>
+
+            {/* Revenue Section */}
+            <h4 style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginBottom: 10, letterSpacing: 0.5 }}>
+                REVENUE (DEMO)
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                <MetricCard
+                    icon="💰"
+                    label="Total Revenue"
+                    value={`$${metrics.totalRevenue.toLocaleString()}`}
+                    color="#22C55E"
+                />
+                <MetricCard
+                    icon="📊"
+                    label="Avg Order"
+                    value={`$${metrics.avgOrderValue.toLocaleString()}`}
+                    color="#8B5CF6"
+                />
+            </div>
+
+            {/* Operations Section */}
+            <h4 style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginBottom: 10, letterSpacing: 0.5 }}>
+                OPERATIONS
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                <MetricCard
+                    icon="⏱️"
+                    label="Avg Prep Time"
+                    value={metrics.avgPrepTimeMin > 0 ? `${metrics.avgPrepTimeMin} min` : '—'}
+                    subtext="Order placed → first update"
+                    color="#F59E0B"
+                />
+                <div style={{
+                    background: 'white',
+                    borderRadius: 12,
+                    padding: 16,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 18 }}>🚗</span>
+                        <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 500 }}>Order Type</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 16 }}>
+                        <div>
+                            <p style={{ fontSize: 20, fontWeight: 700, color: '#3B82F6', margin: 0 }}>
+                                {metrics.deliveryCount}
+                            </p>
+                            <p style={{ fontSize: 10, color: '#9CA3AF', margin: '2px 0 0' }}>Delivery</p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: 20, fontWeight: 700, color: '#6B7280', margin: 0 }}>
+                                {metrics.pickupCount}
+                            </p>
+                            <p style={{ fontSize: 10, color: '#9CA3AF', margin: '2px 0 0' }}>Pickup</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer Note */}
+            <div style={{
+                background: '#F3F4F6',
+                borderRadius: 8,
+                padding: 12,
+                textAlign: 'center'
+            }}>
+                <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>
+                    💡 Metrics update automatically as you demo the app
+                </p>
+            </div>
+        </>
+    )
+}
+
+// ============================================
+// LAUNCH READINESS PANEL (Demo-only, Read-only)
+// ============================================
+
+/**
+ * LaunchTab - Demo-only launch readiness panel
+ * Static UI explaining post-demo next steps
+ * No storage writes, no backend calls
+ */
+function LaunchTab({ cardStyle, labelStyle }) {
+    const [showLaunchModal, setShowLaunchModal] = useState(false)
+
+    // Static checklist items
+    const readyItems = [
+        { icon: '✅', label: 'Menu configured', done: true },
+        { icon: '✅', label: 'Branding applied', done: true },
+        { icon: '✅', label: 'Orders tested', done: true },
+        { icon: '✅', label: 'Staff workflow validated', done: true }
+    ]
+
+    const nextItems = [
+        { icon: '⏳', label: 'Payments setup' },
+        { icon: '⏳', label: 'Notifications' },
+        { icon: '⏳', label: 'Delivery integrations' }
+    ]
+
+    return (
+        <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={labelStyle}>🚀 LAUNCH READINESS</h3>
+                <span style={{
+                    padding: '4px 8px',
+                    background: '#D1FAE5',
+                    color: '#065F46',
+                    borderRadius: 4,
+                    fontSize: 10,
+                    fontWeight: 600
+                }}>
+                    READY
+                </span>
+            </div>
+
+            {/* Readiness Checklist */}
+            <div style={{ ...cardStyle, marginBottom: 16 }}>
+                <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', marginBottom: 12 }}>
+                    ✅ Demo Complete
+                </h4>
+                {readyItems.map((item, idx) => (
+                    <div key={idx} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '8px 0',
+                        borderBottom: idx < readyItems.length - 1 ? '1px solid #F3F4F6' : 'none'
+                    }}>
+                        <span style={{ fontSize: 16 }}>{item.icon}</span>
+                        <span style={{ fontSize: 13, color: '#374151' }}>{item.label}</span>
+                    </div>
+                ))}
+            </div>
+
+            {/* Next Steps */}
+            <div style={{ ...cardStyle, marginBottom: 16, background: '#FFFBEB', border: '1px solid #FCD34D' }}>
+                <h4 style={{ fontSize: 13, fontWeight: 600, color: '#92400E', marginBottom: 12 }}>
+                    ⏳ After Launch
+                </h4>
+                {nextItems.map((item, idx) => (
+                    <div key={idx} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '6px 0',
+                        borderBottom: idx < nextItems.length - 1 ? '1px solid #FDE68A' : 'none'
+                    }}>
+                        <span style={{ fontSize: 14 }}>{item.icon}</span>
+                        <span style={{ fontSize: 12, color: '#78350F' }}>{item.label}</span>
+                    </div>
+                ))}
+            </div>
+
+            {/* Time to Launch Card */}
+            <div style={{
+                ...cardStyle,
+                background: 'linear-gradient(135deg, #1F2937 0%, #374151 100%)',
+                color: 'white',
+                marginBottom: 16,
+                textAlign: 'center'
+            }}>
+                <span style={{ fontSize: 32, marginBottom: 8, display: 'block' }}>🚀</span>
+                <h4 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px' }}>
+                    Launch-Ready Setup
+                </h4>
+                <p style={{ fontSize: 12, color: '#D1D5DB', margin: 0, lineHeight: 1.5 }}>
+                    This demo represents a complete, launch-ready configuration.
+                    Typical onboarding takes 1–3 days.
+                </p>
+            </div>
+
+            {/* Continue to Launch Button */}
+            <button
+                onClick={() => setShowLaunchModal(true)}
+                style={{
+                    width: '100%',
+                    padding: 16,
+                    background: '#22C55E',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 12,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8
+                }}
+            >
+                🚀 Continue to Launch
+            </button>
+
+            {/* Launch Modal */}
+            {showLaunchModal && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    padding: 16
+                }}>
+                    <div style={{
+                        background: 'white',
+                        borderRadius: 16,
+                        width: '100%',
+                        maxWidth: 360,
+                        overflow: 'hidden',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                    }}>
+                        {/* Modal Header */}
+                        <div style={{
+                            padding: '20px 20px 16px',
+                            textAlign: 'center',
+                            borderBottom: '1px solid #E5E7EB'
+                        }}>
+                            <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }}>🎉</span>
+                            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#1F2937', margin: 0 }}>
+                                Ready to Launch?
+                            </h3>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div style={{ padding: 20 }}>
+                            <p style={{ fontSize: 14, color: '#4B5563', lineHeight: 1.6, margin: '0 0 16px' }}>
+                                When you're ready to go live, here's what happens next:
+                            </p>
+
+                            <div style={{ marginBottom: 16 }}>
+                                {[
+                                    { num: '1', text: 'We schedule a quick setup call' },
+                                    { num: '2', text: 'Your menu and branding are migrated' },
+                                    { num: '3', text: 'Staff training (15 min)' },
+                                    { num: '4', text: "You're live!" }
+                                ].map((step, idx) => (
+                                    <div key={idx} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 12,
+                                        marginBottom: 12
+                                    }}>
+                                        <span style={{
+                                            width: 24,
+                                            height: 24,
+                                            borderRadius: '50%',
+                                            background: '#22C55E',
+                                            color: 'white',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: 12,
+                                            fontWeight: 700,
+                                            flexShrink: 0
+                                        }}>
+                                            {step.num}
+                                        </span>
+                                        <span style={{ fontSize: 13, color: '#374151' }}>{step.text}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div style={{
+                                background: '#F3F4F6',
+                                borderRadius: 8,
+                                padding: 12,
+                                textAlign: 'center',
+                                marginBottom: 16
+                            }}>
+                                <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>
+                                    ℹ️ This is a demo — no action will be taken.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div style={{ padding: '0 20px 20px', display: 'flex', gap: 12 }}>
+                            <button
+                                onClick={() => setShowLaunchModal(false)}
+                                style={{
+                                    flex: 1,
+                                    padding: 12,
+                                    background: '#F3F4F6',
+                                    color: '#374151',
+                                    border: 'none',
+                                    borderRadius: 8,
+                                    fontSize: 13,
+                                    fontWeight: 500,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Close
+                            </button>
+                            <button
+                                onClick={() => {
+                                    alert('📧 In production, this would capture your contact info. Demo mode — no action taken.')
+                                    setShowLaunchModal(false)
+                                }}
+                                style={{
+                                    flex: 1,
+                                    padding: 12,
+                                    background: '#22C55E',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: 8,
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Got It
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    )
+}
+
 function DemoBackend() {
     const navigate = useNavigate()
     const [demoSession, setDemoSession] = useState(() => getDemoSession())
@@ -89,6 +1218,10 @@ function DemoBackend() {
     const [applyFeedback, setApplyFeedback] = useState('')
     const [coverEditorOpen, setCoverEditorOpen] = useState(false)
     const [showEmailPopup, setShowEmailPopup] = useState(false)
+
+    // Order Playback state (demo-only)
+    const [playbackOrder, setPlaybackOrder] = useState(null)
+    const [playbackOpen, setPlaybackOpen] = useState(false)
 
     // Derived editing state (add more editors here if needed)
     const isEditing = coverEditorOpen
@@ -181,7 +1314,10 @@ function DemoBackend() {
         { id: 'menu', label: 'Menu' },
         { id: 'info', label: 'Info' },
         { id: 'orders', label: 'Orders' },
-        { id: 'analytics', label: 'Analytics' }
+        { id: 'analytics', label: 'Analytics' },
+        { id: 'activity', label: 'Activity' },
+        { id: 'launch', label: 'Launch' },
+        { id: 'events', label: 'Event Log' }
     ]
 
     const staffTabs = [
@@ -834,21 +1970,47 @@ function DemoBackend() {
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ fontSize: 14, fontWeight: 600, color: '#22C55E' }}>${order.total.toLocaleString()}</span>
-                                        <button
-                                            onClick={() => alert('ℹ️ Demo Mode — Order status changes are simulated')}
-                                            style={{
-                                                padding: '8px 16px',
-                                                background: '#3B82F6',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: 6,
-                                                fontSize: 12,
-                                                fontWeight: 500,
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            {order.status === 'preparacion' ? 'Mark Ready' : 'Deliver'}
-                                        </button>
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                            {/* Replay Order Button - only show if order has events */}
+                                            {orderHasEvents(order.id) && (
+                                                <button
+                                                    onClick={() => {
+                                                        setPlaybackOrder(order)
+                                                        setPlaybackOpen(true)
+                                                    }}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        background: '#8B5CF6',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: 6,
+                                                        fontSize: 11,
+                                                        fontWeight: 500,
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 4
+                                                    }}
+                                                >
+                                                    ▶ Replay
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => alert('ℹ️ Demo Mode — Order status changes are simulated')}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    background: '#3B82F6',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: 6,
+                                                    fontSize: 12,
+                                                    fontWeight: 500,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                {order.status === 'preparacion' ? 'Mark Ready' : 'Deliver'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))
@@ -945,6 +2107,21 @@ function DemoBackend() {
                     </>
                 )}
 
+                {/* ACTIVITY TAB (Owner only) - Demo Activity Dashboard */}
+                {activeTab === 'activity' && role === 'owner' && (
+                    <ActivityTab cardStyle={cardStyle} labelStyle={labelStyle} orders={orders} />
+                )}
+
+                {/* LAUNCH TAB (Owner only) - Launch Readiness Panel */}
+                {activeTab === 'launch' && role === 'owner' && (
+                    <LaunchTab cardStyle={cardStyle} labelStyle={labelStyle} />
+                )}
+
+                {/* EVENT LOG TAB (Owner only) - Simulated Webhooks */}
+                {activeTab === 'events' && role === 'owner' && (
+                    <EventLogTab cardStyle={cardStyle} labelStyle={labelStyle} />
+                )}
+
             </div>
 
             {/* Demo Footer */}
@@ -967,6 +2144,16 @@ function DemoBackend() {
             <DemoEmailPopup
                 isOpen={showEmailPopup}
                 onClose={() => setShowEmailPopup(false)}
+            />
+
+            {/* Order Lifecycle Playback Modal (demo-only) */}
+            <OrderPlaybackModal
+                order={playbackOrder}
+                isOpen={playbackOpen}
+                onClose={() => {
+                    setPlaybackOpen(false)
+                    setPlaybackOrder(null)
+                }}
             />
         </div>
     )

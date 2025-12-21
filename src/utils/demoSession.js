@@ -206,6 +206,9 @@ export function updateDemoMenuItem(menu, categoryId, itemId, updates) {
  * This promotes draft state to active state
  */
 export function applyDemoToFrontend() {
+    // Import dynamically to avoid circular dependency
+    const { emitDemoEvent } = require('./demoEvents.js')
+
     const demoConfig = getDemoConfig()
     const demoMenu = getDemoMenu()
 
@@ -229,6 +232,15 @@ export function applyDemoToFrontend() {
     if (demoMenu) {
         localStorage.setItem(ACTIVE_MENU_KEY, JSON.stringify(demoMenu))
     }
+
+    // Emit menu.updated event (only when publishing changes)
+    const categoriesCount = demoMenu?.categories?.length || 0
+    const itemsCount = demoMenu?.categories?.reduce((sum, cat) => sum + (cat.items?.length || 0), 0) || 0
+    emitDemoEvent('menu.updated', {
+        categoriesCount,
+        itemsCount,
+        updatedAt: new Date().toISOString()
+    })
 
     console.log('✅ Demo changes applied to frontend')
 

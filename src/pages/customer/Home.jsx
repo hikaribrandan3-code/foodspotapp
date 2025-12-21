@@ -634,7 +634,7 @@ function Home() {
                     if (isOwnerMode) {
                         return (
                             <div
-                                key={item.id || index}
+                                key={item.id} // SNAPBACK FIX: Always use stable ID, never index fallback
                                 onContextMenu={(e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
@@ -690,7 +690,7 @@ function Home() {
                     // Non-owner: standard Link
                     return (
                         <Link
-                            key={item.id || index}
+                            key={item.id} // SNAPBACK FIX: Always use stable ID, never index fallback
                             to="/menu"
                             style={cardStyle}
                         >

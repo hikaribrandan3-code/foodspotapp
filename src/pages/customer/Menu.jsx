@@ -76,14 +76,21 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     const [activeCategory, setActiveCategory] = useState(enabledCategories[0]?.id || '')
 
     // Refresh data periodically
+    // SNAPBACK FIX: Pause polling during drag/edit to prevent cascade re-renders
     useEffect(() => {
+        // Skip polling if in edit mode or actively dragging
+        // This prevents React reconciliation issues during item manipulation
+        if (isEditMode || dragState) return
+
         const interval = setInterval(() => {
             setMenu(getMenu())
             setCart(getCurrentOrder())
         }, 2000)
 
         // Listen for frontendSync to re-read demo menu and branding
+        // SNAPBACK FIX: Also skip during edit/drag
         const handleFrontendSync = () => {
+            if (isEditMode || dragState) return // Don't re-render during edits
             setMenu(getMenu())
             if (isInDemoMode()) {
                 setDemoMenu(getActiveDemoMenu())
@@ -96,7 +103,7 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             clearInterval(interval)
             window.removeEventListener('frontendSync', handleFrontendSync)
         }
-    }, [])
+    }, [isEditMode, dragState]) // SNAPBACK FIX: Re-run effect when edit/drag state changes
 
     // Long-press handlers for edit mode (owner only)
     const handleLongPressStart = useCallback((e) => {
