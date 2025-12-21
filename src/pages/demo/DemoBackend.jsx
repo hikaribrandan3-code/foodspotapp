@@ -409,6 +409,7 @@ function DemoBackend() {
                         <BrandingColorPicker
                             primaryColor={demoConfig.primaryColor || '#8B7355'}
                             iconColorMode={demoConfig.iconColorMode || 'white'}
+                            iconColorLabel="Navbar Icon Color"
                             onColorChange={(color) => handleConfigChange({ primaryColor: color })}
                             onIconModeChange={(mode) => handleConfigChange({ iconColorMode: mode })}
                         />

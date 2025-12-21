@@ -42,17 +42,30 @@ function Info() {
     const navigate = useNavigate()
     const [config, setConfig] = useState(() => getConfig())
 
+    // Demo mode detection - use state for reactive updates on frontendSync
+    const inDemoMode = isInDemoMode()
+    const [demoBranding, setDemoBranding] = useState(() => inDemoMode ? getActiveDemoBranding() : null)
+    const effectivePoweredByColor = (inDemoMode && demoBranding?.poweredByColor) || config.branding?.poweredByColor || '#C4856A'
+
     useEffect(() => {
         const interval = setInterval(() => {
             setConfig(getConfig())
         }, 2000)
-        return () => clearInterval(interval)
-    }, [])
 
-    // Demo mode detection - overlay demo branding if available
-    const inDemoMode = isInDemoMode()
-    const demoBranding = inDemoMode ? getActiveDemoBranding() : null
-    const effectivePoweredByColor = (inDemoMode && demoBranding?.poweredByColor) || config.branding?.poweredByColor || '#C4856A'
+        // Listen for frontendSync to re-read demo branding
+        const handleFrontendSync = () => {
+            setConfig(getConfig())
+            if (isInDemoMode()) {
+                setDemoBranding(getActiveDemoBranding())
+            }
+        }
+        window.addEventListener('frontendSync', handleFrontendSync)
+
+        return () => {
+            clearInterval(interval)
+            window.removeEventListener('frontendSync', handleFrontendSync)
+        }
+    }, [])
 
     const infoDisplay = config.infoDisplay || {}
     const businessInfo = config.businessInfo || {}

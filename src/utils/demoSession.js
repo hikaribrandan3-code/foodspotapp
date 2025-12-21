@@ -229,6 +229,10 @@ export function applyDemoToFrontend() {
     }
 
     console.log('✅ Demo changes applied to frontend')
+
+    // Dispatch frontendSync event to trigger re-renders across all listening components
+    window.dispatchEvent(new CustomEvent('frontendSync'))
+
     return true
 }
 

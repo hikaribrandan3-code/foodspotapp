@@ -28,9 +28,9 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
     const [addedItem, setAddedItem] = useState(null) // For visual feedback
     const categoryRefs = useRef({})
 
-    // Demo mode detection - overlay demo menu if available
+    // Demo mode detection - use state for reactive updates on frontendSync
     const inDemoMode = isInDemoMode()
-    const demoMenu = inDemoMode ? getActiveDemoMenu() : null
+    const [demoMenu, setDemoMenu] = useState(() => inDemoMode ? getActiveDemoMenu() : null)
 
     // Use demo menu overlay if in demo mode and demo menu exists
     const effectiveMenu = (inDemoMode && demoMenu) ? demoMenu : menu
@@ -78,7 +78,20 @@ function Menu({ deliveryMode: deliveryModeProp = false }) {
             setMenu(getMenu())
             setCart(getCurrentOrder())
         }, 2000)
-        return () => clearInterval(interval)
+
+        // Listen for frontendSync to re-read demo menu
+        const handleFrontendSync = () => {
+            setMenu(getMenu())
+            if (isInDemoMode()) {
+                setDemoMenu(getActiveDemoMenu())
+            }
+        }
+        window.addEventListener('frontendSync', handleFrontendSync)
+
+        return () => {
+            clearInterval(interval)
+            window.removeEventListener('frontendSync', handleFrontendSync)
+        }
     }, [])
 
     // Long-press handlers for edit mode (owner only)

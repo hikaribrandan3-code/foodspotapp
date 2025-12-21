@@ -27,9 +27,9 @@ function Home() {
     const [config, setConfig] = useState(() => getConfig())
     const menu = getMenu()
 
-    // Demo mode detection
+    // Demo mode detection - use state for reactive updates on frontendSync
     const inDemoMode = isInDemoMode()
-    const demoBranding = inDemoMode ? getActiveDemoBranding() : null
+    const [demoBranding, setDemoBranding] = useState(() => inDemoMode ? getActiveDemoBranding() : null)
 
     // Merge demo branding with config when in demo mode
     const effectiveConfig = inDemoMode && demoBranding ? {
@@ -123,6 +123,10 @@ function Home() {
         const handleFrontendSync = () => {
             console.log('[HOME] Frontend sync triggered')
             refreshAll()
+            // Also re-read demo branding if in demo mode
+            if (isInDemoMode()) {
+                setDemoBranding(getActiveDemoBranding())
+            }
         }
         window.addEventListener('frontendSync', handleFrontendSync)
 

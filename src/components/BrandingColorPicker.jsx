@@ -20,6 +20,7 @@ const COLOR_PRESETS = [
 export default function BrandingColorPicker({
     primaryColor = '#8B7355',
     iconColorMode = 'white',
+    iconColorLabel = 'Color de íconos', // Allow customization of this label
     onColorChange,
     onIconModeChange
 }) {
@@ -155,7 +156,7 @@ export default function BrandingColorPicker({
                     display: 'block',
                     marginBottom: 10
                 }}>
-                    Color de íconos
+                    {iconColorLabel}
                 </label>
                 <div style={{ display: 'flex', gap: 8 }}>
                     <button
