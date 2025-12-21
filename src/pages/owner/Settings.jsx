@@ -729,6 +729,198 @@ function Settings() {
                             </div>
                         </div>
 
+                        {/* INFO PILL COLORS — Pill customization */}
+                        <div className="form-group">
+                            <label className="form-label">🔘 Info Pill Colors</label>
+                            <p style={{ fontSize: 11, color: '#64748B', marginBottom: 12 }}>
+                                Personaliza los colores de los botones en la página Info
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                {[
+                                    { id: 'whatsapp', label: 'WhatsApp', icon: '💬' },
+                                    { id: 'mercadoPago', label: 'Mercado Pago', icon: '💳' },
+                                    { id: 'rappi', label: 'Rappi', icon: '🛵' },
+                                    { id: 'pedidosYa', label: 'PedidosYa', icon: '🍕' },
+                                    { id: 'demo', label: 'Demo', icon: '🎮' },
+                                    { id: 'adminAccess', label: 'Admin', icon: '🔒' },
+                                ].map(pill => {
+                                    const pillConfig = config.infoPills?.[pill.id] || {}
+                                    const bgColor = pillConfig.bgColor || (pill.id === 'whatsapp' ? '#C4856A' : pill.id === 'mercadoPago' ? '#FFE600' : pill.id === 'rappi' ? '#FF5A00' : pill.id === 'pedidosYa' ? '#E31837' : pill.id === 'demo' ? '#84CC16' : '#FFFFFF')
+                                    const textColor = pillConfig.textColor || (pill.id === 'mercadoPago' ? '#009EE3' : pill.id === 'adminAccess' ? '#9CA3AF' : '#FFFFFF')
+                                    return (
+                                        <button
+                                            key={pill.id}
+                                            onClick={() => {
+                                                const input = document.getElementById(`owner-pill-color-${pill.id}`)
+                                                if (input) input.click()
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: 6,
+                                                padding: '10px 12px',
+                                                backgroundColor: bgColor,
+                                                color: textColor,
+                                                borderRadius: 20,
+                                                border: pill.id === 'adminAccess' ? '1px solid #E5E7EB' : 'none',
+                                                fontSize: 12,
+                                                fontWeight: 500,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <span>{pill.icon}</span>
+                                            <span>{pill.label}</span>
+                                            <input
+                                                id={`owner-pill-color-${pill.id}`}
+                                                type="color"
+                                                value={bgColor}
+                                                onChange={(e) => {
+                                                    updateConfig({
+                                                        infoPills: {
+                                                            ...config.infoPills,
+                                                            [pill.id]: { ...pillConfig, bgColor: e.target.value }
+                                                        }
+                                                    })
+                                                    setConfig(getConfig())
+                                                }}
+                                                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                                            />
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        {/* CAMERA BRANDING — Icon and color customization */}
+                        <div className="form-group">
+                            <label className="form-label">📷 Camera Button</label>
+                            <p style={{ fontSize: 11, color: '#64748B', marginBottom: 12 }}>
+                                Personaliza el botón de cámara en la navegación
+                            </p>
+
+                            {/* Enable toggle */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                <span style={{ fontSize: 13, fontWeight: 500, color: '#1E293B' }}>Estilo personalizado</span>
+                                <button
+                                    onClick={() => {
+                                        updateConfig({ camera: { ...config.camera, enabled: !config.camera?.enabled } })
+                                        setConfig(getConfig())
+                                    }}
+                                    style={{
+                                        padding: '6px 12px',
+                                        borderRadius: 16,
+                                        border: 'none',
+                                        backgroundColor: config.camera?.enabled ? '#22C55E' : '#E2E8F0',
+                                        color: config.camera?.enabled ? 'white' : '#64748B',
+                                        fontSize: 12,
+                                        fontWeight: 500,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {config.camera?.enabled ? 'ON' : 'OFF'}
+                                </button>
+                            </div>
+
+                            {/* Icon selector (only when enabled) */}
+                            {config.camera?.enabled && (
+                                <>
+                                    <p style={{ fontSize: 11, color: '#64748B', marginBottom: 8 }}>Ícono de cámara</p>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+                                        {[
+                                            { id: 'default', label: 'Default' },
+                                            { id: 'camera', label: 'Camera' },
+                                            { id: 'aperture', label: 'Aperture' },
+                                            { id: 'webcam', label: 'Webcam' }
+                                        ].map(icon => {
+                                            const isSelected = (config.camera?.icon || 'default') === icon.id
+                                            return (
+                                                <button
+                                                    key={icon.id}
+                                                    onClick={() => {
+                                                        updateConfig({ camera: { ...config.camera, icon: icon.id } })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={{
+                                                        padding: '12px 8px',
+                                                        borderRadius: 12,
+                                                        border: isSelected ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+                                                        backgroundColor: isSelected ? '#EFF6FF' : '#FFFFFF',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        gap: 4
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: 20 }}>
+                                                        {icon.id === 'default' ? '📷' : icon.id === 'camera' ? '📸' : icon.id === 'aperture' ? '🎯' : '🖥️'}
+                                                    </span>
+                                                    <span style={{ fontSize: 10, color: '#64748B' }}>{icon.label}</span>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+
+                                    {/* Color picker */}
+                                    <p style={{ fontSize: 11, color: '#64748B', marginBottom: 8 }}>Color del botón</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                                        <input
+                                            type="color"
+                                            value={config.camera?.color || '#8B7355'}
+                                            onChange={(e) => {
+                                                updateConfig({ camera: { ...config.camera, color: e.target.value } })
+                                                setConfig(getConfig())
+                                            }}
+                                            style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                        />
+                                        <div style={{
+                                            width: 48, height: 48, borderRadius: '50%',
+                                            backgroundColor: config.camera?.color || '#8B7355',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                        }}>
+                                            <span style={{ fontSize: 20 }}>📷</span>
+                                        </div>
+                                        <span style={{ fontSize: 11, color: '#64748B', fontFamily: 'monospace' }}>
+                                            {(config.camera?.color || '#8B7355').toUpperCase()}
+                                        </span>
+                                    </div>
+
+                                    {/* Text color toggle */}
+                                    <p style={{ fontSize: 11, color: '#64748B', marginBottom: 8 }}>Color del ícono</p>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        {['auto', 'white', 'black'].map(mode => {
+                                            const isSelected = (config.camera?.textColor || 'auto') === mode
+                                            return (
+                                                <button
+                                                    key={mode}
+                                                    onClick={() => {
+                                                        updateConfig({ camera: { ...config.camera, textColor: mode } })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '8px 12px',
+                                                        borderRadius: 8,
+                                                        border: isSelected ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+                                                        backgroundColor: mode === 'black' ? '#1E293B' : mode === 'white' ? '#FFFFFF' : '#F1F5F9',
+                                                        color: mode === 'black' ? '#FFFFFF' : mode === 'white' ? '#1E293B' : '#64748B',
+                                                        fontSize: 12,
+                                                        fontWeight: 500,
+                                                        cursor: 'pointer',
+                                                        textTransform: 'capitalize'
+                                                    }}
+                                                >
+                                                    {mode}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
                         <div className="form-group">
                             <label className="form-label">Color de confirmación</label>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

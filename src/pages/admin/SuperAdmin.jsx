@@ -1146,6 +1146,195 @@ function SuperAdmin() {
                                 </div>
                             </div>
 
+                            {/* INFO PILL COLORS — Pill customization */}
+                            <h3 style={labelStyle}>🔘 INFO PILL COLORS</h3>
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Personaliza los colores de los botones en la página Info. Toca un pill para editar.</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                    {[
+                                        { id: 'whatsapp', label: 'WhatsApp', icon: '💬' },
+                                        { id: 'mercadoPago', label: 'Mercado Pago', icon: '💳' },
+                                        { id: 'rappi', label: 'Rappi', icon: '🛵' },
+                                        { id: 'pedidosYa', label: 'PedidosYa', icon: '🍕' },
+                                        { id: 'demo', label: 'Demo', icon: '🎮' },
+                                        { id: 'adminAccess', label: 'Admin', icon: '🔒' },
+                                    ].map(pill => {
+                                        const pillConfig = config.infoPills?.[pill.id] || {}
+                                        const bgColor = pillConfig.bgColor || (pill.id === 'whatsapp' ? '#C4856A' : pill.id === 'mercadoPago' ? '#FFE600' : pill.id === 'rappi' ? '#FF5A00' : pill.id === 'pedidosYa' ? '#E31837' : pill.id === 'demo' ? '#84CC16' : '#FFFFFF')
+                                        const textColor = pillConfig.textColor || (pill.id === 'mercadoPago' ? '#009EE3' : pill.id === 'adminAccess' ? '#9CA3AF' : '#FFFFFF')
+                                        return (
+                                            <button
+                                                key={pill.id}
+                                                onClick={() => {
+                                                    const input = document.getElementById(`sa-pill-color-${pill.id}`)
+                                                    if (input) input.click()
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: 6,
+                                                    padding: '10px 12px',
+                                                    backgroundColor: bgColor,
+                                                    color: textColor,
+                                                    borderRadius: 20,
+                                                    border: pill.id === 'adminAccess' ? '1px solid #E5E7EB' : 'none',
+                                                    fontSize: 12,
+                                                    fontWeight: 500,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <span>{pill.icon}</span>
+                                                <span>{pill.label}</span>
+                                                <input
+                                                    id={`sa-pill-color-${pill.id}`}
+                                                    type="color"
+                                                    value={bgColor}
+                                                    onChange={(e) => {
+                                                        updateConfig({
+                                                            infoPills: {
+                                                                ...config.infoPills,
+                                                                [pill.id]: { ...pillConfig, bgColor: e.target.value }
+                                                            }
+                                                        })
+                                                        setConfig(getConfig())
+                                                    }}
+                                                    style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                                                />
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Toca cualquier pill para cambiar su color de fondo</p>
+                            </div>
+
+                            {/* CAMERA BRANDING — Icon and color customization */}
+                            <h3 style={labelStyle}>📷 CAMERA BUTTON</h3>
+                            <div style={cardStyle}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Personaliza el botón de cámara en la barra de navegación</p>
+
+                                {/* Enable toggle */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                    <label style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>Estilo personalizado</label>
+                                    <button
+                                        onClick={() => {
+                                            updateConfig({ camera: { ...config.camera, enabled: !config.camera?.enabled } })
+                                            setConfig(getConfig())
+                                        }}
+                                        style={{
+                                            padding: '6px 12px',
+                                            borderRadius: 16,
+                                            border: 'none',
+                                            backgroundColor: config.camera?.enabled ? '#22C55E' : '#E5E7EB',
+                                            color: config.camera?.enabled ? 'white' : '#6B7280',
+                                            fontSize: 12,
+                                            fontWeight: 500,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {config.camera?.enabled ? 'ON' : 'OFF'}
+                                    </button>
+                                </div>
+
+                                {/* Icon selector (only when enabled) */}
+                                {config.camera?.enabled && (
+                                    <>
+                                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Ícono de cámara</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+                                            {[
+                                                { id: 'default', label: 'Default' },
+                                                { id: 'camera', label: 'Camera' },
+                                                { id: 'aperture', label: 'Aperture' },
+                                                { id: 'webcam', label: 'Webcam' }
+                                            ].map(icon => {
+                                                const isSelected = (config.camera?.icon || 'default') === icon.id
+                                                return (
+                                                    <button
+                                                        key={icon.id}
+                                                        onClick={() => {
+                                                            updateConfig({ camera: { ...config.camera, icon: icon.id } })
+                                                            setConfig(getConfig())
+                                                        }}
+                                                        style={{
+                                                            padding: '12px 8px',
+                                                            borderRadius: 12,
+                                                            border: isSelected ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                            backgroundColor: isSelected ? '#F0FDF4' : '#FFFFFF',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            gap: 4
+                                                        }}
+                                                    >
+                                                        <span style={{ fontSize: 20 }}>
+                                                            {icon.id === 'default' ? '📷' : icon.id === 'camera' ? '📸' : icon.id === 'aperture' ? '🎯' : '🖥️'}
+                                                        </span>
+                                                        <span style={{ fontSize: 10, color: '#6B7280' }}>{icon.label}</span>
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+
+                                        {/* Color picker */}
+                                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Color del botón</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                                            <input
+                                                type="color"
+                                                value={config.camera?.color || '#8B7355'}
+                                                onChange={(e) => {
+                                                    updateConfig({ camera: { ...config.camera, color: e.target.value } })
+                                                    setConfig(getConfig())
+                                                }}
+                                                style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                            />
+                                            <div style={{
+                                                width: 48, height: 48, borderRadius: '50%',
+                                                backgroundColor: config.camera?.color || '#8B7355',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                            }}>
+                                                <span style={{ fontSize: 20 }}>📷</span>
+                                            </div>
+                                            <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'monospace' }}>
+                                                {(config.camera?.color || '#8B7355').toUpperCase()}
+                                            </span>
+                                        </div>
+
+                                        {/* Text color toggle */}
+                                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Color del ícono</label>
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            {['auto', 'white', 'black'].map(mode => {
+                                                const isSelected = (config.camera?.textColor || 'auto') === mode
+                                                return (
+                                                    <button
+                                                        key={mode}
+                                                        onClick={() => {
+                                                            updateConfig({ camera: { ...config.camera, textColor: mode } })
+                                                            setConfig(getConfig())
+                                                        }}
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '8px 12px',
+                                                            borderRadius: 8,
+                                                            border: isSelected ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                                            backgroundColor: mode === 'black' ? '#1F2937' : mode === 'white' ? '#FFFFFF' : '#F3F4F6',
+                                                            color: mode === 'black' ? '#FFFFFF' : mode === 'white' ? '#1F2937' : '#6B7280',
+                                                            fontSize: 12,
+                                                            fontWeight: 500,
+                                                            cursor: 'pointer',
+                                                            textTransform: 'capitalize'
+                                                        }}
+                                                    >
+                                                        {mode}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
                             {/* Divider Preset Selector */}
                             <h3 style={labelStyle}>🖼️ IMAGEN DECORATIVA (Menú/Pedido)</h3>
                             <div style={cardStyle}>
