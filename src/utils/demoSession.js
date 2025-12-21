@@ -1,6 +1,8 @@
 // Demo Session Utilities
 // ISOLATED from production auth - uses sessionStorage (clears on tab close)
 
+// NOTE: Must use ES module imports here.
+// ❌ require() fails silently in Vite production builds and will break demo → frontend sync.
 import { emitDemoEvent } from './demoEvents.js'
 
 const DEMO_SESSION_KEY = 'demo_session'
