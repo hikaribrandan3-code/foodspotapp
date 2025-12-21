@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getConfig } from '../../config/appConfig.js'
+import { createDemoSession } from '../../utils/demoSession.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
 const WhatsAppIcon = () => (
@@ -203,12 +204,38 @@ function Info() {
                     fontSize: 14,
                     fontWeight: 400,
                     cursor: 'pointer',
-                    marginBottom: 20,
+                    marginBottom: 10,
                     boxSizing: 'border-box'
                 }}
             >
                 <LockIcon />
                 Acceso administrador
+            </button>
+
+            {/* Demo Mode Entry Button */}
+            <button
+                onClick={() => {
+                    createDemoSession()
+                    navigate('/demo/backend/dashboard')
+                }}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    padding: '12px 24px',
+                    backgroundColor: '#84CC16',
+                    color: '#FFFFFF',
+                    borderRadius: 28,
+                    border: 'none',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    marginBottom: 20,
+                    boxSizing: 'border-box'
+                }}
+            >
+                DEMO
             </button>
 
             {hasBusinessInfo && (

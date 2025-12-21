@@ -35,6 +35,9 @@ import Analytics from './pages/owner/Analytics.jsx'
 import SuperAdmin from './pages/admin/SuperAdmin.jsx'
 import CoverPreview from './components/CoverPreview.jsx'
 
+// Demo Pages (no auth required)
+import DemoBackend from './pages/demo/DemoBackend.jsx'
+
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
 
@@ -322,6 +325,11 @@ function App() {
                             <Analytics />
                         </ProtectedRoute>
                     } />
+
+                    {/* Demo Routes - NO AUTH REQUIRED */}
+                    <Route path="/demo/backend/dashboard" element={<DemoBackend />} />
+                    <Route path="/demo/backend" element={<Navigate to="/demo/backend/dashboard" replace />} />
+                    <Route path="/demo" element={<Navigate to="/demo/backend/dashboard" replace />} />
 
                     {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
                     <Route path="/admin" element={<SuperAdmin />} />
