@@ -356,8 +356,16 @@ export function applyDemoToFrontend() {
 
     console.log('✅ Demo changes applied to frontend')
 
+    // [TEMPORARY DEBUG] Log before dispatching frontendSync
+    console.log('[DEMO APPLY] active branding saved', {
+        hasActiveBranding: !!localStorage.getItem('foodspot_active_branding')
+    })
+
     // Dispatch frontendSync event to trigger re-renders across all listening components
     window.dispatchEvent(new CustomEvent('frontendSync'))
+
+    // [TEMPORARY DEBUG] Log after dispatching frontendSync
+    console.log('[DEMO APPLY] frontendSync dispatched')
 
     return true
 }

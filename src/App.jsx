@@ -50,6 +50,14 @@ function App() {
         incrementVisit()
     }, [])
 
+    // [TEMPORARY DEBUG] Confirm React accepted the new config
+    useEffect(() => {
+        console.log('[APP] config committed', {
+            brandingPrimary: config?.branding?.primaryColor,
+            heroIcons: config?.heroIcons
+        })
+    }, [config])
+
     // Apply global typography from config
     useEffect(() => {
         const root = document.documentElement
@@ -272,6 +280,13 @@ function App() {
         const newConfig = getConfig()
         const newDemo = isDemoMode()
 
+        // [TEMPORARY DEBUG] Log what is read before setting state
+        console.log('[APP] refreshConfig()', {
+            demo: newDemo,
+            brandingPrimary: newConfig?.branding?.primaryColor,
+            heroIcons: newConfig?.heroIcons
+        })
+
         // Always update state to ensure CSS variable re-application
         // The useEffect dependencies will handle actual DOM updates
         setConfig(newConfig)
@@ -285,7 +300,11 @@ function App() {
 
         // GLOBAL SYNC: Always listen for explicit frontendSync events (demo + production)
         const handleFrontendSync = () => {
-            console.log('[GLOBAL SYNC] Frontend sync triggered')
+            // [TEMPORARY DEBUG] Log when frontendSync is received
+            console.log('[APP] frontendSync received', {
+                demoMode,
+                timestamp: Date.now()
+            })
             refreshConfig()
         }
         window.addEventListener('frontendSync', handleFrontendSync)
