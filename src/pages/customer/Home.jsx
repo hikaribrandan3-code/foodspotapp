@@ -32,16 +32,25 @@ function Home({ config }) {
 
     // Merge demo branding with config when in demo mode
     // DEFENSIVE: Guard all property access to prevent undefined crashes
+    // CRITICAL: Ensure pauseOrders always has a safe default
+    const baseConfig = config || {}
     const effectiveConfig = inDemoMode && demoBranding ? {
-        ...config,
-        heroIcons: demoBranding?.heroIcons || config?.heroIcons || {},
-        featuredPhotos: demoBranding?.featuredPhotos || config?.featuredPhotos || [],
-        canvasMode: demoBranding?.canvasMode || config?.canvasMode || 'light',
+        ...baseConfig,
+        // Ensure pauseOrders is always defined (fixes crash during demo transition)
+        pauseOrders: baseConfig.pauseOrders ?? false,
+        pauseOrdersMessage: baseConfig.pauseOrdersMessage || '',
+        heroIcons: demoBranding?.heroIcons || baseConfig?.heroIcons || {},
+        featuredPhotos: demoBranding?.featuredPhotos || baseConfig?.featuredPhotos || [],
+        canvasMode: demoBranding?.canvasMode || baseConfig?.canvasMode || 'light',
         branding: {
-            ...(config?.branding || {}),
-            primaryColor: demoBranding?.primaryColor || config?.branding?.primaryColor || '#8B7355'
+            ...(baseConfig?.branding || {}),
+            primaryColor: demoBranding?.primaryColor || baseConfig?.branding?.primaryColor || '#8B7355'
         }
-    } : (config || {})
+    } : {
+        ...baseConfig,
+        pauseOrders: baseConfig.pauseOrders ?? false,
+        pauseOrdersMessage: baseConfig.pauseOrdersMessage || ''
+    }
 
     // Owner/SuperAdmin mode detection - both can edit home icons
     const userMode = getUserMode()
