@@ -278,13 +278,22 @@ export function promoteBrandingToFrontend(branding, menu = null, options = {}) {
     }
 
     // Write branding to active storage
+    // NOTE: Demo config stores primaryColor/iconColorMode at root level,
+    // but getConfig() expects them nested inside a branding object.
+    // Construct the proper nested structure here.
+    const brandingObject = branding.branding || {
+        primaryColor: branding.primaryColor,
+        iconColorMode: branding.iconColorMode,
+        poweredByColor: branding.poweredByColor,
+    }
+
     localStorage.setItem(ACTIVE_BRANDING_KEY, JSON.stringify({
         // Core branding fields
         businessName: branding.businessName,
-        branding: branding.branding, // Full branding object (primaryColor, iconColorMode, etc.)
-        primaryColor: branding.primaryColor,
+        branding: brandingObject, // Nested branding object for getConfig()
+        primaryColor: branding.primaryColor, // Keep for backwards compat
         accentColor: branding.accentColor,
-        iconColorMode: branding.iconColorMode,
+        iconColorMode: branding.iconColorMode, // Keep for backwards compat
         coverImage: branding.coverImage,
         heroIcons: branding.heroIcons,
         businessInfo: branding.businessInfo,

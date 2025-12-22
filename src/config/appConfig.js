@@ -351,8 +351,12 @@ export function getConfig() {
                         },
                         // Hero icons 
                         heroIcons: demoBranding.heroIcons || config.heroIcons,
-                        // Cover image
+                        // Cover image (both legacy coverImage and headerCover for AppHeader)
                         coverImage: demoBranding.coverImage || config.coverImage,
+                        headerCover: demoBranding.coverImage ? {
+                            ...config.headerCover,
+                            image: demoBranding.coverImage
+                        } : config.headerCover,
                         // Featured photos
                         featuredPhotos: demoBranding.featuredPhotos || config.featuredPhotos,
                         // Camera branding
