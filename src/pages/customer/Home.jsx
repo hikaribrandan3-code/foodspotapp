@@ -31,16 +31,17 @@ function Home({ config }) {
     const [demoBranding, setDemoBranding] = useState(() => inDemoMode ? getActiveDemoBranding() : null)
 
     // Merge demo branding with config when in demo mode
+    // DEFENSIVE: Guard all property access to prevent undefined crashes
     const effectiveConfig = inDemoMode && demoBranding ? {
         ...config,
-        heroIcons: demoBranding.heroIcons || config.heroIcons,
-        featuredPhotos: demoBranding.featuredPhotos || config.featuredPhotos,
-        canvasMode: demoBranding.canvasMode || config.canvasMode,
+        heroIcons: demoBranding?.heroIcons || config?.heroIcons || {},
+        featuredPhotos: demoBranding?.featuredPhotos || config?.featuredPhotos || [],
+        canvasMode: demoBranding?.canvasMode || config?.canvasMode || 'light',
         branding: {
-            ...config.branding,
-            primaryColor: demoBranding.primaryColor || config.branding?.primaryColor
+            ...(config?.branding || {}),
+            primaryColor: demoBranding?.primaryColor || config?.branding?.primaryColor || '#8B7355'
         }
-    } : config
+    } : (config || {})
 
     // Owner/SuperAdmin mode detection - both can edit home icons
     const userMode = getUserMode()
