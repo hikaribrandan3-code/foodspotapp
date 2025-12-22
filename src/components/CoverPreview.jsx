@@ -9,7 +9,6 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
-import { getConfig } from '../config/appConfig.js'
 import Home from '../pages/customer/Home.jsx'
 
 // Static Nav Bar (PWA-safe — doesn't hide on /admin paths)
@@ -66,10 +65,9 @@ function CameraButton() {
     )
 }
 
-function CoverPreview() {
+function CoverPreview({ config }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const config = getConfig()
 
     // NO TIMERS, NO AUTO-NAVIGATION
     // Preview persists until user action

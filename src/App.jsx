@@ -390,7 +390,7 @@ function App() {
 
                     {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
                     <Route path="/admin" element={<SuperAdmin config={safeConfig} />} />
-                    <Route path="/admin/cover-preview" element={<CoverPreview />} />
+                    <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
                     {/* Camera Suite */}
                     <Route path="/camera" element={<Camera />} />
