@@ -269,83 +269,51 @@ function App() {
     // Manual config refresh - call from admin/owner actions when needed
     const refreshConfig = useCallback(() => {
         const newConfig = getConfig()
-        const newDemo = isDemoMode()
-
-        // [TEMPORARY DEBUG] Log what is read before setting state
-        console.log('[APP] refreshConfig()', {
-            demo: newDemo,
-            brandingPrimary: newConfig?.branding?.primaryColor,
-            heroIcons: newConfig?.heroIcons
-        })
-
-        // Always update state to ensure CSS variable re-application
-        // The useEffect dependencies will handle actual DOM updates
         setConfig(newConfig)
-        setDemoMode(newDemo)
     }, [])
 
-    // AUTO-SYNC: Listen for localStorage changes from other tabs/windows (Super Admin)
-    // DEMO MODE: Only frontendSync is allowed - no polling, no auto-refresh
+    // AUTO-SYNC: Listen for localStorage changes from other tabs/windows
     useEffect(() => {
-        const inDemo = isDemoMode()
-
-        // GLOBAL SYNC: Always listen for explicit frontendSync events (demo + production)
+        // Listen for explicit frontendSync events
         const handleFrontendSync = () => {
-            // [TEMPORARY DEBUG] Log when frontendSync is received
-            console.log('[APP] frontendSync received', {
-                demoMode,
-                timestamp: Date.now()
-            })
             refreshConfig()
         }
         window.addEventListener('frontendSync', handleFrontendSync)
 
-        // === PRODUCTION-ONLY LISTENERS ===
-        // These are disabled in demo mode to prevent overwriting demo branding
-        let pollInterval = null
-
-        if (!inDemo) {
-            const handleStorageChange = (e) => {
-                // Config key changed - refresh
-                if (e.key === 'grub_config' || e.key === null) {
-                    refreshConfig()
-                }
-            }
-            window.addEventListener('storage', handleStorageChange)
-
-            // Also refresh on visibility change (same-tab sync when returning from admin)
-            const handleVisibilityChange = () => {
-                if (document.visibilityState === 'visible') {
-                    refreshConfig()
-                }
-            }
-            document.addEventListener('visibilitychange', handleVisibilityChange)
-
-            // Focus event for PWA standalone mode
-            const handleFocus = () => {
+        // Storage change listener (cross-tab sync)
+        const handleStorageChange = (e) => {
+            if (e.key === 'grub_config' || e.key === null) {
                 refreshConfig()
             }
-            window.addEventListener('focus', handleFocus)
+        }
+        window.addEventListener('storage', handleStorageChange)
 
-            // Polling fallback for same-tab changes (PWA needs faster polling)
-            // 500ms ensures near-instant updates in PWA standalone mode
-            pollInterval = setInterval(refreshConfig, 500)
-
-            // Cleanup for production listeners
-            return () => {
-                window.removeEventListener('storage', handleStorageChange)
-                document.removeEventListener('visibilitychange', handleVisibilityChange)
-                window.removeEventListener('focus', handleFocus)
-                window.removeEventListener('frontendSync', handleFrontendSync)
-                clearInterval(pollInterval)
+        // Visibility change (same-tab sync when returning from admin)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                refreshConfig()
             }
         }
+        document.addEventListener('visibilitychange', handleVisibilityChange)
 
-        // Cleanup for demo mode (only frontendSync listener)
+        // Focus event for PWA standalone mode
+        const handleFocus = () => {
+            refreshConfig()
+        }
+        window.addEventListener('focus', handleFocus)
+
+        // Polling fallback for same-tab changes (500ms for PWA)
+        const pollInterval = setInterval(refreshConfig, 500)
+
+        // Cleanup
         return () => {
             window.removeEventListener('frontendSync', handleFrontendSync)
+            window.removeEventListener('storage', handleStorageChange)
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+            window.removeEventListener('focus', handleFocus)
+            clearInterval(pollInterval)
         }
-    }, [refreshConfig, demoMode])
+    }, [refreshConfig])
 
     // Maintenance mode overlay
     if (config.maintenanceMode) {
@@ -363,10 +331,7 @@ function App() {
     return (
         <AdminIntentProvider>
             <div className="app-container">
-                {/* Demo Mode Indicator */}
-                {demoMode && (
-                    <div className="demo-indicator">DEMO — datos simulados</div>
-                )}
+
 
                 <Routes>
                     {/* Customer Routes */}
