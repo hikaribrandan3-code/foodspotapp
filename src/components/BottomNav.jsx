@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
-import { getConfig } from '../config/appConfig.js'
+import { useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { getCameraIcon } from './CameraIcons.jsx'
 
 // Icons as SVG components for crisp rendering
@@ -36,41 +35,9 @@ const InfoIcon = () => (
 
 // CAMERA ICON: Removed - now imported from CameraIcons.jsx
 
-function BottomNav() {
+// INVARIANT: config must come from prop (App.jsx safeConfig)
+function BottomNav({ config }) {
     const location = useLocation()
-    const [config, setConfig] = useState(() => getConfig())
-
-    // Poll for branding changes (same as App.jsx for consistency)
-    useEffect(() => {
-        const refreshAll = () => {
-            setConfig(getConfig())
-        }
-
-        const pollInterval = setInterval(() => {
-            const newConfig = getConfig()
-            setConfig(prev => {
-                // Only update if branding or camera changed
-                const brandingChanged = JSON.stringify(prev.branding) !== JSON.stringify(newConfig.branding)
-                const cameraChanged = JSON.stringify(prev.camera) !== JSON.stringify(newConfig.camera)
-                if (brandingChanged || cameraChanged) {
-                    return newConfig
-                }
-                return prev
-            })
-        }, 500)
-
-        // GLOBAL SYNC: Listen for manual sync from Super Admin/Owner Sync button
-        const handleFrontendSync = () => {
-            console.log('[NAV] Frontend sync triggered')
-            refreshAll()
-        }
-        window.addEventListener('frontendSync', handleFrontendSync)
-
-        return () => {
-            clearInterval(pollInterval)
-            window.removeEventListener('frontendSync', handleFrontendSync)
-        }
-    }, [])
 
     // Hide nav on certain pages
     const hiddenPaths = ['/staff', '/owner', '/admin', '/demo', '/game', '/receipt', '/camera']

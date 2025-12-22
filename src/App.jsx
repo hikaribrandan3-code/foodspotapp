@@ -369,7 +369,7 @@ function App() {
                     } />
                     <Route path="/owner/rewards" element={
                         <ProtectedRoute requiredRole="owner">
-                            <RewardsManager />
+                            <RewardsManager config={safeConfig} />
                         </ProtectedRoute>
                     } />
                     <Route path="/owner/settings" element={
@@ -400,7 +400,7 @@ function App() {
                 </Routes>
 
                 {/* Bottom Navigation (visible on main customer pages) */}
-                <BottomNav />
+                <BottomNav config={safeConfig} />
             </div>
         </AdminIntentProvider>
     )

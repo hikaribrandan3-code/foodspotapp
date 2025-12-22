@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
-import { getConfig, updateConfig } from '../../config/appConfig.js'
+import { updateConfig } from '../../config/appConfig.js'
 
 // Shared Owner Header Component
 function OwnerHeader({ title, subtitle, onLogout }) {
@@ -89,11 +89,11 @@ function OwnerTabs({ activeTab }) {
     )
 }
 
-function RewardsManager() {
+// INVARIANT: config must come from prop (App.jsx safeConfig)
+function RewardsManager({ config }) {
     const navigate = useNavigate()
-    const [config, setConfig] = useState(() => getConfig())
-    const [stampsRequired, setStampsRequired] = useState(config.rewards?.stampsRequired || 10)
-    const [rewardDescription, setRewardDescription] = useState(config.rewards?.rewardDescription || '')
+    const [stampsRequired, setStampsRequired] = useState(config?.rewards?.stampsRequired || 10)
+    const [rewardDescription, setRewardDescription] = useState(config?.rewards?.rewardDescription || '')
 
     useEffect(() => {
         const auth = getAuth()
@@ -114,18 +114,18 @@ function RewardsManager() {
                 rewardDescription: rewardDescription || '¡Café gratis!'
             }
         })
-        setConfig(getConfig())
+        window.dispatchEvent(new CustomEvent('frontendSync'))
         alert('¡Cambios guardados!')
     }
 
     const handleToggleRewards = () => {
         updateConfig({
             features: {
-                ...config.features,
-                rewardsEnabled: !config.features.rewardsEnabled
+                ...config?.features,
+                rewardsEnabled: !config?.features?.rewardsEnabled
             }
         })
-        setConfig(getConfig())
+        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
     return (
