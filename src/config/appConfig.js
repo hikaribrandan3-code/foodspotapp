@@ -254,7 +254,7 @@ export const CONFIG_STORAGE_KEY = "grub_config";
 
 // Demo branding storage key (must match demoSession.js)
 const ACTIVE_BRANDING_KEY = 'foodspot_active_branding';
-const DEMO_SESSION_KEY = 'foodspot_demo_session';
+const DEMO_SESSION_KEY = 'demo_session'; // MUST match demoSession.js line 8
 
 // Get current config from storage or return default
 // In demo mode, also merges active demo branding
@@ -311,6 +311,7 @@ export function getConfig() {
         // This allows backend changes to propagate immediately to frontend
         const demoSession = sessionStorage.getItem(DEMO_SESSION_KEY);
         if (demoSession) {
+            console.log('[DEMO DETECTION] ✅ Demo session detected, merging branding...'); // TEMP VERIFICATION LOG
             try {
                 const activeBranding = localStorage.getItem(ACTIVE_BRANDING_KEY);
                 if (activeBranding) {
