@@ -181,12 +181,12 @@ function Settings({ config }) {
 
     const handleToggleMaintenance = () => {
         updateConfig({ maintenanceMode: !config.maintenanceMode })
-        setConfig(getConfig())
+        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
     const handleTogglePause = () => {
         updateConfig({ pauseOrders: !config.pauseOrders })
-        setConfig(getConfig())
+        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
     const handleSaveMessages = () => {
@@ -212,7 +212,7 @@ function Settings({ config }) {
                     // Dispatch global sync event
                     window.dispatchEvent(new CustomEvent('frontendSync'))
                     // Refresh local state
-                    setConfig(getConfig())
+                    window.dispatchEvent(new CustomEvent('frontendSync'))
                     // Visual feedback
                     alert('✅ Frontend synced!')
                 }}
@@ -324,7 +324,7 @@ function Settings({ config }) {
                                             originAddress: e.target.value
                                         }
                                     })
-                                    setConfig(getConfig())
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 placeholder="Usar dirección del local"
                             />
@@ -360,7 +360,7 @@ function Settings({ config }) {
                                             radiusKm: newValue
                                         }
                                     })
-                                    setConfig(getConfig())
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 style={{ width: '100%' }}
                             />
@@ -381,7 +381,7 @@ function Settings({ config }) {
                                             flatFee: parseInt(e.target.value) || 0
                                         }
                                     })
-                                    setConfig(getConfig())
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 placeholder="0 = gratis"
                             />
@@ -402,7 +402,7 @@ function Settings({ config }) {
                                             freeDeliveryThreshold: parseInt(e.target.value) || 0
                                         }
                                     })
-                                    setConfig(getConfig())
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 placeholder="0 = sin umbral"
                             />
@@ -536,7 +536,7 @@ function Settings({ config }) {
                                             fontFamily: e.target.value
                                         }
                                     })
-                                    setConfig(getConfig())
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 style={{ fontFamily: config.branding?.fontFamily || 'Inter' }}
                             >
@@ -564,7 +564,7 @@ function Settings({ config }) {
                                             fontWeight: e.target.value
                                         }
                                     })
-                                    setConfig(getConfig())
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 style={{ fontWeight: config.branding?.fontWeight || '400' }}
                             >
@@ -587,7 +587,7 @@ function Settings({ config }) {
                                         value={config.colors?.primary || '#B8956A'}
                                         onChange={(e) => {
                                             updateConfig({ colors: { ...config.colors, primary: e.target.value } })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                     />
@@ -599,7 +599,7 @@ function Settings({ config }) {
                                         value={config.colors?.primaryLight || '#A89070'}
                                         onChange={(e) => {
                                             updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                     />
@@ -611,7 +611,7 @@ function Settings({ config }) {
                                         value={config.colors?.confirmation || '#22C55E'}
                                         onChange={(e) => {
                                             updateConfig({ colors: { ...config.colors, confirmation: e.target.value } })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                     />
@@ -623,7 +623,7 @@ function Settings({ config }) {
                                         value={config.branding?.poweredByColor || '#C4856A'}
                                         onChange={(e) => {
                                             updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                     />
@@ -636,11 +636,11 @@ function Settings({ config }) {
                             iconColorMode={config.branding?.iconColorMode || 'white'}
                             onColorChange={(color) => {
                                 updateConfig({ branding: { ...config.branding, primaryColor: color } })
-                                setConfig(getConfig())
+                                window.dispatchEvent(new CustomEvent('frontendSync'))
                             }}
                             onIconModeChange={(mode) => {
                                 updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
-                                setConfig(getConfig())
+                                window.dispatchEvent(new CustomEvent('frontendSync'))
                             }}
                         />
 
@@ -667,7 +667,7 @@ function Settings({ config }) {
                                                         [iconId]: { ...iconConfig, color: newColor }
                                                     }
                                                 })
-                                                setConfig(getConfig())
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
                                             }}
                                             onIconModeChange={(mode) => {
                                                 updateConfig({
@@ -676,7 +676,7 @@ function Settings({ config }) {
                                                         [iconId]: { ...iconConfig, iconColorMode: mode }
                                                     }
                                                 })
-                                                setConfig(getConfig())
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
                                             }}
                                         />
                                     )
@@ -693,7 +693,7 @@ function Settings({ config }) {
                                 <button
                                     onClick={() => {
                                         updateConfig({ canvasMode: 'light' })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     style={{
                                         flex: 1,
@@ -712,7 +712,7 @@ function Settings({ config }) {
                                 <button
                                     onClick={() => {
                                         updateConfig({ canvasMode: 'dark' })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     style={{
                                         flex: 1,
@@ -784,7 +784,7 @@ function Settings({ config }) {
                                                             [pill.id]: { ...pillConfig, bgColor: e.target.value }
                                                         }
                                                     })
-                                                    setConfig(getConfig())
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                                 }}
                                                 style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
                                             />
@@ -807,7 +807,7 @@ function Settings({ config }) {
                                 <button
                                     onClick={() => {
                                         updateConfig({ camera: { ...config.camera, enabled: !config.camera?.enabled } })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     style={{
                                         padding: '6px 12px',
@@ -841,7 +841,7 @@ function Settings({ config }) {
                                                     key={icon.id}
                                                     onClick={() => {
                                                         updateConfig({ camera: { ...config.camera, icon: icon.id } })
-                                                        setConfig(getConfig())
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
                                                     style={{
                                                         padding: '12px 8px',
@@ -872,7 +872,7 @@ function Settings({ config }) {
                                             value={config.camera?.color || '#8B7355'}
                                             onChange={(e) => {
                                                 updateConfig({ camera: { ...config.camera, color: e.target.value } })
-                                                setConfig(getConfig())
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
                                             }}
                                             style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                         />
@@ -899,7 +899,7 @@ function Settings({ config }) {
                                                     key={mode}
                                                     onClick={() => {
                                                         updateConfig({ camera: { ...config.camera, textColor: mode } })
-                                                        setConfig(getConfig())
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
                                                     style={{
                                                         flex: 1,
@@ -936,7 +936,7 @@ function Settings({ config }) {
                                                     confirmation: color.value
                                                 }
                                             })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{
                                             width: 36,
@@ -967,7 +967,7 @@ function Settings({ config }) {
                                             poweredByColor: e.target.value
                                         }
                                     })
-                                    setConfig(getConfig())
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 style={{
                                     width: 60,
@@ -991,7 +991,7 @@ function Settings({ config }) {
                                         key={preset.id}
                                         onClick={() => {
                                             updateConfig({ dividerPresetId: preset.id })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{
                                             cursor: 'pointer',
@@ -1030,7 +1030,7 @@ function Settings({ config }) {
                                                 rappiEnabled: !current.rappiEnabled
                                             }
                                         })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     style={{
                                         padding: '4px 12px',
@@ -1059,7 +1059,7 @@ function Settings({ config }) {
                                                 rappiUrl: e.target.value
                                             }
                                         })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     placeholder="https://..."
                                 />
@@ -1079,7 +1079,7 @@ function Settings({ config }) {
                                                 pedidosYaEnabled: !current.pedidosYaEnabled
                                             }
                                         })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     style={{
                                         padding: '4px 12px',
@@ -1108,7 +1108,7 @@ function Settings({ config }) {
                                                 pedidosYaUrl: e.target.value
                                             }
                                         })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     placeholder="https://..."
                                 />
@@ -1132,7 +1132,7 @@ function Settings({ config }) {
                                                 mercadoPagoAlias: e.target.value
                                             }
                                         })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     placeholder="ej: grubclub.mp"
                                 />
@@ -1151,7 +1151,7 @@ function Settings({ config }) {
                 onClose={() => setShowCoverEditor(false)}
                 onSave={(coverData) => {
                     updateConfig({ headerCover: coverData })
-                    setConfig(getConfig())
+                    window.dispatchEvent(new CustomEvent('frontendSync'))
                     setShowCoverEditor(false)
                 }}
                 initialData={config.headerCover}
