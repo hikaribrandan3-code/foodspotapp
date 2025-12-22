@@ -30,26 +30,6 @@ function generateDemoData() {
     return data
 }
 
-// User mode storage key
-const USER_MODE_KEY = 'grub_user_mode'
-
-// Get/set user mode (owner/staff/customer)
-export function getUserMode() {
-    try {
-        return localStorage.getItem(USER_MODE_KEY) || null
-    } catch (e) {
-        return null
-    }
-}
-
-export function setUserMode(mode) {
-    try {
-        localStorage.setItem(USER_MODE_KEY, mode)
-        return true
-    } catch (e) {
-        return false
-    }
-}
 
 // ============================================
 // SUPER ADMIN MODE (PATCH 3.9)
@@ -109,7 +89,8 @@ function SuperAdmin({ config }) {
     const [showCoverEditor, setShowCoverEditor] = useState(() => location.state?.returnToEditor || false)
 
     // Mode selector state
-    const [selectedMode, setSelectedMode] = useState(() => getUserMode() || 'owner')
+    // FIXED: Simulation is ephemeral - never persisted, dies on refresh
+    const [selectedMode, setSelectedMode] = useState('superadmin')
 
     // Image upload state
     const [uploadingItemId, setUploadingItemId] = useState(null)
@@ -126,22 +107,8 @@ function SuperAdmin({ config }) {
         if (session && (session.role === 'superadmin' || session.role === 'owner' || session.role === 'staff')) {
             setIsAuthenticated(true)
             setUserRole(session.role)
-
-            const currentMode = getUserMode()
-
-            // CRITICAL FIX: Correct stale userMode
-            // If session is superadmin but userMode is 'owner' (from old bug), correct it
-            if (session.role === 'superadmin' && currentMode === 'owner') {
-                setUserMode('superadmin')
-            }
-
-            // First login - set mode to actual role
-            if (!currentMode) {
-                setUserMode(session.role)
-            }
-
-            // UI lens starts as owner view for superadmin
-            setSelectedMode(session.role === 'superadmin' ? 'owner' : (currentMode || session.role))
+            // No mode restoration - simulation dies on refresh
+            // selectedMode defaults to 'superadmin', no persistence
         }
     }, [])
 
@@ -301,7 +268,7 @@ function SuperAdmin({ config }) {
 
     // Handle mode change & NAVIGATION
     const handleModeChange = (mode) => {
-        setUserMode(mode)
+        // No persistence - simulation is ephemeral
         setSelectedMode(mode)
 
         if (mode === 'superadmin') {
