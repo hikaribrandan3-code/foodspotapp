@@ -330,7 +330,7 @@ function Order({ config }) {
             paddingBottom: 120
         }}>
             {/* Clean Brand Header */}
-            <HeaderClamp />
+            <HeaderClamp config={config} />
 
             {/* Slim Identity Strip - Uses selected divider preset */}
             {(() => {

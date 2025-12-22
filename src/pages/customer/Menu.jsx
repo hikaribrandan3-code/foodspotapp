@@ -387,7 +387,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             paddingBottom: hasItems ? 220 : 100
         }}>
             {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
-            <HeaderClamp />
+            <HeaderClamp config={config} />
 
             {/* Delivery Mode Context Badge */}
             {deliveryMode && !isEditMode && (

@@ -6,14 +6,14 @@
  * PATCH 4.0: Header Branding mode (text OR logo, never both)
  * PATCH 4.5: Cover mode (Facebook-style header image) — V1 default
  * PATCH 5.0: Cover viewport clamp (internal, mobile only)
+ * PATCH 5.1: Config via prop (single source of truth invariant)
  * 
  * Rules:
  * - Header height determined by mode (64px for logo/text, 220/280px for cover)
  * - Cover viewport clamps internally on mobile (60px)
  * - Header stays in normal document flow
+ * - Config MUST be passed as prop, DO NOT call getConfig()
  */
-
-import { getConfig } from '../config/appConfig.js'
 
 // Cover heights by breakpoint
 const COVER_HEIGHTS = {
@@ -26,20 +26,20 @@ function getBreakpoint() {
     return window.innerWidth >= 768 ? 'tablet' : 'mobile'
 }
 
-function AppHeader() {
-    const config = getConfig()
-    const canvasMode = config.canvasMode || 'light'
-    const businessName = config.businessName || 'FoodSpot'
-    const headerMode = config.headerBranding?.mode || 'cover'
+// INVARIANT: config must come from prop, not getConfig()
+function AppHeader({ config }) {
+    const canvasMode = config?.canvasMode || 'light'
+    const businessName = config?.businessName || 'FoodSpot'
+    const headerMode = config?.headerBranding?.mode || 'cover'
     const breakpoint = getBreakpoint()
     const coverHeight = COVER_HEIGHTS[breakpoint]
-    const useClamp = config.experimental?.headerClampMobile && breakpoint === 'mobile'
+    const useClamp = config?.experimental?.headerClampMobile && breakpoint === 'mobile'
 
     // ============================================
     // COVER MODE (V1 Default)
     // ============================================
     if (headerMode === 'cover') {
-        const cover = config.headerCover || {}
+        const cover = config?.headerCover || {}
         const scale = cover.scale || 1.0
         const offsetX = cover.offsetX || 0
         const offsetY = cover.offsetY || 0
@@ -97,8 +97,8 @@ function AppHeader() {
     // ============================================
     if (headerMode === 'logo') {
         const logo = canvasMode === 'dark'
-            ? (config.logoDark || config.logoLight || config.logo)
-            : (config.logoLight || config.logoDark || config.logo)
+            ? (config?.logoDark || config?.logoLight || config?.logo)
+            : (config?.logoLight || config?.logoDark || config?.logo)
 
         const logoContent = (
             <div className="cover-content" style={{

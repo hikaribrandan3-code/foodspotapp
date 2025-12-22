@@ -383,7 +383,7 @@ function Home({ config }) {
                 minHeight: '100vh'
             }}
         >
-            <HeaderClamp />
+            <HeaderClamp config={config} />
 
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (

@@ -80,7 +80,7 @@ function Info({ config }) {
             paddingBottom: 90,
             minHeight: '100vh'
         }}>
-            <HeaderClamp />
+            <HeaderClamp config={config} />
 
             {infoDisplay.showWhatsApp && businessInfo.whatsapp && (
                 <a
