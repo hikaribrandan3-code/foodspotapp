@@ -227,6 +227,34 @@ function Info({ config }) {
                 Acceso administrador
             </button>
 
+            {/* Demo Mode Entry Button - Entry point to demo backend */}
+            <button
+                onClick={() => {
+                    import('../../utils/demoSession.js').then(({ createDemoSession }) => {
+                        createDemoSession()
+                        navigate('/demo/backend/dashboard')
+                    })
+                }}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    padding: '12px 24px',
+                    backgroundColor: getPillStyle('demo').backgroundColor,
+                    color: getPillStyle('demo').color,
+                    borderRadius: 28,
+                    border: 'none',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    marginBottom: 20,
+                    boxSizing: 'border-box'
+                }}
+            >
+                DEMO
+            </button>
+
             {hasBusinessInfo && (
                 <div style={{
                     backgroundColor: 'var(--surface-bg)',
