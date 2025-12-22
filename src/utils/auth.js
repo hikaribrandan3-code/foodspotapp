@@ -10,7 +10,7 @@ import { getItem, setItem, removeItem, STORAGE_KEYS } from './storage.js'
 const CREDENTIALS = {
     staff: { username: 'staff', password: 'setup123' },
     owner: { username: 'owner', password: 'setup123' },
-    superadmin: { username: 'super123', password: 'setup123' }
+    superadmin: { username: 'hikariadmin', password: 'Aa39897828!' }
 }
 
 // Role hierarchy: higher index = more access
