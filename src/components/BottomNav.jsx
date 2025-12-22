@@ -73,7 +73,7 @@ function BottomNav() {
     }, [])
 
     // Hide nav on certain pages
-    const hiddenPaths = ['/staff', '/owner', '/admin', '/game', '/receipt', '/camera']
+    const hiddenPaths = ['/staff', '/owner', '/admin', '/demo', '/game', '/receipt', '/camera']
     const shouldHide = hiddenPaths.some(path => location.pathname.startsWith(path))
 
     if (shouldHide) return null

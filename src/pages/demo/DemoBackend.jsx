@@ -1313,7 +1313,7 @@ function DemoBackend() {
 
     const handleExitDemo = () => {
         clearDemoSession()
-        navigate('/')
+        navigate('/', { replace: true })
     }
 
     const handleResetDemo = () => {
