@@ -471,53 +471,8 @@ export function getConfig() {
             config = defaultConfig;
         }
 
-        // ============================================
-        // DEMO MODE BRANDING OVERLAY (CRITICAL)
-        // ============================================
-        // When in demo mode, merge active demo branding on top of production config
-        // This allows backend changes to propagate immediately to frontend
-        if (isDemoModeActive()) {
-            try {
-                const activeBranding = localStorage.getItem(ACTIVE_BRANDING_KEY);
-                if (activeBranding) {
-                    const demoBranding = JSON.parse(activeBranding);
-
-                    // Overlay demo branding onto config
-                    config = {
-                        ...config,
-                        // Business name
-                        businessName: demoBranding.businessName || config.businessName,
-                        // Canvas mode
-                        canvasMode: demoBranding.canvasMode || config.canvasMode,
-                        // Branding (merged field-for-field)
-                        branding: {
-                            ...config.branding,
-                            ...demoBranding.branding
-                        },
-                        // Hero icons 
-                        heroIcons: demoBranding.heroIcons || config.heroIcons,
-                        // Cover image (both legacy coverImage and headerCover for AppHeader)
-                        coverImage: demoBranding.coverImage || config.coverImage,
-                        headerCover: demoBranding.coverImage ? {
-                            ...config.headerCover,
-                            image: demoBranding.coverImage
-                        } : config.headerCover,
-                        // Featured photos
-                        featuredPhotos: demoBranding.featuredPhotos || config.featuredPhotos,
-                        // Camera branding
-                        camera: demoBranding.camera || config.camera,
-                        // Info pills
-                        infoPills: demoBranding.infoPills ? {
-                            ...config.infoPills,
-                            ...demoBranding.infoPills
-                        } : config.infoPills
-                    };
-                }
-            } catch (e) {
-                console.error('Error merging demo branding:', e);
-            }
-        }
-
+        // DEMO SIMULATION REMOVED: No demo branding overlay on frontend
+        // Frontend always receives real normalized config
         // FOUNDATIONAL: Normalize config before returning to guarantee safe defaults
         return normalizeConfig(config);
     } catch (e) {

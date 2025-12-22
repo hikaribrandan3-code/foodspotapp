@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
-import { incrementVisit, isDemoMode } from './utils/storage.js'
+import { incrementVisit } from './utils/storage.js'
 import { AdminIntentProvider } from './contexts/AdminIntentContext.jsx'
 
 // Components
@@ -35,7 +35,7 @@ import Analytics from './pages/owner/Analytics.jsx'
 import SuperAdmin from './pages/admin/SuperAdmin.jsx'
 import CoverPreview from './components/CoverPreview.jsx'
 
-// Demo Pages (no auth required)
+// Demo Pages - KEPT for backend demo editor only (not accessible from frontend)
 import DemoBackend from './pages/demo/DemoBackend.jsx'
 
 // Camera Suite
@@ -43,32 +43,11 @@ import Camera from './components/Camera/index.jsx'
 
 function App() {
     const [config, setConfig] = useState(() => getConfig())
-    const [demoMode, setDemoMode] = useState(() => isDemoMode())
 
     // Track visit on app load
     useEffect(() => {
         incrementVisit()
     }, [])
-
-    // FOUNDATIONAL: Clear demo state on app boot if not on demo routes
-    // Demo simulation must NOT survive refresh or affect frontend render
-    useEffect(() => {
-        const isDemoRoute = window.location.pathname.startsWith('/demo')
-        if (!isDemoRoute) {
-            // Clear demo intent to prevent demo bleed-through into frontend
-            localStorage.removeItem('foodspot_demo_active')
-            localStorage.removeItem('foodspot_active_branding')
-            sessionStorage.removeItem('foodspot_demo_session')
-        }
-    }, [])
-
-    // [TEMPORARY DEBUG] Confirm React accepted the new config
-    useEffect(() => {
-        console.log('[APP] config committed', {
-            brandingPrimary: config?.branding?.primaryColor,
-            heroIcons: config?.heroIcons
-        })
-    }, [config])
 
     // Apply global typography from config
     useEffect(() => {

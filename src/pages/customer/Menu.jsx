@@ -6,7 +6,6 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
-import { isInDemoMode, getActiveDemoMenu, getDemoMenu, saveDemoMenu, applyDemoToFrontend } from '../../utils/demoSession.js'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
@@ -26,16 +25,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const [addedItem, setAddedItem] = useState(null) // For visual feedback
     const categoryRefs = useRef({})
 
-    // Demo mode detection - use state for reactive updates on frontendSync
-    const inDemoMode = isInDemoMode()
-    const [demoMenu, setDemoMenu] = useState(() => inDemoMode ? getActiveDemoMenu() : null)
+    // DEMO SIMULATION REMOVED: Always use real menu
+    // No demo mode detection, no demo menu overlay
 
-    // INVARIANT: config prop is ALREADY normalized and includes demo branding
-    // Use demoMenu overlay for menu items only, NOT for branding/config
-
-    // Use demo menu overlay if in demo mode and demo menu exists
-    const effectiveMenu = (inDemoMode && demoMenu) ? demoMenu : menu
-    // Use dividerPresetId from normalized config (includes demo branding)
+    // Use dividerPresetId from normalized config
     const effectiveDividerPresetId = config?.dividerPresetId
 
     // Owner mode detection (from localStorage)
@@ -68,8 +61,8 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     }, [deliveryModeProp])
 
     // Only show enabled categories with available items
-    // In demo mode, use effectiveMenu (which may be demo overlay)
-    const enabledCategories = effectiveMenu.categories.filter(cat =>
+    // Only show enabled categories with available items
+    const enabledCategories = menu.categories.filter(cat =>
         cat.enabled !== false && cat.items.some(item => item.available)
     )
 
@@ -87,14 +80,11 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             setCart(getCurrentOrder())
         }, 2000)
 
-        // Listen for frontendSync to re-read demo menu
+        // Listen for frontendSync to re-read menu
         // SNAPBACK FIX: Also skip during edit/drag
         const handleFrontendSync = () => {
             if (isEditMode || dragState) return // Don't re-render during edits
             setMenu(getMenu())
-            if (isInDemoMode()) {
-                setDemoMenu(getActiveDemoMenu())
-            }
         }
         window.addEventListener('frontendSync', handleFrontendSync)
 
