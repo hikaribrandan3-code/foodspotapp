@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
-import { getSession } from '../../utils/auth.js'
 
 const WhatsAppIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
