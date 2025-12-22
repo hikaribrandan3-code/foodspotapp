@@ -344,25 +344,17 @@ export function getConfig() {
                         businessName: demoBranding.businessName || config.businessName,
                         // Canvas mode
                         canvasMode: demoBranding.canvasMode || config.canvasMode,
-                        // Branding (primaryColor, iconColorMode, poweredByColor)
+                        // Branding (merged field-for-field)
                         branding: {
                             ...config.branding,
-                            primaryColor: demoBranding.primaryColor || config.branding.primaryColor,
-                            iconColorMode: demoBranding.iconColorMode || config.branding.iconColorMode,
-                            poweredByColor: demoBranding.poweredByColor || config.branding.poweredByColor,
+                            ...demoBranding.branding
                         },
                         // Hero icons 
                         heroIcons: demoBranding.heroIcons || config.heroIcons,
-                        // Header cover
-                        headerCover: demoBranding.coverImage ? {
-                            ...config.headerCover,
-                            image: demoBranding.coverImage
-                        } : config.headerCover,
+                        // Cover image
+                        coverImage: demoBranding.coverImage || config.coverImage,
                         // Featured photos
-                        homeConfig: demoBranding.featuredPhotos ? {
-                            ...config.homeConfig,
-                            featuredPhotos: demoBranding.featuredPhotos
-                        } : config.homeConfig,
+                        featuredPhotos: demoBranding.featuredPhotos || config.featuredPhotos,
                         // Camera branding
                         camera: demoBranding.camera || config.camera,
                         // Info pills
