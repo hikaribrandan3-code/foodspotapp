@@ -2366,7 +2366,8 @@ function DemoBackend() {
                 padding: '12px 16px',
                 background: '#FEF3C7',
                 borderTop: '1px solid #FCD34D',
-                textAlign: 'center'
+                textAlign: 'center',
+                pointerEvents: 'none' // Non-interactive, must not block clicks above
             }}>
                 <p style={{ fontSize: 12, color: '#92400E', margin: 0 }}>
                     🔒 Demo Mode — Demo data resets automatically
