@@ -324,9 +324,16 @@ export function clearAllData() {
     return true;
 }
 
-// Demo mode
+// Demo mode - checks multiple sources for PWA compatibility
+// 1. sessionStorage (best-effort accelerator)
+// 2. localStorage demo intent (source of truth for PWA)
+// 3. localStorage active branding (fallback - implies demo was applied)
 export function isDemoMode() {
-    return getItem(STORAGE_KEYS.DEMO_MODE) || false;
+    return Boolean(
+        sessionStorage.getItem('demo_session') ||
+        localStorage.getItem('foodspot_demo_active') ||
+        localStorage.getItem('foodspot_active_branding')
+    );
 }
 
 export function setDemoMode(enabled) {
