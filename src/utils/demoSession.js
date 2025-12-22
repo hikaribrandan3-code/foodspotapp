@@ -1,11 +1,13 @@
 // Demo Session Utilities
-// ISOLATED from production auth - uses sessionStorage (clears on tab close)
+// Demo intent persisted in localStorage (PWA-safe)
+// Session details cached in sessionStorage (best-effort accelerator)
 
 // NOTE: Must use ES module imports here.
 // ❌ require() fails silently in Vite production builds and will break demo → frontend sync.
 import { emitDemoEvent } from './demoEvents.js'
 
 const DEMO_SESSION_KEY = 'demo_session'
+const DEMO_INTENT_KEY = 'foodspot_demo_active' // localStorage - survives PWA navigation
 
 /**
  * Create a new demo session
@@ -20,8 +22,16 @@ export function createDemoSession() {
         expiresAt: Date.now() + (30 * 60 * 1000) // 30 minutes
     }
 
+    // Persist intent in localStorage (survives mobile PWA navigation)
+    localStorage.setItem(DEMO_INTENT_KEY, JSON.stringify({
+        active: true,
+        startedAt: session.startedAt,
+        expiresAt: session.expiresAt
+    }))
+
+    // Cache full session in sessionStorage (best-effort accelerator)
     sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(session))
-    console.log('✅ Demo session created')
+    console.log('✅ Demo session created (localStorage + sessionStorage)')
     return session
 }
 
@@ -53,9 +63,27 @@ export function getDemoSession() {
 
 /**
  * Check if currently in demo mode
+ * Uses localStorage as source of truth (survives mobile PWA navigation)
+ * Falls back to sessionStorage for legacy compatibility
  * @returns {boolean}
  */
 export function isInDemoMode() {
+    // Check localStorage first (source of truth for PWA)
+    try {
+        const intent = localStorage.getItem(DEMO_INTENT_KEY)
+        if (intent) {
+            const parsed = JSON.parse(intent)
+            if (parsed.active && Date.now() < parsed.expiresAt) {
+                return true
+            }
+            // Expired - clean up
+            localStorage.removeItem(DEMO_INTENT_KEY)
+        }
+    } catch (e) {
+        // Ignore parse errors
+    }
+
+    // Fallback to sessionStorage
     return getDemoSession() !== null
 }
 
@@ -76,8 +104,10 @@ export function updateDemoSession(updates) {
  * Clear demo session (exit demo mode)
  */
 export function clearDemoSession() {
+    // Clear both storages
+    localStorage.removeItem(DEMO_INTENT_KEY)
     sessionStorage.removeItem(DEMO_SESSION_KEY)
-    console.log('✅ Demo session cleared')
+    console.log('✅ Demo session cleared (localStorage + sessionStorage)')
 }
 
 /**

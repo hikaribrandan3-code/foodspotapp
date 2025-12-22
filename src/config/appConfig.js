@@ -254,7 +254,29 @@ export const CONFIG_STORAGE_KEY = "grub_config";
 
 // Demo branding storage key (must match demoSession.js)
 const ACTIVE_BRANDING_KEY = 'foodspot_active_branding';
-const DEMO_SESSION_KEY = 'demo_session'; // MUST match demoSession.js line 8
+const DEMO_SESSION_KEY = 'demo_session'; // sessionStorage - best-effort accelerator
+const DEMO_INTENT_KEY = 'foodspot_demo_active'; // localStorage - source of truth for PWA
+
+// Helper: Check if in demo mode (localStorage first, then sessionStorage)
+function isDemoModeActive() {
+    // Check localStorage first (source of truth for PWA)
+    try {
+        const intent = localStorage.getItem(DEMO_INTENT_KEY);
+        if (intent) {
+            const parsed = JSON.parse(intent);
+            if (parsed.active && Date.now() < parsed.expiresAt) {
+                return true;
+            }
+            // Expired - clean up
+            localStorage.removeItem(DEMO_INTENT_KEY);
+        }
+    } catch (e) {
+        // Ignore parse errors
+    }
+
+    // Fallback to sessionStorage
+    return !!sessionStorage.getItem(DEMO_SESSION_KEY);
+}
 
 // Get current config from storage or return default
 // In demo mode, also merges active demo branding
@@ -309,8 +331,7 @@ export function getConfig() {
         // ============================================
         // When in demo mode, merge active demo branding on top of production config
         // This allows backend changes to propagate immediately to frontend
-        const demoSession = sessionStorage.getItem(DEMO_SESSION_KEY);
-        if (demoSession) {
+        if (isDemoModeActive()) {
             try {
                 const activeBranding = localStorage.getItem(ACTIVE_BRANDING_KEY);
                 if (activeBranding) {
