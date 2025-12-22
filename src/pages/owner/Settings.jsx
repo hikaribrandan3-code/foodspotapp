@@ -1155,6 +1155,7 @@ function Settings({ config }) {
                     setShowCoverEditor(false)
                 }}
                 initialData={config.headerCover}
+                config={config}
             />
         </div>
     )

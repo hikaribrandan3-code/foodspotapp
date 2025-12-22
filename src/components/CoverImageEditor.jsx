@@ -85,7 +85,7 @@ function CameraButton() {
 // Snap assist constants
 const SNAP_THRESHOLD = 4 // ±4px for gentle snap
 
-function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false }) {
+function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false, config }) {
     const navigate = useNavigate()
 
     const [image, setImage] = useState(initialData?.image || null)
@@ -299,7 +299,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         }}>
             {/* Frozen Home (dimmed) */}
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.3 }}>
-                <Home />
+                <Home config={config} />
                 <StaticBottomNav />
             </div>
 

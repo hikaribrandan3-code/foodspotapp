@@ -1621,6 +1621,7 @@ function DemoBackend() {
                             }}
                             initialData={{ image: demoConfig.coverImage }}
                             demoMode={true}
+                            config={getConfig()}
                         />
 
                         {/* Color Picker - REUSE EXISTING */}

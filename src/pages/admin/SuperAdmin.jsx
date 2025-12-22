@@ -1550,6 +1550,7 @@ function SuperAdmin({ config }) {
                     window.dispatchEvent(new CustomEvent('frontendSync'))
                 }}
                 initialData={{ ...config.headerCover, returnState: { activeTab: 'branding' } }}
+                config={config}
             />
         </>
     )
