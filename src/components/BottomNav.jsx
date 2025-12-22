@@ -49,8 +49,10 @@ function BottomNav() {
         const pollInterval = setInterval(() => {
             const newConfig = getConfig()
             setConfig(prev => {
-                // Only update if branding changed
-                if (JSON.stringify(prev.branding) !== JSON.stringify(newConfig.branding)) {
+                // Only update if branding or camera changed
+                const brandingChanged = JSON.stringify(prev.branding) !== JSON.stringify(newConfig.branding)
+                const cameraChanged = JSON.stringify(prev.camera) !== JSON.stringify(newConfig.camera)
+                if (brandingChanged || cameraChanged) {
                     return newConfig
                 }
                 return prev
