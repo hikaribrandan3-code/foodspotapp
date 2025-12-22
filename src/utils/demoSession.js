@@ -108,6 +108,9 @@ export function clearDemoSession() {
     localStorage.removeItem(DEMO_INTENT_KEY)
     sessionStorage.removeItem(DEMO_SESSION_KEY)
     console.log('✅ Demo session cleared (localStorage + sessionStorage)')
+
+    // Notify App.jsx immediately to refresh config (prevents flash/revert)
+    window.dispatchEvent(new CustomEvent('frontendSync'))
 }
 
 /**
