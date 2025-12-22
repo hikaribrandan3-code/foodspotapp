@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMenu, formatPrice, reorderCategoryItems } from '../../config/menuData.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
-import { getConfig } from '../../config/appConfig.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
@@ -20,10 +19,9 @@ const AUTO_SCROLL_SPEED = 4 // Pixels per frame (slow and controlled)
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
 
-function Menu({ deliveryMode: deliveryModeProp = false }) {
+function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const navigate = useNavigate()
     const [menu, setMenu] = useState(() => getMenu())
-    const [config] = useState(() => getConfig())
     const [cart, setCart] = useState(() => getCurrentOrder())
     const [addedItem, setAddedItem] = useState(null) // For visual feedback
     const categoryRefs = useRef({})

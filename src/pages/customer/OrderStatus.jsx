@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
-import { getConfig } from '../../config/appConfig.js'
 
 // Check icon for completed steps
 const CheckIcon = () => (
@@ -18,10 +17,9 @@ const SmileyIcon = () => (
     </svg>
 )
 
-function OrderStatus() {
+function OrderStatus({ config }) {
     const navigate = useNavigate()
     const [orders, setOrders] = useState([])
-    const [config] = useState(() => getConfig())
 
     useEffect(() => {
         const loadOrders = () => {

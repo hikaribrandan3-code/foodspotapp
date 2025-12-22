@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getConfig } from '../../config/appConfig.js'
 import { formatPrice } from '../../config/menuData.js'
 import {
     getCurrentOrder,
@@ -28,9 +27,8 @@ const placeholderImages = [
     'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop',
 ]
 
-function Order() {
+function Order({ config }) {
     const navigate = useNavigate()
-    const [config] = useState(() => getConfig())
     const [order, setOrder] = useState(() => getCurrentOrder())
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitted, setSubmitted] = useState(false)

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getConfig } from '../../config/appConfig.js'
 import { createDemoSession, isInDemoMode, getActiveDemoBranding } from '../../utils/demoSession.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
@@ -38,33 +37,23 @@ const MapIcon = () => (
     </svg>
 )
 
-function Info() {
+function Info({ config }) {
     const navigate = useNavigate()
-    const [config, setConfig] = useState(() => getConfig())
 
     // Demo mode detection - use state for reactive updates on frontendSync
     const inDemoMode = isInDemoMode()
     const [demoBranding, setDemoBranding] = useState(() => inDemoMode ? getActiveDemoBranding() : null)
     const effectivePoweredByColor = (inDemoMode && demoBranding?.poweredByColor) || config.branding?.poweredByColor || '#C4856A'
 
+    // Demo branding sync on frontendSync (for demo mode reactivity)
     useEffect(() => {
-        const interval = setInterval(() => {
-            setConfig(getConfig())
-        }, 2000)
-
-        // Listen for frontendSync to re-read demo branding
         const handleFrontendSync = () => {
-            setConfig(getConfig())
             if (isInDemoMode()) {
                 setDemoBranding(getActiveDemoBranding())
             }
         }
         window.addEventListener('frontendSync', handleFrontendSync)
-
-        return () => {
-            clearInterval(interval)
-            window.removeEventListener('frontendSync', handleFrontendSync)
-        }
+        return () => window.removeEventListener('frontendSync', handleFrontendSync)
     }, [])
 
     const infoDisplay = config.infoDisplay || {}

@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom'
-import { getConfig } from '../../config/appConfig.js'
 import { getMenu, formatPrice } from '../../config/menuData.js'
 
-function Promos() {
-    const config = getConfig()
+function Promos({ config }) {
     const menu = getMenu()
 
     // Get all promo/featured items
