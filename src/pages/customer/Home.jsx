@@ -62,10 +62,10 @@ function Home({ config }) {
     const actionsGridRef = useRef(null)
     const featuredGridRef = useRef(null)
 
-    // Get home config with defaults
-    const homeConfig = config.homeConfig || defaultConfig.homeConfig
-    const primaryActions = homeConfig.primaryActions || ['menu', 'envios', 'rewards', 'game']
-    const featuredItemIds = homeConfig.featuredItems || []
+    // Get home config with defaults - DEFENSIVE: guard against undefined config
+    const homeConfig = config?.homeConfig || defaultConfig.homeConfig || {}
+    const primaryActions = homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
+    const featuredItemIds = homeConfig?.featuredItems || []
 
     // Fallback images
     const placeholderImages = {
