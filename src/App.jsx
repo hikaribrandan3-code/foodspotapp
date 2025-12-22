@@ -50,6 +50,18 @@ function App() {
         incrementVisit()
     }, [])
 
+    // FOUNDATIONAL: Clear demo state on app boot if not on demo routes
+    // Demo simulation must NOT survive refresh or affect frontend render
+    useEffect(() => {
+        const isDemoRoute = window.location.pathname.startsWith('/demo')
+        if (!isDemoRoute) {
+            // Clear demo intent to prevent demo bleed-through into frontend
+            localStorage.removeItem('foodspot_demo_active')
+            localStorage.removeItem('foodspot_active_branding')
+            sessionStorage.removeItem('foodspot_demo_session')
+        }
+    }, [])
+
     // [TEMPORARY DEBUG] Confirm React accepted the new config
     useEffect(() => {
         console.log('[APP] config committed', {
