@@ -5,7 +5,7 @@ import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../ut
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
-import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
+import { getSession } from '../../utils/auth.js'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
@@ -31,8 +31,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // Use dividerPresetId from normalized config
     const effectiveDividerPresetId = config?.dividerPresetId
 
-    // Owner mode detection (from localStorage)
-    const isOwnerMode = getUserMode() === 'owner'
+    // Owner mode detection (from auth session)
+    const session = getSession()
+    const isOwnerMode = session?.role === 'owner' || session?.role === 'superadmin'
 
     // Edit mode state (owner only)
     const [isEditMode, setIsEditMode] = useState(false)

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
-import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 import { getSession } from '../../utils/auth.js'
 import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
@@ -30,9 +29,8 @@ function Home({ config }) {
     // All demo branding is handled in getConfig() → normalizeConfig()
 
     // Owner/SuperAdmin mode detection - both can edit home icons
-    const userMode = getUserMode()
     const session = getSession()
-    const isOwnerMode = userMode === 'owner' || userMode === 'superadmin' || session?.role === 'superadmin' || session?.role === 'owner'
+    const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner'
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false)
