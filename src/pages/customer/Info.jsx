@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createDemoSession, isInDemoMode, getActiveDemoBranding } from '../../utils/demoSession.js'
+import { createDemoSession } from '../../utils/demoSession.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
 const WhatsAppIcon = () => (
@@ -40,28 +40,15 @@ const MapIcon = () => (
 function Info({ config }) {
     const navigate = useNavigate()
 
-    // Demo mode detection - use state for reactive updates on frontendSync
-    const inDemoMode = isInDemoMode()
-    const [demoBranding, setDemoBranding] = useState(() => inDemoMode ? getActiveDemoBranding() : null)
-    const effectivePoweredByColor = (inDemoMode && demoBranding?.poweredByColor) || config.branding?.poweredByColor || '#C4856A'
+    // INVARIANT: config prop is ALREADY normalized and includes demo branding
+    // DO NOT merge demo branding here - it bypasses normalizeConfig()
 
-    // Demo branding sync on frontendSync (for demo mode reactivity)
-    useEffect(() => {
-        const handleFrontendSync = () => {
-            if (isInDemoMode()) {
-                setDemoBranding(getActiveDemoBranding())
-            }
-        }
-        window.addEventListener('frontendSync', handleFrontendSync)
-        return () => window.removeEventListener('frontendSync', handleFrontendSync)
-    }, [])
-
-    const infoDisplay = config.infoDisplay || {}
-    const businessInfo = config.businessInfo || {}
+    const infoDisplay = config?.infoDisplay || {}
+    const businessInfo = config?.businessInfo || {}
     const hasBusinessInfo = infoDisplay.showAddress || infoDisplay.showHours || infoDisplay.showMapLink
 
-    // INFO PILL COLORS — Read from config (supports demo branding override)
-    const pillColors = (inDemoMode && demoBranding?.infoPills) || config.infoPills || {}
+    // INFO PILL COLORS — Read directly from normalized config
+    const pillColors = config?.infoPills || {}
     const defaultPillColors = {
         whatsapp: { bgColor: '#C4856A', textColor: 'white' },
         mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3' },
@@ -79,6 +66,9 @@ function Info({ config }) {
             borderColor: pill.borderColor || 'transparent'
         }
     }
+
+    // Powered by color from normalized config
+    const effectivePoweredByColor = config?.branding?.poweredByColor || '#C4856A'
 
     // Theme-aware colors (use CSS tokens that switch for light/dark mode)
     const primaryColor = 'var(--icon-primary)'

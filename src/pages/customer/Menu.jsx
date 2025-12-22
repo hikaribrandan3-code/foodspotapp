@@ -6,7 +6,7 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
-import { isInDemoMode, getActiveDemoMenu, getActiveDemoBranding, getDemoMenu, saveDemoMenu, applyDemoToFrontend } from '../../utils/demoSession.js'
+import { isInDemoMode, getActiveDemoMenu, getDemoMenu, saveDemoMenu, applyDemoToFrontend } from '../../utils/demoSession.js'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
@@ -29,12 +29,14 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // Demo mode detection - use state for reactive updates on frontendSync
     const inDemoMode = isInDemoMode()
     const [demoMenu, setDemoMenu] = useState(() => inDemoMode ? getActiveDemoMenu() : null)
-    const [demoBranding, setDemoBranding] = useState(() => inDemoMode ? getActiveDemoBranding() : null)
+
+    // INVARIANT: config prop is ALREADY normalized and includes demo branding
+    // Use demoMenu overlay for menu items only, NOT for branding/config
 
     // Use demo menu overlay if in demo mode and demo menu exists
     const effectiveMenu = (inDemoMode && demoMenu) ? demoMenu : menu
-    // Use demo dividerPresetId if in demo mode
-    const effectiveDividerPresetId = (inDemoMode && demoBranding?.dividerPresetId) || config.dividerPresetId
+    // Use dividerPresetId from normalized config (includes demo branding)
+    const effectiveDividerPresetId = config?.dividerPresetId
 
     // Owner mode detection (from localStorage)
     const isOwnerMode = getUserMode() === 'owner'
@@ -85,14 +87,13 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             setCart(getCurrentOrder())
         }, 2000)
 
-        // Listen for frontendSync to re-read demo menu and branding
+        // Listen for frontendSync to re-read demo menu
         // SNAPBACK FIX: Also skip during edit/drag
         const handleFrontendSync = () => {
             if (isEditMode || dragState) return // Don't re-render during edits
             setMenu(getMenu())
             if (isInDemoMode()) {
                 setDemoMenu(getActiveDemoMenu())
-                setDemoBranding(getActiveDemoBranding())
             }
         }
         window.addEventListener('frontendSync', handleFrontendSync)
