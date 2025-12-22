@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { getSession } from '../../utils/auth.js'
 
 const WhatsAppIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -248,12 +249,38 @@ function Info({ config }) {
                     fontSize: 14,
                     fontWeight: 500,
                     cursor: 'pointer',
-                    marginBottom: 20,
+                    marginBottom: 12,
                     boxSizing: 'border-box'
                 }}
             >
                 DEMO
             </button>
+
+            {/* Super Admin Escape Button - NAVIGATION ONLY */}
+            {getSession()?.role === 'superadmin' && (
+                <button
+                    onClick={() => navigate('/admin')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        width: '100%',
+                        padding: '12px 24px',
+                        backgroundColor: '#7C3AED',
+                        color: 'white',
+                        borderRadius: 28,
+                        border: 'none',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        marginBottom: 20,
+                        boxSizing: 'border-box'
+                    }}
+                >
+                    🔐 Go to Super Admin
+                </button>
+            )}
 
             {hasBusinessInfo && (
                 <div style={{
