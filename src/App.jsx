@@ -269,9 +269,12 @@ function App() {
     }, [config.canvasMode, config.headerMode])
 
     // Manual config refresh - call from admin/owner actions when needed
+    // INVARIANT: setConfig must NEVER receive undefined (atomic replacement only)
     const refreshConfig = useCallback(() => {
         const newConfig = getConfig()
-        setConfig(newConfig)
+        if (newConfig) {
+            setConfig(newConfig)
+        }
     }, [])
 
     // AUTO-SYNC: Listen for localStorage changes from other tabs/windows
