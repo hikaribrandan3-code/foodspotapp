@@ -6,7 +6,6 @@ import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 import { getSession } from '../../utils/auth.js'
 import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
-import { isInDemoMode, getActiveDemoBranding, getActiveDemoMenu } from '../../utils/demoSession.js'
 
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
@@ -26,31 +25,9 @@ function Home({ config }) {
     const location = useLocation()
     const menu = getMenu()
 
-    // Demo mode detection - use state for reactive updates on frontendSync
-    const inDemoMode = isInDemoMode()
-    const [demoBranding, setDemoBranding] = useState(() => inDemoMode ? getActiveDemoBranding() : null)
-
-    // Merge demo branding with config when in demo mode
-    // DEFENSIVE: Guard all property access to prevent undefined crashes
-    // CRITICAL: Ensure pauseOrders always has a safe default
-    const baseConfig = config || {}
-    const effectiveConfig = inDemoMode && demoBranding ? {
-        ...baseConfig,
-        // Ensure pauseOrders is always defined (fixes crash during demo transition)
-        pauseOrders: baseConfig.pauseOrders ?? false,
-        pauseOrdersMessage: baseConfig.pauseOrdersMessage || '',
-        heroIcons: demoBranding?.heroIcons || baseConfig?.heroIcons || {},
-        featuredPhotos: demoBranding?.featuredPhotos || baseConfig?.featuredPhotos || [],
-        canvasMode: demoBranding?.canvasMode || baseConfig?.canvasMode || 'light',
-        branding: {
-            ...(baseConfig?.branding || {}),
-            primaryColor: demoBranding?.primaryColor || baseConfig?.branding?.primaryColor || '#8B7355'
-        }
-    } : {
-        ...baseConfig,
-        pauseOrders: baseConfig.pauseOrders ?? false,
-        pauseOrdersMessage: baseConfig.pauseOrdersMessage || ''
-    }
+    // INVARIANT: config prop is ALREADY normalized and includes demo branding
+    // DO NOT merge demo branding here - it bypasses normalizeConfig()
+    // All demo branding is handled in getConfig() → normalizeConfig()
 
     // Owner/SuperAdmin mode detection - both can edit home icons
     const userMode = getUserMode()
@@ -84,10 +61,8 @@ function Home({ config }) {
         'medialuna-manteca': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80'
     }
 
-    // Featured items - read DIRECTLY from Branding → Fotos destacadas (Home)
-    // Source of truth: config.featuredPhotos ONLY (no menu linkage)
-    // In demo mode, use demoBranding.featuredPhotos if available
-    const featuredPhotos = (inDemoMode && demoBranding?.featuredPhotos) || effectiveConfig.featuredPhotos || []
+    // Featured items - read DIRECTLY from config (includes demo branding via getConfig)
+    const featuredPhotos = config?.featuredPhotos || []
     const featuredItems = [0, 1, 2, 3].map(slotIndex => {
         const slot = featuredPhotos[slotIndex] || {}
         return {
@@ -110,17 +85,6 @@ function Home({ config }) {
             longPressTimerRef.current = null
         }
     }, [location.pathname])
-
-    // Demo branding sync on frontendSync (for demo mode reactivity)
-    useEffect(() => {
-        const handleFrontendSync = () => {
-            if (isInDemoMode()) {
-                setDemoBranding(getActiveDemoBranding())
-            }
-        }
-        window.addEventListener('frontendSync', handleFrontendSync)
-        return () => window.removeEventListener('frontendSync', handleFrontendSync)
-    }, [])
 
     // Safe navigation wrapper - only navigate if not in edit/drag mode
     const safeNavigate = useCallback((path) => {
@@ -350,31 +314,31 @@ function Home({ config }) {
     }, [])
 
     // Direct hero color helpers (read from config, not CSS variables)
-    // In demo mode, use effectiveConfig to pick up demo branding
+    // Config already includes demo branding via getConfig()
     const getHeroBg = useCallback((actionId) => {
         // Map actionId to heroIcons key
         const iconKey = actionId === 'envios' ? 'delivery' : actionId
-        const heroConfig = effectiveConfig.heroIcons?.[iconKey] || HERO_DEFAULT
+        const heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
         const color = heroConfig?.color
 
         // 'auto' or empty = use canvas surface color
         if (!color || color === 'auto') {
-            return effectiveConfig.canvasMode === 'dark' ? '#000000' : '#FFFFFF'
+            return config?.canvasMode === 'dark' ? '#000000' : '#FFFFFF'
         }
         return color
-    }, [effectiveConfig.heroIcons, effectiveConfig.canvasMode])
+    }, [config?.heroIcons, config?.canvasMode])
 
     const getHeroIcon = useCallback((actionId) => {
         const iconKey = actionId === 'envios' ? 'delivery' : actionId
-        const heroConfig = effectiveConfig.heroIcons?.[iconKey] || HERO_DEFAULT
+        const heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
         const mode = heroConfig?.iconColorMode
 
         // 'auto' or empty = use canvas surface text color
         if (!mode || mode === 'auto') {
-            return effectiveConfig.canvasMode === 'dark' ? '#FFFFFF' : '#000000'
+            return config?.canvasMode === 'dark' ? '#FFFFFF' : '#000000'
         }
         return mode === 'white' ? '#FFFFFF' : HERO_ICON_DARK
-    }, [effectiveConfig.heroIcons, effectiveConfig.canvasMode])
+    }, [config?.heroIcons, config?.canvasMode])
 
     const tileStyle = {
         borderRadius: 28,
