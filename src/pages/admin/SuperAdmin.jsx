@@ -88,9 +88,8 @@ function SuperAdmin({ config }) {
     // PATCH: Restore editor modal state from navigation state if present
     const [showCoverEditor, setShowCoverEditor] = useState(() => location.state?.returnToEditor || false)
 
-    // Mode selector state
-    // FIXED: Simulation is ephemeral - never persisted, dies on refresh
-    const [selectedMode, setSelectedMode] = useState('superadmin')
+    // Mode is derived from context, not local state
+    // Simulation is ephemeral - dies on refresh
 
     // Image upload state
     const [uploadingItemId, setUploadingItemId] = useState(null)
@@ -99,8 +98,11 @@ function SuperAdmin({ config }) {
     const menuImageInputRef = useRef(null)
     const featuredImageInputRef = useRef(null)
 
-    // Role Lens Hooks
-    const { enterOwnerView, enterStaffView, exitSimulation } = useAdminIntent()
+    // Role Lens Hooks - activeRoleView is the source of truth for simulation
+    const { activeRoleView, enterOwnerView, enterStaffView, exitSimulation } = useAdminIntent()
+
+    // Derive current mode from context (defaults to 'superadmin' when not simulating)
+    const currentMode = activeRoleView || 'superadmin'
 
     useEffect(() => {
         const session = getSession()
@@ -266,22 +268,35 @@ function SuperAdmin({ config }) {
         { value: 'customer', label: 'Customer', color: '#F59E0B' }
     ]
 
-    // Handle mode change & NAVIGATION
-    const handleModeChange = (mode) => {
-        // No persistence - simulation is ephemeral
-        setSelectedMode(mode)
+    // Handle mode change - IDEMPOTENT
+    const handleModeChange = (nextMode) => {
+        // Idempotency: same mode = no-op
+        if (nextMode === currentMode) return
 
-        if (mode === 'superadmin') {
+        // Exit simulation -> return to superadmin
+        if (nextMode === 'superadmin') {
             exitSimulation()
-            navigate('/admin') // Explicitly return to admin dashboard
-        } else if (mode === 'owner') {
+            navigate('/admin')
+            return
+        }
+
+        // Enter owner simulation
+        if (nextMode === 'owner') {
             enterOwnerView('business-001')
-            navigate('/owner/menu') // Go to real Owner page
-        } else if (mode === 'staff') {
+            navigate('/owner/menu')
+            return
+        }
+
+        // Enter staff simulation
+        if (nextMode === 'staff') {
             enterStaffView('staff-user-001', 'business-001')
-            navigate('/staff/dashboard') // Go to real Staff page
-        } else if (mode === 'customer') {
-            navigate('/') // Frontend only
+            navigate('/staff/dashboard')
+            return
+        }
+
+        // Customer preview (frontend only, no simulation)
+        if (nextMode === 'customer') {
+            navigate('/')
         }
     }
 
@@ -327,7 +342,7 @@ function SuperAdmin({ config }) {
                             {/* Mode Switcher Dropdown (superadmin only) */}
                             {userRole === 'superadmin' && (
                                 <select
-                                    value={selectedMode || 'superadmin'}
+                                    value={currentMode}
                                     onChange={(e) => handleModeChange(e.target.value)}
                                     style={{
                                         padding: '6px 24px 6px 10px',
@@ -336,7 +351,7 @@ function SuperAdmin({ config }) {
                                         border: 'none',
                                         borderRadius: 5,
                                         cursor: 'pointer',
-                                        background: `${modeOptions.find(m => m.value === selectedMode)?.color || '#22C55E'} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='white' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 8px center`,
+                                        background: `${modeOptions.find(m => m.value === currentMode)?.color || '#7C3AED'} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='white' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 8px center`,
                                         color: 'white',
                                         minWidth: 80
                                     }}
