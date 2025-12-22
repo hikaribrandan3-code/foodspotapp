@@ -279,50 +279,63 @@ function App() {
     }, [])
 
     // AUTO-SYNC: Listen for localStorage changes from other tabs/windows (Super Admin)
+    // DEMO MODE: Only frontendSync is allowed - no polling, no auto-refresh
     useEffect(() => {
-        const handleStorageChange = (e) => {
-            // Config key changed - refresh
-            if (e.key === 'grub_config' || e.key === null) {
-                refreshConfig()
-            }
-        }
+        const inDemo = isDemoMode()
 
-        // Listen for storage events (cross-tab sync)
-        window.addEventListener('storage', handleStorageChange)
-
-        // Also refresh on visibility change (same-tab sync when returning from admin)
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                refreshConfig()
-            }
-        }
-        document.addEventListener('visibilitychange', handleVisibilityChange)
-
-        // Focus event for PWA standalone mode
-        const handleFocus = () => {
-            refreshConfig()
-        }
-        window.addEventListener('focus', handleFocus)
-
-        // GLOBAL SYNC: Listen for manual sync from Super Admin/Owner Sync button
+        // GLOBAL SYNC: Always listen for explicit frontendSync events (demo + production)
         const handleFrontendSync = () => {
             console.log('[GLOBAL SYNC] Frontend sync triggered')
             refreshConfig()
         }
         window.addEventListener('frontendSync', handleFrontendSync)
 
-        // Polling fallback for same-tab changes (PWA needs faster polling)
-        // 500ms ensures near-instant updates in PWA standalone mode
-        const pollInterval = setInterval(refreshConfig, 500)
+        // === PRODUCTION-ONLY LISTENERS ===
+        // These are disabled in demo mode to prevent overwriting demo branding
+        let pollInterval = null
 
-        return () => {
-            window.removeEventListener('storage', handleStorageChange)
-            document.removeEventListener('visibilitychange', handleVisibilityChange)
-            window.removeEventListener('focus', handleFocus)
-            window.removeEventListener('frontendSync', handleFrontendSync)
-            clearInterval(pollInterval)
+        if (!inDemo) {
+            const handleStorageChange = (e) => {
+                // Config key changed - refresh
+                if (e.key === 'grub_config' || e.key === null) {
+                    refreshConfig()
+                }
+            }
+            window.addEventListener('storage', handleStorageChange)
+
+            // Also refresh on visibility change (same-tab sync when returning from admin)
+            const handleVisibilityChange = () => {
+                if (document.visibilityState === 'visible') {
+                    refreshConfig()
+                }
+            }
+            document.addEventListener('visibilitychange', handleVisibilityChange)
+
+            // Focus event for PWA standalone mode
+            const handleFocus = () => {
+                refreshConfig()
+            }
+            window.addEventListener('focus', handleFocus)
+
+            // Polling fallback for same-tab changes (PWA needs faster polling)
+            // 500ms ensures near-instant updates in PWA standalone mode
+            pollInterval = setInterval(refreshConfig, 500)
+
+            // Cleanup for production listeners
+            return () => {
+                window.removeEventListener('storage', handleStorageChange)
+                document.removeEventListener('visibilitychange', handleVisibilityChange)
+                window.removeEventListener('focus', handleFocus)
+                window.removeEventListener('frontendSync', handleFrontendSync)
+                clearInterval(pollInterval)
+            }
         }
-    }, [refreshConfig])
+
+        // Cleanup for demo mode (only frontendSync listener)
+        return () => {
+            window.removeEventListener('frontendSync', handleFrontendSync)
+        }
+    }, [refreshConfig, demoMode])
 
     // Maintenance mode overlay
     if (config.maintenanceMode) {
