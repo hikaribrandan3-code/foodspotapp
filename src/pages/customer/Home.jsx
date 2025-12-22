@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { getConfig, reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.js'
+import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
 import { getSession } from '../../utils/auth.js'
@@ -21,10 +21,9 @@ const ACTION_DEFINITIONS = {
 
 // --- MAIN COMPONENT ---
 
-function Home() {
+function Home({ config }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const [config, setConfig] = useState(() => getConfig())
     const menu = getMenu()
 
     // Demo mode detection - use state for reactive updates on frontendSync
@@ -102,48 +101,16 @@ function Home() {
         }
     }, [location.pathname])
 
-    // Polling for config changes (hero colors, etc.)
-    // SNAPBACK FIX: Pause polling during drag/edit to prevent cascade re-renders
+    // Demo branding sync on frontendSync (for demo mode reactivity)
     useEffect(() => {
-        // SNAPBACK FIX: Skip polling if in edit mode or actively dragging
-        // This prevents React reconciliation issues during item manipulation
-        if (isEditMode || dragState) return
-
-        const refreshAll = () => {
-            const newConfig = getConfig()
-            setConfig(newConfig)
-        }
-
-        const pollInterval = setInterval(() => {
-            const newConfig = getConfig()
-            setConfig(prev => {
-                if (JSON.stringify(prev.heroIcons) !== JSON.stringify(newConfig.heroIcons) ||
-                    JSON.stringify(prev.canvasMode) !== JSON.stringify(newConfig.canvasMode)) {
-                    return newConfig
-                }
-                return prev
-            })
-        }, 500)
-
-        // GLOBAL SYNC: Listen for manual sync from Super Admin/Owner Sync button
-        // SNAPBACK FIX: Also skip during edit/drag
         const handleFrontendSync = () => {
-            // SNAPBACK FIX: Don't re-render during edits
-            if (isEditMode || dragState) return
-            console.log('[HOME] Frontend sync triggered')
-            refreshAll()
-            // Also re-read demo branding if in demo mode
             if (isInDemoMode()) {
                 setDemoBranding(getActiveDemoBranding())
             }
         }
         window.addEventListener('frontendSync', handleFrontendSync)
-
-        return () => {
-            clearInterval(pollInterval)
-            window.removeEventListener('frontendSync', handleFrontendSync)
-        }
-    }, [isEditMode, dragState]) // SNAPBACK FIX: Re-run effect when edit/drag state changes
+        return () => window.removeEventListener('frontendSync', handleFrontendSync)
+    }, [])
 
     // Safe navigation wrapper - only navigate if not in edit/drag mode
     const safeNavigate = useCallback((path) => {
@@ -295,7 +262,8 @@ function Home() {
                 reorderFeaturedItems(newOrder)
             }
 
-            setConfig(getConfig())
+            // Notify App.jsx to refresh config
+            window.dispatchEvent(new Event('frontendSync'))
         }
 
         setDragState(null)

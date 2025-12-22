@@ -352,12 +352,12 @@ function App() {
                     <Route path="/envios" element={<Menu config={config} deliveryMode={true} />} />
                     <Route path="/order" element={<Order config={config} />} />
 
-                    <Route path="/status" element={<OrderStatus />} />
+                    <Route path="/status" element={<OrderStatus config={config} />} />
                     <Route path="/rewards" element={<Rewards config={config} />} />
                     <Route path="/share" element={<ShareFood config={config} />} />
                     <Route path="/game" element={<PerfectPour />} />
-                    <Route path="/info" element={<Info />} />
-                    <Route path="/promos" element={<Promos />} />
+                    <Route path="/info" element={<Info config={config} />} />
+                    <Route path="/promos" element={<Promos config={config} />} />
 
                     {/* Staff Routes */}
                     <Route path="/staff" element={<StaffLogin />} />
