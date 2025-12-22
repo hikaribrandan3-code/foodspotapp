@@ -384,7 +384,7 @@ function App() {
                     <Route path="/demo" element={<Navigate to="/demo/backend/dashboard" replace />} />
 
                     {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
-                    <Route path="/admin" element={<SuperAdmin />} />
+                    <Route path="/admin" element={<SuperAdmin config={config} />} />
                     <Route path="/admin/cover-preview" element={<CoverPreview />} />
 
                     {/* Camera Suite */}

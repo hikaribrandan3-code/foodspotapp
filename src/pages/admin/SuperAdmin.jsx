@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { login, logout, getSession } from '../../utils/auth.js'
 
-import { getConfig, updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
+import { updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
@@ -87,10 +87,12 @@ function isValidLogoUrl(value) {
     return { valid: true }
 }
 
-function SuperAdmin() {
+// INVARIANT: SuperAdmin receives config via prop from App.jsx (single source of truth)
+// Do NOT call getConfig() locally - breaks invariant during saves
+function SuperAdmin({ config }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const [config, setConfig] = useState(() => getConfig())
+    // NOTE: config comes from props, not local state
     const [menu, setMenu] = useState(() => getMenu())
     const [orders, setOrders] = useState(() => getOrders())
     // PATCH: Restore active tab from navigation state if present
@@ -145,7 +147,7 @@ function SuperAdmin() {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setConfig(getConfig())
+            window.dispatchEvent(new CustomEvent('frontendSync'))
             setOrders(getOrders())
             setMenu(getMenu())
         }, 2000)
@@ -192,7 +194,7 @@ function SuperAdmin() {
     const updateBusinessInfo = (field, value) => {
         const newInfo = { ...config.businessInfo, [field]: value }
         updateConfig({ businessInfo: newInfo })
-        setConfig(getConfig())
+        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
     // Update menu item
@@ -255,7 +257,7 @@ function SuperAdmin() {
             ])]
             newPhotos[slotIndex] = { ...newPhotos[slotIndex], image: result.dataURI }
             updateConfig({ featuredPhotos: newPhotos })
-            setConfig(getConfig())
+            window.dispatchEvent(new CustomEvent('frontendSync'))
             setUploadStatus({
                 success: true,
                 message: `✔ ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
@@ -386,7 +388,7 @@ function SuperAdmin() {
                             // Dispatch global sync event
                             window.dispatchEvent(new CustomEvent('frontendSync'))
                             // Also refresh local state
-                            setConfig(getConfig())
+                            window.dispatchEvent(new CustomEvent('frontendSync'))
                             setMenu(getMenu())
                             setOrders(getOrders())
                             // Visual feedback
@@ -486,15 +488,15 @@ function SuperAdmin() {
                             <div style={cardStyle}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                     <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
-                                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
                                 </div>
-                                <input type="text" placeholder="Link de Rappi" value={config.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); setConfig(getConfig()) }} style={{ ...inputStyle, marginBottom: 14 }} />
+                                <input type="text" placeholder="Link de Rappi" value={config.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
 
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                     <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
-                                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
                                 </div>
-                                <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); setConfig(getConfig()) }} style={{ ...inputStyle, marginBottom: 14 }} />
+                                <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
 
                                 {/* Mercado Pago Alias */}
                                 <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
@@ -506,7 +508,7 @@ function SuperAdmin() {
                                         onChange={(e) => {
                                             const c = config.payments || {};
                                             updateConfig({ payments: { ...c, mercadoPagoAlias: e.target.value } });
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={inputStyle}
                                     />
@@ -643,13 +645,13 @@ function SuperAdmin() {
                             <h3 style={labelStyle}>🎨 BRANDING</h3>
                             <div style={cardStyle}>
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
-                                <input type="text" value={config.businessName || ''} onChange={(e) => { updateConfig({ businessName: e.target.value }); setConfig(getConfig()) }} style={inputStyle} />
+                                <input type="text" value={config.businessName || ''} onChange={(e) => { updateConfig({ businessName: e.target.value }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={inputStyle} />
 
                                 {/* Font Selector */}
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Tipografía</label>
                                 <select
                                     value={config.branding?.fontFamily || 'Inter'}
-                                    onChange={(e) => { updateConfig({ branding: { ...config.branding, fontFamily: e.target.value } }); setConfig(getConfig()) }}
+                                    onChange={(e) => { updateConfig({ branding: { ...config.branding, fontFamily: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
                                     style={{ ...inputStyle, fontFamily: config.branding?.fontFamily || 'Inter' }}
                                 >
                                     {CURATED_FONTS.map(font => (
@@ -661,7 +663,7 @@ function SuperAdmin() {
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Peso de fuente</label>
                                 <select
                                     value={config.branding?.fontWeight || '400'}
-                                    onChange={(e) => { updateConfig({ branding: { ...config.branding, fontWeight: e.target.value } }); setConfig(getConfig()) }}
+                                    onChange={(e) => { updateConfig({ branding: { ...config.branding, fontWeight: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
                                     style={{ ...inputStyle, fontWeight: config.branding?.fontWeight || '400' }}
                                 >
                                     {FONT_WEIGHTS.map(weight => (
@@ -673,19 +675,19 @@ function SuperAdmin() {
                                 <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
                                     <div>
                                         <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Primario</p>
-                                        <input type="color" value={config.colors?.primary || '#B8956A'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primary: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                        <input type="color" value={config.colors?.primary || '#B8956A'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primary: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
                                     </div>
                                     <div>
                                         <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Secundario</p>
-                                        <input type="color" value={config.colors?.primaryLight || '#A89070'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                        <input type="color" value={config.colors?.primaryLight || '#A89070'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
                                     </div>
                                     <div>
                                         <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Confirmación</p>
-                                        <input type="color" value={config.colors?.confirmation || '#22C55E'} onChange={(e) => { updateConfig({ colors: { ...config.colors, confirmation: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                        <input type="color" value={config.colors?.confirmation || '#22C55E'} onChange={(e) => { updateConfig({ colors: { ...config.colors, confirmation: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
                                     </div>
                                     <div>
                                         <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Powered by</p>
-                                        <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); setConfig(getConfig()) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                                        <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
                                     </div>
                                 </div>
                             </div>
@@ -697,11 +699,11 @@ function SuperAdmin() {
                                     iconColorMode={config.branding?.iconColorMode || 'white'}
                                     onColorChange={(color) => {
                                         updateConfig({ branding: { ...config.branding, primaryColor: color } })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     onIconModeChange={(mode) => {
                                         updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
-                                        setConfig(getConfig())
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                 />
                             </div>
@@ -729,7 +731,7 @@ function SuperAdmin() {
                                                                 [iconId]: { ...iconConfig, color: newColor }
                                                             }
                                                         })
-                                                        setConfig(getConfig())
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
                                                     onIconModeChange={(mode) => {
                                                         updateConfig({
@@ -738,7 +740,7 @@ function SuperAdmin() {
                                                                 [iconId]: { ...iconConfig, iconColorMode: mode }
                                                             }
                                                         })
-                                                        setConfig(getConfig())
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
                                                 />
                                             )
@@ -777,7 +779,7 @@ function SuperAdmin() {
                                                 <button
                                                     onClick={() => {
                                                         updateConfig({ headerBranding: { mode: 'cover' } })
-                                                        setConfig(getConfig())
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
                                                     style={{
                                                         flex: 1, padding: '10px 12px', borderRadius: 8,
@@ -791,7 +793,7 @@ function SuperAdmin() {
                                                 <button
                                                     onClick={() => {
                                                         updateConfig({ headerBranding: { mode: 'text' } })
-                                                        setConfig(getConfig())
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
                                                     style={{
                                                         flex: 1, padding: '10px 12px', borderRadius: 8,
@@ -810,7 +812,7 @@ function SuperAdmin() {
                                                             return
                                                         }
                                                         updateConfig({ headerBranding: { mode: 'logo' } })
-                                                        setConfig(getConfig())
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
                                                     style={{
                                                         flex: 1, padding: '10px 12px', borderRadius: 8,
@@ -912,7 +914,7 @@ function SuperAdmin() {
                                                                             scale: parseInt(e.target.value) / 100
                                                                         }
                                                                     })
-                                                                    setConfig(getConfig())
+                                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                                                 }}
                                                                 style={{ width: '100%' }}
                                                             />
@@ -935,7 +937,7 @@ function SuperAdmin() {
                                                                             offsetX: parseInt(e.target.value)
                                                                         }
                                                                     })
-                                                                    setConfig(getConfig())
+                                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                                                 }}
                                                                 style={{ width: '100%' }}
                                                             />
@@ -958,7 +960,7 @@ function SuperAdmin() {
                                                                             offsetY: parseInt(e.target.value)
                                                                         }
                                                                     })
-                                                                    setConfig(getConfig())
+                                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                                                 }}
                                                                 style={{ width: '100%' }}
                                                             />
@@ -970,7 +972,7 @@ function SuperAdmin() {
                                                             <button
                                                                 onClick={() => {
                                                                     updateConfig({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } })
-                                                                    setConfig(getConfig())
+                                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                                                 }}
                                                                 style={{
                                                                     width: '100%',
@@ -1029,14 +1031,14 @@ function SuperAdmin() {
                                                             const reader = new FileReader()
                                                             reader.onload = (ev) => {
                                                                 updateConfig({ logoLight: ev.target.result })
-                                                                setConfig(getConfig())
+                                                                window.dispatchEvent(new CustomEvent('frontendSync'))
                                                             }
                                                             reader.readAsDataURL(file)
                                                         }}
                                                     />
                                                     {config.logoLight && (
                                                         <button
-                                                            onClick={() => { updateConfig({ logoLight: null }); setConfig(getConfig()) }}
+                                                            onClick={() => { updateConfig({ logoLight: null }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
                                                             style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
                                                         >
                                                             ✕ Remove
@@ -1078,14 +1080,14 @@ function SuperAdmin() {
                                                             const reader = new FileReader()
                                                             reader.onload = (ev) => {
                                                                 updateConfig({ logoDark: ev.target.result })
-                                                                setConfig(getConfig())
+                                                                window.dispatchEvent(new CustomEvent('frontendSync'))
                                                             }
                                                             reader.readAsDataURL(file)
                                                         }}
                                                     />
                                                     {config.logoDark && (
                                                         <button
-                                                            onClick={() => { updateConfig({ logoDark: null }); setConfig(getConfig()) }}
+                                                            onClick={() => { updateConfig({ logoDark: null }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
                                                             style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
                                                         >
                                                             ✕ Remove
@@ -1108,7 +1110,7 @@ function SuperAdmin() {
                                     <button
                                         onClick={() => {
                                             updateConfig({ canvasMode: 'light' })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{
                                             flex: 1,
@@ -1127,7 +1129,7 @@ function SuperAdmin() {
                                     <button
                                         onClick={() => {
                                             updateConfig({ canvasMode: 'dark' })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{
                                             flex: 1,
@@ -1197,7 +1199,7 @@ function SuperAdmin() {
                                                                 [pill.id]: { ...pillConfig, bgColor: e.target.value }
                                                             }
                                                         })
-                                                        setConfig(getConfig())
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
                                                     style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
                                                 />
@@ -1219,7 +1221,7 @@ function SuperAdmin() {
                                     <button
                                         onClick={() => {
                                             updateConfig({ camera: { ...config.camera, enabled: !config.camera?.enabled } })
-                                            setConfig(getConfig())
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         style={{
                                             padding: '6px 12px',
@@ -1253,7 +1255,7 @@ function SuperAdmin() {
                                                         key={icon.id}
                                                         onClick={() => {
                                                             updateConfig({ camera: { ...config.camera, icon: icon.id } })
-                                                            setConfig(getConfig())
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                                         }}
                                                         style={{
                                                             padding: '12px 8px',
@@ -1284,7 +1286,7 @@ function SuperAdmin() {
                                                 value={config.camera?.color || '#8B7355'}
                                                 onChange={(e) => {
                                                     updateConfig({ camera: { ...config.camera, color: e.target.value } })
-                                                    setConfig(getConfig())
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
                                                 }}
                                                 style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                             />
@@ -1311,7 +1313,7 @@ function SuperAdmin() {
                                                         key={mode}
                                                         onClick={() => {
                                                             updateConfig({ camera: { ...config.camera, textColor: mode } })
-                                                            setConfig(getConfig())
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                                         }}
                                                         style={{
                                                             flex: 1,
@@ -1343,7 +1345,7 @@ function SuperAdmin() {
                                     {DIVIDER_PRESETS.map(preset => (
                                         <div
                                             key={preset.id}
-                                            onClick={() => { updateConfig({ dividerPresetId: preset.id }); setConfig(getConfig()) }}
+                                            onClick={() => { updateConfig({ dividerPresetId: preset.id }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
                                             style={{
                                                 cursor: 'pointer',
                                                 borderRadius: 8,
@@ -1412,7 +1414,7 @@ function SuperAdmin() {
                                                             const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
                                                             newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
                                                             updateConfig({ featuredPhotos: newPhotos })
-                                                            setConfig(getConfig())
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                                         }}
                                                         style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, marginBottom: 6 }}
                                                     />
@@ -1424,7 +1426,7 @@ function SuperAdmin() {
                                                             const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
                                                             newPhotos[slotIndex] = { ...newPhotos[slotIndex], price: parseFloat(e.target.value) || 0 }
                                                             updateConfig({ featuredPhotos: newPhotos })
-                                                            setConfig(getConfig())
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                                         }}
                                                         style={{ width: 100, padding: '6px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12 }}
                                                     />
@@ -1447,17 +1449,17 @@ function SuperAdmin() {
                             <div style={cardStyle}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                                     <span style={{ fontSize: 14, color: '#374151' }}>Pedidos activos</span>
-                                    <label className="toggle"><input type="checkbox" checked={config.features?.ordersEnabled ?? true} onChange={() => { updateConfig({ features: { ...config.features, ordersEnabled: !config.features?.ordersEnabled } }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                                    <label className="toggle"><input type="checkbox" checked={config.features?.ordersEnabled ?? true} onChange={() => { updateConfig({ features: { ...config.features, ordersEnabled: !config.features?.ordersEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: 14, color: '#374151' }}>Pausar pedidos</span>
-                                    <label className="toggle"><input type="checkbox" checked={config.pauseOrders ?? false} onChange={() => { updateConfig({ pauseOrders: !config.pauseOrders }); setConfig(getConfig()) }} /><span className="toggle-slider"></span></label>
+                                    <label className="toggle"><input type="checkbox" checked={config.pauseOrders ?? false} onChange={() => { updateConfig({ pauseOrders: !config.pauseOrders }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
                                 </div>
                             </div>
 
                             <h3 style={labelStyle}>📋 MODO DE OPERACIÓN</h3>
                             <div style={cardStyle}>
-                                <select value={config.orderMode || 'A1'} onChange={(e) => { updateConfig({ orderMode: e.target.value }); setConfig(getConfig()) }} style={{ width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, background: 'white' }}>
+                                <select value={config.orderMode || 'A1'} onChange={(e) => { updateConfig({ orderMode: e.target.value }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, background: 'white' }}>
                                     <option value="A1">A1: Budoni / Pickup rápido</option>
                                     <option value="A2">A2: Café / Pago antes de preparar</option>
                                     <option value="B">B: Restaurante / Pago al final</option>
@@ -1545,7 +1547,7 @@ function SuperAdmin() {
                 onClose={() => setShowCoverEditor(false)}
                 onSave={(data) => {
                     updateConfig({ headerCover: data })
-                    setConfig(getConfig())
+                    window.dispatchEvent(new CustomEvent('frontendSync'))
                 }}
                 initialData={{ ...config.headerCover, returnState: { activeTab: 'branding' } }}
             />
