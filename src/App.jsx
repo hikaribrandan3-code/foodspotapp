@@ -7,6 +7,7 @@ import { AdminIntentProvider } from './contexts/AdminIntentContext.jsx'
 // Components
 import BottomNav from './components/BottomNav.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import AdminLensBar from './components/AdminLensBar.jsx'
 
 // Customer Pages
 import Home from './pages/customer/Home.jsx'
@@ -336,7 +337,8 @@ function App() {
     return (
         <AdminIntentProvider>
             <div className="app-container">
-
+                {/* Global Admin Lens Bar - shows when simulating */}
+                <AdminLensBar />
 
                 <Routes>
                     {/* Customer Routes */}

@@ -1,11 +1,14 @@
 import { useAdminIntent } from '../contexts/AdminIntentContext'
 import { useNavigate } from 'react-router-dom'
+import { getSession } from '../utils/auth.js'
 
 const AdminLensBar = () => {
     const { isSimulated, activeRoleView, impersonatingBusinessId, impersonatingUserId, exitSimulation } = useAdminIntent()
     const navigate = useNavigate()
+    const session = getSession()
 
-    if (!isSimulated) return null
+    // Only show for authenticated superadmin who is simulating
+    if (!isSimulated || session?.role !== 'superadmin') return null
 
     const handleExit = () => {
         exitSimulation()
