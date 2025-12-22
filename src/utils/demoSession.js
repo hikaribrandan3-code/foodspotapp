@@ -252,39 +252,88 @@ export function updateDemoMenuItem(menu, categoryId, itemId, updates) {
     return updatedMenu
 }
 
+// ============================================
+// CORE BRANDING PROMOTION (Shared Logic)
+// ============================================
+// This is the single source of truth for promoting branding to frontend.
+// Used by demo mode (with guards) and can be used by owner/admin modes.
+
+/**
+ * Core function to promote branding config to active frontend storage.
+ * @param {Object} branding - Branding object to promote
+ * @param {Object} menu - Optional menu object to promote
+ * @param {Object} options - { emitEvents: boolean, source: 'demo' | 'owner' | 'admin' }
+ * @returns {boolean} Success
+ */
+export function promoteBrandingToFrontend(branding, menu = null, options = {}) {
+    const { emitEvents = true, source = 'unknown' } = options
+
+    // Validate branding object
+    if (!branding || typeof branding !== 'object') {
+        console.error('promoteBrandingToFrontend: Invalid branding object')
+        return false
+    }
+
+    // Write branding to active storage
+    localStorage.setItem(ACTIVE_BRANDING_KEY, JSON.stringify({
+        // Core branding fields
+        businessName: branding.businessName,
+        branding: branding.branding, // Full branding object (primaryColor, iconColorMode, etc.)
+        primaryColor: branding.primaryColor,
+        accentColor: branding.accentColor,
+        iconColorMode: branding.iconColorMode,
+        coverImage: branding.coverImage,
+        heroIcons: branding.heroIcons,
+        businessInfo: branding.businessInfo,
+        poweredByColor: branding.poweredByColor,
+        featuredPhotos: branding.featuredPhotos,
+        canvasMode: branding.canvasMode,
+        dividerPresetId: branding.dividerPresetId,
+        camera: branding.camera,
+        infoPills: branding.infoPills,
+        // Metadata
+        appliedAt: Date.now(),
+        source: source
+    }))
+
+    // Promote menu if provided
+    if (menu) {
+        localStorage.setItem(ACTIVE_MENU_KEY, JSON.stringify(menu))
+    }
+
+    // Emit events if enabled
+    if (emitEvents) {
+        // Dispatch frontendSync event to trigger re-renders
+        window.dispatchEvent(new CustomEvent('frontendSync'))
+    }
+
+    console.log(`✅ Branding promoted to frontend (source: ${source})`)
+    return true
+}
+
 /**
  * Apply demo edits to frontend (Commit/Publish)
- * This promotes draft state to active state
+ * This promotes draft state to active state with demo-specific guards and events.
  */
 export function applyDemoToFrontend() {
+    // Demo guard: ensure we're in demo mode
+    if (!isInDemoMode()) {
+        console.warn('applyDemoToFrontend called outside demo mode')
+        return false
+    }
+
     const demoConfig = getDemoConfig()
     const demoMenu = getDemoMenu()
 
-    // Promote config to active branding
-    localStorage.setItem(ACTIVE_BRANDING_KEY, JSON.stringify({
-        businessName: demoConfig.businessName,
-        primaryColor: demoConfig.primaryColor,
-        accentColor: demoConfig.accentColor,
-        iconColorMode: demoConfig.iconColorMode,
-        coverImage: demoConfig.coverImage,
-        heroIcons: demoConfig.heroIcons,
-        businessInfo: demoConfig.businessInfo,
-        poweredByColor: demoConfig.poweredByColor,
-        featuredPhotos: demoConfig.featuredPhotos,
-        canvasMode: demoConfig.canvasMode,
-        dividerPresetId: demoConfig.dividerPresetId,
-        // CRITICAL: Include camera and infoPills for complete branding parity
-        camera: demoConfig.camera,
-        infoPills: demoConfig.infoPills,
-        appliedAt: Date.now()
-    }))
+    // Use shared promotion function
+    const success = promoteBrandingToFrontend(demoConfig, demoMenu, {
+        emitEvents: false, // We emit our own events
+        source: 'demo'
+    })
 
-    // Promote menu to active menu
-    if (demoMenu) {
-        localStorage.setItem(ACTIVE_MENU_KEY, JSON.stringify(demoMenu))
-    }
+    if (!success) return false
 
-    // Emit menu.updated event (only when publishing changes)
+    // Demo-specific: Emit menu.updated event
     const categoriesCount = demoMenu?.categories?.length || 0
     const itemsCount = demoMenu?.categories?.reduce((sum, cat) => sum + (cat.items?.length || 0), 0) || 0
     emitDemoEvent('menu.updated', {
