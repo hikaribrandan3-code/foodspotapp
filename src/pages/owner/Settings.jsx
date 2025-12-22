@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
-import { getConfig, updateConfig, CURATED_FONTS, FONT_WEIGHTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.js'
+import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { canChangeDeliveryConfig, recordDeliveryConfigChange, getDeliveryChangesThisMonth } from '../../utils/deliveryUtils.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
@@ -157,12 +157,14 @@ function Card({ children, style = {} }) {
     )
 }
 
-function Settings() {
+// INVARIANT: Settings receives config via prop from App.jsx (single source of truth)
+// Do NOT call getConfig() locally - breaks invariant during saves
+function Settings({ config }) {
     const navigate = useNavigate()
-    const [config, setConfig] = useState(() => getConfig())
-    const [maintenanceMessage, setMaintenanceMessage] = useState(config.maintenanceMessage || '')
-    const [pauseMessage, setPauseMessage] = useState(config.pauseOrdersMessage || '')
-    const [businessInfo, setBusinessInfo] = useState(config.businessInfo || {})
+    // Local form state for editable messages (initialized from prop)
+    const [maintenanceMessage, setMaintenanceMessage] = useState(config?.maintenanceMessage || '')
+    const [pauseMessage, setPauseMessage] = useState(config?.pauseOrdersMessage || '')
+    const [businessInfo, setBusinessInfo] = useState(config?.businessInfo || {})
     const [showCoverEditor, setShowCoverEditor] = useState(false)
 
     useEffect(() => {

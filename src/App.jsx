@@ -369,7 +369,7 @@ function App() {
                     } />
                     <Route path="/owner/settings" element={
                         <ProtectedRoute requiredRole="owner">
-                            <Settings />
+                            <Settings config={config} />
                         </ProtectedRoute>
                     } />
                     <Route path="/owner/analytics" element={

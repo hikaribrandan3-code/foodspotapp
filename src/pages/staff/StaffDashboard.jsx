@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, updateOrder, addStamp } from '../../utils/storage.js'
 import { getMenu, toggleItemAvailability, formatPrice } from '../../config/menuData.js'
-import { getConfig, updateConfig } from '../../config/appConfig.js'
+import { updateConfig } from '../../config/appConfig.js'
 import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
 
 function StaffDashboard({ config }) {
@@ -10,7 +10,8 @@ function StaffDashboard({ config }) {
     const [orders, setOrders] = useState([])
     const [menu, setMenu] = useState(() => getMenu())
     const [activeTab, setActiveTab] = useState('orders')
-    const [appConfig, setAppConfig] = useState(() => getConfig())
+    // INVARIANT: Use config prop from App.jsx (single source of truth)
+    // Do NOT call getConfig() locally - breaks invariant during saves
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({}) // orderId -> 'cash' | 'mercado_pago'
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({}) // orderId -> 4-digit code
 
@@ -27,7 +28,7 @@ function StaffDashboard({ config }) {
         const loadData = () => {
             setOrders(getOrders())
             setMenu(getMenu())
-            setAppConfig(getConfig())
+            // NOTE: config comes from props, no getConfig() here
         }
         loadData()
         const interval = setInterval(loadData, 2000)
@@ -43,7 +44,7 @@ function StaffDashboard({ config }) {
         const order = orders.find(o => o.id === orderId)
         if (!order) return
 
-        const orderMode = appConfig.orderMode || 'A1'
+        const orderMode = config.orderMode || 'A1'
 
         // ============================================
         // PREPAYMENT ENFORCEMENT (P0 - V1 SHIP BLOCKER)
@@ -145,8 +146,9 @@ function StaffDashboard({ config }) {
     }
 
     const handlePauseOrders = () => {
-        updateConfig({ pauseOrders: !appConfig.pauseOrders })
-        setAppConfig(getConfig())
+        updateConfig({ pauseOrders: !config.pauseOrders })
+        // Config will update via App.jsx frontendSync - no local state needed
+        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
     const handleAddStamp = () => {
@@ -202,7 +204,7 @@ function StaffDashboard({ config }) {
                         padding: '2px 8px',
                         borderRadius: 'var(--radius-sm)'
                     }}>
-                        Modo {appConfig.orderMode || 'A1'}
+                        Modo {config.orderMode || 'A1'}
                     </span>
                 </div>
                 <button
@@ -220,13 +222,13 @@ function StaffDashboard({ config }) {
                     <div>
                         <p style={{ fontWeight: 'var(--font-weight-medium)' }}>Pausar pedidos</p>
                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                            {appConfig.pauseOrders ? '⏸️ Pausado' : '▶️ Activo'}
+                            {config.pauseOrders ? '⏸️ Pausado' : '▶️ Activo'}
                         </p>
                     </div>
                     <label className="toggle">
                         <input
                             type="checkbox"
-                            checked={appConfig.pauseOrders}
+                            checked={config.pauseOrders}
                             onChange={handlePauseOrders}
                         />
                         <span className="toggle-slider"></span>
@@ -433,7 +435,7 @@ function StaffDashboard({ config }) {
                                             onClick={() => handlePaymentConfirm(order.id)}
                                             style={{
                                                 minWidth: 120,
-                                                background: order.paymentConfirmed ? 'var(--color-primary)' : (appConfig.colors?.confirmation || '#22C55E'),
+                                                background: order.paymentConfirmed ? 'var(--color-primary)' : (config.colors?.confirmation || '#22C55E'),
                                                 color: 'white',
                                                 border: 'none'
                                             }}
