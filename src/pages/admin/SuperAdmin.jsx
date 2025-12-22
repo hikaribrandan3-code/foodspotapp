@@ -99,7 +99,7 @@ function SuperAdmin({ config }) {
     const featuredImageInputRef = useRef(null)
 
     // Role Lens Hooks - activeRoleView is the source of truth for simulation
-    const { activeRoleView, enterOwnerView, enterStaffView, exitSimulation } = useAdminIntent()
+    const { activeRoleView, isSimulated, enterOwnerView, enterStaffView, exitSimulation } = useAdminIntent()
 
     // Derive current mode from context (defaults to 'superadmin' when not simulating)
     const currentMode = activeRoleView || 'superadmin'
@@ -388,6 +388,27 @@ function SuperAdmin({ config }) {
                                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                                     ))}
                                 </select>
+                            )}
+                            {/* Exit Simulation Button - visible only when simulating */}
+                            {userRole === 'superadmin' && isSimulated && (
+                                <button
+                                    onClick={() => {
+                                        exitSimulation()
+                                        // No navigation - just re-renders with superadmin view
+                                    }}
+                                    style={{
+                                        padding: '6px 12px',
+                                        fontSize: 11,
+                                        fontWeight: 600,
+                                        border: 'none',
+                                        borderRadius: 5,
+                                        cursor: 'pointer',
+                                        background: '#EF4444',
+                                        color: 'white'
+                                    }}
+                                >
+                                    Exit Simulation
+                                </button>
                             )}
                         </div>
                     </div>
