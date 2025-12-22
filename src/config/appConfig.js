@@ -257,6 +257,151 @@ const ACTIVE_BRANDING_KEY = 'foodspot_active_branding';
 const DEMO_SESSION_KEY = 'demo_session'; // sessionStorage - best-effort accelerator
 const DEMO_INTENT_KEY = 'foodspot_demo_active'; // localStorage - source of truth for PWA
 
+// ============================================
+// CONFIG NORMALIZATION (FOUNDATIONAL SAFETY)
+// ============================================
+// Ensures all config fields have safe defaults.
+// This is the single point of defense against undefined crashes.
+// Components should ONLY consume normalized config.
+
+function normalizeConfig(config) {
+    if (!config || typeof config !== 'object') {
+        return { ...defaultConfig };
+    }
+
+    return {
+        // Spread base config first
+        ...config,
+
+        // === PRIMITIVES (with safe defaults) ===
+        businessName: config.businessName || defaultConfig.businessName,
+        canvasMode: config.canvasMode || 'light',
+        headerMode: config.headerMode || 'auto',
+        orderMode: config.orderMode || 'A1',
+        dividerPresetId: config.dividerPresetId || 'coffee-beans',
+
+        // === BOOLEANS (explicit false defaults) ===
+        demoMode: config.demoMode ?? false,
+        maintenanceMode: config.maintenanceMode ?? false,
+        pauseOrders: config.pauseOrders ?? false,
+
+        // === STRINGS (with fallbacks) ===
+        maintenanceMessage: config.maintenanceMessage || defaultConfig.maintenanceMessage,
+        pauseOrdersMessage: config.pauseOrdersMessage || defaultConfig.pauseOrdersMessage,
+
+        // === NESTED OBJECTS (guaranteed to exist) ===
+        headerBranding: {
+            mode: 'cover',
+            ...(config.headerBranding || {})
+        },
+        headerCover: {
+            image: null,
+            scale: 1.0,
+            offsetX: 0,
+            offsetY: 0,
+            ...(config.headerCover || {})
+        },
+        experimental: {
+            headerClampMobile: true,
+            ...(config.experimental || {})
+        },
+        colors: {
+            ...defaultConfig.colors,
+            ...(config.colors || {})
+        },
+        branding: {
+            fontFamily: 'Inter',
+            fontWeight: 'normal',
+            poweredByColor: '#C4856A',
+            primaryColor: '#8B7355',
+            iconColorMode: 'white',
+            ...(config.branding || {})
+        },
+        heroIcons: {
+            menu: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.menu || {}) },
+            delivery: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.delivery || {}) },
+            rewards: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.rewards || {}) },
+            game: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.game || {}) },
+        },
+        features: {
+            ordersEnabled: true,
+            rewardsEnabled: true,
+            gameEnabled: true,
+            instagramSharingEnabled: true,
+            ...(config.features || {})
+        },
+        openingHours: {
+            ...defaultConfig.openingHours,
+            ...(config.openingHours || {})
+        },
+        rewards: {
+            stampsRequired: 10,
+            rewardDescription: '¡Café gratis!',
+            ...(config.rewards || {})
+        },
+        businessInfo: {
+            address: '',
+            phone: '',
+            whatsapp: '',
+            instagram: '',
+            googleMapsLink: '',
+            description: '',
+            ...(config.businessInfo || {})
+        },
+        infoDisplay: {
+            showWhatsApp: true,
+            showHours: true,
+            showAddress: true,
+            showMapLink: true,
+            ...(config.infoDisplay || {})
+        },
+        externalOrdering: {
+            rappiEnabled: false,
+            rappiUrl: '',
+            pedidosYaEnabled: false,
+            pedidosYaUrl: '',
+            ...(config.externalOrdering || {})
+        },
+        payments: {
+            mercadoPagoAlias: '',
+            ...(config.payments || {})
+        },
+        infoPills: {
+            whatsapp: { bgColor: '#C4856A', textColor: 'white', ...(config.infoPills?.whatsapp || {}) },
+            mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3', ...(config.infoPills?.mercadoPago || {}) },
+            rappi: { bgColor: '#FF5A00', textColor: 'white', ...(config.infoPills?.rappi || {}) },
+            pedidosYa: { bgColor: '#E31837', textColor: 'white', ...(config.infoPills?.pedidosYa || {}) },
+            adminAccess: { bgColor: '#FFFFFF', textColor: '#9CA3AF', borderColor: '#E5E7EB', ...(config.infoPills?.adminAccess || {}) },
+            demo: { bgColor: '#84CC16', textColor: 'white', ...(config.infoPills?.demo || {}) },
+            custom: { enabled: false, label: '', url: '', bgColor: '#6366F1', textColor: 'white', ...(config.infoPills?.custom || {}) },
+        },
+        camera: {
+            enabled: false,
+            icon: 'default',
+            color: '#8B7355',
+            textColor: 'auto',
+            ...(config.camera || {})
+        },
+        delivery: {
+            originAddress: '',
+            radiusKm: 5,
+            flatFee: 0,
+            freeDeliveryThreshold: 0,
+            configChanges: [],
+            maxChangesPerMonth: 2,
+            ...(config.delivery || {})
+        },
+        homeConfig: {
+            primaryActions: ['menu', 'envios', 'rewards', 'game'],
+            featuredItems: ['flat-white', 'cappuccino', 'brownie-nuez', 'medialuna-manteca'],
+            ...(config.homeConfig || {})
+        },
+
+        // === ARRAYS (guaranteed to be arrays) ===
+        featuredPhotos: Array.isArray(config.featuredPhotos) ? config.featuredPhotos : defaultConfig.featuredPhotos,
+    };
+}
+
 // Helper: Check if in demo mode (localStorage first, then sessionStorage)
 function isDemoModeActive() {
     // Check localStorage first (source of truth for PWA)
@@ -373,10 +518,11 @@ export function getConfig() {
             }
         }
 
-        return config;
+        // FOUNDATIONAL: Normalize config before returning to guarantee safe defaults
+        return normalizeConfig(config);
     } catch (e) {
         console.error("Error loading config:", e);
-        return defaultConfig;
+        return normalizeConfig(defaultConfig);
     }
 }
 
