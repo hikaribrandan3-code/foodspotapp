@@ -43,6 +43,8 @@ import Camera from './components/Camera/index.jsx'
 
 function App() {
     const [config, setConfig] = useState(() => getConfig())
+    // GUARDRAIL: Defensive fallback to prevent pauseOrders crash
+    const safeConfig = config ?? { pauseOrders: false }
 
     // Track visit on app load
     useEffect(() => {
@@ -335,23 +337,23 @@ function App() {
 
                 <Routes>
                     {/* Customer Routes */}
-                    <Route path="/" element={<Home config={config} />} />
-                    <Route path="/menu" element={<Menu config={config} />} />
-                    <Route path="/envios" element={<Menu config={config} deliveryMode={true} />} />
-                    <Route path="/order" element={<Order config={config} />} />
+                    <Route path="/" element={<Home config={safeConfig} />} />
+                    <Route path="/menu" element={<Menu config={safeConfig} />} />
+                    <Route path="/envios" element={<Menu config={safeConfig} deliveryMode={true} />} />
+                    <Route path="/order" element={<Order config={safeConfig} />} />
 
-                    <Route path="/status" element={<OrderStatus config={config} />} />
-                    <Route path="/rewards" element={<Rewards config={config} />} />
-                    <Route path="/share" element={<ShareFood config={config} />} />
+                    <Route path="/status" element={<OrderStatus config={safeConfig} />} />
+                    <Route path="/rewards" element={<Rewards config={safeConfig} />} />
+                    <Route path="/share" element={<ShareFood config={safeConfig} />} />
                     <Route path="/game" element={<PerfectPour />} />
-                    <Route path="/info" element={<Info config={config} />} />
-                    <Route path="/promos" element={<Promos config={config} />} />
+                    <Route path="/info" element={<Info config={safeConfig} />} />
+                    <Route path="/promos" element={<Promos config={safeConfig} />} />
 
                     {/* Staff Routes */}
                     <Route path="/staff" element={<StaffLogin />} />
                     <Route path="/staff/dashboard" element={
                         <ProtectedRoute requiredRole="staff">
-                            <StaffDashboard config={config} />
+                            <StaffDashboard config={safeConfig} />
                         </ProtectedRoute>
                     } />
 
@@ -369,7 +371,7 @@ function App() {
                     } />
                     <Route path="/owner/settings" element={
                         <ProtectedRoute requiredRole="owner">
-                            <Settings config={config} />
+                            <Settings config={safeConfig} />
                         </ProtectedRoute>
                     } />
                     <Route path="/owner/analytics" element={
@@ -384,7 +386,7 @@ function App() {
                     <Route path="/demo" element={<Navigate to="/demo/backend/dashboard" replace />} />
 
                     {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
-                    <Route path="/admin" element={<SuperAdmin config={config} />} />
+                    <Route path="/admin" element={<SuperAdmin config={safeConfig} />} />
                     <Route path="/admin/cover-preview" element={<CoverPreview />} />
 
                     {/* Camera Suite */}
