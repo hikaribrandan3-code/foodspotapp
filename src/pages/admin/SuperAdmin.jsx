@@ -4,7 +4,7 @@ import { getOrders } from '../../utils/storage.js'
 import { login, logout, getSession } from '../../utils/auth.js'
 
 import { updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
-import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem } from '../../config/menuData.js'
+import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem, addCategory } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
@@ -97,6 +97,11 @@ function SuperAdmin({ config }) {
     const [uploadingFeaturedSlot, setUploadingFeaturedSlot] = useState(null)
     const menuImageInputRef = useRef(null)
     const featuredImageInputRef = useRef(null)
+
+    // Category creation state
+    const [showAddCategory, setShowAddCategory] = useState(false)
+    const [newCategoryName, setNewCategoryName] = useState('')
+    const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
 
     // Role Lens Hooks - activeRoleView is the source of truth for simulation
     const { activeRoleView, isSimulated, enterOwnerView, enterStaffView, exitSimulation } = useAdminIntent()
@@ -553,6 +558,96 @@ function SuperAdmin({ config }) {
                     {activeTab === 'menu' && canEdit && (
                         <>
                             <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
+
+                            {/* Add Category Button / Form */}
+                            {!showAddCategory ? (
+                                <button
+                                    onClick={() => setShowAddCategory(true)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        marginBottom: 16,
+                                        background: '#F3F4F6',
+                                        border: '2px dashed #D1D5DB',
+                                        borderRadius: 10,
+                                        fontSize: 14,
+                                        fontWeight: 500,
+                                        color: '#6B7280',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 6
+                                    }}
+                                >
+                                    ➕ Add Category
+                                </button>
+                            ) : (
+                                <div style={{ ...cardStyle, marginBottom: 16, border: '2px solid #22C55E' }}>
+                                    <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Category name"
+                                            value={newCategoryName}
+                                            onChange={(e) => setNewCategoryName(e.target.value)}
+                                            autoFocus
+                                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="📦"
+                                            value={newCategoryIcon}
+                                            onChange={(e) => setNewCategoryIcon(e.target.value)}
+                                            style={{ ...inputStyle, width: 60, marginBottom: 0, textAlign: 'center' }}
+                                            maxLength={2}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 10 }}>
+                                        <button
+                                            onClick={() => {
+                                                if (newCategoryName.trim()) {
+                                                    addCategory(newCategoryName.trim(), newCategoryIcon || '📦')
+                                                    setMenu(getMenu()) // Refresh menu state
+                                                    setNewCategoryName('')
+                                                    setNewCategoryIcon('📦')
+                                                    setShowAddCategory(false)
+                                                }
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: '10px 16px',
+                                                background: '#22C55E',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: 8,
+                                                fontWeight: 600,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Create Category
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowAddCategory(false)
+                                                setNewCategoryName('')
+                                                setNewCategoryIcon('📦')
+                                            }}
+                                            style={{
+                                                padding: '10px 16px',
+                                                background: '#F3F4F6',
+                                                color: '#6B7280',
+                                                border: 'none',
+                                                borderRadius: 8,
+                                                fontWeight: 500,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             {menu.categories?.map(category => (
                                 <div key={category.id} style={{ marginBottom: 20 }}>
                                     <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.name}</h4>

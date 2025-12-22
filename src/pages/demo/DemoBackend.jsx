@@ -14,6 +14,7 @@ import {
     getDemoMenu,
     saveDemoMenu,
     updateDemoMenuItem,
+    addDemoCategory,
     applyDemoToFrontend,
     clearAllDemoData
 } from '../../utils/demoSession.js'
@@ -1261,6 +1262,11 @@ function DemoBackend() {
     const [coverEditorOpen, setCoverEditorOpen] = useState(false)
     const [showEmailPopup, setShowEmailPopup] = useState(false)
 
+    // Category creation state (demo)
+    const [showAddCategory, setShowAddCategory] = useState(false)
+    const [newCategoryName, setNewCategoryName] = useState('')
+    const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
+
     // Order Playback state (demo-only)
     const [playbackOrder, setPlaybackOrder] = useState(null)
     const [playbackOpen, setPlaybackOpen] = useState(false)
@@ -2037,6 +2043,97 @@ function DemoBackend() {
                 {activeTab === 'menu' && role === 'owner' && (
                     <>
                         <h3 style={labelStyle}>🍽️ MENU MANAGEMENT</h3>
+
+                        {/* Add Category Button / Form */}
+                        {!showAddCategory ? (
+                            <button
+                                onClick={() => setShowAddCategory(true)}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    marginBottom: 16,
+                                    background: '#F3F4F6',
+                                    border: '2px dashed #D1D5DB',
+                                    borderRadius: 10,
+                                    fontSize: 14,
+                                    fontWeight: 500,
+                                    color: '#6B7280',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 6
+                                }}
+                            >
+                                ➕ Add Category
+                            </button>
+                        ) : (
+                            <div style={{ ...cardStyle, marginBottom: 16, border: '2px solid #22C55E' }}>
+                                <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Category name"
+                                        value={newCategoryName}
+                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                        autoFocus
+                                        style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="📦"
+                                        value={newCategoryIcon}
+                                        onChange={(e) => setNewCategoryIcon(e.target.value)}
+                                        style={{ ...inputStyle, width: 60, marginBottom: 0, textAlign: 'center' }}
+                                        maxLength={2}
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', gap: 10 }}>
+                                    <button
+                                        onClick={() => {
+                                            if (newCategoryName.trim()) {
+                                                const updated = addDemoCategory(newCategoryName.trim(), newCategoryIcon || '📦')
+                                                setDemoMenu(updated)
+                                                setHasUnappliedChanges(true)
+                                                setNewCategoryName('')
+                                                setNewCategoryIcon('📦')
+                                                setShowAddCategory(false)
+                                            }
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px 16px',
+                                            background: '#22C55E',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: 8,
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Create Category
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowAddCategory(false)
+                                            setNewCategoryName('')
+                                            setNewCategoryIcon('📦')
+                                        }}
+                                        style={{
+                                            padding: '10px 16px',
+                                            background: '#F3F4F6',
+                                            color: '#6B7280',
+                                            border: 'none',
+                                            borderRadius: 8,
+                                            fontWeight: 500,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {demoMenu?.categories?.map(category => (
                             <div key={category.id} style={{ marginBottom: 20 }}>
                                 <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.icon} {category.name}</h4>

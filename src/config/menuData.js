@@ -137,6 +137,21 @@ export function addMenuItem(categoryId, newItem) {
     return null;
 }
 
+// Add a new category
+export function addCategory(name, icon = '📦') {
+    const menu = getMenu();
+    const id = `category-${Date.now()}`;
+    menu.categories.push({
+        id,
+        name: name || 'Nueva categoría',
+        icon: icon || '📦',
+        enabled: true,
+        items: []
+    });
+    saveMenu(menu);
+    return id;
+}
+
 // Remove a menu item from a category
 export function removeMenuItem(categoryId, itemId) {
     const menu = getMenu();

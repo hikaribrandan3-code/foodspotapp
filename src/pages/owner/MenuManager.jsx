@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
-import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled } from '../../config/menuData.js'
+import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory } from '../../config/menuData.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 
@@ -105,6 +105,11 @@ function MenuManager() {
     const [isUploading, setIsUploading] = useState(false)
     const fileInputRef = useRef(null)
 
+    // Category creation state
+    const [showAddCategory, setShowAddCategory] = useState(false)
+    const [newCategoryName, setNewCategoryName] = useState('')
+    const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
+
     useEffect(() => {
         const auth = getAuth()
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
@@ -201,6 +206,114 @@ function MenuManager() {
             <OwnerTabs activeTab="menu" />
 
             <div style={{ padding: 16 }}>
+                {/* Add Category Button / Form */}
+                {!showAddCategory ? (
+                    <button
+                        onClick={() => setShowAddCategory(true)}
+                        style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            marginBottom: 16,
+                            background: '#F1F5F9',
+                            border: '2px dashed #CBD5E1',
+                            borderRadius: 10,
+                            fontSize: 14,
+                            fontWeight: 500,
+                            color: '#64748B',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6
+                        }}
+                    >
+                        ➕ Agregar Categoría
+                    </button>
+                ) : (
+                    <div style={{
+                        background: '#FFFFFF',
+                        borderRadius: 10,
+                        border: '2px solid #22C55E',
+                        padding: 16,
+                        marginBottom: 16
+                    }}>
+                        <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                            <input
+                                type="text"
+                                placeholder="Nombre de categoría"
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                autoFocus
+                                style={{
+                                    flex: 1,
+                                    padding: '10px 14px',
+                                    border: '1px solid #E2E8F0',
+                                    borderRadius: 8,
+                                    fontSize: 14
+                                }}
+                            />
+                            <input
+                                type="text"
+                                placeholder="📦"
+                                value={newCategoryIcon}
+                                onChange={(e) => setNewCategoryIcon(e.target.value)}
+                                style={{
+                                    width: 50,
+                                    padding: '10px',
+                                    border: '1px solid #E2E8F0',
+                                    borderRadius: 8,
+                                    fontSize: 14,
+                                    textAlign: 'center'
+                                }}
+                                maxLength={2}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                                onClick={() => {
+                                    if (newCategoryName.trim()) {
+                                        addCategory(newCategoryName.trim(), newCategoryIcon || '📦')
+                                        setMenu(getMenu(targetBusinessId))
+                                        setNewCategoryName('')
+                                        setNewCategoryIcon('📦')
+                                        setShowAddCategory(false)
+                                    }
+                                }}
+                                style={{
+                                    flex: 1,
+                                    padding: '10px 16px',
+                                    background: '#22C55E',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: 8,
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Crear
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowAddCategory(false)
+                                    setNewCategoryName('')
+                                    setNewCategoryIcon('📦')
+                                }}
+                                style={{
+                                    padding: '10px 16px',
+                                    background: '#F1F5F9',
+                                    color: '#64748B',
+                                    border: 'none',
+                                    borderRadius: 8,
+                                    fontWeight: 500,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {menu.categories.map(category => {
                     const isEnabled = category.enabled !== false
                     return (

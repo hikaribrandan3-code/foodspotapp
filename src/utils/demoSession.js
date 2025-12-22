@@ -256,6 +256,26 @@ export function updateDemoMenuItem(menu, categoryId, itemId, updates) {
     return updatedMenu
 }
 
+/**
+ * Add a new category to demo menu
+ * @param {string} name - Category name
+ * @param {string} icon - Emoji icon (default: 📦)
+ * @returns {Object} Updated menu
+ */
+export function addDemoCategory(name, icon = '📦') {
+    const menu = getDemoMenu()
+    const id = `demo-category-${Date.now()}`
+    menu.categories.push({
+        id,
+        name: name || 'Nueva categoría',
+        icon: icon || '📦',
+        enabled: true,
+        items: []
+    })
+    saveDemoMenu(menu)
+    return menu
+}
+
 // ============================================
 // CORE BRANDING PROMOTION (Shared Logic)
 // ============================================
