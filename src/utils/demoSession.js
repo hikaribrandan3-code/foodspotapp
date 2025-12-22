@@ -102,15 +102,16 @@ export function updateDemoSession(updates) {
 
 /**
  * Clear demo session (exit demo mode)
+ * NOTE: Does NOT dispatch frontendSync to prevent reverting applied demo branding
+ * Demo branding persists until explicit reset or expiry
  */
 export function clearDemoSession() {
     // Clear both storages
     localStorage.removeItem(DEMO_INTENT_KEY)
     sessionStorage.removeItem(DEMO_SESSION_KEY)
     console.log('✅ Demo session cleared (localStorage + sessionStorage)')
-
-    // Notify App.jsx immediately to refresh config (prevents flash/revert)
-    window.dispatchEvent(new CustomEvent('frontendSync'))
+    // NOTE: Intentionally NOT dispatching frontendSync here
+    // Applied demo branding should persist on frontend after exiting demo backend
 }
 
 /**
