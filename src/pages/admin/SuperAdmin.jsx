@@ -257,6 +257,34 @@ function SuperAdmin({ config }) {
                     <button type="submit" style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 600, color: 'white', background: '#B8956A', border: 'none', borderRadius: 24, cursor: 'pointer', marginBottom: 10 }}>Ingresar</button>
                     <button type="button" onClick={() => navigate('/')} style={{ width: '100%', padding: '12px', fontSize: 14, color: '#6B6560', background: 'white', border: '1px solid #E0DCD6', borderRadius: 24, cursor: 'pointer' }}>← Volver</button>
                 </form>
+                {/* ============================================
+                    DEV-ONLY BYPASS - REMOVE BEFORE PRODUCTION
+                    Temporary scaffolding for verification testing
+                    ============================================ */}
+                {import.meta.env.DEV && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            // Bypass auth - directly set authenticated state
+                            setIsAuthenticated(true)
+                            setUserRole('superadmin')
+                        }}
+                        style={{
+                            marginTop: 20,
+                            padding: '10px 20px',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: 'white',
+                            background: '#7C3AED',
+                            border: '2px dashed #A855F7',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            opacity: 0.8
+                        }}
+                    >
+                        🔧 DEV: Enter Super Admin (No Auth)
+                    </button>
+                )}
             </div>
         )
     }
