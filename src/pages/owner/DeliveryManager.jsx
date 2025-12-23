@@ -2,65 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
-import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.js' // Needed for payment button color fallback
-
-// Shared Owner Header Component (DRY this out later, but keeping for now for isolation)
-function OwnerHeader({ title, subtitle, onLogout }) {
-    return (
-        <div style={{
-            background: '#FFFFFF',
-            padding: '16px 20px 12px',
-            borderBottom: '1px solid #E5E7EB'
-        }}>
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {/* Neutral Logo */}
-                    <div style={{ width: 36, height: 36, background: '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>FS</span>
-                    </div>
-                    <div>
-                        <h1 style={{
-                            fontSize: 18,
-                            fontWeight: 700,
-                            color: '#111827',
-                            margin: 0,
-                            letterSpacing: '-0.02em',
-                            lineHeight: 1.2
-                        }}>{title}</h1>
-                        {subtitle && (
-                            <p style={{
-                                fontSize: 13,
-                                color: '#6B7280',
-                                margin: '2px 0 0',
-                                fontWeight: 500
-                            }}>{subtitle}</p>
-                        )}
-                    </div>
-                </div>
-                <button
-                    onClick={onLogout}
-                    style={{
-                        padding: '8px 16px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: '#4B5563',
-                        background: '#F3F4F6',
-                        border: 'none',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    Salir
-                </button>
-            </div>
-        </div>
-    )
-}
+import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.js'
+import BackendHeader from '../../components/BackendHeader.jsx'
 
 // Shared Owner Tab Navigation
 function OwnerTabs({ activeTab }) {
@@ -169,9 +112,8 @@ function DeliveryManager() {
 
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F9FAFB' }}>
-            <OwnerHeader
-                title="Gestión de Envíos"
-                subtitle="Control de pedidos con entrega"
+            <BackendHeader
+                title="Envíos"
                 onLogout={handleLogout}
             />
             <OwnerTabs activeTab="delivery" />

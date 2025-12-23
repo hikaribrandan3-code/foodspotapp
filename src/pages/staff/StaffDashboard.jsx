@@ -4,7 +4,7 @@ import { getAuth, clearAuth, getOrders, updateOrder, addStamp } from '../../util
 import { getMenu, toggleItemAvailability, formatPrice } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.js'
 import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
-
+import BackendHeader from '../../components/BackendHeader.jsx'
 function StaffDashboard({ config }) {
     const navigate = useNavigate()
     const [orders, setOrders] = useState([])
@@ -186,35 +186,23 @@ function StaffDashboard({ config }) {
 
     return (
         <div className="page backend-surface" style={{ paddingBottom: 'var(--space-4)' }}>
-            {/* Header */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 'var(--space-4)'
-            }}>
-                <div>
-                    <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
-                        Staff
-                    </h1>
+            <BackendHeader
+                title="Staff"
+                onLogout={handleLogout}
+                showDateSelector={false}
+                extraActions={
                     <span style={{
-                        fontSize: 'var(--font-size-xs)',
-                        color: 'var(--color-text-muted)',
-                        background: 'var(--color-card)',
-                        padding: '2px 8px',
-                        borderRadius: 'var(--radius-sm)'
+                        padding: '4px 10px',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: '#6B7280',
+                        background: '#F3F4F6',
+                        borderRadius: 20
                     }}>
                         Modo {config.orderMode || 'A1'}
                     </span>
-                </div>
-                <button
-                    className="btn btn-secondary"
-                    onClick={handleLogout}
-                    style={{ padding: 'var(--space-2) var(--space-3)' }}
-                >
-                    Salir
-                </button>
-            </div>
+                }
+            />
 
             {/* Pause Orders Toggle */}
             <div className="admin-card" style={{ marginBottom: 'var(--space-4)' }}>

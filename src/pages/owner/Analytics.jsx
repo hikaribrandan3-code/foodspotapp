@@ -1,51 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getAnalytics, getOrders, getRewards } from '../../utils/storage.js'
-
-// Shared Owner Header Component
-function OwnerHeader({ title, subtitle, onLogout }) {
-    return (
-        <div style={{
-            background: '#1E293B',
-            padding: '14px 20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-        }}>
-            <div>
-                <h1 style={{
-                    fontSize: 17,
-                    fontWeight: 600,
-                    color: '#FFFFFF',
-                    margin: 0,
-                    letterSpacing: '-0.01em'
-                }}>{title}</h1>
-                {subtitle && (
-                    <p style={{
-                        fontSize: 12,
-                        color: '#94A3B8',
-                        margin: '2px 0 0'
-                    }}>{subtitle}</p>
-                )}
-            </div>
-            <button
-                onClick={onLogout}
-                style={{
-                    padding: '6px 14px',
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: '#94A3B8',
-                    background: 'transparent',
-                    border: '1px solid #475569',
-                    borderRadius: 6,
-                    cursor: 'pointer'
-                }}
-            >
-                Salir
-            </button>
-        </div>
-    )
-}
+import BackendHeader from '../../components/BackendHeader.jsx'
 
 // Shared Owner Tab Navigation
 function OwnerTabs({ activeTab }) {
@@ -145,10 +101,10 @@ function Analytics() {
 
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
-            <OwnerHeader
+            <BackendHeader
                 title="Estadísticas"
-                subtitle="Métricas del negocio"
                 onLogout={handleLogout}
+                showDateSelector={true}
             />
             <OwnerTabs activeTab="analytics" />
 

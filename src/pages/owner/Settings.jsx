@@ -7,84 +7,7 @@ import { canChangeDeliveryConfig, recordDeliveryConfigChange, getDeliveryChanges
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
-
-// Shared Owner Header Component
-function OwnerHeader({ title, subtitle, onLogout, onSync }) {
-    return (
-        <div style={{
-            background: '#FFFFFF',
-            padding: '16px 20px 12px',
-            borderBottom: '1px solid #E5E7EB'
-        }}>
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {/* Neutral Logo */}
-                    <div style={{ width: 36, height: 36, background: '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>FS</span>
-                    </div>
-                    <div>
-                        <h1 style={{
-                            fontSize: 17,
-                            fontWeight: 600,
-                            color: '#1F2937',
-                            margin: 0,
-                            letterSpacing: '-0.01em'
-                        }}>{title}</h1>
-                        {subtitle && (
-                            <p style={{
-                                fontSize: 12,
-                                color: '#64748B',
-                                margin: '2px 0 0'
-                            }}>{subtitle}</p>
-                        )}
-                    </div>
-                </div>
-                <button
-                    onClick={onLogout}
-                    style={{
-                        padding: '6px 14px',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: '#64748B',
-                        background: 'transparent',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: 6,
-                        cursor: 'pointer'
-                    }}
-                >
-                    Salir
-                </button>
-            </div>
-
-            {/* Refresh Frontend Button - FULL WIDTH UNDER HEADER */}
-            <button
-                onClick={onSync}
-                style={{
-                    width: '100%',
-                    marginTop: 12,
-                    padding: '10px 16px',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    background: '#3B82F6',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8
-                }}
-            >
-                🔄 Refresh Frontend
-            </button>
-        </div>
-    )
-}
+import BackendHeader from '../../components/BackendHeader.jsx'
 
 // Shared Owner Tab Navigation
 function OwnerTabs({ activeTab }) {
@@ -205,19 +128,36 @@ function Settings({ config }) {
 
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
-            <OwnerHeader
-                title="Configuración"
-                subtitle="Ajustes del negocio"
+            <BackendHeader
+                title="Config"
                 onLogout={handleLogout}
-                onSync={() => {
-                    // Dispatch global sync event
-                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                    // Refresh local state
-                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                    // Visual feedback
-                    alert('✅ Frontend synced!')
-                }}
             />
+            {/* Sync Button - Settings specific */}
+            <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB' }}>
+                <button
+                    onClick={() => {
+                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                        alert('✅ Frontend synced!')
+                    }}
+                    style={{
+                        width: '100%',
+                        padding: '10px 16px',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        border: 'none',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        background: '#3B82F6',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8
+                    }}
+                >
+                    🔄 Refresh Frontend
+                </button>
+            </div>
             <OwnerTabs activeTab="settings" />
 
             <div style={{ padding: 16 }}>
