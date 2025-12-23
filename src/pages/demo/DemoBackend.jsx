@@ -1362,6 +1362,7 @@ function DemoBackend() {
         { id: 'menu', label: 'Menu' },
         { id: 'info', label: 'Info' },
         { id: 'orders', label: 'Orders' },
+        { id: 'delivery', label: 'Delivery' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'activity', label: 'Activity' },
         { id: 'launch', label: 'Launch' },
@@ -1370,6 +1371,7 @@ function DemoBackend() {
 
     const staffTabs = [
         { id: 'orders', label: 'Orders' },
+        { id: 'delivery', label: 'Delivery' },
         { id: 'stock', label: 'Stock' },
         { id: 'rewards', label: 'Stamps' }
     ]
@@ -2381,6 +2383,53 @@ function DemoBackend() {
                             </div>
                             <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Demo data</p>
                         </div>
+                    </>
+                )}
+
+                {/* DELIVERY TAB - Filtered view of delivery orders only */}
+                {activeTab === 'delivery' && (
+                    <>
+                        <h3 style={labelStyle}>🚚 DELIVERY ORDERS</h3>
+                        {(() => {
+                            const deliveryOrders = MOCK_ORDERS.filter(o => o.orderType === 'delivery' || o.id === 'demo-1')
+                            if (deliveryOrders.length === 0) {
+                                return (
+                                    <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
+                                        <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
+                                        <p style={{ color: '#6B7280' }}>No delivery orders</p>
+                                    </div>
+                                )
+                            }
+                            return deliveryOrders.map(order => (
+                                <div key={order.id} style={{ ...cardStyle, marginBottom: 10, borderLeft: '4px solid #F97316' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                        <span style={{ fontSize: 18, fontWeight: 700 }}>#{order.orderNumber} 🚚</span>
+                                        <span style={{
+                                            padding: '4px 8px',
+                                            borderRadius: 4,
+                                            fontSize: 11,
+                                            fontWeight: 500,
+                                            background: order.status === 'entregado' ? '#D1FAE5' : order.status === 'en_camino' ? '#FFEDD5' : '#E0E7FF',
+                                            color: order.status === 'entregado' ? '#065F46' : order.status === 'en_camino' ? '#9A3412' : '#3730A3'
+                                        }}>
+                                            {order.status}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6, background: '#F8FAFC', padding: 8, borderRadius: 6 }}>
+                                        <p style={{ margin: 0 }}>📍 Demo Address 123</p>
+                                        <p style={{ margin: 0 }}>📞 +54 11 1234 5678</p>
+                                    </div>
+                                    <div style={{ marginBottom: 8 }}>
+                                        {order.items.map((item, idx) => (
+                                            <p key={idx} style={{ fontSize: 13, color: '#374151', margin: '2px 0' }}>{item.quantity}× {item.name}</p>
+                                        ))}
+                                    </div>
+                                    <div style={{ fontSize: 14, fontWeight: 600, color: '#22C55E' }}>
+                                        ${order.total.toLocaleString()}
+                                    </div>
+                                </div>
+                            ))
+                        })()}
                     </>
                 )}
 

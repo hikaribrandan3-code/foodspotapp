@@ -245,6 +245,12 @@ function StaffDashboard({ config }) {
                     Pedidos ({activeOrders.length})
                 </button>
                 <button
+                    className={`tab ${activeTab === 'delivery' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('delivery')}
+                >
+                    Envíos ({orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado').length})
+                </button>
+                <button
                     className={`tab ${activeTab === 'pagos' ? 'active' : ''}`}
                     onClick={() => setActiveTab('pagos')}
                 >
@@ -457,6 +463,76 @@ function StaffDashboard({ config }) {
                             {todayOrders.length}
                         </p>
                     </div>
+                </div>
+            )}
+
+            {/* Delivery Tab - Filtered view of delivery orders only */}
+            {activeTab === 'delivery' && (
+                <div>
+                    {(() => {
+                        const deliveryOrders = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+                        if (deliveryOrders.length === 0) {
+                            return (
+                                <div className="card" style={{ textAlign: 'center', padding: 20 }}>
+                                    <p style={{ color: 'var(--color-muted)', margin: 0 }}>No hay envíos activos</p>
+                                </div>
+                            )
+                        }
+                        return deliveryOrders.map(order => {
+                            const isDeliveryOrder = order.orderType === 'delivery'
+                            const statusConfig = {
+                                pendiente: { label: 'Pendiente', color: '#F59E0B', bg: '#FEF3C7' },
+                                confirmado: { label: 'Confirmado', color: '#3B82F6', bg: '#DBEAFE' },
+                                preparacion: { label: 'Preparando', color: '#8B5CF6', bg: '#EDE9FE' },
+                                listo: { label: 'Listo', color: '#22C55E', bg: '#DCFCE7' },
+                                en_camino: { label: 'En camino', color: '#F97316', bg: '#FFEDD5' }
+                            }
+                            const statusInfo = statusConfig[order.status] || { label: order.status, color: '#6B7280', bg: '#F3F4F6' }
+
+                            return (
+                                <div key={order.id} className="card" style={{ marginBottom: 12 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                        <span style={{ fontWeight: 600, fontSize: 15 }}>#{order.orderNumber} 🚚</span>
+                                        <span style={{
+                                            padding: '4px 10px',
+                                            borderRadius: 12,
+                                            fontSize: 11,
+                                            fontWeight: 600,
+                                            background: statusInfo.bg,
+                                            color: statusInfo.color
+                                        }}>
+                                            {statusInfo.label}
+                                        </span>
+                                    </div>
+                                    {order.customerInfo && (
+                                        <div style={{ fontSize: 13, color: 'var(--color-muted)', marginBottom: 8, background: 'var(--surface-alt-bg)', padding: 10, borderRadius: 8 }}>
+                                            <p style={{ margin: '0 0 4px', fontWeight: 500, color: 'var(--canvas-text)' }}>📍 {order.customerInfo.address}</p>
+                                            {order.customerInfo.phone && <p style={{ margin: 0 }}>📞 {order.customerInfo.phone}</p>}
+                                            {order.customerInfo.name && <p style={{ margin: 0 }}>👤 {order.customerInfo.name}</p>}
+                                        </div>
+                                    )}
+                                    <div style={{ fontSize: 13, color: 'var(--color-muted)', marginBottom: 8 }}>
+                                        {order.items?.map((item, i) => (
+                                            <span key={i}>{item.quantity}x {item.name}{i < order.items.length - 1 ? ', ' : ''}</span>
+                                        ))}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-primary)' }}>
+                                            ${order.total?.toLocaleString()}
+                                        </span>
+                                        {order.status !== 'entregado' && (
+                                            <button
+                                                className="btn btn-primary btn-sm"
+                                                onClick={() => handleStatusUpdate(order.id)}
+                                            >
+                                                {order.status === 'en_camino' ? 'Marcar Entregado' : 'Siguiente Estado →'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })
+                    })()}
                 </div>
             )}
 

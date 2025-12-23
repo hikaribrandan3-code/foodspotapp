@@ -340,6 +340,7 @@ function SuperAdmin({ config }) {
         { id: 'menu', label: 'Menu' },
         { id: 'branding', label: 'Branding' },
         { id: 'pedidos', label: 'Orders' },
+        { id: 'delivery', label: 'Delivery' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'historial', label: 'History' },
         { id: 'tenants', label: 'Tenants' },
@@ -1591,6 +1592,54 @@ function SuperAdmin({ config }) {
                                     <option value="B">B: Restaurante / Pago al final</option>
                                 </select>
                             </div>
+                        </>
+                    )}
+
+                    {/* ==================== DELIVERY TAB ==================== */}
+                    {activeTab === 'delivery' && (
+                        <>
+                            <h3 style={labelStyle}>🚚 DELIVERY ORDERS</h3>
+                            {(() => {
+                                const deliveryOrders = orders.filter(o => o.orderType === 'delivery')
+                                if (deliveryOrders.length === 0) {
+                                    return (
+                                        <div style={cardStyle}>
+                                            <p style={{ color: '#6B7280', textAlign: 'center', margin: 0 }}>No delivery orders yet</p>
+                                        </div>
+                                    )
+                                }
+                                return deliveryOrders.map(order => (
+                                    <div key={order.id} style={{ ...cardStyle, marginBottom: 10 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                            <span style={{ fontWeight: 600, fontSize: 14, color: '#374151' }}>#{order.orderNumber}</span>
+                                            <span style={{
+                                                padding: '2px 8px',
+                                                borderRadius: 10,
+                                                fontSize: 11,
+                                                fontWeight: 600,
+                                                background: order.status === 'entregado' ? '#DCFCE7' : order.status === 'en_camino' ? '#FEF3C7' : '#E0E7FF',
+                                                color: order.status === 'entregado' ? '#166534' : order.status === 'en_camino' ? '#92400E' : '#3730A3'
+                                            }}>
+                                                {order.status}
+                                            </span>
+                                        </div>
+                                        {order.customerInfo && (
+                                            <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>
+                                                <p style={{ margin: 0 }}>📍 {order.customerInfo.address}</p>
+                                                {order.customerInfo.phone && <p style={{ margin: 0 }}>📞 {order.customerInfo.phone}</p>}
+                                            </div>
+                                        )}
+                                        <div style={{ fontSize: 12, color: '#9CA3AF' }}>
+                                            {order.items?.map((item, i) => (
+                                                <span key={i}>{item.quantity}x {item.name}{i < order.items.length - 1 ? ', ' : ''}</span>
+                                            ))}
+                                        </div>
+                                        <div style={{ marginTop: 6, fontSize: 13, fontWeight: 600, color: '#22C55E' }}>
+                                            ${order.total?.toLocaleString()}
+                                        </div>
+                                    </div>
+                                ))
+                            })()}
                         </>
                     )}
 
