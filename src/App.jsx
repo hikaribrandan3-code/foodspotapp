@@ -31,6 +31,7 @@ import MenuManager from './pages/owner/MenuManager.jsx'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
 import Analytics from './pages/owner/Analytics.jsx'
+import DeliveryManager from './pages/owner/DeliveryManager.jsx'
 
 // Admin Pages
 import SuperAdmin from './pages/admin/SuperAdmin.jsx'
@@ -367,6 +368,11 @@ function App() {
                     <Route path="/owner/menu" element={
                         <ProtectedRoute requiredRole="owner">
                             <MenuManager />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/owner/delivery" element={
+                        <ProtectedRoute requiredRole="owner">
+                            <DeliveryManager />
                         </ProtectedRoute>
                     } />
                     <Route path="/owner/rewards" element={

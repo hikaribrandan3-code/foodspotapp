@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
 import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
@@ -91,6 +93,7 @@ function OwnerTabs({ activeTab }) {
     const tabs = [
         { id: 'settings', path: '/owner/settings', label: 'Config' },
         { id: 'menu', path: '/owner/menu', label: 'Menú' },
+        { id: 'delivery', path: '/owner/delivery', label: 'Envíos' },
         { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
         { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
     ]

@@ -22,6 +22,8 @@ import { getDemoEvents, clearDemoEvents } from '../../utils/demoEvents.js'
 import { getConfig, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
+import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
+import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 
 // Import existing branding components (REUSE)
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
@@ -62,12 +64,17 @@ const MOCK_ORDERS = [
     {
         id: 'demo-3',
         orderNumber: '103',
-        status: 'entregado',
-        items: [{ name: 'Espresso', quantity: 1, price: 1200 }],
-        total: 1200,
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        status: 'en_camino',
+        orderType: 'delivery',
+        items: [{ name: 'Avocado Toast', quantity: 1, price: 2800 }],
+        total: 2800,
+        createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
         paymentConfirmed: true,
-        paymentMethod: 'cash'
+        customerInfo: {
+            name: 'Demo User',
+            address: 'Calle Falsa 123',
+            phone: '+5491112345678'
+        }
     }
 ]
 
@@ -1251,7 +1258,10 @@ function DemoBackend() {
     const navigate = useNavigate()
     const [demoSession, setDemoSession] = useState(() => getDemoSession())
     const [activeTab, setActiveTab] = useState('resumen')
-    const [orders] = useState(MOCK_ORDERS)
+    const [demoOrders, setDemoOrders] = useState(MOCK_ORDERS)
+    const orders = demoOrders // Alias for compatibility
+    const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
+    const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
     const [role, setRole] = useState(() => getDemoRole())
 
     // Demo-specific state (localStorage-backed)
@@ -2387,48 +2397,191 @@ function DemoBackend() {
                 )}
 
                 {/* DELIVERY TAB - Filtered view of delivery orders only */}
+                {/* DELIVERY TAB - Interactive view matching Production Owner/Staff */}
                 {activeTab === 'delivery' && (
                     <>
                         <h3 style={labelStyle}>🚚 DELIVERY ORDERS</h3>
+                        {/* Business Disclaimers for Demo */}
+                        <div style={{
+                            background: '#FEF3C7',
+                            border: '1px solid #F59E0B',
+                            borderRadius: 8,
+                            padding: 12,
+                            marginBottom: 16,
+                            fontSize: 11
+                        }}>
+                            <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Delivery Reminders:</p>
+                            <ul style={{ margin: 0, paddingLeft: 16, color: '#92400E' }}>
+                                <li>FoodSpot is software, not a delivery company</li>
+                                <li>The business is responsible for drivers and insurance</li>
+                                <li>Cash payments must be confirmed BEFORE preparation</li>
+                            </ul>
+                        </div>
+
                         {(() => {
-                            const deliveryOrders = MOCK_ORDERS.filter(o => o.orderType === 'delivery' || o.id === 'demo-1')
+                            const deliveryOrders = demoOrders.filter(o => o.orderType === 'delivery' || o.id === 'demo-3')
+
                             if (deliveryOrders.length === 0) {
                                 return (
                                     <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
                                         <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
-                                        <p style={{ color: '#6B7280' }}>No delivery orders</p>
+                                        <p style={{ color: '#6B7280' }}>No delivery orders in demo</p>
                                     </div>
                                 )
                             }
-                            return deliveryOrders.map(order => (
-                                <div key={order.id} style={{ ...cardStyle, marginBottom: 10, borderLeft: '4px solid #F97316' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                                        <span style={{ fontSize: 18, fontWeight: 700 }}>#{order.orderNumber} 🚚</span>
-                                        <span style={{
-                                            padding: '4px 8px',
-                                            borderRadius: 4,
-                                            fontSize: 11,
-                                            fontWeight: 500,
-                                            background: order.status === 'entregado' ? '#D1FAE5' : order.status === 'en_camino' ? '#FFEDD5' : '#E0E7FF',
-                                            color: order.status === 'entregado' ? '#065F46' : order.status === 'en_camino' ? '#9A3412' : '#3730A3'
-                                        }}>
-                                            {order.status}
-                                        </span>
+
+                            // Simulated Logic Handlers
+                            const getDeliveryStatusInfo = (status) => {
+                                const config = {
+                                    pendiente: { label: 'Pending', next: 'confirmado', nextLabel: 'Confirm →', class: 'pending' },
+                                    confirmado: { label: 'Confirmed', next: 'preparacion', nextLabel: 'Start Prep →', class: 'confirmed' },
+                                    preparacion: { label: 'Preparing', next: 'listo', nextLabel: 'Ready →', class: 'preparing' },
+                                    listo: { label: 'Ready', next: 'en_camino', nextLabel: 'Out for Delivery →', class: 'ready' },
+                                    en_camino: { label: 'On the way', next: 'entregado', nextLabel: 'Mark Delivered', class: 'on-way' }
+                                }
+                                return config[status] || { label: status, next: null, nextLabel: null, class: '' }
+                            }
+
+                            const handleDemoStatusChange = (orderId, newStatus) => {
+                                const order = demoOrders.find(o => o.id === orderId)
+                                if (!order.paymentConfirmed && (newStatus === 'preparacion' || newStatus === 'en_camino')) {
+                                    alert('❌ Payment must be confirmed before preparation or dispatch for delivery orders.')
+                                    return
+                                }
+                                setDemoOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+                            }
+
+                            const handleDemoPaymentConfirm = (orderId) => {
+                                const method = paymentMethodSelect[orderId] || 'cash'
+                                setDemoOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentConfirmed: true, paymentMethod: method } : o))
+                            }
+
+                            return deliveryOrders.map(order => {
+                                const statusInfo = getDeliveryStatusInfo(order.status)
+                                return (
+                                    <div key={order.id} style={{ ...cardStyle, marginBottom: 10, borderLeft: '4px solid #F97316' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                            <span style={{ fontSize: 18, fontWeight: 700 }}>#{order.orderNumber} 🚚</span>
+                                            <span style={{
+                                                padding: '4px 8px',
+                                                borderRadius: 4,
+                                                fontSize: 11,
+                                                fontWeight: 500,
+                                                background: order.status === 'en_camino' ? '#FFEDD5' : order.status === 'listo' ? '#DCFCE7' : '#E0E7FF',
+                                                color: order.status === 'en_camino' ? '#9A3412' : order.status === 'listo' ? '#166534' : '#3730A3'
+                                            }}>
+                                                {statusInfo.label}
+                                            </span>
+                                        </div>
+
+                                        {/* Customer Info */}
+                                        {order.customerInfo && (
+                                            <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6, background: '#F8FAFC', padding: 8, borderRadius: 6 }}>
+                                                <p style={{ margin: 0, fontWeight: 600 }}>📍 {order.customerInfo.name}</p>
+                                                <p style={{ margin: 0 }}>{order.customerInfo.address}</p>
+                                                <p style={{ margin: 0 }}>📞 {order.customerInfo.phone}</p>
+                                            </div>
+                                        )}
+
+                                        <div style={{ marginBottom: 8 }}>
+                                            {order.items.map((item, idx) => (
+                                                <p key={idx} style={{ fontSize: 13, color: '#374151', margin: '2px 0' }}>{item.quantity}× {item.name}</p>
+                                            ))}
+                                        </div>
+
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#22C55E', marginBottom: 12 }}>
+                                            ${order.total.toLocaleString()}
+                                        </div>
+
+                                        {/* Interactive Actions for Demo */}
+                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                            {/* Phone confirmation input for en_camino */}
+                                            {order.status === 'en_camino' && order.customerInfo && (
+                                                <div style={{ width: '100%', marginBottom: 8 }}>
+                                                    <input
+                                                        type="text"
+                                                        maxLength={4}
+                                                        placeholder="Code (last 4 digits)"
+                                                        value={deliveryConfirmCode[order.id] || ''}
+                                                        onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '8px 12px',
+                                                            border: '1px solid #E5E7EB',
+                                                            borderRadius: 8,
+                                                            fontSize: 14,
+                                                            textAlign: 'center'
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {/* Status advance button */}
+                                            {statusInfo.next && (
+                                                <button
+                                                    onClick={() => {
+                                                        if (statusInfo.next === 'entregado' && order.customerInfo) {
+                                                            const code = deliveryConfirmCode[order.id] || ''
+                                                            if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
+                                                                alert('❌ Incorrect code. Demo code is last 4 of phone.')
+                                                                return
+                                                            }
+                                                        }
+                                                        handleDemoStatusChange(order.id, statusInfo.next)
+                                                    }}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '8px 12px',
+                                                        background: '#3B82F6',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: 8,
+                                                        fontWeight: 600,
+                                                        fontSize: 12,
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {statusInfo.nextLabel}
+                                                </button>
+                                            )}
+
+                                            {/* Payment Actions */}
+                                            {!order.paymentConfirmed && (
+                                                <select
+                                                    value={paymentMethodSelect[order.id] || 'cash'}
+                                                    onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                    style={{
+                                                        padding: '8px',
+                                                        border: '1px solid #E5E7EB',
+                                                        borderRadius: 8,
+                                                        fontSize: 12
+                                                    }}
+                                                >
+                                                    <option value="cash">💵 Cash</option>
+                                                    <option value="mercado_pago">📱 MP</option>
+                                                </select>
+                                            )}
+
+                                            <button
+                                                onClick={() => handleDemoPaymentConfirm(order.id)}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    background: order.paymentConfirmed ? '#22C55E' : '#F59E0B',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: 8,
+                                                    fontWeight: 600,
+                                                    fontSize: 12,
+                                                    cursor: 'pointer',
+                                                    flex: 1
+                                                }}
+                                            >
+                                                {order.paymentConfirmed ? '✅ Paid' : '💳 Confirm'}
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6, background: '#F8FAFC', padding: 8, borderRadius: 6 }}>
-                                        <p style={{ margin: 0 }}>📍 Demo Address 123</p>
-                                        <p style={{ margin: 0 }}>📞 +54 11 1234 5678</p>
-                                    </div>
-                                    <div style={{ marginBottom: 8 }}>
-                                        {order.items.map((item, idx) => (
-                                            <p key={idx} style={{ fontSize: 13, color: '#374151', margin: '2px 0' }}>{item.quantity}× {item.name}</p>
-                                        ))}
-                                    </div>
-                                    <div style={{ fontSize: 14, fontWeight: 600, color: '#22C55E' }}>
-                                        ${order.total.toLocaleString()}
-                                    </div>
-                                </div>
-                            ))
+                                )
+                            })
                         })()}
                     </>
                 )}

@@ -1,0 +1,381 @@
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.js'
+import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
+import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.js' // Needed for payment button color fallback
+
+// Shared Owner Header Component (DRY this out later, but keeping for now for isolation)
+function OwnerHeader({ title, subtitle, onLogout }) {
+    return (
+        <div style={{
+            background: '#FFFFFF',
+            padding: '16px 20px 12px',
+            borderBottom: '1px solid #E5E7EB'
+        }}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {/* Neutral Logo */}
+                    <div style={{ width: 36, height: 36, background: '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>FS</span>
+                    </div>
+                    <div>
+                        <h1 style={{
+                            fontSize: 18,
+                            fontWeight: 700,
+                            color: '#111827',
+                            margin: 0,
+                            letterSpacing: '-0.02em',
+                            lineHeight: 1.2
+                        }}>{title}</h1>
+                        {subtitle && (
+                            <p style={{
+                                fontSize: 13,
+                                color: '#6B7280',
+                                margin: '2px 0 0',
+                                fontWeight: 500
+                            }}>{subtitle}</p>
+                        )}
+                    </div>
+                </div>
+                <button
+                    onClick={onLogout}
+                    style={{
+                        padding: '8px 16px',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: '#4B5563',
+                        background: '#F3F4F6',
+                        border: 'none',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    Salir
+                </button>
+            </div>
+        </div>
+    )
+}
+
+// Shared Owner Tab Navigation
+function OwnerTabs({ activeTab }) {
+    const tabs = [
+        { id: 'settings', path: '/owner/settings', label: 'Config' },
+        { id: 'menu', path: '/owner/menu', label: 'Menú' },
+        { id: 'delivery', path: '/owner/delivery', label: 'Envíos' },
+        { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
+        { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
+    ]
+
+    return (
+        <div style={{
+            background: '#FFFFFF',
+            borderBottom: '1px solid #E5E7EB',
+            display: 'flex',
+            overflowX: 'auto',
+            padding: '0 16px',
+            gap: 24,
+            width: '100%',
+            boxSizing: 'border-box'
+        }}>
+            {tabs.map(tab => (
+                <Link
+                    key={tab.id}
+                    to={tab.path}
+                    style={{
+                        padding: '14px 4px',
+                        fontSize: 14,
+                        fontWeight: activeTab === tab.id ? 600 : 500,
+                        color: activeTab === tab.id ? '#111827' : '#6B7280',
+                        textDecoration: 'none',
+                        borderBottom: activeTab === tab.id ? '2px solid #111827' : '2px solid transparent',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    {tab.label}
+                </Link>
+            ))}
+        </div>
+    )
+}
+
+function DeliveryManager() {
+    const navigate = useNavigate()
+    const [orders, setOrders] = useState(() => getOrders())
+    const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
+    const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
+
+    useEffect(() => {
+        const auth = getAuth()
+        if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
+            navigate('/owner')
+        }
+    }, [navigate])
+
+    // Poll for order updates
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setOrders(getOrders())
+        }, 5000)
+        return () => clearInterval(interval)
+    }, [])
+
+    const handleLogout = () => {
+        clearAuth()
+        navigate('/')
+    }
+
+    // Helper for status info (reusing Staff logic)
+    const getDeliveryStatusInfo = (status) => {
+        const config = {
+            pendiente: { label: 'Pendiente', next: 'confirmado', nextLabel: 'Confirmar →', class: 'pending', bg: '#FEF3C7', color: '#B45309' },
+            confirmado: { label: 'Confirmado', next: 'preparacion', nextLabel: 'A cocina →', class: 'confirmed', bg: '#DBEAFE', color: '#1D4ED8' },
+            preparacion: { label: 'Preparando', next: 'listo', nextLabel: 'Listo →', class: 'preparing', bg: '#EDE9FE', color: '#7C3AED' },
+            listo: { label: 'Listo', next: 'en_camino', nextLabel: 'Despachar →', class: 'ready', bg: '#DCFCE7', color: '#15803D' },
+            en_camino: { label: 'En camino', next: 'entregado', nextLabel: 'Entregado', class: 'on-way', bg: '#FFEDD5', color: '#9A3412' },
+            entregado: { label: 'Entregado', bg: '#F1F5F9', color: '#64748B' }
+        }
+        return config[status] || { label: status, next: null, nextLabel: null, class: '', bg: '#F3F4F6', color: '#6B7280' }
+    }
+
+    // Handle status change with payment validation
+    const handleDeliveryStatusChange = (orderId, newStatus, order) => {
+        // Check payment confirmation for delivery orders before prep/dispatch
+        if (!order.paymentConfirmed && (newStatus === 'preparacion' || newStatus === 'en_camino')) {
+            alert('❌ El pago debe confirmarse ANTES de preparar o despachar envíos.')
+            return
+        }
+        updateOrder(orderId, { status: newStatus })
+        setOrders(getOrders())
+    }
+
+    // Handle payment confirmation
+    const handlePaymentConfirm = (orderId) => {
+        const method = paymentMethodSelect[orderId] || 'cash'
+        updateOrder(orderId, { paymentConfirmed: true, paymentMethod: method })
+        setOrders(getOrders())
+    }
+
+    // Filter for active delivery orders
+    const deliveryOrders = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+
+    // Today's delivery count
+    const todayDeliveries = orders.filter(o => o.orderType === 'delivery' && new Date(o.createdAt).toDateString() === new Date().toDateString()).length
+
+    return (
+        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F9FAFB' }}>
+            <OwnerHeader
+                title="Gestión de Envíos"
+                subtitle="Control de pedidos con entrega"
+                onLogout={handleLogout}
+            />
+            <OwnerTabs activeTab="delivery" />
+
+            <div style={{ padding: 16, maxWidth: 800, margin: '0 auto' }}>
+                {/* Business Disclaimers */}
+                <div style={{
+                    background: '#FEF3C7',
+                    border: '1px solid #F59E0B',
+                    borderRadius: 8,
+                    padding: 12,
+                    marginBottom: 20,
+                    fontSize: 13
+                }}>
+                    <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Recordatorios importantes:</p>
+                    <ul style={{ margin: 0, paddingLeft: 16, color: '#92400E' }}>
+                        <li>FoodSpot no provee repartidores ni seguros.</li>
+                        <li>Los cobros en efectivo deben asegurar el pago antes de salir de cocina.</li>
+                    </ul>
+                </div>
+
+                {deliveryOrders.length === 0 ? (
+                    <div style={{
+                        background: 'white',
+                        borderRadius: 12,
+                        border: '1px solid #E5E7EB',
+                        padding: 32,
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
+                        <p style={{ color: '#6B7280', margin: 0, fontSize: 14 }}>No hay envíos activos en este momento</p>
+                    </div>
+                ) : (
+                    deliveryOrders.map(order => {
+                        const statusInfo = getDeliveryStatusInfo(order.status)
+                        return (
+                            <div key={order.id} style={{
+                                background: 'white',
+                                borderRadius: 12,
+                                border: '1px solid #E5E7EB',
+                                marginBottom: 16,
+                                overflow: 'hidden',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                            }}>
+                                <div style={{ padding: 16, borderBottom: '1px solid #F3F4F6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>#{order.orderNumber} 🚚</span>
+                                    <span style={{
+                                        padding: '4px 10px',
+                                        borderRadius: 20,
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        background: statusInfo.bg,
+                                        color: statusInfo.color
+                                    }}>
+                                        {statusInfo.label}
+                                    </span>
+                                </div>
+
+                                <div style={{ padding: 16 }}>
+                                    {/* Customer Info */}
+                                    {order.customerInfo && (
+                                        <div style={{ fontSize: 13, color: '#4B5563', marginBottom: 12, background: '#F9FAFB', padding: 12, borderRadius: 8 }}>
+                                            <p style={{ margin: 0, fontWeight: 600, color: '#374151' }}>📍 {order.customerInfo.name}</p>
+                                            <p style={{ margin: '4px 0 0' }}>{order.customerInfo.address}</p>
+                                            <p style={{ margin: '4px 0 0', color: '#6B7280' }}>Tel: ***{getPhoneLast4(order.customerInfo.phone)}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Order Items */}
+                                    <div style={{ fontSize: 14, color: '#374151', marginBottom: 12 }}>
+                                        {order.items?.map((item, i) => (
+                                            <div key={i} style={{ marginBottom: 4 }}>
+                                                <span style={{ fontWeight: 500 }}>{item.quantity}x</span> {item.name}
+                                                {item.extras && item.extras.length > 0 && <span style={{ color: '#6B7280', fontSize: 13 }}> (+{item.extras.map(e => e.name).join(', ')})</span>}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        paddingTop: 12,
+                                        borderTop: '1px solid #F3F4F6',
+                                        marginTop: 12
+                                    }}>
+                                        <span style={{ fontSize: 16, fontWeight: 700, color: '#10B981' }}>
+                                            ${order.total?.toLocaleString()}
+                                        </span>
+                                        <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                                            {new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                                        {/* Payment Section */}
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            {!order.paymentConfirmed && (
+                                                <select
+                                                    value={paymentMethodSelect[order.id] || 'cash'}
+                                                    onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                    style={{
+                                                        padding: '10px 12px',
+                                                        border: '1px solid #E5E7EB',
+                                                        borderRadius: 8,
+                                                        fontSize: 13,
+                                                        background: 'white',
+                                                        minWidth: 110
+                                                    }}
+                                                >
+                                                    <option value="cash">💵 Efec.</option>
+                                                    <option value="mercado_pago">📱 MP</option>
+                                                </select>
+                                            )}
+                                            <button
+                                                onClick={() => handlePaymentConfirm(order.id)}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '10px',
+                                                    background: order.paymentConfirmed ? '#10B981' : '#F59E0B',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: 8,
+                                                    fontWeight: 600,
+                                                    fontSize: 13
+                                                }}
+                                            >
+                                                {order.paymentConfirmed ? `✅ Pagado (${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efe'})` : '💳 Confirmar Pago'}
+                                            </button>
+                                        </div>
+
+                                        {/* Delivery Confirmation Code Input - Only for en_camino */}
+                                        {order.status === 'en_camino' && order.customerInfo && (
+                                            <div>
+                                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>
+                                                    Código de entrega (últimos 4 dígitos del tel)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    maxLength={4}
+                                                    placeholder="0000"
+                                                    value={deliveryConfirmCode[order.id] || ''}
+                                                    onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '12px',
+                                                        border: '1px solid #D1D5DB',
+                                                        borderRadius: 8,
+                                                        fontSize: 18,
+                                                        textAlign: 'center',
+                                                        letterSpacing: 4,
+                                                        boxSizing: 'border-box'
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Status Advance Button */}
+                                        {statusInfo.next && (
+                                            <button
+                                                onClick={() => {
+                                                    // Phone code verification for entregado
+                                                    if (statusInfo.next === 'entregado' && order.customerInfo) {
+                                                        const code = deliveryConfirmCode[order.id] || ''
+                                                        if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
+                                                            alert('❌ Código incorrecto. Pedile al cliente los últimos 4 dígitos de su teléfono.')
+                                                            return
+                                                        }
+                                                        updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
+                                                    }
+                                                    handleDeliveryStatusChange(order.id, statusInfo.next, order)
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    background: '#3B82F6',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: 8,
+                                                    fontWeight: 600,
+                                                    fontSize: 14,
+                                                    cursor: 'pointer',
+                                                    boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)'
+                                                }}
+                                            >
+                                                {statusInfo.nextLabel}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })
+                )}
+
+                {/* Today's delivery summary */}
+                <div style={{ textAlign: 'center', marginTop: 24, color: '#9CA3AF', fontSize: 13 }}>
+                    <p>Envíos procesados hoy: <strong style={{ color: '#F97316' }}>{todayDeliveries}</strong></p>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default DeliveryManager

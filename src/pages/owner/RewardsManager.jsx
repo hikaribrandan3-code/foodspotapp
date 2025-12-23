@@ -53,6 +53,7 @@ function OwnerTabs({ activeTab }) {
     const tabs = [
         { id: 'settings', path: '/owner/settings', label: 'Config' },
         { id: 'menu', path: '/owner/menu', label: 'Menú' },
+        { id: 'delivery', path: '/owner/delivery', label: 'Envíos' },
         { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
         { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
     ]
