@@ -28,6 +28,7 @@ import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
+import BackendHeader from '../../components/BackendHeader.jsx'
 import DemoEmailPopup from '../../components/DemoEmailPopup.jsx'
 
 // Timer utilities for email popup
@@ -1404,19 +1405,12 @@ function DemoBackend() {
 
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: 80 }}>
-            {/* Header - Matching Super Admin */}
-            <div style={{ background: '#FFFFFF', padding: '16px 16px 12px', borderBottom: '1px solid #E5E7EB' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <button onClick={handleExitDemo} style={{ background: 'none', border: 'none', color: '#1F2937', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 36, height: 36, background: demoConfig.primaryColor || '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>FS</span>
-                            </div>
-                            <span style={{ fontSize: 20, fontWeight: 700, color: '#1F2937' }}>{demoConfig.businessName || 'FoodSpot'}</span>
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <BackendHeader
+                title={demoConfig.businessName || 'FoodSpot'}
+                onLogout={handleExitDemo}
+                showDateSelector={false}
+                extraActions={
+                    <>
                         {/* Demo Badge */}
                         <span style={{
                             padding: '4px 10px',
@@ -1451,27 +1445,12 @@ function DemoBackend() {
                             <option value="owner">👔 Owner</option>
                             <option value="staff">👷 Staff</option>
                         </select>
-                        {/* Exit Demo */}
-                        <button
-                            onClick={handleExitDemo}
-                            style={{
-                                padding: '6px 12px',
-                                fontSize: 11,
-                                fontWeight: 500,
-                                background: 'transparent',
-                                border: '1px solid #E5E7EB',
-                                borderRadius: 5,
-                                cursor: 'pointer',
-                                color: '#6B7280'
-                            }}
-                        >
-                            Exit
-                        </button>
-                    </div>
-                </div>
-
-                {/* Apply to Frontend Button - REQUIRED */}
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    </>
+                }
+            />
+            {/* Apply to Frontend Button - REQUIRED */}
+            <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB' }}>
+                <div style={{ display: 'flex', gap: 8 }}>
                     <button
                         onClick={handleApplyToFrontend}
                         style={{

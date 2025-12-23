@@ -11,6 +11,7 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
+import BackendHeader from '../../components/BackendHeader.jsx'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 
 // Generate seeded demo analytics data (30 days)
@@ -363,22 +364,15 @@ function SuperAdmin({ config }) {
     return (
         <>
             <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                {/* Light Neutral Header - BLACK/WHITE ONLY */}
-                <div style={{ background: '#FFFFFF', padding: '16px 16px 12px', borderBottom: '1px solid #E5E7EB' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: '#1F2937', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                {/* Neutral Logo */}
-                                <div style={{ width: 36, height: 36, background: '#1F2937', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>FS</span>
-                                </div>
-                                <span style={{ fontSize: 20, fontWeight: 700, color: '#1F2937' }}>FoodSpot</span>
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {demoAnalytics && userRole === 'superadmin' && <span style={{ padding: '4px 8px', background: '#EF4444', borderRadius: 5, fontSize: 10, fontWeight: 600, color: 'white' }}>DEMO</span>}
-                            {/* Mode Switcher Dropdown (superadmin only) */}
+                <BackendHeader
+                    title="FoodSpot"
+                    onLogout={handleLogout}
+                    showDateSelector={true}
+                    extraActions={
+                        <>
+                            {demoAnalytics && userRole === 'superadmin' && (
+                                <span style={{ padding: '4px 8px', background: '#EF4444', borderRadius: 5, fontSize: 10, fontWeight: 600, color: 'white' }}>DEMO</span>
+                            )}
                             {userRole === 'superadmin' && (
                                 <select
                                     value={currentMode}
@@ -400,13 +394,9 @@ function SuperAdmin({ config }) {
                                     ))}
                                 </select>
                             )}
-                            {/* Exit Simulation Button - visible only when simulating */}
                             {userRole === 'superadmin' && isSimulated && (
                                 <button
-                                    onClick={() => {
-                                        exitSimulation()
-                                        // No navigation - just re-renders with superadmin view
-                                    }}
+                                    onClick={() => exitSimulation()}
                                     style={{
                                         padding: '6px 12px',
                                         fontSize: 11,
@@ -421,24 +411,20 @@ function SuperAdmin({ config }) {
                                     Exit Simulation
                                 </button>
                             )}
-                        </div>
-                    </div>
-
-                    {/* Refresh Frontend Button - FULL WIDTH UNDER HEADER */}
+                        </>
+                    }
+                />
+                {/* Sync Button - SuperAdmin specific */}
+                <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB' }}>
                     <button
                         onClick={() => {
-                            // Dispatch global sync event
-                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                            // Also refresh local state
                             window.dispatchEvent(new CustomEvent('frontendSync'))
                             setMenu(getMenu())
                             setOrders(getOrders())
-                            // Visual feedback
                             alert('✅ Frontend synced!')
                         }}
                         style={{
                             width: '100%',
-                            marginTop: 12,
                             padding: '10px 16px',
                             fontSize: 13,
                             fontWeight: 600,
