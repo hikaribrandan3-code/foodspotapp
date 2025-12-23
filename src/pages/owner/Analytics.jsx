@@ -3,48 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getAnalytics, getOrders, getRewards } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 
-// Shared Owner Tab Navigation
-function OwnerTabs({ activeTab }) {
-    const tabs = [
-        { id: 'settings', path: '/owner/settings', label: 'Config' },
-        { id: 'menu', path: '/owner/menu', label: 'Menú' },
-        { id: 'delivery', path: '/owner/delivery', label: 'Envíos' },
-        { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
-        { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
-    ]
-
-    return (
-        <div style={{
-            background: '#FFFFFF',
-            borderBottom: '1px solid #E2E8F0',
-            display: 'flex',
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch'
-        }}>
-            {tabs.map(tab => (
-                <Link
-                    key={tab.id}
-                    to={tab.path}
-                    style={{
-                        flex: 1,
-                        padding: '12px 16px',
-                        fontSize: 13,
-                        fontWeight: activeTab === tab.id ? 600 : 500,
-                        color: activeTab === tab.id ? '#1E293B' : '#64748B',
-                        textDecoration: 'none',
-                        textAlign: 'center',
-                        borderBottom: activeTab === tab.id ? '2px solid #3B82F6' : '2px solid transparent',
-                        background: 'transparent',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    {tab.label}
-                </Link>
-            ))}
-        </div>
-    )
-}
-
 function Analytics() {
     const navigate = useNavigate()
     const [analytics, setAnalytics] = useState(() => getAnalytics())
@@ -106,9 +64,8 @@ function Analytics() {
                 onLogout={handleLogout}
                 showDateSelector={true}
             />
-            <OwnerTabs activeTab="analytics" />
 
-            <div style={{ padding: 16 }}>
+            <div style={{ padding: 16, paddingBottom: 100 }}>
                 {/* Orders Stats */}
                 <div style={{ marginBottom: 20 }}>
                     <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 10, marginTop: 0 }}>PEDIDOS</h3>
@@ -149,6 +106,7 @@ function Analytics() {
                     Solo números · Sin gráficos
                 </p>
             </div>
+
         </div>
     )
 }

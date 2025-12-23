@@ -12,6 +12,7 @@ import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
+import BackendNav from '../../components/BackendNav.jsx'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 
 // Generate seeded demo analytics data (30 days)
@@ -78,7 +79,8 @@ function SuperAdmin({ config }) {
     const [menu, setMenu] = useState(() => getMenu())
     const [orders, setOrders] = useState(() => getOrders())
     // PATCH: Restore active tab from navigation state if present
-    const [activeTab, setActiveTab] = useState(() => location.state?.activeTab || 'resumen')
+    // New 5-tab structure: summary, menu, branding, orders, analytics
+    const [activeTab, setActiveTab] = useState(() => location.state?.activeTab || 'summary')
     const [demoAnalytics, setDemoAnalytics] = useState(true)
     const [demoData] = useState(() => generateDemoData())
     const [username, setUsername] = useState('')
@@ -299,6 +301,14 @@ function SuperAdmin({ config }) {
             </div>
         )
     }
+    // Badge counts for bottom nav
+    const activeOrders = orders.filter(o => o.status !== 'entregado')
+    const pendingDeliveries = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+    const navBadges = {
+        orders: activeOrders.length,
+        delivery: pendingDeliveries.length
+    }
+
     // Mode options for dropdown (superadmin only)
     const modeOptions = [
         { value: 'superadmin', label: '👑 Super Admin', color: '#7C3AED' },
@@ -339,19 +349,7 @@ function SuperAdmin({ config }) {
         }
     }
 
-    // Full Super Admin Navigation (No Filtering) - ENGLISH ONLY
-    const tabs = [
-        { id: 'resumen', label: 'Summary' },
-        { id: 'info', label: 'Info' },
-        { id: 'menu', label: 'Menu' },
-        { id: 'branding', label: 'Branding' },
-        { id: 'pedidos', label: 'Orders' },
-        { id: 'delivery', label: 'Delivery' },
-        { id: 'analytics', label: 'Analytics' },
-        { id: 'historial', label: 'History' },
-        { id: 'tenants', label: 'Tenants' },
-        { id: 'system', label: 'System' },
-    ]
+    // Sub-tab removed - using flat bottom nav structure
 
     const roleLabel = 'Super Admin'
     const canEdit = true
@@ -443,20 +441,13 @@ function SuperAdmin({ config }) {
                     </button>
                 </div>
 
-                {/* Tab Navigation */}
-                <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    {tabs.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ flex: 'none', padding: '12px 14px', background: 'none', border: 'none', borderBottom: activeTab === tab.id ? '3px solid #22C55E' : '3px solid transparent', fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400, color: activeTab === tab.id ? '#1F2937' : '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
+                {/* Sub-tabs removed - flat bottom nav structure */}
 
-                {/* Content */}
-                <div style={{ padding: 16 }}>
+                {/* Content - with bottom padding for BackendNav */}
+                <div style={{ padding: 16, paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
 
-                    {/* ==================== RESUMEN TAB ==================== */}
-                    {activeTab === 'resumen' && (
+                    {/* ==================== SUMMARY TAB ==================== */}
+                    {activeTab === 'summary' && (
                         <>
                             <h3 style={labelStyle}>💳 PAGOS DEL DÍA</h3>
                             <div style={cardStyle}>
@@ -491,8 +482,8 @@ function SuperAdmin({ config }) {
                         </>
                     )}
 
-                    {/* ==================== INFO TAB ==================== */}
-                    {activeTab === 'info' && canEdit && (
+                    {/* ==================== INFO (under Summary tab) ==================== */}
+                    {activeTab === 'summary' && canEdit && (
                         <>
                             <h3 style={labelStyle}>📍 INFORMACIÓN DEL LOCAL</h3>
                             <div style={cardStyle}>
@@ -1560,8 +1551,8 @@ function SuperAdmin({ config }) {
                         </>
                     )}
 
-                    {/* ==================== PEDIDOS TAB ==================== */}
-                    {activeTab === 'pedidos' && (
+                    {/* ==================== ORDERS TAB ==================== */}
+                    {activeTab === 'orders' && (
                         <>
                             <h3 style={labelStyle}>⚙️ CONFIGURACIÓN DE PEDIDOS</h3>
                             <div style={cardStyle}>
@@ -1586,8 +1577,8 @@ function SuperAdmin({ config }) {
                         </>
                     )}
 
-                    {/* ==================== DELIVERY TAB ==================== */}
-                    {activeTab === 'delivery' && (
+                    {/* DELIVERY SECTION */}
+                    {activeTab === 'orders' && (
                         <>
                             <h3 style={labelStyle}>🚚 DELIVERY ORDERS</h3>
                             {/* Business Disclaimers */}
@@ -1834,8 +1825,8 @@ function SuperAdmin({ config }) {
                         </>
                     )}
 
-                    {/* ==================== HISTORIAL TAB ==================== */}
-                    {activeTab === 'historial' && (
+                    {/* HISTORY SECTION */}
+                    {activeTab === 'orders' && (
                         <>
                             <div style={{ background: '#FEF3C7', borderRadius: 8, padding: 12, marginBottom: 16 }}>
                                 <p style={{ fontSize: 12, color: '#92400E', margin: 0 }}>⚠️ Los registros son de solo lectura. No se pueden modificar pagos confirmados.</p>
@@ -1877,8 +1868,16 @@ function SuperAdmin({ config }) {
                     updateConfig({ headerCover: data })
                     window.dispatchEvent(new CustomEvent('frontendSync'))
                 }}
-                initialData={{ ...config.headerCover, returnState: { activeTab: 'branding' } }}
+                initialData={{ ...config.headerCover, returnState: { activeTab: 'settings' } }}
                 config={config}
+            />
+
+            {/* Bottom Navigation */}
+            <BackendNav
+                role="superadmin"
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                badges={navBadges}
             />
         </>
     )

@@ -6,48 +6,6 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 
-// Shared Owner Tab Navigation
-function OwnerTabs({ activeTab }) {
-    const tabs = [
-        { id: 'settings', path: '/owner/settings', label: 'Config' },
-        { id: 'menu', path: '/owner/menu', label: 'Menú' },
-        { id: 'delivery', path: '/owner/delivery', label: 'Envíos' },
-        { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
-        { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
-    ]
-
-    return (
-        <div style={{
-            background: '#FFFFFF',
-            borderBottom: '1px solid #E2E8F0',
-            display: 'flex',
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch'
-        }}>
-            {tabs.map(tab => (
-                <Link
-                    key={tab.id}
-                    to={tab.path}
-                    style={{
-                        flex: 1,
-                        padding: '12px 16px',
-                        fontSize: 13,
-                        fontWeight: activeTab === tab.id ? 600 : 500,
-                        color: activeTab === tab.id ? '#1E293B' : '#64748B',
-                        textDecoration: 'none',
-                        textAlign: 'center',
-                        borderBottom: activeTab === tab.id ? '2px solid #3B82F6' : '2px solid transparent',
-                        background: 'transparent',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    {tab.label}
-                </Link>
-            ))}
-        </div>
-    )
-}
-
 function MenuManager() {
     const navigate = useNavigate()
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
@@ -159,9 +117,8 @@ function MenuManager() {
                 title="Menú"
                 onLogout={handleLogout}
             />
-            <OwnerTabs activeTab="menu" />
 
-            <div style={{ padding: 16 }}>
+            <div style={{ padding: 16, paddingBottom: 100 }}>
                 {/* Add Category Button / Form */}
                 {!showAddCategory ? (
                     <button
@@ -476,6 +433,7 @@ function MenuManager() {
                     </div>
                 </div>
             )}
+
         </div>
     )
 }

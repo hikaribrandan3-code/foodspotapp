@@ -5,6 +5,8 @@ import { getMenu, toggleItemAvailability, formatPrice } from '../../config/menuD
 import { updateConfig } from '../../config/appConfig.js'
 import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
+import BackendNav from '../../components/BackendNav.jsx'
+
 function StaffDashboard({ config }) {
     const navigate = useNavigate()
     const [orders, setOrders] = useState([])
@@ -184,6 +186,13 @@ function StaffDashboard({ config }) {
         return new Date(o.createdAt).toDateString() === today
     })
 
+    // Badge counts for nav
+    const pendingDeliveries = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+    const navBadges = {
+        orders: activeOrders.length,
+        delivery: pendingDeliveries.length
+    }
+
     return (
         <div className="page backend-surface" style={{ paddingBottom: 'var(--space-4)' }}>
             <BackendHeader
@@ -224,79 +233,243 @@ function StaffDashboard({ config }) {
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="tabs">
-                <button
-                    className={`tab ${activeTab === 'orders' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('orders')}
-                >
-                    Pedidos ({activeOrders.length})
-                </button>
-                <button
-                    className={`tab ${activeTab === 'delivery' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('delivery')}
-                >
-                    Envíos ({orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado').length})
-                </button>
-                <button
-                    className={`tab ${activeTab === 'pagos' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('pagos')}
-                >
-                    Pagos
-                </button>
-                <button
-                    className={`tab ${activeTab === 'items' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('items')}
-                >
-                    Stock
-                </button>
-                <button
-                    className={`tab ${activeTab === 'rewards' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('rewards')}
-                >
-                    Sellos
-                </button>
-            </div>
+            {/* Inline tabs removed - using bottom navigation */}
 
-            {/* Orders Tab */}
-            {activeTab === 'orders' && (
-                <div>
-                    {/* Business Disclaimers - Shown when delivery orders exist */}
-                    {activeOrders.some(o => o.orderType === 'delivery') && (
+            {/* Content - with bottom padding for BackendNav */}
+            <div style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
+                {activeTab === 'orders' && (
+                    <div>
+                        {/* Business Disclaimers - Shown when delivery orders exist */}
+                        {activeOrders.some(o => o.orderType === 'delivery') && (
+                            <div style={{
+                                background: '#FEF3C7',
+                                padding: 12,
+                                borderRadius: 10,
+                                marginBottom: 16,
+                                fontSize: 12,
+                                lineHeight: 1.5
+                            }}>
+                                <p style={{ fontWeight: 600, marginBottom: 6, color: '#92400E' }}>
+                                    📋 Recordatorio FoodSpot:
+                                </p>
+                                <ul style={{ margin: 0, paddingLeft: 16, color: '#78350F' }}>
+                                    <li>FoodSpot es software, no una empresa de delivery</li>
+                                    <li>El negocio es responsable de repartidores, seguros y habilitaciones</li>
+                                    <li>FoodSpot no procesa pagos</li>
+                                </ul>
+                            </div>
+                        )}
+
+                        {activeOrders.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">📋</div>
+                                <p className="empty-state-text">No hay pedidos activos</p>
+                            </div>
+                        ) : (
+                            activeOrders.map(order => {
+                                const statusInfo = getStatusInfo(order.status, order.orderType)
+                                const isDeliveryOrder = order.orderType === 'delivery'
+                                return (
+                                    <div key={order.id} className={`order-card ${statusInfo.class}`}>
+                                        <div className="order-card-header">
+                                            <span className="order-number" style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)' }}>#{order.orderNumber}</span>
+                                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                                {isDeliveryOrder && (
+                                                    <span style={{
+                                                        fontSize: 10,
+                                                        background: '#DBEAFE',
+                                                        color: '#1D4ED8',
+                                                        padding: '2px 6px',
+                                                        borderRadius: 4,
+                                                        fontWeight: 500
+                                                    }}>
+                                                        🚴 Envío
+                                                    </span>
+                                                )}
+                                                <span className={`status-badge ${statusInfo.class}`}>
+                                                    {statusInfo.label}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Delivery Customer Info - Only for delivery orders */}
+                                        {isDeliveryOrder && order.customerInfo && (
+                                            <div style={{
+                                                background: '#F0FDF4',
+                                                padding: 10,
+                                                borderRadius: 8,
+                                                marginBottom: 'var(--space-3)',
+                                                fontSize: 'var(--font-size-sm)'
+                                            }}>
+                                                <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                                                    📍 {order.customerInfo.name}
+                                                </div>
+                                                <div style={{ color: 'var(--color-text-muted)', marginBottom: 2 }}>
+                                                    {order.customerInfo.address}
+                                                </div>
+                                                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+                                                    Tel: ***{getPhoneLast4(order.customerInfo.phone)}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Order Items */}
+                                        <div style={{ marginBottom: 'var(--space-3)' }}>
+                                            {order.items.map((item, idx) => (
+                                                <div key={idx} style={{
+                                                    fontSize: 'var(--font-size-sm)',
+                                                    padding: 'var(--space-1) 0'
+                                                }}>
+                                                    <span>{item.quantity}x {item.name}</span>
+                                                    {item.extras && item.extras.length > 0 && (
+                                                        <span style={{ color: 'var(--color-text-muted)' }}>
+                                                            {' '}(+{item.extras.map(e => e.name).join(', ')})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Total & Time */}
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            fontSize: 'var(--font-size-sm)',
+                                            color: 'var(--color-text-muted)',
+                                            marginBottom: 'var(--space-3)'
+                                        }}>
+                                            <span>{formatPrice(order.total)}</span>
+                                            <span>{new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                                            {/* Delivery Confirmation Code Input - Only for delivery orders in "en_camino" */}
+                                            {isDeliveryOrder && order.status === 'en_camino' && order.customerInfo && (
+                                                <div style={{ width: '100%', marginBottom: 8 }}>
+                                                    <label style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>
+                                                        Últimos 4 dígitos del teléfono para confirmar entrega
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        maxLength={4}
+                                                        placeholder="****"
+                                                        value={deliveryConfirmCode[order.id] || ''}
+                                                        onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '8px 12px',
+                                                            border: '1px solid #E5E7EB',
+                                                            borderRadius: 8,
+                                                            fontSize: 18,
+                                                            textAlign: 'center',
+                                                            letterSpacing: 6
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {statusInfo.next && (
+                                                <button
+                                                    className="btn btn-primary"
+                                                    onClick={() => {
+                                                        // For delivery orders going to "entregado", verify the confirmation code
+                                                        if (isDeliveryOrder && statusInfo.next === 'entregado' && order.customerInfo) {
+                                                            const code = deliveryConfirmCode[order.id] || ''
+                                                            if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
+                                                                alert('❌ Código incorrecto. Ingresá los últimos 4 dígitos del teléfono del cliente.')
+                                                                return
+                                                            }
+                                                            // Update with confirmation timestamp
+                                                            updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
+                                                        }
+                                                        handleStatusChange(order.id, statusInfo.next)
+                                                    }}
+                                                    style={{ flex: 1 }}
+                                                >
+                                                    {statusInfo.nextLabel}
+                                                </button>
+                                            )}
+                                            {/* Payment Method Selector (before confirm) */}
+                                            {!order.paymentConfirmed && (
+                                                <select
+                                                    className="form-input"
+                                                    value={paymentMethodSelect[order.id] || 'cash'}
+                                                    onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                    style={{ flex: 1, minWidth: 100 }}
+                                                >
+                                                    <option value="cash">💵 Efectivo</option>
+                                                    <option value="mercado_pago">📱 MercadoPago</option>
+                                                </select>
+                                            )}
+                                            <button
+                                                className="btn"
+                                                onClick={() => handlePaymentConfirm(order.id)}
+                                                style={{
+                                                    minWidth: 120,
+                                                    background: order.paymentConfirmed ? 'var(--color-primary)' : (config.colors?.confirmation || '#22C55E'),
+                                                    color: 'white',
+                                                    border: 'none'
+                                                }}
+                                            >
+                                                {order.paymentConfirmed ? `✅ ${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efe'}` : '💳 Confirmar'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        )}
+
+                        {/* Today's summary */}
+                        <div className="card" style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
+                            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
+                                Pedidos hoy
+                            </p>
+                            <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>
+                                {todayOrders.length}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Delivery Tab - Filtered view of delivery orders only */}
+                {activeTab === 'delivery' && (
+                    <div>
+                        {/* Business Disclaimers - Always shown in delivery tab */}
                         <div style={{
                             background: '#FEF3C7',
+                            border: '1px solid #F59E0B',
+                            borderRadius: 8,
                             padding: 12,
-                            borderRadius: 10,
                             marginBottom: 16,
-                            fontSize: 12,
-                            lineHeight: 1.5
+                            fontSize: 11
                         }}>
-                            <p style={{ fontWeight: 600, marginBottom: 6, color: '#92400E' }}>
-                                📋 Recordatorio FoodSpot:
-                            </p>
-                            <ul style={{ margin: 0, paddingLeft: 16, color: '#78350F' }}>
+                            <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Recordatorio para entregas:</p>
+                            <ul style={{ margin: 0, paddingLeft: 16, color: '#92400E' }}>
                                 <li>FoodSpot es software, no una empresa de delivery</li>
-                                <li>El negocio es responsable de repartidores, seguros y habilitaciones</li>
-                                <li>FoodSpot no procesa pagos</li>
+                                <li>El negocio es responsable de conductores y seguros</li>
+                                <li>Los cobros en efectivo deben confirmarse ANTES de preparar</li>
                             </ul>
                         </div>
-                    )}
 
-                    {activeOrders.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon">📋</div>
-                            <p className="empty-state-text">No hay pedidos activos</p>
-                        </div>
-                    ) : (
-                        activeOrders.map(order => {
-                            const statusInfo = getStatusInfo(order.status, order.orderType)
-                            const isDeliveryOrder = order.orderType === 'delivery'
-                            return (
-                                <div key={order.id} className={`order-card ${statusInfo.class}`}>
-                                    <div className="order-card-header">
-                                        <span className="order-number" style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)' }}>#{order.orderNumber}</span>
-                                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                            {isDeliveryOrder && (
+                        {(() => {
+                            const deliveryOrders = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+                            if (deliveryOrders.length === 0) {
+                                return (
+                                    <div className="empty-state">
+                                        <span className="empty-state-icon">🚚</span>
+                                        <p className="empty-state-text">No hay envíos activos</p>
+                                    </div>
+                                )
+                            }
+                            return deliveryOrders.map(order => {
+                                const statusInfo = getStatusInfo(order.status, order.orderType)
+                                const isDeliveryOrder = true // All orders here are delivery
+                                return (
+                                    <div key={order.id} className={`order-card ${statusInfo.class}`}>
+                                        <div className="order-card-header">
+                                            <span className="order-number" style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)' }}>#{order.orderNumber}</span>
+                                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                                 <span style={{
                                                     fontSize: 10,
                                                     background: '#DBEAFE',
@@ -307,480 +480,304 @@ function StaffDashboard({ config }) {
                                                 }}>
                                                     🚴 Envío
                                                 </span>
-                                            )}
-                                            <span className={`status-badge ${statusInfo.class}`}>
-                                                {statusInfo.label}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Delivery Customer Info - Only for delivery orders */}
-                                    {isDeliveryOrder && order.customerInfo && (
-                                        <div style={{
-                                            background: '#F0FDF4',
-                                            padding: 10,
-                                            borderRadius: 8,
-                                            marginBottom: 'var(--space-3)',
-                                            fontSize: 'var(--font-size-sm)'
-                                        }}>
-                                            <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                                                📍 {order.customerInfo.name}
-                                            </div>
-                                            <div style={{ color: 'var(--color-text-muted)', marginBottom: 2 }}>
-                                                {order.customerInfo.address}
-                                            </div>
-                                            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-                                                Tel: ***{getPhoneLast4(order.customerInfo.phone)}
+                                                <span className={`status-badge ${statusInfo.class}`}>
+                                                    {statusInfo.label}
+                                                </span>
                                             </div>
                                         </div>
-                                    )}
 
-                                    {/* Order Items */}
-                                    <div style={{ marginBottom: 'var(--space-3)' }}>
-                                        {order.items.map((item, idx) => (
-                                            <div key={idx} style={{
-                                                fontSize: 'var(--font-size-sm)',
-                                                padding: 'var(--space-1) 0'
+                                        {/* Delivery Customer Info */}
+                                        {order.customerInfo && (
+                                            <div style={{
+                                                background: '#F0FDF4',
+                                                padding: 10,
+                                                borderRadius: 8,
+                                                marginBottom: 'var(--space-3)',
+                                                fontSize: 'var(--font-size-sm)'
                                             }}>
-                                                <span>{item.quantity}x {item.name}</span>
-                                                {item.extras && item.extras.length > 0 && (
-                                                    <span style={{ color: 'var(--color-text-muted)' }}>
-                                                        {' '}(+{item.extras.map(e => e.name).join(', ')})
-                                                    </span>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Total & Time */}
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: 'var(--color-text-muted)',
-                                        marginBottom: 'var(--space-3)'
-                                    }}>
-                                        <span>{formatPrice(order.total)}</span>
-                                        <span>{new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-                                        {/* Delivery Confirmation Code Input - Only for delivery orders in "en_camino" */}
-                                        {isDeliveryOrder && order.status === 'en_camino' && order.customerInfo && (
-                                            <div style={{ width: '100%', marginBottom: 8 }}>
-                                                <label style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>
-                                                    Últimos 4 dígitos del teléfono para confirmar entrega
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    maxLength={4}
-                                                    placeholder="****"
-                                                    value={deliveryConfirmCode[order.id] || ''}
-                                                    onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
-                                                    style={{
-                                                        width: '100%',
-                                                        padding: '8px 12px',
-                                                        border: '1px solid #E5E7EB',
-                                                        borderRadius: 8,
-                                                        fontSize: 18,
-                                                        textAlign: 'center',
-                                                        letterSpacing: 6
-                                                    }}
-                                                />
+                                                <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                                                    📍 {order.customerInfo.name}
+                                                </div>
+                                                <div style={{ color: 'var(--color-text-muted)', marginBottom: 2 }}>
+                                                    {order.customerInfo.address}
+                                                </div>
+                                                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+                                                    Tel: ***{getPhoneLast4(order.customerInfo.phone)}
+                                                </div>
                                             </div>
                                         )}
 
-                                        {statusInfo.next && (
-                                            <button
-                                                className="btn btn-primary"
-                                                onClick={() => {
-                                                    // For delivery orders going to "entregado", verify the confirmation code
-                                                    if (isDeliveryOrder && statusInfo.next === 'entregado' && order.customerInfo) {
-                                                        const code = deliveryConfirmCode[order.id] || ''
-                                                        if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
-                                                            alert('❌ Código incorrecto. Ingresá los últimos 4 dígitos del teléfono del cliente.')
-                                                            return
+                                        {/* Order Items */}
+                                        <div style={{ marginBottom: 'var(--space-3)' }}>
+                                            {order.items.map((item, idx) => (
+                                                <div key={idx} style={{
+                                                    fontSize: 'var(--font-size-sm)',
+                                                    padding: 'var(--space-1) 0'
+                                                }}>
+                                                    <span>{item.quantity}x {item.name}</span>
+                                                    {item.extras && item.extras.length > 0 && (
+                                                        <span style={{ color: 'var(--color-text-muted)' }}>
+                                                            {' '}(+{item.extras.map(e => e.name).join(', ')})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Total & Time */}
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            fontSize: 'var(--font-size-sm)',
+                                            color: 'var(--color-text-muted)',
+                                            marginBottom: 'var(--space-3)'
+                                        }}>
+                                            <span>{formatPrice(order.total)}</span>
+                                            <span>{new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                                            {/* Delivery Confirmation Code Input - Only for en_camino */}
+                                            {order.status === 'en_camino' && order.customerInfo && (
+                                                <div style={{ width: '100%', marginBottom: 8 }}>
+                                                    <label style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>
+                                                        Últimos 4 dígitos del teléfono para confirmar entrega
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        maxLength={4}
+                                                        placeholder="****"
+                                                        value={deliveryConfirmCode[order.id] || ''}
+                                                        onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '8px 12px',
+                                                            border: '1px solid #E5E7EB',
+                                                            borderRadius: 8,
+                                                            fontSize: 18,
+                                                            textAlign: 'center',
+                                                            letterSpacing: 6
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {statusInfo.next && (
+                                                <button
+                                                    className="btn btn-primary"
+                                                    onClick={() => {
+                                                        // For delivery orders going to "entregado", verify the confirmation code
+                                                        if (statusInfo.next === 'entregado' && order.customerInfo) {
+                                                            const code = deliveryConfirmCode[order.id] || ''
+                                                            if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
+                                                                alert('❌ Código incorrecto. Ingresá los últimos 4 dígitos del teléfono del cliente.')
+                                                                return
+                                                            }
+                                                            // Update with confirmation timestamp
+                                                            updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
                                                         }
-                                                        // Update with confirmation timestamp
-                                                        updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
-                                                    }
-                                                    handleStatusChange(order.id, statusInfo.next)
+                                                        handleStatusChange(order.id, statusInfo.next)
+                                                    }}
+                                                    style={{ flex: 1 }}
+                                                >
+                                                    {statusInfo.nextLabel}
+                                                </button>
+                                            )}
+                                            {/* Payment Method Selector (before confirm) */}
+                                            {!order.paymentConfirmed && (
+                                                <select
+                                                    className="form-input"
+                                                    value={paymentMethodSelect[order.id] || 'cash'}
+                                                    onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                    style={{ flex: 1, minWidth: 100 }}
+                                                >
+                                                    <option value="cash">💵 Efectivo</option>
+                                                    <option value="mercado_pago">📱 MercadoPago</option>
+                                                </select>
+                                            )}
+                                            <button
+                                                className="btn"
+                                                onClick={() => handlePaymentConfirm(order.id)}
+                                                style={{
+                                                    minWidth: 120,
+                                                    background: order.paymentConfirmed ? 'var(--color-primary)' : (config.colors?.confirmation || '#22C55E'),
+                                                    color: 'white',
+                                                    border: 'none'
                                                 }}
-                                                style={{ flex: 1 }}
                                             >
-                                                {statusInfo.nextLabel}
+                                                {order.paymentConfirmed ? `✅ ${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efe'}` : '💳 Confirmar'}
                                             </button>
-                                        )}
-                                        {/* Payment Method Selector (before confirm) */}
-                                        {!order.paymentConfirmed && (
-                                            <select
-                                                className="form-input"
-                                                value={paymentMethodSelect[order.id] || 'cash'}
-                                                onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                style={{ flex: 1, minWidth: 100 }}
-                                            >
-                                                <option value="cash">💵 Efectivo</option>
-                                                <option value="mercado_pago">📱 MercadoPago</option>
-                                            </select>
-                                        )}
-                                        <button
-                                            className="btn"
-                                            onClick={() => handlePaymentConfirm(order.id)}
-                                            style={{
-                                                minWidth: 120,
-                                                background: order.paymentConfirmed ? 'var(--color-primary)' : (config.colors?.confirmation || '#22C55E'),
-                                                color: 'white',
-                                                border: 'none'
-                                            }}
-                                        >
-                                            {order.paymentConfirmed ? `✅ ${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efe'}` : '💳 Confirmar'}
-                                        </button>
+                                        </div>
                                     </div>
+                                )
+                            })
+                        })()}
+
+                        {/* Today's delivery summary */}
+                        <div className="card" style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
+                            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
+                                Envíos hoy
+                            </p>
+                            <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>
+                                {todayOrders.filter(o => o.orderType === 'delivery').length}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Pagos Tab */}
+                {activeTab === 'pagos' && (() => {
+                    // Calculate payment totals
+                    const confirmedOrders = todayOrders.filter(o => o.paymentConfirmed)
+                    const totalCash = confirmedOrders
+                        .filter(o => o.paymentMethod === 'cash')
+                        .reduce((sum, o) => sum + (o.total || 0), 0)
+                    const totalMP = confirmedOrders
+                        .filter(o => o.paymentMethod === 'mercado_pago')
+                        .reduce((sum, o) => sum + (o.total || 0), 0)
+
+                    return (
+                        <div>
+                            {/* Payment Totals */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: 'var(--space-3)',
+                                marginBottom: 'var(--space-4)'
+                            }}>
+                                <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3)' }}>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>💵 Efectivo</p>
+                                    <p style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-success)' }}>
+                                        {formatPrice(totalCash)}
+                                    </p>
                                 </div>
-                            )
-                        })
-                    )}
+                                <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3)' }}>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>📱 MercadoPago</p>
+                                    <p style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>
+                                        {formatPrice(totalMP)}
+                                    </p>
+                                </div>
+                            </div>
 
-                    {/* Today's summary */}
-                    <div className="card" style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
-                            Pedidos hoy
-                        </p>
-                        <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>
-                            {todayOrders.length}
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {/* Delivery Tab - Filtered view of delivery orders only */}
-            {activeTab === 'delivery' && (
-                <div>
-                    {/* Business Disclaimers - Always shown in delivery tab */}
-                    <div style={{
-                        background: '#FEF3C7',
-                        border: '1px solid #F59E0B',
-                        borderRadius: 8,
-                        padding: 12,
-                        marginBottom: 16,
-                        fontSize: 11
-                    }}>
-                        <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Recordatorio para entregas:</p>
-                        <ul style={{ margin: 0, paddingLeft: 16, color: '#92400E' }}>
-                            <li>FoodSpot es software, no una empresa de delivery</li>
-                            <li>El negocio es responsable de conductores y seguros</li>
-                            <li>Los cobros en efectivo deben confirmarse ANTES de preparar</li>
-                        </ul>
-                    </div>
-
-                    {(() => {
-                        const deliveryOrders = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
-                        if (deliveryOrders.length === 0) {
-                            return (
+                            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-3)' }}>
+                                Pagos recientes (solo lectura)
+                            </p>
+                            {todayOrders.length === 0 ? (
                                 <div className="empty-state">
-                                    <span className="empty-state-icon">🚚</span>
-                                    <p className="empty-state-text">No hay envíos activos</p>
+                                    <div className="empty-state-icon">💳</div>
+                                    <p className="empty-state-text">No hay pedidos hoy</p>
                                 </div>
-                            )
-                        }
-                        return deliveryOrders.map(order => {
-                            const statusInfo = getStatusInfo(order.status, order.orderType)
-                            const isDeliveryOrder = true // All orders here are delivery
-                            return (
-                                <div key={order.id} className={`order-card ${statusInfo.class}`}>
-                                    <div className="order-card-header">
-                                        <span className="order-number" style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)' }}>#{order.orderNumber}</span>
-                                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                            <span style={{
-                                                fontSize: 10,
-                                                background: '#DBEAFE',
-                                                color: '#1D4ED8',
-                                                padding: '2px 6px',
-                                                borderRadius: 4,
-                                                fontWeight: 500
-                                            }}>
-                                                🚴 Envío
-                                            </span>
-                                            <span className={`status-badge ${statusInfo.class}`}>
-                                                {statusInfo.label}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Delivery Customer Info */}
-                                    {order.customerInfo && (
-                                        <div style={{
-                                            background: '#F0FDF4',
-                                            padding: 10,
-                                            borderRadius: 8,
-                                            marginBottom: 'var(--space-3)',
-                                            fontSize: 'var(--font-size-sm)'
-                                        }}>
-                                            <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                                                📍 {order.customerInfo.name}
+                            ) : (
+                                <div className="admin-card">
+                                    {todayOrders.map(order => (
+                                        <div key={order.id} className="admin-row" style={{ borderBottom: '1px solid var(--color-card)' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <p style={{ fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-lg)' }}>
+                                                    #{order.orderNumber}
+                                                </p>
+                                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                                                    {formatPrice(order.total)} • {new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
                                             </div>
-                                            <div style={{ color: 'var(--color-text-muted)', marginBottom: 2 }}>
-                                                {order.customerInfo.address}
-                                            </div>
-                                            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-                                                Tel: ***{getPhoneLast4(order.customerInfo.phone)}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Order Items */}
-                                    <div style={{ marginBottom: 'var(--space-3)' }}>
-                                        {order.items.map((item, idx) => (
-                                            <div key={idx} style={{
-                                                fontSize: 'var(--font-size-sm)',
-                                                padding: 'var(--space-1) 0'
-                                            }}>
-                                                <span>{item.quantity}x {item.name}</span>
-                                                {item.extras && item.extras.length > 0 && (
-                                                    <span style={{ color: 'var(--color-text-muted)' }}>
-                                                        {' '}(+{item.extras.map(e => e.name).join(', ')})
-                                                    </span>
+                                            <div style={{ textAlign: 'right' }}>
+                                                {order.paymentConfirmed ? (
+                                                    <>
+                                                        <p style={{ color: 'var(--color-success)', fontWeight: 'var(--font-weight-medium)' }}>
+                                                            ✅ {order.paymentMethod === 'mercado_pago' ? 'MercadoPago' : 'Efectivo'}
+                                                        </p>
+                                                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                                            {order.paidAt && new Date(order.paidAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <p style={{ color: 'var(--color-warning)' }}>⏳ Sin confirmar</p>
                                                 )}
                                             </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Total & Time */}
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: 'var(--color-text-muted)',
-                                        marginBottom: 'var(--space-3)'
-                                    }}>
-                                        <span>{formatPrice(order.total)}</span>
-                                        <span>{new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-                                        {/* Delivery Confirmation Code Input - Only for en_camino */}
-                                        {order.status === 'en_camino' && order.customerInfo && (
-                                            <div style={{ width: '100%', marginBottom: 8 }}>
-                                                <label style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>
-                                                    Últimos 4 dígitos del teléfono para confirmar entrega
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    maxLength={4}
-                                                    placeholder="****"
-                                                    value={deliveryConfirmCode[order.id] || ''}
-                                                    onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
-                                                    style={{
-                                                        width: '100%',
-                                                        padding: '8px 12px',
-                                                        border: '1px solid #E5E7EB',
-                                                        borderRadius: 8,
-                                                        fontSize: 18,
-                                                        textAlign: 'center',
-                                                        letterSpacing: 6
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-
-                                        {statusInfo.next && (
-                                            <button
-                                                className="btn btn-primary"
-                                                onClick={() => {
-                                                    // For delivery orders going to "entregado", verify the confirmation code
-                                                    if (statusInfo.next === 'entregado' && order.customerInfo) {
-                                                        const code = deliveryConfirmCode[order.id] || ''
-                                                        if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
-                                                            alert('❌ Código incorrecto. Ingresá los últimos 4 dígitos del teléfono del cliente.')
-                                                            return
-                                                        }
-                                                        // Update with confirmation timestamp
-                                                        updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
-                                                    }
-                                                    handleStatusChange(order.id, statusInfo.next)
-                                                }}
-                                                style={{ flex: 1 }}
-                                            >
-                                                {statusInfo.nextLabel}
-                                            </button>
-                                        )}
-                                        {/* Payment Method Selector (before confirm) */}
-                                        {!order.paymentConfirmed && (
-                                            <select
-                                                className="form-input"
-                                                value={paymentMethodSelect[order.id] || 'cash'}
-                                                onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                style={{ flex: 1, minWidth: 100 }}
-                                            >
-                                                <option value="cash">💵 Efectivo</option>
-                                                <option value="mercado_pago">📱 MercadoPago</option>
-                                            </select>
-                                        )}
-                                        <button
-                                            className="btn"
-                                            onClick={() => handlePaymentConfirm(order.id)}
-                                            style={{
-                                                minWidth: 120,
-                                                background: order.paymentConfirmed ? 'var(--color-primary)' : (config.colors?.confirmation || '#22C55E'),
-                                                color: 'white',
-                                                border: 'none'
-                                            }}
-                                        >
-                                            {order.paymentConfirmed ? `✅ ${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efe'}` : '💳 Confirmar'}
-                                        </button>
-                                    </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            )
-                        })
-                    })()}
+                            )}
+                        </div>
+                    )
+                })()}
 
-                    {/* Today's delivery summary */}
-                    <div className="card" style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
-                            Envíos hoy
-                        </p>
-                        <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>
-                            {todayOrders.filter(o => o.orderType === 'delivery').length}
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {/* Pagos Tab */}
-            {activeTab === 'pagos' && (() => {
-                // Calculate payment totals
-                const confirmedOrders = todayOrders.filter(o => o.paymentConfirmed)
-                const totalCash = confirmedOrders
-                    .filter(o => o.paymentMethod === 'cash')
-                    .reduce((sum, o) => sum + (o.total || 0), 0)
-                const totalMP = confirmedOrders
-                    .filter(o => o.paymentMethod === 'mercado_pago')
-                    .reduce((sum, o) => sum + (o.total || 0), 0)
-
-                return (
+                {/* Items Availability Tab */}
+                {activeTab === 'items' && (
                     <div>
-                        {/* Payment Totals */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: 'var(--space-3)',
-                            marginBottom: 'var(--space-4)'
-                        }}>
-                            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3)' }}>
-                                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>💵 Efectivo</p>
-                                <p style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-success)' }}>
-                                    {formatPrice(totalCash)}
-                                </p>
+                        {menu.categories.map(category => (
+                            <div key={category.id} className="admin-section">
+                                <h3 className="admin-section-title">
+                                    {category.icon} {category.name}
+                                </h3>
+                                <div className="admin-card">
+                                    {category.items.map(item => (
+                                        <div key={item.id} className="admin-row">
+                                            <div>
+                                                <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{item.name}</p>
+                                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                                                    {formatPrice(item.price)}
+                                                </p>
+                                            </div>
+                                            <label className="toggle">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={item.available}
+                                                    onChange={() => handleToggleAvailability(category.id, item.id)}
+                                                />
+                                                <span className="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3)' }}>
-                                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>📱 MercadoPago</p>
-                                <p style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>
-                                    {formatPrice(totalMP)}
-                                </p>
-                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Rewards/Stamps Tab */}
+                {activeTab === 'rewards' && (
+                    <div>
+                        <div className="card" style={{ textAlign: 'center' }}>
+                            <h3 style={{ marginBottom: 'var(--space-3)' }}>Validar sello</h3>
+                            <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-sm)' }}>
+                                Usá esto para agregar un sello cuando un cliente comparte en Instagram o visita el local
+                            </p>
+                            <button
+                                className="btn btn-primary btn-lg btn-block"
+                                onClick={handleAddStamp}
+                            >
+                                ⭐ Agregar sello
+                            </button>
                         </div>
 
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-3)' }}>
-                            Pagos recientes (solo lectura)
-                        </p>
-                        {todayOrders.length === 0 ? (
-                            <div className="empty-state">
-                                <div className="empty-state-icon">💳</div>
-                                <p className="empty-state-text">No hay pedidos hoy</p>
-                            </div>
-                        ) : (
-                            <div className="admin-card">
-                                {todayOrders.map(order => (
-                                    <div key={order.id} className="admin-row" style={{ borderBottom: '1px solid var(--color-card)' }}>
-                                        <div style={{ flex: 1 }}>
-                                            <p style={{ fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-lg)' }}>
-                                                #{order.orderNumber}
-                                            </p>
-                                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                                                {formatPrice(order.total)} • {new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                                            </p>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            {order.paymentConfirmed ? (
-                                                <>
-                                                    <p style={{ color: 'var(--color-success)', fontWeight: 'var(--font-weight-medium)' }}>
-                                                        ✅ {order.paymentMethod === 'mercado_pago' ? 'MercadoPago' : 'Efectivo'}
-                                                    </p>
-                                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                                                        {order.paidAt && new Date(order.paidAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                                                    </p>
-                                                </>
-                                            ) : (
-                                                <p style={{ color: 'var(--color-warning)' }}>⏳ Sin confirmar</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )
-            })()}
-
-            {/* Items Availability Tab */}
-            {activeTab === 'items' && (
-                <div>
-                    {menu.categories.map(category => (
-                        <div key={category.id} className="admin-section">
-                            <h3 className="admin-section-title">
-                                {category.icon} {category.name}
-                            </h3>
-                            <div className="admin-card">
-                                {category.items.map(item => (
-                                    <div key={item.id} className="admin-row">
-                                        <div>
-                                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{item.name}</p>
-                                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                                                {formatPrice(item.price)}
-                                            </p>
-                                        </div>
-                                        <label className="toggle">
-                                            <input
-                                                type="checkbox"
-                                                checked={item.available}
-                                                onChange={() => handleToggleAvailability(category.id, item.id)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="card" style={{ marginTop: 'var(--space-4)' }}>
+                            <h4 style={{ marginBottom: 'var(--space-2)' }}>Info</h4>
+                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                                Los sellos también se agregan automáticamente cuando un pedido se marca como entregado.
+                            </p>
                         </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Rewards/Stamps Tab */}
-            {activeTab === 'rewards' && (
-                <div>
-                    <div className="card" style={{ textAlign: 'center' }}>
-                        <h3 style={{ marginBottom: 'var(--space-3)' }}>Validar sello</h3>
-                        <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-sm)' }}>
-                            Usá esto para agregar un sello cuando un cliente comparte en Instagram o visita el local
-                        </p>
-                        <button
-                            className="btn btn-primary btn-lg btn-block"
-                            onClick={handleAddStamp}
-                        >
-                            ⭐ Agregar sello
-                        </button>
                     </div>
+                )}
 
-                    <div className="card" style={{ marginTop: 'var(--space-4)' }}>
-                        <h4 style={{ marginBottom: 'var(--space-2)' }}>Info</h4>
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                            Los sellos también se agregan automáticamente cuando un pedido se marca como entregado.
+                {/* History Tab (pagos remapped) */}
+                {activeTab === 'history' && (
+                    <div>
+                        <h3 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16 }}>📋 Payment History</h3>
+                        <p style={{ color: '#6B7280', fontSize: 13 }}>
+                            View-only history of confirmed payments.
                         </p>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
+
+            {/* Bottom Navigation */}
+            <BackendNav
+                role="staff"
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                badges={navBadges}
+            />
         </div>
     )
 }

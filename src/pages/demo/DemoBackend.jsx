@@ -29,6 +29,7 @@ import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
+import BackendNav from '../../components/BackendNav.jsx'
 import DemoEmailPopup from '../../components/DemoEmailPopup.jsx'
 
 // Timer utilities for email popup
@@ -1257,7 +1258,7 @@ function LaunchTab({ cardStyle, labelStyle }) {
 function DemoBackend() {
     const navigate = useNavigate()
     const [demoSession, setDemoSession] = useState(() => getDemoSession())
-    const [activeTab, setActiveTab] = useState('resumen')
+    const [activeTab, setActiveTab] = useState('summary')
     const [demoOrders, setDemoOrders] = useState(MOCK_ORDERS)
     const orders = demoOrders // Alias for compatibility
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
@@ -1365,28 +1366,29 @@ function DemoBackend() {
         return null // Will redirect
     }
 
-    // Tabs based on role
+    // Tabs based on role - NEW STRUCTURE
     const ownerTabs = [
-        { id: 'resumen', label: 'Summary' },
-        { id: 'branding', label: 'Branding' },
+        { id: 'summary', label: 'Summary' },
         { id: 'menu', label: 'Menu' },
-        { id: 'info', label: 'Info' },
+        { id: 'branding', label: 'Branding' },
         { id: 'orders', label: 'Orders' },
-        { id: 'delivery', label: 'Delivery' },
-        { id: 'analytics', label: 'Analytics' },
-        { id: 'activity', label: 'Activity' },
-        { id: 'launch', label: 'Launch' },
-        { id: 'events', label: 'Event Log' }
+        { id: 'analytics', label: 'Analytics' }
     ]
 
     const staffTabs = [
         { id: 'orders', label: 'Orders' },
         { id: 'delivery', label: 'Delivery' },
-        { id: 'stock', label: 'Stock' },
-        { id: 'rewards', label: 'Stamps' }
+        { id: 'history', label: 'History' }
     ]
 
     const tabs = role === 'owner' ? ownerTabs : staffTabs
+
+    // Badge counts for nav
+    const pendingDeliveries = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+    const navBadges = {
+        orders: activeOrders.length,
+        delivery: pendingDeliveries.length
+    }
 
     // Ensure active tab is valid for current role
     useEffect(() => {
@@ -1489,35 +1491,13 @@ function DemoBackend() {
                 </div>
             </div>
 
-            {/* Tab Navigation - Matching Super Admin */}
-            <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        style={{
-                            flex: 'none',
-                            padding: '12px 14px',
-                            background: 'none',
-                            border: 'none',
-                            borderBottom: activeTab === tab.id ? '3px solid #22C55E' : '3px solid transparent',
-                            fontSize: 13,
-                            fontWeight: activeTab === tab.id ? 600 : 400,
-                            color: activeTab === tab.id ? '#1F2937' : '#6B7280',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap'
-                        }}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
+            {/* Horizontal tabs removed - using bottom navigation */}
 
-            {/* Content */}
-            <div style={{ padding: 16 }}>
+            {/* Content - with bottom padding for BackendNav */}
+            <div style={{ padding: 16, paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
 
                 {/* SUMMARY TAB (Owner only) */}
-                {activeTab === 'resumen' && role === 'owner' && (
+                {activeTab === 'summary' && role === 'owner' && (
                     <>
                         <h3 style={labelStyle}>💳 TODAY'S PAYMENTS</h3>
                         <div style={cardStyle}>
@@ -2618,36 +2598,32 @@ function DemoBackend() {
                     </>
                 )}
 
-                {/* ACTIVITY TAB (Owner only) - Demo Activity Dashboard */}
-                {activeTab === 'activity' && role === 'owner' && (
-                    <ActivityTab cardStyle={cardStyle} labelStyle={labelStyle} orders={orders} />
-                )}
-
-                {/* LAUNCH TAB (Owner only) - Launch Readiness Panel */}
-                {activeTab === 'launch' && role === 'owner' && (
-                    <LaunchTab cardStyle={cardStyle} labelStyle={labelStyle} />
-                )}
-
-                {/* EVENT LOG TAB (Owner only) - Simulated Webhooks */}
-                {activeTab === 'events' && role === 'owner' && (
-                    <EventLogTab cardStyle={cardStyle} labelStyle={labelStyle} />
-                )}
+                {/* Deprecated tabs removed: activity, launch, events */}
 
             </div>
 
-            {/* Demo Footer */}
+            {/* Bottom Navigation */}
+            <BackendNav
+                role={role === 'owner' ? 'owner' : 'staff'}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                badges={navBadges}
+            />
+
+            {/* Demo Footer - positioned above nav */}
             <div style={{
                 position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '12px 16px',
+                bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))',
+                left: 10,
+                right: 10,
+                padding: '8px 16px',
                 background: '#FEF3C7',
-                borderTop: '1px solid #FCD34D',
+                borderRadius: '8px 8px 0 0',
                 textAlign: 'center',
-                pointerEvents: 'none' // Non-interactive, must not block clicks above
+                pointerEvents: 'none',
+                zIndex: 999
             }}>
-                <p style={{ fontSize: 12, color: '#92400E', margin: 0 }}>
+                <p style={{ fontSize: 11, color: '#92400E', margin: 0 }}>
                     🔒 Demo Mode — Demo data resets automatically
                 </p>
             </div>

@@ -5,48 +5,6 @@ import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 
-// Shared Owner Tab Navigation
-function OwnerTabs({ activeTab }) {
-    const tabs = [
-        { id: 'settings', path: '/owner/settings', label: 'Config' },
-        { id: 'menu', path: '/owner/menu', label: 'Menú' },
-        { id: 'delivery', path: '/owner/delivery', label: 'Envíos' },
-        { id: 'analytics', path: '/owner/analytics', label: 'Stats' },
-        { id: 'rewards', path: '/owner/rewards', label: 'Recompensas' }
-    ]
-
-    return (
-        <div style={{
-            background: '#FFFFFF',
-            borderBottom: '1px solid #E5E7EB',
-            display: 'flex',
-            overflowX: 'auto',
-            padding: '0 16px',
-            gap: 24,
-            width: '100%',
-            boxSizing: 'border-box'
-        }}>
-            {tabs.map(tab => (
-                <Link
-                    key={tab.id}
-                    to={tab.path}
-                    style={{
-                        padding: '14px 4px',
-                        fontSize: 14,
-                        fontWeight: activeTab === tab.id ? 600 : 500,
-                        color: activeTab === tab.id ? '#111827' : '#6B7280',
-                        textDecoration: 'none',
-                        borderBottom: activeTab === tab.id ? '2px solid #111827' : '2px solid transparent',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    {tab.label}
-                </Link>
-            ))}
-        </div>
-    )
-}
-
 function DeliveryManager() {
     const navigate = useNavigate()
     const [orders, setOrders] = useState(() => getOrders())
@@ -116,9 +74,8 @@ function DeliveryManager() {
                 title="Envíos"
                 onLogout={handleLogout}
             />
-            <OwnerTabs activeTab="delivery" />
 
-            <div style={{ padding: 16, maxWidth: 800, margin: '0 auto' }}>
+            <div style={{ padding: 16, maxWidth: 800, margin: '0 auto', paddingBottom: 100 }}>
                 {/* Business Disclaimers */}
                 <div style={{
                     background: '#FEF3C7',
@@ -316,6 +273,7 @@ function DeliveryManager() {
                     <p>Envíos procesados hoy: <strong style={{ color: '#F97316' }}>{todayDeliveries}</strong></p>
                 </div>
             </div>
+
         </div>
     )
 }
