@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
 import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'

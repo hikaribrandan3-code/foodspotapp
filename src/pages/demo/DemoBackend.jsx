@@ -23,7 +23,6 @@ import { getConfig, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
-import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 
 // Import existing branding components (REUSE)
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
