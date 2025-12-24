@@ -88,23 +88,20 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
     const [activeCategory, setActiveCategory] = useState(enabledCategories[0]?.id || '')
 
-    // Refresh data periodically
-    // SNAPBACK FIX: Pause polling during drag/edit OR when shield is active
+    // ==== OPERATION SILENCE: AUTOMATIC REFRESH DISABLED ====
+    // The polling was causing snapback by overwriting optimistic state
+    // Menu loads ONCE on mount, then only updates via drag handlers
+    /*
     useEffect(() => {
         const interval = setInterval(() => {
-            // ==== THE GUARD ====
-            // ABORT if any of these conditions are true:
             if (isEditMode) return
             if (dragState) return
-            if (blockRefreshRef.current) return // THE SHIELD IS UP
-
+            if (blockRefreshRef.current) return
             setMenu(getMenu())
             setCart(getCurrentOrder())
         }, 2000)
 
-        // Listen for frontendSync to re-read menu
         const handleFrontendSync = () => {
-            // Also respect the shield
             if (isEditMode || dragState || blockRefreshRef.current) return
             setMenu(getMenu())
         }
@@ -115,6 +112,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             window.removeEventListener('frontendSync', handleFrontendSync)
         }
     }, [isEditMode, dragState])
+    */
 
     // Long-press handlers for edit mode (owner only)
     const handleLongPressStart = useCallback((e) => {
@@ -401,6 +399,8 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         // ==== BRUTE FORCE OPTIMISTIC UPDATE ====
         setMenu(prevMenu => {
+            console.log('📝 COMMITTING STATE UPDATE: Moving item to index ' + targetIndex)
+
             // 1. Clone the categories
             const newCategories = [...prevMenu.categories]
 
