@@ -149,6 +149,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const handleDragStart = useCallback((e, categoryId, item, itemIndex, availableItems) => {
         if (!isOwnerMode || !isEditMode) return
 
+        // SAFARI FIX: Aggressive event prevention
+        e.preventDefault()
+        e.stopPropagation()
+
         // Haptic feedback
         if (navigator.vibrate) {
             navigator.vibrate(30)
@@ -159,6 +163,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         const touch = e.touches?.[0] || e
         const rect = e.currentTarget.getBoundingClientRect()
+
+        // Mark the dragged element for easy identification
+        e.currentTarget.setAttribute('data-dragging', 'true')
 
         setDragState({
             categoryId,
@@ -182,7 +189,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const handleDragMove = useCallback((e) => {
         if (!dragState) return
 
+        // SAFARI FIX: Aggressive event prevention
         e.preventDefault()
+        e.stopPropagation()
+
         const touch = e.touches?.[0] || e
         const touchX = touch.clientX
         const touchY = touch.clientY
@@ -215,40 +225,27 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                 }
                 autoScrollRef.current = requestAnimationFrame(scrollDown)
             }
-            // If in middle zone (80%), no scrolling - autoScrollRef stays null
         }
 
-        // Get container bounds
-        const container = categoryRefs.current[dragState.categoryId]
-        if (!container) return
+        // SAFARI FIX: Use elementFromPoint for reliable hit detection
+        // Temporarily hide the floating drag card so it doesn't block detection
+        const floatingCard = document.querySelector('[data-floating-drag="true"]')
+        if (floatingCard) floatingCard.style.pointerEvents = 'none'
 
-        const grid = container.querySelector('.menu-grid')
-        if (!grid) return
+        const targetEl = document.elementFromPoint(touchX, touchY)
 
-        // Calculate target index based on CENTER PROXIMITY (better for grid)
-        const gridItems = grid.children
-        let targetIndex = dragState.targetIndex // Keep current if no match
-        let closestDistance = Infinity
+        if (floatingCard) floatingCard.style.pointerEvents = ''
 
-        for (let i = 0; i < gridItems.length; i++) {
-            // Skip the dragged item's original slot
-            if (i === dragState.itemIndex) continue
+        // Find the closest grid item with data-item-id
+        const gridItem = targetEl?.closest('[data-item-id]')
+        let targetIndex = dragState.targetIndex
 
-            const itemRect = gridItems[i].getBoundingClientRect()
-            const centerX = itemRect.left + itemRect.width / 2
-            const centerY = itemRect.top + itemRect.height / 2
-
-            // Calculate distance to center
-            const distance = Math.sqrt(
-                Math.pow(touchX - centerX, 2) + Math.pow(touchY - centerY, 2)
-            )
-
-            // If pointer is within the item bounds AND closest so far
-            if (distance < closestDistance &&
-                touchX > itemRect.left && touchX < itemRect.right &&
-                touchY > itemRect.top && touchY < itemRect.bottom) {
-                closestDistance = distance
-                targetIndex = i
+        if (gridItem && gridItem.getAttribute('data-dragging') !== 'true') {
+            const targetId = gridItem.getAttribute('data-item-id')
+            // Find index in current items array
+            const newIndex = dragState.items.indexOf(targetId)
+            if (newIndex !== -1 && newIndex !== dragState.itemIndex) {
+                targetIndex = newIndex
             }
         }
 
@@ -294,6 +291,14 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     }, [dragState])
 
     const handleDragEnd = useCallback(() => {
+        // SAFARI FIX: Clear DOM attributes FIRST before any state updates
+        if (dragItemRef.current) {
+            dragItemRef.current.removeAttribute('data-dragging')
+            dragItemRef.current.style.transform = ''
+            dragItemRef.current.style.zIndex = ''
+            dragItemRef.current.style.position = ''
+        }
+
         // 1. Safety Check: If no drag state or no movement, just reset
         if (!dragState || dragState.itemIndex === dragState.targetIndex) {
             // Still need to cleanup if dragState exists
@@ -658,6 +663,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                                         return (
                                             <div
                                                 key={item.id}
+                                                data-item-id={item.id}
                                                 onClick={() => !isEditMode && !dragState && handleTapToAdd(item)}
                                                 onTouchStart={(e) => {
                                                     if (isEditMode) {
@@ -863,6 +869,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
                 return (
                     <div
+                        data-floating-drag="true"
                         style={{
                             position: 'fixed',
                             left: dragState.currentX - dragState.offsetX,
