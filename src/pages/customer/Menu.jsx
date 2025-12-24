@@ -49,6 +49,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // Blocks getMenu() polling for 2 seconds after drag ends to prevent snapback
     const blockRefreshRef = useRef(false)
 
+    // ==== THE CSS SILENCER ====
+    // When true, kills all CSS transitions to prevent "slow glide" on drop
+    const [isDropping, setIsDropping] = useState(false)
+
     // Delivery mode: session is source of truth, route prop can set it
     // This ensures persistence across page refresh and back navigation
     const [deliveryMode, setDeliveryMode] = useState(() => {
@@ -236,36 +240,53 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             }
         }
 
-        // SAFARI FIX: Use elementFromPoint for reliable hit detection
-        // Floating card already has pointer-events: none in styles
-        const targetEl = document.elementFromPoint(touchX, touchY)
+        // ==== MAGNET MATH: Distance-Based Detection ====
+        // Instead of strict point-in-rect, find the CLOSEST item center
+        const allItems = document.querySelectorAll('[data-item-id]')
+        let closestItem = null
+        let closestDistance = Infinity
+        let closestCategoryId = null
 
-        // Find the closest grid item with data-item-id
-        const gridItem = targetEl?.closest('[data-item-id]')
-        // Find the target category
-        const targetCategoryEl = targetEl?.closest('[data-category-id]')
-        const targetCatId = targetCategoryEl?.getAttribute('data-category-id')
+        allItems.forEach(item => {
+            // Skip the item being dragged
+            if (item.getAttribute('data-dragging') === 'true') return
+
+            const rect = item.getBoundingClientRect()
+            const centerX = rect.left + rect.width / 2
+            const centerY = rect.top + rect.height / 2
+            const distance = Math.hypot(touchX - centerX, touchY - centerY)
+
+            if (distance < closestDistance) {
+                closestDistance = distance
+                closestItem = item
+                // Get the category this item belongs to
+                const catEl = item.closest('[data-category-id]')
+                closestCategoryId = catEl?.getAttribute('data-category-id')
+            }
+        })
 
         let targetIndex = dragState.targetIndex
         let newCategoryId = dragState.categoryId
 
-        if (gridItem && gridItem.getAttribute('data-dragging') !== 'true') {
-            const targetId = gridItem.getAttribute('data-item-id')
+        // MAGNET THRESHOLD: 120px is generous for mobile fingers
+        const MAGNET_THRESHOLD = 120
 
-            // Check if we're over a different category
-            if (targetCatId && targetCatId !== dragState.categoryId) {
-                // Cross-category drag - find the target category's items
-                const targetCategory = menu.categories.find(c => c.id === targetCatId)
+        if (closestItem && closestDistance < MAGNET_THRESHOLD) {
+            const targetId = closestItem.getAttribute('data-item-id')
+
+            if (closestCategoryId && closestCategoryId !== dragState.categoryId) {
+                // Cross-category drag
+                const targetCategory = menu.categories.find(c => c.id === closestCategoryId)
                 if (targetCategory) {
                     const targetCatItems = targetCategory.items.filter(i => i.available)
                     const newIndex = targetCatItems.findIndex(i => i.id === targetId)
                     if (newIndex !== -1) {
                         targetIndex = newIndex
-                        newCategoryId = targetCatId
+                        newCategoryId = closestCategoryId
                     }
                 }
             } else {
-                // Same category - find index in current items array
+                // Same category
                 const newIndex = dragState.items.indexOf(targetId)
                 if (newIndex !== -1 && newIndex !== dragState.itemIndex) {
                     targetIndex = newIndex
@@ -327,8 +348,11 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     }, [dragState, menu])
 
     const handleDragEnd = useCallback(() => {
+        // ==== CSS SILENCER: Kill transitions FIRST ====
+        setIsDropping(true)
+
         // ==== REQUIREMENT 1: THE GHOST KILLER ====
-        // Kill the overlay IMMEDIATELY - this is the VERY FIRST LINE
+        // Kill the overlay IMMEDIATELY
         // Captures dragState before nullifying for later use
         const capturedState = dragState
         setDragState(null)
@@ -354,6 +378,8 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // Safety Check: If no drag state or no movement, just exit
         if (!capturedState || capturedState.itemIndex === capturedState.targetIndex) {
             console.log('[ATOMIC] No movement detected, cleanup complete')
+            // Reset isDropping after a short delay even for no-move case
+            setTimeout(() => setIsDropping(false), 100)
             return
         }
 
@@ -424,11 +450,16 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             // Lower the shield after 2 seconds to allow polling to resume
             setTimeout(() => {
                 blockRefreshRef.current = false
-                console.log('[SHIELD] Cooldown complete, polling resumed')
+                setIsDropping(false) // Re-enable CSS transitions
+                console.log('[SHIELD] Cooldown complete, isDropping reset, polling resumed')
                 // Optional: Force a fresh sync to ensure consistency
                 setMenu(getMenu())
             }, 2000)
         }
+
+        // If we got here from the early return (no movement), still reset isDropping
+        // This is handled by the fact that isDropping was set to true at the start
+        // and will be reset by the timeout above for real moves, or we reset it here for no-move cases
     }, [dragState])
 
     // Global touch/mouse event listeners for drag
@@ -759,7 +790,8 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                                                 style={{
                                                     cursor: isEditMode ? 'grab' : 'pointer',
                                                     transform: addedItem === item.id ? 'scale(0.95)' : 'scale(1)',
-                                                    transition: isEditMode ? 'none' : 'transform 0.15s ease',
+                                                    // CSS SILENCER: Kill transitions during drop to prevent slow glide
+                                                    transition: (isEditMode || isDropping) ? 'none' : 'transform 0.15s ease',
                                                     opacity: isDragging ? 0.3 : (addedItem === item.id ? 0.7 : 1),
                                                     boxShadow: isEditMode && !isDragging ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
                                                     borderRadius: isEditMode ? 8 : 0,
