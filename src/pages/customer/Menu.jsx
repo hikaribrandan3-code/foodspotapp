@@ -254,7 +254,20 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     }, [dragState])
 
     const handleDragEnd = useCallback(() => {
-        if (!dragState) return
+        // 1. Safety Check: If no drag state or no movement, just reset
+        if (!dragState || dragState.itemIndex === dragState.targetIndex) {
+            // Still need to cleanup if dragState exists
+            if (dragState) {
+                if (autoScrollRef.current) {
+                    cancelAnimationFrame(autoScrollRef.current)
+                    autoScrollRef.current = null
+                }
+                document.body.style.overflow = ''
+                setDragState(null)
+                dragItemRef.current = null
+            }
+            return
+        }
 
         // Stop auto-scroll if active
         if (autoScrollRef.current) {
@@ -265,54 +278,78 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // Re-enable page scroll
         document.body.style.overflow = ''
 
-        // If position changed, reorder and save
-        if (dragState.itemIndex !== dragState.targetIndex) {
-            const newOrder = [...dragState.items]
-            const [movedItem] = newOrder.splice(dragState.itemIndex, 1)
-            newOrder.splice(dragState.targetIndex, 0, movedItem)
+        const { categoryId, itemIndex, targetIndex, items } = dragState
 
-            if (isInDemoMode()) {
-                // DEMO MODE PERSISTENCE FIX
-                // 1. Get current demo/draft menu
-                const draftMenu = getDemoMenu() || getActiveDemoMenu()
+        // 2. Compute the new order locally
+        const newOrder = [...items]
+        const [movedItem] = newOrder.splice(itemIndex, 1)
+        newOrder.splice(targetIndex, 0, movedItem)
 
-                if (draftMenu) {
-                    const category = draftMenu.categories.find(c => c.id === dragState.categoryId)
-                    if (category) {
-                        // 2. Rebuild category items respecting new order + hidden items
-                        const itemMap = {}
-                        category.items.forEach(item => itemMap[item.id] = item)
+        if (isInDemoMode()) {
+            // DEMO MODE PERSISTENCE FIX
+            // 1. Get current demo/draft menu
+            const draftMenu = getDemoMenu() || getActiveDemoMenu()
 
-                        const reorderedItems = []
-                        newOrder.forEach(item => {
-                            if (itemMap[item.id]) {
-                                reorderedItems.push(itemMap[item.id])
-                                delete itemMap[item.id]
-                            }
-                        })
+            if (draftMenu) {
+                const category = draftMenu.categories.find(c => c.id === categoryId)
+                if (category) {
+                    // 2. Rebuild category items respecting new order + hidden items
+                    const itemMap = {}
+                    category.items.forEach(item => itemMap[item.id] = item)
 
-                        // Append any hidden/unavailable items not in the grid
-                        Object.values(itemMap).forEach(item => reorderedItems.push(item))
+                    const reorderedItems = []
+                    newOrder.forEach(item => {
+                        if (itemMap[item.id]) {
+                            reorderedItems.push(itemMap[item.id])
+                            delete itemMap[item.id]
+                        }
+                    })
 
-                        category.items = reorderedItems
+                    // Append any hidden/unavailable items not in the grid
+                    Object.values(itemMap).forEach(item => reorderedItems.push(item))
 
-                        // 3. Save and Sync
-                        saveDemoMenu(draftMenu)
-                        applyDemoToFrontend()
+                    category.items = reorderedItems
 
-                        // 4. Instant State Update (avoids snapback race)
-                        setDemoMenu(getActiveDemoMenu())
-                    }
+                    // 3. Save and Sync
+                    saveDemoMenu(draftMenu)
+                    applyDemoToFrontend()
+
+                    // 4. Instant State Update (avoids snapback race)
+                    setDemoMenu(getActiveDemoMenu())
                 }
-            } else {
-                // Save to backend (Production)
-                reorderCategoryItems(dragState.categoryId, newOrder)
-
-                // Refresh menu
-                setMenu(getMenu())
             }
+        } else {
+            // 3. OPTIMISTIC UPDATE: Update React State IMMEDIATELY (Visual Speed)
+            // This prevents the "snapback" because the UI updates before the storage/polling can interfere
+            setMenu(prevMenu => {
+                const updatedCategories = prevMenu.categories.map(cat => {
+                    if (cat.id !== categoryId) return cat
+
+                    // Create a map for quick lookup of current items
+                    const itemMap = Object.fromEntries(cat.items.map(i => [i.id, i]))
+
+                    // Reconstruct the category items based on the new ID order
+                    const reorderedItems = newOrder.map(id => itemMap[id]).filter(Boolean)
+
+                    // Safety net: Append any items that might have been missed (hidden/unavailable)
+                    cat.items.forEach(i => {
+                        if (!newOrder.includes(i.id)) reorderedItems.push(i)
+                    })
+
+                    return { ...cat, items: reorderedItems }
+                })
+
+                return { ...prevMenu, categories: updatedCategories }
+            })
+
+            // 4. ASYNC PERSISTENCE: Write to storage in the background
+            // We use setTimeout to push this to the end of the event loop, unblocking the UI
+            setTimeout(() => {
+                reorderCategoryItems(categoryId, newOrder)
+            }, 0)
         }
 
+        // 5. Cleanup
         setDragState(null)
         dragItemRef.current = null
     }, [dragState])
