@@ -370,9 +370,6 @@ function SuperAdmin({ config }) {
                     showAvatar={false}
                     extraActions={
                         <>
-                            {demoAnalytics && userRole === 'superadmin' && (
-                                <span style={{ padding: '4px 8px', background: '#EF4444', borderRadius: 5, fontSize: 10, fontWeight: 600, color: 'white' }}>DEMO</span>
-                            )}
                             {userRole === 'superadmin' && (
                                 <select
                                     value={currentMode}
