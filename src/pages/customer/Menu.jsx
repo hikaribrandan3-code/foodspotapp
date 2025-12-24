@@ -210,6 +210,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         const touchX = touch.clientX
         const touchY = touch.clientY
 
+        // ==== TRACE LOG: MOVE EVENT ====
+        console.log('[MOVE] Touch X:', touchX, 'Y:', touchY)
+
         // ===== HOT ZONE AUTO-SCROLL =====
         if (ENABLE_AUTO_SCROLL) {
             const viewportHeight = window.innerHeight
@@ -271,8 +274,12 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // MAGNET THRESHOLD: 120px is generous for mobile fingers
         const MAGNET_THRESHOLD = 120
 
+        // ==== TRACE LOG: MAGNET MATH ====
+        console.log('[MATH] Closest Item:', closestItem?.getAttribute('data-item-id'), 'Distance:', closestDistance.toFixed(1), 'Threshold:', MAGNET_THRESHOLD)
+
         if (closestItem && closestDistance < MAGNET_THRESHOLD) {
             const targetId = closestItem.getAttribute('data-item-id')
+            console.log('[MATH] Within threshold! TargetId:', targetId)
 
             if (closestCategoryId && closestCategoryId !== dragState.categoryId) {
                 // Cross-category drag
@@ -288,11 +295,17 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             } else {
                 // Same category
                 const newIndex = dragState.items.indexOf(targetId)
+                console.log('[MATH] indexOf result:', newIndex, 'Current itemIndex:', dragState.itemIndex)
                 if (newIndex !== -1 && newIndex !== dragState.itemIndex) {
                     targetIndex = newIndex
                 }
             }
+        } else {
+            console.log('[MATH] OUTSIDE threshold or no closestItem')
         }
+
+        // ==== TRACE LOG: TARGET INDEX ====
+        console.log('[MATH] Final targetIndex:', targetIndex, 'newCategoryId:', newCategoryId)
 
         // Check if anything changed
         const targetChanged = targetIndex !== dragState.targetIndex || newCategoryId !== dragState.categoryId
@@ -348,6 +361,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     }, [dragState, menu])
 
     const handleDragEnd = useCallback(() => {
+        // ==== TRACE LOG: DROP START ====
+        console.log('[DROP START] dragState exists:', !!dragState)
+        console.log('[DROP START] blockRefreshRef:', blockRefreshRef.current)
+
         // ==== CSS SILENCER: Kill transitions FIRST ====
         setIsDropping(true)
 
@@ -357,6 +374,13 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         const capturedState = dragState
         setDragState(null)
         dragItemRef.current = null
+
+        console.log('[DROP] capturedState:', capturedState ? {
+            categoryId: capturedState.categoryId,
+            itemIndex: capturedState.itemIndex,
+            targetIndex: capturedState.targetIndex,
+            itemsLength: capturedState.items?.length
+        } : 'NULL')
 
         // Clear DOM attributes
         if (dragItemRef.current) {
@@ -377,13 +401,14 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         // Safety Check: If no drag state or no movement, just exit
         if (!capturedState || capturedState.itemIndex === capturedState.targetIndex) {
-            console.log('[ATOMIC] No movement detected, cleanup complete')
+            console.log('[DROP] NO MOVEMENT - itemIndex:', capturedState?.itemIndex, 'targetIndex:', capturedState?.targetIndex)
             // Reset isDropping after a short delay even for no-move case
             setTimeout(() => setIsDropping(false), 100)
             return
         }
 
         const { categoryId, itemIndex, targetIndex, items } = capturedState
+        console.log('[DROP] MOVEMENT DETECTED - Source:', itemIndex, 'Target:', targetIndex)
 
         // ==== REQUIREMENT 2: OPTIMISTIC INJECTION ====
         // Calculate newOrder FIRST
@@ -414,6 +439,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                 }
             }
         } else {
+            // ==== TRACE LOG: OPTIMISTIC UPDATE ====
+            console.log('[OPTIMISTIC] Setting menu state now...')
+            console.log('[OPTIMISTIC] newOrder:', newOrder)
+
             // OPTIMISTIC UI UPDATE: Inject new order into state IMMEDIATELY
             setMenu(prevMenu => {
                 const updatedCategories = prevMenu.categories.map(cat => {
@@ -476,13 +505,22 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
             // ==== REQUIREMENT 5: THE MUZZLE (SAFARI FIX) ====
             const handleEnd = (e) => {
+                // ==== TRACE LOG: TOUCH END ====
+                console.log('[TOUCH END] Fired!')
+                console.log('[TOUCH END] e.cancelable:', e?.cancelable)
+                console.log('[TOUCH END] e.defaultPrevented:', e?.defaultPrevented)
+                console.log('[TOUCH END] hadActiveDrag:', hadActiveDrag)
+
                 if (e && hadActiveDrag) {
                     e.preventDefault()
                     e.stopPropagation()
                     e.stopImmediatePropagation() // CRITICAL: Prevents ghost clicks
+                    console.log('[TOUCH END] Event prevention applied')
                 }
                 hadActiveDrag = false
+                console.log('[TOUCH END] Calling handleDragEnd...')
                 handleDragEnd()
+                console.log('[TOUCH END] handleDragEnd returned')
             }
 
             const handleCancel = () => {
