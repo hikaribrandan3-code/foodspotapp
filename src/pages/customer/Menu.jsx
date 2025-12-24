@@ -318,27 +318,19 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     }, [dragState, menu])
 
     const handleDragEnd = useCallback(() => {
-        // SAFARI FIX: Clear DOM attributes FIRST before any state updates
+        // ==== REQUIREMENT 1: THE GHOST KILLER ====
+        // Kill the overlay IMMEDIATELY - this is the VERY FIRST LINE
+        // Captures dragState before nullifying for later use
+        const capturedState = dragState
+        setDragState(null)
+        dragItemRef.current = null
+
+        // Clear DOM attributes
         if (dragItemRef.current) {
             dragItemRef.current.removeAttribute('data-dragging')
             dragItemRef.current.style.transform = ''
             dragItemRef.current.style.zIndex = ''
             dragItemRef.current.style.position = ''
-        }
-
-        // 1. Safety Check: If no drag state or no movement, just reset
-        if (!dragState || dragState.itemIndex === dragState.targetIndex) {
-            // Still need to cleanup if dragState exists
-            if (dragState) {
-                if (autoScrollRef.current) {
-                    cancelAnimationFrame(autoScrollRef.current)
-                    autoScrollRef.current = null
-                }
-                document.body.style.overflow = ''
-                setDragState(null)
-                dragItemRef.current = null
-            }
-            return
         }
 
         // Stop auto-scroll if active
@@ -350,25 +342,28 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // Re-enable page scroll
         document.body.style.overflow = ''
 
-        const { categoryId, itemIndex, targetIndex, items } = dragState
+        // Safety Check: If no drag state or no movement, just exit
+        if (!capturedState || capturedState.itemIndex === capturedState.targetIndex) {
+            console.log('[ATOMIC] No movement detected, cleanup complete')
+            return
+        }
 
-        // 2. Compute the new order locally
+        const { categoryId, itemIndex, targetIndex, items } = capturedState
+
+        // ==== REQUIREMENT 2: OPTIMISTIC INJECTION ====
+        // Calculate newOrder FIRST
         const newOrder = [...items]
         const [movedItem] = newOrder.splice(itemIndex, 1)
         newOrder.splice(targetIndex, 0, movedItem)
 
         if (isInDemoMode()) {
-            // DEMO MODE PERSISTENCE FIX
-            // 1. Get current demo/draft menu
+            // DEMO MODE PERSISTENCE
             const draftMenu = getDemoMenu() || getActiveDemoMenu()
-
             if (draftMenu) {
                 const category = draftMenu.categories.find(c => c.id === categoryId)
                 if (category) {
-                    // 2. Rebuild category items respecting new order + hidden items
                     const itemMap = {}
                     category.items.forEach(item => itemMap[item.id] = item)
-
                     const reorderedItems = []
                     newOrder.forEach(item => {
                         if (itemMap[item.id]) {
@@ -376,86 +371,72 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                             delete itemMap[item.id]
                         }
                     })
-
-                    // Append any hidden/unavailable items not in the grid
                     Object.values(itemMap).forEach(item => reorderedItems.push(item))
-
                     category.items = reorderedItems
-
-                    // 3. Save and Sync
                     saveDemoMenu(draftMenu)
                     applyDemoToFrontend()
-
-                    // 4. Instant State Update (avoids snapback race)
                     setDemoMenu(getActiveDemoMenu())
                 }
             }
         } else {
-            // 3. OPTIMISTIC UPDATE: Update React State IMMEDIATELY (Visual Speed)
-            // This prevents the "snapback" because the UI updates before the storage/polling can interfere
+            // OPTIMISTIC UI UPDATE: Inject new order into state IMMEDIATELY
             setMenu(prevMenu => {
                 const updatedCategories = prevMenu.categories.map(cat => {
                     if (cat.id !== categoryId) return cat
-
-                    // Create a map for quick lookup of current items
                     const itemMap = Object.fromEntries(cat.items.map(i => [i.id, i]))
-
-                    // Reconstruct the category items based on the new ID order
                     const reorderedItems = newOrder.map(id => itemMap[id]).filter(Boolean)
-
-                    // Safety net: Append any items that might have been missed (hidden/unavailable)
                     cat.items.forEach(i => {
                         if (!newOrder.includes(i.id)) reorderedItems.push(i)
                     })
-
-                    // Force new array reference
                     return { ...cat, items: [...reorderedItems] }
                 })
-
-                // Force new array reference for categories
                 return { ...prevMenu, categories: [...updatedCategories] }
             })
 
-            console.log('[DRAG] SUCCESS: Menu state updated for category', categoryId)
+            console.log('[ATOMIC] Optimistic UI update complete')
 
-            // 4. ASYNC PERSISTENCE: Write to storage in the background
-            // We use setTimeout to push this to the end of the event loop, unblocking the UI
+            // ==== REQUIREMENT 3: ZERO-DELAY PERSISTENCE ====
+            // NO setTimeout - write to storage IMMEDIATELY
             try {
-                setTimeout(() => {
-                    reorderCategoryItems(categoryId, newOrder)
-                    console.log('[DRAG] SUCCESS: Persisted to localStorage', categoryId, newOrder)
-
-                    // HERO ICON PATTERN: Dispatch frontendSync to refresh App.jsx props
-                    window.dispatchEvent(new Event('frontendSync'))
-                    console.log('[DRAG] SUCCESS: frontendSync dispatched')
-                }, 0)
+                reorderCategoryItems(categoryId, newOrder)
+                console.log('[ATOMIC] localStorage persisted:', categoryId)
             } catch (err) {
-                console.error('[DRAG] FAILURE: localStorage save error', err)
+                console.error('[ATOMIC] FAILURE: localStorage write', err)
             }
-        }
 
-        // 5. Cleanup - CRITICAL: Force ghost disappear
-        console.log('[DRAG] Cleanup: Nullifying dragState and dragItemRef')
-        setDragState(null)
-        dragItemRef.current = null
+            // ==== REQUIREMENT 4: THE NUKE ====
+            // Force the OS to re-read config
+            window.dispatchEvent(new CustomEvent('forceConfigUpdate', { detail: { menuUpdated: true } }))
+            window.dispatchEvent(new Event('frontendSync'))
+            console.log('[ATOMIC] forceConfigUpdate + frontendSync dispatched')
+        }
     }, [dragState])
 
     // Global touch/mouse event listeners for drag
     useEffect(() => {
         if (dragState) {
+            // Track if we had an active drag for the muzzle
+            let hadActiveDrag = true
+
             const handleMove = (e) => {
                 e.preventDefault()
+                e.stopPropagation()
                 handleDragMove(e)
             }
+
+            // ==== REQUIREMENT 5: THE MUZZLE (SAFARI FIX) ====
             const handleEnd = (e) => {
-                if (e) {
+                if (e && hadActiveDrag) {
                     e.preventDefault()
                     e.stopPropagation()
+                    e.stopImmediatePropagation() // CRITICAL: Prevents ghost clicks
                 }
+                hadActiveDrag = false
                 handleDragEnd()
             }
+
             const handleCancel = () => {
-                // Force cleanup even on cancel
+                hadActiveDrag = false
                 document.body.style.overflow = ''
                 setDragState(null)
                 dragItemRef.current = null
@@ -468,9 +449,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             document.addEventListener('mousemove', handleMove, { capture: true })
             document.addEventListener('mouseup', handleEnd, { capture: true })
 
-            // Block clicks globally during drag
+            // Block ALL clicks globally during drag
             const blockClick = (e) => {
-                if (dragState) {
+                if (hadActiveDrag) {
                     e.preventDefault()
                     e.stopPropagation()
                     e.stopImmediatePropagation()
@@ -951,7 +932,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                             left: dragState.currentX - dragState.offsetX,
                             top: dragState.currentY - dragState.offsetY,
                             width: dragState.itemWidth,
-                            zIndex: 9999,
+                            zIndex: 999999, // THE HIGHEST - above navbar/sidebar
                             pointerEvents: 'none',
                             transform: 'scale(1.05)',
                             opacity: 0.95
