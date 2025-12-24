@@ -56,6 +56,14 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // ==== VISUAL DEBUGGER ====
     const [debugLog, setDebugLog] = useState('Debug Active... Waiting for touch')
 
+    // ==== NUCLEAR RENDER ====
+    // Incrementing this forces React to re-render the grid with fresh keys
+    const [menuVersion, setMenuVersion] = useState(0)
+
+    // ==== DEMO MODE DISABLED ====
+    // Demo mode is handled elsewhere; this component always runs in production mode
+    const isInDemoMode = () => false
+
     // Delivery mode: session is source of truth, route prop can set it
     // This ensures persistence across page refresh and back navigation
     const [deliveryMode, setDeliveryMode] = useState(() => {
@@ -330,8 +338,8 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             categoryId: newCategoryId
         }))
 
-        // Trigger immediate visual reorder if target changed (Production only)
-        if (targetChanged && !isInDemoMode()) {
+        // Trigger immediate visual reorder if target changed
+        if (targetChanged) {
             setMenu(prevMenu => {
                 const updatedCategories = prevMenu.categories.map(cat => {
                     if (cat.id !== dragState.categoryId && cat.id !== newCategoryId) return cat
@@ -438,6 +446,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
             return { ...prevMenu, categories: newCategories }
         })
+
+        // ==== NUCLEAR RENDER: Force React to see the change ====
+        setMenuVersion(v => v + 1)
 
         // Persist
         // We use the 'items' ID list from drag state because it tracks the sort order purely
@@ -752,7 +763,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             <div style={{ padding: '0 16px' }}>
                 {enabledCategories.map(category => (
                     <div
-                        key={category.id}
+                        key={category.id + '-' + menuVersion}
                         ref={el => categoryRefs.current[category.id] = el}
                         data-category-id={category.id}
                         style={{ marginBottom: 24 }}
