@@ -53,6 +53,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // When true, kills all CSS transitions to prevent "slow glide" on drop
     const [isDropping, setIsDropping] = useState(false)
 
+    // ==== VISUAL DEBUGGER ====
+    const [debugLog, setDebugLog] = useState('Debug Active... Waiting for touch')
+
     // Delivery mode: session is source of truth, route prop can set it
     // This ensures persistence across page refresh and back navigation
     const [deliveryMode, setDeliveryMode] = useState(() => {
@@ -307,6 +310,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // ==== TRACE LOG: TARGET INDEX ====
         console.log('[MATH] Final targetIndex:', targetIndex, 'newCategoryId:', newCategoryId)
 
+        // ==== VISUAL DEBUGGER UPDATE ====
+        setDebugLog('MOVE: X:' + touchX.toFixed(0) + ' Y:' + touchY.toFixed(0) + '\nClosest: ' + (closestItem?.getAttribute('data-item-id') || 'none') + ' (Dist: ' + closestDistance.toFixed(0) + 'px)\nTarget: ' + targetIndex + ' | itemIndex: ' + dragState.itemIndex)
+
         // Check if anything changed
         const targetChanged = targetIndex !== dragState.targetIndex || newCategoryId !== dragState.categoryId
 
@@ -409,6 +415,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         const { categoryId, itemIndex, targetIndex, items } = capturedState
         console.log('[DROP] MOVEMENT DETECTED - Source:', itemIndex, 'Target:', targetIndex)
+
+        // ==== VISUAL DEBUGGER UPDATE ====
+        setDebugLog('ENDED. Moving ' + itemIndex + ' -> ' + targetIndex + '\nBlocker: ' + blockRefreshRef.current)
 
         // ==== REQUIREMENT 2: OPTIMISTIC INJECTION ====
         // Calculate newOrder FIRST
@@ -611,6 +620,25 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         }}>
             {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
             <HeaderClamp config={config} />
+
+            {/* ==== VISUAL DEBUGGER OVERLAY ==== */}
+            <div style={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0,
+                padding: '10px',
+                paddingTop: 'calc(env(safe-area-inset-top) + 10px)',
+                background: 'rgba(0,0,0,0.9)',
+                color: '#00ff00',
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+                zIndex: 9999999,
+                pointerEvents: 'none',
+                whiteSpace: 'pre-wrap',
+                backdropFilter: 'blur(4px)'
+            }}>
+                {debugLog}
+            </div>
 
             {/* Delivery Mode Context Badge */}
             {deliveryMode && !isEditMode && (
