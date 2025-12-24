@@ -267,6 +267,11 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // Check if anything changed
         const targetChanged = targetIndex !== dragState.targetIndex || newCategoryId !== dragState.categoryId
 
+        // DIAGNOSTIC: Log category change
+        if (newCategoryId !== dragState.categoryId) {
+            console.log('[DRAG] CATEGORY CHANGE: From', dragState.categoryId, 'To', newCategoryId)
+        }
+
         // Update drag state with new position and potentially new category
         setDragState(prev => ({
             ...prev,
@@ -306,7 +311,8 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                     return cat
                 })
 
-                return { ...prevMenu, categories: updatedCategories }
+                // Force new array reference to trigger reflow
+                return { ...prevMenu, categories: [...updatedCategories] }
             })
         }
     }, [dragState, menu])
@@ -402,20 +408,30 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                         if (!newOrder.includes(i.id)) reorderedItems.push(i)
                     })
 
-                    return { ...cat, items: reorderedItems }
+                    // Force new array reference
+                    return { ...cat, items: [...reorderedItems] }
                 })
 
-                return { ...prevMenu, categories: updatedCategories }
+                // Force new array reference for categories
+                return { ...prevMenu, categories: [...updatedCategories] }
             })
+
+            console.log('[DRAG] SUCCESS: Menu state updated for category', categoryId)
 
             // 4. ASYNC PERSISTENCE: Write to storage in the background
             // We use setTimeout to push this to the end of the event loop, unblocking the UI
-            setTimeout(() => {
-                reorderCategoryItems(categoryId, newOrder)
-            }, 0)
+            try {
+                setTimeout(() => {
+                    reorderCategoryItems(categoryId, newOrder)
+                    console.log('[DRAG] SUCCESS: Persisted to localStorage', categoryId, newOrder)
+                }, 0)
+            } catch (err) {
+                console.error('[DRAG] FAILURE: localStorage save error', err)
+            }
         }
 
-        // 5. Cleanup
+        // 5. Cleanup - CRITICAL: Force ghost disappear
+        console.log('[DRAG] Cleanup: Nullifying dragState and dragItemRef')
         setDragState(null)
         dragItemRef.current = null
     }, [dragState])

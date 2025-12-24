@@ -228,16 +228,27 @@ function Home({ config }) {
             const [movedItem] = newOrder.splice(dragState.itemIndex, 1)
             newOrder.splice(dragState.targetIndex, 0, movedItem)
 
-            if (dragState.gridType === 'actions') {
-                reorderPrimaryActions(newOrder)
-            } else {
-                reorderFeaturedItems(newOrder)
-            }
+            // DIAGNOSTIC: Try/catch to detect save failures
+            try {
+                if (dragState.gridType === 'actions') {
+                    reorderPrimaryActions(newOrder)
+                    console.log('[DRAG] SUCCESS: Primary actions reordered', newOrder)
+                } else {
+                    reorderFeaturedItems(newOrder)
+                    console.log('[DRAG] SUCCESS: Featured items reordered', newOrder)
+                }
 
-            // Notify App.jsx to refresh config
-            window.dispatchEvent(new Event('frontendSync'))
+                // Notify App.jsx to refresh config
+                window.dispatchEvent(new Event('frontendSync'))
+                console.log('[DRAG] SUCCESS: frontendSync dispatched')
+            } catch (err) {
+                console.error('[DRAG] FAILURE: Save error', err)
+            }
+        } else {
+            console.log('[DRAG] No movement detected, skipping save')
         }
 
+        // CRITICAL: Force ghost disappear by nullifying state
         setDragState(null)
 
         // CRITICAL: Delay unblocking to prevent ghost clicks
