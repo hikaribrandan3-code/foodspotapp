@@ -562,8 +562,10 @@ function Home({ config }) {
                         opacity: isDragging ? 0.3 : 1,
                         border: isPlaceholder ? '2px dashed #22C55E' : 'none',
                         touchAction: isEditMode ? 'none' : 'auto',
+                        // CSS MUZZLE: Full parity with Hero Icons
                         userSelect: 'none',
-                        WebkitUserSelect: 'none'
+                        WebkitUserSelect: 'none',
+                        WebkitTouchCallout: isEditMode ? 'none' : 'default'
                     }
 
                     const cardContent = (

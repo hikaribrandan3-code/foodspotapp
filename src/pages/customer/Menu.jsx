@@ -424,6 +424,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                 setTimeout(() => {
                     reorderCategoryItems(categoryId, newOrder)
                     console.log('[DRAG] SUCCESS: Persisted to localStorage', categoryId, newOrder)
+
+                    // HERO ICON PATTERN: Dispatch frontendSync to refresh App.jsx props
+                    window.dispatchEvent(new Event('frontendSync'))
+                    console.log('[DRAG] SUCCESS: frontendSync dispatched')
                 }, 0)
             } catch (err) {
                 console.error('[DRAG] FAILURE: localStorage save error', err)
@@ -439,19 +443,49 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // Global touch/mouse event listeners for drag
     useEffect(() => {
         if (dragState) {
-            const handleMove = (e) => handleDragMove(e)
-            const handleEnd = () => handleDragEnd()
+            const handleMove = (e) => {
+                e.preventDefault()
+                handleDragMove(e)
+            }
+            const handleEnd = (e) => {
+                if (e) {
+                    e.preventDefault()
+                    e.stopPropagation()
+                }
+                handleDragEnd()
+            }
+            const handleCancel = () => {
+                // Force cleanup even on cancel
+                document.body.style.overflow = ''
+                setDragState(null)
+                dragItemRef.current = null
+            }
 
-            document.addEventListener('touchmove', handleMove, { passive: false })
-            document.addEventListener('touchend', handleEnd)
-            document.addEventListener('mousemove', handleMove)
-            document.addEventListener('mouseup', handleEnd)
+            // HERO ICON PATTERN: capture: true takes priority over browser
+            document.addEventListener('touchmove', handleMove, { passive: false, capture: true })
+            document.addEventListener('touchend', handleEnd, { passive: false, capture: true })
+            document.addEventListener('touchcancel', handleCancel, { capture: true })
+            document.addEventListener('mousemove', handleMove, { capture: true })
+            document.addEventListener('mouseup', handleEnd, { capture: true })
+
+            // Block clicks globally during drag
+            const blockClick = (e) => {
+                if (dragState) {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    e.stopImmediatePropagation()
+                    return false
+                }
+            }
+            document.addEventListener('click', blockClick, { capture: true })
 
             return () => {
-                document.removeEventListener('touchmove', handleMove)
-                document.removeEventListener('touchend', handleEnd)
-                document.removeEventListener('mousemove', handleMove)
-                document.removeEventListener('mouseup', handleEnd)
+                document.removeEventListener('touchmove', handleMove, { capture: true })
+                document.removeEventListener('touchend', handleEnd, { capture: true })
+                document.removeEventListener('touchcancel', handleCancel, { capture: true })
+                document.removeEventListener('mousemove', handleMove, { capture: true })
+                document.removeEventListener('mouseup', handleEnd, { capture: true })
+                document.removeEventListener('click', blockClick, { capture: true })
             }
         }
     }, [dragState, handleDragMove, handleDragEnd])
@@ -731,7 +765,11 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                                                     borderRadius: isEditMode ? 8 : 0,
                                                     background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : 'transparent',
                                                     border: isPlaceholder ? '2px dashed #22C55E' : 'none',
-                                                    touchAction: isEditMode ? 'none' : 'auto'
+                                                    touchAction: isEditMode ? 'none' : 'auto',
+                                                    // CSS MUZZLE: Stop Safari from trying to select/save
+                                                    userSelect: 'none',
+                                                    WebkitUserSelect: 'none',
+                                                    WebkitTouchCallout: isEditMode ? 'none' : 'default'
                                                 }}
                                             >
                                                 {/* Item Image */}
