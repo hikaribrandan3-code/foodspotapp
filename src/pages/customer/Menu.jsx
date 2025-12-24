@@ -45,6 +45,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const dragItemRef = useRef(null)
     const autoScrollRef = useRef(null) // For auto-scroll interval
 
+    // ==== THE SHIELD (COOLDOWN REF) ====
+    // Blocks getMenu() polling for 2 seconds after drag ends to prevent snapback
+    const blockRefreshRef = useRef(false)
+
     // Delivery mode: session is source of truth, route prop can set it
     // This ensures persistence across page refresh and back navigation
     const [deliveryMode, setDeliveryMode] = useState(() => {
@@ -70,21 +74,23 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const [activeCategory, setActiveCategory] = useState(enabledCategories[0]?.id || '')
 
     // Refresh data periodically
-    // SNAPBACK FIX: Pause polling during drag/edit to prevent cascade re-renders
+    // SNAPBACK FIX: Pause polling during drag/edit OR when shield is active
     useEffect(() => {
-        // Skip polling if in edit mode or actively dragging
-        // This prevents React reconciliation issues during item manipulation
-        if (isEditMode || dragState) return
-
         const interval = setInterval(() => {
+            // ==== THE GUARD ====
+            // ABORT if any of these conditions are true:
+            if (isEditMode) return
+            if (dragState) return
+            if (blockRefreshRef.current) return // THE SHIELD IS UP
+
             setMenu(getMenu())
             setCart(getCurrentOrder())
         }, 2000)
 
         // Listen for frontendSync to re-read menu
-        // SNAPBACK FIX: Also skip during edit/drag
         const handleFrontendSync = () => {
-            if (isEditMode || dragState) return // Don't re-render during edits
+            // Also respect the shield
+            if (isEditMode || dragState || blockRefreshRef.current) return
             setMenu(getMenu())
         }
         window.addEventListener('frontendSync', handleFrontendSync)
@@ -93,7 +99,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             clearInterval(interval)
             window.removeEventListener('frontendSync', handleFrontendSync)
         }
-    }, [isEditMode, dragState]) // SNAPBACK FIX: Re-run effect when edit/drag state changes
+    }, [isEditMode, dragState])
 
     // Long-press handlers for edit mode (owner only)
     const handleLongPressStart = useCallback((e) => {
@@ -148,6 +154,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // ===== DRAG & DROP HANDLERS (Edit Mode Only) =====
     const handleDragStart = useCallback((e, categoryId, item, itemIndex, availableItems) => {
         if (!isOwnerMode || !isEditMode) return
+
+        // ==== RAISE THE SHIELD ====
+        blockRefreshRef.current = true
 
         // SAFARI FIX: Aggressive event prevention
         e.preventDefault()
@@ -409,6 +418,16 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             window.dispatchEvent(new CustomEvent('forceConfigUpdate', { detail: { menuUpdated: true } }))
             window.dispatchEvent(new Event('frontendSync'))
             console.log('[ATOMIC] forceConfigUpdate + frontendSync dispatched')
+
+            // ==== COOLDOWN SHIELD: HOLD FOR 2 SECONDS ====
+            // Keep blockRefreshRef.current = true (already raised in dragStart)
+            // Lower the shield after 2 seconds to allow polling to resume
+            setTimeout(() => {
+                blockRefreshRef.current = false
+                console.log('[SHIELD] Cooldown complete, polling resumed')
+                // Optional: Force a fresh sync to ensure consistency
+                setMenu(getMenu())
+            }, 2000)
         }
     }, [dragState])
 
