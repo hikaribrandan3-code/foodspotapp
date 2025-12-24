@@ -367,137 +367,94 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     }, [dragState, menu])
 
     const handleDragEnd = useCallback(() => {
-        // ==== TRACE LOG: DROP START ====
-        console.log('[DROP START] dragState exists:', !!dragState)
-        console.log('[DROP START] blockRefreshRef:', blockRefreshRef.current)
-
-        // ==== CSS SILENCER: Kill transitions FIRST ====
         setIsDropping(true)
 
-        // ==== REQUIREMENT 1: THE GHOST KILLER ====
-        // Kill the overlay IMMEDIATELY
-        // Captures dragState before nullifying for later use
+        // Capture state
         const capturedState = dragState
         setDragState(null)
         dragItemRef.current = null
 
-        console.log('[DROP] capturedState:', capturedState ? {
-            categoryId: capturedState.categoryId,
-            itemIndex: capturedState.itemIndex,
-            targetIndex: capturedState.targetIndex,
-            itemsLength: capturedState.items?.length
-        } : 'NULL')
-
-        // Clear DOM attributes
+        // Cleanup DOM
         if (dragItemRef.current) {
             dragItemRef.current.removeAttribute('data-dragging')
             dragItemRef.current.style.transform = ''
-            dragItemRef.current.style.zIndex = ''
-            dragItemRef.current.style.position = ''
         }
-
-        // Stop auto-scroll if active
-        if (autoScrollRef.current) {
-            cancelAnimationFrame(autoScrollRef.current)
-            autoScrollRef.current = null
-        }
-
-        // Re-enable page scroll
         document.body.style.overflow = ''
 
-        // Safety Check: If no drag state or no movement, just exit
-        if (!capturedState || capturedState.itemIndex === capturedState.targetIndex) {
-            console.log('[DROP] NO MOVEMENT - itemIndex:', capturedState?.itemIndex, 'targetIndex:', capturedState?.targetIndex)
-            // Reset isDropping after a short delay even for no-move case
+        if (!capturedState) return
+
+        const { categoryId, itemIndex, targetIndex, items } = capturedState
+        setDebugLog(`ENDED. Moving ${itemIndex} -> ${targetIndex}\nBlocker: ${blockRefreshRef.current}`)
+
+        if (itemIndex === targetIndex) {
             setTimeout(() => setIsDropping(false), 100)
             return
         }
 
-        const { categoryId, itemIndex, targetIndex, items } = capturedState
-        console.log('[DROP] MOVEMENT DETECTED - Source:', itemIndex, 'Target:', targetIndex)
+        // ==== BRUTE FORCE OPTIMISTIC UPDATE ====
+        setMenu(prevMenu => {
+            // 1. Clone the categories
+            const newCategories = [...prevMenu.categories]
 
-        // ==== VISUAL DEBUGGER UPDATE ====
-        setDebugLog('ENDED. Moving ' + itemIndex + ' -> ' + targetIndex + '\nBlocker: ' + blockRefreshRef.current)
+            // 2. Find the target category
+            const catIndex = newCategories.findIndex(c => c.id === categoryId)
+            if (catIndex === -1) return prevMenu
 
-        // ==== REQUIREMENT 2: OPTIMISTIC INJECTION ====
-        // Calculate newOrder FIRST
-        const newOrder = [...items]
-        const [movedItem] = newOrder.splice(itemIndex, 1)
-        newOrder.splice(targetIndex, 0, movedItem)
+            // 3. Clone the items array safely
+            const updatedItems = [...newCategories[catIndex].items]
 
-        if (isInDemoMode()) {
-            // DEMO MODE PERSISTENCE
-            const draftMenu = getDemoMenu() || getActiveDemoMenu()
-            if (draftMenu) {
-                const category = draftMenu.categories.find(c => c.id === categoryId)
-                if (category) {
-                    const itemMap = {}
-                    category.items.forEach(item => itemMap[item.id] = item)
-                    const reorderedItems = []
-                    newOrder.forEach(item => {
-                        if (itemMap[item.id]) {
-                            reorderedItems.push(itemMap[item.id])
-                            delete itemMap[item.id]
-                        }
-                    })
-                    Object.values(itemMap).forEach(item => reorderedItems.push(item))
-                    category.items = reorderedItems
-                    saveDemoMenu(draftMenu)
-                    applyDemoToFrontend()
-                    setDemoMenu(getActiveDemoMenu())
-                }
-            }
-        } else {
-            // ==== TRACE LOG: OPTIMISTIC UPDATE ====
-            console.log('[OPTIMISTIC] Setting menu state now...')
-            console.log('[OPTIMISTIC] newOrder:', newOrder)
+            // 4. Identify the item to move (The one at the source index IN THE VISIBLE LIST)
+            // Note: 'items' in drag state is just IDs. We need the real objects.
+            const availableItems = updatedItems.filter(i => i.available)
+            const itemToMove = availableItems[itemIndex]
 
-            // OPTIMISTIC UI UPDATE: Inject new order into state IMMEDIATELY
-            setMenu(prevMenu => {
-                const updatedCategories = prevMenu.categories.map(cat => {
-                    if (cat.id !== categoryId) return cat
-                    const itemMap = Object.fromEntries(cat.items.map(i => [i.id, i]))
-                    const reorderedItems = newOrder.map(id => itemMap[id]).filter(Boolean)
-                    cat.items.forEach(i => {
-                        if (!newOrder.includes(i.id)) reorderedItems.push(i)
-                    })
-                    return { ...cat, items: [...reorderedItems] }
-                })
-                return { ...prevMenu, categories: [...updatedCategories] }
-            })
-
-            console.log('[ATOMIC] Optimistic UI update complete')
-
-            // ==== REQUIREMENT 3: ZERO-DELAY PERSISTENCE ====
-            // NO setTimeout - write to storage IMMEDIATELY
-            try {
-                reorderCategoryItems(categoryId, newOrder)
-                console.log('[ATOMIC] localStorage persisted:', categoryId)
-            } catch (err) {
-                console.error('[ATOMIC] FAILURE: localStorage write', err)
+            if (!itemToMove) {
+                console.error("Critical: Item not found at index", itemIndex)
+                return prevMenu
             }
 
-            // ==== REQUIREMENT 4: THE NUKE ====
-            // Force the OS to re-read config
-            window.dispatchEvent(new CustomEvent('forceConfigUpdate', { detail: { menuUpdated: true } }))
-            window.dispatchEvent(new Event('frontendSync'))
-            console.log('[ATOMIC] forceConfigUpdate + frontendSync dispatched')
+            // 5. Remove from old spot (in the full list)
+            const sourceRealIndex = updatedItems.findIndex(i => i.id === itemToMove.id)
+            updatedItems.splice(sourceRealIndex, 1)
 
-            // ==== COOLDOWN SHIELD: HOLD FOR 2 SECONDS ====
-            // Keep blockRefreshRef.current = true (already raised in dragStart)
-            // Lower the shield after 2 seconds to allow polling to resume
-            setTimeout(() => {
-                blockRefreshRef.current = false
-                setIsDropping(false) // Re-enable CSS transitions
-                console.log('[SHIELD] Cooldown complete, isDropping reset, polling resumed')
-                // Optional: Force a fresh sync to ensure consistency
-                setMenu(getMenu())
-            }, 2000)
-        }
+            // 6. Insert at new spot
+            // We need to find where the "targetIndex" maps to in the FULL list (including unavailable items)
+            // Strategy: Insert it before the item currently at targetIndex in the available list
+            const targetAvailableItem = availableItems[targetIndex]
 
-        // If we got here from the early return (no movement), still reset isDropping
-        // This is handled by the fact that isDropping was set to true at the start
-        // and will be reset by the timeout above for real moves, or we reset it here for no-move cases
+            if (targetAvailableItem) {
+                // Insert before the target item
+                const targetRealIndex = updatedItems.findIndex(i => i.id === targetAvailableItem.id)
+                // If we are moving down, the index might have shifted after splice, but findIndex resolves that
+                updatedItems.splice(targetRealIndex, 0, itemToMove)
+            } else {
+                // If no target item (dropped at end), push to end of available items
+                // This is complex with hidden items, so we'll just append to the very end for safety
+                updatedItems.push(itemToMove)
+            }
+
+            // 7. Update the category
+            newCategories[catIndex] = { ...newCategories[catIndex], items: updatedItems }
+
+            return { ...prevMenu, categories: newCategories }
+        })
+
+        // Persist
+        // We use the 'items' ID list from drag state because it tracks the sort order purely
+        const newOrderIds = [...items]
+        const [movedId] = newOrderIds.splice(itemIndex, 1)
+        newOrderIds.splice(targetIndex, 0, movedId)
+        reorderCategoryItems(categoryId, newOrderIds)
+
+        // Force Sync
+        window.dispatchEvent(new CustomEvent('forceConfigUpdate', { detail: { menuUpdated: true } }))
+
+        // Cooldown
+        setTimeout(() => {
+            blockRefreshRef.current = false
+            setIsDropping(false)
+        }, 2000)
+
     }, [dragState])
 
     // Global touch/mouse event listeners for drag
