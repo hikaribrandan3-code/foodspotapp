@@ -365,7 +365,9 @@ function SuperAdmin({ config }) {
                 <BackendHeader
                     title="FoodSpot"
                     onLogout={handleLogout}
-                    showDateSelector={true}
+                    showDateSelector={false}
+                    showNotifications={false}
+                    showAvatar={false}
                     extraActions={
                         <>
                             {demoAnalytics && userRole === 'superadmin' && (
@@ -406,9 +408,25 @@ function SuperAdmin({ config }) {
                                         color: 'white'
                                     }}
                                 >
-                                    Exit Simulation
+                                    Salir de Simulación
                                 </button>
                             )}
+                            {/* Ver Menú - Navigate to frontend without logout */}
+                            <button
+                                onClick={() => navigate('/')}
+                                style={{
+                                    padding: '6px 12px',
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    border: 'none',
+                                    borderRadius: 5,
+                                    cursor: 'pointer',
+                                    background: '#3B82F6',
+                                    color: 'white'
+                                }}
+                            >
+                                Ver Menú
+                            </button>
                         </>
                     }
                 />
@@ -1879,6 +1897,27 @@ function SuperAdmin({ config }) {
                 onTabChange={setActiveTab}
                 badges={navBadges}
             />
+
+            {/* Floating Status Badge - Role Indicator */}
+            <div style={{
+                position: 'fixed',
+                bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))',
+                right: 16,
+                padding: '6px 10px',
+                background: '#7C3AED',
+                color: 'white',
+                fontSize: 10,
+                fontWeight: 600,
+                borderRadius: 12,
+                boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)',
+                zIndex: 999,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+            }}>
+                <span style={{ width: 6, height: 6, background: '#22C55E', borderRadius: '50%' }} />
+                Super Admin
+            </div>
         </>
     )
 }
