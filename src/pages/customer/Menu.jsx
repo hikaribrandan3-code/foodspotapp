@@ -228,43 +228,59 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         }
 
         // SAFARI FIX: Use elementFromPoint for reliable hit detection
-        // Temporarily hide the floating drag card so it doesn't block detection
-        const floatingCard = document.querySelector('[data-floating-drag="true"]')
-        if (floatingCard) floatingCard.style.pointerEvents = 'none'
-
+        // Floating card already has pointer-events: none in styles
         const targetEl = document.elementFromPoint(touchX, touchY)
-
-        if (floatingCard) floatingCard.style.pointerEvents = ''
 
         // Find the closest grid item with data-item-id
         const gridItem = targetEl?.closest('[data-item-id]')
+        // Find the target category
+        const targetCategoryEl = targetEl?.closest('[data-category-id]')
+        const targetCatId = targetCategoryEl?.getAttribute('data-category-id')
+
         let targetIndex = dragState.targetIndex
+        let newCategoryId = dragState.categoryId
 
         if (gridItem && gridItem.getAttribute('data-dragging') !== 'true') {
             const targetId = gridItem.getAttribute('data-item-id')
-            // Find index in current items array
-            const newIndex = dragState.items.indexOf(targetId)
-            if (newIndex !== -1 && newIndex !== dragState.itemIndex) {
-                targetIndex = newIndex
+
+            // Check if we're over a different category
+            if (targetCatId && targetCatId !== dragState.categoryId) {
+                // Cross-category drag - find the target category's items
+                const targetCategory = menu.categories.find(c => c.id === targetCatId)
+                if (targetCategory) {
+                    const targetCatItems = targetCategory.items.filter(i => i.available)
+                    const newIndex = targetCatItems.findIndex(i => i.id === targetId)
+                    if (newIndex !== -1) {
+                        targetIndex = newIndex
+                        newCategoryId = targetCatId
+                    }
+                }
+            } else {
+                // Same category - find index in current items array
+                const newIndex = dragState.items.indexOf(targetId)
+                if (newIndex !== -1 && newIndex !== dragState.itemIndex) {
+                    targetIndex = newIndex
+                }
             }
         }
 
-        // IMMEDIATE VISUAL SHIFT: If target changed, update menu state NOW
-        const targetChanged = targetIndex !== dragState.targetIndex
+        // Check if anything changed
+        const targetChanged = targetIndex !== dragState.targetIndex || newCategoryId !== dragState.categoryId
 
-        // Update drag state with new position
+        // Update drag state with new position and potentially new category
         setDragState(prev => ({
             ...prev,
             currentX: touchX,
             currentY: touchY,
-            targetIndex
+            targetIndex,
+            categoryId: newCategoryId
         }))
 
         // Trigger immediate visual reorder if target changed (Production only)
         if (targetChanged && !isInDemoMode()) {
             setMenu(prevMenu => {
                 const updatedCategories = prevMenu.categories.map(cat => {
-                    if (cat.id !== dragState.categoryId) return cat
+                    if (cat.id !== dragState.categoryId && cat.id !== newCategoryId) return cat
 
                     // Reorder helper
                     const reorder = (list, startIndex, endIndex) => {
@@ -274,21 +290,26 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                         return result
                     }
 
-                    const reorderedItems = reorder(
-                        cat.items.filter(i => i.available),
-                        dragState.itemIndex,
-                        targetIndex
-                    )
+                    if (cat.id === dragState.categoryId && newCategoryId === dragState.categoryId) {
+                        // Same category reorder
+                        const reorderedItems = reorder(
+                            cat.items.filter(i => i.available),
+                            dragState.itemIndex,
+                            targetIndex
+                        )
+                        const unavailable = cat.items.filter(i => !i.available)
+                        return { ...cat, items: [...reorderedItems, ...unavailable] }
+                    }
 
-                    // Preserve unavailable items at end
-                    const unavailable = cat.items.filter(i => !i.available)
-                    return { ...cat, items: [...reorderedItems, ...unavailable] }
+                    // Cross-category moves not supported in live preview (too complex)
+                    // Will only apply on dragEnd
+                    return cat
                 })
 
                 return { ...prevMenu, categories: updatedCategories }
             })
         }
-    }, [dragState])
+    }, [dragState, menu])
 
     const handleDragEnd = useCallback(() => {
         // SAFARI FIX: Clear DOM attributes FIRST before any state updates
@@ -629,6 +650,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                     <div
                         key={category.id}
                         ref={el => categoryRefs.current[category.id] = el}
+                        data-category-id={category.id}
                         style={{ marginBottom: 24 }}
                     >
                         {/* Section Title */}
