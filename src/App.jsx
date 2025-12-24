@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
 import { incrementVisit } from './utils/storage.js'
+import { getSession } from './utils/auth.js'
 import { AdminIntentProvider } from './contexts/AdminIntentContext.jsx'
 
 // Components
@@ -409,6 +410,39 @@ function App() {
 
                 {/* Bottom Navigation (visible on main customer pages) */}
                 <BottomNav config={safeConfig} />
+
+                {/* Global Status Badge - shows role when logged in */}
+                {(() => {
+                    const session = getSession()
+                    if (!session?.role) return null
+                    const roleLabels = {
+                        superadmin: 'Super Admin',
+                        owner: 'Owner',
+                        staff: 'Staff'
+                    }
+                    return (
+                        <div style={{
+                            position: 'fixed',
+                            bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
+                            right: 12,
+                            padding: '5px 8px',
+                            background: 'rgba(124, 58, 237, 0.75)',
+                            color: 'white',
+                            fontSize: 9,
+                            fontWeight: 600,
+                            borderRadius: 10,
+                            zIndex: 998,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            opacity: 0.6,
+                            pointerEvents: 'none'
+                        }}>
+                            <span style={{ width: 5, height: 5, background: '#22C55E', borderRadius: '50%' }} />
+                            {roleLabels[session.role] || session.role}
+                        </div>
+                    )
+                })()}
             </div>
         </AdminIntentProvider>
     )
