@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { getConfig } from '../../config/appConfig.js'
 import { getRewards } from '../../utils/storage.js'
 
 // --- REWARDS CONFIG (Backend-editable) ---
@@ -63,8 +62,13 @@ const CoffeeStampIcon = ({ filled }) => (
 
 // --- MAIN COMPONENT ---
 function Rewards({ config }) {
+    // BATTLE 2: Config MUST come from props (App.jsx is source of truth)
+    if (!config) {
+        console.error('[FATAL] Rewards: Missing config prop — check App.jsx routing')
+        return null
+    }
+    const appConfig = config
     const [rewards, setRewards] = useState(() => getRewards())
-    const appConfig = config || getConfig()
 
     // Backend config hook - merge with defaults
     const rewardsConfig = {

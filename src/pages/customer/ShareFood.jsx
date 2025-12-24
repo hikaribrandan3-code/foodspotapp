@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getConfig } from '../../config/appConfig.js'
 import { incrementInstagramShare } from '../../utils/storage.js'
 
 function ShareFood({ config }) {
+    // BATTLE 2: Config MUST come from props (App.jsx is source of truth)
+    if (!config) {
+        console.error('[FATAL] ShareFood: Missing config prop — check App.jsx routing')
+        return null
+    }
     const navigate = useNavigate()
-    const appConfig = config || getConfig()
+    const appConfig = config
     const [shared, setShared] = useState(false)
 
     const handleShare = () => {
