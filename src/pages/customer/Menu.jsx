@@ -336,13 +336,16 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             categoryId: newCategoryId
         }))
 
-        // Trigger immediate visual reorder if target changed
+        // ==== LIVE PREVIEW DISABLED ====
+        // This was causing the "Stale Index Bug" - it used dragState.itemIndex (original)
+        // repeatedly, which corrupted the sort order and caused snapback.
+        // Now we only reorder on DROP in handleDragEnd.
+        /*
         if (targetChanged) {
             setMenu(prevMenu => {
                 const updatedCategories = prevMenu.categories.map(cat => {
                     if (cat.id !== dragState.categoryId && cat.id !== newCategoryId) return cat
 
-                    // Reorder helper
                     const reorder = (list, startIndex, endIndex) => {
                         const result = Array.from(list)
                         const [removed] = result.splice(startIndex, 1)
@@ -351,7 +354,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                     }
 
                     if (cat.id === dragState.categoryId && newCategoryId === dragState.categoryId) {
-                        // Same category reorder
                         const reorderedItems = reorder(
                             cat.items.filter(i => i.available),
                             dragState.itemIndex,
@@ -361,15 +363,13 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                         return { ...cat, items: [...reorderedItems, ...unavailable] }
                     }
 
-                    // Cross-category moves not supported in live preview (too complex)
-                    // Will only apply on dragEnd
                     return cat
                 })
 
-                // Force new array reference to trigger reflow
                 return { ...prevMenu, categories: [...updatedCategories] }
             })
         }
+        */
     }, [dragState, menu])
 
     const handleDragEnd = useCallback(() => {
