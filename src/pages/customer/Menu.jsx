@@ -184,6 +184,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         e.preventDefault()
         const touch = e.touches?.[0] || e
+        const touchX = touch.clientX
         const touchY = touch.clientY
 
         // ===== HOT ZONE AUTO-SCROLL =====
@@ -224,33 +225,72 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         const grid = container.querySelector('.menu-grid')
         if (!grid) return
 
-        const gridRect = grid.getBoundingClientRect()
-
-        // Clamp to grid bounds for target index calculation
-        const clampedX = Math.max(gridRect.left, Math.min(touch.clientX, gridRect.right))
-        const clampedY = Math.max(gridRect.top, Math.min(touchY, gridRect.bottom))
-
-        // Calculate target index based on position
+        // Calculate target index based on CENTER PROXIMITY (better for grid)
         const gridItems = grid.children
-        let targetIndex = dragState.itemIndex
+        let targetIndex = dragState.targetIndex // Keep current if no match
+        let closestDistance = Infinity
 
         for (let i = 0; i < gridItems.length; i++) {
-            const itemRect = gridItems[i].getBoundingClientRect()
+            // Skip the dragged item's original slot
+            if (i === dragState.itemIndex) continue
 
-            if (clampedX > itemRect.left && clampedX < itemRect.right &&
-                clampedY > itemRect.top && clampedY < itemRect.bottom) {
+            const itemRect = gridItems[i].getBoundingClientRect()
+            const centerX = itemRect.left + itemRect.width / 2
+            const centerY = itemRect.top + itemRect.height / 2
+
+            // Calculate distance to center
+            const distance = Math.sqrt(
+                Math.pow(touchX - centerX, 2) + Math.pow(touchY - centerY, 2)
+            )
+
+            // If pointer is within the item bounds AND closest so far
+            if (distance < closestDistance &&
+                touchX > itemRect.left && touchX < itemRect.right &&
+                touchY > itemRect.top && touchY < itemRect.bottom) {
+                closestDistance = distance
                 targetIndex = i
-                break
             }
         }
 
-        // Use raw touch position for floating card (not clamped)
+        // IMMEDIATE VISUAL SHIFT: If target changed, update menu state NOW
+        const targetChanged = targetIndex !== dragState.targetIndex
+
+        // Update drag state with new position
         setDragState(prev => ({
             ...prev,
-            currentX: touch.clientX,
+            currentX: touchX,
             currentY: touchY,
             targetIndex
         }))
+
+        // Trigger immediate visual reorder if target changed (Production only)
+        if (targetChanged && !isInDemoMode()) {
+            setMenu(prevMenu => {
+                const updatedCategories = prevMenu.categories.map(cat => {
+                    if (cat.id !== dragState.categoryId) return cat
+
+                    // Reorder helper
+                    const reorder = (list, startIndex, endIndex) => {
+                        const result = Array.from(list)
+                        const [removed] = result.splice(startIndex, 1)
+                        result.splice(endIndex, 0, removed)
+                        return result
+                    }
+
+                    const reorderedItems = reorder(
+                        cat.items.filter(i => i.available),
+                        dragState.itemIndex,
+                        targetIndex
+                    )
+
+                    // Preserve unavailable items at end
+                    const unavailable = cat.items.filter(i => !i.available)
+                    return { ...cat, items: [...reorderedItems, ...unavailable] }
+                })
+
+                return { ...prevMenu, categories: updatedCategories }
+            })
+        }
     }, [dragState])
 
     const handleDragEnd = useCallback(() => {
