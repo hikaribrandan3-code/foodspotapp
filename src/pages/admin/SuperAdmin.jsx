@@ -363,7 +363,7 @@ function SuperAdmin({ config }) {
         <>
             <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 <BackendHeader
-                    title="FoodSpot"
+                    title="ADMIN"
                     onLogout={handleLogout}
                     showDateSelector={false}
                     showNotifications={false}
@@ -411,7 +411,7 @@ function SuperAdmin({ config }) {
                                     Salir de Simulación
                                 </button>
                             )}
-                            {/* Ver Menú - Navigate to frontend without logout */}
+                            {/* Vista Cliente - Navigate to frontend without logout */}
                             <button
                                 onClick={() => navigate('/')}
                                 style={{
@@ -425,7 +425,7 @@ function SuperAdmin({ config }) {
                                     color: 'white'
                                 }}
                             >
-                                Ver Menú
+                                Vista Cliente
                             </button>
                         </>
                     }
