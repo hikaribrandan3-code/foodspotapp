@@ -280,7 +280,8 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         let targetIndex = dragState.targetIndex
         let newCategoryId = dragState.categoryId
 
-        // MAGNET THRESHOLD: 60px for tighter, more accurate mobile detection\n        const MAGNET_THRESHOLD = 60
+        // MAGNET THRESHOLD: 100px - middle ground (120 too loose, 60 too tight)
+        const MAGNET_THRESHOLD = 100
 
         // ==== TRACE LOG: MAGNET MATH ====
         console.log('[MATH] Closest Item:', closestItem?.getAttribute('data-item-id'), 'Distance:', closestDistance.toFixed(1), 'Threshold:', MAGNET_THRESHOLD)
