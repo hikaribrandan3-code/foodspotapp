@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
+import { isInDemoMode } from '../../utils/demoSession.js'
 import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
@@ -24,9 +25,9 @@ function Home({ config }) {
     const location = useLocation()
     const menu = getMenu()
 
-    // Owner/SuperAdmin mode detection - both can edit home icons
+    // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()
-    const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner'
+    const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner' || isInDemoMode()
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false)
