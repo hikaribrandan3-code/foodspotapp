@@ -429,82 +429,78 @@ function Home({ config }) {
         >
             <HeaderClamp config={config} />
 
-            {/* Demo Mode Pill - Shows when viewing frontend in demo mode */}
+            {/* Demo Mode Badge */}
             {isInDemoMode() && session?.role !== 'superadmin' && session?.role !== 'owner' && (
                 <div
                     onClick={() => navigate('/demo')}
                     style={{
-                        width: 'fit-content',
-                        marginLeft: 'auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        background: '#FEF3C7',
-                        border: '1px solid #F59E0B',
-                        borderRadius: 20,
-                        padding: '6px 14px',
-                        marginBottom: 24,
+                        position: 'fixed',
+                        top: 100,
+                        right: 0,
+                        zIndex: 50,
+                        background: '#F59E0B',
+                        color: '#FFFFFF',
+                        padding: '4px 8px',
+                        borderTopLeftRadius: 6,
+                        borderBottomLeftRadius: 6,
+                        fontWeight: 700,
+                        fontSize: 10,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                         cursor: 'pointer',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: '#92400E'
+                        letterSpacing: 0.5
                     }}
                 >
-                    🚧 DEMO MODE
+                    DEMO
                 </div>
             )}
 
-            {/* Super Admin Pill */}
+            {/* Super Admin Badge */}
             {session?.role === 'superadmin' && (
                 <div
                     onClick={() => navigate('/admin/dashboard')}
                     style={{
-                        width: 'fit-content',
-                        marginLeft: 'auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        background: '#1E293B',
-                        border: '1px solid #334155',
-                        borderRadius: 20,
-                        padding: '6px 14px',
-                        marginBottom: 24,
+                        position: 'fixed',
+                        top: 100,
+                        right: 0,
+                        zIndex: 50,
+                        background: '#0F172A',
+                        color: '#FFFFFF',
+                        padding: '4px 8px',
+                        borderTopLeftRadius: 6,
+                        borderBottomLeftRadius: 6,
+                        fontWeight: 700,
+                        fontSize: 10,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                         cursor: 'pointer',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: '#F8FAFC',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        letterSpacing: 0.5
                     }}
                 >
-                    🏢 HEADQUARTERS
+                    SUPER
                 </div>
             )}
 
-            {/* Owner Pill */}
+            {/* Owner Badge */}
             {session?.role === 'owner' && (
                 <div
                     onClick={() => navigate('/owner')}
                     style={{
-                        width: 'fit-content',
-                        marginLeft: 'auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        background: '#EFF6FF',
-                        border: '1px solid #3B82F6',
-                        borderRadius: 20,
-                        padding: '6px 14px',
-                        marginBottom: 24,
+                        position: 'fixed',
+                        top: 100,
+                        right: 0,
+                        zIndex: 50,
+                        background: '#3B82F6',
+                        color: '#FFFFFF',
+                        padding: '4px 8px',
+                        borderTopLeftRadius: 6,
+                        borderBottomLeftRadius: 6,
+                        fontWeight: 700,
+                        fontSize: 10,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                         cursor: 'pointer',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: '#1E40AF'
+                        letterSpacing: 0.5
                     }}
                 >
-                    👋 OWNER MODE
+                    OWNER
                 </div>
             )}
 
