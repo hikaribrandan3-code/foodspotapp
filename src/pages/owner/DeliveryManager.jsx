@@ -280,7 +280,7 @@ function DeliveryManager({ demoMode = false }) {
 
             {/* Backend Navigation */}
             <BackendNav
-                role="owner"
+                role={demoMode ? 'demo' : 'owner'}
                 useRoutes={true}
             />
         </div>

@@ -37,7 +37,7 @@ function OwnerLogin() {
             minHeight: '80vh'
         }}>
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
-                <div style={{ fontSize: '3rem', marginBottom: 'var(--space-3)' }}>👔</div>
+                <div style={{ fontSize: '3rem', marginBottom: 'var(--space-3)' }}></div>
                 <h1 className="page-title">Acceso Owner</h1>
                 <p className="page-subtitle">Ingresá tus credenciales</p>
             </div>
