@@ -2,8 +2,9 @@
 // Uses SAME UI layout as production, but with demo session + mock data
 // NO authentication required - only demo session check
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
+
 // NOTE: demoSession.js imports are loaded dynamically at runtime to avoid Safari circular import crash
 // DO NOT add static imports from demoSession.js or demoEvents.js here
 import { getConfig, HERO_DEFAULT } from '../../config/appConfig.js'
@@ -44,14 +45,16 @@ const clearAllDemoData = () => demoSessionModule?.clearAllDemoData?.()
 const getDemoEvents = () => demoEventsModule?.getDemoEvents?.() || []
 const clearDemoEvents = () => demoEventsModule?.clearDemoEvents?.()
 
-
 // Import existing branding components (REUSE)
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
-import CoverImageEditor from '../../components/CoverImageEditor.jsx'
+// NOTE: CoverImageEditor imports Home.jsx which can cause circular import issues
+// Load it lazily to keep it out of the DemoBackend chunk
+const CoverImageEditor = React.lazy(() => import('../../components/CoverImageEditor.jsx'))
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import DemoEmailPopup from '../../components/DemoEmailPopup.jsx'
+
 
 // Timer utilities for email popup
 import {
@@ -1647,18 +1650,20 @@ function DemoBackend() {
                             <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Same editor as Owner/SuperAdmin — drag to position, pinch to zoom</p>
                         </div>
 
-                        {/* CoverImageEditor Modal - SAME AS PRODUCTION */}
-                        <CoverImageEditor
-                            isOpen={coverEditorOpen}
-                            onClose={() => setCoverEditorOpen(false)}
-                            onSave={(data) => {
-                                handleConfigChange({ coverImage: data.image })
-                                setCoverEditorOpen(false)
-                            }}
-                            initialData={{ image: demoConfig.coverImage }}
-                            demoMode={true}
-                            config={getConfig()}
-                        />
+                        {/* CoverImageEditor Modal - SAME AS PRODUCTION (lazy loaded) */}
+                        <Suspense fallback={null}>
+                            <CoverImageEditor
+                                isOpen={coverEditorOpen}
+                                onClose={() => setCoverEditorOpen(false)}
+                                onSave={(data) => {
+                                    handleConfigChange({ coverImage: data.image })
+                                    setCoverEditorOpen(false)
+                                }}
+                                initialData={{ image: demoConfig.coverImage }}
+                                demoMode={true}
+                                config={getConfig()}
+                            />
+                        </Suspense>
 
                         {/* Color Picker - REUSE EXISTING */}
                         <BrandingColorPicker
