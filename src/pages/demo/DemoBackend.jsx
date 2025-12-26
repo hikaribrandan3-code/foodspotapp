@@ -1320,6 +1320,54 @@ function DemoBackend() {
         })
     }, [])
 
+    // Redirect if no valid demo session (only after modules loaded)
+    useEffect(() => {
+        if (!isModulesLoaded) return
+        if (!demoSession) {
+            navigate('/')
+        }
+    }, [isModulesLoaded, demoSession, navigate])
+
+    // Check session expiry periodically (only after modules loaded)
+    useEffect(() => {
+        if (!isModulesLoaded) return
+        const interval = setInterval(() => {
+            const session = getDemoSession()
+            if (!session) {
+                navigate('/')
+            }
+        }, 5000)
+        return () => clearInterval(interval)
+    }, [isModulesLoaded, navigate])
+
+    // Start demo timer on mount (only after modules loaded)
+    useEffect(() => {
+        if (!isModulesLoaded) return
+        startDemoTimer()
+    }, [isModulesLoaded])
+
+    // Pause/resume timer when editing state changes
+    useEffect(() => {
+        if (!isModulesLoaded) return
+        if (isEditing) {
+            pauseDemoTimer()
+        } else {
+            resumeDemoTimer()
+        }
+    }, [isModulesLoaded, isEditing])
+
+    // Poll for popup eligibility
+    useEffect(() => {
+        if (!isModulesLoaded) return
+        const checkPopup = setInterval(() => {
+            if (!isEditing && shouldShowPopup()) {
+                setShowEmailPopup(true)
+                markPopupShown()
+            }
+        }, 1000)
+        return () => clearInterval(checkPopup)
+    }, [isModulesLoaded, isEditing])
+
     // Show loading until modules are ready
     if (!isModulesLoaded) {
         return (
@@ -1339,48 +1387,6 @@ function DemoBackend() {
         )
     }
 
-    // Redirect if no valid demo session
-    useEffect(() => {
-        if (!demoSession) {
-            navigate('/')
-        }
-    }, [demoSession, navigate])
-
-    // Check session expiry periodically
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const session = getDemoSession()
-            if (!session) {
-                navigate('/')
-            }
-        }, 5000)
-        return () => clearInterval(interval)
-    }, [navigate])
-
-    // Start demo timer on mount
-    useEffect(() => {
-        startDemoTimer()
-    }, [])
-
-    // Pause/resume timer when editing state changes
-    useEffect(() => {
-        if (isEditing) {
-            pauseDemoTimer()
-        } else {
-            resumeDemoTimer()
-        }
-    }, [isEditing])
-
-    // Poll for popup eligibility
-    useEffect(() => {
-        const checkPopup = setInterval(() => {
-            if (!isEditing && shouldShowPopup()) {
-                setShowEmailPopup(true)
-                markPopupShown()
-            }
-        }, 1000)
-        return () => clearInterval(checkPopup)
-    }, [isEditing])
 
     const handleExitDemo = () => {
         clearDemoSession()
