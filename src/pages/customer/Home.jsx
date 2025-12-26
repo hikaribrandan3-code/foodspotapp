@@ -3,9 +3,16 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
-import { isInDemoMode } from '../../utils/demoSession.js'
+// NOTE: Do NOT import from demoSession.js - causes circular import crash in Safari
+// Use inline isDemoMode check below instead
 import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
+
+// Inline demo check (avoids circular import)
+const isDemoMode = () => Boolean(
+    sessionStorage.getItem('demo_session') ||
+    localStorage.getItem('foodspot_demo_active')
+);
 
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
@@ -27,7 +34,7 @@ function Home({ config }) {
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()
-    const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner' || isInDemoMode()
+    const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner' || isDemoMode()
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false)

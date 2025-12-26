@@ -6,7 +6,14 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getSession } from '../../utils/auth.js'
-import { isInDemoMode } from '../../utils/demoSession.js'
+// NOTE: Do NOT import from demoSession.js - causes circular import crash in Safari
+// Use inline isDemoMode check below instead
+
+// Inline demo check (avoids circular import)
+const isDemoMode = () => Boolean(
+    sessionStorage.getItem('demo_session') ||
+    localStorage.getItem('foodspot_demo_active')
+);
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
@@ -34,7 +41,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
     // Owner mode detection (from auth session OR demo mode)
     const session = getSession()
-    const isOwnerMode = session?.role === 'owner' || session?.role === 'superadmin' || isInDemoMode()
+    const isOwnerMode = session?.role === 'owner' || session?.role === 'superadmin' || isDemoMode()
 
     // Edit mode state (owner only)
     const [isEditMode, setIsEditMode] = useState(false)
