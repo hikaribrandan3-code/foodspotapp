@@ -181,12 +181,7 @@ export const DIVIDER_PRESETS = [
         url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=800&h=200&fit=crop&q=80',
         category: 'burger'
     },
-    {
-        id: 'burger-6',
-        name: 'Con Bacon',
-        url: 'https://images.unsplash.com/photo-1586190848861-99c8a3fb7ea5?w=800&h=200&fit=crop&q=80',
-        category: 'burger'
-    },
+
     {
         id: 'burger-7',
         name: 'Sliders',
