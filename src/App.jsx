@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
-import { incrementVisit } from './utils/storage.js'
+import { incrementVisit, getOrders, updateOrder } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
 
@@ -95,6 +95,7 @@ function StackedAdminBadge() {
 
 function App() {
     const [config, setConfig] = useState(() => getConfig())
+    const [orders, setOrders] = useState(() => getOrders())
     // GUARDRAIL: Defensive fallback to prevent pauseOrders crash
     const safeConfig = config ?? { pauseOrders: false }
 
@@ -327,6 +328,7 @@ function App() {
         if (newConfig) {
             setConfig(newConfig)
         }
+        setOrders(getOrders())
     }, [])
 
     // AUTO-SYNC: Listen for localStorage changes from other tabs/windows
@@ -408,7 +410,7 @@ function App() {
                     <Route path="/staff" element={<StaffLogin />} />
                     <Route path="/staff/dashboard" element={
                         <ProtectedRoute requiredRole="staff">
-                            <StaffDashboard config={safeConfig} />
+                            <StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />
                         </ProtectedRoute>
                     } />
 
@@ -441,7 +443,7 @@ function App() {
                     } />
                     <Route path="/owner/analytics" element={
                         <ProtectedRoute requiredRole="owner">
-                            <Analytics />
+                            <Analytics orders={orders} />
                         </ProtectedRoute>
                     } />
                     <Route path="/owner/branding" element={

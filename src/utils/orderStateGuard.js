@@ -67,3 +67,11 @@ export const canAdvanceOrder = (order, newStatus, config) => {
 
     return { allowed: true }
 }
+
+/**
+ * ALIAS: Supabase-compatible Logic Gate.
+ * Matches the signature from FoodSpot_Master_Plan.md
+ */
+export const validateOrderStatusTransition = (order, newStatus, orderMode = 'A1') => {
+    return canAdvanceOrder(order, newStatus, { orderMode })
+}

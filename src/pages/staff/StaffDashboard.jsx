@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAuth, clearAuth, getOrders, updateOrder, addStamp } from '../../utils/storage.js'
+import { getAuth, clearAuth, addStamp } from '../../utils/storage.js'
 import { getMenu, toggleItemAvailability, formatPrice } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.js'
 import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
@@ -14,9 +14,8 @@ const ALERT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-p
 // ideally we would use a local asset or a generated data URI for "Rush-Proof" speed.
 // Using a short, sharp beep.
 
-function StaffDashboard({ config }) {
+function StaffDashboard({ config, orders = [], updateOrder, setOrders }) {
     const navigate = useNavigate()
-    const [orders, setOrders] = useState([])
     const [menu, setMenu] = useState(() => getMenu())
     const [activeTab, setActiveTab] = useState('orders')
 
@@ -43,43 +42,41 @@ function StaffDashboard({ config }) {
         }
     }, [navigate])
 
-    // Load orders & Audio Logic
+    // AUDIO ALERT LOGIC: React to orders prop changes
     useEffect(() => {
-        const loadData = () => {
-            const currentOrders = getOrders()
-            // Sort by newest first
-            currentOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        // Sort orders by newest first for display
+        const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-            // AUDIO ALERT LOGIC: New 'enviado' (pending) order detection
-            // Check if there are NEW orders that are in 'enviado' state
-            // We compare the count of 'enviado' orders.
-            const currentPendingCount = currentOrders.filter(o => o.status === 'enviado').length
-            const prevPendingCount = prevOrdersLengthRef.current
+        // New 'enviado' (pending) order detection
+        const currentPendingCount = sortedOrders.filter(o => o.status === 'enviado').length
+        const prevPendingCount = prevOrdersLengthRef.current
 
-            if (currentPendingCount > prevPendingCount) {
-                // New order arrived!
-                // Trigger 2-second "Beep-Beep" (Play, wait, Play)
-                if (audioRef.current) {
-                    audioRef.current.currentTime = 0
-                    audioRef.current.play().catch(e => console.log("Audio prevent:", e))
-                    // Double beep logic
-                    setTimeout(() => {
-                        if (audioRef.current) {
-                            audioRef.current.currentTime = 0
-                            audioRef.current.play().catch(e => console.log("Audio prevent:", e))
-                        }
-                    }, 1000)
-                }
+        if (currentPendingCount > prevPendingCount) {
+            // New order arrived! Trigger "Beep-Beep"
+            if (audioRef.current) {
+                audioRef.current.currentTime = 0
+                audioRef.current.play().catch(e => console.log("Audio prevent:", e))
+                setTimeout(() => {
+                    if (audioRef.current) {
+                        audioRef.current.currentTime = 0
+                        audioRef.current.play().catch(e => console.log("Audio prevent:", e))
+                    }
+                }, 1000)
             }
-            prevOrdersLengthRef.current = currentPendingCount
-
-            setOrders(currentOrders)
-            setMenu(getMenu())
         }
-        loadData()
-        const interval = setInterval(loadData, 2000)
+        prevOrdersLengthRef.current = currentPendingCount
+    }, [orders])
+
+    // Menu sync
+    useEffect(() => {
+        const interval = setInterval(() => setMenu(getMenu()), 2000)
         return () => clearInterval(interval)
     }, [])
+
+    // Compute sorted orders for display
+    const sortedOrders = useMemo(() => {
+        return [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    }, [orders])
 
     const handleLogout = () => {
         clearAuth()
@@ -112,7 +109,7 @@ function StaffDashboard({ config }) {
             addStamp()
         }
 
-        setOrders(getOrders())
+        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
     const handlePaymentConfirm = (orderId) => {
@@ -134,7 +131,7 @@ function StaffDashboard({ config }) {
                 paymentMethod: method
             })
         }
-        setOrders(getOrders())
+        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
     const handleToggleAvailability = (categoryId, itemId) => {

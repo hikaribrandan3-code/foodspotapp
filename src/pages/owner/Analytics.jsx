@@ -1,165 +1,83 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { getAuth, clearAuth, getAnalytics, getOrders, getRewards } from '../../utils/storage.js'
+import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import { formatPrice } from '../../config/menuData.js'
+import { logout } from '../../utils/auth.js'
 
-function Analytics({ demoMode = false }) {
+/* --- ANALYTICS COMPONENT (SUPABASE-READY READ LAYER) --- */
+const Analytics = ({ orders = [] }) => {
     const navigate = useNavigate()
-    const [analytics, setAnalytics] = useState(() => getAnalytics())
-    const [orders, setOrders] = useState(() => getOrders())
-    const [rewards, setRewards] = useState(() => getRewards())
 
-    useEffect(() => {
-        // Skip auth check in demo mode
-        if (demoMode) return
+    // Navigation Exit Strategy: Prevents Admin Sub-Page Trap
+    const handleBack = () => navigate('/owner/summary')
+    const handleLogout = () => { logout(); navigate('/') }
 
-        const auth = getAuth()
-        if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
-            navigate('/owner')
+    // Data Logic: Purely functional, derived from 'orders' prop to ensure Single Source of Truth
+    const stats = useMemo(() => {
+        const deliveredOrders = orders.filter(o => o.status === 'entregado')
+        const totalRevenue = deliveredOrders.reduce((sum, o) => sum + (o.total || 0), 0)
+        const deliveryTotal = orders.filter(o => o.orderType === 'delivery').length
+        const pickupTotal = orders.filter(o => o.orderType === 'pickup').length
+
+        return {
+            totalRevenue,
+            deliveredCount: deliveredOrders.length,
+            deliveryTotal,
+            pickupTotal
         }
-    }, [navigate, demoMode])
+    }, [orders])
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setAnalytics(getAnalytics())
-            setOrders(getOrders())
-            setRewards(getRewards())
-        }, 5000)
-        return () => clearInterval(interval)
-    }, [])
-
-    const handleLogout = () => {
-        clearAuth()
-        navigate('/')
-    }
-
-    // Calculate stats
-    const today = new Date().toDateString()
-    // Demo mock data - consistent with Demo Summary
-    const demoStats = {
-        ordersToday: 3,
-        ordersWeek: 12,
-        ordersMonth: 45,
-        totalOrders: 127,
-        revenueToday: 8500,
-        totalRevenue: 45000,
-        visits: 1240,
-        instagramShares: 85,
-        stamps: 42,
-        redeemed: 15
-    }
-
-    const realOrdersToday = orders.filter(o => new Date(o.createdAt).toDateString() === today).length
-    const realOrdersWeek = orders.filter(o => new Date(o.createdAt) >= weekAgo).length
-    const realOrdersMonth = orders.filter(o => new Date(o.createdAt) >= monthAgo).length
-    const realTotalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0)
-    const realRevenueToday = orders
-        .filter(o => new Date(o.createdAt).toDateString() === today)
-        .reduce((sum, o) => sum + (o.total || 0), 0)
-
-    // Use demo data when in demo mode
-    const ordersToday = demoMode ? demoStats.ordersToday : realOrdersToday
-    const ordersWeek = demoMode ? demoStats.ordersWeek : realOrdersWeek
-    const ordersMonth = demoMode ? demoStats.ordersMonth : realOrdersMonth
-    const totalRevenue = demoMode ? demoStats.totalRevenue : realTotalRevenue
-    const revenueToday = demoMode ? demoStats.revenueToday : realRevenueToday
-    const totalOrdersCount = demoMode ? demoStats.totalOrders : orders.length
-
-    // Activity stats
-    const visits = demoMode ? demoStats.visits : (analytics.visits || 0)
-    const igShares = demoMode ? demoStats.instagramShares : (analytics.instagramShares || 0)
-    const activeStamps = demoMode ? demoStats.stamps : (rewards.stamps || 0)
-    const redeemedRewards = demoMode ? demoStats.redeemed : (rewards.redeemed?.length || 0)
-
-    const StatCard = ({ value, label }) => (
-        <div style={{
-            background: '#FFFFFF',
-            borderRadius: 10,
-            border: '1px solid #E2E8F0',
-            padding: 16,
-            textAlign: 'center'
-        }}>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#1E293B' }}>{value}</div>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>{label}</div>
-        </div>
-    )
+    // Styles
+    const cardStyle = { padding: '20px', background: '#fff', borderRadius: '18px', border: '1px solid #eee', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }
+    const labelStyle = { display: 'block', color: '#888', fontSize: '12px', marginBottom: '8px', textTransform: 'uppercase' }
+    const valueStyle = { margin: 0, fontSize: '22px', fontWeight: 'bold', color: '#000' }
 
     return (
-        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+        <div className="page backend-surface" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
             <BackendHeader
-                title={demoMode ? "Demo Analytics" : "Estadísticas"}
+                title="Analytics"
                 onLogout={handleLogout}
-                showDateSelector={!demoMode}
+                showDateSelector={false}
+                extraActions={
+                    <button
+                        onClick={handleBack}
+                        style={{ background: '#f0f0f0', border: 'none', padding: '8px 14px', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', fontSize: 12 }}
+                    >
+                        ← Volver
+                    </button>
+                }
             />
 
-            <div style={{ padding: 16, paddingBottom: 100 }}>
-                {/* Orders Stats */}
-                <div style={{ marginBottom: 20 }}>
-                    <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 10, marginTop: 0 }}>PEDIDOS</h3>
-
-                    {/* Demo Date Range Pill */}
-                    {demoMode && (
-                        <div style={{
-                            background: '#DBEAFE',
-                            border: '1px solid #3B82F6',
-                            borderRadius: 20,
-                            padding: '6px 12px',
-                            marginBottom: 12,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            fontSize: 12,
-                            fontWeight: 500,
-                            color: '#1E40AF',
-                            cursor: 'pointer'
-                        }}>
-                            📅 Demo Period: 2 weeks
-                        </div>
-                    )}
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <StatCard value={ordersToday} label="Hoy" />
-                        <StatCard value={ordersWeek} label="Esta semana" />
-                        <StatCard value={ordersMonth} label="Este mes" />
-                        <StatCard value={totalOrdersCount} label="Total" />
+            <div style={{ padding: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: 20 }}>
+                    <div style={cardStyle}>
+                        <span style={labelStyle}>Ingresos Totales</span>
+                        <h3 style={valueStyle}>{formatPrice(stats.totalRevenue)}</h3>
+                    </div>
+                    <div style={cardStyle}>
+                        <span style={labelStyle}>Entregados</span>
+                        <h3 style={valueStyle}>{stats.deliveredCount}</h3>
+                    </div>
+                    <div style={cardStyle}>
+                        <span style={labelStyle}>Envíos</span>
+                        <h3 style={valueStyle}>{stats.deliveryTotal}</h3>
+                    </div>
+                    <div style={cardStyle}>
+                        <span style={labelStyle}>Pickup</span>
+                        <h3 style={valueStyle}>{stats.pickupTotal}</h3>
                     </div>
                 </div>
 
-                {/* Engagement Stats */}
-                <div style={{ marginBottom: 20 }}>
-                    <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 10, marginTop: 0 }}>ACTIVIDAD</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <StatCard value={visits} label="Visitas" />
-                        <StatCard value={igShares} label="Shares IG" />
-                        <StatCard value={activeStamps} label="Sellos activos" />
-                        <StatCard value={redeemedRewards} label="Canjeados" />
-                    </div>
+                <div style={{ marginTop: '30px', padding: '30px', textAlign: 'center', border: '1px dashed #ccc', borderRadius: '20px', color: '#888' }}>
+                    <p style={{ margin: 0 }}>📈 Real-time Supabase insights pendiente migración.</p>
                 </div>
-
-                {/* Revenue Stats */}
-                <div>
-                    <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 10, marginTop: 0 }}>INGRESOS</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <StatCard value={`$${(revenueToday / 1000).toFixed(1)}k`} label="Hoy" />
-                        <StatCard value={`$${(totalRevenue / 1000).toFixed(1)}k`} label="Total" />
-                    </div>
-                </div>
-
-                <p style={{
-                    textAlign: 'center',
-                    color: '#94A3B8',
-                    fontSize: 11,
-                    marginTop: 24
-                }}>
-                    Solo números · Sin gráficos
-                </p>
             </div>
 
-            {/* Backend Navigation */}
             <BackendNav
-                role={demoMode ? 'demo' : 'owner'}
-                useRoutes={true}
+                role="owner"
+                activeTab="analytics"
+                onTabChange={(tab) => navigate(`/owner/${tab}`)}
             />
         </div>
     )
