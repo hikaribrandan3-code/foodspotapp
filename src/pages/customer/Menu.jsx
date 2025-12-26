@@ -77,7 +77,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     }, [deliveryModeProp])
 
     // Only show enabled categories with available items
-    // Only show enabled categories with available items
     const enabledCategories = menu.categories.filter(cat =>
         cat.enabled !== false && cat.items.some(item => item.available)
     )
@@ -197,7 +196,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             offsetY: touch.clientY - rect.top,
             itemWidth: rect.width,
             itemHeight: rect.height,
-            items: availableItems.map(i => i.id), // Current order
+            items: availableItems.map(i => i.id), // Current order (IDs only)
             targetIndex: itemIndex
         })
 
@@ -322,7 +321,9 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
     // ==== handleDragEnd: EXECUTE SORT ON DROP ====
     // This is the ONLY place where the menu order changes
-    // Since the list didn't move during drag, itemIndex (original) and targetIndex (final) are both valid
+    // Uses the STANDARD ALGORITHM from react-beautiful-dnd:
+    // 1. Remove item from source index
+    // 2. Insert at target index (which may need adjustment for direction)
     const handleDragEnd = useCallback(() => {
         setIsDropping(true)
 
@@ -350,61 +351,62 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         }
 
         const { categoryId, itemIndex, targetIndex, items } = capturedState
-        setDebugLog(`DROP! Moving ${itemIndex} -> ${targetIndex}\nBlocker: ${blockRefreshRef.current}`)
+
+        // ==== DETAILED DEBUG LOG ====
+        const direction = itemIndex < targetIndex ? 'DOWN' : itemIndex > targetIndex ? 'UP' : 'NONE'
+        setDebugLog(`DROP! ${direction}\nFrom: ${itemIndex} → To: ${targetIndex}\nItems: ${items.length}`)
+        console.log('🎯 DROP EVENT:', { itemIndex, targetIndex, direction, items })
 
         // If no movement, just cleanup
         if (itemIndex === targetIndex) {
+            console.log('🎯 No movement - early return')
             setTimeout(() => setIsDropping(false), 100)
             return
         }
 
-        // ==== THE ONE FINAL REORDER ====
-        // Since the list was static during drag, itemIndex and targetIndex are both correct
-        setMenu(prevMenu => {
-            console.log('📝 COMMITTING STATE UPDATE: Moving item from ' + itemIndex + ' to ' + targetIndex)
+        // ==== THE REORDER ALGORITHM ====
+        // We use the SIMPLEST, MOST ROBUST approach: 
+        // Work directly with the ID array (which matches the original order)
+        // Then rebuild the items array in that order
 
-            // 1. Clone the categories
+        // Step 1: Create the new order of IDs
+        const newOrderIds = [...items]
+        const [movedId] = newOrderIds.splice(itemIndex, 1)
+        newOrderIds.splice(targetIndex, 0, movedId)
+
+        console.log('📋 New ID order:', newOrderIds)
+
+        // Step 2: Apply to React state
+        setMenu(prevMenu => {
+            console.log('📝 APPLYING NEW ORDER TO STATE')
+
+            // Clone categories
             const newCategories = [...prevMenu.categories]
 
-            // 2. Find the target category
+            // Find category
             const catIndex = newCategories.findIndex(c => c.id === categoryId)
-            if (catIndex === -1) return prevMenu
-
-            // 3. Clone the items array safely
-            const updatedItems = [...newCategories[catIndex].items]
-
-            // 4. Identify the item to move (The one at the source index IN THE VISIBLE LIST)
-            // Note: 'items' in drag state is just IDs. We need the real objects.
-            const availableItems = updatedItems.filter(i => i.available)
-            const itemToMove = availableItems[itemIndex]
-
-            if (!itemToMove) {
-                console.error("Critical: Item not found at index", itemIndex)
+            if (catIndex === -1) {
+                console.error('Category not found!')
                 return prevMenu
             }
 
-            // 5. Remove from old spot (in the full list)
-            const sourceRealIndex = updatedItems.findIndex(i => i.id === itemToMove.id)
-            updatedItems.splice(sourceRealIndex, 1)
+            // Get all items (available and unavailable)
+            const allItems = [...newCategories[catIndex].items]
+            const availableItems = allItems.filter(i => i.available)
+            const unavailableItems = allItems.filter(i => !i.available)
 
-            // 6. Insert at new spot
-            // We need to find where the "targetIndex" maps to in the FULL list (including unavailable items)
-            // Strategy: Insert it before the item currently at targetIndex in the available list
-            const targetAvailableItem = availableItems[targetIndex]
+            // Reorder available items according to newOrderIds
+            const reorderedAvailable = newOrderIds
+                .map(id => availableItems.find(item => item.id === id))
+                .filter(Boolean) // Remove any undefined (shouldn't happen)
 
-            if (targetAvailableItem) {
-                // Insert before the target item
-                const targetRealIndex = updatedItems.findIndex(i => i.id === targetAvailableItem.id)
-                // If we are moving down, the index might have shifted after splice, but findIndex resolves that
-                updatedItems.splice(targetRealIndex, 0, itemToMove)
-            } else {
-                // If no target item (dropped at end), push to end of available items
-                // This is complex with hidden items, so we'll just append to the very end for safety
-                updatedItems.push(itemToMove)
-            }
+            // Combine: reordered available + unavailable at end
+            const finalItems = [...reorderedAvailable, ...unavailableItems]
 
-            // 7. Update the category
-            newCategories[catIndex] = { ...newCategories[catIndex], items: updatedItems }
+            console.log('📋 Final order:', finalItems.map(i => i.id))
+
+            // Update category
+            newCategories[catIndex] = { ...newCategories[catIndex], items: finalItems }
 
             return { ...prevMenu, categories: newCategories }
         })
@@ -413,19 +415,17 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         setMenuVersion(v => v + 1)
 
         // Persist to storage
-        // We use the 'items' ID list from drag state because it tracks the sort order purely
-        const newOrderIds = [...items]
-        const [movedId] = newOrderIds.splice(itemIndex, 1)
-        newOrderIds.splice(targetIndex, 0, movedId)
         reorderCategoryItems(categoryId, newOrderIds)
+        console.log('💾 Persisted to storage')
 
-        // Force Sync
+        // Force Sync (but don't trigger a full reload that would overwrite our state)
         window.dispatchEvent(new CustomEvent('forceConfigUpdate', { detail: { menuUpdated: true } }))
 
         // Cooldown - lower the shield after 2 seconds
         setTimeout(() => {
             blockRefreshRef.current = false
             setIsDropping(false)
+            console.log('🛡️ Shield lowered')
         }, 2000)
 
     }, [dragState])
