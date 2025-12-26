@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getOrders, updateOrder } from '../../utils/storage.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
+import { canAdvanceOrder, getOrderStatusInfo } from '../../utils/orderStateGuard.js' // Shared Logic Gate
 import { login, logout, getSession } from '../../utils/auth.js'
 
 import { updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
@@ -461,7 +462,7 @@ function SuperAdmin({ config }) {
                 {/* Content - with bottom padding for BackendNav */}
                 <div style={{ padding: 16, paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
 
-                    {/* ==================== SUMMARY TAB ==================== */}
+                    {/* SUMMARY TAB */}
                     {activeTab === 'summary' && (
                         <>
                             {/* 1. FINANCIAL DASHBOARD (Top Priority) */}
@@ -551,10 +552,10 @@ function SuperAdmin({ config }) {
                         </>
                     )}
 
-                    {/* ==================== MENU TAB ==================== */}
+                    {/* MENU TAB */}
                     {activeTab === 'menu' && canEdit && (
                         <>
-                            <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ (v2.0)</h3>
+                            <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
 
                             {/* 1. FEATURED SECTION (TOP 4) */}
                             <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -1478,7 +1479,7 @@ function SuperAdmin({ config }) {
                         </>
                     )}
 
-                    {/* ==================== ORDERS TAB ==================== */}
+                    {/* ORDERS TAB */}
                     {activeTab === 'orders' && (
                         <>
                             <h3 style={labelStyle}>⚙️ CONFIGURACIÓN DE PEDIDOS</h3>
@@ -1549,9 +1550,10 @@ function SuperAdmin({ config }) {
 
                                 // Handle status change with payment validation
                                 const handleDeliveryStatusChange = (orderId, newStatus, order) => {
-                                    // Check payment confirmation for delivery orders before prep/dispatch
-                                    if (!order.paymentConfirmed && (newStatus === 'preparacion' || newStatus === 'en_camino')) {
-                                        alert('❌ Payment must be confirmed before preparation or dispatch for delivery orders.')
+                                    // Use Shared Logic Gate
+                                    const validation = canAdvanceOrder(order, newStatus, config)
+                                    if (!validation.allowed) {
+                                        alert(validation.reason)
                                         return
                                     }
                                     updateOrder(orderId, { status: newStatus })
