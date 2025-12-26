@@ -20,6 +20,10 @@ function MenuManager() {
     const [isUploading, setIsUploading] = useState(false)
     const fileInputRef = useRef(null)
 
+    // PHOENIX PATTERN: Key-based input reset for mobile browsers
+    // Incrementing this forces React to trash and recreate the file input DOM node
+    const [inputKey, setInputKey] = useState(0)
+
     // Category creation state
     const [showAddCategory, setShowAddCategory] = useState(false)
     const [newCategoryName, setNewCategoryName] = useState('')
@@ -71,14 +75,10 @@ function MenuManager() {
         } finally {
             setIsUploading(false)
 
-            // SAFE RESET PATTERN: Wait for mobile browser event bubble to complete
-            // Safari Mobile and Chrome Mobile ignore immediate resets
-            setTimeout(() => {
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = ''
-                    console.log('File input reset (safe delay)')
-                }
-            }, 500)
+            // PHOENIX PATTERN: Force React to unmount/remount the input
+            // This clears Safari/Chrome internal file caches that .value='' doesn't reach
+            setInputKey(prev => prev + 1)
+            console.log('File input phoenix reset (key incremented)')
         }
     }
 
@@ -408,6 +408,7 @@ function MenuManager() {
                                 </div>
                             )}
                             <input
+                                key={inputKey}
                                 ref={fileInputRef}
                                 type="file"
                                 accept="image/jpeg,image/png,image/jpg"
