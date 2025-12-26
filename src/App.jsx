@@ -29,7 +29,6 @@ import StaffDashboard from './pages/staff/StaffDashboard.jsx'
 // Owner Pages
 import OwnerLogin from './pages/owner/OwnerLogin.jsx'
 import OwnerSummary from './pages/owner/OwnerSummary.jsx'
-import OwnerDashboard from './pages/owner/OwnerDashboard.jsx'
 import MenuManager from './pages/owner/MenuManager.jsx'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
