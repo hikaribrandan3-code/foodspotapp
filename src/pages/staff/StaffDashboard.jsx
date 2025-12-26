@@ -149,17 +149,26 @@ function StaffDashboard({ config, orders = [], updateOrder, setOrders }) {
         alert('¡Sello agregado!')
     }
 
-    const activeOrders = orders.filter(o => o.status !== 'entregado')
-    const todayOrders = orders.filter(o => {
-        const today = new Date().toDateString()
-        return new Date(o.createdAt).toDateString() === today
-    })
+    // PERF: Memoized for busy shifts - only re-filter when 'orders' array changes (v5 Audit)
+    const activeOrders = useMemo(() =>
+        orders.filter(o => o.status !== 'entregado'),
+        [orders]
+    )
 
-    const pendingDeliveries = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
-    const navBadges = {
+    const todayOrders = useMemo(() => {
+        const today = new Date().toDateString()
+        return orders.filter(o => new Date(o.createdAt).toDateString() === today)
+    }, [orders])
+
+    const pendingDeliveries = useMemo(() =>
+        orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado'),
+        [orders]
+    )
+
+    const navBadges = useMemo(() => ({
         orders: activeOrders.length,
         delivery: pendingDeliveries.length
-    }
+    }), [activeOrders.length, pendingDeliveries.length])
 
     return (
         <div className="page backend-surface" style={{ paddingBottom: 'var(--space-4)' }}>

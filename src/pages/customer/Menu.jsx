@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMenu, formatPrice, reorderCategoryItems } from '../../config/menuData.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
@@ -77,10 +77,12 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         }
     }, [deliveryModeProp])
 
-    // Only show enabled categories with available items
-    const enabledCategories = menu.categories.filter(cat =>
-        cat.enabled !== false && cat.items.some(item => item.available)
-    )
+    // PERF: Memoized to prevent filter-on-every-render leak (v5 Audit)
+    const enabledCategories = useMemo(() => {
+        return menu.categories.filter(cat =>
+            cat.enabled !== false && cat.items.some(item => item.available)
+        )
+    }, [menu.categories])
 
     const [activeCategory, setActiveCategory] = useState(enabledCategories[0]?.id || '')
 
