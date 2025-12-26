@@ -879,7 +879,10 @@ function SuperAdmin({ config }) {
                         </>
                     )}
 
-                    {/* ==================== BRANDING TAB ==================== */}
+    // State for granular editing
+                    const [editingPillId, setEditingPillId] = useState(null)
+
+                    // ==================== BRANDING TAB ====================
                     {activeTab === 'branding' && canEdit && (
                         <>
                             <h3 style={labelStyle}>🎨 BRANDING Y ESTÉTICA</h3>
@@ -1160,21 +1163,21 @@ function SuperAdmin({ config }) {
                                         </div>
                                     </div>
                                     <div>
-                                        <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Color de Marca en Footer</p>
+                                        <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Créditos de FoodSpot (Footer)</p>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 40, height: 40, border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer' }} />
                                             <span style={{ fontSize: 11, color: '#6B7280' }}>{(config.branding?.poweredByColor || '#C4856A').toUpperCase()}</span>
                                         </div>
                                         <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>
-                                            Personaliza el color de '@powered by foodspotapp' que aparece en la parte inferior.
+                                            Personaliza el color de '@powered by foodspotapp'.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* SLOT 6: BOTÓN DE CÁMARA (SVG LOGIC) */}
+                            {/* SLOT 6: CONFIGURACIÓN DE CÁMARA */}
                             <div style={cardStyle}>
-                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>6. Botón de Cámara</h4>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>6. Configuración de Cámara</h4>
 
                                 {/* Enable toggle */}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -1198,7 +1201,7 @@ function SuperAdmin({ config }) {
                                 {config.camera?.enabled && (
                                     <>
                                         <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>
-                                            Selecciona el ícono. El color del ícono se adapta automáticamente al "Color de Iconos de Navegación".
+                                            Selecciona el estilo del botón:
                                         </p>
                                         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
                                             {[
@@ -1207,11 +1210,6 @@ function SuperAdmin({ config }) {
                                                 { id: 'aperture', label: 'Obturador', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="14.31" y1="8" x2="20.05" y2="17.94" /><line x1="9.69" y1="8" x2="21.17" y2="8" /><line x1="7.38" y1="12" x2="13.12" y2="2.06" /><line x1="9.69" y1="16" x2="3.95" y2="6.06" /><line x1="14.31" y1="16" x2="2.83" y2="16" /><line x1="16.62" y1="12" x2="10.88" y2="21.94" /></svg> }
                                             ].map(item => {
                                                 const isSelected = (config.camera?.icon || 'default') === item.id
-                                                // Reactive tint: "Blanco" (white) or "Negro" (black) based on Nav Icon Config
-                                                // If 'white', the icon in preview should be white on dark bg. If 'black', black on light.
-                                                // We simulate this context in the preview button.
-                                                const navIconMode = config.branding?.iconColorMode || 'white'
-
                                                 return (
                                                     <button
                                                         key={item.id}
@@ -1220,37 +1218,77 @@ function SuperAdmin({ config }) {
                                                             window.dispatchEvent(new CustomEvent('frontendSync'))
                                                         }}
                                                         style={{
-                                                            flex: 1, padding: '16px', borderRadius: 8,
+                                                            flex: 1, padding: '12px', borderRadius: 8,
                                                             border: isSelected ? '3px solid #3B82F6' : '1px solid #E5E7EB',
-                                                            // Preview background matches Nav Bar color concept loosely (or just neutral)
-                                                            // To show reactivity, let's use the actual Nav Color as background for independent preview 
-                                                            backgroundColor: config.branding?.primaryColor || '#8B7355',
-                                                            cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                                                            color: navIconMode === 'white' ? '#FFFFFF' : '#000000',
-                                                            transition: 'all 0.2s',
-                                                            boxShadow: isSelected ? '0 0 0 2px rgba(59, 130, 246, 0.2)' : 'none'
+                                                            backgroundColor: isSelected ? '#EFF6FF' : 'white',
+                                                            cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                                                            color: '#374151'
                                                         }}
                                                     >
-                                                        <div>{item.icon}</div>
-                                                        <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.8 }}>{item.label}</span>
+                                                        <div style={{ color: isSelected ? '#3B82F6' : '#9CA3AF' }}>{item.icon}</div>
+                                                        <span style={{ fontSize: 11, fontWeight: 500 }}>{item.label}</span>
                                                     </button>
                                                 )
                                             })}
                                         </div>
 
-                                        <div style={{ marginTop: 12 }}>
-                                            <p style={{ fontSize: 10, color: '#9CA3AF', fontStyle: 'italic' }}>
-                                                * El color del ícono es {config.branding?.iconColorMode === 'white' ? 'BLANCO' : 'NEGRO'} según tu configuración de navegación.
-                                            </p>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, backgroundColor: '#F9FAFB', padding: 12, borderRadius: 8 }}>
+                                            <div>
+                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 6, fontWeight: 600 }}>Color del Botón</label>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <input
+                                                        type="color"
+                                                        value={config.camera?.color || '#3B82F6'}
+                                                        onChange={(e) => {
+                                                            updateConfig({ camera: { ...config.camera, color: e.target.value } })
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                        }}
+                                                        style={{ width: 44, height: 44, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                                    />
+                                                    <span style={{ fontSize: 11, color: '#6B7280', fontFamily: 'monospace' }}>{(config.camera?.color || '#3B82F6').toUpperCase()}</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 6, fontWeight: 600 }}>Color del Ícono</label>
+                                                <div style={{ display: 'flex', gap: 4 }}>
+                                                    <button
+                                                        onClick={() => {
+                                                            updateConfig({ camera: { ...config.camera, textColor: 'white' } })
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                        }}
+                                                        style={{
+                                                            flex: 1, padding: 8, borderRadius: 6,
+                                                            border: (config.camera?.textColor || 'white') === 'white' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                            background: 'white', fontSize: 11, fontWeight: 500, cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        Blanco
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            updateConfig({ camera: { ...config.camera, textColor: 'black' } })
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                        }}
+                                                        style={{
+                                                            flex: 1, padding: 8, borderRadius: 6,
+                                                            border: config.camera?.textColor === 'black' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                            background: 'black', color: 'white', fontSize: 11, fontWeight: 500, cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        Negro
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </>
                                 )}
                             </div>
 
-                            {/* SLOT 7: INFO PILL COLORS */}
+                            {/* SLOT 7: BOTONES DE INFO */}
                             <div style={cardStyle}>
-                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>7. Info Pill Colors</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>7. Botones de Info</h4>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
                                     {[
                                         { id: 'whatsapp', label: 'WhatsApp', icon: '💬' },
                                         { id: 'mercadoPago', label: 'Mercado Pago', icon: '💳' },
@@ -1260,53 +1298,132 @@ function SuperAdmin({ config }) {
                                         { id: 'adminAccess', label: 'Admin', icon: '🔒' },
                                     ].map(pill => {
                                         const pillConfig = config.infoPills?.[pill.id] || {}
-                                        const bgColor = pillConfig.bgColor || (pill.id === 'whatsapp' ? '#C4856A' : pill.id === 'mercadoPago' ? '#FFE600' : pill.id === 'rappi' ? '#FF5A00' : pill.id === 'pedidosYa' ? '#E31837' : pill.id === 'demo' ? '#84CC16' : '#FFFFFF')
+                                        const isEditing = editingPillId === pill.id
+
+                                        // Defaults
+                                        const defaultBg = pill.id === 'whatsapp' ? '#C4856A' : pill.id === 'mercadoPago' ? '#FFE600' : pill.id === 'rappi' ? '#FF5A00' : pill.id === 'pedidosYa' ? '#E31837' : pill.id === 'demo' ? '#84CC16' : '#FFFFFF'
+                                        const bgColor = pillConfig.bgColor || defaultBg
                                         const textColor = pillConfig.textColor || (pill.id === 'mercadoPago' ? '#009EE3' : pill.id === 'adminAccess' ? '#9CA3AF' : '#FFFFFF')
+                                        // For preview in grid, we use actual colors
+
                                         return (
                                             <button
                                                 key={pill.id}
-                                                onClick={() => {
-                                                    const input = document.getElementById(`sa-pill-color-${pill.id}`)
-                                                    if (input) input.click()
-                                                }}
+                                                onClick={() => setEditingPillId(pill.id)}
                                                 style={{
                                                     display: 'flex',
+                                                    flexDirection: 'column',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     gap: 6,
-                                                    padding: '10px 12px',
-                                                    backgroundColor: bgColor,
-                                                    color: textColor,
-                                                    borderRadius: 20,
-                                                    border: pill.id === 'adminAccess' ? '1px solid #E5E7EB' : 'none',
-                                                    fontSize: 12,
-                                                    fontWeight: 500,
+                                                    padding: '12px 8px',
+                                                    backgroundColor: 'white',
+                                                    borderRadius: 8,
+                                                    border: isEditing ? '2px solid #3B82F6' : '1px solid #E5E7EB',
                                                     cursor: 'pointer',
                                                     position: 'relative',
-                                                    overflow: 'hidden'
+                                                    overflow: 'hidden',
+                                                    transition: 'all 0.2s',
+                                                    boxShadow: isEditing ? '0 0 0 2px rgba(59, 130, 246, 0.2)' : 'none'
                                                 }}
                                             >
-                                                <span>{pill.icon}</span>
-                                                <span>{pill.label}</span>
-                                                <input
-                                                    id={`sa-pill-color-${pill.id}`}
-                                                    type="color"
-                                                    value={bgColor}
-                                                    onChange={(e) => {
-                                                        updateConfig({
-                                                            infoPills: {
-                                                                ...config.infoPills,
-                                                                [pill.id]: { ...pillConfig, bgColor: e.target.value }
-                                                            }
-                                                        })
-                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                    }}
-                                                    style={{ position: 'absolute', opacity: 0, inset: 0, cursor: 'pointer' }}
-                                                />
+                                                {/* Mini Preview inside card */}
+                                                <div style={{
+                                                    background: bgColor,
+                                                    color: textColor,
+                                                    padding: '4px 8px',
+                                                    borderRadius: 12,
+                                                    fontSize: 10,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 4
+                                                }}>
+                                                    <span>{pill.icon}</span>
+                                                    <span>{pill.label}</span>
+                                                </div>
+                                                <span style={{ fontSize: 10, color: isEditing ? '#3B82F6' : '#9CA3AF', fontWeight: 600 }}>
+                                                    {isEditing ? 'EDITANDO' : 'Editar'}
+                                                </span>
                                             </button>
                                         )
                                     })}
                                 </div>
+
+                                {/* Active Pill Editor */}
+                                {editingPillId && (
+                                    <div style={{ backgroundColor: '#F9FAFB', padding: 12, borderRadius: 8, animation: 'fadeIn 0.2s' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>
+                                                Ajustes de {editingPillId.toUpperCase()}
+                                            </span>
+                                            <button onClick={() => setEditingPillId(null)} style={{ border: 'none', background: 'transparent', color: '#9CA3AF', cursor: 'pointer', fontSize: 16 }}>×</button>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                            <div>
+                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 6, fontWeight: 600 }}>Color de Fondo</label>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <input
+                                                        type="color"
+                                                        value={config.infoPills?.[editingPillId]?.bgColor || '#ffffff'}
+                                                        onChange={(e) => {
+                                                            updateConfig({
+                                                                infoPills: {
+                                                                    ...config.infoPills,
+                                                                    [editingPillId]: { ...config.infoPills?.[editingPillId], bgColor: e.target.value }
+                                                                }
+                                                            })
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                        }}
+                                                        style={{ width: 44, height: 44, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                                    />
+                                                    <span style={{ fontSize: 11, color: '#6B7280', fontFamily: 'monospace' }}>{(config.infoPills?.[editingPillId]?.bgColor || '#ffffff').toUpperCase()}</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 6, fontWeight: 600 }}>Color de Texto</label>
+                                                <div style={{ display: 'flex', gap: 4 }}>
+                                                    <button
+                                                        onClick={() => {
+                                                            updateConfig({
+                                                                infoPills: {
+                                                                    ...config.infoPills,
+                                                                    [editingPillId]: { ...config.infoPills?.[editingPillId], textColor: '#ffffff' }
+                                                                }
+                                                            })
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                        }}
+                                                        style={{
+                                                            flex: 1, padding: 8, borderRadius: 6,
+                                                            border: (config.infoPills?.[editingPillId]?.textColor || '#ffffff') === '#ffffff' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                            background: 'white', color: '#374151', fontSize: 11, fontWeight: 500, cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        Blanco
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            updateConfig({
+                                                                infoPills: {
+                                                                    ...config.infoPills,
+                                                                    [editingPillId]: { ...config.infoPills?.[editingPillId], textColor: '#000000' }
+                                                                }
+                                                            })
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                        }}
+                                                        style={{
+                                                            flex: 1, padding: 8, borderRadius: 6,
+                                                            border: config.infoPills?.[editingPillId]?.textColor === '#000000' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                            background: 'black', color: 'white', fontSize: 11, fontWeight: 500, cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        Negro
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
