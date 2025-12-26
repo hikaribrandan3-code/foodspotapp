@@ -54,13 +54,19 @@ const ROUTE_MAPS = {
         orders: '/owner/delivery',
         analytics: '/owner/analytics'
     },
+    demo: {
+        summary: '/demo',
+        menu: '/owner/menu',      // Demo uses same menu page as Owner
+        branding: '/owner/branding', // Demo uses same branding page as Owner
+        orders: '/owner/delivery',   // Demo uses same orders page as Owner
+        analytics: '/owner/analytics' // Demo uses same analytics as Owner
+    },
     staff: {
         orders: '/staff/dashboard',
         delivery: '/staff/dashboard',
         history: '/staff/dashboard'
     },
-    // Demo and SuperAdmin use state-based navigation (no routes)
-    demo: null,
+    // SuperAdmin uses state-based navigation (no routes)
     superadmin: null
 }
 
