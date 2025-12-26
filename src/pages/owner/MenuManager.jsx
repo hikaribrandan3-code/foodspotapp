@@ -133,7 +133,7 @@ function MenuManager({ demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
-                title="Menú"
+                title={demoMode ? "Demo Menú" : "Menú"}
                 onLogout={handleLogout}
             />
 

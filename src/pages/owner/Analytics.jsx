@@ -64,7 +64,7 @@ function Analytics({ demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
-                title="Estadísticas"
+                title={demoMode ? "Demo Analytics" : "Estadísticas"}
                 onLogout={handleLogout}
                 showDateSelector={true}
             />

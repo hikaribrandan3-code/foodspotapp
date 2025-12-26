@@ -75,7 +75,7 @@ function DeliveryManager({ demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F9FAFB' }}>
             <BackendHeader
-                title="Envíos"
+                title={demoMode ? "Demo Orders" : "Envíos"}
                 onLogout={handleLogout}
             />
 

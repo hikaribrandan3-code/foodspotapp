@@ -91,7 +91,7 @@ function Settings({ config, demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
-                title="Config"
+                title={demoMode ? "Demo Branding" : "Config"}
                 onLogout={handleLogout}
             />
             {/* Sync Button - Settings specific */}
