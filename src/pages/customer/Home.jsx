@@ -434,6 +434,8 @@ function Home({ config }) {
                 <div
                     onClick={() => navigate('/demo')}
                     style={{
+                        width: 'fit-content',
+                        marginLeft: 'auto',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -442,14 +444,14 @@ function Home({ config }) {
                         border: '1px solid #F59E0B',
                         borderRadius: 20,
                         padding: '6px 14px',
-                        marginBottom: 16,
+                        marginBottom: 24,
                         cursor: 'pointer',
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: 600,
                         color: '#92400E'
                     }}
                 >
-                    🚧 DEMO MODE — Tap to return to dashboard
+                    🚧 DEMO MODE
                 </div>
             )}
 
@@ -458,6 +460,8 @@ function Home({ config }) {
                 <div
                     onClick={() => navigate('/admin/dashboard')}
                     style={{
+                        width: 'fit-content',
+                        marginLeft: 'auto',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -466,15 +470,15 @@ function Home({ config }) {
                         border: '1px solid #334155',
                         borderRadius: 20,
                         padding: '6px 14px',
-                        marginBottom: 16,
+                        marginBottom: 24,
                         cursor: 'pointer',
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: 600,
                         color: '#F8FAFC',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                     }}
                 >
-                    🏢 HEADQUARTERS — Return to Admin
+                    🏢 HEADQUARTERS
                 </div>
             )}
 
@@ -483,6 +487,8 @@ function Home({ config }) {
                 <div
                     onClick={() => navigate('/owner')}
                     style={{
+                        width: 'fit-content',
+                        marginLeft: 'auto',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -491,14 +497,14 @@ function Home({ config }) {
                         border: '1px solid #3B82F6',
                         borderRadius: 20,
                         padding: '6px 14px',
-                        marginBottom: 16,
+                        marginBottom: 24,
                         cursor: 'pointer',
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: 600,
                         color: '#1E40AF'
                     }}
                 >
-                    👋 OWNER MODE — Return to Dashboard
+                    👋 OWNER MODE
                 </div>
             )}
 
