@@ -66,11 +66,43 @@ function DeliveryManager({ demoMode = false }) {
         setOrders(getOrders())
     }
 
+    // Demo mock orders
+    const demoOrdersData = [
+        {
+            id: 'demo-1',
+            orderType: 'delivery',
+            status: 'pendiente',
+            total: 4200,
+            customerName: 'Juan Pérez',
+            address: 'Av. Libertador 2400',
+            phone: '1155556666',
+            items: [{ name: 'Burger Grub', quantity: 2 }, { name: 'Papas Fritas', quantity: 1 }],
+            createdAt: new Date().toISOString(),
+            paymentConfirmed: false,
+            paymentMethod: 'cash'
+        },
+        {
+            id: 'demo-2',
+            orderType: 'delivery',
+            status: 'en_camino',
+            total: 2800,
+            customerName: 'Maria Garcia',
+            address: 'Juramento 1500',
+            phone: '1144447777',
+            items: [{ name: 'Ensalada Caesar', quantity: 1 }, { name: 'Agua s/gas', quantity: 1 }],
+            createdAt: new Date(Date.now() - 30 * 60000).toISOString(),
+            paymentConfirmed: true,
+            paymentMethod: 'transfer'
+        }
+    ]
+
+    const effectiveOrders = demoMode ? demoOrdersData : orders
+
     // Filter for active delivery orders
-    const deliveryOrders = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+    const deliveryOrders = effectiveOrders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
 
     // Today's delivery count
-    const todayDeliveries = orders.filter(o => o.orderType === 'delivery' && new Date(o.createdAt).toDateString() === new Date().toDateString()).length
+    const todayDeliveries = effectiveOrders.filter(o => o.orderType === 'delivery' && new Date(o.createdAt).toDateString() === new Date().toDateString()).length
 
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F9FAFB' }}>

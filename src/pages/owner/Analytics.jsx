@@ -36,17 +36,41 @@ function Analytics({ demoMode = false }) {
 
     // Calculate stats
     const today = new Date().toDateString()
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    // Demo mock data - consistent with Demo Summary
+    const demoStats = {
+        ordersToday: 3,
+        ordersWeek: 12,
+        ordersMonth: 45,
+        totalOrders: 127,
+        revenueToday: 8500,
+        totalRevenue: 45000,
+        visits: 1240,
+        instagramShares: 85,
+        stamps: 42,
+        redeemed: 15
+    }
 
-    const ordersToday = orders.filter(o => new Date(o.createdAt).toDateString() === today).length
-    const ordersWeek = orders.filter(o => new Date(o.createdAt) >= weekAgo).length
-    const ordersMonth = orders.filter(o => new Date(o.createdAt) >= monthAgo).length
-
-    const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0)
-    const revenueToday = orders
+    const realOrdersToday = orders.filter(o => new Date(o.createdAt).toDateString() === today).length
+    const realOrdersWeek = orders.filter(o => new Date(o.createdAt) >= weekAgo).length
+    const realOrdersMonth = orders.filter(o => new Date(o.createdAt) >= monthAgo).length
+    const realTotalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0)
+    const realRevenueToday = orders
         .filter(o => new Date(o.createdAt).toDateString() === today)
         .reduce((sum, o) => sum + (o.total || 0), 0)
+
+    // Use demo data when in demo mode
+    const ordersToday = demoMode ? demoStats.ordersToday : realOrdersToday
+    const ordersWeek = demoMode ? demoStats.ordersWeek : realOrdersWeek
+    const ordersMonth = demoMode ? demoStats.ordersMonth : realOrdersMonth
+    const totalRevenue = demoMode ? demoStats.totalRevenue : realTotalRevenue
+    const revenueToday = demoMode ? demoStats.revenueToday : realRevenueToday
+    const totalOrdersCount = demoMode ? demoStats.totalOrders : orders.length
+
+    // Activity stats
+    const visits = demoMode ? demoStats.visits : (analytics.visits || 0)
+    const igShares = demoMode ? demoStats.instagramShares : (analytics.instagramShares || 0)
+    const activeStamps = demoMode ? demoStats.stamps : (rewards.stamps || 0)
+    const redeemedRewards = demoMode ? demoStats.redeemed : (rewards.redeemed?.length || 0)
 
     const StatCard = ({ value, label }) => (
         <div style={{
@@ -98,7 +122,7 @@ function Analytics({ demoMode = false }) {
                         <StatCard value={ordersToday} label="Hoy" />
                         <StatCard value={ordersWeek} label="Esta semana" />
                         <StatCard value={ordersMonth} label="Este mes" />
-                        <StatCard value={orders.length} label="Total" />
+                        <StatCard value={totalOrdersCount} label="Total" />
                     </div>
                 </div>
 
@@ -106,10 +130,10 @@ function Analytics({ demoMode = false }) {
                 <div style={{ marginBottom: 20 }}>
                     <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 10, marginTop: 0 }}>ACTIVIDAD</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <StatCard value={analytics.visits || 0} label="Visitas" />
-                        <StatCard value={analytics.instagramShares || 0} label="Shares IG" />
-                        <StatCard value={rewards.stamps || 0} label="Sellos activos" />
-                        <StatCard value={rewards.redeemed?.length || 0} label="Canjeados" />
+                        <StatCard value={visits} label="Visitas" />
+                        <StatCard value={igShares} label="Shares IG" />
+                        <StatCard value={activeStamps} label="Sellos activos" />
+                        <StatCard value={redeemedRewards} label="Canjeados" />
                     </div>
                 </div>
 
