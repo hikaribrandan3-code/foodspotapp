@@ -447,6 +447,11 @@ function App() {
                             <Analytics />
                         </ProtectedRoute>
                     } />
+                    <Route path="/owner/branding" element={
+                        <ProtectedRoute requiredRole="owner">
+                            <Settings config={safeConfig} />
+                        </ProtectedRoute>
+                    } />
 
                     {/* Demo Routes - NO AUTH REQUIRED */}
                     <Route path="/demo/backend/dashboard" element={<DemoBackend />} />
