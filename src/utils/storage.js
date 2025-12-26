@@ -1,8 +1,7 @@
 // localStorage utility functions for Grub Club App
 
 import { emitDemoEvent } from './demoEvents.js'
-// NOTE: DO NOT import from demoSession.js here - causes circular import crash in Safari
-// Use the local isDemoMode() function which checks storage directly
+import { isInDemoMode } from './demoSession.js'
 
 const STORAGE_PREFIX = "grub_";
 
@@ -65,7 +64,7 @@ export function addOrder(order) {
     const result = saveOrders(orders);
 
     // Demo webhook event
-    if (result && isDemoMode()) {
+    if (result && isInDemoMode()) {
         emitDemoEvent('order.created', {
             orderId: order.id,
             orderNumber: order.orderNumber,
@@ -88,7 +87,7 @@ export function updateOrder(orderId, updates) {
         const newStatus = orders[index].status;
 
         // Demo webhook event: status_updated (only when status actually changes)
-        if (isDemoMode() && updates.status && oldStatus !== newStatus) {
+        if (isInDemoMode() && updates.status && oldStatus !== newStatus) {
             emitDemoEvent('order.status_updated', {
                 orderId,
                 orderNumber: orders[index].orderNumber,
@@ -103,7 +102,7 @@ export function updateOrder(orderId, updates) {
         // ============================================
         if (updates.status === 'entregado') {
             // Demo webhook event: order.completed (fires once on completion)
-            if (isDemoMode()) {
+            if (isInDemoMode()) {
                 emitDemoEvent('order.completed', {
                     orderId,
                     orderNumber: orders[index].orderNumber,

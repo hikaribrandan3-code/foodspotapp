@@ -227,12 +227,12 @@ function Info({ config }) {
                 Acceso administrador
             </button>
 
-            {/* Demo Mode Entry Button - Entry point to demo backend */}
+            {/* Demo Mode Entry Button - Entry point to demo (simplified) */}
             <button
                 onClick={() => {
                     import('../../utils/demoSession.js').then(({ createDemoSession }) => {
                         createDemoSession()
-                        navigate('/demo/backend/dashboard')
+                        navigate('/demo')
                     })
                 }}
                 style={{

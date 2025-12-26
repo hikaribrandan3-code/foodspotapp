@@ -2,59 +2,35 @@
 // Uses SAME UI layout as production, but with demo session + mock data
 // NO authentication required - only demo session check
 
-import React, { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-// NOTE: demoSession.js imports are loaded dynamically at runtime to avoid Safari circular import crash
-// DO NOT add static imports from demoSession.js or demoEvents.js here
+import {
+    getDemoSession,
+    clearDemoSession,
+    getDemoRole,
+    toggleDemoRole,
+    getDemoConfig,
+    updateDemoConfig,
+    getDemoMenu,
+    saveDemoMenu,
+    updateDemoMenuItem,
+    addDemoCategory,
+    applyDemoToFrontend,
+    clearAllDemoData
+} from '../../utils/demoSession.js'
+import { getDemoEvents, clearDemoEvents } from '../../utils/demoEvents.js'
 import { getConfig, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 
-// ============================================
-// SAFARI CRASH FIX: Lazy-load demoSession functions
-// These are loaded dynamically at runtime instead of module init
-// ============================================
-let demoSessionModule = null
-let demoEventsModule = null
-
-async function loadDemoModules() {
-    if (!demoSessionModule) {
-        demoSessionModule = await import('../../utils/demoSession.js')
-    }
-    if (!demoEventsModule) {
-        demoEventsModule = await import('../../utils/demoEvents.js')
-    }
-    return { demoSession: demoSessionModule, demoEvents: demoEventsModule }
-}
-
-// Wrapper functions that use lazy-loaded modules
-const getDemoSession = () => demoSessionModule?.getDemoSession?.() || null
-const clearDemoSession = () => demoSessionModule?.clearDemoSession?.()
-const getDemoRole = () => demoSessionModule?.getDemoRole?.() || 'owner'
-const toggleDemoRole = () => demoSessionModule?.toggleDemoRole?.()
-const getDemoConfig = () => demoSessionModule?.getDemoConfig?.() || {}
-const updateDemoConfig = (updates) => demoSessionModule?.updateDemoConfig?.(updates)
-const getDemoMenu = () => demoSessionModule?.getDemoMenu?.() || { categories: [] }
-const saveDemoMenu = (menu) => demoSessionModule?.saveDemoMenu?.(menu)
-const updateDemoMenuItem = (id, updates) => demoSessionModule?.updateDemoMenuItem?.(id, updates)
-const addDemoCategory = (name) => demoSessionModule?.addDemoCategory?.(name)
-const applyDemoToFrontend = () => demoSessionModule?.applyDemoToFrontend?.()
-const clearAllDemoData = () => demoSessionModule?.clearAllDemoData?.()
-const getDemoEvents = () => demoEventsModule?.getDemoEvents?.() || []
-const clearDemoEvents = () => demoEventsModule?.clearDemoEvents?.()
-
 // Import existing branding components (REUSE)
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
-// NOTE: CoverImageEditor imports Home.jsx which can cause circular import issues
-// Load it lazily to keep it out of the DemoBackend chunk
-const CoverImageEditor = React.lazy(() => import('../../components/CoverImageEditor.jsx'))
+import CoverImageEditor from '../../components/CoverImageEditor.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import DemoEmailPopup from '../../components/DemoEmailPopup.jsx'
-
 
 // Timer utilities for email popup
 import {
@@ -1281,59 +1257,43 @@ function LaunchTab({ cardStyle, labelStyle }) {
 
 function DemoBackend() {
     const navigate = useNavigate()
-
-    // ============================================
-    // ALL HOOKS MUST BE DECLARED BEFORE ANY EARLY RETURN
-    // (React Error #310 - hooks order must be consistent)
-    // ============================================
-    const [isModulesLoaded, setIsModulesLoaded] = useState(false)
-    const [demoSession, setDemoSession] = useState(null)
+    const [demoSession, setDemoSession] = useState(() => getDemoSession())
     const [activeTab, setActiveTab] = useState('summary')
     const [demoOrders, setDemoOrders] = useState(MOCK_ORDERS)
     const orders = demoOrders // Alias for compatibility
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
-    const [role, setRole] = useState('owner')
-    const [demoConfig, setDemoConfig] = useState({})
-    const [demoMenu, setDemoMenu] = useState({ categories: [] })
+    const [role, setRole] = useState(() => getDemoRole())
+
+    // Demo-specific state (localStorage-backed)
+    const [demoConfig, setDemoConfig] = useState(() => getDemoConfig())
+    const [demoMenu, setDemoMenu] = useState(() => getDemoMenu() || getMenu())
     const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false)
     const [applyFeedback, setApplyFeedback] = useState('')
     const [coverEditorOpen, setCoverEditorOpen] = useState(false)
     const [showEmailPopup, setShowEmailPopup] = useState(false)
+
+    // Category creation state (demo)
     const [showAddCategory, setShowAddCategory] = useState(false)
     const [newCategoryName, setNewCategoryName] = useState('')
     const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
+
+    // Order Playback state (demo-only)
     const [playbackOrder, setPlaybackOrder] = useState(null)
     const [playbackOpen, setPlaybackOpen] = useState(false)
 
     // Derived editing state (add more editors here if needed)
     const isEditing = coverEditorOpen
 
-    // ============================================
-    // SAFARI CRASH FIX: Load modules then initialize state
-    // ============================================
+    // Redirect if no valid demo session
     useEffect(() => {
-        loadDemoModules().then(() => {
-            setIsModulesLoaded(true)
-            // Initialize state from loaded modules
-            setDemoSession(getDemoSession())
-            setRole(getDemoRole())
-            setDemoConfig(getDemoConfig())
-            setDemoMenu(getDemoMenu() || getMenu())
-        })
-    }, [])
-
-    // Redirect if no valid demo session (only after modules loaded)
-    useEffect(() => {
-        if (!isModulesLoaded) return
         if (!demoSession) {
             navigate('/')
         }
-    }, [isModulesLoaded, demoSession, navigate])
+    }, [demoSession, navigate])
 
-    // Check session expiry periodically (only after modules loaded)
+    // Check session expiry periodically
     useEffect(() => {
-        if (!isModulesLoaded) return
         const interval = setInterval(() => {
             const session = getDemoSession()
             if (!session) {
@@ -1341,27 +1301,24 @@ function DemoBackend() {
             }
         }, 5000)
         return () => clearInterval(interval)
-    }, [isModulesLoaded, navigate])
+    }, [navigate])
 
-    // Start demo timer on mount (only after modules loaded)
+    // Start demo timer on mount
     useEffect(() => {
-        if (!isModulesLoaded) return
         startDemoTimer()
-    }, [isModulesLoaded])
+    }, [])
 
     // Pause/resume timer when editing state changes
     useEffect(() => {
-        if (!isModulesLoaded) return
         if (isEditing) {
             pauseDemoTimer()
         } else {
             resumeDemoTimer()
         }
-    }, [isModulesLoaded, isEditing])
+    }, [isEditing])
 
     // Poll for popup eligibility
     useEffect(() => {
-        if (!isModulesLoaded) return
         const checkPopup = setInterval(() => {
             if (!isEditing && shouldShowPopup()) {
                 setShowEmailPopup(true)
@@ -1369,27 +1326,7 @@ function DemoBackend() {
             }
         }, 1000)
         return () => clearInterval(checkPopup)
-    }, [isModulesLoaded, isEditing])
-
-    // Show loading until modules are ready
-    if (!isModulesLoaded) {
-        return (
-            <div style={{
-                height: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#f4f6f8',
-                fontFamily: 'system-ui'
-            }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 32, marginBottom: 16 }}>⏳</div>
-                    <p style={{ color: '#666' }}>Loading Demo Backend...</p>
-                </div>
-            </div>
-        )
-    }
-
+    }, [isEditing])
 
     const handleExitDemo = () => {
         clearDemoSession()
@@ -1650,20 +1587,18 @@ function DemoBackend() {
                             <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Same editor as Owner/SuperAdmin — drag to position, pinch to zoom</p>
                         </div>
 
-                        {/* CoverImageEditor Modal - SAME AS PRODUCTION (lazy loaded) */}
-                        <Suspense fallback={null}>
-                            <CoverImageEditor
-                                isOpen={coverEditorOpen}
-                                onClose={() => setCoverEditorOpen(false)}
-                                onSave={(data) => {
-                                    handleConfigChange({ coverImage: data.image })
-                                    setCoverEditorOpen(false)
-                                }}
-                                initialData={{ image: demoConfig.coverImage }}
-                                demoMode={true}
-                                config={getConfig()}
-                            />
-                        </Suspense>
+                        {/* CoverImageEditor Modal - SAME AS PRODUCTION */}
+                        <CoverImageEditor
+                            isOpen={coverEditorOpen}
+                            onClose={() => setCoverEditorOpen(false)}
+                            onSave={(data) => {
+                                handleConfigChange({ coverImage: data.image })
+                                setCoverEditorOpen(false)
+                            }}
+                            initialData={{ image: demoConfig.coverImage }}
+                            demoMode={true}
+                            config={getConfig()}
+                        />
 
                         {/* Color Picker - REUSE EXISTING */}
                         <BrandingColorPicker

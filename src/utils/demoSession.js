@@ -2,8 +2,9 @@
 // Demo intent persisted in localStorage (PWA-safe)
 // Session details cached in sessionStorage (best-effort accelerator)
 
-// NOTE: DO NOT import demoEvents.js here - causes circular import crash in Safari
-// Use dynamic import() when needed instead
+// NOTE: Must use ES module imports here.
+// ❌ require() fails silently in Vite production builds and will break demo → frontend sync.
+import { emitDemoEvent } from './demoEvents.js'
 
 const DEMO_SESSION_KEY = 'demo_session'
 const DEMO_INTENT_KEY = 'foodspot_demo_active' // localStorage - survives PWA navigation
@@ -365,16 +366,14 @@ export function applyDemoToFrontend() {
 
     if (!success) return false
 
-    // Demo-specific: Emit menu.updated event (use dynamic import to avoid circular dependency)
+    // Demo-specific: Emit menu.updated event
     const categoriesCount = demoMenu?.categories?.length || 0
     const itemsCount = demoMenu?.categories?.reduce((sum, cat) => sum + (cat.items?.length || 0), 0) || 0
-    import('./demoEvents.js').then(({ emitDemoEvent }) => {
-        emitDemoEvent('menu.updated', {
-            categoriesCount,
-            itemsCount,
-            updatedAt: new Date().toISOString()
-        })
-    }).catch(e => console.warn('Failed to emit demo event:', e))
+    emitDemoEvent('menu.updated', {
+        categoriesCount,
+        itemsCount,
+        updatedAt: new Date().toISOString()
+    })
 
     console.log('✅ Demo changes applied to frontend')
 
