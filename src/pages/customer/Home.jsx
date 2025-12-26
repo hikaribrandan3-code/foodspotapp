@@ -429,80 +429,7 @@ function Home({ config }) {
         >
             <HeaderClamp config={config} />
 
-            {/* Demo Mode Badge */}
-            {isInDemoMode() && session?.role !== 'superadmin' && session?.role !== 'owner' && (
-                <div
-                    onClick={() => navigate('/demo')}
-                    style={{
-                        position: 'fixed',
-                        top: 16,
-                        right: 16,
-                        zIndex: 9999,
-                        background: '#F59E0B',
-                        color: '#FFFFFF',
-                        padding: '6px 10px',
-                        borderRadius: 20,
-                        fontWeight: 700,
-                        fontSize: 10,
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        cursor: 'pointer',
-                        letterSpacing: 0.5,
-                        textTransform: 'uppercase'
-                    }}
-                >
-                    DEMO
-                </div>
-            )}
 
-            {/* Super Admin Badge */}
-            {session?.role === 'superadmin' && (
-                <div
-                    onClick={() => navigate('/admin/dashboard')}
-                    style={{
-                        position: 'fixed',
-                        top: 16,
-                        right: 16,
-                        zIndex: 9999,
-                        background: '#0F172A',
-                        color: '#FFFFFF',
-                        padding: '6px 10px',
-                        borderRadius: 20,
-                        fontWeight: 700,
-                        fontSize: 10,
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        cursor: 'pointer',
-                        letterSpacing: 0.5,
-                        textTransform: 'uppercase'
-                    }}
-                >
-                    SUPER
-                </div>
-            )}
-
-            {/* Owner Badge */}
-            {session?.role === 'owner' && (
-                <div
-                    onClick={() => navigate('/owner')}
-                    style={{
-                        position: 'fixed',
-                        top: 16,
-                        right: 16,
-                        zIndex: 9999,
-                        background: '#3B82F6',
-                        color: '#FFFFFF',
-                        padding: '6px 10px',
-                        borderRadius: 20,
-                        fontWeight: 700,
-                        fontSize: 10,
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        cursor: 'pointer',
-                        letterSpacing: 0.5,
-                        textTransform: 'uppercase'
-                    }}
-                >
-                    OWNER
-                </div>
-            )}
 
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (
@@ -553,6 +480,7 @@ function Home({ config }) {
                 ref={actionsGridRef}
                 className="actions-grid"
                 style={{
+                    position: 'relative',
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: 12,
@@ -646,6 +574,73 @@ function Home({ config }) {
                         </Link>
                     )
                 })}
+
+                {/* Role Badges - Centered in Grid */}
+                {isInDemoMode() && session?.role !== 'superadmin' && session?.role !== 'owner' && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 10,
+                        background: '#F59E0B',
+                        color: '#FFFFFF',
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        fontWeight: 700,
+                        fontSize: 9,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        pointerEvents: 'none',
+                        letterSpacing: 0.5,
+                        whiteSpace: 'nowrap'
+                    }}>
+                        DEMO
+                    </div>
+                )}
+
+                {session?.role === 'superadmin' && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 10,
+                        background: '#0F172A',
+                        color: '#FFFFFF',
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        fontWeight: 700,
+                        fontSize: 9,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        pointerEvents: 'none',
+                        letterSpacing: 0.5,
+                        whiteSpace: 'nowrap'
+                    }}>
+                        SUPER
+                    </div>
+                )}
+
+                {session?.role === 'owner' && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 10,
+                        background: '#3B82F6',
+                        color: '#FFFFFF',
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        fontWeight: 700,
+                        fontSize: 9,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        pointerEvents: 'none',
+                        letterSpacing: 0.5,
+                        whiteSpace: 'nowrap'
+                    }}>
+                        OWNER
+                    </div>
+                )}
             </div>
 
             {/* Featured Feed Section - Uses LOCAL STATE */}
