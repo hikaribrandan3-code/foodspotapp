@@ -435,19 +435,19 @@ function Home({ config }) {
                     onClick={() => navigate('/demo')}
                     style={{
                         position: 'fixed',
-                        top: 100,
-                        right: 0,
-                        zIndex: 50,
+                        top: 16,
+                        right: 16,
+                        zIndex: 9999,
                         background: '#F59E0B',
                         color: '#FFFFFF',
-                        padding: '4px 8px',
-                        borderTopLeftRadius: 6,
-                        borderBottomLeftRadius: 6,
+                        padding: '6px 10px',
+                        borderRadius: 20,
                         fontWeight: 700,
                         fontSize: 10,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                         cursor: 'pointer',
-                        letterSpacing: 0.5
+                        letterSpacing: 0.5,
+                        textTransform: 'uppercase'
                     }}
                 >
                     DEMO
@@ -460,19 +460,19 @@ function Home({ config }) {
                     onClick={() => navigate('/admin/dashboard')}
                     style={{
                         position: 'fixed',
-                        top: 100,
-                        right: 0,
-                        zIndex: 50,
+                        top: 16,
+                        right: 16,
+                        zIndex: 9999,
                         background: '#0F172A',
                         color: '#FFFFFF',
-                        padding: '4px 8px',
-                        borderTopLeftRadius: 6,
-                        borderBottomLeftRadius: 6,
+                        padding: '6px 10px',
+                        borderRadius: 20,
                         fontWeight: 700,
                         fontSize: 10,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                         cursor: 'pointer',
-                        letterSpacing: 0.5
+                        letterSpacing: 0.5,
+                        textTransform: 'uppercase'
                     }}
                 >
                     SUPER
@@ -485,19 +485,19 @@ function Home({ config }) {
                     onClick={() => navigate('/owner')}
                     style={{
                         position: 'fixed',
-                        top: 100,
-                        right: 0,
-                        zIndex: 50,
+                        top: 16,
+                        right: 16,
+                        zIndex: 9999,
                         background: '#3B82F6',
                         color: '#FFFFFF',
-                        padding: '4px 8px',
-                        borderTopLeftRadius: 6,
-                        borderBottomLeftRadius: 6,
+                        padding: '6px 10px',
+                        borderRadius: 20,
                         fontWeight: 700,
                         fontSize: 10,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                         cursor: 'pointer',
-                        letterSpacing: 0.5
+                        letterSpacing: 0.5,
+                        textTransform: 'uppercase'
                     }}
                 >
                     OWNER
