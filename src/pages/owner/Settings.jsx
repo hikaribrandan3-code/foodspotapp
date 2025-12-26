@@ -8,6 +8,7 @@ import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
+import BackendNav from '../../components/BackendNav.jsx'
 
 // Section Header Component
 function SectionHeader({ title }) {
@@ -1056,6 +1057,11 @@ function Settings({ config }) {
                 config={config}
             />
 
+            {/* Backend Navigation */}
+            <BackendNav
+                role="owner"
+                useRoutes={true}
+            />
         </div>
     )
 }

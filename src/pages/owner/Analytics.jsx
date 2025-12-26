@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getAnalytics, getOrders, getRewards } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
+import BackendNav from '../../components/BackendNav.jsx'
 
 function Analytics() {
     const navigate = useNavigate()
@@ -107,6 +108,11 @@ function Analytics() {
                 </p>
             </div>
 
+            {/* Backend Navigation */}
+            <BackendNav
+                role="owner"
+                useRoutes={true}
+            />
         </div>
     )
 }

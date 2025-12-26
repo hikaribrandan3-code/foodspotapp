@@ -4,6 +4,7 @@ import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
+import BackendNav from '../../components/BackendNav.jsx'
 
 function DeliveryManager() {
     const navigate = useNavigate()
@@ -274,6 +275,11 @@ function DeliveryManager() {
                 </div>
             </div>
 
+            {/* Backend Navigation */}
+            <BackendNav
+                role="owner"
+                useRoutes={true}
+            />
         </div>
     )
 }

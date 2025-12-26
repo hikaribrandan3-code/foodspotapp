@@ -5,6 +5,7 @@ import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled,
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
+import BackendNav from '../../components/BackendNav.jsx'
 
 function MenuManager() {
     const navigate = useNavigate()
@@ -450,6 +451,11 @@ function MenuManager() {
                 </div>
             )}
 
+            {/* Backend Navigation */}
+            <BackendNav
+                role="owner"
+                useRoutes={true}
+            />
         </div>
     )
 }
