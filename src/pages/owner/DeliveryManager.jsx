@@ -66,8 +66,9 @@ function DeliveryManager({ demoMode = false }) {
         setOrders(getOrders())
     }
 
-    // Demo mock orders
+    // Demo mock orders - Total 12 orders (2 active + 10 delivered)
     const demoOrdersData = [
+        // Active Orders
         {
             id: 'demo-1',
             orderType: 'delivery',
@@ -93,13 +94,29 @@ function DeliveryManager({ demoMode = false }) {
             createdAt: new Date(Date.now() - 30 * 60000).toISOString(),
             paymentConfirmed: true,
             paymentMethod: 'transfer'
-        }
+        },
+        // Delivered Orders (History)
+        ...Array.from({ length: 10 }).map((_, i) => ({
+            id: `demo-hist-${i}`,
+            orderType: 'delivery',
+            status: 'entregado',
+            total: 3500 + (i * 100),
+            customerName: `Cliente Demo ${i + 1}`,
+            address: `Calle Demo ${100 + i}`,
+            phone: '1133334444',
+            items: [{ name: 'Combo Demo', quantity: 1 }],
+            createdAt: new Date(Date.now() - (i + 2) * 3600000).toISOString(),
+            paymentConfirmed: true,
+            paymentMethod: 'mercado_pago',
+            deliveryConfirmedAt: new Date().toISOString()
+        }))
     ]
 
     const effectiveOrders = demoMode ? demoOrdersData : orders
 
-    // Filter for active delivery orders
+    // Filter for active vs completed delivery orders
     const deliveryOrders = effectiveOrders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+    const completedOrders = effectiveOrders.filter(o => o.orderType === 'delivery' && (o.status === 'entregado' || o.status === 'cancelado'))
 
     // Today's delivery count
     const todayDeliveries = effectiveOrders.filter(o => o.orderType === 'delivery' && new Date(o.createdAt).toDateString() === new Date().toDateString()).length
@@ -302,6 +319,46 @@ function DeliveryManager({ demoMode = false }) {
                             </div>
                         )
                     })
+                )}
+
+                {/* DEMO ONLY: History Section to match Summary Stats */}
+                {demoMode && completedOrders.length > 0 && (
+                    <div style={{ marginTop: 32 }}>
+                        <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 12, textTransform: 'uppercase' }}>
+                            Historial de Hoy (Demo)
+                        </h3>
+                        {completedOrders.map(order => (
+                            <div key={order.id} style={{
+                                background: 'white',
+                                borderRadius: 8,
+                                border: '1px solid #E5E7EB',
+                                padding: 12,
+                                marginBottom: 10,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                opacity: 0.7
+                            }}>
+                                <div>
+                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{order.customerName}</div>
+                                    <div style={{ fontSize: 12, color: '#6B7280' }}>
+                                        {order.items.length} items · ${order.total.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <span style={{
+                                        fontSize: 11,
+                                        background: '#F1F5F9',
+                                        color: '#64748B',
+                                        padding: '2px 8px',
+                                        borderRadius: 12
+                                    }}>
+                                        Entregado
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 )}
 
                 {/* Today's delivery summary */}
