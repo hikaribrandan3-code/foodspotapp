@@ -98,6 +98,8 @@ function SuperAdmin({ config }) {
     // Image upload state
     const [uploadingItemId, setUploadingItemId] = useState(null)
     const [uploadStatus, setUploadStatus] = useState(null)
+    // State for granular editing (Moved from invalid location)
+    const [editingPillId, setEditingPillId] = useState(null)
     const [uploadingFeaturedSlot, setUploadingFeaturedSlot] = useState(null)
     const menuImageInputRef = useRef(null)
     const featuredImageInputRef = useRef(null)
@@ -879,8 +881,7 @@ function SuperAdmin({ config }) {
                         </>
                     )}
 
-    // State for granular editing
-                    const [editingPillId, setEditingPillId] = useState(null)
+
 
                     // ==================== BRANDING TAB ====================
                     {activeTab === 'branding' && canEdit && (
