@@ -28,10 +28,10 @@ export const DIVIDER_PRESETS = [
         category: 'bakery'
     },
     {
-        id: 'bakery-5',
-        name: 'Horno de leña',
-        url: 'https://images.unsplash.com/photo-1586765101683-176c7c253e77?w=800&h=200&fit=crop&q=80',
-        category: 'bakery'
+        id: 'breakfast-1',
+        name: 'Pancakes con miel',
+        url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&h=200&fit=crop&q=80',
+        category: 'breakfast'
     },
 
     // --- COFFEE SPOTS (5) ---
@@ -80,10 +80,10 @@ export const DIVIDER_PRESETS = [
         category: 'icecream'
     },
     {
-        id: 'icecream-3',
-        name: 'Paletas frutales',
-        url: 'https://images.unsplash.com/photo-1517093247926-d648ea0c4b22?w=800&h=200&fit=crop&q=80',
-        category: 'icecream'
+        id: 'breakfast-2',
+        name: 'Yogurt con granola',
+        url: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&h=200&fit=crop&q=80',
+        category: 'breakfast'
     },
     {
         id: 'icecream-4',
@@ -100,10 +100,10 @@ export const DIVIDER_PRESETS = [
 
     // --- CANDY SPOTS (3) ---
     {
-        id: 'candy-1',
-        name: 'Golosinas coloridas',
-        url: 'https://images.unsplash.com/photo-1532153354457-5fbe1a3bb6fa?w=800&h=200&fit=crop&q=80',
-        category: 'candy'
+        id: 'breakfast-3',
+        name: 'Waffles belgas',
+        url: 'https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=800&h=200&fit=crop&q=80',
+        category: 'breakfast'
     },
     {
         id: 'candy-2',
@@ -126,10 +126,10 @@ export const DIVIDER_PRESETS = [
         category: 'asian'
     },
     {
-        id: 'sushi-2',
-        name: 'Rolls variados',
-        url: 'https://images.unsplash.com/photo-1617196018665-ea58dc08af2d?w=800&h=200&fit=crop&q=80',
-        category: 'asian'
+        id: 'breakfast-4',
+        name: 'Desayuno completo',
+        url: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=800&h=200&fit=crop&q=80',
+        category: 'breakfast'
     },
     {
         id: 'asian-3',
