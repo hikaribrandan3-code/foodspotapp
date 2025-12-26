@@ -558,9 +558,23 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=200&h=200&fit=crop',
     ]
 
-    const getItemImage = (item, index) => {
+    // Helper: Generate a stable number from a string ID
+    const getStableIndex = (id) => {
+        let hash = 0
+        for (let i = 0; i < id.length; i++) {
+            hash = id.charCodeAt(i) + ((hash << 5) - hash)
+        }
+        return Math.abs(hash)
+    }
+
+    const getItemImage = (item) => {
+        // 1. If real image exists, use it (This is why Flat White worked)
         if (item.image) return item.image
-        return placeholderImages[index % placeholderImages.length]
+
+        // 2. If no image, generate STABLE placeholder based on ID
+        // DO NOT use 'index' here - that caused the identity crisis
+        const stableIndex = getStableIndex(item.id)
+        return placeholderImages[stableIndex % placeholderImages.length]
     }
 
     return (
@@ -830,7 +844,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                                                     marginBottom: 8
                                                 }}>
                                                     <img
-                                                        src={getItemImage(item, index)}
+                                                        src={getItemImage(item)}
                                                         alt={item.name}
                                                         style={{
                                                             width: '100%',
@@ -1019,7 +1033,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                                 background: '#E8E4DD'
                             }}>
                                 <img
-                                    src={getItemImage(item, dragState.itemIndex)}
+                                    src={getItemImage(item)}
                                     alt={item.name}
                                     style={{
                                         width: '100%',
