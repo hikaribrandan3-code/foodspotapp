@@ -2,13 +2,19 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory } from '../../config/menuData.js'
-import { getConfig, updateConfig } from '../../config/appConfig.js' // Added config imports
+import { updateConfig } from '../../config/appConfig.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
-function MenuManager({ demoMode = false }) {
+/**
+ * MENU MANAGER
+ * 
+ * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
+ * This ensures Single Source of Truth from App.jsx.
+ */
+function MenuManager({ config, demoMode = false }) {
     const navigate = useNavigate()
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
 
@@ -16,7 +22,9 @@ function MenuManager({ demoMode = false }) {
     const targetBusinessId = isSimulated ? impersonatingBusinessId : currentUser?.businessId
 
     const [menu, setMenu] = useState(() => getMenu(targetBusinessId))
-    const [config, setConfig] = useState(() => getConfig()) // Added config state
+    // REMOVED: const [config, setConfig] = useState(() => getConfig())
+    // Config now comes from props
+    const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
     const [editingItem, setEditingItem] = useState(null)
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
     const [uploadStatus, setUploadStatus] = useState(null)
@@ -156,7 +164,7 @@ function MenuManager({ demoMode = false }) {
     // ---------------------
 
     // --- FEATURED ITEMS LOGIC (Synced with SuperAdmin) ---
-    const activeFeaturedItems = config.featuredPhotos || []
+    const activeFeaturedItems = localConfig?.featuredPhotos || []
     const isFeatured = (item) => activeFeaturedItems.some(f => f && f.name === item.name)
 
     const handleToggleFeatured = (item) => {
@@ -178,13 +186,11 @@ function MenuManager({ demoMode = false }) {
             }
         }
 
-        // Update both Config (for Home Top 4) AND Menu Item flag (for Promo toggle sync)
-        const newConfig = { ...config, featuredPhotos: currentFeatured }
+        // Update both Config (for Home Top 4) AND local state
+        const newConfig = { ...localConfig, featuredPhotos: currentFeatured }
         updateConfig(newConfig)
-        setConfig(newConfig)
-
-        // Find and toggle the item in the menu structure for visual sync
-        // Note: The actual "Promo" toggle in the UI will now reflect isFeatured(item)
+        setLocalConfig(newConfig)
+        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
     // -----------------------------------------------------
 

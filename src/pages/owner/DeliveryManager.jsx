@@ -3,10 +3,17 @@ import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.js'
+import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
-function DeliveryManager({ demoMode = false }) {
+/**
+ * DELIVERY MANAGER
+ * 
+ * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
+ * Payment gate logic MUST use canAdvanceOrder() from orderStateGuard.js.
+ */
+function DeliveryManager({ config, demoMode = false }) {
     const navigate = useNavigate()
     const [orders, setOrders] = useState(() => getOrders())
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
@@ -37,7 +44,7 @@ function DeliveryManager({ demoMode = false }) {
 
     // Helper for status info (reusing Staff logic)
     const getDeliveryStatusInfo = (status) => {
-        const config = {
+        const statusConfig = {
             pendiente: { label: 'Pendiente', next: 'confirmado', nextLabel: 'Confirmar →', class: 'pending', bg: '#FEF3C7', color: '#B45309' },
             confirmado: { label: 'Confirmado', next: 'preparacion', nextLabel: 'A cocina →', class: 'confirmed', bg: '#DBEAFE', color: '#1D4ED8' },
             preparacion: { label: 'Preparando', next: 'listo', nextLabel: 'Listo →', class: 'preparing', bg: '#EDE9FE', color: '#7C3AED' },
@@ -45,14 +52,15 @@ function DeliveryManager({ demoMode = false }) {
             en_camino: { label: 'En camino', next: 'entregado', nextLabel: 'Entregado', class: 'on-way', bg: '#FFEDD5', color: '#9A3412' },
             entregado: { label: 'Entregado', bg: '#F1F5F9', color: '#64748B' }
         }
-        return config[status] || { label: status, next: null, nextLabel: null, class: '', bg: '#F3F4F6', color: '#6B7280' }
+        return statusConfig[status] || { label: status, next: null, nextLabel: null, class: '', bg: '#F3F4F6', color: '#6B7280' }
     }
 
-    // Handle status change with payment validation
+    // Handle status change with centralized payment validation
     const handleDeliveryStatusChange = (orderId, newStatus, order) => {
-        // Check payment confirmation for delivery orders before prep/dispatch
-        if (!order.paymentConfirmed && (newStatus === 'preparacion' || newStatus === 'en_camino')) {
-            alert('❌ El pago debe confirmarse ANTES de preparar o despachar envíos.')
+        // Use centralized payment gate from orderStateGuard.js
+        const validation = canAdvanceOrder(order, newStatus, config)
+        if (!validation.allowed) {
+            alert(validation.reason)
             return
         }
         updateOrder(orderId, { status: newStatus })

@@ -461,7 +461,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                         touchAction: 'manipulation'
                     }}
                 >
-                    ✕ Cancel
+                    ✕ Cancelar
                 </button>
                 <button
                     onClick={() => fileInputRef.current?.click()}

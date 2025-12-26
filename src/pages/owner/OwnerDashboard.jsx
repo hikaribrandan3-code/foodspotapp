@@ -1,78 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getAuth, clearAuth } from '../../utils/storage.js';
-import { getConfig } from '../../config/appConfig.js';
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getAuth, clearAuth } from '../../utils/storage.js'
 
 // Layout
-import DashboardLayout from '../../components/Shared/DashboardLayout.jsx';
+import DashboardLayout from '../../components/Shared/DashboardLayout.jsx'
 
 // Tab Components (imported from existing pages)
-import StoreBranding from '../../components/Admin/StoreBranding.jsx';
-
-// Lazy imports for existing components - we'll pass props to them
-// Note: MenuManager, Analytics, etc. are used as-is without modification
+import StoreBranding from '../../components/Admin/StoreBranding.jsx'
 
 /**
  * OWNER DASHBOARD
  * Unified dashboard using DashboardLayout wrapper.
- * Replaces separate owner pages with single tab-based interface.
+ * 
+ * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
+ * This ensures Single Source of Truth from App.jsx.
  */
-export default function OwnerDashboard() {
-    const navigate = useNavigate();
-    const [currentTab, setCurrentTab] = useState('menu');
-    const [config, setConfig] = useState(() => getConfig());
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [userName, setUserName] = useState('Owner');
+export default function OwnerDashboard({ config }) {
+    const navigate = useNavigate()
+    const [currentTab, setCurrentTab] = useState('menu')
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [userName, setUserName] = useState('Owner')
 
     // Auth check
     useEffect(() => {
-        const auth = getAuth();
+        const auth = getAuth()
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
-            navigate('/owner');
-            return;
+            navigate('/owner')
+            return
         }
-        setIsAuthenticated(true);
-        setUserName(auth.username || 'Owner');
-    }, [navigate]);
-
-    // Config sync
-    useEffect(() => {
-        const handleSync = () => setConfig(getConfig());
-        window.addEventListener('frontendSync', handleSync);
-        const interval = setInterval(handleSync, 2000);
-        return () => {
-            window.removeEventListener('frontendSync', handleSync);
-            clearInterval(interval);
-        };
-    }, []);
+        setIsAuthenticated(true)
+        setUserName(auth.username || 'Owner')
+    }, [navigate])
 
     // Logout handler
     const handleLogout = () => {
-        clearAuth();
-        navigate('/');
-    };
+        clearAuth()
+        navigate('/')
+    }
 
     if (!isAuthenticated) {
-        return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
+        return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>
     }
 
     // Render tab content
     const renderTabContent = () => {
         switch (currentTab) {
             case 'menu':
-                return <MenuManagerEmbed config={config} />;
+                return <MenuManagerEmbed config={config} />
             case 'orders':
-                return <OrdersEmbed config={config} />;
+                return <OrdersEmbed config={config} />
             case 'analytics':
-                return <AnalyticsEmbed config={config} />;
+                return <AnalyticsEmbed config={config} />
             case 'settings':
-                return <StoreBranding isDemo={false} />;
+                return <StoreBranding config={config} isDemo={false} />
             case 'qr':
-                return <QRCodeEmbed />;
+                return <QRCodeEmbed />
             default:
-                return <div>Select a tab</div>;
+                return <div>Select a tab</div>
         }
-    };
+    }
 
     return (
         <DashboardLayout
@@ -83,12 +69,11 @@ export default function OwnerDashboard() {
         >
             {renderTabContent()}
         </DashboardLayout>
-    );
+    )
 }
 
 // ============================================
 // EMBEDDED COMPONENTS (Lightweight wrappers)
-// These will render the core content from existing pages
 // ============================================
 
 function MenuManagerEmbed({ config }) {
@@ -100,7 +85,6 @@ function MenuManagerEmbed({ config }) {
             <p style={{ color: '#6B7280', marginBottom: 20 }}>
                 Manage your menu items, categories, and pricing.
             </p>
-            {/* Link to existing MenuManager for now */}
             <a
                 href="/owner/menu"
                 style={{
@@ -119,7 +103,7 @@ function MenuManagerEmbed({ config }) {
                 Tip: Full menu editing is available in the dedicated page for better mobile experience.
             </p>
         </div>
-    );
+    )
 }
 
 function OrdersEmbed({ config }) {
@@ -146,7 +130,7 @@ function OrdersEmbed({ config }) {
                 Open Order Manager →
             </a>
         </div>
-    );
+    )
 }
 
 function AnalyticsEmbed({ config }) {
@@ -173,7 +157,7 @@ function AnalyticsEmbed({ config }) {
                 Open Analytics →
             </a>
         </div>
-    );
+    )
 }
 
 function QRCodeEmbed() {
@@ -196,5 +180,5 @@ function QRCodeEmbed() {
                 <p style={{ color: '#6B7280' }}>QR Code generator coming soon!</p>
             </div>
         </div>
-    );
+    )
 }

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { getConfig, updateConfig, CURATED_FONTS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js';
-import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js';
+import React, { useState, useEffect } from 'react'
+import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
+import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 
 /**
  * STORE BRANDING COMPONENT
  * Unified branding settings for Owner and Demo modes.
+ * 
+ * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
+ * This ensures Single Source of Truth from App.jsx.
  * 
  * Visual Hierarchy:
  * 1. Hero/Cover Image (Top priority)
@@ -12,21 +15,25 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
  * 3. Navigation & Colors
  */
 
-export default function StoreBranding({ isDemo = false }) {
-    const [config, setConfig] = useState(() => getConfig());
-    const [uploadStatus, setUploadStatus] = useState(null);
+export default function StoreBranding({ config, isDemo = false }) {
+    // Local copy for mutations (syncs back to parent via frontendSync)
+    const [localConfig, setLocalConfig] = useState(config || {})
+    const [uploadStatus, setUploadStatus] = useState(null)
 
-    // Refresh config on mount
+    // Sync with parent config changes
     useEffect(() => {
-        setConfig(getConfig());
-    }, []);
+        if (config) {
+            setLocalConfig(config)
+        }
+    }, [config])
 
     // Helper to update config and sync
     const handleConfigUpdate = (updates) => {
-        updateConfig(updates);
-        setConfig(getConfig());
-        window.dispatchEvent(new CustomEvent('frontendSync'));
-    };
+        const newConfig = { ...localConfig, ...updates }
+        updateConfig(newConfig)
+        setLocalConfig(newConfig)
+        window.dispatchEvent(new CustomEvent('frontendSync'))
+    }
 
     // Image upload handler
     const handleImageUpload = async (e, type) => {

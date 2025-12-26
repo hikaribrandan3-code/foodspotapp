@@ -757,7 +757,7 @@ function SuperAdmin({ config }) {
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            Cancel
+                                            Cancelar
                                         </button>
                                     </div>
                                 </div>

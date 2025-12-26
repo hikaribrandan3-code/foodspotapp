@@ -1,7 +1,14 @@
-// Delivery Utilities for FoodSpot v1.0
-// Handles delivery-specific logic: payment time windows, validation, confirmation
+/**
+ * REFACTORED: Delivery Utils
+ * Accepts 'config' as a parameter to ensure single-source-of-truth.
+ * 
+ * ARCHITECTURAL INVARIANT: These functions are PURE.
+ * They do NOT call getConfig() — config must be passed in.
+ */
 
-import { getConfig, updateConfig } from '../config/appConfig.js'
+// ============================================
+// TIME-BASED UTILITIES (No config needed)
+// ============================================
 
 /**
  * Check if cash payment is currently allowed
@@ -31,12 +38,13 @@ export function getCashTimeWindow() {
     }
 }
 
+// ============================================
+// VALIDATION UTILITIES (No config needed)
+// ============================================
+
 /**
  * Validate required delivery information
  * @param {Object} info - Customer delivery info
- * @param {string} info.name - Full name (required)
- * @param {string} info.phone - Phone number (required)
- * @param {string} info.address - Delivery address (required)
  * @returns {{ valid: boolean, errors: string[] }}
  */
 export function validateDeliveryInfo(info) {
@@ -81,6 +89,10 @@ export function verifyDeliveryCode(phone, code) {
     return last4 === code.replace(/\D/g, '')
 }
 
+// ============================================
+// SESSION UTILITIES (No config needed)
+// ============================================
+
 /**
  * Check if currently in delivery mode (from session storage)
  * @returns {boolean}
@@ -105,15 +117,16 @@ export function getDeliveryModeLabel() {
 }
 
 // ============================================
-// DELIVERY CONFIGURATION UTILITIES (v1)
+// CONFIG-DEPENDENT UTILITIES (REFACTORED)
 // ============================================
 
 /**
  * Get the delivery origin address (from config or businessInfo)
+ * @param {Object} config - App configuration object
  * @returns {string}
  */
-export function getDeliveryOriginAddress() {
-    const config = getConfig()
+export function getDeliveryOriginAddress(config) {
+    if (!config) return ''
     if (config.delivery?.originAddress) {
         return config.delivery.originAddress
     }
@@ -122,39 +135,40 @@ export function getDeliveryOriginAddress() {
 
 /**
  * Get configured delivery radius in km
+ * @param {Object} config - App configuration object
  * @returns {number}
  */
-export function getDeliveryRadius() {
-    const config = getConfig()
-    return config.delivery?.radiusKm || 5
+export function getDeliveryRadius(config) {
+    return config?.delivery?.radiusKm || 5
 }
 
 /**
  * Get configured flat delivery fee
+ * @param {Object} config - App configuration object
  * @returns {number}
  */
-export function getDeliveryFee() {
-    const config = getConfig()
-    return config.delivery?.flatFee || 0
+export function getDeliveryFee(config) {
+    return config?.delivery?.flatFee || 0
 }
 
 /**
  * Get free delivery threshold
+ * @param {Object} config - App configuration object
  * @returns {number}
  */
-export function getFreeDeliveryThreshold() {
-    const config = getConfig()
-    return config.delivery?.freeDeliveryThreshold || 0
+export function getFreeDeliveryThreshold(config) {
+    return config?.delivery?.freeDeliveryThreshold || 0
 }
 
 /**
  * Calculate delivery fee for an order total
- * @param {number} orderTotal
+ * @param {Object} config - App configuration object
+ * @param {number} orderTotal - Order subtotal
  * @returns {number}
  */
-export function calculateDeliveryFee(orderTotal) {
-    const fee = getDeliveryFee()
-    const threshold = getFreeDeliveryThreshold()
+export function calculateDeliveryFee(config, orderTotal) {
+    const fee = getDeliveryFee(config)
+    const threshold = getFreeDeliveryThreshold(config)
 
     if (threshold > 0 && orderTotal >= threshold) {
         return 0 // Free delivery
@@ -164,67 +178,40 @@ export function calculateDeliveryFee(orderTotal) {
 
 /**
  * Get number of delivery config changes this month
+ * @param {Object} config - App configuration object
  * @returns {number}
  */
-export function getDeliveryChangesThisMonth() {
-    const config = getConfig()
-    const changes = config.delivery?.configChanges || []
+export function getDeliveryChangesThisMonth(config) {
+    const history = config?.delivery?.changeHistory || []
     const now = new Date()
     const thisMonth = now.getMonth()
     const thisYear = now.getFullYear()
 
-    return changes.filter(change => {
+    return history.filter(change => {
         const changeDate = new Date(change.timestamp)
         return changeDate.getMonth() === thisMonth && changeDate.getFullYear() === thisYear
     }).length
 }
 
 /**
- * Check if delivery config can be changed (2× per month limit)
- * @returns {{ allowed: boolean, remaining: number, message: string }}
+ * Check if delivery config can be changed (3× per month limit)
+ * @param {Object} config - App configuration object
+ * @returns {boolean}
  */
-export function canChangeDeliveryConfig() {
-    const config = getConfig()
-    const max = config.delivery?.maxChangesPerMonth || 2
-    const used = getDeliveryChangesThisMonth()
-    const remaining = Math.max(0, max - used)
-
-    return {
-        allowed: remaining > 0,
-        remaining,
-        message: remaining > 0
-            ? `${remaining} cambio(s) restante(s) este mes`
-            : 'Límite de cambios alcanzado (2 por mes)'
-    }
+export function canChangeDeliveryConfig(config) {
+    return getDeliveryChangesThisMonth(config) < 3
 }
 
 /**
- * Record a delivery config change
+ * Record a delivery config change (returns new delivery object, doesn't mutate)
+ * @param {Object} config - App configuration object
  * @param {string} field - Field that was changed
  * @param {*} oldValue - Previous value
  * @param {*} newValue - New value
- * @returns {boolean} - Whether the change was recorded
+ * @returns {Object} - New delivery config object with change recorded
  */
-export function recordDeliveryConfigChange(field, oldValue, newValue) {
-    const { allowed } = canChangeDeliveryConfig()
-    if (!allowed) return false
-
-    const config = getConfig()
-    const changes = config.delivery?.configChanges || []
-
-    changes.push({
-        timestamp: new Date().toISOString(),
-        field,
-        oldValue,
-        newValue
-    })
-
-    updateConfig({
-        delivery: {
-            ...config.delivery,
-            configChanges: changes
-        }
-    })
-
-    return true
+export function recordDeliveryConfigChange(config, field, oldValue, newValue) {
+    const history = config?.delivery?.changeHistory || []
+    const newChange = { field, oldValue, newValue, timestamp: new Date().toISOString() }
+    return { ...config.delivery, changeHistory: [...history, newChange] }
 }

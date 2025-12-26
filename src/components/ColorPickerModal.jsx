@@ -307,7 +307,7 @@ export default function ColorPickerModal({
                             cursor: 'pointer'
                         }}
                     >
-                        Done
+                        Listo
                     </button>
                 </div>
 

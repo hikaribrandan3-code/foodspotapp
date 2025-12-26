@@ -664,7 +664,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                             cursor: 'pointer'
                         }}
                     >
-                        Done
+                        Listo
                     </button>
                 </div>
             )}

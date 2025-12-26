@@ -423,12 +423,12 @@ function App() {
                     } />
                     <Route path="/owner/menu" element={
                         <ProtectedRoute requiredRole="owner">
-                            <MenuManager />
+                            <MenuManager config={safeConfig} />
                         </ProtectedRoute>
                     } />
                     <Route path="/owner/delivery" element={
                         <ProtectedRoute requiredRole="owner">
-                            <DeliveryManager />
+                            <DeliveryManager config={safeConfig} />
                         </ProtectedRoute>
                     } />
                     <Route path="/owner/rewards" element={
@@ -454,9 +454,9 @@ function App() {
 
                     {/* Demo Routes - NO AUTH REQUIRED */}
                     <Route path="/demo" element={<Demo />} />
-                    <Route path="/demo/menu" element={<MenuManager demoMode={true} />} />
+                    <Route path="/demo/menu" element={<MenuManager config={safeConfig} demoMode={true} />} />
                     <Route path="/demo/branding" element={<Settings config={safeConfig} demoMode={true} />} />
-                    <Route path="/demo/orders" element={<DeliveryManager demoMode={true} />} />
+                    <Route path="/demo/orders" element={<DeliveryManager config={safeConfig} demoMode={true} />} />
                     <Route path="/demo/analytics" element={<Analytics demoMode={true} />} />
                     <Route path="/demo/new" element={<Demo />} />
                     <Route path="/demo/backend/dashboard" element={<DemoBackend />} />
