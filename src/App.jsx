@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
 import { incrementVisit } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
-import { AdminIntentProvider } from './contexts/AdminIntentContext.jsx'
+import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
 
 // Components
 import BottomNav from './components/BottomNav.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
-import AdminLensBar from './components/AdminLensBar.jsx'
+// AdminLensBar REMOVED - status now in bottom stacked badge
 
 // Customer Pages
 import Home from './pages/customer/Home.jsx'
@@ -43,6 +43,62 @@ import DemoBackend from './pages/demo/DemoBackend.jsx'
 
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
+
+// ====== STACKED ADMIN BADGE COMPONENT ======
+// Shows Super Admin status with optional view mode indicator
+function StackedAdminBadge() {
+    const session = getSession()
+    const { isSimulated, activeRoleView, exitSimulation } = useAdminIntent()
+
+    // Only show for superadmin
+    if (session?.role !== 'superadmin') return null
+
+    return (
+        <div
+            onClick={() => {
+                if (isSimulated) {
+                    exitSimulation()
+                }
+            }}
+            style={{
+                position: 'fixed',
+                bottom: 20,
+                left: 20,
+                padding: '8px 12px',
+                background: '#1a1a1a',
+                color: '#00ff00',
+                fontSize: 12,
+                fontWeight: 700,
+                borderRadius: 10,
+                zIndex: 998,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                gap: 2,
+                cursor: isSimulated ? 'pointer' : 'default',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                border: '1px solid rgba(0,255,0,0.2)'
+            }}
+        >
+            {/* Top Line: Super Admin */}
+            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
+                🔧 SUPER ADMIN
+            </span>
+
+            {/* Bottom Line: View Mode (only if simulating) */}
+            {isSimulated && (
+                <span style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: '#ffcc00',
+                    marginTop: 2
+                }}>
+                    ({activeRoleView.toUpperCase()}) — tap to exit
+                </span>
+            )}
+        </div>
+    )
+}
 
 function App() {
     const [config, setConfig] = useState(() => getConfig())
@@ -339,8 +395,7 @@ function App() {
     return (
         <AdminIntentProvider>
             <div className="app-container">
-                {/* Global Admin Lens Bar - shows when simulating */}
-                <AdminLensBar />
+                {/* AdminLensBar REMOVED - status now in bottom stacked badge */}
 
                 <Routes>
                     {/* Customer Routes */}
@@ -411,38 +466,8 @@ function App() {
                 {/* Bottom Navigation (visible on main customer pages) */}
                 <BottomNav config={safeConfig} />
 
-                {/* Global Status Badge - shows role when logged in */}
-                {(() => {
-                    const session = getSession()
-                    if (!session?.role) return null
-                    const roleLabels = {
-                        superadmin: 'Super Admin',
-                        owner: 'Owner',
-                        staff: 'Staff'
-                    }
-                    return (
-                        <div style={{
-                            position: 'fixed',
-                            bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
-                            right: 12,
-                            padding: '5px 8px',
-                            background: 'rgba(124, 58, 237, 0.75)',
-                            color: 'white',
-                            fontSize: 9,
-                            fontWeight: 600,
-                            borderRadius: 10,
-                            zIndex: 998,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            opacity: 0.6,
-                            pointerEvents: 'none'
-                        }}>
-                            <span style={{ width: 5, height: 5, background: '#22C55E', borderRadius: '50%' }} />
-                            {roleLabels[session.role] || session.role}
-                        </div>
-                    )
-                })()}
+                {/* Stacked Admin Badge - Bottom Left */}
+                <StackedAdminBadge />
             </div>
         </AdminIntentProvider>
     )
