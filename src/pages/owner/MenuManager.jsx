@@ -70,6 +70,15 @@ function MenuManager() {
             })
         } finally {
             setIsUploading(false)
+
+            // SAFE RESET PATTERN: Wait for mobile browser event bubble to complete
+            // Safari Mobile and Chrome Mobile ignore immediate resets
+            setTimeout(() => {
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = ''
+                    console.log('File input reset (safe delay)')
+                }
+            }, 500)
         }
     }
 
