@@ -41,6 +41,10 @@ function MenuManager() {
         setEditingItem({ categoryId, itemId: item.id })
         setEditForm({ name: item.name, price: item.price.toString(), image: item.image || null })
         setUploadStatus(null)
+        // Reset file input to ensure clean state for new item
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+        }
     }
 
     const handleImageUpload = async (e) => {
@@ -58,12 +62,18 @@ function MenuManager() {
                 message: `✔ Imagen optimizada: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
             })
         } catch (error) {
+            console.error('Image upload error:', error)
             setUploadStatus({
                 success: false,
-                message: error.message
+                message: error.message || 'Error al procesar imagen'
             })
         } finally {
             setIsUploading(false)
+            // CRITICAL: Reset file input to allow re-selecting same file
+            // This fixes iOS Safari caching issue
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
         }
     }
 
