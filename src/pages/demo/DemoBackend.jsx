@@ -4,25 +4,46 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-    getDemoSession,
-    clearDemoSession,
-    getDemoRole,
-    toggleDemoRole,
-    getDemoConfig,
-    updateDemoConfig,
-    getDemoMenu,
-    saveDemoMenu,
-    updateDemoMenuItem,
-    addDemoCategory,
-    applyDemoToFrontend,
-    clearAllDemoData
-} from '../../utils/demoSession.js'
-import { getDemoEvents, clearDemoEvents } from '../../utils/demoEvents.js'
+// NOTE: demoSession.js imports are loaded dynamically at runtime to avoid Safari circular import crash
+// DO NOT add static imports from demoSession.js or demoEvents.js here
 import { getConfig, HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
+
+// ============================================
+// SAFARI CRASH FIX: Lazy-load demoSession functions
+// These are loaded dynamically at runtime instead of module init
+// ============================================
+let demoSessionModule = null
+let demoEventsModule = null
+
+async function loadDemoModules() {
+    if (!demoSessionModule) {
+        demoSessionModule = await import('../../utils/demoSession.js')
+    }
+    if (!demoEventsModule) {
+        demoEventsModule = await import('../../utils/demoEvents.js')
+    }
+    return { demoSession: demoSessionModule, demoEvents: demoEventsModule }
+}
+
+// Wrapper functions that use lazy-loaded modules
+const getDemoSession = () => demoSessionModule?.getDemoSession?.() || null
+const clearDemoSession = () => demoSessionModule?.clearDemoSession?.()
+const getDemoRole = () => demoSessionModule?.getDemoRole?.() || 'owner'
+const toggleDemoRole = () => demoSessionModule?.toggleDemoRole?.()
+const getDemoConfig = () => demoSessionModule?.getDemoConfig?.() || {}
+const updateDemoConfig = (updates) => demoSessionModule?.updateDemoConfig?.(updates)
+const getDemoMenu = () => demoSessionModule?.getDemoMenu?.() || { categories: [] }
+const saveDemoMenu = (menu) => demoSessionModule?.saveDemoMenu?.(menu)
+const updateDemoMenuItem = (id, updates) => demoSessionModule?.updateDemoMenuItem?.(id, updates)
+const addDemoCategory = (name) => demoSessionModule?.addDemoCategory?.(name)
+const applyDemoToFrontend = () => demoSessionModule?.applyDemoToFrontend?.()
+const clearAllDemoData = () => demoSessionModule?.clearAllDemoData?.()
+const getDemoEvents = () => demoEventsModule?.getDemoEvents?.() || []
+const clearDemoEvents = () => demoEventsModule?.clearDemoEvents?.()
+
 
 // Import existing branding components (REUSE)
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
@@ -1257,6 +1278,38 @@ function LaunchTab({ cardStyle, labelStyle }) {
 
 function DemoBackend() {
     const navigate = useNavigate()
+
+    // ============================================
+    // SAFARI CRASH FIX: Load modules before using them
+    // ============================================
+    const [isModulesLoaded, setIsModulesLoaded] = useState(false)
+
+    useEffect(() => {
+        loadDemoModules().then(() => {
+            setIsModulesLoaded(true)
+        })
+    }, [])
+
+    // Show loading until modules are ready
+    if (!isModulesLoaded) {
+        return (
+            <div style={{
+                height: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#f4f6f8',
+                fontFamily: 'system-ui'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 32, marginBottom: 16 }}>⏳</div>
+                    <p style={{ color: '#666' }}>Loading Demo Backend...</p>
+                </div>
+            </div>
+        )
+    }
+
+    // Now modules are loaded, initialize state
     const [demoSession, setDemoSession] = useState(() => getDemoSession())
     const [activeTab, setActiveTab] = useState('summary')
     const [demoOrders, setDemoOrders] = useState(MOCK_ORDERS)
