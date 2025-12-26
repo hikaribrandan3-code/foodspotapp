@@ -224,7 +224,7 @@ export const DIVIDER_PRESETS = [
     {
         id: 'bldg-2',
         name: 'Moderno iluminado',
-        url: 'https://images.unsplash.com/photo-1479839672679-a41e719cb472?w=800&h=200&fit=crop&q=80',
+        url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24',
         category: 'building'
     },
     {
