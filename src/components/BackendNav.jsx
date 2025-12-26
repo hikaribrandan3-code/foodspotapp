@@ -187,12 +187,21 @@ function BackendNav({
     const getActiveFromRoute = () => {
         const routes = ROUTE_MAPS[role]
         if (!routes) return activeTab
+
+        // Find the best (most specific) match - longest route wins
+        let bestMatch = null
+        let bestMatchLength = -1
+
         for (const [tabId, route] of Object.entries(routes)) {
             if (location.pathname === route || location.pathname.startsWith(route + '/')) {
-                return tabId
+                if (route.length > bestMatchLength) {
+                    bestMatch = tabId
+                    bestMatchLength = route.length
+                }
             }
         }
-        return tabs[0]?.id
+
+        return bestMatch || tabs[0]?.id
     }
 
     const currentTab = useRoutes ? getActiveFromRoute() : activeTab
