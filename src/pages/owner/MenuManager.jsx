@@ -276,29 +276,39 @@ function MenuManager() {
                                 background: '#FFFFFF',
                                 borderRadius: 10,
                                 border: '1px solid #E2E8F0',
-                                overflow: 'hidden'
                             }}>
                                 {category.items.map((item, idx) => (
                                     <div key={item.id} style={{
                                         display: 'flex',
-                                        alignItems: 'center',
+                                        alignItems: 'flex-start',
                                         padding: '12px 14px',
-                                        borderBottom: idx < category.items.length - 1 ? '1px solid #F1F5F9' : 'none'
+                                        borderBottom: idx < category.items.length - 1 ? '1px solid #F1F5F9' : 'none',
+                                        gap: 10
                                     }}>
-                                        {item.image && (
-                                            <div style={{ width: 40, height: 40, flexShrink: 0, marginRight: 12 }}>
-                                                <img
-                                                    src={item.image}
-                                                    alt=""
-                                                    style={{
-                                                        width: 40,
-                                                        height: 40,
-                                                        borderRadius: 6,
-                                                        objectFit: 'cover'
-                                                    }}
-                                                />
+                                        {/* Image Placeholder - SuperAdmin Style (always visible, clickable) */}
+                                        <div style={{ width: 60, flexShrink: 0 }}>
+                                            <div
+                                                onClick={() => handleEdit(category.id, item)}
+                                                style={{
+                                                    width: 60,
+                                                    height: 60,
+                                                    borderRadius: 8,
+                                                    background: item.image ? 'none' : '#F3F4F6',
+                                                    border: '2px dashed #D1D5DB',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    overflow: 'hidden'
+                                                }}
+                                            >
+                                                {item.image ? (
+                                                    <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                         {/* Item Details - SuperAdmin Style */}
                                         <div style={{ flex: 1 }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
