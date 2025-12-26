@@ -1,14 +1,15 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
 import { incrementVisit } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
+import { isInDemoMode } from './utils/demoSession.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
 
 // Components
 import BottomNav from './components/BottomNav.jsx'
+import BackendNav from './components/BackendNav.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
-// AdminLensBar REMOVED - status now in bottom stacked badge
 
 // Customer Pages
 import Home from './pages/customer/Home.jsx'
@@ -97,6 +98,37 @@ function StackedAdminBadge() {
                 </span>
             )}
         </div>
+    )
+}
+
+// ====== GLOBAL BACKEND NAV COMPONENT ======
+// Shows BackendNav for owner, superadmin, and demo-owner on customer pages
+function GlobalBackendNav() {
+    const session = getSession()
+    const location = useLocation()
+    const [activeTab, setActiveTab] = useState('summary')
+
+    // Show for owner, superadmin, or demo mode
+    const role = session?.role
+    const isDemoOwner = isInDemoMode()
+    const shouldShow = role === 'owner' || role === 'superadmin' || isDemoOwner
+
+    // Don't show on login pages, staff pages, demo backend, or admin page (they have their own nav)
+    const hideOnRoutes = ['/owner', '/staff', '/demo', '/admin']
+    const isHiddenRoute = hideOnRoutes.some(r => location.pathname.startsWith(r))
+
+    if (!shouldShow || isHiddenRoute) return null
+
+    // Determine role for BackendNav config
+    const effectiveRole = role === 'superadmin' ? 'owner' : (role || 'owner')
+
+    return (
+        <BackendNav
+            role={effectiveRole}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            useRoutes={false}
+        />
     )
 }
 
@@ -465,6 +497,9 @@ function App() {
 
                 {/* Bottom Navigation (visible on main customer pages) */}
                 <BottomNav config={safeConfig} />
+
+                {/* Backend Nav for owner/superadmin/demo on customer pages */}
+                <GlobalBackendNav />
 
                 {/* Stacked Admin Badge - Bottom Left */}
                 <StackedAdminBadge />
