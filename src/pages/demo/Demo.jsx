@@ -106,7 +106,7 @@ export default function Demo() {
                 <h3 style={labelStyle}>QUICK ACTIONS</h3>
                 <div style={cardStyle}>
                     <button
-                        onClick={() => navigate('/owner/menu')}
+                        onClick={() => navigate('/demo/menu')}
                         style={{
                             width: '100%',
                             padding: '14px 16px',
@@ -123,7 +123,7 @@ export default function Demo() {
                         📖 Edit Menu
                     </button>
                     <button
-                        onClick={() => navigate('/owner/branding')}
+                        onClick={() => navigate('/demo/branding')}
                         style={{
                             width: '100%',
                             padding: '14px 16px',

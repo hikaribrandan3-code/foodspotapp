@@ -4,18 +4,21 @@ import { getAuth, clearAuth, getAnalytics, getOrders, getRewards } from '../../u
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
-function Analytics() {
+function Analytics({ demoMode = false }) {
     const navigate = useNavigate()
     const [analytics, setAnalytics] = useState(() => getAnalytics())
     const [orders, setOrders] = useState(() => getOrders())
     const [rewards, setRewards] = useState(() => getRewards())
 
     useEffect(() => {
+        // Skip auth check in demo mode
+        if (demoMode) return
+
         const auth = getAuth()
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
             navigate('/owner')
         }
-    }, [navigate])
+    }, [navigate, demoMode])
 
     useEffect(() => {
         const interval = setInterval(() => {

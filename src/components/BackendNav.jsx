@@ -56,10 +56,10 @@ const ROUTE_MAPS = {
     },
     demo: {
         summary: '/demo',
-        menu: '/owner/menu',      // Demo uses same menu page as Owner
-        branding: '/owner/branding', // Demo uses same branding page as Owner
-        orders: '/owner/delivery',   // Demo uses same orders page as Owner
-        analytics: '/owner/analytics' // Demo uses same analytics as Owner
+        menu: '/demo/menu',
+        branding: '/demo/branding',
+        orders: '/demo/orders',
+        analytics: '/demo/analytics'
     },
     staff: {
         orders: '/staff/dashboard',

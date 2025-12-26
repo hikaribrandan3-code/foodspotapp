@@ -462,10 +462,14 @@ function App() {
                     } />
 
                     {/* Demo Routes - NO AUTH REQUIRED */}
+                    <Route path="/demo" element={<Demo />} />
+                    <Route path="/demo/menu" element={<MenuManager demoMode={true} />} />
+                    <Route path="/demo/branding" element={<Settings config={safeConfig} demoMode={true} />} />
+                    <Route path="/demo/orders" element={<DeliveryManager demoMode={true} />} />
+                    <Route path="/demo/analytics" element={<Analytics demoMode={true} />} />
                     <Route path="/demo/new" element={<Demo />} />
                     <Route path="/demo/backend/dashboard" element={<DemoBackend />} />
                     <Route path="/demo/backend" element={<Navigate to="/demo/backend/dashboard" replace />} />
-                    <Route path="/demo" element={<Demo />} />
 
                     {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
                     <Route path="/admin" element={<SuperAdmin config={safeConfig} />} />

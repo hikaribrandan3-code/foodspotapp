@@ -42,7 +42,7 @@ function Card({ children, style = {} }) {
 
 // INVARIANT: Settings receives config via prop from App.jsx (single source of truth)
 // Do NOT call getConfig() locally - breaks invariant during saves
-function Settings({ config }) {
+function Settings({ config, demoMode = false }) {
     const navigate = useNavigate()
     // Local form state for editable messages (initialized from prop)
     const [maintenanceMessage, setMaintenanceMessage] = useState(config?.maintenanceMessage || '')
@@ -51,11 +51,14 @@ function Settings({ config }) {
     const [showCoverEditor, setShowCoverEditor] = useState(false)
 
     useEffect(() => {
+        // Skip auth check in demo mode
+        if (demoMode) return
+
         const auth = getAuth()
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
             navigate('/owner')
         }
-    }, [navigate])
+    }, [navigate, demoMode])
 
     const handleLogout = () => {
         clearAuth()

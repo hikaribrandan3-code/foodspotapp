@@ -6,18 +6,21 @@ import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
-function DeliveryManager() {
+function DeliveryManager({ demoMode = false }) {
     const navigate = useNavigate()
     const [orders, setOrders] = useState(() => getOrders())
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
 
     useEffect(() => {
+        // Skip auth check in demo mode
+        if (demoMode) return
+
         const auth = getAuth()
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
             navigate('/owner')
         }
-    }, [navigate])
+    }, [navigate, demoMode])
 
     // Poll for order updates
     useEffect(() => {

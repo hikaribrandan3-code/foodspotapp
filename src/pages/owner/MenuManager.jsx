@@ -7,7 +7,7 @@ import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
-function MenuManager() {
+function MenuManager({ demoMode = false }) {
     const navigate = useNavigate()
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
 
@@ -31,11 +31,14 @@ function MenuManager() {
     const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
 
     useEffect(() => {
+        // Skip auth check in demo mode
+        if (demoMode) return
+
         const auth = getAuth()
         if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
             navigate('/owner')
         }
-    }, [navigate])
+    }, [navigate, demoMode])
 
     const handleLogout = () => {
         clearAuth()
