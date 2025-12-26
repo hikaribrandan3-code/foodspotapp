@@ -429,6 +429,30 @@ function Home({ config }) {
         >
             <HeaderClamp config={config} />
 
+            {/* Demo Mode Pill - Shows when viewing frontend in demo mode */}
+            {isInDemoMode() && (
+                <div
+                    onClick={() => navigate('/demo')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        background: '#FEF3C7',
+                        border: '1px solid #F59E0B',
+                        borderRadius: 20,
+                        padding: '6px 14px',
+                        marginBottom: 16,
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: '#92400E'
+                    }}
+                >
+                    🚧 DEMO MODE — Tap to return to dashboard
+                </div>
+            )}
+
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (
                 <div style={{

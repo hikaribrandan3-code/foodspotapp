@@ -140,7 +140,13 @@ export default function Demo() {
                         🎨 Customize Branding
                     </button>
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => {
+                            // Set demo mode flag so frontend shows demo pill
+                            try {
+                                localStorage.setItem('foodspot_demo_active', 'true')
+                            } catch (e) { }
+                            navigate('/')
+                        }}
                         style={{
                             width: '100%',
                             padding: '14px 16px',
