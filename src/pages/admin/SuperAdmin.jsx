@@ -882,13 +882,15 @@ function SuperAdmin({ config }) {
                     {/* ==================== BRANDING TAB ==================== */}
                     {activeTab === 'branding' && canEdit && (
                         <>
-                            <h3 style={labelStyle}>🎨 BRANDING</h3>
+                            <h3 style={labelStyle}>🎨 BRANDING Y ESTÉTICA</h3>
+
+                            {/* SLOT 1: BASE DEL SISTEMA */}
                             <div style={cardStyle}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>1. Base del Sistema</h4>
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
                                 <input type="text" value={config.businessName || ''} onChange={(e) => { updateConfig({ businessName: e.target.value }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={inputStyle} />
 
-                                {/* Font Selector */}
-                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Tipografía</label>
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Tipografía</label>
                                 <select
                                     value={config.branding?.fontFamily || 'Inter'}
                                     onChange={(e) => { updateConfig({ branding: { ...config.branding, fontFamily: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
@@ -899,7 +901,6 @@ function SuperAdmin({ config }) {
                                     ))}
                                 </select>
 
-                                {/* Font Weight Selector */}
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Peso de fuente</label>
                                 <select
                                     value={config.branding?.fontWeight || '400'}
@@ -910,488 +911,341 @@ function SuperAdmin({ config }) {
                                         <option key={weight.value} value={weight.value}>{weight.label}</option>
                                     ))}
                                 </select>
+                            </div>
 
-                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8, marginTop: 16 }}>Colores</label>
-                                <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-                                    <div>
-                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Primario</p>
-                                        <input type="color" value={config.colors?.primary || '#B8956A'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primary: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
-                                    </div>
-                                    <div>
-                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Secundario</p>
-                                        <input type="color" value={config.colors?.primaryLight || '#A89070'} onChange={(e) => { updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
-                                    </div>
-                                    <div>
-                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Confirmación</p>
-                                        <input type="color" value={config.colors?.confirmation || '#22C55E'} onChange={(e) => { updateConfig({ colors: { ...config.colors, confirmation: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
-                                    </div>
-                                    <div>
-                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 4 }}>Powered by</p>
-                                        <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }} />
+                            {/* SLOT 2: PORTADA (INICIO) */}
+                            <div style={cardStyle}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>2. Portada (Inicio)</h4>
+
+                                {/* Header Branding Mode Toggle */}
+                                <div style={{ marginBottom: 16 }}>
+                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                        Modo de Cabecera
+                                    </label>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ headerBranding: { mode: 'cover' } })
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            }}
+                                            style={{
+                                                flex: 1, padding: '10px 12px', borderRadius: 8,
+                                                border: (config.headerBranding?.mode || 'cover') === 'cover' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                background: (config.headerBranding?.mode || 'cover') === 'cover' ? '#EFF6FF' : 'white',
+                                                color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                                            }}
+                                        >
+                                            🖼️ Portada
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ headerBranding: { mode: 'text' } })
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            }}
+                                            style={{
+                                                flex: 1, padding: '10px 12px', borderRadius: 8,
+                                                border: config.headerBranding?.mode === 'text' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                background: config.headerBranding?.mode === 'text' ? '#EFF6FF' : 'white',
+                                                color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                                            }}
+                                        >
+                                            📝 Solo Texto
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Phase 1 Navbar Branding - Color Picker Component */}
-                            <div>
-                                <BrandingColorPicker
-                                    primaryColor={config.branding?.primaryColor || '#8B7355'}
-                                    iconColorMode={config.branding?.iconColorMode || 'white'}
-                                    onColorChange={(color) => {
-                                        updateConfig({ branding: { ...config.branding, primaryColor: color } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                    }}
-                                    onIconModeChange={(mode) => {
-                                        updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                    }}
-                                />
-                            </div>
-
-                            {/* Hero Icons Customization (v2 - Fully Isolated) */}
-                            <h3 style={labelStyle}>🎯 HERO ICONS (INICIO)</h3>
-                            <div>
-                                <div style={cardStyle}>
-                                    <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Color de fondo e ícono para cada tile (Independiente de la navegación)</p>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                        {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
-                                            const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
-                                            const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
-                                            return (
-                                                <HeroIconPicker
-                                                    key={iconId}
-                                                    label={labels[iconId]}
-                                                    iconId={iconId}
-                                                    color={iconConfig.color}
-                                                    iconColorMode={iconConfig.iconColorMode}
-                                                    onColorChange={(newColor) => {
-                                                        updateConfig({
-                                                            heroIcons: {
-                                                                ...config.heroIcons,
-                                                                [iconId]: { ...iconConfig, color: newColor }
-                                                            }
-                                                        })
-                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                    }}
-                                                    onIconModeChange={(mode) => {
-                                                        updateConfig({
-                                                            heroIcons: {
-                                                                ...config.heroIcons,
-                                                                [iconId]: { ...iconConfig, iconColorMode: mode }
-                                                            }
-                                                        })
-                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                    }}
-                                                />
-                                            )
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* ============================================ */}
-                            {/* SYSTEM / SUPER ADMIN (PATCH 3.9) */}
-                            {/* ============================================ */}
-                            {isTrueSuperAdmin() && (
-                                <>
-                                    <h3 style={{
-                                        ...labelStyle,
-                                        color: SUPER_ADMIN_COLOR,
-                                        borderLeft: `3px solid ${SUPER_ADMIN_COLOR}`,
-                                        paddingLeft: 8,
-                                        marginLeft: -8
-                                    }}>🔒 SYSTEM / SUPER ADMIN</h3>
-                                    <div style={{
-                                        ...cardStyle,
-                                        border: `2px solid ${SUPER_ADMIN_COLOR}`,
-                                        background: '#FAF5FF'
-                                    }}>
-                                        <p style={{ fontSize: 12, color: '#7C3AED', marginBottom: 16, fontWeight: 500 }}>
-                                            ⚠️ System-level controls. Changes affect all instances.
-                                        </p>
-
-                                        {/* Header Branding Mode Toggle */}
-                                        <div style={{ marginBottom: 16 }}>
-                                            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                                Header Branding
-                                            </label>
-                                            <div style={{ display: 'flex', gap: 8 }}>
-                                                <button
-                                                    onClick={() => {
-                                                        updateConfig({ headerBranding: { mode: 'cover' } })
-                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                    }}
-                                                    style={{
-                                                        flex: 1, padding: '10px 12px', borderRadius: 8,
-                                                        border: (config.headerBranding?.mode || 'cover') === 'cover' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
-                                                        background: (config.headerBranding?.mode || 'cover') === 'cover' ? '#FAF5FF' : 'white',
-                                                        color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    🖼️ Cover
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        updateConfig({ headerBranding: { mode: 'text' } })
-                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                    }}
-                                                    style={{
-                                                        flex: 1, padding: '10px 12px', borderRadius: 8,
-                                                        border: config.headerBranding?.mode === 'text' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
-                                                        background: config.headerBranding?.mode === 'text' ? '#FAF5FF' : 'white',
-                                                        color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    📝 Text
-                                                </button>
-                                                {/* Logo mode hidden — using Cover/Text only
-                                                <button
-                                                    onClick={() => {
-                                                        if (!config.logoLight && !config.logoDark) {
-                                                            alert('Please configure logos first before switching to logo mode.')
-                                                            return
-                                                        }
-                                                        updateConfig({ headerBranding: { mode: 'logo' } })
-                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                    }}
-                                                    style={{
-                                                        flex: 1, padding: '10px 12px', borderRadius: 8,
-                                                        border: config.headerBranding?.mode === 'logo' ? `2px solid ${SUPER_ADMIN_COLOR}` : '1px solid #E5E7EB',
-                                                        background: config.headerBranding?.mode === 'logo' ? '#FAF5FF' : 'white',
-                                                        color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    🏷️ Logo
-                                                </button>
-                                                */}
+                                {/* Cover Editor */}
+                                {(config.headerBranding?.mode === 'cover' || !config.headerBranding?.mode) && (
+                                    <div style={{ marginBottom: 16 }}>
+                                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                            Imagen de Portada
+                                        </label>
+                                        {/* Cover Preview */}
+                                        <div style={{
+                                            background: '#111827',
+                                            borderRadius: 12,
+                                            padding: 12,
+                                            marginBottom: 4
+                                        }}>
+                                            <div
+                                                style={{
+                                                    width: '100%',
+                                                    height: 64,
+                                                    border: '2px solid #374151',
+                                                    borderRadius: 4,
+                                                    overflow: 'hidden',
+                                                    background: '#1F2937',
+                                                    position: 'relative'
+                                                }}
+                                            >
+                                                {config.headerCover?.image ? (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        inset: 0,
+                                                        backgroundImage: `url(${config.headerCover.image})`,
+                                                        backgroundSize: `${(config.headerCover?.scale || 1) * 100}%`,
+                                                        backgroundPosition: `${50 + (config.headerCover?.offsetX || 0)}% ${50 + (config.headerCover?.offsetY || 0)}%`,
+                                                        backgroundRepeat: 'no-repeat'
+                                                    }} />
+                                                ) : (
+                                                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <span style={{ color: '#9CA3AF', fontSize: 13 }}>Sin imagen</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
-                                        {/* Cover Editor - only show when mode is "cover" */}
-                                        {(config.headerBranding?.mode === 'cover' || !config.headerBranding?.mode) && (
-                                            <div style={{ marginBottom: 16 }}>
-                                                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                                    Cover Image
-                                                </label>
-                                                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>Facebook-style header with drag and zoom</p>
+                                        <button
+                                            onClick={() => setShowCoverEditor(true)}
+                                            onTouchEnd={(e) => { e.preventDefault(); setShowCoverEditor(true); }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                background: '#3B82F6',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: 8,
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                marginTop: 8
+                                            }}
+                                        >
+                                            {config.headerCover?.image ? '✏️ Editar Portada' : '📷 Subir Portada'}
+                                        </button>
 
-                                                {/* Cover Preview (Read-Only) */}
-                                                <div style={{
-                                                    background: '#111827',
-                                                    borderRadius: 12,
-                                                    padding: 12,
-                                                    marginBottom: 4
-                                                }}>
-                                                    <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 8, textAlign: 'center' }}>
-                                                        📱 HEADER PREVIEW — {config.headerCover?.image ? 'Cover Mode' : 'No cover set'}
-                                                    </p>
-                                                    <div
-                                                        style={{
-                                                            width: '100%',
-                                                            height: 64,
-                                                            border: '2px solid #374151',
-                                                            borderRadius: 4,
-                                                            overflow: 'hidden',
-                                                            background: '#1F2937',
-                                                            position: 'relative'
-                                                        }}
-                                                    >
-                                                        {config.headerCover?.image ? (
-                                                            <div style={{
-                                                                position: 'absolute',
-                                                                inset: 0,
-                                                                backgroundImage: `url(${config.headerCover.image})`,
-                                                                backgroundSize: `${(config.headerCover?.scale || 1) * 100}%`,
-                                                                backgroundPosition: `${50 + (config.headerCover?.offsetX || 0)}% ${50 + (config.headerCover?.offsetY || 0)}%`,
-                                                                backgroundRepeat: 'no-repeat'
-                                                            }} />
-                                                        ) : (
-                                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                                <span style={{ color: '#9CA3AF', fontSize: 13 }}>No cover image</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Single Add/Edit Cover Button */}
-                                                <button
-                                                    onClick={() => setShowCoverEditor(true)}
-                                                    onTouchEnd={(e) => { e.preventDefault(); setShowCoverEditor(true); }}
-                                                    style={{
-                                                        width: '100%',
-                                                        padding: '14px 16px',
-                                                        background: SUPER_ADMIN_COLOR,
-                                                        color: '#fff',
-                                                        border: 'none',
-                                                        borderRadius: 8,
-                                                        fontSize: 13,
-                                                        fontWeight: 600,
-                                                        cursor: 'pointer',
-                                                        marginTop: 8,
-                                                        touchAction: 'manipulation'
-                                                    }}
-                                                >
-                                                    {config.headerCover?.image ? '✏️ Edit Cover' : '📷 Add Cover Photo'}
-                                                </button>
-
-                                                {/* Controls - only show when image exists */}
-                                                {config.headerCover?.image && (
-                                                    <>
-                                                        {/* Scale Slider */}
-                                                        <div style={{ marginTop: 12 }}>
-                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
-                                                                Scale: {Math.round((config.headerCover?.scale || 1) * 100)}%
-                                                            </label>
-                                                            <input
-                                                                type="range"
-                                                                min="50"
-                                                                max="300"
-                                                                value={(config.headerCover?.scale || 1) * 100}
-                                                                onChange={(e) => {
-                                                                    updateConfig({
-                                                                        headerCover: {
-                                                                            ...config.headerCover,
-                                                                            scale: parseInt(e.target.value) / 100
-                                                                        }
-                                                                    })
-                                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                                }}
-                                                                style={{ width: '100%' }}
-                                                            />
-                                                        </div>
-
-                                                        {/* X Offset Slider */}
-                                                        <div style={{ marginTop: 8 }}>
-                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
-                                                                X Offset: {config.headerCover?.offsetX || 0}%
-                                                            </label>
-                                                            <input
-                                                                type="range"
-                                                                min="-50"
-                                                                max="50"
-                                                                value={config.headerCover?.offsetX || 0}
-                                                                onChange={(e) => {
-                                                                    updateConfig({
-                                                                        headerCover: {
-                                                                            ...config.headerCover,
-                                                                            offsetX: parseInt(e.target.value)
-                                                                        }
-                                                                    })
-                                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                                }}
-                                                                style={{ width: '100%' }}
-                                                            />
-                                                        </div>
-
-                                                        {/* Y Offset Slider */}
-                                                        <div style={{ marginTop: 8 }}>
-                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'block', marginBottom: 4 }}>
-                                                                Y Offset: {config.headerCover?.offsetY || 0}%
-                                                            </label>
-                                                            <input
-                                                                type="range"
-                                                                min="-50"
-                                                                max="50"
-                                                                value={config.headerCover?.offsetY || 0}
-                                                                onChange={(e) => {
-                                                                    updateConfig({
-                                                                        headerCover: {
-                                                                            ...config.headerCover,
-                                                                            offsetY: parseInt(e.target.value)
-                                                                        }
-                                                                    })
-                                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                                }}
-                                                                style={{ width: '100%' }}
-                                                            />
-                                                        </div>
-
-                                                        {/* Action Buttons */}
-                                                        {/* Remove Cover Button */}
-                                                        <div style={{ marginTop: 12 }}>
-                                                            <button
-                                                                onClick={() => {
-                                                                    updateConfig({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } })
-                                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                                }}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    padding: '10px 14px',
-                                                                    background: 'none',
-                                                                    color: '#DC2626',
-                                                                    border: '1px solid #DC2626',
-                                                                    borderRadius: 8,
-                                                                    fontSize: 12,
-                                                                    fontWeight: 600,
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                            >
-                                                                ✕ Remove Cover
-                                                            </button>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Logo inputs only show when mode is "logo" */}
-                                        {config.headerBranding?.mode === 'logo' && (
-                                            <>
-                                                {/* Logo Light Upload */}
-                                                <div style={{ marginBottom: 16 }}>
-                                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                                        Logo (Light Mode)
-                                                    </label>
-                                                    <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Dark logo for white/light backgrounds</p>
-                                                    <div
-                                                        onClick={() => document.getElementById('logo-light-upload')?.click()}
-                                                        style={{
-                                                            border: '2px dashed #D1D5DB',
-                                                            borderRadius: 8,
-                                                            padding: 20,
-                                                            textAlign: 'center',
-                                                            cursor: 'pointer',
-                                                            background: '#FAFAFA'
-                                                        }}
-                                                    >
-                                                        {config.logoLight ? (
-                                                            <img src={config.logoLight} alt="Logo Light" style={{ maxHeight: 48, width: 'auto' }} />
-                                                        ) : (
-                                                            <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload PNG/JPG</span>
-                                                        )}
-                                                    </div>
-                                                    <input
-                                                        id="logo-light-upload"
-                                                        type="file"
-                                                        accept="image/png,image/jpeg"
-                                                        style={{ display: 'none' }}
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0]
-                                                            if (!file) return
-                                                            const reader = new FileReader()
-                                                            reader.onload = (ev) => {
-                                                                updateConfig({ logoLight: ev.target.result })
-                                                                window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                            }
-                                                            reader.readAsDataURL(file)
-                                                        }}
-                                                    />
-                                                    {config.logoLight && (
-                                                        <button
-                                                            onClick={() => { updateConfig({ logoLight: null }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
-                                                            style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
-                                                        >
-                                                            ✕ Remove
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {/* Logo Dark Upload */}
-                                                <div>
-                                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
-                                                        Logo (Dark Mode)
-                                                    </label>
-                                                    <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>Light/white logo for dark backgrounds</p>
-                                                    <div
-                                                        onClick={() => document.getElementById('logo-dark-upload')?.click()}
-                                                        style={{
-                                                            border: '2px dashed #D1D5DB',
-                                                            borderRadius: 8,
-                                                            padding: 20,
-                                                            textAlign: 'center',
-                                                            cursor: 'pointer',
-                                                            background: '#1F2937'
-                                                        }}
-                                                    >
-                                                        {config.logoDark ? (
-                                                            <img src={config.logoDark} alt="Logo Dark" style={{ maxHeight: 48, width: 'auto' }} />
-                                                        ) : (
-                                                            <span style={{ color: '#9CA3AF', fontSize: 13 }}>📷 Click to upload PNG/JPG</span>
-                                                        )}
-                                                    </div>
-                                                    <input
-                                                        id="logo-dark-upload"
-                                                        type="file"
-                                                        accept="image/png,image/jpeg"
-                                                        style={{ display: 'none' }}
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0]
-                                                            if (!file) return
-                                                            const reader = new FileReader()
-                                                            reader.onload = (ev) => {
-                                                                updateConfig({ logoDark: ev.target.result })
-                                                                window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                            }
-                                                            reader.readAsDataURL(file)
-                                                        }}
-                                                    />
-                                                    {config.logoDark && (
-                                                        <button
-                                                            onClick={() => { updateConfig({ logoDark: null }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
-                                                            style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}
-                                                        >
-                                                            ✕ Remove
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </>
+                                        {config.headerCover?.image && (
+                                            <button
+                                                onClick={() => {
+                                                    updateConfig({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } })
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: 8,
+                                                    padding: '8px',
+                                                    background: 'white',
+                                                    color: '#EF4444',
+                                                    border: '1px solid #EF4444',
+                                                    borderRadius: 8,
+                                                    fontSize: 12,
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                🗑️ Eliminar Portada
+                                            </button>
                                         )}
                                     </div>
-                                </>
-                            )}
+                                )}
+                            </div>
 
-
-
-                            {/* Modo Oscuro - Light/Dark Toggle */}
-                            <h3 style={labelStyle}>🌙 MODO OSCURO</h3>
+                            {/* SLOT 3: ICONOS HERO (INICIO) */}
                             <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Tema de la aplicación</p>
-                                <div style={{ display: 'flex', gap: 8 }}>
-                                    <button
-                                        onClick={() => {
-                                            updateConfig({ canvasMode: 'light' })
-                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '12px 16px',
-                                            borderRadius: 10,
-                                            border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                            background: '#FFFFFF',
-                                            color: '#1F2937',
-                                            fontSize: 14,
-                                            fontWeight: 600,
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        ☀️ Claro
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            updateConfig({ canvasMode: 'dark' })
-                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '12px 16px',
-                                            borderRadius: 10,
-                                            border: config.canvasMode === 'dark' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                            background: '#1F2937',
-                                            color: '#FFFFFF',
-                                            fontSize: 14,
-                                            fontWeight: 600,
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        🌙 Oscuro
-                                    </button>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>3. Iconos Hero (Inicio)</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                    {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                                        const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
+                                        const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
+                                        return (
+                                            <HeroIconPicker
+                                                key={iconId}
+                                                label={labels[iconId]}
+                                                iconId={iconId}
+                                                color={iconConfig.color}
+                                                iconColorMode={iconConfig.iconColorMode}
+                                                onColorChange={(newColor) => {
+                                                    updateConfig({
+                                                        heroIcons: {
+                                                            ...config.heroIcons,
+                                                            [iconId]: { ...iconConfig, color: newColor }
+                                                        }
+                                                    })
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                }}
+                                                onIconModeChange={(mode) => {
+                                                    updateConfig({
+                                                        heroIcons: {
+                                                            ...config.heroIcons,
+                                                            [iconId]: { ...iconConfig, iconColorMode: mode }
+                                                        }
+                                                    })
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                }}
+                                            />
+                                        )
+                                    })}
                                 </div>
                             </div>
 
-                            {/* INFO PILL COLORS — Pill customization */}
-                            <h3 style={labelStyle}>🔘 INFO PILL COLORS</h3>
+                            {/* SLOT 4: ESTÉTICA DE NAVEGACIÓN */}
                             <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Personaliza los colores de los botones en la página Info. Toca un pill para editar.</p>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>4. Estética de Navegación</h4>
+
+                                {/* Navbar Color */}
+                                <div style={{ marginBottom: 16 }}>
+                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                        Color de la Barra de Navegación
+                                    </label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <input
+                                            type="color"
+                                            value={config.branding?.primaryColor || '#8B7355'}
+                                            onChange={(e) => {
+                                                updateConfig({ branding: { ...config.branding, primaryColor: e.target.value } })
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            }}
+                                            style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer', padding: 0 }}
+                                        />
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{
+                                                height: 32,
+                                                background: config.branding?.primaryColor || '#8B7355',
+                                                borderRadius: 6,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                            }}>
+                                                <span style={{ fontSize: 10, color: config.branding?.iconColorMode === 'white' ? 'white' : 'black', fontWeight: 600 }}>Preview</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Icon Color Mode */}
+                                <div>
+                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>
+                                        Color de Iconos de Navegación
+                                    </label>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ branding: { ...config.branding, iconColorMode: 'white' } })
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            }}
+                                            style={{
+                                                flex: 1, padding: '10px 12px', borderRadius: 8,
+                                                border: (config.branding?.iconColorMode || 'white') === 'white' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                background: (config.branding?.iconColorMode || 'white') === 'white' ? '#EFF6FF' : 'white',
+                                                color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                                            }}
+                                        >
+                                            ⬜ Blanco
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                updateConfig({ branding: { ...config.branding, iconColorMode: 'black' } })
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            }}
+                                            style={{
+                                                flex: 1, padding: '10px 12px', borderRadius: 8,
+                                                border: config.branding?.iconColorMode === 'black' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                background: config.branding?.iconColorMode === 'black' ? '#EFF6FF' : 'white',
+                                                color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                                            }}
+                                        >
+                                            ⬛ Negro
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SLOT 5: CONFIRMACIÓN Y CRÉDITOS */}
+                            <div style={cardStyle}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>5. Confirmación y Créditos</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                    <div>
+                                        <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Color de Botón de Confirmación</p>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input type="color" value={config.colors?.confirmation || '#22C55E'} onChange={(e) => { updateConfig({ colors: { ...config.colors, confirmation: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 40, height: 40, border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer' }} />
+                                            <span style={{ fontSize: 11, color: '#6B7280' }}>{(config.colors?.confirmation || '#22C55E').toUpperCase()}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Color de Créditos (Footer)</p>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 40, height: 40, border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer' }} />
+                                            <span style={{ fontSize: 11, color: '#6B7280' }}>{(config.branding?.poweredByColor || '#C4856A').toUpperCase()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SLOT 6: BOTÓN DE CÁMARA (SVG LOGIC) */}
+                            <div style={cardStyle}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>6. Botón de Cámara</h4>
+
+                                {/* Enable toggle */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                    <label style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>Habilitar botón en navegación</label>
+                                    <button
+                                        onClick={() => {
+                                            updateConfig({ camera: { ...config.camera, enabled: !config.camera?.enabled } })
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        }}
+                                        style={{
+                                            padding: '6px 12px', borderRadius: 16, border: 'none',
+                                            backgroundColor: config.camera?.enabled ? '#22C55E' : '#E5E7EB',
+                                            color: config.camera?.enabled ? 'white' : '#6B7280',
+                                            fontSize: 12, fontWeight: 500, cursor: 'pointer'
+                                        }}
+                                    >
+                                        {config.camera?.enabled ? 'ACTIVADO' : 'DESACTIVADO'}
+                                    </button>
+                                </div>
+
+                                {config.camera?.enabled && (
+                                    <>
+                                        <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>
+                                            Selecciona el ícono. El color del ícono se adapta automáticamente al "Color de Iconos de Navegación".
+                                        </p>
+                                        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                                            {[
+                                                { id: 'default', label: 'Lente', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg> },
+                                                { id: 'camera', label: 'Cámara', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg> },
+                                                { id: 'aperture', label: 'Obturador', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="14.31" y1="8" x2="20.05" y2="17.94" /><line x1="9.69" y1="8" x2="21.17" y2="8" /><line x1="7.38" y1="12" x2="13.12" y2="2.06" /><line x1="9.69" y1="16" x2="3.95" y2="6.06" /><line x1="14.31" y1="16" x2="2.83" y2="16" /><line x1="16.62" y1="12" x2="10.88" y2="21.94" /></svg> }
+                                            ].map(item => {
+                                                const isSelected = (config.camera?.icon || 'default') === item.id
+                                                // Reactive tint: "Blanco" (white) or "Negro" (black) based on Nav Icon Config
+                                                // If 'white', the icon in preview should be white on dark bg. If 'black', black on light.
+                                                // We simulate this context in the preview button.
+                                                const navIconMode = config.branding?.iconColorMode || 'white'
+
+                                                return (
+                                                    <button
+                                                        key={item.id}
+                                                        onClick={() => {
+                                                            updateConfig({ camera: { ...config.camera, icon: item.id } })
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                        }}
+                                                        style={{
+                                                            flex: 1, padding: '16px', borderRadius: 8,
+                                                            border: isSelected ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                            // Preview background matches Nav Bar color concept loosely (or just neutral)
+                                                            // To show reactivity, let's use the actual Nav Color as background for independent preview 
+                                                            backgroundColor: config.branding?.primaryColor || '#8B7355',
+                                                            cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                                                            color: navIconMode === 'white' ? '#FFFFFF' : '#000000',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        <div>{item.icon}</div>
+                                                        <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.8 }}>{item.label}</span>
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+
+                                        <div style={{ marginTop: 12 }}>
+                                            <p style={{ fontSize: 10, color: '#9CA3AF', fontStyle: 'italic' }}>
+                                                * El color del ícono es {config.branding?.iconColorMode === 'white' ? 'BLANCO' : 'NEGRO'} según tu configuración de navegación.
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* SLOT 7: INFO PILL COLORS */}
+                            <div style={cardStyle}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>7. Info Pill Colors</h4>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                     {[
                                         { id: 'whatsapp', label: 'WhatsApp', icon: '💬' },
@@ -1423,7 +1277,9 @@ function SuperAdmin({ config }) {
                                                     border: pill.id === 'adminAccess' ? '1px solid #E5E7EB' : 'none',
                                                     fontSize: 12,
                                                     fontWeight: 500,
-                                                    cursor: 'pointer'
+                                                    cursor: 'pointer',
+                                                    position: 'relative',
+                                                    overflow: 'hidden'
                                                 }}
                                             >
                                                 <span>{pill.icon}</span>
@@ -1441,146 +1297,13 @@ function SuperAdmin({ config }) {
                                                         })
                                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                                     }}
-                                                    style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                                                    style={{ position: 'absolute', opacity: 0, inset: 0, cursor: 'pointer' }}
                                                 />
                                             </button>
                                         )
                                     })}
                                 </div>
-                                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>Toca cualquier pill para cambiar su color de fondo</p>
                             </div>
-
-                            {/* CAMERA BRANDING — Icon and color customization */}
-                            <h3 style={labelStyle}>📷 CAMERA BUTTON</h3>
-                            <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Personaliza el botón de cámara en la barra de navegación</p>
-
-                                {/* Enable toggle */}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                                    <label style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>Estilo personalizado</label>
-                                    <button
-                                        onClick={() => {
-                                            updateConfig({ camera: { ...config.camera, enabled: !config.camera?.enabled } })
-                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        }}
-                                        style={{
-                                            padding: '6px 12px',
-                                            borderRadius: 16,
-                                            border: 'none',
-                                            backgroundColor: config.camera?.enabled ? '#22C55E' : '#E5E7EB',
-                                            color: config.camera?.enabled ? 'white' : '#6B7280',
-                                            fontSize: 12,
-                                            fontWeight: 500,
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        {config.camera?.enabled ? 'ON' : 'OFF'}
-                                    </button>
-                                </div>
-
-                                {/* Icon selector (only when enabled) */}
-                                {config.camera?.enabled && (
-                                    <>
-                                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Ícono de cámara</label>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-                                            {[
-                                                { id: 'default', label: 'Default' },
-                                                { id: 'camera', label: 'Camera' },
-                                                { id: 'aperture', label: 'Aperture' },
-                                                { id: 'webcam', label: 'Webcam' }
-                                            ].map(icon => {
-                                                const isSelected = (config.camera?.icon || 'default') === icon.id
-                                                return (
-                                                    <button
-                                                        key={icon.id}
-                                                        onClick={() => {
-                                                            updateConfig({ camera: { ...config.camera, icon: icon.id } })
-                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                        }}
-                                                        style={{
-                                                            padding: '12px 8px',
-                                                            borderRadius: 12,
-                                                            border: isSelected ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                                            backgroundColor: isSelected ? '#F0FDF4' : '#FFFFFF',
-                                                            cursor: 'pointer',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            alignItems: 'center',
-                                                            gap: 4
-                                                        }}
-                                                    >
-                                                        <span style={{ fontSize: 20 }}>
-                                                            {icon.id === 'default' ? '📷' : icon.id === 'camera' ? '📸' : icon.id === 'aperture' ? '🎯' : '🖥️'}
-                                                        </span>
-                                                        <span style={{ fontSize: 10, color: '#6B7280' }}>{icon.label}</span>
-                                                    </button>
-                                                )
-                                            })}
-                                        </div>
-
-                                        {/* Color picker */}
-                                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Color del botón</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                                            <input
-                                                type="color"
-                                                value={config.camera?.color || '#8B7355'}
-                                                onChange={(e) => {
-                                                    updateConfig({ camera: { ...config.camera, color: e.target.value } })
-                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                }}
-                                                style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                                            />
-                                            <div style={{
-                                                width: 48, height: 48, borderRadius: '50%',
-                                                backgroundColor: config.camera?.color || '#8B7355',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                                            }}>
-                                                <span style={{ fontSize: 20 }}>📷</span>
-                                            </div>
-                                            <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'monospace' }}>
-                                                {(config.camera?.color || '#8B7355').toUpperCase()}
-                                            </span>
-                                        </div>
-
-                                        {/* Text color toggle */}
-                                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 8 }}>Color del ícono</label>
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            {['auto', 'white', 'black'].map(mode => {
-                                                const isSelected = (config.camera?.textColor || 'auto') === mode
-                                                return (
-                                                    <button
-                                                        key={mode}
-                                                        onClick={() => {
-                                                            updateConfig({ camera: { ...config.camera, textColor: mode } })
-                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                        }}
-                                                        style={{
-                                                            flex: 1,
-                                                            padding: '8px 12px',
-                                                            borderRadius: 8,
-                                                            border: isSelected ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                                            backgroundColor: mode === 'black' ? '#1F2937' : mode === 'white' ? '#FFFFFF' : '#F3F4F6',
-                                                            color: mode === 'black' ? '#FFFFFF' : mode === 'white' ? '#1F2937' : '#6B7280',
-                                                            fontSize: 12,
-                                                            fontWeight: 500,
-                                                            cursor: 'pointer',
-                                                            textTransform: 'capitalize'
-                                                        }}
-                                                    >
-                                                        {mode}
-                                                    </button>
-                                                )
-                                            })}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-
-
-
-
-
                         </>
                     )}
 
