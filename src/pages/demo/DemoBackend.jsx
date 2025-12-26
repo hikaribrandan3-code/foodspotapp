@@ -1280,13 +1280,43 @@ function DemoBackend() {
     const navigate = useNavigate()
 
     // ============================================
-    // SAFARI CRASH FIX: Load modules before using them
+    // ALL HOOKS MUST BE DECLARED BEFORE ANY EARLY RETURN
+    // (React Error #310 - hooks order must be consistent)
     // ============================================
     const [isModulesLoaded, setIsModulesLoaded] = useState(false)
+    const [demoSession, setDemoSession] = useState(null)
+    const [activeTab, setActiveTab] = useState('summary')
+    const [demoOrders, setDemoOrders] = useState(MOCK_ORDERS)
+    const orders = demoOrders // Alias for compatibility
+    const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
+    const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
+    const [role, setRole] = useState('owner')
+    const [demoConfig, setDemoConfig] = useState({})
+    const [demoMenu, setDemoMenu] = useState({ categories: [] })
+    const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false)
+    const [applyFeedback, setApplyFeedback] = useState('')
+    const [coverEditorOpen, setCoverEditorOpen] = useState(false)
+    const [showEmailPopup, setShowEmailPopup] = useState(false)
+    const [showAddCategory, setShowAddCategory] = useState(false)
+    const [newCategoryName, setNewCategoryName] = useState('')
+    const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
+    const [playbackOrder, setPlaybackOrder] = useState(null)
+    const [playbackOpen, setPlaybackOpen] = useState(false)
 
+    // Derived editing state (add more editors here if needed)
+    const isEditing = coverEditorOpen
+
+    // ============================================
+    // SAFARI CRASH FIX: Load modules then initialize state
+    // ============================================
     useEffect(() => {
         loadDemoModules().then(() => {
             setIsModulesLoaded(true)
+            // Initialize state from loaded modules
+            setDemoSession(getDemoSession())
+            setRole(getDemoRole())
+            setDemoConfig(getDemoConfig())
+            setDemoMenu(getDemoMenu() || getMenu())
         })
     }, [])
 
@@ -1308,35 +1338,6 @@ function DemoBackend() {
             </div>
         )
     }
-
-    // Now modules are loaded, initialize state
-    const [demoSession, setDemoSession] = useState(() => getDemoSession())
-    const [activeTab, setActiveTab] = useState('summary')
-    const [demoOrders, setDemoOrders] = useState(MOCK_ORDERS)
-    const orders = demoOrders // Alias for compatibility
-    const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
-    const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
-    const [role, setRole] = useState(() => getDemoRole())
-
-    // Demo-specific state (localStorage-backed)
-    const [demoConfig, setDemoConfig] = useState(() => getDemoConfig())
-    const [demoMenu, setDemoMenu] = useState(() => getDemoMenu() || getMenu())
-    const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false)
-    const [applyFeedback, setApplyFeedback] = useState('')
-    const [coverEditorOpen, setCoverEditorOpen] = useState(false)
-    const [showEmailPopup, setShowEmailPopup] = useState(false)
-
-    // Category creation state (demo)
-    const [showAddCategory, setShowAddCategory] = useState(false)
-    const [newCategoryName, setNewCategoryName] = useState('')
-    const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
-
-    // Order Playback state (demo-only)
-    const [playbackOrder, setPlaybackOrder] = useState(null)
-    const [playbackOpen, setPlaybackOpen] = useState(false)
-
-    // Derived editing state (add more editors here if needed)
-    const isEditing = coverEditorOpen
 
     // Redirect if no valid demo session
     useEffect(() => {
