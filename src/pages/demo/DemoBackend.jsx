@@ -1996,867 +1996,881 @@ function DemoBackend() {
                             <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
                                 Selected: {DIVIDER_PRESETS.find(p => p.id === demoConfig.dividerPresetId)?.name || 'None'}
                             </p>
-                            {/* Option to clear/remove */}
-                            {demoConfig.dividerPresetId && (
-                                <button
-                                    onClick={() => handleConfigChange({ dividerPresetId: null })}
-                                    style={{ marginTop: 8, padding: '6px 12px', fontSize: 11, background: '#EF4444', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                                >
-                                    Remove Header Image
-                                </button>
-                            )}
-                        </div>
-                    </>
-                )}
-
-                {/* MENU TAB (Owner only) - FUNCTIONAL EDITING */}
-                {/* MENU TAB (Owner only) - FUNCTIONAL EDITING */}
-                {activeTab === 'menu' && role === 'owner' && (
-                    <>
-                        <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
-
-                        {/* 1. FEATURED SECTION (TOP 4) */}
-                        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Destaques de Inicio (Top 4)
-                        </h3>
-
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(4, 1fr)',
-                            gap: 8,
-                            marginBottom: 24,
-                            background: 'white',
-                            padding: 12,
-                            borderRadius: 12,
-                            border: '1px solid #E2E8F0'
-                        }}>
-                            {[0, 1, 2, 3].map(i => {
-                                const slot = activeFeaturedItems[i]
-                                return (
-                                    <div key={i} style={{
-                                        aspectRatio: '1/1',
-                                        background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
-                                        borderRadius: 8,
-                                        border: '1px dashed #CBD5E1',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        overflow: 'hidden'
-                                    }}>
-                                        {slot ? (
-                                            <>
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    bottom: 0, left: 0, right: 0,
-                                                    background: 'rgba(0,0,0,0.6)',
-                                                    color: 'white',
-                                                    fontSize: 9,
-                                                    padding: '2px 4px',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    textAlign: 'center'
-                                                }}>
-                                                    {slot.name}
-                                                </div>
-                                                <button
-                                                    onClick={() => handleToggleFeatured(slot)}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 2, right: 2,
-                                                        width: 20, height: 20,
-                                                        background: 'red',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '50%',
-                                                        fontSize: 12,
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    ×
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center' }}>Vacío</span>
-                                        )}
-                                    </div>
-                                )
-                            })}
-                        </div>
-
-                        {/* 2. VISUAL DIVIDER */}
-                        <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
-
-                        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Menú Principal
-                        </h3>
-
-                        {/* Add Category Button / Form */}
-                        {!showAddCategory ? (
-                            <button
-                                onClick={() => setShowAddCategory(true)}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 16px',
-                                    marginBottom: 16,
-                                    background: '#F1F5F9',
-                                    border: '2px dashed #CBD5E1',
-                                    borderRadius: 10,
-                                    fontSize: 14,
-                                    fontWeight: 500,
-                                    color: '#64748B',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 6
-                                }}
-                            >
-                                ➕ Agregar Categoría
-                            </button>
-                        ) : (
-                            <div style={{ ...cardStyle, marginBottom: 16, border: '2px solid #22C55E' }}>
-                                <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                                    <input
-                                        type="text"
-                                        placeholder="Nombre de categoría"
-                                        value={newCategoryName}
-                                        onChange={(e) => setNewCategoryName(e.target.value)}
-                                        autoFocus
-                                        style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="📦"
-                                        value={newCategoryIcon}
-                                        onChange={(e) => setNewCategoryIcon(e.target.value)}
-                                        style={{ ...inputStyle, width: 60, marginBottom: 0, textAlign: 'center' }}
-                                        maxLength={2}
-                                    />
-                                </div>
-                                <div style={{ display: 'flex', gap: 10 }}>
-                                    <button
-                                        onClick={() => {
-                                            if (newCategoryName.trim()) {
-                                                const updated = addDemoCategory(newCategoryName.trim(), newCategoryIcon || '📦')
-                                                setDemoMenu(updated)
-                                                setHasUnappliedChanges(true)
-                                                setNewCategoryName('')
-                                                setNewCategoryIcon('📦')
-                                                setShowAddCategory(false)
-                                            }
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '10px 16px',
-                                            background: '#22C55E',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: 8,
-                                            fontWeight: 600,
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Crear
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setShowAddCategory(false)
-                                            setNewCategoryName('')
-                                            setNewCategoryIcon('📦')
-                                        }}
-                                        style={{
-                                            padding: '10px 16px',
-                                            background: '#F1F5F9',
-                                            color: '#64748B',
-                                            border: 'none',
-                                            borderRadius: 8,
-                                            fontWeight: 500,
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {demoMenu?.categories?.map(category => (
-                            <div key={category.id} style={{ marginBottom: 20 }}>
-                                <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.name}</h4>
-                                <div style={{
-                                    background: 'white',
-                                    borderRadius: 12,
-                                    border: '1px solid #E2E8F0',
-                                    overflow: 'hidden'
-                                }}>
-                                    {category.items?.map((item, idx) => (
-                                        <div key={item.id} style={{
-                                            display: 'flex',
-                                            alignItems: 'flex-start',
-                                            padding: '12px 14px',
-                                            borderBottom: '1px solid #F1F5F9',
-                                            gap: 10
-                                        }}>
-                                            {/* Image */}
-                                            <div style={{ width: 60, flexShrink: 0 }}>
-                                                <div
-                                                    onClick={() => openMenuEdit(category.id, item)}
-                                                    style={{
-                                                        width: 60,
-                                                        height: 60,
-                                                        borderRadius: 8,
-                                                        background: item.image ? 'none' : '#F3F4F6',
-                                                        border: '2px dashed #D1D5DB',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        cursor: 'pointer',
-                                                        overflow: 'hidden'
-                                                    }}
-                                                >
-                                                    {item.image ? (
-                                                        <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                    ) : (
-                                                        <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Details */}
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                                            <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>{item.name}</p>
-                                                            <div
-                                                                onClick={(e) => { e.stopPropagation(); handleToggleFeatured(item); }}
-                                                                style={{
-                                                                    cursor: 'pointer',
-                                                                    fontSize: 16,
-                                                                    filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
-                                                                    opacity: isFeatured(item) ? 1 : 0.2
-                                                                }}
-                                                            >
-                                                                ⭐
-                                                            </div>
-                                                        </div>
-                                                        <p style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, margin: 0 }}>${item.price}</p>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24 }}>
-                                                            Agotado
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={item.outOfStock ?? false}
-                                                                onChange={(e) => handleMenuItemEdit(category.id, item.id, { outOfStock: e.target.checked })}
-                                                                style={{ width: 18, height: 18, accentColor: '#EF4444', cursor: 'pointer' }}
-                                                            />
-                                                        </label>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24 }}>
-                                                            Promo
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isFeatured(item)}
-                                                                onChange={() => handleToggleFeatured(item)}
-                                                                style={{ width: 18, height: 18, accentColor: '#EAB308', cursor: 'pointer' }}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Delete Button */}
-                                            <button
-                                                onClick={() => handleMenuDelete(category.id, item)}
-                                                style={{
-                                                    background: 'none', border: 'none',
-                                                    color: '#EF4444', fontSize: 20,
-                                                    cursor: 'pointer', padding: '4px 8px',
-                                                    alignSelf: 'flex-start', marginLeft: 4, opacity: 0.6
-                                                }}
-                                                title="Eliminar ítem"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    ))}
-
-                                    {/* Add Item Button */}
-                                    <div
-                                        onClick={() => handleMenuAddItem(category.id)}
-                                        style={{
-                                            padding: '12px',
-                                            background: '#F8FAFC',
-                                            borderTop: '1px solid #E2E8F0',
-                                            color: '#3B82F6',
-                                            fontSize: 13,
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                                        }}
-                                    >
-                                        ➕ Agregar Ítem
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Menu Edit Modal */}
-                        {editingItem && activeTab === 'menu' && (
-                            <div style={{
-                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                                background: 'rgba(0,0,0,0.5)', zIndex: 9999,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                padding: 20
-                            }} onClick={() => setEditingItem(null)}>
-                                <div style={{
-                                    background: 'white', borderRadius: 16, width: '100%', maxWidth: 400,
-                                    padding: 24, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-                                }} onClick={e => e.stopPropagation()}>
-                                    <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: '#1F2937' }}>Editar ítem</h2>
-
-                                    <div style={{ marginBottom: 16 }}>
-                                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Nombre</label>
-                                        <input
-                                            type="text"
-                                            value={menuEditForm.name}
-                                            onChange={(e) => setMenuEditForm({ ...menuEditForm, name: e.target.value })}
-                                            style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #D1D5DB', fontSize: 14 }}
-                                        />
-                                    </div>
-
-                                    <div style={{ marginBottom: 16 }}>
-                                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Precio (ARS)</label>
-                                        <input
-                                            type="number"
-                                            value={menuEditForm.price}
-                                            onChange={(e) => setMenuEditForm({ ...menuEditForm, price: e.target.value })}
-                                            style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #D1D5DB', fontSize: 14 }}
-                                        />
-                                    </div>
-
-                                    <div style={{ marginBottom: 24 }}>
-                                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Imagen</label>
-                                        {menuEditForm.image && (
-                                            <div style={{ marginBottom: 8 }}>
-                                                <img src={menuEditForm.image} alt="" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 8 }} />
-                                            </div>
-                                        )}
-                                        <input
-                                            key={menuInputKey}
-                                            ref={menuFileInputRef}
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/jpg"
-                                            onChange={handleModalImageUpload}
-                                            style={{ display: 'none' }}
-                                        />
-                                        <button
-                                            onClick={() => menuFileInputRef.current?.click()}
-                                            disabled={isMenuUploading}
+                            {/* 2. VISUAL DIVIDER (Decorative Pill Branding) */}
+                            <div style={{ ...cardStyle, marginBottom: 24, border: '1px solid #E2E8F0' }}>
+                                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Imagen Decorativa (Menú/Pedido)
+                                </h3>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Selecciona el estilo que divide el menú</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                                    {DIVIDER_PRESETS.map(preset => (
+                                        <div
+                                            key={preset.id}
+                                            onClick={() => { handleConfigChange({ dividerPresetId: preset.id }); }}
                                             style={{
-                                                width: '100%', padding: '10px',
-                                                background: '#F3F4F6', color: '#4B5563',
-                                                border: '1px solid #D1D5DB', borderRadius: 8,
-                                                fontWeight: 500, cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                borderRadius: 8,
+                                                overflow: 'hidden',
+                                                border: demoConfig.dividerPresetId === preset.id ? '2px solid #22C55E' : '1px solid #E2E8F0',
+                                                opacity: demoConfig.dividerPresetId === preset.id ? 1 : 0.7,
+                                                height: 40
                                             }}
                                         >
-                                            {isMenuUploading ? 'Subiendo...' : (menuEditForm.image ? 'Cambiar imagen' : 'Subir imagen')}
-                                        </button>
-                                    </div>
-
-                                    <button
-                                        onClick={handleMenuSave}
-                                        style={{
-                                            width: '100%', padding: '12px',
-                                            background: '#22C55E', color: 'white',
-                                            border: 'none', borderRadius: 10,
-                                            fontWeight: 600, fontSize: 15, cursor: 'pointer',
-                                            marginBottom: 10
-                                        }}
-                                    >
-                                        Listo
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingItem(null)}
-                                        style={{
-                                            width: '100%', padding: '12px',
-                                            background: 'white', color: '#6B7280',
-                                            border: '1px solid #E5E7EB', borderRadius: 10,
-                                            fontWeight: 500, fontSize: 15, cursor: 'pointer'
-                                        }}
-                                    >
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {/* INFO TAB (Owner only) - PRESENCE MODE */}
-                {activeTab === 'info' && role === 'owner' && (
-                    <>
-                        <h3 style={labelStyle}>📍 BUSINESS INFO</h3>
-                        <div style={cardStyle}>
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Hours</label>
-                            <input
-                                type="text"
-                                value={demoConfig.businessInfo?.hours || ''}
-                                onChange={(e) => handleConfigChange({
-                                    businessInfo: { ...demoConfig.businessInfo, hours: e.target.value }
-                                })}
-                                placeholder="Add your hours (e.g., Mon-Fri 9am-6pm)"
-                                style={inputStyle}
-                            />
-
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Address</label>
-                            <input
-                                type="text"
-                                value={demoConfig.businessInfo?.address || ''}
-                                onChange={(e) => handleConfigChange({
-                                    businessInfo: { ...demoConfig.businessInfo, address: e.target.value }
-                                })}
-                                placeholder="Add your address"
-                                style={inputStyle}
-                            />
-
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Phone</label>
-                            <input
-                                type="text"
-                                value={demoConfig.businessInfo?.phone || ''}
-                                onChange={(e) => handleConfigChange({
-                                    businessInfo: { ...demoConfig.businessInfo, phone: e.target.value }
-                                })}
-                                placeholder="Add your phone number"
-                                style={inputStyle}
-                            />
-
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>WhatsApp</label>
-                            <input
-                                type="text"
-                                value={demoConfig.businessInfo?.whatsapp || ''}
-                                onChange={(e) => handleConfigChange({
-                                    businessInfo: { ...demoConfig.businessInfo, whatsapp: e.target.value }
-                                })}
-                                placeholder="Add your WhatsApp number"
-                                style={inputStyle}
-                            />
-                        </div>
-                        <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center' }}>
-                            These fields show presence in the Info screen
-                        </p>
-                    </>
-                )}
-
-                {/* ORDERS TAB */}
-                {activeTab === 'orders' && (
-                    <>
-                        <h3 style={labelStyle}>📋 ACTIVE ORDERS</h3>
-                        {activeOrders.length === 0 ? (
-                            <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
-                                <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
-                                <p style={{ color: '#6B7280' }}>No active orders</p>
-                            </div>
-                        ) : (
-                            activeOrders.map(order => (
-                                <div key={order.id} style={{ ...cardStyle, borderLeft: `4px solid ${order.status === 'listo' ? '#22C55E' : '#F59E0B'}` }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                                        <span style={{ fontSize: 20, fontWeight: 700 }}>#{order.orderNumber}</span>
-                                        <span style={{
-                                            padding: '4px 8px',
-                                            borderRadius: 4,
-                                            fontSize: 11,
-                                            fontWeight: 500,
-                                            background: order.status === 'listo' ? '#D1FAE5' : '#FEF3C7',
-                                            color: order.status === 'listo' ? '#065F46' : '#92400E'
-                                        }}>
-                                            {order.status === 'preparacion' ? 'Preparing' : order.status === 'listo' ? 'Ready' : order.status}
-                                        </span>
-                                    </div>
-                                    <div style={{ marginBottom: 8 }}>
-                                        {order.items.map((item, idx) => (
-                                            <p key={idx} style={{ fontSize: 13, color: '#374151', margin: '2px 0' }}>{item.quantity}× {item.name}</p>
-                                        ))}
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: 14, fontWeight: 600, color: '#22C55E' }}>${order.total.toLocaleString()}</span>
-                                        <div style={{ display: 'flex', gap: 6 }}>
-                                            {/* Replay Order Button - only show if order has events */}
-                                            {orderHasEvents(order.id) && (
-                                                <button
-                                                    onClick={() => {
-                                                        setPlaybackOrder(order)
-                                                        setPlaybackOpen(true)
-                                                    }}
-                                                    style={{
-                                                        padding: '8px 12px',
-                                                        background: '#8B5CF6',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: 6,
-                                                        fontSize: 11,
-                                                        fontWeight: 500,
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: 4
-                                                    }}
-                                                >
-                                                    ▶ Replay
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => alert('ℹ️ Demo Mode — Order status changes are simulated')}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    background: '#3B82F6',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: 6,
-                                                    fontSize: 12,
-                                                    fontWeight: 500,
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                {order.status === 'preparacion' ? 'Mark Ready' : 'Deliver'}
-                                            </button>
+                                            <img src={preset.url} alt={preset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         </div>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))
-                        )}
-
-                        <div style={{ ...cardStyle, textAlign: 'center', marginTop: 8 }}>
-                            <p style={{ color: '#6B7280', fontSize: 13 }}>Orders today</p>
-                            <p style={{ fontSize: 28, fontWeight: 700, color: '#22C55E', margin: '4px 0' }}>{todayOrders.length}</p>
-                        </div>
-                    </>
+                            </div>
+                        </>
                 )}
 
-                {/* ANALYTICS TAB (Owner only) */}
-                {activeTab === 'analytics' && role === 'owner' && (
-                    <>
-                        <h3 style={labelStyle}>📈 ANALYTICS</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                            <div style={cardStyle}>
-                                <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>This Week</p>
-                                <p style={{ fontSize: 20, fontWeight: 700, color: '#22C55E', margin: '4px 0' }}>${MOCK_ANALYTICS.week.revenue.toLocaleString()}</p>
-                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{MOCK_ANALYTICS.week.orders} orders</p>
-                            </div>
-                            <div style={cardStyle}>
-                                <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>This Month</p>
-                                <p style={{ fontSize: 20, fontWeight: 700, color: '#22C55E', margin: '4px 0' }}>${MOCK_ANALYTICS.month.revenue.toLocaleString()}</p>
-                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{MOCK_ANALYTICS.month.orders} orders</p>
-                            </div>
-                        </div>
+                        {/* MENU TAB (Owner only) - FUNCTIONAL EDITING */}
+                        {/* MENU TAB (Owner only) - FUNCTIONAL EDITING */}
+                        {activeTab === 'menu' && role === 'owner' && (
+                            <>
+                                <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
 
-                        {/* Demo Chart Placeholder */}
-                        <div style={cardStyle}>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Revenue Trend (30 days)</p>
-                            <div style={{ display: 'flex', alignItems: 'flex-end', height: 80, gap: 4 }}>
-                                {[45, 60, 35, 80, 55, 70, 90, 65, 75, 85, 50, 95, 70, 60, 80].map((h, i) => (
-                                    <div key={i} style={{ flex: 1, height: `${h}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
-                                ))}
-                            </div>
-                            <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Demo data</p>
-                        </div>
-                    </>
-                )}
+                                {/* 1. FEATURED SECTION (TOP 4) */}
+                                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Destaques de Inicio (Top 4)
+                                </h3>
 
-                {/* DELIVERY TAB - Filtered view of delivery orders only */}
-                {/* DELIVERY TAB - Interactive view matching Production Owner/Staff */}
-                {activeTab === 'delivery' && (
-                    <>
-                        <h3 style={labelStyle}>🚚 DELIVERY ORDERS</h3>
-                        {/* Business Disclaimers for Demo */}
-                        <div style={{
-                            background: '#FEF3C7',
-                            border: '1px solid #F59E0B',
-                            borderRadius: 8,
-                            padding: 12,
-                            marginBottom: 16,
-                            fontSize: 11
-                        }}>
-                            <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Delivery Reminders:</p>
-                            <ul style={{ margin: 0, paddingLeft: 16, color: '#92400E' }}>
-                                <li>FoodSpot is software, not a delivery company</li>
-                                <li>The business is responsible for drivers and insurance</li>
-                                <li>Cash payments must be confirmed BEFORE preparation</li>
-                            </ul>
-                        </div>
-
-                        {(() => {
-                            const deliveryOrders = demoOrders.filter(o => o.orderType === 'delivery' || o.id === 'demo-3')
-
-                            if (deliveryOrders.length === 0) {
-                                return (
-                                    <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
-                                        <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
-                                        <p style={{ color: '#6B7280' }}>No delivery orders in demo</p>
-                                    </div>
-                                )
-                            }
-
-                            // Simulated Logic Handlers
-                            const getDeliveryStatusInfo = (status) => {
-                                const config = {
-                                    pendiente: { label: 'Pending', next: 'confirmado', nextLabel: 'Confirm →', class: 'pending' },
-                                    confirmado: { label: 'Confirmed', next: 'preparacion', nextLabel: 'Start Prep →', class: 'confirmed' },
-                                    preparacion: { label: 'Preparing', next: 'listo', nextLabel: 'Ready →', class: 'preparing' },
-                                    listo: { label: 'Ready', next: 'en_camino', nextLabel: 'Out for Delivery →', class: 'ready' },
-                                    en_camino: { label: 'On the way', next: 'entregado', nextLabel: 'Mark Delivered', class: 'on-way' }
-                                }
-                                return config[status] || { label: status, next: null, nextLabel: null, class: '' }
-                            }
-
-                            const handleDemoStatusChange = (orderId, newStatus) => {
-                                const order = demoOrders.find(o => o.id === orderId)
-                                if (!order.paymentConfirmed && (newStatus === 'preparacion' || newStatus === 'en_camino')) {
-                                    alert('❌ Payment must be confirmed before preparation or dispatch for delivery orders.')
-                                    return
-                                }
-                                setDemoOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
-                            }
-
-                            const handleDemoPaymentConfirm = (orderId) => {
-                                const method = paymentMethodSelect[orderId] || 'cash'
-                                setDemoOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentConfirmed: true, paymentMethod: method } : o))
-                            }
-
-                            return deliveryOrders.map(order => {
-                                const statusInfo = getDeliveryStatusInfo(order.status)
-                                return (
-                                    <div key={order.id} style={{ ...cardStyle, marginBottom: 10, borderLeft: '4px solid #F97316' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                                            <span style={{ fontSize: 18, fontWeight: 700 }}>#{order.orderNumber} 🚚</span>
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                borderRadius: 4,
-                                                fontSize: 11,
-                                                fontWeight: 500,
-                                                background: order.status === 'en_camino' ? '#FFEDD5' : order.status === 'listo' ? '#DCFCE7' : '#E0E7FF',
-                                                color: order.status === 'en_camino' ? '#9A3412' : order.status === 'listo' ? '#166534' : '#3730A3'
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(4, 1fr)',
+                                    gap: 8,
+                                    marginBottom: 24,
+                                    background: 'white',
+                                    padding: 12,
+                                    borderRadius: 12,
+                                    border: '1px solid #E2E8F0'
+                                }}>
+                                    {[0, 1, 2, 3].map(i => {
+                                        const slot = activeFeaturedItems[i]
+                                        return (
+                                            <div key={i} style={{
+                                                aspectRatio: '1/1',
+                                                background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
+                                                borderRadius: 8,
+                                                border: '1px dashed #CBD5E1',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                position: 'relative',
+                                                overflow: 'hidden'
                                             }}>
-                                                {statusInfo.label}
-                                            </span>
-                                        </div>
-
-                                        {/* Customer Info */}
-                                        {order.customerInfo && (
-                                            <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6, background: '#F8FAFC', padding: 8, borderRadius: 6 }}>
-                                                <p style={{ margin: 0, fontWeight: 600 }}>📍 {order.customerInfo.name}</p>
-                                                <p style={{ margin: 0 }}>{order.customerInfo.address}</p>
-                                                <p style={{ margin: 0 }}>📞 {order.customerInfo.phone}</p>
-                                            </div>
-                                        )}
-
-                                        <div style={{ marginBottom: 8 }}>
-                                            {order.items.map((item, idx) => (
-                                                <p key={idx} style={{ fontSize: 13, color: '#374151', margin: '2px 0' }}>{item.quantity}× {item.name}</p>
-                                            ))}
-                                        </div>
-
-                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#22C55E', marginBottom: 12 }}>
-                                            ${order.total.toLocaleString()}
-                                        </div>
-
-                                        {/* Interactive Actions for Demo */}
-                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                            {/* Phone confirmation input for en_camino */}
-                                            {order.status === 'en_camino' && order.customerInfo && (
-                                                <div style={{ width: '100%', marginBottom: 8 }}>
-                                                    <input
-                                                        type="text"
-                                                        maxLength={4}
-                                                        placeholder="Code (last 4 digits)"
-                                                        value={deliveryConfirmCode[order.id] || ''}
-                                                        onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
-                                                        style={{
-                                                            width: '100%',
-                                                            padding: '8px 12px',
-                                                            border: '1px solid #E5E7EB',
-                                                            borderRadius: 8,
-                                                            fontSize: 14,
+                                                {slot ? (
+                                                    <>
+                                                        <div style={{
+                                                            position: 'absolute',
+                                                            bottom: 0, left: 0, right: 0,
+                                                            background: 'rgba(0,0,0,0.6)',
+                                                            color: 'white',
+                                                            fontSize: 9,
+                                                            padding: '2px 4px',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
                                                             textAlign: 'center'
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
+                                                        }}>
+                                                            {slot.name}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleToggleFeatured(slot)}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: 2, right: 2,
+                                                                width: 20, height: 20,
+                                                                background: 'red',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '50%',
+                                                                fontSize: 12,
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center' }}>Vacío</span>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
 
-                                            {/* Status advance button */}
-                                            {statusInfo.next && (
-                                                <button
-                                                    onClick={() => {
-                                                        if (statusInfo.next === 'entregado' && order.customerInfo) {
-                                                            const code = deliveryConfirmCode[order.id] || ''
-                                                            if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
-                                                                alert('❌ Incorrect code. Demo code is last 4 of phone.')
-                                                                return
-                                                            }
-                                                        }
-                                                        handleDemoStatusChange(order.id, statusInfo.next)
-                                                    }}
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '8px 12px',
-                                                        background: '#3B82F6',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: 8,
-                                                        fontWeight: 600,
-                                                        fontSize: 12,
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    {statusInfo.nextLabel}
-                                                </button>
-                                            )}
 
-                                            {/* Payment Actions */}
-                                            {!order.paymentConfirmed && (
-                                                <select
-                                                    value={paymentMethodSelect[order.id] || 'cash'}
-                                                    onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                    style={{
-                                                        padding: '8px',
-                                                        border: '1px solid #E5E7EB',
-                                                        borderRadius: 8,
-                                                        fontSize: 12
-                                                    }}
-                                                >
-                                                    <option value="cash">💵 Cash</option>
-                                                    <option value="mercado_pago">📱 MP</option>
-                                                </select>
-                                            )}
 
+                                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Menú Principal
+                                </h3>
+
+                                {/* Add Category Button / Form */}
+                                {!showAddCategory ? (
+                                    <button
+                                        onClick={() => setShowAddCategory(true)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            marginBottom: 16,
+                                            background: '#F1F5F9',
+                                            border: '2px dashed #CBD5E1',
+                                            borderRadius: 10,
+                                            fontSize: 14,
+                                            fontWeight: 500,
+                                            color: '#64748B',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 6
+                                        }}
+                                    >
+                                        ➕ Agregar Categoría
+                                    </button>
+                                ) : (
+                                    <div style={{ ...cardStyle, marginBottom: 16, border: '2px solid #22C55E' }}>
+                                        <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre de categoría"
+                                                value={newCategoryName}
+                                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                                autoFocus
+                                                style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="📦"
+                                                value={newCategoryIcon}
+                                                onChange={(e) => setNewCategoryIcon(e.target.value)}
+                                                style={{ ...inputStyle, width: 60, marginBottom: 0, textAlign: 'center' }}
+                                                maxLength={2}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: 10 }}>
                                             <button
-                                                onClick={() => handleDemoPaymentConfirm(order.id)}
+                                                onClick={() => {
+                                                    if (newCategoryName.trim()) {
+                                                        const updated = addDemoCategory(newCategoryName.trim(), newCategoryIcon || '📦')
+                                                        setDemoMenu(updated)
+                                                        setHasUnappliedChanges(true)
+                                                        setNewCategoryName('')
+                                                        setNewCategoryIcon('📦')
+                                                        setShowAddCategory(false)
+                                                    }
+                                                }}
                                                 style={{
-                                                    padding: '8px 12px',
-                                                    background: order.paymentConfirmed ? '#22C55E' : '#F59E0B',
+                                                    flex: 1,
+                                                    padding: '10px 16px',
+                                                    background: '#22C55E',
                                                     color: 'white',
                                                     border: 'none',
                                                     borderRadius: 8,
                                                     fontWeight: 600,
-                                                    fontSize: 12,
-                                                    cursor: 'pointer',
-                                                    flex: 1
+                                                    cursor: 'pointer'
                                                 }}
                                             >
-                                                {order.paymentConfirmed ? '✅ Paid' : '💳 Confirm'}
+                                                Crear
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setShowAddCategory(false)
+                                                    setNewCategoryName('')
+                                                    setNewCategoryIcon('📦')
+                                                }}
+                                                style={{
+                                                    padding: '10px 16px',
+                                                    background: '#F1F5F9',
+                                                    color: '#64748B',
+                                                    border: 'none',
+                                                    borderRadius: 8,
+                                                    fontWeight: 500,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                Cancelar
                                             </button>
                                         </div>
                                     </div>
-                                )
-                            })
-                        })()}
-                    </>
-                )}
+                                )}
 
-                {/* STOCK TAB (Staff) */}
-                {activeTab === 'stock' && role === 'staff' && (
-                    <>
-                        <h3 style={labelStyle}>🍽️ ITEM AVAILABILITY</h3>
-                        {demoMenu?.categories?.slice(0, 2).map(category => (
-                            <div key={category.id} style={{ marginBottom: 16 }}>
-                                <h4 style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>{category.icon} {category.name}</h4>
-                                <div style={cardStyle}>
-                                    {category.items?.slice(0, 4).map(item => (
-                                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F3F4F6' }}>
-                                            <div>
-                                                <p style={{ fontSize: 13, fontWeight: 500, margin: 0 }}>{item.name}</p>
-                                                <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>${item.price?.toLocaleString()}</p>
+                                {demoMenu?.categories?.map(category => (
+                                    <div key={category.id} style={{ marginBottom: 20 }}>
+                                        <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.name}</h4>
+                                        <div style={{
+                                            background: 'white',
+                                            borderRadius: 12,
+                                            border: '1px solid #E2E8F0',
+                                            overflow: 'hidden'
+                                        }}>
+                                            {category.items?.map((item, idx) => (
+                                                <div key={item.id} style={{
+                                                    display: 'flex',
+                                                    alignItems: 'flex-start',
+                                                    padding: '12px 14px',
+                                                    borderBottom: '1px solid #F1F5F9',
+                                                    gap: 10
+                                                }}>
+                                                    {/* Image */}
+                                                    <div style={{ width: 60, flexShrink: 0 }}>
+                                                        <div
+                                                            onClick={() => openMenuEdit(category.id, item)}
+                                                            style={{
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 8,
+                                                                background: item.image ? 'none' : '#F3F4F6',
+                                                                border: '2px dashed #D1D5DB',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                cursor: 'pointer',
+                                                                overflow: 'hidden'
+                                                            }}
+                                                        >
+                                                            {item.image ? (
+                                                                <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                            ) : (
+                                                                <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Details */}
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                            <div style={{ flex: 1 }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                                                    <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>{item.name}</p>
+                                                                    <div
+                                                                        onClick={(e) => { e.stopPropagation(); handleToggleFeatured(item); }}
+                                                                        style={{
+                                                                            cursor: 'pointer',
+                                                                            fontSize: 16,
+                                                                            filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
+                                                                            opacity: isFeatured(item) ? 1 : 0.2
+                                                                        }}
+                                                                    >
+                                                                        ⭐
+                                                                    </div>
+                                                                </div>
+                                                                <p style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, margin: 0 }}>${item.price}</p>
+                                                            </div>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24 }}>
+                                                                    Agotado
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={item.outOfStock ?? false}
+                                                                        onChange={(e) => handleMenuItemEdit(category.id, item.id, { outOfStock: e.target.checked })}
+                                                                        style={{ width: 18, height: 18, accentColor: '#EF4444', cursor: 'pointer' }}
+                                                                    />
+                                                                </label>
+                                                                <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24 }}>
+                                                                    Promo
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={isFeatured(item)}
+                                                                        onChange={() => handleToggleFeatured(item)}
+                                                                        style={{ width: 18, height: 18, accentColor: '#EAB308', cursor: 'pointer' }}
+                                                                    />
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Delete Button */}
+                                                    <button
+                                                        onClick={() => handleMenuDelete(category.id, item)}
+                                                        style={{
+                                                            background: 'none', border: 'none',
+                                                            color: '#EF4444', fontSize: 20,
+                                                            cursor: 'pointer', padding: '4px 8px',
+                                                            alignSelf: 'flex-start', marginLeft: 4, opacity: 0.6
+                                                        }}
+                                                        title="Eliminar ítem"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                            {/* Add Item Button */}
+                                            <div
+                                                onClick={() => handleMenuAddItem(category.id)}
+                                                style={{
+                                                    padding: '12px',
+                                                    background: '#F8FAFC',
+                                                    borderTop: '1px solid #E2E8F0',
+                                                    color: '#3B82F6',
+                                                    fontSize: 13,
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                                }}
+                                            >
+                                                ➕ Agregar Ítem
                                             </div>
-                                            <label style={{ display: 'flex', alignItems: 'center' }}>
-                                                <input type="checkbox" defaultChecked style={{ accentColor: '#22C55E' }} onChange={() => alert('ℹ️ Demo Mode — Availability toggle simulated')} />
-                                            </label>
                                         </div>
-                                    ))}
+                                    </div>
+                                ))}
+
+                                {/* Menu Edit Modal */}
+                                {editingItem && activeTab === 'menu' && (
+                                    <div style={{
+                                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                        background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        padding: 20
+                                    }} onClick={() => setEditingItem(null)}>
+                                        <div style={{
+                                            background: 'white', borderRadius: 16, width: '100%', maxWidth: 400,
+                                            padding: 24, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+                                        }} onClick={e => e.stopPropagation()}>
+                                            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: '#1F2937' }}>Editar ítem</h2>
+
+                                            <div style={{ marginBottom: 16 }}>
+                                                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Nombre</label>
+                                                <input
+                                                    type="text"
+                                                    value={menuEditForm.name}
+                                                    onChange={(e) => setMenuEditForm({ ...menuEditForm, name: e.target.value })}
+                                                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #D1D5DB', fontSize: 14 }}
+                                                />
+                                            </div>
+
+                                            <div style={{ marginBottom: 16 }}>
+                                                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Precio (ARS)</label>
+                                                <input
+                                                    type="number"
+                                                    value={menuEditForm.price}
+                                                    onChange={(e) => setMenuEditForm({ ...menuEditForm, price: e.target.value })}
+                                                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #D1D5DB', fontSize: 14 }}
+                                                />
+                                            </div>
+
+                                            <div style={{ marginBottom: 24 }}>
+                                                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Imagen</label>
+                                                {menuEditForm.image && (
+                                                    <div style={{ marginBottom: 8 }}>
+                                                        <img src={menuEditForm.image} alt="" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 8 }} />
+                                                    </div>
+                                                )}
+                                                <input
+                                                    key={menuInputKey}
+                                                    ref={menuFileInputRef}
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/jpg"
+                                                    onChange={handleModalImageUpload}
+                                                    style={{ display: 'none' }}
+                                                />
+                                                <button
+                                                    onClick={() => menuFileInputRef.current?.click()}
+                                                    disabled={isMenuUploading}
+                                                    style={{
+                                                        width: '100%', padding: '10px',
+                                                        background: '#F3F4F6', color: '#4B5563',
+                                                        border: '1px solid #D1D5DB', borderRadius: 8,
+                                                        fontWeight: 500, cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {isMenuUploading ? 'Subiendo...' : (menuEditForm.image ? 'Cambiar imagen' : 'Subir imagen')}
+                                                </button>
+                                            </div>
+
+                                            <button
+                                                onClick={handleMenuSave}
+                                                style={{
+                                                    width: '100%', padding: '12px',
+                                                    background: '#22C55E', color: 'white',
+                                                    border: 'none', borderRadius: 10,
+                                                    fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                                                    marginBottom: 10
+                                                }}
+                                            >
+                                                Listo
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingItem(null)}
+                                                style={{
+                                                    width: '100%', padding: '12px',
+                                                    background: 'white', color: '#6B7280',
+                                                    border: '1px solid #E5E7EB', borderRadius: 10,
+                                                    fontWeight: 500, fontSize: 15, cursor: 'pointer'
+                                                }}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* INFO TAB (Owner only) - PRESENCE MODE */}
+                        {activeTab === 'info' && role === 'owner' && (
+                            <>
+                                <h3 style={labelStyle}>📍 BUSINESS INFO</h3>
+                                <div style={cardStyle}>
+                                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Hours</label>
+                                    <input
+                                        type="text"
+                                        value={demoConfig.businessInfo?.hours || ''}
+                                        onChange={(e) => handleConfigChange({
+                                            businessInfo: { ...demoConfig.businessInfo, hours: e.target.value }
+                                        })}
+                                        placeholder="Add your hours (e.g., Mon-Fri 9am-6pm)"
+                                        style={inputStyle}
+                                    />
+
+                                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Address</label>
+                                    <input
+                                        type="text"
+                                        value={demoConfig.businessInfo?.address || ''}
+                                        onChange={(e) => handleConfigChange({
+                                            businessInfo: { ...demoConfig.businessInfo, address: e.target.value }
+                                        })}
+                                        placeholder="Add your address"
+                                        style={inputStyle}
+                                    />
+
+                                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Phone</label>
+                                    <input
+                                        type="text"
+                                        value={demoConfig.businessInfo?.phone || ''}
+                                        onChange={(e) => handleConfigChange({
+                                            businessInfo: { ...demoConfig.businessInfo, phone: e.target.value }
+                                        })}
+                                        placeholder="Add your phone number"
+                                        style={inputStyle}
+                                    />
+
+                                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>WhatsApp</label>
+                                    <input
+                                        type="text"
+                                        value={demoConfig.businessInfo?.whatsapp || ''}
+                                        onChange={(e) => handleConfigChange({
+                                            businessInfo: { ...demoConfig.businessInfo, whatsapp: e.target.value }
+                                        })}
+                                        placeholder="Add your WhatsApp number"
+                                        style={inputStyle}
+                                    />
                                 </div>
-                            </div>
-                        ))}
-                    </>
-                )}
+                                <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center' }}>
+                                    These fields show presence in the Info screen
+                                </p>
+                            </>
+                        )}
 
-                {/* REWARDS TAB (Staff) */}
-                {activeTab === 'rewards' && role === 'staff' && (
-                    <>
-                        <h3 style={labelStyle}>⭐ STAMP VALIDATION</h3>
-                        <div style={cardStyle}>
-                            <h3 style={{ textAlign: 'center', marginBottom: 12 }}>Validate Stamp</h3>
-                            <p style={{ color: '#6B7280', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
-                                Use this to add a stamp when a customer visits or shares on Instagram
-                            </p>
-                            <button
-                                onClick={() => alert('ℹ️ Demo Mode — Stamp added (simulated)')}
-                                style={{
-                                    width: '100%',
-                                    padding: 14,
-                                    background: '#22C55E',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: 10,
-                                    fontSize: 14,
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                ⭐ Add Stamp
-                            </button>
-                        </div>
-                    </>
-                )}
+                        {/* ORDERS TAB */}
+                        {activeTab === 'orders' && (
+                            <>
+                                <h3 style={labelStyle}>📋 ACTIVE ORDERS</h3>
+                                {activeOrders.length === 0 ? (
+                                    <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
+                                        <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
+                                        <p style={{ color: '#6B7280' }}>No active orders</p>
+                                    </div>
+                                ) : (
+                                    activeOrders.map(order => (
+                                        <div key={order.id} style={{ ...cardStyle, borderLeft: `4px solid ${order.status === 'listo' ? '#22C55E' : '#F59E0B'}` }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                                <span style={{ fontSize: 20, fontWeight: 700 }}>#{order.orderNumber}</span>
+                                                <span style={{
+                                                    padding: '4px 8px',
+                                                    borderRadius: 4,
+                                                    fontSize: 11,
+                                                    fontWeight: 500,
+                                                    background: order.status === 'listo' ? '#D1FAE5' : '#FEF3C7',
+                                                    color: order.status === 'listo' ? '#065F46' : '#92400E'
+                                                }}>
+                                                    {order.status === 'preparacion' ? 'Preparing' : order.status === 'listo' ? 'Ready' : order.status}
+                                                </span>
+                                            </div>
+                                            <div style={{ marginBottom: 8 }}>
+                                                {order.items.map((item, idx) => (
+                                                    <p key={idx} style={{ fontSize: 13, color: '#374151', margin: '2px 0' }}>{item.quantity}× {item.name}</p>
+                                                ))}
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ fontSize: 14, fontWeight: 600, color: '#22C55E' }}>${order.total.toLocaleString()}</span>
+                                                <div style={{ display: 'flex', gap: 6 }}>
+                                                    {/* Replay Order Button - only show if order has events */}
+                                                    {orderHasEvents(order.id) && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setPlaybackOrder(order)
+                                                                setPlaybackOpen(true)
+                                                            }}
+                                                            style={{
+                                                                padding: '8px 12px',
+                                                                background: '#8B5CF6',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: 6,
+                                                                fontSize: 11,
+                                                                fontWeight: 500,
+                                                                cursor: 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: 4
+                                                            }}
+                                                        >
+                                                            ▶ Replay
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => alert('ℹ️ Demo Mode — Order status changes are simulated')}
+                                                        style={{
+                                                            padding: '8px 16px',
+                                                            background: '#3B82F6',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: 6,
+                                                            fontSize: 12,
+                                                            fontWeight: 500,
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        {order.status === 'preparacion' ? 'Mark Ready' : 'Deliver'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
 
-                {/* Deprecated tabs removed: activity, launch, events */}
+                                <div style={{ ...cardStyle, textAlign: 'center', marginTop: 8 }}>
+                                    <p style={{ color: '#6B7280', fontSize: 13 }}>Orders today</p>
+                                    <p style={{ fontSize: 28, fontWeight: 700, color: '#22C55E', margin: '4px 0' }}>{todayOrders.length}</p>
+                                </div>
+                            </>
+                        )}
 
+                        {/* ANALYTICS TAB (Owner only) */}
+                        {activeTab === 'analytics' && role === 'owner' && (
+                            <>
+                                <h3 style={labelStyle}>📈 ANALYTICS</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                                    <div style={cardStyle}>
+                                        <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>This Week</p>
+                                        <p style={{ fontSize: 20, fontWeight: 700, color: '#22C55E', margin: '4px 0' }}>${MOCK_ANALYTICS.week.revenue.toLocaleString()}</p>
+                                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{MOCK_ANALYTICS.week.orders} orders</p>
+                                    </div>
+                                    <div style={cardStyle}>
+                                        <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>This Month</p>
+                                        <p style={{ fontSize: 20, fontWeight: 700, color: '#22C55E', margin: '4px 0' }}>${MOCK_ANALYTICS.month.revenue.toLocaleString()}</p>
+                                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{MOCK_ANALYTICS.month.orders} orders</p>
+                                    </div>
+                                </div>
+
+                                {/* Demo Chart Placeholder */}
+                                <div style={cardStyle}>
+                                    <p style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Revenue Trend (30 days)</p>
+                                    <div style={{ display: 'flex', alignItems: 'flex-end', height: 80, gap: 4 }}>
+                                        {[45, 60, 35, 80, 55, 70, 90, 65, 75, 85, 50, 95, 70, 60, 80].map((h, i) => (
+                                            <div key={i} style={{ flex: 1, height: `${h}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
+                                        ))}
+                                    </div>
+                                    <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Demo data</p>
+                                </div>
+                            </>
+                        )}
+
+                        {/* DELIVERY TAB - Filtered view of delivery orders only */}
+                        {/* DELIVERY TAB - Interactive view matching Production Owner/Staff */}
+                        {activeTab === 'delivery' && (
+                            <>
+                                <h3 style={labelStyle}>🚚 DELIVERY ORDERS</h3>
+                                {/* Business Disclaimers for Demo */}
+                                <div style={{
+                                    background: '#FEF3C7',
+                                    border: '1px solid #F59E0B',
+                                    borderRadius: 8,
+                                    padding: 12,
+                                    marginBottom: 16,
+                                    fontSize: 11
+                                }}>
+                                    <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Delivery Reminders:</p>
+                                    <ul style={{ margin: 0, paddingLeft: 16, color: '#92400E' }}>
+                                        <li>FoodSpot is software, not a delivery company</li>
+                                        <li>The business is responsible for drivers and insurance</li>
+                                        <li>Cash payments must be confirmed BEFORE preparation</li>
+                                    </ul>
+                                </div>
+
+                                {(() => {
+                                    const deliveryOrders = demoOrders.filter(o => o.orderType === 'delivery' || o.id === 'demo-3')
+
+                                    if (deliveryOrders.length === 0) {
+                                        return (
+                                            <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
+                                                <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
+                                                <p style={{ color: '#6B7280' }}>No delivery orders in demo</p>
+                                            </div>
+                                        )
+                                    }
+
+                                    // Simulated Logic Handlers
+                                    const getDeliveryStatusInfo = (status) => {
+                                        const config = {
+                                            pendiente: { label: 'Pending', next: 'confirmado', nextLabel: 'Confirm →', class: 'pending' },
+                                            confirmado: { label: 'Confirmed', next: 'preparacion', nextLabel: 'Start Prep →', class: 'confirmed' },
+                                            preparacion: { label: 'Preparing', next: 'listo', nextLabel: 'Ready →', class: 'preparing' },
+                                            listo: { label: 'Ready', next: 'en_camino', nextLabel: 'Out for Delivery →', class: 'ready' },
+                                            en_camino: { label: 'On the way', next: 'entregado', nextLabel: 'Mark Delivered', class: 'on-way' }
+                                        }
+                                        return config[status] || { label: status, next: null, nextLabel: null, class: '' }
+                                    }
+
+                                    const handleDemoStatusChange = (orderId, newStatus) => {
+                                        const order = demoOrders.find(o => o.id === orderId)
+                                        if (!order.paymentConfirmed && (newStatus === 'preparacion' || newStatus === 'en_camino')) {
+                                            alert('❌ Payment must be confirmed before preparation or dispatch for delivery orders.')
+                                            return
+                                        }
+                                        setDemoOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+                                    }
+
+                                    const handleDemoPaymentConfirm = (orderId) => {
+                                        const method = paymentMethodSelect[orderId] || 'cash'
+                                        setDemoOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentConfirmed: true, paymentMethod: method } : o))
+                                    }
+
+                                    return deliveryOrders.map(order => {
+                                        const statusInfo = getDeliveryStatusInfo(order.status)
+                                        return (
+                                            <div key={order.id} style={{ ...cardStyle, marginBottom: 10, borderLeft: '4px solid #F97316' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                                    <span style={{ fontSize: 18, fontWeight: 700 }}>#{order.orderNumber} 🚚</span>
+                                                    <span style={{
+                                                        padding: '4px 8px',
+                                                        borderRadius: 4,
+                                                        fontSize: 11,
+                                                        fontWeight: 500,
+                                                        background: order.status === 'en_camino' ? '#FFEDD5' : order.status === 'listo' ? '#DCFCE7' : '#E0E7FF',
+                                                        color: order.status === 'en_camino' ? '#9A3412' : order.status === 'listo' ? '#166534' : '#3730A3'
+                                                    }}>
+                                                        {statusInfo.label}
+                                                    </span>
+                                                </div>
+
+                                                {/* Customer Info */}
+                                                {order.customerInfo && (
+                                                    <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6, background: '#F8FAFC', padding: 8, borderRadius: 6 }}>
+                                                        <p style={{ margin: 0, fontWeight: 600 }}>📍 {order.customerInfo.name}</p>
+                                                        <p style={{ margin: 0 }}>{order.customerInfo.address}</p>
+                                                        <p style={{ margin: 0 }}>📞 {order.customerInfo.phone}</p>
+                                                    </div>
+                                                )}
+
+                                                <div style={{ marginBottom: 8 }}>
+                                                    {order.items.map((item, idx) => (
+                                                        <p key={idx} style={{ fontSize: 13, color: '#374151', margin: '2px 0' }}>{item.quantity}× {item.name}</p>
+                                                    ))}
+                                                </div>
+
+                                                <div style={{ fontSize: 14, fontWeight: 600, color: '#22C55E', marginBottom: 12 }}>
+                                                    ${order.total.toLocaleString()}
+                                                </div>
+
+                                                {/* Interactive Actions for Demo */}
+                                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                                    {/* Phone confirmation input for en_camino */}
+                                                    {order.status === 'en_camino' && order.customerInfo && (
+                                                        <div style={{ width: '100%', marginBottom: 8 }}>
+                                                            <input
+                                                                type="text"
+                                                                maxLength={4}
+                                                                placeholder="Code (last 4 digits)"
+                                                                value={deliveryConfirmCode[order.id] || ''}
+                                                                onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '8px 12px',
+                                                                    border: '1px solid #E5E7EB',
+                                                                    borderRadius: 8,
+                                                                    fontSize: 14,
+                                                                    textAlign: 'center'
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Status advance button */}
+                                                    {statusInfo.next && (
+                                                        <button
+                                                            onClick={() => {
+                                                                if (statusInfo.next === 'entregado' && order.customerInfo) {
+                                                                    const code = deliveryConfirmCode[order.id] || ''
+                                                                    if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
+                                                                        alert('❌ Incorrect code. Demo code is last 4 of phone.')
+                                                                        return
+                                                                    }
+                                                                }
+                                                                handleDemoStatusChange(order.id, statusInfo.next)
+                                                            }}
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '8px 12px',
+                                                                background: '#3B82F6',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: 8,
+                                                                fontWeight: 600,
+                                                                fontSize: 12,
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            {statusInfo.nextLabel}
+                                                        </button>
+                                                    )}
+
+                                                    {/* Payment Actions */}
+                                                    {!order.paymentConfirmed && (
+                                                        <select
+                                                            value={paymentMethodSelect[order.id] || 'cash'}
+                                                            onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                            style={{
+                                                                padding: '8px',
+                                                                border: '1px solid #E5E7EB',
+                                                                borderRadius: 8,
+                                                                fontSize: 12
+                                                            }}
+                                                        >
+                                                            <option value="cash">💵 Cash</option>
+                                                            <option value="mercado_pago">📱 MP</option>
+                                                        </select>
+                                                    )}
+
+                                                    <button
+                                                        onClick={() => handleDemoPaymentConfirm(order.id)}
+                                                        style={{
+                                                            padding: '8px 12px',
+                                                            background: order.paymentConfirmed ? '#22C55E' : '#F59E0B',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: 8,
+                                                            fontWeight: 600,
+                                                            fontSize: 12,
+                                                            cursor: 'pointer',
+                                                            flex: 1
+                                                        }}
+                                                    >
+                                                        {order.paymentConfirmed ? '✅ Paid' : '💳 Confirm'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                })()}
+                            </>
+                        )}
+
+                        {/* STOCK TAB (Staff) */}
+                        {activeTab === 'stock' && role === 'staff' && (
+                            <>
+                                <h3 style={labelStyle}>🍽️ ITEM AVAILABILITY</h3>
+                                {demoMenu?.categories?.slice(0, 2).map(category => (
+                                    <div key={category.id} style={{ marginBottom: 16 }}>
+                                        <h4 style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>{category.icon} {category.name}</h4>
+                                        <div style={cardStyle}>
+                                            {category.items?.slice(0, 4).map(item => (
+                                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F3F4F6' }}>
+                                                    <div>
+                                                        <p style={{ fontSize: 13, fontWeight: 500, margin: 0 }}>{item.name}</p>
+                                                        <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>${item.price?.toLocaleString()}</p>
+                                                    </div>
+                                                    <label style={{ display: 'flex', alignItems: 'center' }}>
+                                                        <input type="checkbox" defaultChecked style={{ accentColor: '#22C55E' }} onChange={() => alert('ℹ️ Demo Mode — Availability toggle simulated')} />
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        )}
+
+                        {/* REWARDS TAB (Staff) */}
+                        {activeTab === 'rewards' && role === 'staff' && (
+                            <>
+                                <h3 style={labelStyle}>⭐ STAMP VALIDATION</h3>
+                                <div style={cardStyle}>
+                                    <h3 style={{ textAlign: 'center', marginBottom: 12 }}>Validate Stamp</h3>
+                                    <p style={{ color: '#6B7280', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
+                                        Use this to add a stamp when a customer visits or shares on Instagram
+                                    </p>
+                                    <button
+                                        onClick={() => alert('ℹ️ Demo Mode — Stamp added (simulated)')}
+                                        style={{
+                                            width: '100%',
+                                            padding: 14,
+                                            background: '#22C55E',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: 10,
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        ⭐ Add Stamp
+                                    </button>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Deprecated tabs removed: activity, launch, events */}
+
+                    </div>
+
+                {/* Bottom Navigation */}
+                <BackendNav
+                    role={role === 'owner' ? 'owner' : 'staff'}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    badges={navBadges}
+                />
+
+                {/* Demo Footer - positioned above nav */}
+                <div style={{
+                    position: 'fixed',
+                    bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))',
+                    left: 10,
+                    right: 10,
+                    padding: '8px 16px',
+                    background: '#FEF3C7',
+                    borderRadius: '8px 8px 0 0',
+                    textAlign: 'center',
+                    pointerEvents: 'none',
+                    zIndex: 999
+                }}>
+                    <p style={{ fontSize: 11, color: '#92400E', margin: 0 }}>
+                        🔒 Demo Mode — Demo data resets automatically
+                    </p>
+                </div>
+
+                {/* Email Popup (shows after 5 minutes) */}
+                <DemoEmailPopup
+                    isOpen={showEmailPopup}
+                    onClose={() => setShowEmailPopup(false)}
+                />
+
+                {/* Order Lifecycle Playback Modal (demo-only) */}
+                <OrderPlaybackModal
+                    order={playbackOrder}
+                    isOpen={playbackOpen}
+                    onClose={() => {
+                        setPlaybackOpen(false)
+                        setPlaybackOrder(null)
+                    }}
+                />
             </div>
-
-            {/* Bottom Navigation */}
-            <BackendNav
-                role={role === 'owner' ? 'owner' : 'staff'}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                badges={navBadges}
-            />
-
-            {/* Demo Footer - positioned above nav */}
-            <div style={{
-                position: 'fixed',
-                bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))',
-                left: 10,
-                right: 10,
-                padding: '8px 16px',
-                background: '#FEF3C7',
-                borderRadius: '8px 8px 0 0',
-                textAlign: 'center',
-                pointerEvents: 'none',
-                zIndex: 999
-            }}>
-                <p style={{ fontSize: 11, color: '#92400E', margin: 0 }}>
-                    🔒 Demo Mode — Demo data resets automatically
-                </p>
-            </div>
-
-            {/* Email Popup (shows after 5 minutes) */}
-            <DemoEmailPopup
-                isOpen={showEmailPopup}
-                onClose={() => setShowEmailPopup(false)}
-            />
-
-            {/* Order Lifecycle Playback Modal (demo-only) */}
-            <OrderPlaybackModal
-                order={playbackOrder}
-                isOpen={playbackOpen}
-                onClose={() => {
-                    setPlaybackOpen(false)
-                    setPlaybackOrder(null)
-                }}
-            />
-        </div>
-    )
+            )
 }
 
-export default DemoBackend
+            export default DemoBackend

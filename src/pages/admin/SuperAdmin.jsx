@@ -554,7 +554,124 @@ function SuperAdmin({ config }) {
                     {/* ==================== MENU TAB ==================== */}
                     {activeTab === 'menu' && canEdit && (
                         <>
-                            <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
+                            <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ (v2.0)</h3>
+
+                            {/* 1. FEATURED SECTION (TOP 4) */}
+                            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Destaques de Inicio (Top 4)
+                            </h3>
+
+                            {/* Grid of 4 Featured Items */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                gap: 8,
+                                marginBottom: 24,
+                                background: 'white',
+                                padding: 12,
+                                borderRadius: 12,
+                                border: '1px solid #E2E8F0'
+                            }}>
+                                {[0, 1, 2, 3].map(slotIndex => {
+                                    const currentSlot = config.featuredPhotos?.[slotIndex] || {}
+                                    return (
+                                        <div key={slotIndex} style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: 4
+                                        }}>
+                                            {/* Image Slot */}
+                                            <div
+                                                onClick={() => document.getElementById(`featured-img-${slotIndex}`)?.click()}
+                                                style={{
+                                                    aspectRatio: '1/1',
+                                                    width: '100%',
+                                                    background: currentSlot.image ? `url(${currentSlot.image}) center/cover` : '#F1F5F9',
+                                                    borderRadius: 8,
+                                                    border: '1px dashed #CBD5E1',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    position: 'relative',
+                                                    overflow: 'hidden',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                {!currentSlot.image && <span style={{ fontSize: 16, color: '#9CA3AF' }}>📷</span>}
+                                                {uploadingFeaturedSlot === slotIndex && (
+                                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <span style={{ fontSize: 10 }}>...</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <input
+                                                id={`featured-img-${slotIndex}`}
+                                                type="file"
+                                                accept="image/jpeg,image/png"
+                                                onChange={(e) => handleFeaturedImageUpload(e, slotIndex)}
+                                                style={{ display: 'none' }}
+                                            />
+
+                                            {/* Inputs */}
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre"
+                                                value={currentSlot.name || ''}
+                                                onChange={(e) => {
+                                                    const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
+                                                    newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
+                                                    updateConfig({ featuredPhotos: newPhotos })
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                }}
+                                                style={{ width: '100%', fontSize: 10, padding: 4, borderRadius: 4, border: '1px solid #E2E8F0', textAlign: 'center' }}
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="$"
+                                                value={currentSlot.price || ''}
+                                                onChange={(e) => {
+                                                    const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
+                                                    newPhotos[slotIndex] = { ...newPhotos[slotIndex], price: parseFloat(e.target.value) || 0 }
+                                                    updateConfig({ featuredPhotos: newPhotos })
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                }}
+                                                style={{ width: '100%', fontSize: 10, padding: 4, borderRadius: 4, border: '1px solid #E2E8F0', textAlign: 'center' }}
+                                            />
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
+                            {/* 2. VISUAL DIVIDER (Decorative Pill Branding) */}
+                            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Imagen Decorativa (Menú/Pedido)
+                            </h3>
+                            <div style={{ ...cardStyle, marginBottom: 24, border: '1px solid #E2E8F0' }}>
+                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Selecciona el estilo que divide el menú</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                                    {DIVIDER_PRESETS.map(preset => (
+                                        <div
+                                            key={preset.id}
+                                            onClick={() => { updateConfig({ dividerPresetId: preset.id }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
+                                            style={{
+                                                cursor: 'pointer',
+                                                borderRadius: 8,
+                                                overflow: 'hidden',
+                                                border: config.dividerPresetId === preset.id ? '2px solid #22C55E' : '1px solid #E2E8F0',
+                                                opacity: config.dividerPresetId === preset.id ? 1 : 0.7,
+                                                height: 40
+                                            }}
+                                        >
+                                            <img src={preset.url} alt={preset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Menú Principal
+                            </h3>
 
                             {/* Add Category Button / Form */}
                             {!showAddCategory ? (
@@ -1460,108 +1577,10 @@ function SuperAdmin({ config }) {
                                 )}
                             </div>
 
-                            {/* Divider Preset Selector */}
-                            <h3 style={labelStyle}>🖼️ IMAGEN DECORATIVA (Menú/Pedido)</h3>
-                            <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Imagen que aparece debajo del nombre en Menú y Pedido</p>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                                    {DIVIDER_PRESETS.map(preset => (
-                                        <div
-                                            key={preset.id}
-                                            onClick={() => { updateConfig({ dividerPresetId: preset.id }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
-                                            style={{
-                                                cursor: 'pointer',
-                                                borderRadius: 8,
-                                                overflow: 'hidden',
-                                                border: config.dividerPresetId === preset.id ? '3px solid #22C55E' : '2px solid #E5E7EB',
-                                                opacity: config.dividerPresetId === preset.id ? 1 : 0.7
-                                            }}
-                                        >
-                                            <img src={preset.url} alt={preset.name} style={{ width: '100%', height: 40, objectFit: 'cover' }} />
-                                        </div>
-                                    ))}
-                                </div>
-                                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8 }}>
-                                    Actual: {DIVIDER_PRESETS.find(p => p.id === config.dividerPresetId)?.name || 'Ninguna'}
-                                </p>
-                            </div>
 
-                            {/* Featured Photos Controls - Standalone System */}
-                            <h3 style={labelStyle}>📸 FOTOS DESTACADAS (Home) - 4 slots fijos</h3>
-                            <div style={cardStyle}>
-                                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Estos 4 items aparecen en la página de inicio</p>
-                                {[0, 1, 2, 3].map(slotIndex => {
-                                    const currentSlot = config.featuredPhotos?.[slotIndex] || {}
 
-                                    return (
-                                        <div key={slotIndex} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: slotIndex < 3 ? '1px solid #F3F4F6' : 'none' }}>
-                                            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                                                {/* Image Preview/Upload */}
-                                                <div
-                                                    onClick={() => document.getElementById(`featured-img-${slotIndex}`)?.click()}
-                                                    style={{
-                                                        width: 80,
-                                                        height: 80,
-                                                        borderRadius: 12,
-                                                        background: currentSlot.image ? 'none' : '#F3F4F6',
-                                                        border: '2px dashed #D1D5DB',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        cursor: 'pointer',
-                                                        overflow: 'hidden',
-                                                        flexShrink: 0
-                                                    }}
-                                                >
-                                                    {currentSlot.image ? (
-                                                        <img src={currentSlot.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                    ) : (
-                                                        <span style={{ fontSize: 24, color: '#9CA3AF' }}>📷</span>
-                                                    )}
-                                                </div>
-                                                <input
-                                                    id={`featured-img-${slotIndex}`}
-                                                    type="file"
-                                                    accept="image/jpeg,image/png"
-                                                    onChange={(e) => handleFeaturedImageUpload(e, slotIndex)}
-                                                    style={{ display: 'none' }}
-                                                />
 
-                                                {/* Slot Controls - Name & Price */}
-                                                <div style={{ flex: 1 }}>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Nombre del item"
-                                                        value={currentSlot.name || ''}
-                                                        onChange={(e) => {
-                                                            const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
-                                                            newPhotos[slotIndex] = { ...newPhotos[slotIndex], name: e.target.value }
-                                                            updateConfig({ featuredPhotos: newPhotos })
-                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                        }}
-                                                        style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, marginBottom: 6 }}
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Precio"
-                                                        value={currentSlot.price || ''}
-                                                        onChange={(e) => {
-                                                            const newPhotos = [...(config.featuredPhotos || [{}, {}, {}, {}])]
-                                                            newPhotos[slotIndex] = { ...newPhotos[slotIndex], price: parseFloat(e.target.value) || 0 }
-                                                            updateConfig({ featuredPhotos: newPhotos })
-                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                        }}
-                                                        style={{ width: 100, padding: '6px 10px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12 }}
-                                                    />
-                                                    {uploadingFeaturedSlot === slotIndex && (
-                                                        <p style={{ fontSize: 10, color: '#6B7280', marginTop: 4 }}>Optimizando...</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
+
                         </>
                     )}
 
