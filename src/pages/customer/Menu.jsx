@@ -253,54 +253,69 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             }
         }
 
-        // ==== MAGNET MATH: Distance-Based Detection ====
-        // Instead of strict point-in-rect, find the CLOSEST item center
+        // ==== COLLISION DETECTION: Bounding Box Overlap ====
+        // Calculate intersection area between dragged card and potential targets
+        // This is more consistent than distance-based detection
+
+        // Define the Dragged Box (The Visual Card)
+        const dragRect = {
+            left: touchX - dragState.offsetX,
+            top: touchY - dragState.offsetY,
+            right: touchX - dragState.offsetX + dragState.itemWidth,
+            bottom: touchY - dragState.offsetY + dragState.itemHeight,
+            width: dragState.itemWidth,
+            height: dragState.itemHeight
+        }
+
         const allItems = document.querySelectorAll('[data-item-id]')
         let closestItem = null
-        let closestDistance = Infinity
+        let maxOverlap = 0
 
         allItems.forEach(item => {
             // Skip the item being dragged
             if (item.getAttribute('data-dragging') === 'true') return
 
             const rect = item.getBoundingClientRect()
-            const centerX = rect.left + rect.width / 2
-            const centerY = rect.top + rect.height / 2
-            const distance = Math.hypot(touchX - centerX, touchY - centerY)
 
-            if (distance < closestDistance) {
-                closestDistance = distance
+            // Calculate Intersection Rectangle
+            const intersectionX = Math.max(0, Math.min(dragRect.right, rect.right) - Math.max(dragRect.left, rect.left))
+            const intersectionY = Math.max(0, Math.min(dragRect.bottom, rect.bottom) - Math.max(dragRect.top, rect.top))
+            const intersectionArea = intersectionX * intersectionY
+
+            const itemArea = rect.width * rect.height
+            const overlapRatio = intersectionArea / itemArea
+
+            // THRESHOLD: 40% Overlap triggers the swap
+            if (overlapRatio > 0.40 && overlapRatio > maxOverlap) {
+                maxOverlap = overlapRatio
                 closestItem = item
             }
         })
 
         let targetIndex = dragState.targetIndex
 
-        // MAGNET THRESHOLD: 100px - middle ground (120 too loose, 60 too tight)
-        const MAGNET_THRESHOLD = 100
+        // ==== TRACE LOG: COLLISION DETECTION ====
+        console.log('[COLLISION] Best overlap:', (maxOverlap * 100).toFixed(1) + '%', 'Target:', closestItem?.getAttribute('data-item-id'))
 
-        // ==== TRACE LOG: MAGNET MATH ====
-        console.log('[MATH] Closest Item:', closestItem?.getAttribute('data-item-id'), 'Distance:', closestDistance.toFixed(1), 'Threshold:', MAGNET_THRESHOLD)
-
-        if (closestItem && closestDistance < MAGNET_THRESHOLD) {
+        if (closestItem && maxOverlap > 0.40) {
             const targetId = closestItem.getAttribute('data-item-id')
-            console.log('[MATH] Within threshold! TargetId:', targetId)
+            console.log('[COLLISION] Overlap threshold met! TargetId:', targetId)
 
             // Same category only - no cross-category during static drag
             const newIndex = dragState.items.indexOf(targetId)
-            console.log('[MATH] indexOf result:', newIndex, 'Current itemIndex:', dragState.itemIndex)
+            console.log('[COLLISION] indexOf result:', newIndex, 'Current itemIndex:', dragState.itemIndex)
             if (newIndex !== -1) {
                 targetIndex = newIndex
             }
         } else {
-            console.log('[MATH] OUTSIDE threshold or no closestItem')
+            console.log('[COLLISION] No sufficient overlap')
         }
 
         // ==== TRACE LOG: TARGET INDEX ====
-        console.log('[MATH] Final targetIndex:', targetIndex)
+        console.log('[COLLISION] Final targetIndex:', targetIndex)
 
         // ==== VISUAL DEBUGGER UPDATE ====
-        setDebugLog('MOVE: X:' + touchX.toFixed(0) + ' Y:' + touchY.toFixed(0) + '\nClosest: ' + (closestItem?.getAttribute('data-item-id') || 'none') + ' (Dist: ' + closestDistance.toFixed(0) + 'px)\nTarget: ' + targetIndex + ' | itemIndex: ' + dragState.itemIndex)
+        setDebugLog('MOVE: X:' + touchX.toFixed(0) + ' Y:' + touchY.toFixed(0) + '\nOverlap: ' + (maxOverlap * 100).toFixed(0) + '% | Target: ' + (closestItem?.getAttribute('data-item-id') || 'none') + '\nIdx: ' + targetIndex + ' | From: ' + dragState.itemIndex)
 
         // Update drag state with new position and target index
         // NOTE: We do NOT update categoryId or reorder the menu here
