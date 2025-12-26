@@ -1104,7 +1104,7 @@ function SuperAdmin({ config }) {
                                                 borderRadius: 6,
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center'
                                             }}>
-                                                <span style={{ fontSize: 10, color: config.branding?.iconColorMode === 'white' ? 'white' : 'black', fontWeight: 600 }}>Preview</span>
+                                                <span style={{ fontSize: 10, color: config.branding?.iconColorMode === 'white' ? 'white' : 'black', fontWeight: 600 }}>Vista Previa</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1160,11 +1160,14 @@ function SuperAdmin({ config }) {
                                         </div>
                                     </div>
                                     <div>
-                                        <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Color de Créditos (Footer)</p>
+                                        <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Color de Marca en Footer</p>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             <input type="color" value={config.branding?.poweredByColor || '#C4856A'} onChange={(e) => { updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ width: 40, height: 40, border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer' }} />
                                             <span style={{ fontSize: 11, color: '#6B7280' }}>{(config.branding?.poweredByColor || '#C4856A').toUpperCase()}</span>
                                         </div>
+                                        <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>
+                                            Personaliza el color de '@powered by foodspotapp' que aparece en la parte inferior.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -1218,13 +1221,14 @@ function SuperAdmin({ config }) {
                                                         }}
                                                         style={{
                                                             flex: 1, padding: '16px', borderRadius: 8,
-                                                            border: isSelected ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                                            border: isSelected ? '3px solid #3B82F6' : '1px solid #E5E7EB',
                                                             // Preview background matches Nav Bar color concept loosely (or just neutral)
                                                             // To show reactivity, let's use the actual Nav Color as background for independent preview 
                                                             backgroundColor: config.branding?.primaryColor || '#8B7355',
                                                             cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                                                             color: navIconMode === 'white' ? '#FFFFFF' : '#000000',
-                                                            transition: 'all 0.2s'
+                                                            transition: 'all 0.2s',
+                                                            boxShadow: isSelected ? '0 0 0 2px rgba(59, 130, 246, 0.2)' : 'none'
                                                         }}
                                                     >
                                                         <div>{item.icon}</div>
