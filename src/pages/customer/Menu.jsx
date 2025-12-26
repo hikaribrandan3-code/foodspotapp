@@ -54,9 +54,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // When true, kills all CSS transitions to prevent "slow glide" on drop
     const [isDropping, setIsDropping] = useState(false)
 
-    // ==== VISUAL DEBUGGER ====
-    const [debugLog, setDebugLog] = useState('Debug Active... Waiting for touch')
-
     // ==== NUCLEAR RENDER ====
     // Incrementing this forces React to re-render the grid with fresh keys
     const [menuVersion, setMenuVersion] = useState(0)
@@ -120,10 +117,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         longPressTimerRef.current = setTimeout(() => {
             // Haptic feedback if supported
-            console.log('EDIT MODE ACTIVATED — VIBRATE FIRED', {
-                hasVibrate: !!navigator.vibrate,
-                duration: LONG_PRESS_DURATION
-            })
             if (navigator.vibrate) {
                 navigator.vibrate(50)
             }
@@ -223,9 +216,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         const touchX = touch.clientX
         const touchY = touch.clientY
 
-        // ==== TRACE LOG: MOVE EVENT ====
-        console.log('[MOVE] Touch X:', touchX, 'Y:', touchY)
-
         // ===== HOT ZONE AUTO-SCROLL =====
         if (ENABLE_AUTO_SCROLL) {
             const viewportHeight = window.innerHeight
@@ -297,28 +287,15 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         let targetIndex = dragState.targetIndex
 
-        // ==== TRACE LOG: COLLISION DETECTION ====
-        console.log('[COLLISION] Best overlap:', (maxOverlap * 100).toFixed(1) + '%', 'Target:', closestItem?.getAttribute('data-item-id'))
-
         if (closestItem && maxOverlap > 0.40) {
             const targetId = closestItem.getAttribute('data-item-id')
-            console.log('[COLLISION] Overlap threshold met! TargetId:', targetId)
 
             // Same category only - no cross-category during static drag
             const newIndex = dragState.items.indexOf(targetId)
-            console.log('[COLLISION] indexOf result:', newIndex, 'Current itemIndex:', dragState.itemIndex)
             if (newIndex !== -1) {
                 targetIndex = newIndex
             }
-        } else {
-            console.log('[COLLISION] No sufficient overlap')
         }
-
-        // ==== TRACE LOG: TARGET INDEX ====
-        console.log('[COLLISION] Final targetIndex:', targetIndex)
-
-        // ==== VISUAL DEBUGGER UPDATE ====
-        setDebugLog('MOVE: X:' + touchX.toFixed(0) + ' Y:' + touchY.toFixed(0) + '\nOverlap: ' + (maxOverlap * 100).toFixed(0) + '% | Target: ' + (closestItem?.getAttribute('data-item-id') || 'none') + '\nIdx: ' + targetIndex + ' | From: ' + dragState.itemIndex)
 
         // Update drag state with new position and target index
         // NOTE: We do NOT update categoryId or reorder the menu here
@@ -370,14 +347,8 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         const { categoryId, itemIndex, targetIndex, items } = capturedState
 
-        // ==== DETAILED DEBUG LOG ====
-        const direction = itemIndex < targetIndex ? 'DOWN' : itemIndex > targetIndex ? 'UP' : 'NONE'
-        setDebugLog(`DROP! ${direction}\nFrom: ${itemIndex} → To: ${targetIndex}\nItems: ${items.length}`)
-        console.log('🎯 DROP EVENT:', { itemIndex, targetIndex, direction, items })
-
         // If no movement, just cleanup
         if (itemIndex === targetIndex) {
-            console.log('🎯 No movement - early return')
             setTimeout(() => setIsDropping(false), 100)
             return
         }
@@ -392,19 +363,14 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         const [movedId] = newOrderIds.splice(itemIndex, 1)
         newOrderIds.splice(targetIndex, 0, movedId)
 
-        console.log('📋 New ID order:', newOrderIds)
-
         // Step 2: Apply to React state
         setMenu(prevMenu => {
-            console.log('📝 APPLYING NEW ORDER TO STATE')
-
             // Clone categories
             const newCategories = [...prevMenu.categories]
 
             // Find category
             const catIndex = newCategories.findIndex(c => c.id === categoryId)
             if (catIndex === -1) {
-                console.error('Category not found!')
                 return prevMenu
             }
 
@@ -421,8 +387,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             // Combine: reordered available + unavailable at end
             const finalItems = [...reorderedAvailable, ...unavailableItems]
 
-            console.log('📋 Final order:', finalItems.map(i => i.id))
-
             // Update category
             newCategories[catIndex] = { ...newCategories[catIndex], items: finalItems }
 
@@ -434,7 +398,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
         // Persist to storage
         reorderCategoryItems(categoryId, newOrderIds)
-        console.log('💾 Persisted to storage')
 
         // Force Sync (but don't trigger a full reload that would overwrite our state)
         window.dispatchEvent(new CustomEvent('forceConfigUpdate', { detail: { menuUpdated: true } }))
@@ -443,7 +406,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         setTimeout(() => {
             blockRefreshRef.current = false
             setIsDropping(false)
-            console.log('🛡️ Shield lowered')
         }, 2000)
 
     }, [dragState])
@@ -462,22 +424,13 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
 
             // ==== REQUIREMENT 5: THE MUZZLE (SAFARI FIX) ====
             const handleEnd = (e) => {
-                // ==== TRACE LOG: TOUCH END ====
-                console.log('[TOUCH END] Fired!')
-                console.log('[TOUCH END] e.cancelable:', e?.cancelable)
-                console.log('[TOUCH END] e.defaultPrevented:', e?.defaultPrevented)
-                console.log('[TOUCH END] hadActiveDrag:', hadActiveDrag)
-
                 if (e && hadActiveDrag) {
                     e.preventDefault()
                     e.stopPropagation()
                     e.stopImmediatePropagation() // CRITICAL: Prevents ghost clicks
-                    console.log('[TOUCH END] Event prevention applied')
                 }
                 hadActiveDrag = false
-                console.log('[TOUCH END] Calling handleDragEnd...')
                 handleDragEnd()
-                console.log('[TOUCH END] handleDragEnd returned')
             }
 
             const handleCancel = () => {
@@ -587,25 +540,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         }}>
             {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
             <HeaderClamp config={config} />
-
-            {/* ==== VISUAL DEBUGGER OVERLAY ==== */}
-            <div style={{
-                position: 'fixed',
-                top: 0, left: 0, right: 0,
-                padding: '10px',
-                paddingTop: 'calc(env(safe-area-inset-top) + 10px)',
-                background: 'rgba(0,0,0,0.9)',
-                color: '#00ff00',
-                fontSize: '12px',
-                fontFamily: 'monospace',
-                fontWeight: 'bold',
-                zIndex: 9999999,
-                pointerEvents: 'none',
-                whiteSpace: 'pre-wrap',
-                backdropFilter: 'blur(4px)'
-            }}>
-                {debugLog}
-            </div>
 
             {/* Delivery Mode Context Badge */}
             {deliveryMode && !isEditMode && (
