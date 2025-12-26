@@ -1508,7 +1508,7 @@ function SuperAdmin({ config }) {
                     {/* DELIVERY SECTION */}
                     {activeTab === 'orders' && (
                         <>
-                            <h3 style={labelStyle}>🚚 DELIVERY ORDERS</h3>
+                            <h3 style={labelStyle}>🚚 PEDIDOS DE ENVÍO</h3>
                             {/* Business Disclaimers */}
                             <div style={{
                                 background: '#FEF3C7',
@@ -1518,11 +1518,11 @@ function SuperAdmin({ config }) {
                                 marginBottom: 16,
                                 fontSize: 11
                             }}>
-                                <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Delivery Reminders:</p>
+                                <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Recordatorios de Despacho:</p>
                                 <ul style={{ margin: 0, paddingLeft: 16, color: '#92400E' }}>
-                                    <li>FoodSpot is software, not a delivery company</li>
-                                    <li>The business is responsible for drivers and insurance</li>
-                                    <li>Cash payments must be confirmed BEFORE preparation</li>
+                                    <li>FoodSpot es software, no una empresa de delivery</li>
+                                    <li>El negocio es responsable de los repartidores y seguros</li>
+                                    <li>Los pagos en efectivo deben confirmarse ANTES de preparar</li>
                                 </ul>
                             </div>
                             {(() => {
@@ -1531,22 +1531,12 @@ function SuperAdmin({ config }) {
                                     return (
                                         <div style={{ ...cardStyle, textAlign: 'center', padding: 24 }}>
                                             <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
-                                            <p style={{ color: '#6B7280', margin: 0 }}>No active delivery orders</p>
+                                            <p style={{ color: '#6B7280', margin: 0 }}>No hay pedidos de envío activos</p>
                                         </div>
                                     )
                                 }
 
-                                // Helper for status info (reusing Staff logic)
-                                const getDeliveryStatusInfo = (status) => {
-                                    const config = {
-                                        pendiente: { label: 'Pending', next: 'confirmado', nextLabel: 'Confirm →', class: 'pending' },
-                                        confirmado: { label: 'Confirmed', next: 'preparacion', nextLabel: 'Start Prep →', class: 'confirmed' },
-                                        preparacion: { label: 'Preparing', next: 'listo', nextLabel: 'Ready →', class: 'preparing' },
-                                        listo: { label: 'Ready', next: 'en_camino', nextLabel: 'Out for Delivery →', class: 'ready' },
-                                        en_camino: { label: 'On the way', next: 'entregado', nextLabel: 'Mark Delivered', class: 'on-way' }
-                                    }
-                                    return config[status] || { label: status, next: null, nextLabel: null, class: '' }
-                                }
+
 
                                 // Handle status change with payment validation
                                 const handleDeliveryStatusChange = (orderId, newStatus, order) => {
@@ -1568,7 +1558,7 @@ function SuperAdmin({ config }) {
                                 }
 
                                 return deliveryOrders.map(order => {
-                                    const statusInfo = getDeliveryStatusInfo(order.status)
+                                    const statusInfo = getOrderStatusInfo(order.status, order.orderType)
                                     return (
                                         <div key={order.id} style={{ ...cardStyle, marginBottom: 12, borderLeft: '4px solid #F97316' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -1612,7 +1602,7 @@ function SuperAdmin({ config }) {
                                                 {order.status === 'en_camino' && order.customerInfo && (
                                                     <div style={{ width: '100%', marginBottom: 8 }}>
                                                         <label style={{ fontSize: 10, color: '#6B7280', display: 'block', marginBottom: 4 }}>
-                                                            Last 4 digits of phone to confirm delivery
+                                                            Últimos 4 dígitos del teléfono para confirmar entrega
                                                         </label>
                                                         <input
                                                             type="text"
@@ -1641,7 +1631,7 @@ function SuperAdmin({ config }) {
                                                             if (statusInfo.next === 'entregado' && order.customerInfo) {
                                                                 const code = deliveryConfirmCode[order.id] || ''
                                                                 if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
-                                                                    alert('❌ Incorrect code. Enter the last 4 digits of customer phone.')
+                                                                    alert('❌ Código incorrecto. Ingrese los últimos 4 dígitos del teléfono del cliente.')
                                                                     return
                                                                 }
                                                                 updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
