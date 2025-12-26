@@ -439,10 +439,10 @@ function SuperAdmin({ config }) {
                             alert('✅ Frontend synced!')
                         }}
                         style={{
-                            width: 'fit-content',
+                            width: '100%',
                             padding: '12px 24px',
                             background: config.camera?.color || config.branding?.primaryColor || '#3B82F6',
-                            borderRadius: 24,
+                            borderRadius: 12,
                             border: 'none',
                             fontSize: 14,
                             fontWeight: 600,
@@ -450,7 +450,8 @@ function SuperAdmin({ config }) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 8
+                            gap: 8,
+                            cursor: 'pointer'
                         }}
                     >
                         🔄 Actualizar Frontend
