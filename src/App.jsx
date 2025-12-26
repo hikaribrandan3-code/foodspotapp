@@ -473,10 +473,6 @@ function App() {
 
                 {/* Bottom Navigation (visible on main customer pages) */}
                 <BottomNav config={safeConfig} />
-
-
-                {/* Stacked Admin Badge - Bottom Left */}
-                <StackedAdminBadge />
             </div>
         </AdminIntentProvider>
     )

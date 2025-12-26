@@ -363,7 +363,7 @@ function SuperAdmin({ config }) {
         <>
             <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 <BackendHeader
-                    title="ADMIN"
+                    title="Modo: Super Admin"
                     onLogout={handleLogout}
                     showDateSelector={false}
                     showNotifications={false}
@@ -452,7 +452,7 @@ function SuperAdmin({ config }) {
                             gap: 8
                         }}
                     >
-                        🔄 Refresh Frontend
+                        🔄 Actualizar Frontend
                     </button>
                 </div>
 
@@ -464,6 +464,7 @@ function SuperAdmin({ config }) {
                     {/* ==================== SUMMARY TAB ==================== */}
                     {activeTab === 'summary' && (
                         <>
+                            {/* 1. FINANCIAL DASHBOARD (Top Priority) */}
                             <h3 style={labelStyle}>💳 PAGOS DEL DÍA</h3>
                             <div style={cardStyle}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
@@ -492,19 +493,16 @@ function SuperAdmin({ config }) {
                                 <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{monthOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Este mes</p></div>
                             </div>
 
-                            {/* PDF Export disabled for v1 — pushing to v2 */}
-                            {/* <button style={{ width: '100%', padding: '14px', background: '#22C55E', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>📄 Exportar PDF del mes</button> */}
-                        </>
-                    )}
-
-                    {/* ==================== INFO (under Summary tab) ==================== */}
-                    {activeTab === 'summary' && canEdit && (
-                        <>
-                            <h3 style={labelStyle}>📍 INFORMACIÓN DEL LOCAL</h3>
+                            {/* 2. ACTIVE COMMUNICATION */}
+                            <h3 style={labelStyle}>📞 COMUNICACIÓN ACTIVA</h3>
                             <div style={cardStyle}>
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>WhatsApp (contacto principal)</label>
                                 <input type="text" placeholder="+54 11 1234-5678" value={config.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
+                            </div>
 
+                            {/* 3. PHYSICAL STORE INFO (LOCALIZACIÓN) */}
+                            <h3 style={labelStyle}>📍 LOCALIZACIÓN</h3>
+                            <div style={cardStyle}>
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección</label>
                                 <input type="text" placeholder="Av. Corrientes 1234" value={config.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={inputStyle} />
 
@@ -518,7 +516,8 @@ function SuperAdmin({ config }) {
                                 <input type="text" placeholder="Timbre 2A, subir escaleras" value={config.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
                             </div>
 
-                            <h3 style={labelStyle}>🔗 LINKS EXTERNOS</h3>
+                            {/* 4. EXTERNAL GATES (BOTTOM) */}
+                            <h3 style={labelStyle}>🔗 LINKS EXTERNOS & PAGOS</h3>
                             <div style={cardStyle}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                     <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>

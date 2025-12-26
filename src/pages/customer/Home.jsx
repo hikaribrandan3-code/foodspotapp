@@ -470,7 +470,7 @@ function Home({ config }) {
                             cursor: 'pointer'
                         }}
                     >
-                        Done
+                        Listo
                     </button>
                 </div>
             )}

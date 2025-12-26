@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory } from '../../config/menuData.js'
+import { getConfig, updateConfig } from '../../config/appConfig.js' // Added config imports
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
@@ -15,6 +16,7 @@ function MenuManager({ demoMode = false }) {
     const targetBusinessId = isSimulated ? impersonatingBusinessId : currentUser?.businessId
 
     const [menu, setMenu] = useState(() => getMenu(targetBusinessId))
+    const [config, setConfig] = useState(() => getConfig()) // Added config state
     const [editingItem, setEditingItem] = useState(null)
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
     const [uploadStatus, setUploadStatus] = useState(null)
@@ -130,6 +132,62 @@ function MenuManager({ demoMode = false }) {
         setMenu(getMenu(targetBusinessId))
     }
 
+    // --- CRUD HANDLERS ---
+    const handleRemoveItem = (categoryId, item) => {
+        if (confirm(`¿Eliminar ítem "${item.name}"?`)) {
+            removeMenuItem(categoryId, item.id)
+            setMenu(getMenu(targetBusinessId))
+        }
+    }
+
+    const handleAddItem = (categoryId) => {
+        const newItem = {
+            name: 'Nuevo ítem',
+            price: 0,
+            image: null
+        }
+        addMenuItem(categoryId, newItem)
+        setMenu(getMenu(targetBusinessId))
+        // Optionally auto-open edit modal for the new item.
+        // For now, we leave it as created. 
+        // To do auto-open we need to know the ID, but addMenuItem returns it.
+        // Let's improve this if possible, but basic add is fine.
+    }
+    // ---------------------
+
+    // --- FEATURED ITEMS LOGIC (Synced with SuperAdmin) ---
+    const activeFeaturedItems = config.featuredPhotos || []
+    const isFeatured = (item) => activeFeaturedItems.some(f => f && f.name === item.name)
+
+    const handleToggleFeatured = (item) => {
+        const currentFeatured = [...activeFeaturedItems]
+        const idx = currentFeatured.findIndex(f => f && f.name === item.name)
+
+        if (idx !== -1) {
+            currentFeatured.splice(idx, 1) // Remove
+        } else {
+            if (currentFeatured.length < 4) {
+                currentFeatured.push({
+                    name: item.name,
+                    price: item.price,
+                    image: item.image
+                })
+            } else {
+                alert('Máximo 4 destacados. Elimina uno para agregar otro.')
+                return
+            }
+        }
+
+        // Update both Config (for Home Top 4) AND Menu Item flag (for Promo toggle sync)
+        const newConfig = { ...config, featuredPhotos: currentFeatured }
+        updateConfig(newConfig)
+        setConfig(newConfig)
+
+        // Find and toggle the item in the menu structure for visual sync
+        // Note: The actual "Promo" toggle in the UI will now reflect isFeatured(item)
+    }
+    // -----------------------------------------------------
+
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
@@ -138,6 +196,84 @@ function MenuManager({ demoMode = false }) {
             />
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
+                {/* 1. FEATURED SECTION (TOP 4) */}
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Destaques de Inicio (Top 4)
+                </h3>
+
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: 8,
+                    marginBottom: 24,
+                    background: 'white',
+                    padding: 12,
+                    borderRadius: 12,
+                    border: '1px solid #E2E8F0'
+                }}>
+                    {[0, 1, 2, 3].map(i => {
+                        const slot = activeFeaturedItems[i]
+                        return (
+                            <div key={i} style={{
+                                aspectRatio: '1/1',
+                                background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
+                                borderRadius: 8,
+                                border: '1px dashed #CBD5E1',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}>
+                                {slot ? (
+                                    <>
+                                        <div style={{
+                                            position: 'absolute',
+                                            bottom: 0, left: 0, right: 0,
+                                            background: 'rgba(0,0,0,0.6)',
+                                            color: 'white',
+                                            fontSize: 9,
+                                            padding: '2px 4px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            textAlign: 'center'
+                                        }}>
+                                            {slot.name}
+                                        </div>
+                                        <button
+                                            onClick={() => handleToggleFeatured(slot)}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 2, right: 2,
+                                                width: 20, height: 20,
+                                                background: 'red',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                fontSize: 12,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            ×
+                                        </button>
+                                    </>
+                                ) : (
+                                    <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center' }}>Vacío</span>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {/* 2. VISUAL DIVIDER */}
+                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
+
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Menú Principal
+                </h3>
+
                 {/* Add Category Button / Form */}
                 {!showAddCategory ? (
                     <button
@@ -316,34 +452,44 @@ function MenuManager({ demoMode = false }) {
                                         <div style={{ flex: 1 }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                 <div style={{ flex: 1 }}>
-                                                    <p style={{
-                                                        fontWeight: 500,
-                                                        fontSize: 14,
-                                                        color: '#1E293B',
-                                                        margin: 0,
-                                                        marginBottom: 4
-                                                    }}>{item.name}</p>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                                        <p style={{
+                                                            fontWeight: 500,
+                                                            fontSize: 14,
+                                                            color: '#1E293B',
+                                                            margin: 0
+                                                        }}>{item.name}</p>
+                                                        <div
+                                                            style={{
+                                                                fontSize: 16,
+                                                                filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
+                                                                opacity: isFeatured(item) ? 1 : 0.2
+                                                            }}
+                                                        >
+                                                            ⭐
+                                                        </div>
+                                                    </div>
                                                     <p style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, margin: 0 }}>
-                                                        {item.price}
+                                                        ${item.price}
                                                     </p>
                                                 </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
                                                         Agotado
                                                         <input
                                                             type="checkbox"
                                                             checked={!item.available}
                                                             onChange={() => handleToggleAvailability(category.id, item.id)}
-                                                            style={{ accentColor: '#EF4444' }}
+                                                            style={{ width: 18, height: 18, accentColor: '#EF4444' }}
                                                         />
                                                     </label>
-                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
                                                         Promo
                                                         <input
                                                             type="checkbox"
-                                                            checked={item.featured ?? false}
-                                                            onChange={() => handleSetFeatured(category.id, item.id)}
-                                                            style={{ accentColor: '#22C55E' }}
+                                                            checked={isFeatured(item)}
+                                                            onChange={() => handleToggleFeatured(item)}
+                                                            style={{ width: 18, height: 18, accentColor: '#EAB308' }}
                                                         />
                                                     </label>
                                                 </div>
@@ -351,7 +497,7 @@ function MenuManager({ demoMode = false }) {
                                         </div>
                                         {/* Delete Button - SuperAdmin Style */}
                                         <button
-                                            onClick={() => handleEdit(category.id, item)}
+                                            onClick={() => handleRemoveItem(category.id, item)}
                                             style={{
                                                 background: 'none',
                                                 border: 'none',
@@ -362,12 +508,28 @@ function MenuManager({ demoMode = false }) {
                                                 alignSelf: 'flex-start',
                                                 marginLeft: 8
                                             }}
-                                            title="Editar item"
+                                            title="Eliminar ítem"
                                         >
                                             ×
                                         </button>
                                     </div>
                                 ))}
+                                {/* Add Item Button (New) */}
+                                <div
+                                    onClick={() => handleAddItem(category.id)}
+                                    style={{
+                                        padding: '12px',
+                                        background: '#F8FAFC',
+                                        borderTop: '1px solid #E2E8F0',
+                                        color: '#3B82F6',
+                                        fontSize: 13,
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                    }}
+                                >
+                                    ➕ Agregar Ítem
+                                </div>
                             </div>
                         </div>
                     )

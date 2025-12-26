@@ -2010,9 +2010,88 @@ function DemoBackend() {
                 )}
 
                 {/* MENU TAB (Owner only) - FUNCTIONAL EDITING */}
+                {/* MENU TAB (Owner only) - FUNCTIONAL EDITING */}
                 {activeTab === 'menu' && role === 'owner' && (
                     <>
-                        <h3 style={labelStyle}>🍽️ MENU MANAGEMENT</h3>
+                        <h3 style={labelStyle}>🍽️ GESTIÓN DE MENÚ</h3>
+
+                        {/* 1. FEATURED SECTION (TOP 4) */}
+                        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Destaques de Inicio (Top 4)
+                        </h3>
+
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: 8,
+                            marginBottom: 24,
+                            background: 'white',
+                            padding: 12,
+                            borderRadius: 12,
+                            border: '1px solid #E2E8F0'
+                        }}>
+                            {[0, 1, 2, 3].map(i => {
+                                const slot = activeFeaturedItems[i]
+                                return (
+                                    <div key={i} style={{
+                                        aspectRatio: '1/1',
+                                        background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
+                                        borderRadius: 8,
+                                        border: '1px dashed #CBD5E1',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}>
+                                        {slot ? (
+                                            <>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    bottom: 0, left: 0, right: 0,
+                                                    background: 'rgba(0,0,0,0.6)',
+                                                    color: 'white',
+                                                    fontSize: 9,
+                                                    padding: '2px 4px',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    {slot.name}
+                                                </div>
+                                                <button
+                                                    onClick={() => handleToggleFeatured(slot)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 2, right: 2,
+                                                        width: 20, height: 20,
+                                                        background: 'red',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        fontSize: 12,
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    ×
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center' }}>Vacío</span>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        {/* 2. VISUAL DIVIDER */}
+                        <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
+
+                        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Menú Principal
+                        </h3>
 
                         {/* Add Category Button / Form */}
                         {!showAddCategory ? (
@@ -2022,12 +2101,12 @@ function DemoBackend() {
                                     width: '100%',
                                     padding: '12px 16px',
                                     marginBottom: 16,
-                                    background: '#F3F4F6',
-                                    border: '2px dashed #D1D5DB',
+                                    background: '#F1F5F9',
+                                    border: '2px dashed #CBD5E1',
                                     borderRadius: 10,
                                     fontSize: 14,
                                     fontWeight: 500,
-                                    color: '#6B7280',
+                                    color: '#64748B',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -2035,14 +2114,14 @@ function DemoBackend() {
                                     gap: 6
                                 }}
                             >
-                                ➕ Add Category
+                                ➕ Agregar Categoría
                             </button>
                         ) : (
                             <div style={{ ...cardStyle, marginBottom: 16, border: '2px solid #22C55E' }}>
                                 <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
                                     <input
                                         type="text"
-                                        placeholder="Category name"
+                                        placeholder="Nombre de categoría"
                                         value={newCategoryName}
                                         onChange={(e) => setNewCategoryName(e.target.value)}
                                         autoFocus
@@ -2080,7 +2159,7 @@ function DemoBackend() {
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        Create Category
+                                        Crear
                                     </button>
                                     <button
                                         onClick={() => {
@@ -2090,15 +2169,15 @@ function DemoBackend() {
                                         }}
                                         style={{
                                             padding: '10px 16px',
-                                            background: '#F3F4F6',
-                                            color: '#6B7280',
+                                            background: '#F1F5F9',
+                                            color: '#64748B',
                                             border: 'none',
                                             borderRadius: 8,
                                             fontWeight: 500,
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        Cancel
+                                        Cancelar
                                     </button>
                                 </div>
                             </div>
@@ -2106,81 +2185,214 @@ function DemoBackend() {
 
                         {demoMenu?.categories?.map(category => (
                             <div key={category.id} style={{ marginBottom: 20 }}>
-                                <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.icon} {category.name}</h4>
-                                {category.items?.map(item => (
-                                    <div key={item.id} style={{ ...cardStyle, marginBottom: 8 }}>
-                                        <div style={{ marginBottom: 8 }}>
-                                            <label style={{ fontSize: 11, color: '#9CA3AF' }}>Name</label>
-                                            <input
-                                                type="text"
-                                                value={item.name}
-                                                onChange={(e) => handleMenuItemEdit(category.id, item.id, { name: e.target.value })}
-                                                style={{ ...inputStyle, marginBottom: 4, fontWeight: 500 }}
-                                            />
-                                        </div>
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            <div style={{ flex: 1 }}>
-                                                <label style={{ fontSize: 11, color: '#9CA3AF' }}>Price ($)</label>
-                                                <input
-                                                    type="number"
-                                                    value={item.price || 0}
-                                                    onChange={(e) => handleMenuItemEdit(category.id, item.id, { price: parseFloat(e.target.value) || 0 })}
-                                                    style={{ ...inputStyle, marginBottom: 0 }}
-                                                />
-                                            </div>
-                                            <div style={{ flex: 1 }}>
-                                                <label style={{ fontSize: 11, color: '#9CA3AF' }}>Status</label>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 8 }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={item.outOfStock || false}
-                                                        onChange={(e) => handleMenuItemEdit(category.id, item.id, { outOfStock: e.target.checked })}
-                                                        style={{ accentColor: '#EF4444' }}
-                                                    />
-                                                    <span style={{ fontSize: 12, color: '#6B7280' }}>Out of stock</span>
+                                <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{category.name}</h4>
+                                <div style={{
+                                    background: 'white',
+                                    borderRadius: 12,
+                                    border: '1px solid #E2E8F0',
+                                    overflow: 'hidden'
+                                }}>
+                                    {category.items?.map((item, idx) => (
+                                        <div key={item.id} style={{
+                                            display: 'flex',
+                                            alignItems: 'flex-start',
+                                            padding: '12px 14px',
+                                            borderBottom: '1px solid #F1F5F9',
+                                            gap: 10
+                                        }}>
+                                            {/* Image */}
+                                            <div style={{ width: 60, flexShrink: 0 }}>
+                                                <div
+                                                    onClick={() => openMenuEdit(category.id, item)}
+                                                    style={{
+                                                        width: 60,
+                                                        height: 60,
+                                                        borderRadius: 8,
+                                                        background: item.image ? 'none' : '#F3F4F6',
+                                                        border: '2px dashed #D1D5DB',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        cursor: 'pointer',
+                                                        overflow: 'hidden'
+                                                    }}
+                                                >
+                                                    {item.image ? (
+                                                        <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    ) : (
+                                                        <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
+                                                    )}
                                                 </div>
                                             </div>
-                                        </div>
-                                        {/* Pill Image - Menu Item Image */}
-                                        <div style={{ marginTop: 8 }}>
-                                            <label style={{ fontSize: 11, color: '#9CA3AF' }}>Item Image (Pill)</label>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                                                {item.image ? (
-                                                    <>
-                                                        <img src={item.image} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
-                                                        <button
-                                                            onClick={() => handleMenuItemEdit(category.id, item.id, { image: null })}
-                                                            style={{ padding: '4px 8px', fontSize: 11, background: '#EF4444', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0]
-                                                            if (file) {
-                                                                const reader = new FileReader()
-                                                                reader.onload = (event) => {
-                                                                    handleMenuItemEdit(category.id, item.id, { image: event.target?.result })
-                                                                }
-                                                                reader.readAsDataURL(file)
-                                                            }
-                                                        }}
-                                                        style={{ fontSize: 11 }}
-                                                    />
-                                                )}
+
+                                            {/* Details */}
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                                            <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>{item.name}</p>
+                                                            <div
+                                                                onClick={(e) => { e.stopPropagation(); handleToggleFeatured(item); }}
+                                                                style={{
+                                                                    cursor: 'pointer',
+                                                                    fontSize: 16,
+                                                                    filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
+                                                                    opacity: isFeatured(item) ? 1 : 0.2
+                                                                }}
+                                                            >
+                                                                ⭐
+                                                            </div>
+                                                        </div>
+                                                        <p style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, margin: 0 }}>${item.price}</p>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24 }}>
+                                                            Agotado
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={item.outOfStock ?? false}
+                                                                onChange={(e) => handleMenuItemEdit(category.id, item.id, { outOfStock: e.target.checked })}
+                                                                style={{ width: 18, height: 18, accentColor: '#EF4444', cursor: 'pointer' }}
+                                                            />
+                                                        </label>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24 }}>
+                                                            Promo
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isFeatured(item)}
+                                                                onChange={() => handleToggleFeatured(item)}
+                                                                style={{ width: 18, height: 18, accentColor: '#EAB308', cursor: 'pointer' }}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                </div>
                                             </div>
+
+                                            {/* Delete Button */}
+                                            <button
+                                                onClick={() => handleMenuDelete(category.id, item)}
+                                                style={{
+                                                    background: 'none', border: 'none',
+                                                    color: '#EF4444', fontSize: 20,
+                                                    cursor: 'pointer', padding: '4px 8px',
+                                                    alignSelf: 'flex-start', marginLeft: 4, opacity: 0.6
+                                                }}
+                                                title="Eliminar ítem"
+                                            >
+                                                ×
+                                            </button>
                                         </div>
+                                    ))}
+
+                                    {/* Add Item Button */}
+                                    <div
+                                        onClick={() => handleMenuAddItem(category.id)}
+                                        style={{
+                                            padding: '12px',
+                                            background: '#F8FAFC',
+                                            borderTop: '1px solid #E2E8F0',
+                                            color: '#3B82F6',
+                                            fontSize: 13,
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                        }}
+                                    >
+                                        ➕ Agregar Ítem
                                     </div>
-                                ))}
+                                </div>
                             </div>
                         ))}
-                        <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center', marginTop: 16 }}>
-                            💡 Click "Apply to Frontend" to see changes in customer view
-                        </p>
+
+                        {/* Menu Edit Modal */}
+                        {editingItem && activeTab === 'menu' && (
+                            <div style={{
+                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                padding: 20
+                            }} onClick={() => setEditingItem(null)}>
+                                <div style={{
+                                    background: 'white', borderRadius: 16, width: '100%', maxWidth: 400,
+                                    padding: 24, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+                                }} onClick={e => e.stopPropagation()}>
+                                    <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: '#1F2937' }}>Editar ítem</h2>
+
+                                    <div style={{ marginBottom: 16 }}>
+                                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Nombre</label>
+                                        <input
+                                            type="text"
+                                            value={menuEditForm.name}
+                                            onChange={(e) => setMenuEditForm({ ...menuEditForm, name: e.target.value })}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #D1D5DB', fontSize: 14 }}
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: 16 }}>
+                                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Precio (ARS)</label>
+                                        <input
+                                            type="number"
+                                            value={menuEditForm.price}
+                                            onChange={(e) => setMenuEditForm({ ...menuEditForm, price: e.target.value })}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #D1D5DB', fontSize: 14 }}
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: 24 }}>
+                                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Imagen</label>
+                                        {menuEditForm.image && (
+                                            <div style={{ marginBottom: 8 }}>
+                                                <img src={menuEditForm.image} alt="" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 8 }} />
+                                            </div>
+                                        )}
+                                        <input
+                                            key={menuInputKey}
+                                            ref={menuFileInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/jpg"
+                                            onChange={handleModalImageUpload}
+                                            style={{ display: 'none' }}
+                                        />
+                                        <button
+                                            onClick={() => menuFileInputRef.current?.click()}
+                                            disabled={isMenuUploading}
+                                            style={{
+                                                width: '100%', padding: '10px',
+                                                background: '#F3F4F6', color: '#4B5563',
+                                                border: '1px solid #D1D5DB', borderRadius: 8,
+                                                fontWeight: 500, cursor: 'pointer'
+                                            }}
+                                        >
+                                            {isMenuUploading ? 'Subiendo...' : (menuEditForm.image ? 'Cambiar imagen' : 'Subir imagen')}
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        onClick={handleMenuSave}
+                                        style={{
+                                            width: '100%', padding: '12px',
+                                            background: '#22C55E', color: 'white',
+                                            border: 'none', borderRadius: 10,
+                                            fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                                            marginBottom: 10
+                                        }}
+                                    >
+                                        Listo
+                                    </button>
+                                    <button
+                                        onClick={() => setEditingItem(null)}
+                                        style={{
+                                            width: '100%', padding: '12px',
+                                            background: 'white', color: '#6B7280',
+                                            border: '1px solid #E5E7EB', borderRadius: 10,
+                                            fontWeight: 500, fontSize: 15, cursor: 'pointer'
+                                        }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
 
