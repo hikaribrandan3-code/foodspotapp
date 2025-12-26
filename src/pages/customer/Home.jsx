@@ -430,7 +430,7 @@ function Home({ config }) {
             <HeaderClamp config={config} />
 
             {/* Demo Mode Pill - Shows when viewing frontend in demo mode */}
-            {isInDemoMode() && (
+            {isInDemoMode() && session?.role !== 'superadmin' && session?.role !== 'owner' && (
                 <div
                     onClick={() => navigate('/demo')}
                     style={{
@@ -479,7 +479,7 @@ function Home({ config }) {
             )}
 
             {/* Owner Pill */}
-            {session?.role === 'owner' && !isInDemoMode() && (
+            {session?.role === 'owner' && (
                 <div
                     onClick={() => navigate('/owner')}
                     style={{
