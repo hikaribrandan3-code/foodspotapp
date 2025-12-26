@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders } from '../../utils/storage.js'
-import { getConfig, updateConfig } from '../../config/appConfig.js'
+import { updateConfig } from '../../config/appConfig.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
 /**
  * OwnerSummary - Summary dashboard for Owner (matches SuperAdmin Summary layout)
+ * 
+ * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
+ * This ensures Single Source of Truth from App.jsx.
  */
 function OwnerSummary({ config }) {
     const navigate = useNavigate()

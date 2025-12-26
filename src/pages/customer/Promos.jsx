@@ -1,7 +1,18 @@
 import { Link } from 'react-router-dom'
 import { getMenu, formatPrice } from '../../config/menuData.js'
 
+/**
+ * Promos Page - Lists featured/promo items
+ * 
+ * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
+ */
 function Promos({ config }) {
+    // Defensive check
+    if (!config) {
+        console.error('[FATAL] Promos: Missing config prop — check App.jsx routing')
+        return null
+    }
+
     const menu = getMenu()
 
     // Get all promo/featured items

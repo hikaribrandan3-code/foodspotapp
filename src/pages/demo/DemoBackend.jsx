@@ -19,7 +19,7 @@ import {
     clearAllDemoData
 } from '../../utils/demoSession.js'
 import { getDemoEvents, clearDemoEvents } from '../../utils/demoEvents.js'
-import { getConfig, HERO_DEFAULT } from '../../config/appConfig.js'
+import { HERO_DEFAULT } from '../../config/appConfig.js'
 import { getMenu } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
@@ -1597,7 +1597,7 @@ function DemoBackend() {
                             }}
                             initialData={{ image: demoConfig.coverImage }}
                             demoMode={true}
-                            config={getConfig()}
+                            config={demoConfig}
                         />
 
                         {/* Color Picker - REUSE EXISTING */}
