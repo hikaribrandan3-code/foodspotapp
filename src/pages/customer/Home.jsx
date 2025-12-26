@@ -24,10 +24,6 @@ function Home({ config }) {
     const location = useLocation()
     const menu = getMenu()
 
-    // INVARIANT: config prop is ALREADY normalized and includes demo branding
-    // DO NOT merge demo branding here - it bypasses normalizeConfig()
-    // All demo branding is handled in getConfig() → normalizeConfig()
-
     // Owner/SuperAdmin mode detection - both can edit home icons
     const session = getSession()
     const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner'
@@ -46,10 +42,23 @@ function Home({ config }) {
     const actionsGridRef = useRef(null)
     const featuredGridRef = useRef(null)
 
-    // Get home config with defaults - DEFENSIVE: guard against undefined config
+    // Get home config with defaults
     const homeConfig = config?.homeConfig || defaultConfig.homeConfig || {}
-    const primaryActions = homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
-    const featuredItemIds = homeConfig?.featuredItems || []
+
+    // ====== OPTIMISTIC STATE: LOCAL OWNERSHIP OF ORDER ======
+    // These states are the SOURCE OF TRUTH for UI rendering
+    // They update INSTANTLY on drop, before storage is written
+    const [localPrimaryActions, setLocalPrimaryActions] = useState(
+        () => homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
+    )
+
+    // Sync from config prop when it changes (but NOT during drag)
+    useEffect(() => {
+        if (!isDraggingRef.current && !isEditMode) {
+            const newActions = homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
+            setLocalPrimaryActions(newActions)
+        }
+    }, [homeConfig?.primaryActions, isEditMode])
 
     // Fallback images
     const placeholderImages = {
@@ -59,21 +68,33 @@ function Home({ config }) {
         'medialuna-manteca': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80'
     }
 
-    // Featured items - read DIRECTLY from config (includes demo branding via getConfig)
+    // Featured items with LOCAL STATE for optimistic updates
     const featuredPhotos = config?.featuredPhotos || []
-    const featuredItems = [0, 1, 2, 3].map(slotIndex => {
-        const slot = featuredPhotos[slotIndex] || {}
-        return {
-            id: `featured-slot-${slotIndex}`,
-            name: slot.name || '',        // Empty if not set in Branding
-            image: slot.image || null,    // Image from Branding upload
-            price: slot.price || 0
+    const buildFeaturedItems = useCallback((photos) => {
+        return [0, 1, 2, 3].map(slotIndex => {
+            const slot = photos[slotIndex] || {}
+            return {
+                id: `featured-slot-${slotIndex}`,
+                name: slot.name || '',
+                image: slot.image || null,
+                price: slot.price || 0
+            }
+        })
+    }, [])
+
+    const [localFeaturedItems, setLocalFeaturedItems] = useState(
+        () => buildFeaturedItems(featuredPhotos)
+    )
+
+    // Sync featured items from config prop when it changes (but NOT during drag)
+    useEffect(() => {
+        if (!isDraggingRef.current && !isEditMode) {
+            setLocalFeaturedItems(buildFeaturedItems(featuredPhotos))
         }
-    })
+    }, [featuredPhotos, buildFeaturedItems, isEditMode])
 
     // CRITICAL: Reset drag state on route change
     useEffect(() => {
-        // Force reset all drag state when route changes
         isDraggingRef.current = false
         navigationBlockedRef.current = false
         setDragState(null)
@@ -84,9 +105,8 @@ function Home({ config }) {
         }
     }, [location.pathname])
 
-    // Safe navigation wrapper - only navigate if not in edit/drag mode
+    // Safe navigation wrapper
     const safeNavigate = useCallback((path) => {
-        // Only block if actively dragging or in edit mode
         if (isDraggingRef.current || isEditMode) {
             console.log('[DRAG SAFETY] Navigation blocked - drag/edit in progress')
             return false
@@ -96,8 +116,6 @@ function Home({ config }) {
     }, [navigate, isEditMode])
 
     // Long-press handlers for edit mode (owner only)
-    // CRITICAL: Do NOT call preventDefault or block navigation here
-    // Just start the timer - navigation happens via onClick if timer doesn't fire
     const handleLongPressStart = useCallback((e) => {
         if (!isOwnerMode || isEditMode) return
 
@@ -112,7 +130,6 @@ function Home({ config }) {
                 navigator.vibrate(50)
             }
             setIsEditMode(true)
-            // Now block navigation since we're in edit mode
             navigationBlockedRef.current = true
         }, LONG_PRESS_DURATION)
     }, [isOwnerMode, isEditMode])
@@ -122,7 +139,6 @@ function Home({ config }) {
             clearTimeout(longPressTimerRef.current)
             longPressTimerRef.current = null
         }
-        // Reset navigation block if timer didn't fire
         if (!isEditMode) {
             navigationBlockedRef.current = false
         }
@@ -143,15 +159,13 @@ function Home({ config }) {
         }
     }, [])
 
-    // CRITICAL: Drag handlers with proper event blocking
+    // Drag handlers with proper event blocking
     const handleDragStart = useCallback((e, gridType, itemId, itemIndex, items) => {
         if (!isOwnerMode || !isEditMode) return
 
-        // CRITICAL: Set drag lock IMMEDIATELY
         isDraggingRef.current = true
         navigationBlockedRef.current = true
 
-        // Prevent default to stop any link/navigation behavior
         e.preventDefault()
         e.stopPropagation()
 
@@ -180,7 +194,6 @@ function Home({ config }) {
     const handleDragMove = useCallback((e) => {
         if (!dragState || !isDraggingRef.current) return
 
-        // CRITICAL: Always prevent default during drag
         e.preventDefault()
         e.stopPropagation()
 
@@ -208,6 +221,7 @@ function Home({ config }) {
         }))
     }, [dragState])
 
+    // ====== OPTIMISTIC DRAG END: STATE FIRST, STORAGE LATER ======
     const handleDragEnd = useCallback((e) => {
         if (!dragState) {
             isDraggingRef.current = false
@@ -215,7 +229,6 @@ function Home({ config }) {
             return
         }
 
-        // CRITICAL: Prevent any navigation events
         if (e) {
             e.preventDefault()
             e.stopPropagation()
@@ -223,42 +236,71 @@ function Home({ config }) {
 
         document.body.style.overflow = ''
 
-        if (dragState.itemIndex !== dragState.targetIndex) {
-            const newOrder = [...dragState.items]
-            const [movedItem] = newOrder.splice(dragState.itemIndex, 1)
-            newOrder.splice(dragState.targetIndex, 0, movedItem)
+        const { gridType, itemIndex, targetIndex, items } = dragState
 
-            // DIAGNOSTIC: Try/catch to detect save failures
-            try {
-                if (dragState.gridType === 'actions') {
-                    reorderPrimaryActions(newOrder)
-                    console.log('[DRAG] SUCCESS: Primary actions reordered', newOrder)
-                } else {
-                    reorderFeaturedItems(newOrder)
-                    console.log('[DRAG] SUCCESS: Featured items reordered', newOrder)
+        if (itemIndex !== targetIndex) {
+            // Calculate new order
+            const newOrder = [...items]
+            const [movedItem] = newOrder.splice(itemIndex, 1)
+            newOrder.splice(targetIndex, 0, movedItem)
+
+            console.log('[DRAG] OPTIMISTIC UPDATE:', newOrder)
+
+            // ====== STEP 1: UPDATE STATE INSTANTLY (OPTIMISTIC) ======
+            if (gridType === 'actions') {
+                setLocalPrimaryActions(newOrder)
+            } else {
+                // For featured items, reorder the local state
+                setLocalFeaturedItems(prevItems => {
+                    const reordered = [...prevItems]
+                    const [moved] = reordered.splice(itemIndex, 1)
+                    reordered.splice(targetIndex, 0, moved)
+                    return reordered
+                })
+            }
+
+            // ====== STEP 2: SAVE IN BACKGROUND (NON-BLOCKING) ======
+            // Use requestIdleCallback to defer storage write until after render
+            const saveToStorage = () => {
+                try {
+                    if (gridType === 'actions') {
+                        reorderPrimaryActions(newOrder)
+                        console.log('[DRAG] BACKGROUND SAVE: Primary actions persisted')
+                    } else {
+                        reorderFeaturedItems(newOrder)
+                        console.log('[DRAG] BACKGROUND SAVE: Featured items persisted')
+                    }
+
+                    // Dispatch sync event AFTER storage write completes
+                    window.dispatchEvent(new Event('frontendSync'))
+                    console.log('[DRAG] BACKGROUND SAVE: frontendSync dispatched')
+                } catch (err) {
+                    console.error('[DRAG] BACKGROUND SAVE FAILURE:', err)
                 }
+            }
 
-                // Notify App.jsx to refresh config
-                window.dispatchEvent(new Event('frontendSync'))
-                console.log('[DRAG] SUCCESS: frontendSync dispatched')
-            } catch (err) {
-                console.error('[DRAG] FAILURE: Save error', err)
+            // Defer storage write to allow React to render first
+            if (typeof requestIdleCallback === 'function') {
+                requestIdleCallback(saveToStorage, { timeout: 500 })
+            } else {
+                // Fallback for Safari (no requestIdleCallback)
+                setTimeout(saveToStorage, 50)
             }
         } else {
             console.log('[DRAG] No movement detected, skipping save')
         }
 
-        // CRITICAL: Force ghost disappear by nullifying state
+        // Clear drag state immediately (ghost disappears)
         setDragState(null)
 
-        // CRITICAL: Delay unblocking to prevent ghost clicks
+        // Delay unblocking to prevent ghost clicks
         setTimeout(() => {
             isDraggingRef.current = false
             navigationBlockedRef.current = false
         }, 150)
     }, [dragState])
 
-    // CRITICAL: Cancel handler for edge cases
+    // Cancel handler for edge cases
     const handleDragCancel = useCallback(() => {
         document.body.style.overflow = ''
         setDragState(null)
@@ -282,14 +324,12 @@ function Home({ config }) {
                 handleDragCancel()
             }
 
-            // Add listeners with capture phase to intercept before any other handlers
             document.addEventListener('touchmove', handleMove, { passive: false, capture: true })
             document.addEventListener('touchend', handleEnd, { passive: false, capture: true })
             document.addEventListener('touchcancel', handleCancel, { capture: true })
             document.addEventListener('mousemove', handleMove, { capture: true })
             document.addEventListener('mouseup', handleEnd, { capture: true })
 
-            // Block clicks globally during drag
             const blockClick = (e) => {
                 if (isDraggingRef.current) {
                     e.preventDefault()
@@ -322,15 +362,12 @@ function Home({ config }) {
         }
     }, [])
 
-    // Direct hero color helpers (read from config, not CSS variables)
-    // Config already includes demo branding via getConfig()
+    // Direct hero color helpers
     const getHeroBg = useCallback((actionId) => {
-        // Map actionId to heroIcons key
         const iconKey = actionId === 'envios' ? 'delivery' : actionId
         const heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
         const color = heroConfig?.color
 
-        // 'auto' or empty = use canvas surface color
         if (!color || color === 'auto') {
             return config?.canvasMode === 'dark' ? '#000000' : '#FFFFFF'
         }
@@ -342,7 +379,6 @@ function Home({ config }) {
         const heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
         const mode = heroConfig?.iconColorMode
 
-        // 'auto' or empty = use canvas surface text color
         if (!mode || mode === 'auto') {
             return config?.canvasMode === 'dark' ? '#FFFFFF' : '#000000'
         }
@@ -369,16 +405,14 @@ function Home({ config }) {
         marginTop: 4
     })
 
-    // CRITICAL: Click handler that respects drag lock
+    // Click handler that respects drag lock
     const handleTileClick = useCallback((e, path) => {
-        // Only block if actively dragging or in edit mode
         if (isDraggingRef.current || isEditMode) {
             e.preventDefault()
             e.stopPropagation()
             console.log('[DRAG SAFETY] Click blocked - edit/drag mode active')
             return
         }
-        // Navigate immediately
         navigate(path)
     }, [navigate, isEditMode])
 
@@ -438,7 +472,7 @@ function Home({ config }) {
                 </div>
             )}
 
-            {/* Main 2x2 Navigation Grid */}
+            {/* Main 2x2 Navigation Grid - Uses LOCAL STATE */}
             <div
                 ref={actionsGridRef}
                 className="actions-grid"
@@ -449,7 +483,7 @@ function Home({ config }) {
                     marginBottom: 20
                 }}
             >
-                {primaryActions.map((actionId, index) => {
+                {localPrimaryActions.map((actionId, index) => {
                     const action = ACTION_DEFINITIONS[actionId]
                     if (!action) return null
 
@@ -464,19 +498,17 @@ function Home({ config }) {
                         </>
                     )
 
-                    // Owner mode: always use div (no Link navigation issues)
                     if (isOwnerMode) {
                         return (
                             <div
                                 key={actionId}
                                 onContextMenu={(e) => {
-                                    // Prevent browser context menu on long-press
                                     e.preventDefault()
                                     e.stopPropagation()
                                 }}
                                 onTouchStart={(e) => {
                                     if (isEditMode) {
-                                        handleDragStart(e, 'actions', actionId, index, primaryActions)
+                                        handleDragStart(e, 'actions', actionId, index, localPrimaryActions)
                                     } else {
                                         handleLongPressStart(e)
                                     }
@@ -493,7 +525,7 @@ function Home({ config }) {
                                 }}
                                 onMouseDown={(e) => {
                                     if (isEditMode) {
-                                        handleDragStart(e, 'actions', actionId, index, primaryActions)
+                                        handleDragStart(e, 'actions', actionId, index, localPrimaryActions)
                                     } else {
                                         handleLongPressStart(e)
                                     }
@@ -528,7 +560,6 @@ function Home({ config }) {
                         )
                     }
 
-                    // Non-owner: standard Link
                     return (
                         <Link
                             key={actionId}
@@ -541,13 +572,13 @@ function Home({ config }) {
                 })}
             </div>
 
-            {/* Featured Feed Section */}
+            {/* Featured Feed Section - Uses LOCAL STATE */}
             <div
                 ref={featuredGridRef}
                 className="featured-grid"
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}
             >
-                {featuredItems.slice(0, 4).map((item, index) => {
+                {localFeaturedItems.slice(0, 4).map((item, index) => {
                     const isDragging = dragState?.gridType === 'featured' && dragState?.itemId === item.id
                     const isPlaceholder = dragState?.gridType === 'featured' && dragState?.targetIndex === index && !isDragging
 
@@ -562,7 +593,6 @@ function Home({ config }) {
                         opacity: isDragging ? 0.3 : 1,
                         border: isPlaceholder ? '2px dashed #22C55E' : 'none',
                         touchAction: isEditMode ? 'none' : 'auto',
-                        // CSS MUZZLE: Full parity with Hero Icons
                         userSelect: 'none',
                         WebkitUserSelect: 'none',
                         WebkitTouchCallout: isEditMode ? 'none' : 'default'
@@ -591,18 +621,17 @@ function Home({ config }) {
                         </>
                     )
 
-                    // Owner mode: always use div
                     if (isOwnerMode) {
                         return (
                             <div
-                                key={item.id} // SNAPBACK FIX: Always use stable ID, never index fallback
+                                key={item.id}
                                 onContextMenu={(e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
                                 }}
                                 onTouchStart={(e) => {
                                     if (isEditMode) {
-                                        handleDragStart(e, 'featured', item.id, index, featuredItems)
+                                        handleDragStart(e, 'featured', item.id, index, localFeaturedItems)
                                     } else {
                                         handleLongPressStart(e)
                                     }
@@ -619,7 +648,7 @@ function Home({ config }) {
                                 }}
                                 onMouseDown={(e) => {
                                     if (isEditMode) {
-                                        handleDragStart(e, 'featured', item.id, index, featuredItems)
+                                        handleDragStart(e, 'featured', item.id, index, localFeaturedItems)
                                     } else {
                                         handleLongPressStart(e)
                                     }
@@ -648,10 +677,9 @@ function Home({ config }) {
                         )
                     }
 
-                    // Non-owner: standard Link
                     return (
                         <Link
-                            key={item.id} // SNAPBACK FIX: Always use stable ID, never index fallback
+                            key={item.id}
                             to="/menu"
                             style={cardStyle}
                         >
@@ -681,7 +709,7 @@ function Home({ config }) {
                         </div>
                     )
                 } else {
-                    const item = featuredItems.find(i => i.id === dragState.itemId)
+                    const item = localFeaturedItems.find(i => i.id === dragState.itemId)
                     if (!item) return null
                     draggedContent = (
                         <div style={{
