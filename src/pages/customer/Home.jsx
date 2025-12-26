@@ -453,6 +453,55 @@ function Home({ config }) {
                 </div>
             )}
 
+            {/* Super Admin Pill */}
+            {session?.role === 'superadmin' && (
+                <div
+                    onClick={() => navigate('/admin/dashboard')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        background: '#1E293B',
+                        border: '1px solid #334155',
+                        borderRadius: 20,
+                        padding: '6px 14px',
+                        marginBottom: 16,
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: '#F8FAFC',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                >
+                    🏢 HEADQUARTERS — Return to Admin
+                </div>
+            )}
+
+            {/* Owner Pill */}
+            {session?.role === 'owner' && !isInDemoMode() && (
+                <div
+                    onClick={() => navigate('/owner')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        background: '#EFF6FF',
+                        border: '1px solid #3B82F6',
+                        borderRadius: 20,
+                        padding: '6px 14px',
+                        marginBottom: 16,
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: '#1E40AF'
+                    }}
+                >
+                    👋 OWNER MODE — Return to Dashboard
+                </div>
+            )}
+
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (
                 <div style={{
