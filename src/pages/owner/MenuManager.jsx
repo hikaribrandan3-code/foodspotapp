@@ -259,7 +259,7 @@ function MenuManager() {
                                     color: '#374151',
                                     margin: 0
                                 }}>
-                                    {category.icon} {category.name}
+                                    {category.name}
                                     {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444' }}>(oculta)</span>}
                                 </h3>
                                 <label className="toggle">
@@ -299,65 +299,60 @@ function MenuManager() {
                                                 />
                                             </div>
                                         )}
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                <p style={{
-                                                    fontWeight: 500,
-                                                    fontSize: 14,
-                                                    color: '#1E293B',
-                                                    margin: 0,
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
-                                                }}>{item.name}</p>
-                                                {item.featured && <span style={{ fontSize: 12 }}>⭐</span>}
+                                        {/* Item Details - SuperAdmin Style */}
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <p style={{
+                                                        fontWeight: 500,
+                                                        fontSize: 14,
+                                                        color: '#1E293B',
+                                                        margin: 0,
+                                                        marginBottom: 4
+                                                    }}>{item.name}</p>
+                                                    <p style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, margin: 0 }}>
+                                                        {item.price}
+                                                    </p>
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                        Agotado
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!item.available}
+                                                            onChange={() => handleToggleAvailability(category.id, item.id)}
+                                                            style={{ accentColor: '#EF4444' }}
+                                                        />
+                                                    </label>
+                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                        Promo
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={item.featured ?? false}
+                                                            onChange={() => handleSetFeatured(category.id, item.id)}
+                                                            style={{ accentColor: '#22C55E' }}
+                                                        />
+                                                    </label>
+                                                </div>
                                             </div>
-                                            <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>
-                                                {formatPrice(item.price)} · {item.available ? '✓ Stock' : '✗ Agotado'}
-                                            </p>
                                         </div>
-                                        <div style={{ display: 'flex', gap: 6 }}>
-                                            <button
-                                                onClick={() => handleEdit(category.id, item)}
-                                                style={{
-                                                    padding: '6px 10px',
-                                                    fontSize: 12,
-                                                    background: '#F1F5F9',
-                                                    border: 'none',
-                                                    borderRadius: 5,
-                                                    cursor: 'pointer',
-                                                    color: '#475569'
-                                                }}
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button
-                                                onClick={() => handleToggleAvailability(category.id, item.id)}
-                                                style={{
-                                                    padding: '6px 10px',
-                                                    fontSize: 12,
-                                                    background: item.available ? '#FEE2E2' : '#DCFCE7',
-                                                    border: 'none',
-                                                    borderRadius: 5,
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                {item.available ? '🔴' : '🟢'}
-                                            </button>
-                                            <button
-                                                onClick={() => handleSetFeatured(category.id, item.id)}
-                                                style={{
-                                                    padding: '6px 10px',
-                                                    fontSize: 12,
-                                                    background: item.featured ? '#FEF3C7' : '#F1F5F9',
-                                                    border: 'none',
-                                                    borderRadius: 5,
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                ⭐
-                                            </button>
-                                        </div>
+                                        {/* Delete Button - SuperAdmin Style */}
+                                        <button
+                                            onClick={() => handleEdit(category.id, item)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: '#EF4444',
+                                                fontSize: 18,
+                                                cursor: 'pointer',
+                                                padding: 4,
+                                                alignSelf: 'flex-start',
+                                                marginLeft: 8
+                                            }}
+                                            title="Editar item"
+                                        >
+                                            ×
+                                        </button>
                                     </div>
                                 ))}
                             </div>
