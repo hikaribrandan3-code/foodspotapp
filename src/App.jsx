@@ -465,7 +465,7 @@ function App() {
                     <Route path="/demo/new" element={<Demo />} />
                     <Route path="/demo/backend/dashboard" element={<DemoBackend />} />
                     <Route path="/demo/backend" element={<Navigate to="/demo/backend/dashboard" replace />} />
-                    <Route path="/demo" element={<Navigate to="/demo/backend/dashboard" replace />} />
+                    <Route path="/demo" element={<Demo />} />
 
                     {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
                     <Route path="/admin" element={<SuperAdmin config={safeConfig} />} />
