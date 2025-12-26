@@ -1668,7 +1668,7 @@ function SuperAdmin({ config }) {
                                                             minWidth: 100
                                                         }}
                                                     >
-                                                        <option value="cash">💵 Cash</option>
+                                                        <option value="cash">💵 Efectivo</option>
                                                         <option value="mercado_pago">📱 MercadoPago</option>
                                                     </select>
                                                 )}
@@ -1688,7 +1688,7 @@ function SuperAdmin({ config }) {
                                                         cursor: 'pointer'
                                                     }}
                                                 >
-                                                    {order.paymentConfirmed ? `✅ ${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Cash'}` : '💳 Confirm Pay'}
+                                                    {order.paymentConfirmed ? `✅ ${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efectivo'}` : '💳 Confirmar Pago'}
                                                 </button>
                                             </div>
                                         </div>
@@ -1698,7 +1698,7 @@ function SuperAdmin({ config }) {
 
                             {/* Today's delivery summary */}
                             <div style={{ ...cardStyle, textAlign: 'center', marginTop: 16 }}>
-                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>Deliveries Today</p>
+                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>Pedidos de envío hoy</p>
                                 <p style={{ fontSize: 24, fontWeight: 700, color: '#F97316', margin: '4px 0 0' }}>
                                     {orders.filter(o => o.orderType === 'delivery' && new Date(o.createdAt).toDateString() === new Date().toDateString()).length}
                                 </p>
