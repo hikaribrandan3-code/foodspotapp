@@ -1242,15 +1242,14 @@ function SuperAdmin({ config }) {
                                             </div>
 
                                             {/* SELECTOR GRID */}
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 21 }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 72px)', gap: 6, marginTop: 20 }}>
                                                 {[
                                                     { id: 'default', label: 'Lente', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg> },
                                                     { id: 'camera', label: 'Cámara', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg> },
                                                     { id: 'aperture', label: 'Obturador', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="14.31" y1="8" x2="20.05" y2="17.94" /><line x1="9.69" y1="8" x2="21.17" y2="8" /><line x1="7.38" y1="12" x2="13.12" y2="2.06" /><line x1="9.69" y1="16" x2="3.95" y2="6.06" /><line x1="14.31" y1="16" x2="2.83" y2="16" /><line x1="16.62" y1="12" x2="10.88" y2="21.94" /></svg> }
                                                 ].map(item => {
                                                     const isSelected = (config.camera?.icon || 'default') === item.id
-                                                    const textColor = config.camera?.textColor === 'black' ? '#000000' : '#4B5563' // Black or gray in selector
-                                                    // Active state always uses blue text/icon, inactive follows preference or default
+                                                    const textColor = config.camera?.textColor === 'black' ? '#000000' : '#4B5563'
                                                     const iconColor = isSelected ? '#3B82F6' : textColor
 
                                                     return (
@@ -1261,7 +1260,8 @@ function SuperAdmin({ config }) {
                                                                 window.dispatchEvent(new CustomEvent('frontendSync'))
                                                             }}
                                                             style={{
-                                                                padding: '12px 4px', borderRadius: 8,
+                                                                width: 72, height: 72,
+                                                                borderRadius: 12,
                                                                 border: isSelected ? '2px solid #3B82F6' : '1px solid #E5E7EB',
                                                                 backgroundColor: isSelected ? '#EFF6FF' : 'white',
                                                                 cursor: 'pointer',
@@ -1269,14 +1269,12 @@ function SuperAdmin({ config }) {
                                                                 flexDirection: 'column',
                                                                 alignItems: 'center',
                                                                 justifyContent: 'center',
-                                                                gap: 8,
-                                                                color: iconColor,
-                                                                minWidth: 0,
-                                                                height: 72 // Match preview height
+                                                                gap: 4,
+                                                                padding: 0
                                                             }}
                                                         >
-                                                            <div style={{ color: iconColor }}>{item.icon}</div>
-                                                            <span style={{ fontSize: 10, fontWeight: 600 }}>{item.label}</span>
+                                                            <div style={{ color: iconColor, display: 'flex' }}>{item.icon}</div>
+                                                            <span style={{ fontSize: 10, fontWeight: 600, color: iconColor }}>{item.label}</span>
                                                         </button>
                                                     )
                                                 })}
