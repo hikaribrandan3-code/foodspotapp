@@ -361,8 +361,9 @@ function App() {
         }
         window.addEventListener('focus', handleFocus)
 
-        // Polling fallback for same-tab changes (500ms for PWA)
-        const pollInterval = setInterval(refreshConfig, 500)
+        // REFINED: Increased to 2000ms to save battery while maintaining PWA fallback.
+        // Event listeners (focus, storage, visibility) handle the heavy lifting.
+        const pollInterval = setInterval(refreshConfig, 2000)
 
         // Cleanup
         return () => {
