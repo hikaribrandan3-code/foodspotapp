@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
 import { incrementVisit, getOrders, updateOrder } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
@@ -35,13 +35,30 @@ import Settings from './pages/owner/Settings.jsx'
 import Analytics from './pages/owner/Analytics.jsx'
 import DeliveryManager from './pages/owner/DeliveryManager.jsx'
 
-// Admin Pages
-import SuperAdmin from './pages/admin/SuperAdmin.jsx'
+// Admin Pages (Lazy-loaded for 90+ performance score)
+// Offloads ~4,500 lines from initial customer bundle
+const SuperAdmin = lazy(() => import('./pages/admin/SuperAdmin.jsx'))
 import CoverPreview from './components/CoverPreview.jsx'
 
-// Demo Pages
-import DemoBackend from './pages/demo/DemoBackend.jsx'
+// Demo Pages (Lazy-loaded)
+const DemoBackend = lazy(() => import('./pages/demo/DemoBackend.jsx'))
 import Demo from './pages/demo/Demo.jsx'
+
+// Loading fallback for lazy components
+const LazyFallback = () => (
+    <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: 'var(--canvas-bg, #fff)',
+        color: 'var(--canvas-text, #000)',
+        fontSize: 14,
+        fontWeight: 500
+    }}>
+        Cargando...
+    </div>
+)
 
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
@@ -459,11 +476,19 @@ function App() {
                     <Route path="/demo/orders" element={<DeliveryManager config={safeConfig} demoMode={true} />} />
                     <Route path="/demo/analytics" element={<Analytics demoMode={true} />} />
                     <Route path="/demo/new" element={<Demo />} />
-                    <Route path="/demo/backend/dashboard" element={<DemoBackend />} />
+                    <Route path="/demo/backend/dashboard" element={
+                        <Suspense fallback={<LazyFallback />}>
+                            <DemoBackend />
+                        </Suspense>
+                    } />
                     <Route path="/demo/backend" element={<Navigate to="/demo/backend/dashboard" replace />} />
 
                     {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
-                    <Route path="/admin" element={<SuperAdmin config={safeConfig} />} />
+                    <Route path="/admin" element={
+                        <Suspense fallback={<LazyFallback />}>
+                            <SuperAdmin config={safeConfig} />
+                        </Suspense>
+                    } />
                     <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
                     {/* Camera Suite */}
