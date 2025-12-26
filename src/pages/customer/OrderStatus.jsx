@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
+import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 
 // Check icon for completed steps
 const CheckIcon = () => (
@@ -17,7 +18,7 @@ const SmileyIcon = () => (
     </svg>
 )
 
-function OrderStatus({ config }) {
+function OrderStatus({ config, featuredItems = [] }) {
     const navigate = useNavigate()
     const [orders, setOrders] = useState([])
 
@@ -68,6 +69,11 @@ function OrderStatus({ config }) {
     const activeOrders = orders.filter(o => o.status !== 'entregado')
     const mostRecentOrder = activeOrders[0]
 
+    // Use the new empty state component
+    if (orders.length === 0) {
+        return <OrderStatusEmpty config={config} featuredItems={featuredItems} />
+    }
+
     return (
         <div className="page" style={{
             padding: '0 24px',
@@ -76,152 +82,7 @@ function OrderStatus({ config }) {
             backgroundColor: '#FAFAF8',
             minHeight: '100vh'
         }}>
-            {/* Header removed - Pedido # is now the primary header inside the card */}
-            {orders.length === 0 ? (
-                <div style={{ padding: '20px 0' }}>
-                    {/* Empty State Header */}
-                    <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                        <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-                        <p style={{ color: grayMuted, margin: 0, fontSize: 15 }}>No tenés pedidos activos</p>
-                    </div>
-
-                    {/* Quick Actions Row */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 12,
-                        marginBottom: 28
-                    }}>
-                        <button
-                            onClick={() => navigate('/envios')}
-                            style={{
-                                padding: '14px 16px',
-                                background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-                                border: 'none',
-                                borderRadius: 14,
-                                color: 'white',
-                                fontWeight: 600,
-                                fontSize: 13,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 8
-                            }}
-                        >
-                            🚚 Delivery
-                        </button>
-                        <button
-                            onClick={() => navigate('/rewards')}
-                            style={{
-                                padding: '14px 16px',
-                                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                                border: 'none',
-                                borderRadius: 14,
-                                color: 'white',
-                                fontWeight: 600,
-                                fontSize: 13,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 8
-                            }}
-                        >
-                            ⭐ Premios
-                        </button>
-                    </div>
-
-                    {/* Productos Destacados Section */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: 14
-                    }}>
-                        <h3 style={{
-                            margin: 0,
-                            fontSize: 16,
-                            fontWeight: 700,
-                            color: '#1F2937'
-                        }}>
-                            Productos Destacados
-                        </h3>
-                        <button
-                            onClick={() => navigate('/menu')}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#3B82F6',
-                                fontSize: 13,
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                padding: 0
-                            }}
-                        >
-                            Ver todo →
-                        </button>
-                    </div>
-
-                    {/* Featured Products Grid - from config.featuredPhotos */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 12
-                    }}>
-                        {(config?.featuredPhotos || []).slice(0, 4).map((item, index) => (
-                            <div
-                                key={index}
-                                onClick={() => navigate('/menu')}
-                                style={{
-                                    cursor: 'pointer',
-                                    background: '#FFFFFF',
-                                    borderRadius: 16,
-                                    overflow: 'hidden',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-                                }}
-                            >
-                                <div style={{
-                                    height: 100,
-                                    width: '100%',
-                                    background: item.image
-                                        ? `url(${item.image}) center/cover no-repeat`
-                                        : '#E5E0D8'
-                                }} />
-                                <div style={{ padding: '10px 12px' }}>
-                                    <div style={{
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        color: '#4A4238',
-                                        lineHeight: 1.2
-                                    }}>
-                                        {item.name || 'Producto'}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* CTA Button */}
-                    <button
-                        onClick={() => navigate('/menu')}
-                        style={{
-                            width: '100%',
-                            marginTop: 24,
-                            padding: '14px 32px',
-                            background: greenActive,
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 24,
-                            fontSize: 15,
-                            fontWeight: 600,
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Hacer un pedido
-                    </button>
-                </div>
-            ) : mostRecentOrder && (
+            {mostRecentOrder && (
                 <>
                     {/* Order Card (Primary Focus - wider, tighter) */}
                     <div style={{

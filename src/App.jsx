@@ -399,7 +399,7 @@ function App() {
                     <Route path="/envios" element={<Menu config={safeConfig} deliveryMode={true} />} />
                     <Route path="/order" element={<Order config={safeConfig} />} />
 
-                    <Route path="/status" element={<OrderStatus config={safeConfig} />} />
+                    <Route path="/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
                     <Route path="/rewards" element={<Rewards config={safeConfig} />} />
                     <Route path="/share" element={<ShareFood config={safeConfig} />} />
                     <Route path="/game" element={<PerfectPour />} />
