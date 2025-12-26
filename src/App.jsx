@@ -100,47 +100,6 @@ function StackedAdminBadge() {
     )
 }
 
-// ====== GLOBAL BACKEND NAV COMPONENT ======
-// Shows BackendNav for owner, superadmin, and demo-owner on customer pages
-function GlobalBackendNav() {
-    const session = getSession()
-    const location = useLocation()
-    const [activeTab, setActiveTab] = useState('summary')
-
-    // Check demo mode using dynamic import to avoid circular dependency
-    const [isDemoOwner, setIsDemoOwner] = useState(false)
-
-    useEffect(() => {
-        // Dynamically import to avoid circular dependency at module load
-        import('./utils/demoSession.js').then(({ isInDemoMode }) => {
-            setIsDemoOwner(isInDemoMode())
-        }).catch(() => {
-            setIsDemoOwner(false)
-        })
-    }, [location.pathname])
-
-    // Show for owner, superadmin, or demo mode
-    const role = session?.role
-    const shouldShow = role === 'owner' || role === 'superadmin' || isDemoOwner
-
-    // Don't show on login pages, staff pages, demo backend, or admin page (they have their own nav)
-    const hideOnRoutes = ['/owner', '/staff', '/demo', '/admin']
-    const isHiddenRoute = hideOnRoutes.some(r => location.pathname.startsWith(r))
-
-    if (!shouldShow || isHiddenRoute) return null
-
-    // Determine role for BackendNav config
-    const effectiveRole = role === 'superadmin' ? 'owner' : (role || 'owner')
-
-    return (
-        <BackendNav
-            role={effectiveRole}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            useRoutes={false}
-        />
-    )
-}
 
 function App() {
     const [config, setConfig] = useState(() => getConfig())
@@ -508,8 +467,6 @@ function App() {
                 {/* Bottom Navigation (visible on main customer pages) */}
                 <BottomNav config={safeConfig} />
 
-                {/* Backend Nav for owner/superadmin/demo on customer pages */}
-                <GlobalBackendNav />
 
                 {/* Stacked Admin Badge - Bottom Left */}
                 <StackedAdminBadge />
