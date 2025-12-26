@@ -28,6 +28,7 @@ import StaffDashboard from './pages/staff/StaffDashboard.jsx'
 
 // Owner Pages
 import OwnerLogin from './pages/owner/OwnerLogin.jsx'
+import OwnerSummary from './pages/owner/OwnerSummary.jsx'
 import MenuManager from './pages/owner/MenuManager.jsx'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
@@ -422,6 +423,11 @@ function App() {
 
                     {/* Owner Routes */}
                     <Route path="/owner" element={<OwnerLogin />} />
+                    <Route path="/owner/summary" element={
+                        <ProtectedRoute requiredRole="owner">
+                            <OwnerSummary config={safeConfig} />
+                        </ProtectedRoute>
+                    } />
                     <Route path="/owner/menu" element={
                         <ProtectedRoute requiredRole="owner">
                             <MenuManager />

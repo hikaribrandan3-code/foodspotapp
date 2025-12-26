@@ -48,7 +48,7 @@ const STAFF_TABS = [
 // Route mappings for different contexts
 const ROUTE_MAPS = {
     owner: {
-        summary: '/owner/settings',
+        summary: '/owner/summary',
         menu: '/owner/menu',
         branding: '/owner/branding',
         orders: '/owner/delivery',
