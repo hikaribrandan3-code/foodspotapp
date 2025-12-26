@@ -29,6 +29,7 @@ import StaffDashboard from './pages/staff/StaffDashboard.jsx'
 // Owner Pages
 import OwnerLogin from './pages/owner/OwnerLogin.jsx'
 import OwnerSummary from './pages/owner/OwnerSummary.jsx'
+import OwnerDashboard from './pages/owner/OwnerDashboard.jsx'
 import MenuManager from './pages/owner/MenuManager.jsx'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
@@ -39,8 +40,9 @@ import DeliveryManager from './pages/owner/DeliveryManager.jsx'
 import SuperAdmin from './pages/admin/SuperAdmin.jsx'
 import CoverPreview from './components/CoverPreview.jsx'
 
-// Demo Pages - KEPT for backend demo editor only (not accessible from frontend)
+// Demo Pages
 import DemoBackend from './pages/demo/DemoBackend.jsx'
+import Demo from './pages/demo/Demo.jsx'
 
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
@@ -460,6 +462,7 @@ function App() {
                     } />
 
                     {/* Demo Routes - NO AUTH REQUIRED */}
+                    <Route path="/demo/new" element={<Demo />} />
                     <Route path="/demo/backend/dashboard" element={<DemoBackend />} />
                     <Route path="/demo/backend" element={<Navigate to="/demo/backend/dashboard" replace />} />
                     <Route path="/demo" element={<Navigate to="/demo/backend/dashboard" replace />} />
