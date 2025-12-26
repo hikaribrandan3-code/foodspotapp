@@ -439,14 +439,13 @@ function SuperAdmin({ config }) {
                             alert('✅ Frontend synced!')
                         }}
                         style={{
-                            width: '100%',
-                            padding: '10px 16px',
-                            fontSize: 13,
-                            fontWeight: 600,
+                            width: 'fit-content',
+                            padding: '12px 24px',
+                            background: config.camera?.color || config.branding?.primaryColor || '#3B82F6',
+                            borderRadius: 24,
                             border: 'none',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            background: '#3B82F6',
+                            fontSize: 14,
+                            fontWeight: 600,
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -457,8 +456,6 @@ function SuperAdmin({ config }) {
                         🔄 Actualizar Frontend
                     </button>
                 </div>
-
-                {/* Sub-tabs removed - flat bottom nav structure */}
 
                 {/* Content - with bottom padding for BackendNav */}
                 <div style={{ padding: 16, paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
@@ -866,7 +863,7 @@ function SuperAdmin({ config }) {
                                             border: '2px dashed #D1D5DB',
                                             borderRadius: 10,
                                             fontSize: 13,
-                                            color: '#6B7280',
+                                            color: config.camera?.color || config.branding?.primaryColor || '#6B7280',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -883,7 +880,7 @@ function SuperAdmin({ config }) {
 
 
 
-                    // ==================== BRANDING TAB ====================
+
                     {activeTab === 'branding' && canEdit && (
                         <>
                             <h3 style={labelStyle}>🎨 BRANDING Y ESTÉTICA</h3>
@@ -1204,33 +1201,77 @@ function SuperAdmin({ config }) {
                                         <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 12 }}>
                                             Selecciona el estilo del botón:
                                         </p>
-                                        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-                                            {[
-                                                { id: 'default', label: 'Lente', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg> },
-                                                { id: 'camera', label: 'Cámara', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg> },
-                                                { id: 'aperture', label: 'Obturador', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="14.31" y1="8" x2="20.05" y2="17.94" /><line x1="9.69" y1="8" x2="21.17" y2="8" /><line x1="7.38" y1="12" x2="13.12" y2="2.06" /><line x1="9.69" y1="16" x2="3.95" y2="6.06" /><line x1="14.31" y1="16" x2="2.83" y2="16" /><line x1="16.62" y1="12" x2="10.88" y2="21.94" /></svg> }
-                                            ].map(item => {
-                                                const isSelected = (config.camera?.icon || 'default') === item.id
-                                                return (
-                                                    <button
-                                                        key={item.id}
-                                                        onClick={() => {
-                                                            updateConfig({ camera: { ...config.camera, icon: item.id } })
-                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                        }}
-                                                        style={{
-                                                            flex: 1, padding: '12px', borderRadius: 8,
-                                                            border: isSelected ? '3px solid #3B82F6' : '1px solid #E5E7EB',
-                                                            backgroundColor: isSelected ? '#EFF6FF' : 'white',
-                                                            cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                                                            color: '#374151'
-                                                        }}
-                                                    >
-                                                        <div style={{ color: isSelected ? '#3B82F6' : '#9CA3AF' }}>{item.icon}</div>
-                                                        <span style={{ fontSize: 11, fontWeight: 500 }}>{item.label}</span>
-                                                    </button>
-                                                )
-                                            })}
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr', gap: 16, marginBottom: 16 }}>
+                                            {/* PREVIEW BOX */}
+                                            <div style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: 8
+                                            }}>
+                                                <span style={{ fontSize: 11, fontWeight: 600, color: '#6B7280' }}>VISTA PREVIA</span>
+                                                <div style={{
+                                                    width: 64, height: 64,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    background: '#F9FAFB',
+                                                    borderRadius: 12,
+                                                    border: '1px dashed #D1D5DB',
+                                                }}>
+                                                    <div style={{
+                                                        width: 50, height: 50,
+                                                        backgroundColor: config.camera?.color || '#3B82F6',
+                                                        borderRadius: '50%',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+                                                    }}>
+                                                        {(() => {
+                                                            const iconId = config.camera?.icon || 'default'
+                                                            const item = [
+                                                                { id: 'default', label: 'Lente', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg> },
+                                                                { id: 'camera', label: 'Cámara', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg> },
+                                                                { id: 'aperture', label: 'Obturador', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="14.31" y1="8" x2="20.05" y2="17.94" /><line x1="9.69" y1="8" x2="21.17" y2="8" /><line x1="7.38" y1="12" x2="13.12" y2="2.06" /><line x1="9.69" y1="16" x2="3.95" y2="6.06" /><line x1="14.31" y1="16" x2="2.83" y2="16" /><line x1="16.62" y1="12" x2="10.88" y2="21.94" /></svg> }
+                                                            ].find(i => i.id === iconId)
+
+                                                            return item ? (
+                                                                <div style={{ color: config.camera?.textColor === 'black' ? '#000000' : '#FFFFFF' }}>
+                                                                    {item.icon}
+                                                                </div>
+                                                            ) : null
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* SELECTOR GRID */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                                                {[
+                                                    { id: 'default', label: 'Lente', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg> },
+                                                    { id: 'camera', label: 'Cámara', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg> },
+                                                    { id: 'aperture', label: 'Obturador', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="14.31" y1="8" x2="20.05" y2="17.94" /><line x1="9.69" y1="8" x2="21.17" y2="8" /><line x1="7.38" y1="12" x2="13.12" y2="2.06" /><line x1="9.69" y1="16" x2="3.95" y2="6.06" /><line x1="14.31" y1="16" x2="2.83" y2="16" /><line x1="16.62" y1="12" x2="10.88" y2="21.94" /></svg> }
+                                                ].map(item => {
+                                                    const isSelected = (config.camera?.icon || 'default') === item.id
+                                                    return (
+                                                        <button
+                                                            key={item.id}
+                                                            onClick={() => {
+                                                                updateConfig({ camera: { ...config.camera, icon: item.id } })
+                                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                            }}
+                                                            style={{
+                                                                flex: 1, padding: '12px', borderRadius: 8,
+                                                                border: isSelected ? '3px solid #3B82F6' : '1px solid #E5E7EB',
+                                                                backgroundColor: isSelected ? '#EFF6FF' : 'white',
+                                                                cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                                                                color: '#374151',
+                                                                minWidth: 0
+                                                            }}
+                                                        >
+                                                            <div style={{ color: isSelected ? '#3B82F6' : '#9CA3AF' }}>{item.icon}</div>
+                                                            <span style={{ fontSize: 11, fontWeight: 500 }}>{item.label}</span>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
                                         </div>
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, backgroundColor: '#F9FAFB', padding: 12, borderRadius: 8 }}>
