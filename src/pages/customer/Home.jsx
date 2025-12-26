@@ -12,9 +12,9 @@ const LONG_PRESS_DURATION = 1800
 
 // Action definitions (using shared HeroIcons)
 const ACTION_DEFINITIONS = {
-    menu: { icon: MenuIcon, label: 'Menú', path: '/menu' },
+    menu: { icon: MenuIcon, label: 'Menu', path: '/menu' },
     envios: { icon: DeliveryIcon, label: 'Envíos', path: '/envios' },
-    rewards: { icon: RewardsIcon, label: 'Premios', path: '/rewards' },
+    rewards: { icon: RewardsIcon, label: 'Rewards', path: '/rewards' },
     game: { icon: GameIcon, label: 'Mini Game', path: '/game' }
 }
 
@@ -641,84 +641,6 @@ function Home({ config }) {
                         OWNER
                     </div>
                 )}
-            </div>
-
-            {/* Quick Actions Row */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 12,
-                marginBottom: 24
-            }}>
-                <button
-                    onClick={() => navigate('/envios')}
-                    style={{
-                        padding: '14px 16px',
-                        background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-                        border: 'none',
-                        borderRadius: 14,
-                        color: 'white',
-                        fontWeight: 600,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                    }}
-                >
-                    🚚 Delivery
-                </button>
-                <button
-                    onClick={() => navigate('/rewards')}
-                    style={{
-                        padding: '14px 16px',
-                        background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                        border: 'none',
-                        borderRadius: 14,
-                        color: 'white',
-                        fontWeight: 600,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                    }}
-                >
-                    ⭐ Premios
-                </button>
-            </div>
-
-            {/* Productos Destacados Section Header */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 14
-            }}>
-                <h3 style={{
-                    margin: 0,
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: 'var(--canvas-text, #1F2937)'
-                }}>
-                    Productos Destacados
-                </h3>
-                <button
-                    onClick={() => navigate('/menu')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#3B82F6',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        padding: 0
-                    }}
-                >
-                    Ver todo →
-                </button>
             </div>
 
             {/* Featured Feed Section - Uses LOCAL STATE */}
