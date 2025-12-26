@@ -60,10 +60,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // Incrementing this forces React to re-render the grid with fresh keys
     const [menuVersion, setMenuVersion] = useState(0)
 
-    // ==== DEMO MODE DISABLED ====
-    // Demo mode is handled elsewhere; this component always runs in production mode
-    const isInDemoMode = () => false
-
     // Delivery mode: session is source of truth, route prop can set it
     // This ensures persistence across page refresh and back navigation
     const [deliveryMode, setDeliveryMode] = useState(() => {
@@ -208,6 +204,12 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         dragItemRef.current = e.currentTarget
     }, [isOwnerMode, isEditMode])
 
+    // ==== handleDragMove: DISABLED LIVE SORTING ====
+    // This function ONLY:
+    // 1. Calculates the targetIndex based on finger position
+    // 2. Updates the Debug Log (Green box)
+    // 3. Updates the visual placeholder style
+    // NO setMenu() call - the list stays STATIC during drag
     const handleDragMove = useCallback((e) => {
         if (!dragState) return
 
@@ -257,7 +259,6 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         const allItems = document.querySelectorAll('[data-item-id]')
         let closestItem = null
         let closestDistance = Infinity
-        let closestCategoryId = null
 
         allItems.forEach(item => {
             // Skip the item being dragged
@@ -271,14 +272,10 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             if (distance < closestDistance) {
                 closestDistance = distance
                 closestItem = item
-                // Get the category this item belongs to
-                const catEl = item.closest('[data-category-id]')
-                closestCategoryId = catEl?.getAttribute('data-category-id')
             }
         })
 
         let targetIndex = dragState.targetIndex
-        let newCategoryId = dragState.categoryId
 
         // MAGNET THRESHOLD: 100px - middle ground (120 too loose, 60 too tight)
         const MAGNET_THRESHOLD = 100
@@ -290,116 +287,81 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             const targetId = closestItem.getAttribute('data-item-id')
             console.log('[MATH] Within threshold! TargetId:', targetId)
 
-            if (closestCategoryId && closestCategoryId !== dragState.categoryId) {
-                // Cross-category drag
-                const targetCategory = menu.categories.find(c => c.id === closestCategoryId)
-                if (targetCategory) {
-                    const targetCatItems = targetCategory.items.filter(i => i.available)
-                    const newIndex = targetCatItems.findIndex(i => i.id === targetId)
-                    if (newIndex !== -1) {
-                        targetIndex = newIndex
-                        newCategoryId = closestCategoryId
-                    }
-                }
-            } else {
-                // Same category
-                const newIndex = dragState.items.indexOf(targetId)
-                console.log('[MATH] indexOf result:', newIndex, 'Current itemIndex:', dragState.itemIndex)
-                if (newIndex !== -1 && newIndex !== dragState.itemIndex) {
-                    targetIndex = newIndex
-                }
+            // Same category only - no cross-category during static drag
+            const newIndex = dragState.items.indexOf(targetId)
+            console.log('[MATH] indexOf result:', newIndex, 'Current itemIndex:', dragState.itemIndex)
+            if (newIndex !== -1) {
+                targetIndex = newIndex
             }
         } else {
             console.log('[MATH] OUTSIDE threshold or no closestItem')
         }
 
         // ==== TRACE LOG: TARGET INDEX ====
-        console.log('[MATH] Final targetIndex:', targetIndex, 'newCategoryId:', newCategoryId)
+        console.log('[MATH] Final targetIndex:', targetIndex)
 
         // ==== VISUAL DEBUGGER UPDATE ====
         setDebugLog('MOVE: X:' + touchX.toFixed(0) + ' Y:' + touchY.toFixed(0) + '\nClosest: ' + (closestItem?.getAttribute('data-item-id') || 'none') + ' (Dist: ' + closestDistance.toFixed(0) + 'px)\nTarget: ' + targetIndex + ' | itemIndex: ' + dragState.itemIndex)
 
-        // Check if anything changed
-        const targetChanged = targetIndex !== dragState.targetIndex || newCategoryId !== dragState.categoryId
-
-        // DIAGNOSTIC: Log category change
-        if (newCategoryId !== dragState.categoryId) {
-            console.log('[DRAG] CATEGORY CHANGE: From', dragState.categoryId, 'To', newCategoryId)
-        }
-
-        // Update drag state with new position and potentially new category
+        // Update drag state with new position and target index
+        // NOTE: We do NOT update categoryId or reorder the menu here
+        // The list stays STATIC - only the floating card moves
         setDragState(prev => ({
             ...prev,
             currentX: touchX,
             currentY: touchY,
-            targetIndex,
-            categoryId: newCategoryId
+            targetIndex
         }))
 
         // ==== LIVE PREVIEW DISABLED ====
-        // This was causing the "Stale Index Bug" - it used dragState.itemIndex (original)
-        // repeatedly, which corrupted the sort order and caused snapback.
-        // Now we only reorder on DROP in handleDragEnd.
-        /*
-        if (targetChanged) {
-            setMenu(prevMenu => {
-                const updatedCategories = prevMenu.categories.map(cat => {
-                    if (cat.id !== dragState.categoryId && cat.id !== newCategoryId) return cat
+        // NO setMenu() call here - this was causing the stale index bug
+        // The menu items stay in their original positions during drag
+        // Reordering happens ONLY on drop in handleDragEnd
 
-                    const reorder = (list, startIndex, endIndex) => {
-                        const result = Array.from(list)
-                        const [removed] = result.splice(startIndex, 1)
-                        result.splice(endIndex, 0, removed)
-                        return result
-                    }
+    }, [dragState])
 
-                    if (cat.id === dragState.categoryId && newCategoryId === dragState.categoryId) {
-                        const reorderedItems = reorder(
-                            cat.items.filter(i => i.available),
-                            dragState.itemIndex,
-                            targetIndex
-                        )
-                        const unavailable = cat.items.filter(i => !i.available)
-                        return { ...cat, items: [...reorderedItems, ...unavailable] }
-                    }
-
-                    return cat
-                })
-
-                return { ...prevMenu, categories: [...updatedCategories] }
-            })
-        }
-        */
-    }, [dragState, menu])
-
+    // ==== handleDragEnd: EXECUTE SORT ON DROP ====
+    // This is the ONLY place where the menu order changes
+    // Since the list didn't move during drag, itemIndex (original) and targetIndex (final) are both valid
     const handleDragEnd = useCallback(() => {
         setIsDropping(true)
 
-        // Capture state
+        // Stop auto-scroll if active
+        if (autoScrollRef.current) {
+            cancelAnimationFrame(autoScrollRef.current)
+            autoScrollRef.current = null
+        }
+
+        // Capture state before clearing
         const capturedState = dragState
         setDragState(null)
-        dragItemRef.current = null
 
         // Cleanup DOM
         if (dragItemRef.current) {
             dragItemRef.current.removeAttribute('data-dragging')
             dragItemRef.current.style.transform = ''
         }
+        dragItemRef.current = null
         document.body.style.overflow = ''
 
-        if (!capturedState) return
+        if (!capturedState) {
+            setIsDropping(false)
+            return
+        }
 
         const { categoryId, itemIndex, targetIndex, items } = capturedState
-        setDebugLog(`ENDED. Moving ${itemIndex} -> ${targetIndex}\nBlocker: ${blockRefreshRef.current}`)
+        setDebugLog(`DROP! Moving ${itemIndex} -> ${targetIndex}\nBlocker: ${blockRefreshRef.current}`)
 
+        // If no movement, just cleanup
         if (itemIndex === targetIndex) {
             setTimeout(() => setIsDropping(false), 100)
             return
         }
 
-        // ==== BRUTE FORCE OPTIMISTIC UPDATE ====
+        // ==== THE ONE FINAL REORDER ====
+        // Since the list was static during drag, itemIndex and targetIndex are both correct
         setMenu(prevMenu => {
-            console.log('📝 COMMITTING STATE UPDATE: Moving item to index ' + targetIndex)
+            console.log('📝 COMMITTING STATE UPDATE: Moving item from ' + itemIndex + ' to ' + targetIndex)
 
             // 1. Clone the categories
             const newCategories = [...prevMenu.categories]
@@ -450,7 +412,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // ==== NUCLEAR RENDER: Force React to see the change ====
         setMenuVersion(v => v + 1)
 
-        // Persist
+        // Persist to storage
         // We use the 'items' ID list from drag state because it tracks the sort order purely
         const newOrderIds = [...items]
         const [movedId] = newOrderIds.splice(itemIndex, 1)
@@ -460,7 +422,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // Force Sync
         window.dispatchEvent(new CustomEvent('forceConfigUpdate', { detail: { menuUpdated: true } }))
 
-        // Cooldown
+        // Cooldown - lower the shield after 2 seconds
         setTimeout(() => {
             blockRefreshRef.current = false
             setIsDropping(false)
@@ -503,6 +465,11 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
             const handleCancel = () => {
                 hadActiveDrag = false
                 document.body.style.overflow = ''
+                // Stop auto-scroll
+                if (autoScrollRef.current) {
+                    cancelAnimationFrame(autoScrollRef.current)
+                    autoScrollRef.current = null
+                }
                 setDragState(null)
                 dragItemRef.current = null
             }
