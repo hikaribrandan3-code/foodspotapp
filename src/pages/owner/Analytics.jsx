@@ -66,13 +66,34 @@ function Analytics({ demoMode = false }) {
             <BackendHeader
                 title={demoMode ? "Demo Analytics" : "Estadísticas"}
                 onLogout={handleLogout}
-                showDateSelector={true}
+                showDateSelector={!demoMode}
             />
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
                 {/* Orders Stats */}
                 <div style={{ marginBottom: 20 }}>
                     <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 10, marginTop: 0 }}>PEDIDOS</h3>
+
+                    {/* Demo Date Range Pill */}
+                    {demoMode && (
+                        <div style={{
+                            background: '#DBEAFE',
+                            border: '1px solid #3B82F6',
+                            borderRadius: 20,
+                            padding: '6px 12px',
+                            marginBottom: 12,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: '#1E40AF',
+                            cursor: 'pointer'
+                        }}>
+                            📅 Demo Period: 2 weeks
+                        </div>
+                    )}
+
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         <StatCard value={ordersToday} label="Hoy" />
                         <StatCard value={ordersWeek} label="Esta semana" />
