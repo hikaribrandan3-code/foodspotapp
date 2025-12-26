@@ -41,21 +41,22 @@ function MenuManager() {
         setEditingItem({ categoryId, itemId: item.id })
         setEditForm({ name: item.name, price: item.price.toString(), image: item.image || null })
         setUploadStatus(null)
-        // Reset file input to ensure clean state for new item
-        if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-        }
     }
 
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0]
-        if (!file) return
+        if (!file) {
+            console.log('No file selected')
+            return
+        }
 
+        console.log('Starting image upload:', file.name, file.type, file.size)
         setIsUploading(true)
         setUploadStatus(null)
 
         try {
             const result = await processAndStoreImage(file)
+            console.log('Image processed successfully:', result.optimizedSize)
             setEditForm(prev => ({ ...prev, image: result.dataURI }))
             setUploadStatus({
                 success: true,
@@ -69,11 +70,6 @@ function MenuManager() {
             })
         } finally {
             setIsUploading(false)
-            // CRITICAL: Reset file input to allow re-selecting same file
-            // This fixes iOS Safari caching issue
-            if (fileInputRef.current) {
-                fileInputRef.current.value = ''
-            }
         }
     }
 
