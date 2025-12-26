@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
 import { incrementVisit } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
-import { isInDemoMode } from './utils/demoSession.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
 
 // Components
@@ -108,9 +107,20 @@ function GlobalBackendNav() {
     const location = useLocation()
     const [activeTab, setActiveTab] = useState('summary')
 
+    // Check demo mode using dynamic import to avoid circular dependency
+    const [isDemoOwner, setIsDemoOwner] = useState(false)
+
+    useEffect(() => {
+        // Dynamically import to avoid circular dependency at module load
+        import('./utils/demoSession.js').then(({ isInDemoMode }) => {
+            setIsDemoOwner(isInDemoMode())
+        }).catch(() => {
+            setIsDemoOwner(false)
+        })
+    }, [location.pathname])
+
     // Show for owner, superadmin, or demo mode
     const role = session?.role
-    const isDemoOwner = isInDemoMode()
     const shouldShow = role === 'owner' || role === 'superadmin' || isDemoOwner
 
     // Don't show on login pages, staff pages, demo backend, or admin page (they have their own nav)
