@@ -88,17 +88,6 @@ function StackedAdminBadge() {
                 🔧 SUPER ADMIN
             </span>
 
-            {/* Bottom Line: View Mode (only if simulating) */}
-            {isSimulated && (
-                <span style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: '#ffcc00',
-                    marginTop: 2
-                }}>
-                    ({activeRoleView.toUpperCase()}) — tap to exit
-                </span>
-            )}
         </div>
     )
 }
