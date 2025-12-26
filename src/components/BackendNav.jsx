@@ -50,7 +50,7 @@ const ROUTE_MAPS = {
     owner: {
         summary: '/owner/settings',
         menu: '/owner/menu',
-        branding: '/owner/branding',
+        branding: '/owner/settings',  // Branding is in Settings page
         orders: '/owner/delivery',
         analytics: '/owner/analytics'
     },
