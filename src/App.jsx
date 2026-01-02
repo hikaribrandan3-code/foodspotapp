@@ -209,13 +209,21 @@ function App() {
         root.style.setProperty('--hero-delivery-bg', getHeroBg(deliveryConfig))
         root.style.setProperty('--hero-delivery-icon', getHeroIcon(deliveryConfig))
 
-        // Promos
-        const promosConfig = heroIcons.promos || HERO_DEFAULT
-        root.style.setProperty('--hero-promos-bg', getHeroBg(promosConfig))
-        root.style.setProperty('--hero-promos-icon', getHeroIcon(promosConfig))
-        // Alias for stale cache
-        root.style.setProperty('--hero-rewards-bg', getHeroBg(promosConfig))
-        root.style.setProperty('--hero-rewards-icon', getHeroIcon(promosConfig))
+        // ⚡ UNIVERSAL SYNC: Merge Promos and Rewards into one 'Master Config'
+        // This ensures that if ONE updates, BOTH update in the CSS.
+        const masterPromosConfig = {
+            ...HERO_DEFAULT,                    // Fallback
+            ...(heroIcons.rewards || {}),       // Legacy
+            ...(heroIcons.promos || {})         // New (Takes Priority)
+        }
+
+        // Set variables for PROMOS (The New Standard)
+        root.style.setProperty('--hero-promos-bg', getHeroBg(masterPromosConfig))
+        root.style.setProperty('--hero-promos-icon', getHeroIcon(masterPromosConfig))
+
+        // Set variables for REWARDS (The Legacy Fallback) - Maps to SAME master config
+        root.style.setProperty('--hero-rewards-bg', getHeroBg(masterPromosConfig))
+        root.style.setProperty('--hero-rewards-icon', getHeroIcon(masterPromosConfig))
 
         // Game
         const gameConfig = heroIcons.game || HERO_DEFAULT

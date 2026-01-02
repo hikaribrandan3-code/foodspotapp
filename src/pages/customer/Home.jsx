@@ -365,11 +365,23 @@ function Home({ config }) {
     }, [])
 
     // Direct hero color helpers
+    // ⚡ UNIVERSAL SYNC: For promos/rewards, merge both configs into master
     const getHeroBg = useCallback((actionId) => {
         const iconKey = actionId === 'envios' ? 'delivery' : actionId
-        const heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
-        const color = heroConfig?.color
 
+        // ⚡ Master merge for promos/rewards
+        let heroConfig
+        if (iconKey === 'promos' || iconKey === 'rewards') {
+            heroConfig = {
+                ...HERO_DEFAULT,
+                ...(config?.heroIcons?.rewards || {}),
+                ...(config?.heroIcons?.promos || {})
+            }
+        } else {
+            heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
+        }
+
+        const color = heroConfig?.color
         if (!color || color === 'auto') {
             return config?.canvasMode === 'dark' ? '#000000' : '#FFFFFF'
         }
@@ -378,9 +390,20 @@ function Home({ config }) {
 
     const getHeroIcon = useCallback((actionId) => {
         const iconKey = actionId === 'envios' ? 'delivery' : actionId
-        const heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
-        const mode = heroConfig?.iconColorMode
 
+        // ⚡ Master merge for promos/rewards
+        let heroConfig
+        if (iconKey === 'promos' || iconKey === 'rewards') {
+            heroConfig = {
+                ...HERO_DEFAULT,
+                ...(config?.heroIcons?.rewards || {}),
+                ...(config?.heroIcons?.promos || {})
+            }
+        } else {
+            heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
+        }
+
+        const mode = heroConfig?.iconColorMode
         if (!mode || mode === 'auto') {
             return config?.canvasMode === 'dark' ? '#FFFFFF' : '#000000'
         }
