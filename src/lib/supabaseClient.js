@@ -23,7 +23,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
  * @param {string} bucketName - The storage bucket name (e.g., 'branding')
  * @returns {Promise<{url: string, error: Error|null}>}
  */
-export async function uploadAsset(file, bucketName = 'branding') {
+export async function uploadAsset(file, bucketName = 'assets') {
     try {
         // 1. Generate cache-busting filename: logo_1735849200.png
         const ext = file.name.split('.').pop()
