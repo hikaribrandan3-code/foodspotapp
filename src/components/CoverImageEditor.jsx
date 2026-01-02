@@ -247,6 +247,10 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         // PRODUCTION MODE: Save to config and navigate to preview
         // Save current state to config
         updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint } })
+
+        // 🛡️ CRITICAL: Dispatch frontendSync IMMEDIATELY to update parent (App.jsx)
+        window.dispatchEvent(new CustomEvent('frontendSync'))
+
         // Save to parent
         onSave({ image, scale, offsetX, offsetY, breakpoint })
 
@@ -259,8 +263,15 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 // Success — navigate to preview
                 // PATCH: Pass return state if provided (for correct exit navigation)
                 const returnState = initialData?.returnState || {}
-                navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
-                onClose()
+
+                // 🛡️ FIX: Dispatch sync again and give React time to re-render
+                // before closing editor to prevent gray screen
+                window.dispatchEvent(new CustomEvent('frontendSync'))
+
+                setTimeout(() => {
+                    navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
+                    onClose()
+                }, 100) // Wait for React re-render
             } else {
                 // Retry save once
                 console.warn('Safari: Cover image not persisted, retrying...')
@@ -271,8 +282,11 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     const retryConfig = getConfig()
                     if (retryConfig.headerCover?.image) {
                         const returnState = initialData?.returnState || {}
-                        navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
-                        onClose()
+                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                        setTimeout(() => {
+                            navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
+                            onClose()
+                        }, 100)
                     } else {
                         // Generic message for all browsers
                         alert('Saving image… please wait and try again.')
