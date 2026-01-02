@@ -80,6 +80,8 @@ function CoverPreview({ config }) {
     }
 
     const handleDone = () => {
+        // 🛡️ FIX: Dispatch sync before navigating to ensure SuperAdmin gets fresh config
+        window.dispatchEvent(new CustomEvent('frontendSync'))
         navigate(returnTo, { state: restState })
     }
 

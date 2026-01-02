@@ -1791,7 +1791,7 @@ function SuperAdmin({ config }) {
                     updateConfig({ headerCover: data })
                     window.dispatchEvent(new CustomEvent('frontendSync'))
                 }}
-                initialData={{ ...config.headerCover, returnState: { activeTab: 'settings' } }}
+                initialData={{ ...config.headerCover, returnState: { activeTab: 'branding' } }}
                 config={config}
             />
 
