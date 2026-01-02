@@ -1053,6 +1053,49 @@ function SuperAdmin({ config }) {
                                                 🗑️ Eliminar Portada
                                             </button>
                                         )}
+
+                                        {/* 🛡️ EMERGENCY: Clear Storage button for quota errors */}
+                                        <button
+                                            onClick={() => {
+                                                if (confirm('⚠️ Esto borrará TODAS las imágenes guardadas (portada, logos, avatars). ¿Continuar?')) {
+                                                    // Clear all image-related data from localStorage
+                                                    try {
+                                                        // Remove config image data
+                                                        const currentConfig = JSON.parse(localStorage.getItem('grub_config') || '{}')
+                                                        delete currentConfig.headerCover
+                                                        delete currentConfig.logo
+                                                        delete currentConfig.logoLight
+                                                        delete currentConfig.logoDark
+                                                        localStorage.setItem('grub_config', JSON.stringify(currentConfig))
+
+                                                        // Remove standalone image keys
+                                                        localStorage.removeItem('foodspot_backend_avatar')
+                                                        localStorage.removeItem('foodspot_business_logo')
+
+                                                        // Dispatch sync
+                                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                        alert('✅ Almacenamiento liberado. Ahora puedes subir una nueva imagen.')
+                                                        window.location.reload()
+                                                    } catch (e) {
+                                                        alert('Error: ' + e.message)
+                                                    }
+                                                }
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                marginTop: 16,
+                                                padding: '10px',
+                                                background: '#FEE2E2',
+                                                color: '#991B1B',
+                                                border: '1px solid #FCA5A5',
+                                                borderRadius: 8,
+                                                fontSize: 11,
+                                                fontWeight: 600,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            🧹 Limpiar Almacenamiento (Emergencia)
+                                        </button>
                                     </div>
                                 )}
                             </div>
