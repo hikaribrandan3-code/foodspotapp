@@ -1054,27 +1054,19 @@ function SuperAdmin({ config }) {
                                             </button>
                                         )}
 
-                                        {/* 🛡️ EMERGENCY: Clear Storage button for quota errors */}
+                                        {/* 🛡️ EMERGENCY: Clear Storage button (COVER ONLY) */}
                                         <button
                                             onClick={() => {
-                                                if (confirm('⚠️ Esto borrará TODAS las imágenes guardadas (portada, logos, avatars). ¿Continuar?')) {
-                                                    // Clear all image-related data from localStorage
+                                                if (confirm('⚠️ Esto borrará solo la IMAGEN DE PORTADA para liberar espacio. Tus logos no se tocarán. ¿Continuar?')) {
                                                     try {
-                                                        // Remove config image data
+                                                        // Clear ONLY header cover data
                                                         const currentConfig = JSON.parse(localStorage.getItem('grub_config') || '{}')
                                                         delete currentConfig.headerCover
-                                                        delete currentConfig.logo
-                                                        delete currentConfig.logoLight
-                                                        delete currentConfig.logoDark
                                                         localStorage.setItem('grub_config', JSON.stringify(currentConfig))
-
-                                                        // Remove standalone image keys
-                                                        localStorage.removeItem('foodspot_backend_avatar')
-                                                        localStorage.removeItem('foodspot_business_logo')
 
                                                         // Dispatch sync
                                                         window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                        alert('✅ Almacenamiento liberado. Ahora puedes subir una nueva imagen.')
+                                                        alert('✅ Espacio liberado. Intenta subir tu portada de nuevo.')
                                                         window.location.reload()
                                                     } catch (e) {
                                                         alert('Error: ' + e.message)
@@ -1094,7 +1086,7 @@ function SuperAdmin({ config }) {
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            🧹 Limpiar Almacenamiento (Emergencia)
+                                            🧹 Liberar Memoria de Portada (Solo Portada)
                                         </button>
                                     </div>
                                 )}
