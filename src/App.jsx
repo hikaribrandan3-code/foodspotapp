@@ -188,10 +188,10 @@ function App() {
         root.style.setProperty('--hero-delivery-bg', getHeroBg(deliveryConfig))
         root.style.setProperty('--hero-delivery-icon', getHeroIcon(deliveryConfig))
 
-        // Rewards
-        const rewardsConfig = heroIcons.rewards || HERO_DEFAULT
-        root.style.setProperty('--hero-rewards-bg', getHeroBg(rewardsConfig))
-        root.style.setProperty('--hero-rewards-icon', getHeroIcon(rewardsConfig))
+        // Promos
+        const promosConfig = heroIcons.promos || HERO_DEFAULT
+        root.style.setProperty('--hero-promos-bg', getHeroBg(promosConfig))
+        root.style.setProperty('--hero-promos-icon', getHeroIcon(promosConfig))
 
         // Game
         const gameConfig = heroIcons.game || HERO_DEFAULT

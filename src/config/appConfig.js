@@ -87,7 +87,7 @@ export const defaultConfig = {
     heroIcons: {
         menu: { color: "auto", iconColorMode: "auto" },
         delivery: { color: "auto", iconColorMode: "auto" },
-        rewards: { color: "auto", iconColorMode: "auto" },
+        promos: { color: "auto", iconColorMode: "auto" },
         game: { color: "auto", iconColorMode: "auto" },
     },
 
@@ -133,10 +133,30 @@ export const defaultConfig = {
         sunday: { open: "09:00", close: "18:00", closed: false },
     },
 
-    // Rewards Configuration
+    // Rewards Configuration (Legacy - for RewardsPill)
     rewards: {
         stampsRequired: 10, // Stamps needed for reward
         rewardDescription: "¡Café gratis!",
+    },
+
+    // Promos Configuration (McDonald's Vibe)
+    promos: {
+        happyHourEnabled: true,
+        happyHourDurationHours: 2,
+        headerTitle: 'DELIVERY HAPPY HOUR',
+        weeklySpecial: {
+            id: 'weekly-boss',
+            title: 'WEEKLY SPECIAL',
+            name: 'Double Stack "The Boss"',
+            price: 1499,
+            originalPrice: 1899,
+            image: null
+        },
+        feastBundles: [
+            { id: 'feast-crispy', title: 'Feast Bundle', subtitle: 'Crispy Bucket Feast', price: 2499, borderColor: '#DC2626', image: null },
+            { id: 'feast-taco', title: 'Family Crnete', subtitle: 'Taco Tuesday Pack', price: 1899, borderColor: '#FCD34D', image: null },
+            { id: 'feast-game', title: 'Feast Bundle', subtitle: 'Game Night Combo', price: 2199, borderColor: '#F97316', image: null }
+        ]
     },
 
     // Business Info
@@ -240,8 +260,8 @@ export const defaultConfig = {
     // ============================================
     homeConfig: {
         // Primary action icons (exactly 4, order matters)
-        // IDs: 'menu', 'envios', 'rewards', 'game'
-        primaryActions: ['menu', 'envios', 'rewards', 'game'],
+        // IDs: 'menu', 'envios', 'promos', 'game'
+        primaryActions: ['menu', 'envios', 'promos', 'game'],
 
         // Featured items (exactly 4 menu item IDs, order matters)
         // These reference menu items by ID, decoupled from menu order
@@ -320,7 +340,7 @@ function normalizeConfig(config) {
         heroIcons: {
             menu: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.menu || {}) },
             delivery: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.delivery || {}) },
-            rewards: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.rewards || {}) },
+            promos: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.promos || {}) },
             game: { color: 'auto', iconColorMode: 'auto', ...(config.heroIcons?.game || {}) },
         },
         features: {
@@ -392,7 +412,7 @@ function normalizeConfig(config) {
             ...(config.delivery || {})
         },
         homeConfig: {
-            primaryActions: ['menu', 'envios', 'rewards', 'game'],
+            primaryActions: ['menu', 'envios', 'promos', 'game'],
             featuredItems: ['flat-white', 'cappuccino', 'brownie-nuez', 'medialuna-manteca'],
             ...(config.homeConfig || {})
         },

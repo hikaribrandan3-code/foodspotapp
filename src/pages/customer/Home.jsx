@@ -4,7 +4,7 @@ import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_D
 import { getMenu } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { isInDemoMode } from '../../utils/demoSession.js'
-import { MenuIcon, DeliveryIcon, RewardsIcon, GameIcon } from '../../components/HeroIcons.jsx'
+import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
 // Long-press timing (1.8 seconds)
@@ -14,7 +14,7 @@ const LONG_PRESS_DURATION = 1800
 const ACTION_DEFINITIONS = {
     menu: { icon: MenuIcon, label: 'Menu', path: '/menu' },
     envios: { icon: DeliveryIcon, label: 'Envíos', path: '/envios' },
-    rewards: { icon: RewardsIcon, label: 'Rewards', path: '/rewards' },
+    promos: { icon: PromosIcon, label: 'Promos', path: '/promos' },
     game: { icon: GameIcon, label: 'Mini Game', path: '/game' }
 }
 
