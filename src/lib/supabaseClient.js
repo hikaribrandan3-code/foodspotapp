@@ -84,3 +84,31 @@ export async function updateBranding(updates) {
 
     return { data, error }
 }
+
+/**
+ * Get current authenticated user
+ * @returns {Promise<{user: object|null, error: Error|null}>}
+ */
+export async function getCurrentUser() {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    return { user, error }
+}
+
+/**
+ * Sign out current user
+ * @returns {Promise<{error: Error|null}>}
+ */
+export async function signOut() {
+    const { error } = await supabase.auth.signOut()
+    return { error }
+}
+
+/**
+ * Check if user is authenticated
+ * @returns {Promise<boolean>}
+ */
+export async function isAuthenticated() {
+    const { user } = await getCurrentUser()
+    return !!user
+}
+

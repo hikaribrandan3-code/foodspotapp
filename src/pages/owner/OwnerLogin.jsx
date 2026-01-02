@@ -1,31 +1,41 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login } from '../../utils/auth.js'
+import { supabase } from '../../lib/supabaseClient'
 
+/**
+ * Owner/Super Admin Login
+ * Uses Supabase Auth for secure authentication
+ */
 function OwnerLogin() {
     const navigate = useNavigate()
-    const [username, setUsername] = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
+        setLoading(true)
+        setError('')
 
-        const result = login(username, password)
+        try {
+            // Authenticate with Supabase
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            })
 
-        if (result.success) {
-            // Route based on role
-            if (result.role === 'superadmin') {
-                navigate('/admin')
-            } else if (result.role === 'owner' || result.role === 'staff') {
-                navigate('/owner/menu')
-            } else {
-                setError('Solo acceso para owner o superior')
-                setTimeout(() => setError(''), 3000)
-            }
-        } else {
-            setError('Credenciales incorrectas')
-            setTimeout(() => setError(''), 3000)
+            if (authError) throw authError
+
+            // Success - navigate to admin
+            // The RLS policies will determine what they can access
+            navigate('/admin')
+        } catch (err) {
+            console.error('Login error:', err)
+            setError(err.message || 'Credenciales incorrectas')
+            setTimeout(() => setError(''), 5000)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -37,20 +47,21 @@ function OwnerLogin() {
             minHeight: '80vh'
         }}>
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
-                <div style={{ fontSize: '3rem', marginBottom: 'var(--space-3)' }}></div>
-                <h1 className="page-title">Acceso Owner</h1>
-                <p className="page-subtitle">Ingresá tus credenciales</p>
+                <div style={{ fontSize: '3rem', marginBottom: 'var(--space-3)' }}>🔐</div>
+                <h1 className="page-title">Acceso Admin</h1>
+                <p className="page-subtitle">Ingresá tu email y contraseña</p>
             </div>
 
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
                     <input
-                        type="text"
+                        type="email"
                         className="form-input"
-                        placeholder="Usuario"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         autoFocus
+                        disabled={loading}
                     />
                 </div>
                 <div className="form-group">
@@ -60,6 +71,7 @@ function OwnerLogin() {
                         placeholder="Contraseña"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
                     />
                 </div>
 
@@ -67,14 +79,20 @@ function OwnerLogin() {
                     <p style={{
                         color: 'var(--color-error)',
                         textAlign: 'center',
-                        marginBottom: 'var(--space-3)'
+                        marginBottom: 'var(--space-3)',
+                        fontSize: '14px'
                     }}>
                         {error}
                     </p>
                 )}
 
-                <button type="submit" className="btn btn-primary btn-block btn-lg">
-                    Ingresar
+                <button
+                    type="submit"
+                    className="btn btn-primary btn-block btn-lg"
+                    disabled={loading}
+                    style={{ opacity: loading ? 0.7 : 1 }}
+                >
+                    {loading ? 'Verificando...' : 'Ingresar'}
                 </button>
             </form>
 
@@ -82,6 +100,7 @@ function OwnerLogin() {
                 className="btn btn-secondary btn-block"
                 style={{ marginTop: 'var(--space-4)' }}
                 onClick={() => navigate('/')}
+                disabled={loading}
             >
                 ← Volver
             </button>
@@ -90,4 +109,3 @@ function OwnerLogin() {
 }
 
 export default OwnerLogin
-
