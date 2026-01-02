@@ -1628,7 +1628,9 @@ function DemoBackend() {
                                                 handleConfigChange({
                                                     heroIcons: {
                                                         ...demoConfig.heroIcons,
-                                                        [iconId]: { ...iconConfig, color: newColor }
+                                                        [iconId]: { ...iconConfig, color: newColor },
+                                                        // FORCE SYNC: Double-write
+                                                        ...(iconId === 'promos' ? { rewards: { ...iconConfig, color: newColor } } : {})
                                                     }
                                                 })
                                             }}
@@ -1636,7 +1638,9 @@ function DemoBackend() {
                                                 handleConfigChange({
                                                     heroIcons: {
                                                         ...demoConfig.heroIcons,
-                                                        [iconId]: { ...iconConfig, iconColorMode: mode }
+                                                        [iconId]: { ...iconConfig, iconColorMode: mode },
+                                                        // FORCE SYNC: Double-write
+                                                        ...(iconId === 'promos' ? { rewards: { ...iconConfig, iconColorMode: mode } } : {})
                                                     }
                                                 })
                                             }}

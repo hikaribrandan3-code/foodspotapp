@@ -1061,7 +1061,9 @@ function SuperAdmin({ config }) {
                                                     updateConfig({
                                                         heroIcons: {
                                                             ...config.heroIcons,
-                                                            [iconId]: { ...iconConfig, color: newColor }
+                                                            [iconId]: { ...iconConfig, color: newColor },
+                                                            // FORCE SYNC: Double-write for legacy caches
+                                                            ...(iconId === 'promos' ? { rewards: { ...iconConfig, color: newColor } } : {})
                                                         }
                                                     })
                                                     window.dispatchEvent(new CustomEvent('frontendSync'))
@@ -1070,7 +1072,9 @@ function SuperAdmin({ config }) {
                                                     updateConfig({
                                                         heroIcons: {
                                                             ...config.heroIcons,
-                                                            [iconId]: { ...iconConfig, iconColorMode: mode }
+                                                            [iconId]: { ...iconConfig, iconColorMode: mode },
+                                                            // FORCE SYNC: Double-write for legacy caches
+                                                            ...(iconId === 'promos' ? { rewards: { ...iconConfig, iconColorMode: mode } } : {})
                                                         }
                                                     })
                                                     window.dispatchEvent(new CustomEvent('frontendSync'))
