@@ -7,6 +7,7 @@
  * PATCH 4.5: Cover mode (Facebook-style header image) — V1 default
  * PATCH 5.0: Cover viewport clamp (internal, mobile only)
  * PATCH 5.1: Config via prop (single source of truth invariant)
+ * PATCH 5.2: No-Blink Stabilizer (skeleton + opacity fade)
  * 
  * Rules:
  * - Header height determined by mode (64px for logo/text, 220/280px for cover)
@@ -14,6 +15,8 @@
  * - Header stays in normal document flow
  * - Config MUST be passed as prop, DO NOT call getConfig()
  */
+
+import { useState, useEffect } from 'react'
 
 // Cover heights by breakpoint
 const COVER_HEIGHTS = {
@@ -35,42 +38,23 @@ function AppHeader({ config }) {
     const coverHeight = COVER_HEIGHTS[breakpoint]
     const useClamp = config?.experimental?.headerClampMobile && breakpoint === 'mobile'
 
+    // 🛡️ NO-BLINK STABILIZER: Track image loading state
+    const [imageLoaded, setImageLoaded] = useState(false)
+    const cover = config?.headerCover || {}
+    const coverImage = cover.image
+
+    // Reset loading state when image URL changes
+    useEffect(() => {
+        setImageLoaded(false)
+    }, [coverImage])
+
     // ============================================
-    // COVER MODE (V1 Default)
+    // COVER MODE (V1 Default) - With No-Blink Stabilizer
     // ============================================
     if (headerMode === 'cover') {
-        const cover = config?.headerCover || {}
         const scale = cover.scale || 1.0
         const offsetX = cover.offsetX || 0
         const offsetY = cover.offsetY || 0
-
-        const coverContent = (
-            <div className="cover-content" style={{
-                position: 'absolute',
-                width: '200%',
-                height: '200%',
-                left: '-50%',
-                top: '-50%',
-                backgroundImage: cover.image ? `url(${cover.image})` : 'none',
-                backgroundSize: `${scale * 100}%`,
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                transform: `translate(${offsetX}px, ${offsetY}px)`
-            }} />
-        )
-
-        const placeholder = (
-            <div className="cover-content" style={{
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
-                <span style={{ color: 'var(--canvas-text)', opacity: 0.5, fontSize: 12 }}>
-                    No cover image
-                </span>
-            </div>
-        )
 
         return (
             <header style={{
@@ -82,12 +66,64 @@ function AppHeader({ config }) {
                     className={useClamp ? 'cover-viewport' : undefined}
                     style={{
                         height: useClamp ? undefined : coverHeight,
+                        minHeight: coverHeight, // 🛡️ RIGID HEIGHT - Prevents collapse
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        background: '#E5E7EB' // Skeleton base color
                     }}
                 >
-                    {cover.image ? coverContent : placeholder}
+                    {/* 1. SKELETON PLACEHOLDER - Always visible until image loads */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)',
+                            backgroundSize: '200% 100%',
+                            animation: imageLoaded ? 'none' : 'shimmer 1.5s infinite',
+                            opacity: imageLoaded ? 0 : 1,
+                            transition: 'opacity 300ms ease-out'
+                        }}
+                    />
+
+                    {/* 2. COVER IMAGE - Fades in after load */}
+                    {coverImage ? (
+                        <img
+                            src={coverImage}
+                            alt="Cover"
+                            onLoad={() => setImageLoaded(true)}
+                            style={{
+                                position: 'absolute',
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                objectPosition: `calc(50% + ${offsetX}px) calc(50% + ${offsetY}px)`,
+                                transform: `scale(${scale})`,
+                                opacity: imageLoaded ? 1 : 0,
+                                transition: 'opacity 500ms ease-in-out'
+                            }}
+                        />
+                    ) : (
+                        <div style={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ color: 'var(--canvas-text)', opacity: 0.5, fontSize: 12 }}>
+                                No cover image
+                            </span>
+                        </div>
+                    )}
                 </div>
+
+                {/* CSS Keyframes for shimmer animation */}
+                <style>{`
+                    @keyframes shimmer {
+                        0% { background-position: -200% 0; }
+                        100% { background-position: 200% 0; }
+                    }
+                `}</style>
             </header>
         )
     }
