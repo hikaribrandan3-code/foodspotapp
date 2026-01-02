@@ -463,9 +463,9 @@ export function getConfig() {
                     // Ensure each icon's config is also deep merged
                     menu: { ...defaultConfig.heroIcons.menu, ...(parsed.heroIcons?.menu || {}) },
                     delivery: { ...defaultConfig.heroIcons.delivery, ...(parsed.heroIcons?.delivery || {}) },
-                    promos: { ...defaultConfig.heroIcons.promos, ...(parsed.heroIcons?.promos || {}) },
-                    // MIRROR: Fix Google/Stale cache color sync
-                    rewards: { ...defaultConfig.heroIcons.promos, ...(parsed.heroIcons?.promos || {}) },
+                    promos: { ...defaultConfig.heroIcons.promos, ...(parsed.heroIcons?.rewards || {}), ...(parsed.heroIcons?.promos || {}) },
+                    // MIRROR: Fix Google/Stale cache color sync (Unified State)
+                    rewards: { ...defaultConfig.heroIcons.promos, ...(parsed.heroIcons?.rewards || {}), ...(parsed.heroIcons?.promos || {}) },
                     game: { ...defaultConfig.heroIcons.game, ...(parsed.heroIcons?.game || {}) },
                 },
                 // Deep merge other nested objects
