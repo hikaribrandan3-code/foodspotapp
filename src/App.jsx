@@ -120,6 +120,27 @@ function App() {
         incrementVisit()
     }, [])
 
+    // ☢️ NUCLEAR: Service Worker Killer - Purge zombie workers trapping Google Cache
+    useEffect(() => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (const registration of registrations) {
+                    console.log('[SW] Unregistering zombie worker:', registration.scope)
+                    registration.unregister()
+                }
+            })
+        }
+        // Also clear caches API if available
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                for (const name of names) {
+                    console.log('[Cache] Purging cache:', name)
+                    caches.delete(name)
+                }
+            })
+        }
+    }, [])
+
     // Apply global typography from config
     useEffect(() => {
         const root = document.documentElement
