@@ -45,6 +45,24 @@ function BackendHeader({
         } catch { return null }
     })
 
+    // 🛡️ FIX: Listen for frontendSync to refresh logo when it changes
+    // This fixes the Google App cache issue where logo doesn't update after upload
+    useEffect(() => {
+        const handleSync = () => {
+            try {
+                setBusinessLogo(localStorage.getItem(BUSINESS_LOGO_KEY) || null)
+                setAvatar(localStorage.getItem(AVATAR_KEY) || null)
+            } catch (e) { /* ignore */ }
+        }
+        window.addEventListener('frontendSync', handleSync)
+        // Also listen for storage changes from other tabs
+        window.addEventListener('storage', handleSync)
+        return () => {
+            window.removeEventListener('frontendSync', handleSync)
+            window.removeEventListener('storage', handleSync)
+        }
+    }, [])
+
     // Local date state (cosmetic, no sync)
     const [selectedDate, setSelectedDate] = useState(() => {
         return new Date().toLocaleDateString('en-US', {
