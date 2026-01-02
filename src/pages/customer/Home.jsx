@@ -50,13 +50,13 @@ function Home({ config }) {
     // These states are the SOURCE OF TRUTH for UI rendering
     // They update INSTANTLY on drop, before storage is written
     const [localPrimaryActions, setLocalPrimaryActions] = useState(
-        () => homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
+        () => homeConfig?.primaryActions || ['menu', 'envios', 'promos', 'game']
     )
 
     // Sync from config prop when it changes (but NOT during drag)
     useEffect(() => {
         if (!isDraggingRef.current && !isEditMode) {
-            const newActions = homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
+            const newActions = homeConfig?.primaryActions || ['menu', 'envios', 'promos', 'game']
             setLocalPrimaryActions(newActions)
         }
     }, [homeConfig?.primaryActions, isEditMode])
