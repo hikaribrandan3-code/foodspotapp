@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addToCurrentOrder, getRewards } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
+import HeaderClamp from '../../components/HeaderClamp.jsx'
 
 // ============================================
 // PROMOS PAGE - McDonald's Vibe UI
@@ -139,41 +140,12 @@ function Promos({ config }) {
     const stampsRequired = config?.rewards?.stampsRequired || 10
 
     return (
-        <div className="min-h-screen bg-white pb-64">
-            {/* === RED HEADER WITH SWIRL PATTERN === */}
-            <header className="bg-[#DB0007] relative overflow-hidden pb-10 pt-4">
-                {/* Decorative swirl pattern */}
-                <div className="absolute inset-0 opacity-20">
-                    <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
-                        <path d="M0,100 Q100,50 200,100 T400,100" fill="none" stroke="#8B0000" strokeWidth="40" />
-                        <path d="M0,150 Q100,100 200,150 T400,150" fill="none" stroke="#8B0000" strokeWidth="30" />
-                    </svg>
-                </div>
+        <div className="min-h-screen bg-white pb-24">
+            {/* === STANDARD HERO COVER (Matches Home/Menu) === */}
+            <HeaderClamp config={config} />
 
-                {/* Header Title */}
-                <h1 className="relative z-10 text-center font-black text-2xl md:text-3xl tracking-wide"
-                    style={{
-                        color: '#FCD34D',
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.4), 0 0 20px rgba(252,211,77,0.3)'
-                    }}>
-                    {headerTitle}
-                </h1>
-
-                {/* LCD Countdown Timer */}
-                <div className="relative z-10 text-center mt-4">
-                    <div className="font-mono text-6xl md:text-7xl font-bold tracking-wider"
-                        style={{
-                            color: '#FCD34D',
-                            textShadow: '0 0 10px rgba(252,211,77,0.5), 0 0 30px rgba(252,211,77,0.3)',
-                            fontFamily: "'Courier New', monospace"
-                        }}>
-                        {timeRemaining}
-                    </div>
-                </div>
-            </header>
-
-            {/* === WHITE SHEET BODY === */}
-            <main className="bg-white rounded-t-[40px] -mt-24 relative z-10 px-4 pt-6">
+            {/* === WHITE BODY === */}
+            <main className="px-4 pt-6">
                 {/* Weekly Special Section */}
                 <h2 className="text-xl font-bold text-gray-900 mb-4">WEEKLY SPECIAL</h2>
 
