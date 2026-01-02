@@ -983,6 +983,8 @@ function SuperAdmin({ config }) {
                                             marginBottom: 4
                                         }}>
                                             <div
+                                                // 🛡️ GOOGLE FIX: Key changes = React remounts = fresh image
+                                                key={`cover-${config.headerCover?.imageVersion || 0}`}
                                                 style={{
                                                     width: '100%',
                                                     height: 64,

@@ -245,8 +245,10 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         }
 
         // PRODUCTION MODE: Save to config and navigate to preview
-        // Save current state to config
-        updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint } })
+        // Save current state to config with cache-buster version
+        // 🛡️ GOOGLE APP FIX: Add imageVersion timestamp to force WebView to refresh image
+        const imageVersion = Date.now()
+        updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint, imageVersion } })
 
         // 🛡️ CRITICAL: Dispatch frontendSync IMMEDIATELY to update parent (App.jsx)
         window.dispatchEvent(new CustomEvent('frontendSync'))
