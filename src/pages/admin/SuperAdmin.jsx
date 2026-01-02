@@ -130,6 +130,18 @@ function SuperAdmin({ config }) {
         }
     }, [])
 
+    // 🛡️ FIX: Update activeTab when returning from CoverPreview (navigation state change)
+    // This fixes the "white void" where the branding tab content doesn't render after returning
+    useEffect(() => {
+        if (location.state?.activeTab && location.state.activeTab !== activeTab) {
+            setActiveTab(location.state.activeTab)
+        }
+        // Also re-open cover editor if coming back for more edits
+        if (location.state?.returnToEditor) {
+            setShowCoverEditor(true)
+        }
+    }, [location.state])
+
     useEffect(() => {
         const interval = setInterval(() => {
             window.dispatchEvent(new CustomEvent('frontendSync'))
