@@ -1067,11 +1067,6 @@ function SuperAdmin({ config }) {
                                                         }
                                                     })
                                                     window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                    // ☢️ NUCLEAR: Force reload for Promos to break Google Cache
-                                                    if (iconId === 'promos') {
-                                                        console.log('☢️ NUCLEAR RELOAD TRIGGERED - Promos color updated')
-                                                        setTimeout(() => window.location.reload(true), 100)
-                                                    }
                                                 }}
                                                 onIconModeChange={(mode) => {
                                                     updateConfig({
@@ -1083,11 +1078,6 @@ function SuperAdmin({ config }) {
                                                         }
                                                     })
                                                     window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                    // ☢️ NUCLEAR: Force reload for Promos to break Google Cache
-                                                    if (iconId === 'promos') {
-                                                        console.log('☢️ NUCLEAR RELOAD TRIGGERED - Promos mode updated')
-                                                        setTimeout(() => window.location.reload(true), 100)
-                                                    }
                                                 }}
                                             />
                                         )
