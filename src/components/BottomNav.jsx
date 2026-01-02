@@ -73,7 +73,13 @@ function BottomNav({ config }) {
     return (
         <nav
             className="bottom-nav"
-            style={{ backgroundColor: navBgColor }}
+            style={{
+                backgroundColor: navBgColor,
+                left: 0,
+                right: 0,
+                width: '100vw',
+                marginLeft: 'calc(-50vw + 50%)'
+            }}
         >
             <NavLink
                 to="/"

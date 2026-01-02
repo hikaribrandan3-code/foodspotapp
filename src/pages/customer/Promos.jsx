@@ -139,9 +139,9 @@ function Promos({ config }) {
     const stampsRequired = config?.rewards?.stampsRequired || 10
 
     return (
-        <div className="min-h-screen bg-white pb-24">
+        <div className="min-h-screen bg-white pb-64">
             {/* === RED HEADER WITH SWIRL PATTERN === */}
-            <header className="bg-[#DB0007] relative overflow-hidden pb-16 pt-6">
+            <header className="bg-[#DB0007] relative overflow-hidden pb-10 pt-4">
                 {/* Decorative swirl pattern */}
                 <div className="absolute inset-0 opacity-20">
                     <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
@@ -173,7 +173,7 @@ function Promos({ config }) {
             </header>
 
             {/* === WHITE SHEET BODY === */}
-            <main className="bg-white rounded-t-[40px] -mt-10 relative z-10 px-4 pt-6">
+            <main className="bg-white rounded-t-[40px] -mt-24 relative z-10 px-4 pt-6">
                 {/* Weekly Special Section */}
                 <h2 className="text-xl font-bold text-gray-900 mb-4">WEEKLY SPECIAL</h2>
 
