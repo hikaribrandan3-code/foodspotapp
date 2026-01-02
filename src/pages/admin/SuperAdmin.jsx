@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { getOrders, updateOrder } from '../../utils/storage.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { canAdvanceOrder, getOrderStatusInfo } from '../../utils/orderStateGuard.js' // Shared Logic Gate
-import { login, logout, getSession } from '../../utils/auth.js'
+import { supabase, signOut, getCurrentUser } from '../../lib/supabaseClient.js'
 
 import { updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem, addCategory } from '../../config/menuData.js'
@@ -84,9 +84,10 @@ function SuperAdmin({ config }) {
     const [activeTab, setActiveTab] = useState(() => location.state?.activeTab || 'summary')
     const [demoAnalytics, setDemoAnalytics] = useState(true)
     const [demoData] = useState(() => generateDemoData())
-    const [username, setUsername] = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [authLoading, setAuthLoading] = useState(true)
     const [userRole, setUserRole] = useState('superadmin')
     const [error, setError] = useState('')
     const [editingItem, setEditingItem] = useState(null)
@@ -120,14 +121,18 @@ function SuperAdmin({ config }) {
     // Derive current mode from context (defaults to 'superadmin' when not simulating)
     const currentMode = activeRoleView || 'superadmin'
 
+    // 🛡️ SUPABASE AUTH: Check session on mount
     useEffect(() => {
-        const session = getSession()
-        if (session && (session.role === 'superadmin' || session.role === 'owner' || session.role === 'staff')) {
-            setIsAuthenticated(true)
-            setUserRole(session.role)
-            // No mode restoration - simulation dies on refresh
-            // selectedMode defaults to 'superadmin', no persistence
+        const checkAuth = async () => {
+            setAuthLoading(true)
+            const { user } = await getCurrentUser()
+            if (user) {
+                setIsAuthenticated(true)
+                setUserRole('superadmin') // You're the boss
+            }
+            setAuthLoading(false)
         }
+        checkAuth()
     }, [])
 
     // 🛡️ FIX: Update activeTab when returning from CoverPreview (navigation state change)
@@ -151,20 +156,33 @@ function SuperAdmin({ config }) {
         return () => clearInterval(interval)
     }, [])
 
-    const handleLogin = (e) => {
+    // 🛡️ SUPABASE AUTH: Login with email/password
+    const handleLogin = async (e) => {
         e.preventDefault()
-        const result = login(username, password)
-        if (result.success) {
+        setAuthLoading(true)
+        setError('')
+
+        try {
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            })
+
+            if (authError) throw authError
+
             setIsAuthenticated(true)
-            setUserRole(result.role)
-            setError('')
-        } else {
-            setError('Credenciales incorrectas')
+            setUserRole('superadmin')
+        } catch (err) {
+            console.error('Login error:', err)
+            setError(err.message || 'Credenciales incorrectas')
+        } finally {
+            setAuthLoading(false)
         }
     }
 
-    const handleLogout = () => {
-        logout()
+    // 🛡️ SUPABASE AUTH: Logout
+    const handleLogout = async () => {
+        await signOut()
         setIsAuthenticated(false)
         navigate('/')
     }
@@ -279,10 +297,10 @@ function SuperAdmin({ config }) {
                 <h1 style={{ fontSize: 24, fontWeight: 600, color: '#4A4340', marginBottom: 8 }}>Panel Admin</h1>
                 <p style={{ fontSize: 14, color: '#8B8580', marginBottom: 28 }}>Ingresá tus credenciales</p>
                 <form onSubmit={handleLogin} style={{ width: '100%', maxWidth: 300 }}>
-                    <input type="text" placeholder="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} style={{ width: '100%', padding: '14px 18px', fontSize: 15, border: '1px solid #E0DCD6', borderRadius: 24, background: 'white', marginBottom: 10, boxSizing: 'border-box' }} />
-                    <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '14px 18px', fontSize: 15, border: '1px solid #E0DCD6', borderRadius: 24, background: 'white', marginBottom: 14, boxSizing: 'border-box' }} />
+                    <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={authLoading} style={{ width: '100%', padding: '14px 18px', fontSize: 15, border: '1px solid #E0DCD6', borderRadius: 24, background: 'white', marginBottom: 10, boxSizing: 'border-box' }} />
+                    <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} disabled={authLoading} style={{ width: '100%', padding: '14px 18px', fontSize: 15, border: '1px solid #E0DCD6', borderRadius: 24, background: 'white', marginBottom: 14, boxSizing: 'border-box' }} />
                     {error && <p style={{ color: '#B85450', textAlign: 'center', fontSize: 13, marginBottom: 10 }}>{error}</p>}
-                    <button type="submit" style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 600, color: 'white', background: '#B8956A', border: 'none', borderRadius: 24, cursor: 'pointer', marginBottom: 10 }}>Ingresar</button>
+                    <button type="submit" disabled={authLoading} style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 600, color: 'white', background: authLoading ? '#CCC' : '#B8956A', border: 'none', borderRadius: 24, cursor: authLoading ? 'wait' : 'pointer', marginBottom: 10 }}>{authLoading ? 'Verificando...' : 'Ingresar'}</button>
                     <button type="button" onClick={() => navigate('/')} style={{ width: '100%', padding: '12px', fontSize: 14, color: '#6B6560', background: 'white', border: '1px solid #E0DCD6', borderRadius: 24, cursor: 'pointer' }}>← Volver</button>
                 </form>
                 {/* ============================================
