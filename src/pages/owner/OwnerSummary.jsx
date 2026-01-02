@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders } from '../../utils/storage.js'
-import { updateConfig } from '../../config/appConfig.js'
+import { updateConfig } from '../../config/appConfig.v2.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 

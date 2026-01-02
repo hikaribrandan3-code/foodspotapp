@@ -19,7 +19,7 @@ import {
     clearAllDemoData
 } from '../../utils/demoSession.js'
 import { getDemoEvents, clearDemoEvents } from '../../utils/demoEvents.js'
-import { HERO_DEFAULT } from '../../config/appConfig.js'
+import { HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { getMenu } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'

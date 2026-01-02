@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
+import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 
 /**

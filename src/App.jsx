@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
-import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.js'
+import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
 import { incrementVisit, getOrders, updateOrder } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'

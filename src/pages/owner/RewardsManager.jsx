@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { getAuth, clearAuth } from '../../utils/storage.js'
-import { updateConfig } from '../../config/appConfig.js'
+import { updateConfig } from '../../config/appConfig.v2.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 
 // INVARIANT: config must come from prop (App.jsx safeConfig)

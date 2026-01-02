@@ -15,7 +15,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getConfig, updateConfig } from '../config/appConfig.js'
+import { getConfig, updateConfig } from '../config/appConfig.v2.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
 import Home from '../pages/customer/Home.jsx'
 

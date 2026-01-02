@@ -5,7 +5,7 @@ import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { canAdvanceOrder, getOrderStatusInfo } from '../../utils/orderStateGuard.js' // Shared Logic Gate
 import { login, logout, getSession } from '../../utils/auth.js'
 
-import { updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.js'
+import { updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem, addCategory } from '../../config/menuData.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
@@ -366,7 +366,7 @@ function SuperAdmin({ config }) {
         <>
             <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 <BackendHeader
-                    title="Modo: Super Admin"
+                    title={<>Modo: Super Admin <span style={{ fontSize: 10, background: '#DC2626', color: 'white', padding: '2px 6px', borderRadius: 10, marginLeft: 6, fontWeight: 700 }}>v2.0 LIVE</span></>}
                     onLogout={handleLogout}
                     showDateSelector={false}
                     showNotifications={false}
