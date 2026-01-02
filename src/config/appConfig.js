@@ -412,7 +412,7 @@ function normalizeConfig(config) {
             ...(config.delivery || {})
         },
         homeConfig: {
-            primaryActions: ['menu', 'envios', 'promos', 'game'],
+            primaryActions: (config.homeConfig?.primaryActions || ['menu', 'envios', 'promos', 'game']).map(id => id === 'rewards' ? 'promos' : id),
             featuredItems: ['flat-white', 'cappuccino', 'brownie-nuez', 'medialuna-manteca'],
             ...(config.homeConfig || {})
         },
@@ -463,7 +463,7 @@ export function getConfig() {
                     // Ensure each icon's config is also deep merged
                     menu: { ...defaultConfig.heroIcons.menu, ...(parsed.heroIcons?.menu || {}) },
                     delivery: { ...defaultConfig.heroIcons.delivery, ...(parsed.heroIcons?.delivery || {}) },
-                    rewards: { ...defaultConfig.heroIcons.rewards, ...(parsed.heroIcons?.rewards || {}) },
+                    promos: { ...defaultConfig.heroIcons.promos, ...(parsed.heroIcons?.promos || {}) },
                     game: { ...defaultConfig.heroIcons.game, ...(parsed.heroIcons?.game || {}) },
                 },
                 // Deep merge other nested objects
