@@ -15,7 +15,8 @@ const ACTION_DEFINITIONS = {
     menu: { icon: MenuIcon, label: 'Menu', path: '/menu' },
     envios: { icon: DeliveryIcon, label: 'Envíos', path: '/envios' },
     promos: { icon: PromosIcon, label: 'Promos', path: '/promos' },
-    game: { icon: GameIcon, label: 'Mini Game', path: '/game' }
+    game: { icon: GameIcon, label: 'Mini Game', path: '/game' },
+    rewards: { icon: PromosIcon, label: 'Promos', path: '/promos' } // ALIAS: Fix stale cache
 }
 
 // --- MAIN COMPONENT ---

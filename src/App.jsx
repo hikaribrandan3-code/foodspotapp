@@ -192,6 +192,9 @@ function App() {
         const promosConfig = heroIcons.promos || HERO_DEFAULT
         root.style.setProperty('--hero-promos-bg', getHeroBg(promosConfig))
         root.style.setProperty('--hero-promos-icon', getHeroIcon(promosConfig))
+        // Alias for stale cache
+        root.style.setProperty('--hero-rewards-bg', getHeroBg(promosConfig))
+        root.style.setProperty('--hero-rewards-icon', getHeroIcon(promosConfig))
 
         // Game
         const gameConfig = heroIcons.game || HERO_DEFAULT
