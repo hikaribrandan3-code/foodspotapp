@@ -1047,9 +1047,9 @@ function SuperAdmin({ config }) {
                             <div style={cardStyle}>
                                 <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>3. Iconos Hero (Inicio)</h4>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                    {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                                    {['menu', 'delivery', 'promos', 'game'].map(iconId => {
                                         const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
-                                        const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
+                                        const labels = { menu: 'Menú', delivery: 'Envíos', promos: 'Promos', game: 'Juego' }
                                         return (
                                             <HeroIconPicker
                                                 key={iconId}

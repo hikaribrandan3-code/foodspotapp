@@ -552,9 +552,9 @@ function Settings({ config, demoMode = false }) {
                                 Color de fondo e ícono para cada tile
                             </p>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                                {['menu', 'delivery', 'promos', 'game'].map(iconId => {
                                     const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT
-                                    const labels = { menu: 'Menú', delivery: 'Envíos', rewards: 'Rewards', game: 'Juego' }
+                                    const labels = { menu: 'Menú', delivery: 'Envíos', promos: 'Promos', game: 'Juego' }
                                     return (
                                         <HeroIconPicker
                                             key={iconId}

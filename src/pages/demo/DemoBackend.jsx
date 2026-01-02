@@ -1614,9 +1614,9 @@ function DemoBackend() {
                         <div style={cardStyle}>
                             <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>Customize the color and icon style for home tiles</p>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                                {['menu', 'delivery', 'promos', 'game'].map(iconId => {
                                     const iconConfig = demoConfig.heroIcons?.[iconId] || HERO_DEFAULT
-                                    const labels = { menu: 'Menu', delivery: 'Delivery', rewards: 'Rewards', game: 'Game' }
+                                    const labels = { menu: 'Menu', delivery: 'Delivery', promos: 'Promos', game: 'Game' }
                                     return (
                                         <HeroIconPicker
                                             key={iconId}

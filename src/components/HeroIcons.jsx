@@ -44,7 +44,8 @@ export const HERO_ICONS = {
     menu: MenuIcon,
     delivery: DeliveryIcon,
     promos: PromosIcon,
-    game: GameIcon
+    game: GameIcon,
+    rewards: PromosIcon // Alias for backward compatibility
 }
 
 // Labels for display
@@ -52,5 +53,6 @@ export const HERO_LABELS = {
     menu: 'Menú',
     delivery: 'Envíos',
     promos: 'Promos',
-    game: 'Juego'
+    game: 'Juego',
+    rewards: 'Promos' // Alias for backward compatibility
 }
