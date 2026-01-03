@@ -17,6 +17,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getConfig, updateConfig } from '../config/appConfig.v2.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
+import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import Home from '../pages/customer/Home.jsx'
 
 const COVER_HEIGHTS = {
@@ -151,13 +152,18 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         }
     }, [isOpen]) // Intentionally exclude initialData to prevent resets
 
-    // File selection
+    // File selection - store original file for Supabase upload
+    const [originalFile, setOriginalFile] = useState(null)
+
     const handleFileSelect = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
 
         try {
-            // PATCH: Optimize image before loading to prevent localStorage quota errors in Safari
+            // Store original file for Supabase upload
+            setOriginalFile(file)
+
+            // PATCH: Optimize image for preview (not for storage)
             const { dataURI } = await processAndStoreImage(file)
             setImage(dataURI)
             // Reset position for new image only
@@ -236,7 +242,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     }
 
     // ===== CONTINUE → ROUTE TO PREVIEW (or save directly in demo mode) =====
-    const handleContinue = () => {
+    const handleContinue = async () => {
         // DEMO MODE: Save directly without navigation or production config update
         if (demoMode) {
             onSave({ image, scale, offsetX, offsetY, breakpoint })
@@ -244,58 +250,52 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             return
         }
 
-        // PRODUCTION MODE: Save to config and navigate to preview
-        // Save current state to config with cache-buster version
-        // 🛡️ GOOGLE APP FIX: Add imageVersion timestamp to force WebView to refresh image
-        const imageVersion = Date.now()
-        updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint, imageVersion } })
+        // 🛡️ SUPABASE MODE: Upload to cloud storage (SINGLE SOURCE OF TRUTH)
+        try {
+            let heroUrl = image // Fallback to dataURI if no original file
 
-        // 🛡️ CRITICAL: Dispatch frontendSync IMMEDIATELY to update parent (App.jsx)
-        window.dispatchEvent(new CustomEvent('frontendSync'))
+            // Upload original file to Supabase if we have it
+            if (originalFile) {
+                console.log('[Supabase] Uploading hero image...')
+                const { url, error } = await uploadAsset(originalFile, 'assets')
+                if (error) {
+                    console.error('[Supabase] Upload failed:', error)
+                    alert('Error uploading image. Using local storage as fallback.')
+                } else {
+                    heroUrl = url
+                    console.log('[Supabase] Hero image uploaded:', heroUrl)
 
-        // Save to parent
-        onSave({ image, scale, offsetX, offsetY, breakpoint })
-
-        // Safari-safe: verify save completed, retry once if needed
-        setTimeout(() => {
-            const savedConfig = getConfig()
-
-            // Verify cover image was persisted
-            if (savedConfig.headerCover?.image) {
-                // Success — navigate to preview
-                // PATCH: Pass return state if provided (for correct exit navigation)
-                const returnState = initialData?.returnState || {}
-
-                // 🛡️ FIX: Dispatch sync again and give React time to re-render
-                // before closing editor to prevent gray screen
-                window.dispatchEvent(new CustomEvent('frontendSync'))
-
-                setTimeout(() => {
-                    navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
-                    onClose()
-                }, 100) // Wait for React re-render
-            } else {
-                // Retry save once
-                console.warn('Safari: Cover image not persisted, retrying...')
-                updateConfig({ headerCover: { image, scale, offsetX, offsetY, breakpoint } })
-
-                // Second verification after retry
-                setTimeout(() => {
-                    const retryConfig = getConfig()
-                    if (retryConfig.headerCover?.image) {
-                        const returnState = initialData?.returnState || {}
-                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                        setTimeout(() => {
-                            navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
-                            onClose()
-                        }, 100)
+                    // Save URL to branding table
+                    const { error: dbError } = await updateBranding({ hero_url: heroUrl })
+                    if (dbError) {
+                        console.error('[Supabase] Failed to save hero URL:', dbError)
                     } else {
-                        // Generic message for all browsers
-                        alert('Saving image… please wait and try again.')
+                        console.log('[Supabase] Hero URL saved to database')
                     }
-                }, 100)
+                }
             }
-        }, 50)
+
+            // Also save to localStorage as backup (for offline/fallback)
+            const imageVersion = Date.now()
+            updateConfig({ headerCover: { image: heroUrl, scale, offsetX, offsetY, breakpoint, imageVersion } })
+
+            // Dispatch sync
+            window.dispatchEvent(new CustomEvent('frontendSync'))
+
+            // Save to parent
+            onSave({ image: heroUrl, scale, offsetX, offsetY, breakpoint })
+
+            // Navigate to preview
+            const returnState = initialData?.returnState || {}
+            setTimeout(() => {
+                navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
+                onClose()
+            }, 100)
+
+        } catch (err) {
+            console.error('[Supabase] Error in save flow:', err)
+            alert('Error saving. Please try again.')
+        }
     }
 
     if (!isOpen) return null

@@ -4,6 +4,7 @@ import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.j
 import { incrementVisit, getOrders, updateOrder } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
+import { getBranding } from './lib/supabaseClient.js'
 
 // Components
 import BottomNav from './components/BottomNav.jsx'
@@ -112,12 +113,53 @@ function StackedAdminBadge() {
 function App() {
     const [config, setConfig] = useState(() => getConfig())
     const [orders, setOrders] = useState(() => getOrders())
+    const [cloudBrandingLoaded, setCloudBrandingLoaded] = useState(false)
     // GUARDRAIL: Defensive fallback to prevent pauseOrders crash
     const safeConfig = config ?? { pauseOrders: false }
 
     // Track visit on app load
     useEffect(() => {
         incrementVisit()
+    }, [])
+
+    // 🛡️ SUPABASE: Fetch branding from cloud on mount (SINGLE SOURCE OF TRUTH)
+    useEffect(() => {
+        const loadCloudBranding = async () => {
+            try {
+                const { data: cloudBranding, error } = await getBranding()
+                if (error) {
+                    console.warn('[Supabase] Failed to load branding:', error.message)
+                    return
+                }
+                if (cloudBranding) {
+                    console.log('[Supabase] Cloud branding loaded:', cloudBranding)
+                    setConfig(prev => ({
+                        ...prev,
+                        // Override with cloud data (Supabase wins)
+                        branding: {
+                            ...prev.branding,
+                            primaryColor: cloudBranding.primary_color || prev.branding?.primaryColor,
+                        },
+                        colors: {
+                            ...prev.colors,
+                            primary: cloudBranding.primary_color || prev.colors?.primary,
+                            secondary: cloudBranding.secondary_color || prev.colors?.secondary,
+                        },
+                        // Hero image from cloud
+                        headerCover: cloudBranding.hero_url ? {
+                            ...prev.headerCover,
+                            image: cloudBranding.hero_url
+                        } : prev.headerCover,
+                        // Logo from cloud  
+                        logo: cloudBranding.logo_url || prev.logo,
+                    }))
+                    setCloudBrandingLoaded(true)
+                }
+            } catch (err) {
+                console.error('[Supabase] Error loading branding:', err)
+            }
+        }
+        loadCloudBranding()
     }, [])
 
     // ☢️ NUCLEAR: Service Worker Killer - Purge zombie workers trapping Google Cache
@@ -371,11 +413,46 @@ function App() {
 
     // Manual config refresh - call from admin/owner actions when needed
     // INVARIANT: setConfig must NEVER receive undefined (atomic replacement only)
-    const refreshConfig = useCallback(() => {
-        const newConfig = getConfig()
-        if (newConfig) {
-            setConfig(newConfig)
+    // 🛡️ SUPABASE: Now fetches branding from cloud (SINGLE SOURCE OF TRUTH)
+    const refreshConfig = useCallback(async () => {
+        // 1. Get local config (for non-branding fields like menu, orders)
+        const localConfig = getConfig()
+
+        // 2. Fetch branding from Supabase (cloud wins)
+        try {
+            const { data: cloudBranding } = await getBranding()
+
+            if (cloudBranding) {
+                // 3. Merge: Supabase wins for branding fields
+                const mergedConfig = {
+                    ...localConfig,
+                    branding: {
+                        ...localConfig.branding,
+                        primaryColor: cloudBranding.primary_color || localConfig.branding?.primaryColor,
+                    },
+                    colors: {
+                        ...localConfig.colors,
+                        primary: cloudBranding.primary_color || localConfig.colors?.primary,
+                        secondary: cloudBranding.secondary_color || localConfig.colors?.secondary,
+                    },
+                    headerCover: cloudBranding.hero_url ? {
+                        ...localConfig.headerCover,
+                        image: cloudBranding.hero_url
+                    } : localConfig.headerCover,
+                    logo: cloudBranding.logo_url || localConfig.logo,
+                }
+                setConfig(mergedConfig)
+            } else if (localConfig) {
+                setConfig(localConfig)
+            }
+        } catch (err) {
+            // Fallback to local config if cloud fails
+            console.warn('[Supabase] Refresh failed, using local:', err.message)
+            if (localConfig) {
+                setConfig(localConfig)
+            }
         }
+
         setOrders(getOrders())
     }, [])
 
