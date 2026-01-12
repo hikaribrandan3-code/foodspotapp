@@ -89,7 +89,9 @@ function StackedAdminBadge() {
 
     const handleNavigate = (path) => {
         setShowMenu(false)
-        navigate(path)
+        navigate(path, { replace: true })
+        // Force scroll to top on switch
+        window.scrollTo(0, 0)
     }
 
     return (
@@ -99,55 +101,60 @@ function StackedAdminBadge() {
                 onClick={() => setShowMenu(!showMenu)}
                 style={{
                     position: 'fixed',
-                    bottom: 20,
+                    bottom: 90, // LIFTED: Clear the 68px BottomNav + safe area
                     left: 20,
                     padding: '8px 12px',
-                    background: '#1a1a1a',
+                    // GLASSMORPHISM: Frosted glass effect
+                    background: 'rgba(26, 26, 26, 0.85)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
                     color: '#00ff00',
                     fontSize: 12,
                     fontWeight: 700,
                     borderRadius: 10,
-                    zIndex: 998,
+                    zIndex: 2000, // SUPREME LAYER: Above everything
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
                     cursor: 'pointer',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
                     border: '1px solid rgba(0,255,0,0.2)',
-                    userSelect: 'none'
+                    userSelect: 'none',
+                    transition: 'transform 0.1s active'
                 }}
             >
                 <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
                     🔧 SUPER ADMIN
                 </span>
-                <span style={{ fontSize: 10, opacity: 0.7 }}>▲</span>
+                <span style={{ fontSize: 10, opacity: 0.7 }}>{showMenu ? '▼' : '▲'}</span>
             </div>
 
             {/* Switcher Menu */}
             {showMenu && (
                 <>
-                    {/* Backdrop */}
+                    {/* Backdrop - High Z-index to catch clicks */}
                     <div
                         onClick={() => setShowMenu(false)}
                         style={{
                             position: 'fixed',
                             inset: 0,
-                            zIndex: 997,
-                            background: 'transparent'
+                            zIndex: 1999, // Just below the badge
+                            background: 'rgba(0,0,0,0.2)' // Dim background
                         }}
                     />
                     {/* Menu */}
                     <div style={{
                         position: 'fixed',
-                        bottom: 60,
+                        bottom: 130, // Positioned relative to lifted badge
                         left: 20,
                         background: '#1a1a1a',
                         borderRadius: 12,
                         padding: 8,
-                        zIndex: 999,
+                        zIndex: 2000,
                         boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                         border: '1px solid rgba(255,255,255,0.1)',
-                        minWidth: 160
+                        minWidth: 160,
+                        animation: 'fadeIn 0.15s ease-out'
                     }}>
                         <div style={{ fontSize: 10, color: '#888', padding: '4px 12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             Quick Switch
