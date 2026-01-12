@@ -1,42 +1,74 @@
-// ProtectedRoute component for role-based route protection
+/**
+ * ProtectedRoute - Role-based route protection with Supabase Auth
+ * 
+ * Now handles async session fetch with loading state.
+ * Respects AdminIntentContext for Super Admin role simulation.
+ */
+import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
-import { getSession } from '../utils/auth.js'
+import { getSession, hasRole, getLoginRedirect, getDashboardRedirect } from '../utils/auth.js'
 import { useAdminIntent } from '../contexts/AdminIntentContext.jsx'
 
-/**
- * Wraps a route to require authentication and a minimum role level.
- * 
- * ROLE LENS ENABLED:
- * This component respects the 'AdminIntentContext'.
- * If a Super Admin effectively simulates 'staff', they will be denied access to 'owner' routes.
- * 
- * Role hierarchy: superadmin > owner > staff
- */
-function ProtectedRoute({ children, requiredRole }) {
-    // 1. Get Real Session (Auth Source of Truth)
-    const session = getSession()
+// Role hierarchy for local checks
+const ROLE_HIERARCHY = ['staff', 'owner', 'superadmin']
 
-    // 2. Get Simulation Intent (Role Lens)
+function ProtectedRoute({ children, requiredRole }) {
+    const [session, setSession] = useState(null)
+    const [isLoading, setIsLoading] = useState(true)
+
+    // Get Simulation Intent (Role Lens)
     const { activeRoleView, isSimulated } = useAdminIntent()
 
-    // 3. Determine Effective Role
-    // If simulating, use the simulation view. usage: superadmin -> staff
-    // If not simulating, use the real session role.
-    const realRole = session?.role
-    const effectiveRole = isSimulated ? activeRoleView : realRole
-
-    // --- ACCESS LOGIC (Localized to avoid modifying services) ---
-    const ROLE_HIERARCHY = ['staff', 'owner', 'superadmin']
-
-    // Not authenticated at all (Real session check)
-    if (!session) {
-        const loginRoutes = {
-            staff: '/staff',
-            owner: '/owner',
-            superadmin: '/admin'
+    // Fetch session on mount
+    useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const sessionData = await getSession()
+                setSession(sessionData)
+            } catch {
+                setSession(null)
+            } finally {
+                setIsLoading(false)
+            }
         }
-        return <Navigate to={loginRoutes[requiredRole] || '/staff'} replace />
+        fetchSession()
+    }, [])
+
+    // Loading state - show minimal spinner
+    if (isLoading) {
+        return (
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh',
+                background: 'var(--canvas-bg, #fff)'
+            }}>
+                <div style={{
+                    width: 32,
+                    height: 32,
+                    border: '3px solid #E5E7EB',
+                    borderTopColor: '#3B82F6',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                }} />
+                <style>{`
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                `}</style>
+            </div>
+        )
     }
+
+    // Not authenticated
+    if (!session) {
+        return <Navigate to={getLoginRedirect(requiredRole)} replace />
+    }
+
+    // Determine Effective Role (simulation or real)
+    const realRole = session.role
+    const effectiveRole = isSimulated ? activeRoleView : realRole
 
     // Role Hierarchy Check
     const userLevel = ROLE_HIERARCHY.indexOf(effectiveRole)
@@ -44,17 +76,7 @@ function ProtectedRoute({ children, requiredRole }) {
 
     // Invalid roles or insufficient permission
     if (userLevel === -1 || requiredLevel === -1 || userLevel < requiredLevel) {
-
-        // Redirect Logic based on Effective Role
-        // If I am effectively 'staff', I should go to staff dashboard
-        const dashboardRoutes = {
-            staff: '/staff/dashboard',
-            owner: '/owner/menu',
-            superadmin: '/admin'
-        }
-
-        // If I am effectively 'superadmin' but failed (shouldn't happen unless req role is invalid), go to admin
-        return <Navigate to={dashboardRoutes[effectiveRole] || '/'} replace />
+        return <Navigate to={getDashboardRedirect(effectiveRole)} replace />
     }
 
     return children

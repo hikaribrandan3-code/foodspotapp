@@ -27,7 +27,18 @@ function Home({ config }) {
     const menu = getMenu()
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
-    const session = getSession()
+    const [session, setSession] = useState(null)
+    useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const sessionData = await getSession()
+                setSession(sessionData)
+            } catch {
+                setSession(null)
+            }
+        }
+        fetchSession()
+    }, [])
     const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner' || isInDemoMode()
 
     // Edit mode state

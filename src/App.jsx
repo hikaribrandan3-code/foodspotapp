@@ -1,10 +1,10 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
 import { incrementVisit, getOrders, updateOrder } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
-import { getBranding } from './lib/supabaseClient.js'
+import { getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
 
 // Components
 import BottomNav from './components/BottomNav.jsx'
@@ -65,47 +65,141 @@ const LazyFallback = () => (
 import Camera from './components/Camera/index.jsx'
 
 // ====== STACKED ADMIN BADGE COMPONENT ======
-// Shows Super Admin status with optional view mode indicator
+// Shows Super Admin status with role switcher menu
 function StackedAdminBadge() {
-    const session = getSession()
+    const [session, setSession] = useState(null)
+    const [showMenu, setShowMenu] = useState(false)
     const { isSimulated, activeRoleView, exitSimulation } = useAdminIntent()
+    const navigate = useNavigate()
 
-    // Only show for superadmin
-    if (session?.role !== 'superadmin') return null
+    useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const sessionData = await getSession()
+                setSession(sessionData)
+            } catch {
+                setSession(null)
+            }
+        }
+        fetchSession()
+    }, [])
+
+    // Only show for superadmin (wait for session to load)
+    if (!session || session?.role !== 'superadmin') return null
+
+    const handleNavigate = (path) => {
+        setShowMenu(false)
+        navigate(path)
+    }
 
     return (
-        <div
-            onClick={() => {
-                if (isSimulated) {
-                    exitSimulation()
-                }
-            }}
-            style={{
-                position: 'fixed',
-                bottom: 20,
-                left: 20,
-                padding: '8px 12px',
-                background: '#1a1a1a',
-                color: '#00ff00',
-                fontSize: 12,
-                fontWeight: 700,
-                borderRadius: 10,
-                zIndex: 998,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                gap: 2,
-                cursor: isSimulated ? 'pointer' : 'default',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-                border: '1px solid rgba(0,255,0,0.2)'
-            }}
-        >
-            {/* Top Line: Super Admin */}
-            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
-                🔧 SUPER ADMIN
-            </span>
+        <>
+            {/* Main Badge */}
+            <div
+                onClick={() => setShowMenu(!showMenu)}
+                style={{
+                    position: 'fixed',
+                    bottom: 20,
+                    left: 20,
+                    padding: '8px 12px',
+                    background: '#1a1a1a',
+                    color: '#00ff00',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    borderRadius: 10,
+                    zIndex: 998,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                    border: '1px solid rgba(0,255,0,0.2)',
+                    userSelect: 'none'
+                }}
+            >
+                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
+                    🔧 SUPER ADMIN
+                </span>
+                <span style={{ fontSize: 10, opacity: 0.7 }}>▲</span>
+            </div>
 
-        </div>
+            {/* Switcher Menu */}
+            {showMenu && (
+                <>
+                    {/* Backdrop */}
+                    <div
+                        onClick={() => setShowMenu(false)}
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            zIndex: 997,
+                            background: 'transparent'
+                        }}
+                    />
+                    {/* Menu */}
+                    <div style={{
+                        position: 'fixed',
+                        bottom: 60,
+                        left: 20,
+                        background: '#1a1a1a',
+                        borderRadius: 12,
+                        padding: 8,
+                        zIndex: 999,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        minWidth: 160
+                    }}>
+                        <div style={{ fontSize: 10, color: '#888', padding: '4px 12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Quick Switch
+                        </div>
+                        {[
+                            { label: '🎛️ Admin Panel', path: '/admin', color: '#7C3AED' },
+                            { label: '👤 Owner View', path: '/owner/summary', color: '#3B82F6' },
+                            { label: '📋 Staff View', path: '/staff/dashboard', color: '#22C55E' }
+                        ].map(item => (
+                            <div
+                                key={item.path}
+                                onClick={() => handleNavigate(item.path)}
+                                style={{
+                                    padding: '10px 12px',
+                                    color: '#fff',
+                                    fontSize: 13,
+                                    fontWeight: 500,
+                                    borderRadius: 8,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    transition: 'background 0.15s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
+                                {item.label}
+                            </div>
+                        ))}
+                        {isSimulated && (
+                            <div
+                                onClick={() => { exitSimulation(); setShowMenu(false) }}
+                                style={{
+                                    padding: '10px 12px',
+                                    color: '#EF4444',
+                                    fontSize: 13,
+                                    fontWeight: 500,
+                                    borderRadius: 8,
+                                    cursor: 'pointer',
+                                    borderTop: '1px solid rgba(255,255,255,0.1)',
+                                    marginTop: 4
+                                }}
+                            >
+                                ✕ Exit Simulation
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+        </>
     )
 }
 
@@ -115,7 +209,8 @@ function App() {
     const [orders, setOrders] = useState(() => getOrders())
     const [cloudBrandingLoaded, setCloudBrandingLoaded] = useState(false)
     // GUARDRAIL: Defensive fallback to prevent pauseOrders crash
-    const safeConfig = config ?? { pauseOrders: false }
+    // useMemo ensures reference stability for child useMemo optimizations
+    const safeConfig = useMemo(() => config ?? { pauseOrders: false }, [config])
 
     // Track visit on app load
     useEffect(() => {
@@ -123,40 +218,42 @@ function App() {
     }, [])
 
     // 🛡️ SUPABASE: Fetch branding from cloud on mount (SINGLE SOURCE OF TRUTH)
+    // Hardware Readiness: Async fetch does NOT block static imports
     useEffect(() => {
         const loadCloudBranding = async () => {
             try {
                 const { data: cloudBranding, error } = await getBranding()
-                if (error) {
-                    console.warn('[Supabase] Failed to load branding:', error.message)
-                    return
-                }
-                if (cloudBranding) {
-                    console.log('[Supabase] Cloud branding loaded:', cloudBranding)
-                    setConfig(prev => ({
-                        ...prev,
-                        // Override with cloud data (Supabase wins)
-                        branding: {
-                            ...prev.branding,
-                            primaryColor: cloudBranding.primary_color || prev.branding?.primaryColor,
-                        },
-                        colors: {
-                            ...prev.colors,
-                            primary: cloudBranding.primary_color || prev.colors?.primary,
-                            secondary: cloudBranding.secondary_color || prev.colors?.secondary,
-                        },
-                        // Hero image from cloud
-                        headerCover: cloudBranding.hero_url ? {
-                            ...prev.headerCover,
-                            image: cloudBranding.hero_url
-                        } : prev.headerCover,
-                        // Logo from cloud  
-                        logo: cloudBranding.logo_url || prev.logo,
-                    }))
-                    setCloudBrandingLoaded(true)
-                }
-            } catch (err) {
-                console.error('[Supabase] Error loading branding:', err)
+                // Silent fallback: if error or no data, localStorage wins
+                if (error || !cloudBranding) return
+
+                // Safe Config Protocol: Cloud data overrides localStorage
+                setConfig(prev => ({
+                    ...prev,
+                    // Business identity
+                    businessName: cloudBranding.business_name || prev.businessName,
+                    // Branding config (fonts, primary color)
+                    branding: {
+                        ...prev.branding,
+                        primaryColor: cloudBranding.primary_color || prev.branding?.primaryColor,
+                        fontFamily: cloudBranding.font_family || prev.branding?.fontFamily,
+                    },
+                    // Colors (complete mapping to prevent CSS variable desync)
+                    colors: {
+                        ...prev.colors,
+                        primary: cloudBranding.primary_color || prev.colors?.primary,
+                        secondary: cloudBranding.secondary_color || prev.colors?.secondary,
+                    },
+                    // Hero image from cloud
+                    headerCover: cloudBranding.hero_url ? {
+                        ...prev.headerCover,
+                        image: cloudBranding.hero_url
+                    } : prev.headerCover,
+                    // Logo from cloud
+                    logo: cloudBranding.logo_url || prev.logo,
+                }))
+                setCloudBrandingLoaded(true)
+            } catch {
+                // Silent fallback to localStorage - no UI break
             }
         }
         loadCloudBranding()
@@ -456,23 +553,64 @@ function App() {
         setOrders(getOrders())
     }, [])
 
-    // AUTO-SYNC: Listen for localStorage changes from other tabs/windows
+    // ============================================
+    // HYBRID CLOUD-FIRST: Realtime + Guest Handshake
+    // REPLACES 2000ms polling with Supabase Realtime
+    // ============================================
     useEffect(() => {
-        // Listen for explicit frontendSync events
-        const handleFrontendSync = () => {
-            refreshConfig()
-        }
-        window.addEventListener('frontendSync', handleFrontendSync)
+        let realtimeChannel = null
 
-        // Storage change listener (cross-tab sync)
-        const handleStorageChange = (e) => {
-            if (e.key === 'grub_config' || e.key === null) {
-                refreshConfig()
+        const initCloudSync = async () => {
+            // 1. GUEST HANDSHAKE: Check for guest token (Valet Ticket)
+            const guestToken = localStorage.getItem('fs_guest_token')
+            const customerPhone = localStorage.getItem('fs_customer_phone')
+
+            if (guestToken) {
+                try {
+                    const { data: guestOrders } = await getOrdersByGuestToken(guestToken)
+                    if (guestOrders && guestOrders.length > 0) {
+                        setOrders(guestOrders)
+                    }
+                } catch {
+                    // Silent fallback - no orders to sync
+                }
+            } else if (customerPhone) {
+                // FAIL-SAFE: Phone number anchor if no guest token
+                try {
+                    const { data: phoneOrders } = await getOrdersByPhone(customerPhone)
+                    if (phoneOrders && phoneOrders.length > 0) {
+                        setOrders(phoneOrders)
+                    }
+                } catch {
+                    // Silent fallback
+                }
             }
-        }
-        window.addEventListener('storage', handleStorageChange)
 
-        // Visibility change (same-tab sync when returning from admin)
+            // 2. REALTIME SUBSCRIPTION: Replace polling
+            // ROBUST SYNC: Full spread for all field updates
+            realtimeChannel = subscribeToOrders(
+                // onInsert: New order created
+                (newOrder) => {
+                    setOrders(prev => {
+                        // Prevent duplicates
+                        if (prev.some(o => o.id === newOrder.id)) return prev
+                        return [newOrder, ...prev]
+                    })
+                },
+                // onUpdate: Full spread - any field update syncs instantly
+                (orderId, updatedData) => {
+                    setOrders(prev => prev.map(order =>
+                        order.id === orderId
+                            ? { ...order, ...updatedData }
+                            : order
+                    ))
+                }
+            )
+        }
+
+        initCloudSync()
+
+        // 3. VISIBILITY SYNC: Refresh config on tab focus (lightweight, no polling)
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 refreshConfig()
@@ -480,23 +618,28 @@ function App() {
         }
         document.addEventListener('visibilitychange', handleVisibilityChange)
 
-        // Focus event for PWA standalone mode
-        const handleFocus = () => {
+        // 4. CROSS-TAB SYNC: Listen for storage changes
+        const handleStorageChange = (e) => {
+            if (e.key === 'grub_config' || e.key === null) {
+                refreshConfig()
+            }
+        }
+        window.addEventListener('storage', handleStorageChange)
+
+        // 5. FRONTEND SYNC EVENT: Listen for explicit sync requests
+        const handleFrontendSync = () => {
             refreshConfig()
         }
-        window.addEventListener('focus', handleFocus)
+        window.addEventListener('frontendSync', handleFrontendSync)
 
-        // REFINED: Increased to 2000ms to save battery while maintaining PWA fallback.
-        // Event listeners (focus, storage, visibility) handle the heavy lifting.
-        const pollInterval = setInterval(refreshConfig, 2000)
-
-        // Cleanup
+        // CLEANUP - NO setInterval (polling is BANNED)
         return () => {
-            window.removeEventListener('frontendSync', handleFrontendSync)
-            window.removeEventListener('storage', handleStorageChange)
+            if (realtimeChannel) {
+                realtimeChannel.unsubscribe()
+            }
             document.removeEventListener('visibilitychange', handleVisibilityChange)
-            window.removeEventListener('focus', handleFocus)
-            clearInterval(pollInterval)
+            window.removeEventListener('storage', handleStorageChange)
+            window.removeEventListener('frontendSync', handleFrontendSync)
         }
     }, [refreshConfig])
 

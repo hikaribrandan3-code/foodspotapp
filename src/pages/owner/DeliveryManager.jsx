@@ -19,15 +19,8 @@ function DeliveryManager({ config, demoMode = false }) {
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
 
-    useEffect(() => {
-        // Skip auth check in demo mode
-        if (demoMode) return
-
-        const auth = getAuth()
-        if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
-            navigate('/owner')
-        }
-    }, [navigate, demoMode])
+    // NOTE: Auth check removed - ProtectedRoute handles authentication
+    // demoMode components bypass ProtectedRoute entirely via separate routes
 
     // Poll for order updates
     useEffect(() => {

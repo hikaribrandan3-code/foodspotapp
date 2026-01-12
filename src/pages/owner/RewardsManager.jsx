@@ -10,12 +10,7 @@ function RewardsManager({ config }) {
     const [stampsRequired, setStampsRequired] = useState(config?.rewards?.stampsRequired || 10)
     const [rewardDescription, setRewardDescription] = useState(config?.rewards?.rewardDescription || '')
 
-    useEffect(() => {
-        const auth = getAuth()
-        if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
-            navigate('/owner')
-        }
-    }, [navigate])
+    // NOTE: Auth check removed - ProtectedRoute handles authentication
 
     const handleLogout = () => {
         clearAuth()

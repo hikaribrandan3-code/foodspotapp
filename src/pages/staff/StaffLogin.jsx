@@ -1,29 +1,93 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login } from '../../utils/auth.js'
+import { supabase } from '../../lib/supabaseClient.js'
+import { getSession } from '../../utils/auth.js'
 
 function StaffLogin() {
     const navigate = useNavigate()
-    const [username, setUsername] = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [checkingSession, setCheckingSession] = useState(true)
 
-    const handleSubmit = (e) => {
+    // BYPASS: If already authenticated, skip login UI
+    useEffect(() => {
+        const checkExistingSession = async () => {
+            try {
+                const session = await getSession()
+                if (session?.authenticated) {
+                    // Redirect based on role
+                    if (session.role === 'superadmin') {
+                        navigate('/admin', { replace: true })
+                    } else if (session.role === 'owner') {
+                        navigate('/owner/menu', { replace: true })
+                    } else if (session.role === 'staff') {
+                        navigate('/staff/dashboard', { replace: true })
+                    }
+                    return
+                }
+            } catch {
+                // No session, show login form
+            }
+            setCheckingSession(false)
+        }
+        checkExistingSession()
+    }, [navigate])
+
+    // Show loading while checking session
+    if (checkingSession) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(180deg, #F8F6F3 0%, #F0EDE8 100%)'
+            }}>
+                <div style={{
+                    width: 32,
+                    height: 32,
+                    border: '3px solid #E5E7EB',
+                    borderTopColor: '#B8A089',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+        )
+    }
+
+    const handleSubmit = async (e) => {
         e.preventDefault()
+        setLoading(true)
+        setError('')
 
-        const result = login(username, password)
+        try {
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            })
 
-        if (result.success) {
-            if (result.role === 'superadmin') {
+            if (authError) throw authError
+
+            // Get role from user metadata
+            const role = data.user?.user_metadata?.role || 'staff'
+
+            // Navigate based on role
+            if (role === 'superadmin') {
                 navigate('/admin')
-            } else if (result.role === 'owner') {
+            } else if (role === 'owner') {
                 navigate('/owner/menu')
             } else {
                 navigate('/staff/dashboard')
             }
-        } else {
-            setError('Credenciales incorrectas')
-            setTimeout(() => setError(''), 3000)
+        } catch (err) {
+            console.error('Login error:', err)
+            setError(err.message || 'Credenciales incorrectas')
+            setTimeout(() => setError(''), 5000)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -81,18 +145,19 @@ function StaffLogin() {
                 color: '#8B8580',
                 marginBottom: 32
             }}>
-                Ingresá tus credenciales
+                Ingresá tu email y contraseña
             </p>
 
             {/* Form */}
             <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 320 }}>
-                {/* Username Input */}
+                {/* Email Input */}
                 <input
-                    type="text"
-                    placeholder="Usuario"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     autoFocus
+                    disabled={loading}
                     style={{
                         width: '100%',
                         padding: '16px 20px',
@@ -103,7 +168,8 @@ function StaffLogin() {
                         color: '#4A4340',
                         marginBottom: 12,
                         outline: 'none',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        opacity: loading ? 0.7 : 1
                     }}
                 />
 
@@ -113,6 +179,7 @@ function StaffLogin() {
                     placeholder="Contraseña"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
                     style={{
                         width: '100%',
                         padding: '16px 20px',
@@ -123,7 +190,8 @@ function StaffLogin() {
                         color: '#4A4340',
                         marginBottom: 16,
                         outline: 'none',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        opacity: loading ? 0.7 : 1
                     }}
                 />
 
@@ -142,6 +210,7 @@ function StaffLogin() {
                 {/* Primary Button - Ingresar */}
                 <button
                     type="submit"
+                    disabled={loading}
                     style={{
                         width: '100%',
                         padding: '16px 24px',
@@ -151,17 +220,19 @@ function StaffLogin() {
                         background: '#B8956A',
                         border: 'none',
                         borderRadius: 28,
-                        cursor: 'pointer',
-                        marginBottom: 12
+                        cursor: loading ? 'wait' : 'pointer',
+                        marginBottom: 12,
+                        opacity: loading ? 0.7 : 1
                     }}
                 >
-                    Ingresar
+                    {loading ? 'Verificando...' : 'Ingresar'}
                 </button>
 
                 {/* Secondary Button - Volver */}
                 <button
                     type="button"
                     onClick={() => navigate('/')}
+                    disabled={loading}
                     style={{
                         width: '100%',
                         padding: '14px 24px',

@@ -1,151 +1,146 @@
-// Auth utilities for FoodSpot
-// Simple role-based authentication using localStorage
+/**
+ * Supabase Auth Service for FoodSpot
+ * 
+ * Cloud-Authoritative authentication using Supabase Auth.
+ * Role is stored in user_metadata.role
+ */
 
-import { getItem, setItem, removeItem, STORAGE_KEYS } from './storage.js'
-
-// ============================================
-// MVP CREDENTIALS - HARDCODED FOR NOW
-// FUTURE: Replace with backend auth (Supabase Auth, etc.)
-// ============================================
-const CREDENTIALS = {
-    staff: { username: 'staff', password: 'setup123' },
-    owner: { username: 'owner', password: 'setup123' },
-    superadmin: { username: 'hikariadmin', password: 'Aa39897828!' }
-}
+import { supabase } from '../lib/supabaseClient.js'
 
 // Role hierarchy: higher index = more access
 const ROLE_HIERARCHY = ['staff', 'owner', 'superadmin']
 
-const AUTH_STORAGE_KEY = STORAGE_KEYS.AUTH
-
 /**
- * Attempt to login with username/password
+ * Attempt to login with email/password via Supabase
  * Returns { success, role, error }
  */
-export function login(username, password) {
-    // Check against each role's credentials
-    for (const [role, creds] of Object.entries(CREDENTIALS)) {
-        if (creds.username === username && creds.password === password) {
-            const session = {
-                role,
-                authenticated: true,
-                timestamp: Date.now(),
-                username,
-                // PATCH 3.9: Add email for Super Admin identity check
-                email: role === 'superadmin' ? 'superadmin@foodspot.app' : null
-            }
-            setItem(AUTH_STORAGE_KEY, session)
-            return { success: true, role }
+export async function login(email, password) {
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        })
+
+        if (error) {
+            return { success: false, error: error.message }
         }
+
+        const role = data.user?.user_metadata?.role || 'staff'
+        return { success: true, role, user: data.user }
+    } catch (err) {
+        return { success: false, error: err.message }
     }
-
-    return { success: false, error: 'Invalid credentials' }
 }
 
 /**
- * Clear current session
+ * Clear current session via Supabase
  */
-export function logout() {
-    removeItem(AUTH_STORAGE_KEY)
+export async function logout() {
+    await supabase.auth.signOut()
 }
 
 /**
- * Get current session
- * Returns { role, authenticated, username } or null
- * Sessions expire after 20 minutes of inactivity
+ * Get current session from Supabase
+ * Returns { role, authenticated, user, email } or null
  */
-const SESSION_DURATION_MS = 20 * 60 * 1000 // 20 minutes
+export async function getSession() {
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession()
 
-export function getSession() {
-    const session = getItem(AUTH_STORAGE_KEY)
-    if (!session || !session.authenticated) {
+        if (error || !session) {
+            return null
+        }
+
+        const user = session.user
+        const role = user?.user_metadata?.role || 'staff'
+
+        return {
+            role,
+            authenticated: true,
+            user,
+            email: user?.email,
+            username: user?.email?.split('@')[0] || 'user'
+        }
+    } catch {
         return null
     }
-
-    // Check session expiry (20 minutes)
-    const now = Date.now()
-    const sessionAge = now - (session.timestamp || 0)
-
-    if (sessionAge > SESSION_DURATION_MS) {
-        // Session expired - clear it
-        removeItem(AUTH_STORAGE_KEY)
-        return null
-    }
-
-    // Optionally refresh timestamp on activity (sliding window)
-    // Uncomment below for sliding window behavior:
-    // session.timestamp = now
-    // setItem(AUTH_STORAGE_KEY, session)
-
-    return session
 }
 
 /**
- * Check if current user has access to a required role
+ * Synchronous session check for components that already have session data
+ * Use getSession() for initial fetch, this is for role checks after fetch
+ */
+export function getSessionSync() {
+    // This will be used by components that have already fetched the session
+    // and cached it in their state. Fallback for legacy code.
+    return null
+}
+
+/**
+ * Check if user has access to a required role
  * superadmin > owner > staff
- * Returns true if user's role is >= required role
  */
-export function hasRole(requiredRole) {
-    const session = getSession()
-    if (!session) return false
+export function hasRole(userRole, requiredRole) {
+    if (!userRole) return false
 
     // superadmin always has access
-    if (session.role === 'superadmin') return true
+    if (userRole === 'superadmin') return true
 
-    const userLevel = ROLE_HIERARCHY.indexOf(session.role)
+    const userLevel = ROLE_HIERARCHY.indexOf(userRole)
     const requiredLevel = ROLE_HIERARCHY.indexOf(requiredRole)
 
-    // Invalid roles
     if (userLevel === -1 || requiredLevel === -1) return false
 
     return userLevel >= requiredLevel
 }
 
 /**
- * Check if current user can access a route requiring a specific role
- * Returns { allowed, redirectTo }
+ * Get redirect path for a role
  */
-export function canAccessRoute(requiredRole) {
-    const session = getSession()
-
-    // Not authenticated at all
-    if (!session) {
-        // Redirect to appropriate login
-        const loginRoutes = {
-            staff: '/staff',
-            owner: '/owner',
-            superadmin: '/admin'
-        }
-        return { allowed: false, redirectTo: loginRoutes[requiredRole] || '/staff' }
+export function getLoginRedirect(role) {
+    const routes = {
+        staff: '/staff',
+        owner: '/owner',
+        superadmin: '/admin'
     }
+    return routes[role] || '/staff'
+}
 
-    // Check role hierarchy
-    if (hasRole(requiredRole)) {
-        return { allowed: true }
-    }
-
-    // User is authenticated but doesn't have permission
-    // Redirect to their appropriate dashboard
-    const dashboardRoutes = {
+/**
+ * Get dashboard path for a role
+ */
+export function getDashboardRedirect(role) {
+    const routes = {
         staff: '/staff/dashboard',
         owner: '/owner/menu',
         superadmin: '/admin'
     }
-    return { allowed: false, redirectTo: dashboardRoutes[session.role] || '/' }
-}
-
-/**
- * Get current user's role
- * Returns role string or null
- */
-export function getCurrentRole() {
-    const session = getSession()
-    return session?.role || null
+    return routes[role] || '/'
 }
 
 /**
  * Check if user is authenticated (any role)
  */
-export function isAuthenticated() {
-    return getSession() !== null
+export async function isAuthenticated() {
+    const session = await getSession()
+    return session !== null
+}
+
+/**
+ * Subscribe to auth state changes
+ */
+export function onAuthStateChange(callback) {
+    return supabase.auth.onAuthStateChange((event, session) => {
+        if (session) {
+            const role = session.user?.user_metadata?.role || 'staff'
+            callback({
+                role,
+                authenticated: true,
+                user: session.user,
+                email: session.user?.email
+            })
+        } else {
+            callback(null)
+        }
+    })
 }

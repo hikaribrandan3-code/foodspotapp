@@ -112,3 +112,328 @@ export async function isAuthenticated() {
     return !!user
 }
 
+/**
+ * Fetch menu data from Supabase (categories + items)
+ * Transforms cloud schema into frontend format
+ * @returns {Promise<{data: object|null, error: Error|null}>}
+ */
+export async function getMenuCloud() {
+    try {
+        // 1. Fetch categories ordered by display_order
+        const { data: categories, error: catError } = await supabase
+            .from('categories')
+            .select('*')
+            .order('display_order', { ascending: true })
+
+        if (catError) throw catError
+
+        // 2. Fetch all menu items ordered by display_order
+        const { data: items, error: itemError } = await supabase
+            .from('menu_items')
+            .select('*')
+            .order('display_order', { ascending: true })
+
+        if (itemError) throw itemError
+
+        // 3. Transform to frontend format (nest items under categories)
+        const menuData = {
+            categories: categories.map(cat => ({
+                id: cat.id,
+                name: cat.name,
+                icon: cat.icon,
+                enabled: cat.enabled,
+                items: items
+                    .filter(item => item.category_id === cat.id)
+                    .map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        available: item.available,
+                        featured: item.featured,
+                        image: item.image_url,
+                        description: item.description
+                    }))
+            }))
+        }
+
+        return { data: menuData, error: null }
+    } catch (error) {
+        return { data: null, error }
+    }
+}
+
+/**
+ * Update a menu item in Supabase
+ * @param {string} itemId - The item ID
+ * @param {object} updates - Fields to update (name, price, available, featured, image_url, description)
+ * @returns {Promise<{data: object|null, error: Error|null}>}
+ */
+export async function updateMenuItemCloud(itemId, updates) {
+    // Map frontend field names to database column names
+    const dbUpdates = {}
+    if (updates.name !== undefined) dbUpdates.name = updates.name
+    if (updates.price !== undefined) dbUpdates.price = updates.price
+    if (updates.available !== undefined) dbUpdates.available = updates.available
+    if (updates.featured !== undefined) dbUpdates.featured = updates.featured
+    if (updates.image !== undefined) dbUpdates.image_url = updates.image
+    if (updates.description !== undefined) dbUpdates.description = updates.description
+
+    const { data, error } = await supabase
+        .from('menu_items')
+        .update(dbUpdates)
+        .eq('id', itemId)
+        .select()
+        .single()
+
+    return { data, error }
+}
+
+/**
+ * Update a category in Supabase
+ * @param {string} categoryId - The category ID
+ * @param {object} updates - Fields to update (name, icon, enabled, display_order)
+ * @returns {Promise<{data: object|null, error: Error|null}>}
+ */
+export async function updateCategoryCloud(categoryId, updates) {
+    const { data, error } = await supabase
+        .from('categories')
+        .update(updates)
+        .eq('id', categoryId)
+        .select()
+        .single()
+
+    return { data, error }
+}
+
+/**
+ * Add a new menu item to Supabase
+ * @param {object} item - The item to add (id, category_id, name, price, available, featured, image_url, display_order)
+ * @returns {Promise<{data: object|null, error: Error|null}>}
+ */
+export async function addMenuItemCloud(item) {
+    const { data, error } = await supabase
+        .from('menu_items')
+        .insert({
+            id: item.id,
+            category_id: item.categoryId,
+            name: item.name,
+            price: item.price || 0,
+            available: item.available ?? true,
+            featured: item.featured ?? false,
+            image_url: item.image || null,
+            display_order: item.displayOrder || 0
+        })
+        .select()
+        .single()
+
+    return { data, error }
+}
+
+// =========================================================
+// ORDERS CLOUD FUNCTIONS
+// =========================================================
+
+/**
+ * Create a new order in Supabase
+ * @param {object} orderData - The order to create
+ * @returns {Promise<{data: object|null, error: Error|null}>}
+ */
+export async function createOrderCloud(orderData) {
+    const { data, error } = await supabase
+        .from('orders')
+        .insert({
+            order_number: orderData.orderNumber,
+            items: orderData.items,
+            total: orderData.total,
+            status: orderData.status || 'pendiente',
+            customer_name: orderData.customerName || null,
+            customer_phone: orderData.customerPhone || null,
+            delivery_mode: orderData.deliveryMode || false,
+            delivery_address: orderData.deliveryAddress || null,
+            payment_method: orderData.paymentMethod || null,
+            notes: orderData.notes || null,
+            created_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+    return { data, error }
+}
+
+/**
+ * Fetch all active orders from Supabase (newest first)
+ * @returns {Promise<{data: array|null, error: Error|null}>}
+ */
+export async function getOrdersCloud() {
+    const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    // Transform to frontend format
+    if (data) {
+        const orders = data.map(order => ({
+            id: order.id,
+            orderNumber: order.order_number,
+            items: order.items,
+            total: order.total,
+            status: order.status,
+            customerName: order.customer_name,
+            customerPhone: order.customer_phone,
+            deliveryMode: order.delivery_mode,
+            deliveryAddress: order.delivery_address,
+            paymentMethod: order.payment_method,
+            notes: order.notes,
+            createdAt: order.created_at
+        }))
+        return { data: orders, error: null }
+    }
+
+    return { data: null, error }
+}
+
+/**
+ * Update an order status in Supabase
+ * @param {string} orderId - The order UUID
+ * @param {object} updates - Fields to update (status, payment_method, etc)
+ * @returns {Promise<{data: object|null, error: Error|null}>}
+ */
+export async function updateOrderCloud(orderId, updates) {
+    const dbUpdates = {}
+    if (updates.status !== undefined) dbUpdates.status = updates.status
+    if (updates.paymentMethod !== undefined) dbUpdates.payment_method = updates.paymentMethod
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes
+
+    const { data, error } = await supabase
+        .from('orders')
+        .update(dbUpdates)
+        .eq('id', orderId)
+        .select()
+        .single()
+
+    return { data, error }
+}
+
+/**
+ * Subscribe to real-time order updates
+ * @param {function} onInsert - Callback when new order is created
+ * @param {function} onUpdate - Callback when order is updated
+ * @returns {object} Supabase subscription (call .unsubscribe() to cleanup)
+ */
+export function subscribeToOrders(onInsert, onUpdate) {
+    return supabase
+        .channel('orders-realtime')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
+            const order = payload.new
+            onInsert({
+                id: order.id,
+                orderNumber: order.order_number,
+                items: order.items,
+                total: order.total,
+                status: order.status,
+                customerName: order.customer_name,
+                customerPhone: order.customer_phone,
+                deliveryMode: order.delivery_mode,
+                deliveryAddress: order.delivery_address,
+                createdAt: order.created_at
+            })
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
+            onUpdate(payload.new.id, payload.new)
+        })
+        .subscribe()
+}
+
+// =========================================================
+// GUEST TOKEN FUNCTIONS (Valet Ticket System)
+// =========================================================
+
+/**
+ * Fetch orders by guest token (for anonymous users)
+ * @param {string} guestToken - The guest's UUID token
+ * @returns {Promise<{data: array|null, error: Error|null}>}
+ */
+export async function getOrdersByGuestToken(guestToken) {
+    const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('guest_token', guestToken)
+        .order('created_at', { ascending: false })
+
+    if (data) {
+        const orders = data.map(order => ({
+            id: order.id,
+            orderNumber: order.order_number,
+            items: order.items,
+            total: order.total,
+            status: order.status,
+            customerName: order.customer_name,
+            customerPhone: order.customer_phone,
+            deliveryMode: order.delivery_mode,
+            deliveryAddress: order.delivery_address,
+            paymentMethod: order.payment_method,
+            createdAt: order.created_at
+        }))
+        return { data: orders, error: null }
+    }
+
+    return { data: [], error }
+}
+
+/**
+ * Fetch orders by phone number (Contact Key sync)
+ * @param {string} phoneNumber - Customer phone number
+ * @returns {Promise<{data: array|null, error: Error|null}>}
+ */
+export async function getOrdersByPhone(phoneNumber) {
+    const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('customer_phone', phoneNumber)
+        .order('created_at', { ascending: false })
+
+    if (data) {
+        const orders = data.map(order => ({
+            id: order.id,
+            orderNumber: order.order_number,
+            items: order.items,
+            total: order.total,
+            status: order.status,
+            customerName: order.customer_name,
+            customerPhone: order.customer_phone,
+            deliveryMode: order.delivery_mode,
+            deliveryAddress: order.delivery_address,
+            createdAt: order.created_at
+        }))
+        return { data: orders, error: null }
+    }
+
+    return { data: [], error }
+}
+
+/**
+ * Create order with guest token
+ * @param {object} orderData - Order data
+ * @param {string} guestToken - Guest UUID token
+ */
+export async function createOrderWithGuestToken(orderData, guestToken) {
+    const { data, error } = await supabase
+        .from('orders')
+        .insert({
+            order_number: orderData.orderNumber,
+            items: orderData.items,
+            total: orderData.total,
+            status: orderData.status || 'pendiente',
+            customer_name: orderData.customerName || null,
+            customer_phone: orderData.customerPhone || null,
+            delivery_mode: orderData.deliveryMode || false,
+            delivery_address: orderData.deliveryAddress || null,
+            payment_method: orderData.paymentMethod || null,
+            guest_token: guestToken,
+            created_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+    return { data, error }
+}

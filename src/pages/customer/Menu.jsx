@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMenu, formatPrice, reorderCategoryItems } from '../../config/menuData.js'
+import { getMenuCloud } from '../../lib/supabaseClient.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
@@ -29,11 +30,39 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     // DEMO SIMULATION REMOVED: Always use real menu
     // No demo mode detection, no demo menu overlay
 
+    // 🛡️ SUPABASE: Cloud-first menu loading with localStorage fallback
+    const [cloudMenuLoaded, setCloudMenuLoaded] = useState(false)
+    useEffect(() => {
+        const loadCloudMenu = async () => {
+            try {
+                const { data: cloudMenu, error } = await getMenuCloud()
+                // Silent fallback: if error or no data, localStorage wins
+                if (error || !cloudMenu || !cloudMenu.categories?.length) return
+                setMenu(cloudMenu)
+                setCloudMenuLoaded(true)
+            } catch {
+                // Silent fallback to localStorage - no UI break
+            }
+        }
+        loadCloudMenu()
+    }, [])
+
     // Use dividerPresetId from normalized config
     const effectiveDividerPresetId = config?.dividerPresetId
 
     // Owner mode detection (from auth session OR demo mode)
-    const session = getSession()
+    const [session, setSession] = useState(null)
+    useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const sessionData = await getSession()
+                setSession(sessionData)
+            } catch {
+                setSession(null)
+            }
+        }
+        fetchSession()
+    }, [])
     const isOwnerMode = session?.role === 'owner' || session?.role === 'superadmin' || isInDemoMode()
 
     // Edit mode state (owner only)

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getOrders, updateOrder } from '../../utils/storage.js'
+import { getSession } from '../../utils/auth.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { canAdvanceOrder, getOrderStatusInfo } from '../../utils/orderStateGuard.js' // Shared Logic Gate
-import { supabase, signOut, getCurrentUser } from '../../lib/supabaseClient.js'
+import { supabase, signOut, getCurrentUser, updateBranding, updateMenuItemCloud, addMenuItemCloud, getOrdersCloud, subscribeToOrders } from '../../lib/supabaseClient.js'
 
 import { updateConfig, CURATED_FONTS, CONFIRMATION_COLORS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { getMenu, saveMenu, updateMenuItem, addMenuItem, removeMenuItem, addCategory } from '../../config/menuData.js'
@@ -41,9 +42,9 @@ function generateDemoData() {
 const SUPERADMIN_EMAIL = 'superadmin@foodspot.app'
 const SUPER_ADMIN_COLOR = '#7C3AED'
 
-function isTrueSuperAdmin() {
+async function isTrueSuperAdmin() {
     try {
-        const session = getSession()
+        const session = await getSession()
         return session?.email === SUPERADMIN_EMAIL
     } catch (e) {
         return false
@@ -94,6 +95,9 @@ function SuperAdmin({ config }) {
     // PATCH: Restore editor modal state from navigation state if present
     const [showCoverEditor, setShowCoverEditor] = useState(() => location.state?.returnToEditor || false)
 
+    // 🛡️ CLOUD WRITE FEEDBACK: Shows "Saved" toast after successful cloud writes
+    const [saveStatus, setSaveStatus] = useState(null) // null | 'saving' | 'saved' | 'error'
+
     // Mode is derived from context, not local state
     // Simulation is ephemeral - dies on refresh
 
@@ -133,6 +137,39 @@ function SuperAdmin({ config }) {
             setAuthLoading(false)
         }
         checkAuth()
+    }, [])
+
+    // 🛡️ SUPABASE: Cloud-first orders fetch with realtime subscription
+    useEffect(() => {
+        const loadCloudOrders = async () => {
+            try {
+                const { data: cloudOrders, error } = await getOrdersCloud()
+                if (!error && cloudOrders?.length > 0) {
+                    setOrders(cloudOrders)
+                }
+            } catch {
+                // Silent fallback to localStorage
+            }
+        }
+        loadCloudOrders()
+
+        // Realtime subscription for live order updates
+        const subscription = subscribeToOrders(
+            // onInsert: New order arrives
+            (newOrder) => {
+                setOrders(prev => [newOrder, ...prev])
+            },
+            // onUpdate: Order status changed
+            (orderId, updatedOrder) => {
+                setOrders(prev => prev.map(o =>
+                    o.id === orderId ? { ...o, status: updatedOrder.status } : o
+                ))
+            }
+        )
+
+        return () => {
+            subscription.unsubscribe()
+        }
     }, [])
 
     // 🛡️ FIX: Update activeTab when returning from CoverPreview (navigation state change)
@@ -205,23 +242,134 @@ function SuperAdmin({ config }) {
     const demoTotalSales = demoData.reduce((sum, d) => sum + d.value, 0)
     const demoTotalOrders = demoData.reduce((sum, d) => sum + d.orders, 0)
 
-    // Update business info
+    // Update business info (LOCAL ONLY - DEPRECATED, use updateBusinessInfoCloud)
     const updateBusinessInfo = (field, value) => {
         const newInfo = { ...config.businessInfo, [field]: value }
         updateConfig({ businessInfo: newInfo })
         window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
-    // Update menu item
-    const handleUpdateMenuItem = (categoryId, itemId, updates) => {
-        updateMenuItem(categoryId, itemId, updates)
-        setMenu(getMenu())
+    // =========================================================
+    // CLOUD-FIRST WRITE HANDLERS (Safe Config Protocol)
+    // =========================================================
+
+    // Cloud-first write for Business Info fields
+    const updateBusinessInfoCloud = async (field, value) => {
+        // Map local field names to Supabase column names
+        const columnMap = {
+            whatsapp: 'whatsapp',
+            address: 'address',
+            hours: 'hours',
+            googleMapsLink: 'google_maps_link',
+            directions: 'directions'
+        }
+        const column = columnMap[field]
+        if (!column) return
+
+        setSaveStatus('saving')
+
+        // 1. Write to cloud first
+        const { error } = await updateBranding({ [column]: value })
+
+        // 2. Only update local on success
+        if (!error) {
+            const newInfo = { ...config.businessInfo, [field]: value }
+            updateConfig({ businessInfo: newInfo })
+            window.dispatchEvent(new CustomEvent('frontendSync'))
+            setSaveStatus('saved')
+            setTimeout(() => setSaveStatus(null), 1500)
+        } else {
+            setSaveStatus('error')
+            setTimeout(() => setSaveStatus(null), 2000)
+        }
     }
 
-    // Add new menu item
-    const handleAddMenuItem = (categoryId) => {
-        addMenuItem(categoryId, { name: 'Nuevo item', price: 0 })
-        setMenu(getMenu())
+    // Cloud-first write for Branding fields
+    const updateBrandingCloud = async (field, value) => {
+        // Map local field names to Supabase column names
+        const columnMap = {
+            businessName: 'business_name',
+            primaryColor: 'primary_color',
+            fontFamily: 'font_family',
+            fontWeight: 'font_weight'
+        }
+        const column = columnMap[field]
+        if (!column) return
+
+        setSaveStatus('saving')
+
+        // 1. Write to cloud first
+        const { error } = await updateBranding({ [column]: value })
+
+        // 2. Only update local on success
+        if (!error) {
+            if (field === 'businessName') {
+                updateConfig({ businessName: value })
+            } else if (field === 'primaryColor') {
+                // DUAL-PATH UPDATE: Sync both branding.primaryColor AND colors.primary
+                updateConfig({
+                    branding: { ...config.branding, primaryColor: value },
+                    colors: { ...config.colors, primary: value }
+                })
+            } else {
+                updateConfig({ branding: { ...config.branding, [field]: value } })
+            }
+            window.dispatchEvent(new CustomEvent('frontendSync'))
+            setSaveStatus('saved')
+            setTimeout(() => setSaveStatus(null), 1500)
+        } else {
+            setSaveStatus('error')
+            setTimeout(() => setSaveStatus(null), 2000)
+        }
+    }
+
+    // Update menu item (CLOUD-FIRST: Safe Config Protocol)
+    const handleUpdateMenuItem = async (categoryId, itemId, updates) => {
+        setSaveStatus('saving')
+
+        // 1. Write to cloud first
+        const { error } = await updateMenuItemCloud(itemId, updates)
+
+        // 2. Only update local on success
+        if (!error) {
+            updateMenuItem(categoryId, itemId, updates)
+            setMenu(getMenu())
+            setSaveStatus('saved')
+            setTimeout(() => setSaveStatus(null), 1500)
+        } else {
+            setSaveStatus('error')
+            setTimeout(() => setSaveStatus(null), 2000)
+        }
+    }
+
+    // Add new menu item (CLOUD-FIRST: Safe Config Protocol)
+    const handleAddMenuItem = async (categoryId) => {
+        const newId = `item-${Date.now()}`
+        const newItem = {
+            id: newId,
+            categoryId: categoryId,
+            name: 'Nuevo item',
+            price: 0,
+            available: true,
+            featured: false,
+            displayOrder: menu.categories.find(c => c.id === categoryId)?.items?.length || 0
+        }
+
+        setSaveStatus('saving')
+
+        // 1. Write to cloud first
+        const { error } = await addMenuItemCloud(newItem)
+
+        // 2. Only update local on success
+        if (!error) {
+            addMenuItem(categoryId, { name: 'Nuevo item', price: 0 })
+            setMenu(getMenu())
+            setSaveStatus('saved')
+            setTimeout(() => setSaveStatus(null), 1500)
+        } else {
+            setSaveStatus('error')
+            setTimeout(() => setSaveStatus(null), 2000)
+        }
     }
 
     // Remove menu item
@@ -528,23 +676,23 @@ function SuperAdmin({ config }) {
                             <h3 style={labelStyle}>📞 COMUNICACIÓN ACTIVA</h3>
                             <div style={cardStyle}>
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>WhatsApp (contacto principal)</label>
-                                <input type="text" placeholder="+54 11 1234-5678" value={config.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
+                                <input type="text" placeholder="+54 11 1234-5678" value={config.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfoCloud('whatsapp', e.target.value)} style={inputStyle} />
                             </div>
 
                             {/* 3. PHYSICAL STORE INFO (LOCALIZACIÓN) */}
                             <h3 style={labelStyle}>📍 LOCALIZACIÓN</h3>
                             <div style={cardStyle}>
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección</label>
-                                <input type="text" placeholder="Av. Corrientes 1234" value={config.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={inputStyle} />
+                                <input type="text" placeholder="Av. Corrientes 1234" value={config.businessInfo?.address || ''} onChange={(e) => updateBusinessInfoCloud('address', e.target.value)} style={inputStyle} />
 
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Horarios</label>
-                                <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfo('hours', e.target.value)} style={inputStyle} />
+                                <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfoCloud('hours', e.target.value)} style={inputStyle} />
 
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps (reseñas)</label>
-                                <input type="text" placeholder="https://maps.google.com/..." value={config.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={inputStyle} />
+                                <input type="text" placeholder="https://maps.google.com/..." value={config.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfoCloud('googleMapsLink', e.target.value)} style={inputStyle} />
 
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Indicaciones / Notas</label>
-                                <input type="text" placeholder="Timbre 2A, subir escaleras" value={config.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
+                                <input type="text" placeholder="Timbre 2A, subir escaleras" value={config.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfoCloud('directions', e.target.value)} style={inputStyle} />
                             </div>
 
                             {/* 4. EXTERNAL GATES (BOTTOM) */}
@@ -921,12 +1069,12 @@ function SuperAdmin({ config }) {
                             <div style={cardStyle}>
                                 <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>1. Base del Sistema</h4>
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre del negocio</label>
-                                <input type="text" value={config.businessName || ''} onChange={(e) => { updateConfig({ businessName: e.target.value }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={inputStyle} />
+                                <input type="text" value={config.businessName || ''} onChange={(e) => updateBrandingCloud('businessName', e.target.value)} style={inputStyle} />
 
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Tipografía</label>
                                 <select
                                     value={config.branding?.fontFamily || 'Inter'}
-                                    onChange={(e) => { updateConfig({ branding: { ...config.branding, fontFamily: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
+                                    onChange={(e) => updateBrandingCloud('fontFamily', e.target.value)}
                                     style={{ ...inputStyle, fontFamily: config.branding?.fontFamily || 'Inter' }}
                                 >
                                     {CURATED_FONTS.map(font => (
@@ -937,7 +1085,7 @@ function SuperAdmin({ config }) {
                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, marginTop: 12 }}>Peso de fuente</label>
                                 <select
                                     value={config.branding?.fontWeight || '400'}
-                                    onChange={(e) => { updateConfig({ branding: { ...config.branding, fontWeight: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }}
+                                    onChange={(e) => updateBrandingCloud('fontWeight', e.target.value)}
                                     style={{ ...inputStyle, fontWeight: config.branding?.fontWeight || '400' }}
                                 >
                                     {FONT_WEIGHTS.map(weight => (
@@ -1165,10 +1313,7 @@ function SuperAdmin({ config }) {
                                         <input
                                             type="color"
                                             value={config.branding?.primaryColor || '#8B7355'}
-                                            onChange={(e) => {
-                                                updateConfig({ branding: { ...config.branding, primaryColor: e.target.value } })
-                                                window.dispatchEvent(new CustomEvent('frontendSync'))
-                                            }}
+                                            onChange={(e) => updateBrandingCloud('primaryColor', e.target.value)}
                                             style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer', padding: 0 }}
                                         />
                                         <div style={{ flex: 1 }}>
@@ -1861,6 +2006,28 @@ function SuperAdmin({ config }) {
                 initialData={{ ...config.headerCover, returnState: { activeTab: 'branding' } }}
                 config={config}
             />
+
+            {/* 🛡️ SAVE STATUS TOAST */}
+            {saveStatus && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: 100,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    padding: '10px 20px',
+                    borderRadius: 20,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    zIndex: 9999,
+                    background: saveStatus === 'saving' ? '#3B82F6' : saveStatus === 'saved' ? '#22C55E' : '#EF4444',
+                    color: 'white',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                }}>
+                    {saveStatus === 'saving' && '⏳ Guardando...'}
+                    {saveStatus === 'saved' && '✅ Guardado'}
+                    {saveStatus === 'error' && '❌ Error al guardar'}
+                </div>
+            )}
 
             {/* Bottom Navigation */}
             <BackendNav

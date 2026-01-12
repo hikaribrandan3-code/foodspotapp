@@ -10,6 +10,8 @@ import {
     generateOrderNumber,
     incrementOrderCount
 } from '../../utils/storage.js'
+import { createOrderWithGuestToken } from '../../lib/supabaseClient.js'
+import { getGuestToken } from '../../utils/guestToken.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import {
@@ -108,7 +110,7 @@ function Order({ config }) {
         setOrder(getCurrentOrder())
     }
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (isSubmitting || submitted || order.items.length === 0) return
         if (config.pauseOrders) return
 
@@ -143,6 +145,31 @@ function Order({ config }) {
             deliveryConfirmedAt: null
         }
 
+        // 🛡️ CLOUD-FIRST: Persist to Supabase with Guest Token (Valet Ticket)
+        try {
+            const guestToken = getGuestToken()
+
+            // PHONE SYNC: Store phone in localStorage for Fail-Safe recovery
+            if (customerInfo?.phone) {
+                localStorage.setItem('fs_customer_phone', customerInfo.phone)
+            }
+
+            await createOrderWithGuestToken({
+                orderNumber: newOrder.orderNumber,
+                items: newOrder.items,
+                total: newOrder.total,
+                status: newOrder.status,
+                customerName: customerInfo?.name || null,
+                customerPhone: customerInfo?.phone || null,
+                deliveryMode: deliveryMode,
+                deliveryAddress: customerInfo?.address || null,
+                paymentMethod: paymentMethod || null
+            }, guestToken)
+        } catch {
+            // Silent fallback - localStorage still works
+        }
+
+        // LOCAL: Also save to localStorage for offline/fallback
         addOrder(newOrder)
         incrementOrderCount()
         clearCurrentOrder()

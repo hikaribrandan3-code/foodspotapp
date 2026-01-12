@@ -34,13 +34,7 @@ function StaffDashboard({ config, orders = [], updateOrder, setOrders }) {
         audioRef.current.preload = 'auto'
     }, [])
 
-    // Check auth
-    useEffect(() => {
-        const auth = getAuth()
-        if (!auth.authenticated || (auth.role !== 'staff' && auth.role !== 'superadmin')) {
-            navigate('/staff')
-        }
-    }, [navigate])
+    // NOTE: Auth check removed - ProtectedRoute handles authentication
 
     // AUDIO ALERT LOGIC: React to orders prop changes
     useEffect(() => {

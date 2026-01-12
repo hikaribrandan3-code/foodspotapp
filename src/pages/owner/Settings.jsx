@@ -50,15 +50,8 @@ function Settings({ config, demoMode = false }) {
     const [businessInfo, setBusinessInfo] = useState(config?.businessInfo || {})
     const [showCoverEditor, setShowCoverEditor] = useState(false)
 
-    useEffect(() => {
-        // Skip auth check in demo mode
-        if (demoMode) return
-
-        const auth = getAuth()
-        if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
-            navigate('/owner')
-        }
-    }, [navigate, demoMode])
+    // NOTE: Auth check removed - ProtectedRoute handles authentication
+    // demoMode components bypass ProtectedRoute entirely via separate routes
 
     const handleLogout = () => {
         clearAuth()

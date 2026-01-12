@@ -15,12 +15,7 @@ function OwnerSummary({ config }) {
     const navigate = useNavigate()
     const [orders, setOrders] = useState(() => getOrders())
 
-    useEffect(() => {
-        const auth = getAuth()
-        if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
-            navigate('/owner')
-        }
-    }, [navigate])
+    // NOTE: Auth check removed - ProtectedRoute handles authentication
 
     // Poll for order updates
     useEffect(() => {

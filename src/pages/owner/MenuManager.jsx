@@ -40,15 +40,8 @@ function MenuManager({ config, demoMode = false }) {
     const [newCategoryName, setNewCategoryName] = useState('')
     const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
 
-    useEffect(() => {
-        // Skip auth check in demo mode
-        if (demoMode) return
-
-        const auth = getAuth()
-        if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
-            navigate('/owner')
-        }
-    }, [navigate, demoMode])
+    // NOTE: Auth check removed - ProtectedRoute handles authentication
+    // The old getAuth() was using localStorage, not Supabase Auth
 
     const handleLogout = () => {
         clearAuth()
