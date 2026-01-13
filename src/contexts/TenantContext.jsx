@@ -49,7 +49,8 @@ export function TenantProvider({ children }) {
 
                 // First segment could be the tenant slug
                 // We check if it looks like a tenant slug (not a known route)
-                const knownRoutes = ['menu', 'order', 'info', 'login', 'staff', 'owner', 'admin', 'demo', 'superadmin']
+                // 🚪 TRIAL BYPASS: 'start-trial' skips tenant lookup entirely
+                const knownRoutes = ['menu', 'order', 'info', 'login', 'staff', 'owner', 'admin', 'demo', 'superadmin', 'start-trial']
                 let slug = DEFAULT_SLUG
 
                 if (pathSegments.length > 0 && !knownRoutes.includes(pathSegments[0])) {
