@@ -27,9 +27,18 @@ function OwnerLogin() {
 
             if (authError) throw authError
 
-            // Success - navigate to admin
-            // The RLS policies will determine what they can access
-            navigate('/admin')
+            // Get role from user metadata
+            const role = data.user?.user_metadata?.role || 'owner'
+
+            // Navigate based on role
+            if (role === 'superadmin') {
+                navigate('/admin')
+            } else if (role === 'owner') {
+                navigate('/owner/summary')
+            } else {
+                // Fallback for staff (shouldn't use this login page)
+                navigate('/staff/dashboard')
+            }
         } catch (err) {
             console.error('Login error:', err)
             setError(err.message || 'Credenciales incorrectas')

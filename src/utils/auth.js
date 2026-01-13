@@ -112,7 +112,7 @@ export function getLoginRedirect(role) {
 export function getDashboardRedirect(role) {
     const routes = {
         staff: '/staff/dashboard',
-        owner: '/owner/menu',
+        owner: '/owner/summary', // Owner lands in "Office" (Summary)
         superadmin: '/admin'
     }
     return routes[role] || '/'

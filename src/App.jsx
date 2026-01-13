@@ -246,6 +246,20 @@ function App() {
         incrementVisit()
     }, [])
 
+    // 🛡️ HARD STATE PURGE: Clear simulation state on auth changes
+    // Prevents "Staff mode sticking" when switching accounts
+    useEffect(() => {
+        const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+                // Purge all simulation-related localStorage
+                localStorage.removeItem('admin_intent')
+                localStorage.removeItem('simulatedRole')
+                localStorage.removeItem('activeRoleView')
+            }
+        })
+        return () => authListener?.subscription.unsubscribe()
+    }, [])
+
     // 🛡️ SUPABASE: Fetch branding from cloud on mount (SINGLE SOURCE OF TRUTH)
     // Hardware Readiness: Async fetch does NOT block static imports
     useEffect(() => {

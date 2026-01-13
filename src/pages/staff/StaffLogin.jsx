@@ -21,7 +21,7 @@ function StaffLogin() {
                     if (session.role === 'superadmin') {
                         navigate('/admin', { replace: true })
                     } else if (session.role === 'owner') {
-                        navigate('/owner/menu', { replace: true })
+                        navigate('/owner/summary', { replace: true })
                     } else if (session.role === 'staff') {
                         navigate('/staff/dashboard', { replace: true })
                     }
@@ -78,7 +78,7 @@ function StaffLogin() {
             if (role === 'superadmin') {
                 navigate('/admin')
             } else if (role === 'owner') {
-                navigate('/owner/menu')
+                navigate('/owner/summary')
             } else {
                 navigate('/staff/dashboard')
             }
