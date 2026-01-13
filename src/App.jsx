@@ -64,6 +64,28 @@ const LazyFallback = () => (
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
 
+// ====== RULE 2: ROUTE AREA WRAPPER ======
+// Forces complete unmount when switching between role areas
+// key changes based on URL area = React destroys and rebuilds UI
+function RouteAreaWrapper({ children }) {
+    const location = useLocation()
+
+    // Derive area from first path segment
+    const getRouteArea = () => {
+        const path = location.pathname
+        if (path.startsWith('/admin')) return 'admin'
+        if (path.startsWith('/owner')) return 'owner'
+        if (path.startsWith('/staff')) return 'staff'
+        if (path.startsWith('/demo')) return 'demo'
+        return 'customer' // Default for / and other customer routes
+    }
+
+    const routeArea = getRouteArea()
+
+    // Key changes = React unmounts old tree and mounts fresh tree
+    return <div key={routeArea}>{children}</div>
+}
+
 // ====== STACKED ADMIN BADGE COMPONENT ======
 // Shows Super Admin status with role switcher menu
 function StackedAdminBadge() {
@@ -668,97 +690,109 @@ function App() {
             <div className="app-container">
                 {/* AdminLensBar REMOVED - status now in bottom stacked badge */}
 
-                <Routes>
-                    {/* Customer Routes */}
-                    <Route path="/" element={<Home config={safeConfig} />} />
-                    <Route path="/menu" element={<Menu config={safeConfig} />} />
-                    <Route path="/envios" element={<Menu config={safeConfig} deliveryMode={true} />} />
-                    <Route path="/order" element={<Order config={safeConfig} />} />
+                {/* ============================================
+                    RULE 2: FORCED COMPONENT UNMOUNT
+                    key changes based on route area = React destroys old UI
+                    ============================================ */}
+                <RouteAreaWrapper>
+                    <Routes>
+                        {/* Customer Routes */}
+                        <Route path="/" element={<Home config={safeConfig} />} />
+                        <Route path="/menu" element={<Menu config={safeConfig} />} />
+                        <Route path="/envios" element={<Menu config={safeConfig} deliveryMode={true} />} />
+                        <Route path="/order" element={<Order config={safeConfig} />} />
 
-                    <Route path="/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
-                    <Route path="/rewards" element={<Rewards config={safeConfig} />} />
-                    <Route path="/share" element={<ShareFood config={safeConfig} />} />
-                    <Route path="/game" element={<PerfectPour />} />
-                    <Route path="/info" element={<Info config={safeConfig} />} />
-                    <Route path="/promos" element={<Promos config={safeConfig} />} />
+                        <Route path="/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
+                        <Route path="/rewards" element={<Rewards config={safeConfig} />} />
+                        <Route path="/share" element={<ShareFood config={safeConfig} />} />
+                        <Route path="/game" element={<PerfectPour />} />
+                        <Route path="/info" element={<Info config={safeConfig} />} />
+                        <Route path="/promos" element={<Promos config={safeConfig} />} />
 
-                    {/* Staff Routes */}
-                    <Route path="/staff" element={<StaffLogin />} />
-                    <Route path="/staff/dashboard" element={
-                        <ProtectedRoute requiredRole="staff">
-                            <StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />
-                        </ProtectedRoute>
-                    } />
+                        {/* Staff Routes */}
+                        <Route path="/staff" element={<StaffLogin />} />
+                        <Route path="/staff/dashboard" element={
+                            <ProtectedRoute requiredRole="staff">
+                                <StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />
+                            </ProtectedRoute>
+                        } />
 
-                    {/* Owner Routes */}
-                    <Route path="/owner" element={<OwnerLogin />} />
-                    <Route path="/owner/summary" element={
-                        <ProtectedRoute requiredRole="owner">
-                            <OwnerSummary config={safeConfig} />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/owner/menu" element={
-                        <ProtectedRoute requiredRole="owner">
-                            <MenuManager config={safeConfig} />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/owner/delivery" element={
-                        <ProtectedRoute requiredRole="owner">
-                            <DeliveryManager config={safeConfig} />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/owner/rewards" element={
-                        <ProtectedRoute requiredRole="owner">
-                            <RewardsManager config={safeConfig} />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/owner/settings" element={
-                        <ProtectedRoute requiredRole="owner">
-                            <Settings config={safeConfig} />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/owner/analytics" element={
-                        <ProtectedRoute requiredRole="owner">
-                            <Analytics orders={orders} />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/owner/branding" element={
-                        <ProtectedRoute requiredRole="owner">
-                            <Settings config={safeConfig} />
-                        </ProtectedRoute>
-                    } />
+                        {/* Owner Routes */}
+                        <Route path="/owner" element={<OwnerLogin />} />
+                        <Route path="/owner/summary" element={
+                            <ProtectedRoute requiredRole="owner">
+                                <OwnerSummary config={safeConfig} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/owner/menu" element={
+                            <ProtectedRoute requiredRole="owner">
+                                <MenuManager config={safeConfig} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/owner/delivery" element={
+                            <ProtectedRoute requiredRole="owner">
+                                <DeliveryManager config={safeConfig} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/owner/rewards" element={
+                            <ProtectedRoute requiredRole="owner">
+                                <RewardsManager config={safeConfig} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/owner/settings" element={
+                            <ProtectedRoute requiredRole="owner">
+                                <Settings config={safeConfig} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/owner/analytics" element={
+                            <ProtectedRoute requiredRole="owner">
+                                <Analytics orders={orders} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/owner/branding" element={
+                            <ProtectedRoute requiredRole="owner">
+                                <Settings config={safeConfig} />
+                            </ProtectedRoute>
+                        } />
 
-                    {/* Demo Routes - NO AUTH REQUIRED */}
-                    <Route path="/demo" element={<Demo />} />
-                    <Route path="/demo/menu" element={<MenuManager config={safeConfig} demoMode={true} />} />
-                    <Route path="/demo/branding" element={<Settings config={safeConfig} demoMode={true} />} />
-                    <Route path="/demo/orders" element={<DeliveryManager config={safeConfig} demoMode={true} />} />
-                    <Route path="/demo/analytics" element={<Analytics demoMode={true} />} />
-                    <Route path="/demo/new" element={<Demo />} />
-                    <Route path="/demo/backend/dashboard" element={
-                        <Suspense fallback={<LazyFallback />}>
-                            <DemoBackend />
-                        </Suspense>
-                    } />
-                    <Route path="/demo/backend" element={<Navigate to="/demo/backend/dashboard" replace />} />
+                        {/* Demo Routes - NO AUTH REQUIRED */}
+                        <Route path="/demo" element={<Demo />} />
+                        <Route path="/demo/menu" element={<MenuManager config={safeConfig} demoMode={true} />} />
+                        <Route path="/demo/branding" element={<Settings config={safeConfig} demoMode={true} />} />
+                        <Route path="/demo/orders" element={<DeliveryManager config={safeConfig} demoMode={true} />} />
+                        <Route path="/demo/analytics" element={<Analytics demoMode={true} />} />
+                        <Route path="/demo/new" element={<Demo />} />
+                        <Route path="/demo/backend/dashboard" element={
+                            <Suspense fallback={<LazyFallback />}>
+                                <DemoBackend />
+                            </Suspense>
+                        } />
+                        <Route path="/demo/backend" element={<Navigate to="/demo/backend/dashboard" replace />} />
 
-                    {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
-                    <Route path="/admin" element={
-                        <Suspense fallback={<LazyFallback />}>
-                            <SuperAdmin config={safeConfig} />
-                        </Suspense>
-                    } />
-                    <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
+                        {/* Super Admin Routes - Note: SuperAdmin has own login screen */}
+                        <Route path="/admin" element={
+                            <Suspense fallback={<LazyFallback />}>
+                                <SuperAdmin config={safeConfig} />
+                            </Suspense>
+                        } />
+                        <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
-                    {/* Camera Suite */}
-                    <Route path="/camera" element={<Camera />} />
+                        {/* Camera Suite */}
+                        <Route path="/camera" element={<Camera />} />
 
-                    {/* Fallback */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                        {/* Fallback */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </RouteAreaWrapper>
 
                 {/* Bottom Navigation (visible on main customer pages) */}
                 <BottomNav config={safeConfig} />
+
+                {/* ============================================
+                    RULE 1: PERSISTENT ADMIN BADGE (GLOBAL OVERLAY)
+                    Always visible for superadmin, never part of a page
+                    ============================================ */}
+                <StackedAdminBadge />
             </div>
         </AdminIntentProvider>
     )

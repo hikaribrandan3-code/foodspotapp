@@ -189,21 +189,24 @@ function BackendNav({
         return () => mediaQuery.removeEventListener('change', handler)
     }, [])
 
-    // Get tabs based on role - EXPLICIT role handling (no fallback)
-    const getTabs = () => {
-        switch (role) {
-            case 'staff': return STAFF_TABS
-            case 'superadmin': return SUPERADMIN_TABS
-            case 'owner':
-            case 'demo':
-            default: return OWNER_TABS
-        }
+    // ============================================
+    // RULE 3: URL-BASED TAB SELECTION
+    // Check the current URL, NOT the user's rank
+    // If URL starts with /staff, show Staff tabs even for superadmin
+    // ============================================
+    const getTabsFromUrl = () => {
+        const path = location.pathname
+        if (path.startsWith('/staff')) return { tabs: STAFF_TABS, area: 'staff' }
+        if (path.startsWith('/owner')) return { tabs: OWNER_TABS, area: 'owner' }
+        if (path.startsWith('/admin')) return { tabs: SUPERADMIN_TABS, area: 'superadmin' }
+        if (path.startsWith('/demo')) return { tabs: OWNER_TABS, area: 'demo' }
+        return { tabs: OWNER_TABS, area: 'owner' } // Fallback
     }
-    const tabs = getTabs()
+    const { tabs, area: urlArea } = getTabsFromUrl()
 
     // Derive active tab from route if using routes
     const getActiveFromRoute = () => {
-        const routes = ROUTE_MAPS[role]
+        const routes = ROUTE_MAPS[urlArea] // Use URL-derived area, not prop
         if (!routes) return activeTab
 
         // Find the best (most specific) match - longest route wins
