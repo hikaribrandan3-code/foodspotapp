@@ -45,6 +45,15 @@ const STAFF_TABS = [
     { id: 'history', label: 'History', route: null }
 ]
 
+// Super Admin tabs - same as Owner but state-based (no navigation)
+const SUPERADMIN_TABS = [
+    { id: 'summary', label: 'Summary', route: null },
+    { id: 'menu', label: 'Menu', route: null },
+    { id: 'branding', label: 'Branding', route: null },
+    { id: 'orders', label: 'Orders', route: null, hasBadge: true },
+    { id: 'analytics', label: 'Analytics', route: null }
+]
+
 // Route mappings for different contexts
 const ROUTE_MAPS = {
     owner: {
@@ -180,8 +189,17 @@ function BackendNav({
         return () => mediaQuery.removeEventListener('change', handler)
     }, [])
 
-    // Get tabs based on role
-    const tabs = role === 'staff' ? STAFF_TABS : OWNER_TABS
+    // Get tabs based on role - EXPLICIT role handling (no fallback)
+    const getTabs = () => {
+        switch (role) {
+            case 'staff': return STAFF_TABS
+            case 'superadmin': return SUPERADMIN_TABS
+            case 'owner':
+            case 'demo':
+            default: return OWNER_TABS
+        }
+    }
+    const tabs = getTabs()
 
     // Derive active tab from route if using routes
     const getActiveFromRoute = () => {

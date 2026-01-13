@@ -498,35 +498,29 @@ function SuperAdmin({ config }) {
         { value: 'customer', label: 'Customer', color: '#F59E0B' }
     ]
 
-    // Handle mode change - IDEMPOTENT
+    // Handle mode change - PURE NAVIGATION (no simulation state)
+    // SuperAdmin role hierarchy already grants access to all routes
     const handleModeChange = (nextMode) => {
         // Idempotency: same mode = no-op
         if (nextMode === currentMode) return
 
-        // Exit simulation -> return to superadmin
-        if (nextMode === 'superadmin') {
-            exitSimulation()
-            navigate('/admin')
-            return
-        }
-
-        // Enter owner simulation
-        if (nextMode === 'owner') {
-            enterOwnerView('business-001')
-            navigate('/owner/menu')
-            return
-        }
-
-        // Enter staff simulation
-        if (nextMode === 'staff') {
-            enterStaffView('staff-user-001', 'business-001')
-            navigate('/staff/dashboard')
-            return
-        }
-
-        // Customer preview (frontend only, no simulation)
-        if (nextMode === 'customer') {
-            navigate('/')
+        // Navigate to the target dashboard - ProtectedRoute will handle access
+        switch (nextMode) {
+            case 'superadmin':
+                exitSimulation() // Clear any lingering simulation state
+                navigate('/admin', { replace: true })
+                break
+            case 'owner':
+                navigate('/owner/summary', { replace: true })
+                break
+            case 'staff':
+                navigate('/staff/dashboard', { replace: true })
+                break
+            case 'customer':
+                navigate('/', { replace: true })
+                break
+            default:
+                break
         }
     }
 
