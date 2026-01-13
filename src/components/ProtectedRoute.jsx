@@ -1,40 +1,139 @@
 /**
- * ProtectedRoute - Role-based route protection with Supabase Auth
+ * ProtectedRoute - Production-Grade RBAC Silo Bouncer
  * 
- * Now handles async session fetch with loading state.
- * Respects AdminIntentContext for Super Admin role simulation.
+ * SECURITY INVARIANTS:
+ * 1. ROLE GUARD: User must have matching role from Supabase user_metadata
+ * 2. SILO GUARD: User must have business_id in metadata (multi-tenant isolation)
+ * 3. URL SILO GUARD: User's business_id must match URL tenant slug
+ * 4. AUTH PERSISTENCE: Handles async session loading to prevent false redirects
+ * 5. HARD REDIRECT: Uses 'replace' to trigger state purge in App.jsx
  */
 import { useState, useEffect } from 'react'
-import { Navigate } from 'react-router-dom'
-import { getSession, hasRole, getLoginRedirect, getDashboardRedirect } from '../utils/auth.js'
-import { useAdminIntent } from '../contexts/AdminIntentContext.jsx'
+import { Navigate, useParams } from 'react-router-dom'
+import { supabase } from '../lib/supabaseClient.js'
+import { useTenant } from '../contexts/TenantContext.jsx'
 
-// Role hierarchy for local checks
+// Role hierarchy: higher index = more access
 const ROLE_HIERARCHY = ['staff', 'owner', 'superadmin']
 
+// Home base routes for each role (used for "wrong role" redirects)
+// Note: Now includes tenantSlug placeholder
+const getRoleHomeRoute = (role, tenantSlug) => {
+    const routes = {
+        staff: `/${tenantSlug}/staff/dashboard`,
+        owner: `/${tenantSlug}/owner/summary`,
+        superadmin: '/admin'
+    }
+    return routes[role] || `/${tenantSlug}`
+}
+
+// Login routes for each role (used for "not authenticated" redirects)
+const getRoleLoginRoute = (role, tenantSlug) => {
+    const routes = {
+        staff: `/${tenantSlug}/staff`,
+        owner: `/${tenantSlug}/owner`,
+        superadmin: '/admin'
+    }
+    return routes[role] || `/${tenantSlug}/staff`
+}
+
 function ProtectedRoute({ children, requiredRole }) {
-    const [session, setSession] = useState(null)
-    const [isLoading, setIsLoading] = useState(true)
+    // 🏢 PHASE 3: Get URL tenant context
+    const { businessId: urlBusinessId, tenantData } = useTenant()
+    const { tenantSlug } = useParams()
 
-    // Get Simulation Intent (Role Lens)
-    const { activeRoleView, isSimulated } = useAdminIntent()
+    const [authState, setAuthState] = useState({
+        isLoading: true,
+        session: null,
+        role: null,
+        businessId: null
+    })
 
-    // Fetch session on mount
+    // 🛡️ SUPABASE DIRECT: Fetch session from Supabase auth
+    // Reads role and business_id from raw_user_meta_data
     useEffect(() => {
+        let isMounted = true
+
         const fetchSession = async () => {
             try {
-                const sessionData = await getSession()
-                setSession(sessionData)
+                const { data: { session }, error } = await supabase.auth.getSession()
+
+                if (error || !session) {
+                    if (isMounted) {
+                        setAuthState({
+                            isLoading: false,
+                            session: null,
+                            role: null,
+                            businessId: null
+                        })
+                    }
+                    return
+                }
+
+                // 🔐 EXTRACT METADATA: Role and Business ID from Supabase
+                const user = session.user
+                const metadata = user?.user_metadata || {}
+                const role = metadata.role || null
+                const businessId = metadata.business_id || null
+
+                if (isMounted) {
+                    setAuthState({
+                        isLoading: false,
+                        session,
+                        role,
+                        businessId
+                    })
+                }
             } catch {
-                setSession(null)
-            } finally {
-                setIsLoading(false)
+                if (isMounted) {
+                    setAuthState({
+                        isLoading: false,
+                        session: null,
+                        role: null,
+                        businessId: null
+                    })
+                }
             }
         }
+
         fetchSession()
+
+        // 🔄 REALTIME AUTH: Listen for session changes
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (!isMounted) return
+
+            if (session) {
+                const metadata = session.user?.user_metadata || {}
+                setAuthState({
+                    isLoading: false,
+                    session,
+                    role: metadata.role || null,
+                    businessId: metadata.business_id || null
+                })
+            } else {
+                setAuthState({
+                    isLoading: false,
+                    session: null,
+                    role: null,
+                    businessId: null
+                })
+            }
+        })
+
+        return () => {
+            isMounted = false
+            authListener?.subscription?.unsubscribe()
+        }
     }, [])
 
-    // Loading state - show minimal spinner
+    const { isLoading, session, role, businessId: userBusinessId } = authState
+    const currentSlug = tenantSlug || tenantData?.slug || 'grub-club'
+
+    // ============================================
+    // STATE 1: LOADING (Supabase session hydrating)
+    // ============================================
+    // Show spinner while waiting for Supabase to resolve session
+    // This prevents false redirects on initial page load
     if (isLoading) {
         return (
             <div style={{
@@ -61,25 +160,86 @@ function ProtectedRoute({ children, requiredRole }) {
         )
     }
 
-    // Not authenticated
+    // ============================================
+    // STATE 2: NOT AUTHENTICATED
+    // ============================================
+    // No session = redirect to login page for required role
     if (!session) {
-        return <Navigate to={getLoginRedirect(requiredRole)} replace />
+        const loginRoute = getRoleLoginRoute(requiredRole, currentSlug)
+        return <Navigate to={loginRoute} replace />
     }
 
-    // Determine Effective Role (simulation or real)
-    const realRole = session.role
-    const effectiveRole = isSimulated ? activeRoleView : realRole
+    // ============================================
+    // STATE 3: SILO GUARD (Multi-Tenant Isolation)
+    // ============================================
+    // 🛡️ CRITICAL: If no business_id in metadata, user is "orphaned"
+    // They cannot access any protected route until assigned to a business
+    // This is a NON-NEGOTIABLE security invariant for multi-tenancy
+    if (!userBusinessId) {
+        console.error('[SILO GUARD] User has no business_id in metadata:', session.user?.email)
+        // Redirect to root with error state (could show a "Contact Admin" page)
+        return <Navigate to="/" replace state={{ siloError: true }} />
+    }
 
-    // Role Hierarchy Check
-    const userLevel = ROLE_HIERARCHY.indexOf(effectiveRole)
+    // ============================================
+    // STATE 3.5: URL SILO GUARD (Cross-Tenant Jump Prevention)
+    // ============================================
+    // 🛡️ CRITICAL: Prevent user from accessing a different tenant's routes
+    // Compare user's business_id from metadata against URL's businessId
+    // SuperAdmins bypass this check (they can view any tenant)
+    const userRole = role
+    if (userRole !== 'superadmin' && urlBusinessId && userBusinessId !== urlBusinessId) {
+        console.warn('[SILO JUMP BLOCKED] User attempted cross-tenant access:', {
+            userBusinessId,
+            urlBusinessId,
+            email: session.user?.email
+        })
+        // Redirect them to their own tenant's dashboard
+        // We need to look up their tenant's slug from their businessId
+        // For now, redirect to root and let TenantContext figure it out
+        return <Navigate to="/" replace state={{ siloJump: true }} />
+    }
+
+    // ============================================
+    // STATE 4: ROLE GUARD (Role-Based Access Control)
+    // ============================================
+    // Check if user's role meets the required role for this route
+
+    // No role in metadata = cannot determine access
+    if (!role) {
+        console.error('[ROLE GUARD] User has no role in metadata:', session.user?.email)
+        return <Navigate to="/" replace />
+    }
+
+    // superadmin bypasses all role checks (god mode)
+    if (role === 'superadmin') {
+        return children
+    }
+
+    // Check role hierarchy
+    const userLevel = ROLE_HIERARCHY.indexOf(role)
     const requiredLevel = ROLE_HIERARCHY.indexOf(requiredRole)
 
-    // Invalid roles or insufficient permission
-    if (userLevel === -1 || requiredLevel === -1 || userLevel < requiredLevel) {
-        return <Navigate to={getDashboardRedirect(effectiveRole)} replace />
+    // Unknown role = deny access
+    if (userLevel === -1) {
+        console.error('[ROLE GUARD] Unknown role:', role)
+        return <Navigate to="/" replace />
     }
 
+    // Wrong role = redirect to their correct home base
+    // e.g., Staff trying to access Owner route → redirect to /staff/dashboard
+    if (userLevel < requiredLevel) {
+        const correctHome = getRoleHomeRoute(role, currentSlug)
+        return <Navigate to={correctHome} replace />
+    }
+
+    // ============================================
+    // STATE 5: ACCESS GRANTED
+    // ============================================
+    // User has valid session, business_id, matching URL tenant, and sufficient role
+    // Render the protected content
     return children
 }
 
 export default ProtectedRoute
+

@@ -41,7 +41,7 @@ export async function logout() {
 
 /**
  * Get current session from Supabase
- * Returns { role, authenticated, user, email } or null
+ * Returns { role, businessId, authenticated, user, email } or null
  */
 export async function getSession() {
     try {
@@ -52,10 +52,13 @@ export async function getSession() {
         }
 
         const user = session.user
-        const role = user?.user_metadata?.role || 'staff'
+        const metadata = user?.user_metadata || {}
+        const role = metadata.role || 'staff'
+        const businessId = metadata.business_id || null // 🔐 SILO KEY
 
         return {
             role,
+            businessId, // Multi-tenant isolation key
             authenticated: true,
             user,
             email: user?.email,

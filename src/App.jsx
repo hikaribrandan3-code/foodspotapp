@@ -1,9 +1,10 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
-import { incrementVisit, getOrders, updateOrder } from './utils/storage.js'
+import { incrementVisit } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
+import { useTenant } from './contexts/TenantContext.jsx'
 import { getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
 
 // Components
@@ -44,6 +45,9 @@ import CoverPreview from './components/CoverPreview.jsx'
 // Demo Pages (Lazy-loaded)
 const DemoBackend = lazy(() => import('./pages/demo/DemoBackend.jsx'))
 import Demo from './pages/demo/Demo.jsx'
+
+// Auth Pages
+import TrialSignup from './pages/auth/TrialSignup.jsx'
 
 // Loading fallback for lazy components
 const LazyFallback = () => (
@@ -234,24 +238,83 @@ function StackedAdminBadge() {
 
 
 function App() {
+    const { businessId, tenantData, trialExpired } = useTenant()
+
     const [config, setConfig] = useState(() => getConfig())
-    const [orders, setOrders] = useState(() => getOrders())
-    const [cloudBrandingLoaded, setCloudBrandingLoaded] = useState(false)
-    // GUARDRAIL: Defensive fallback to prevent pauseOrders crash
-    // useMemo ensures reference stability for child useMemo optimizations
+    const [orders, setOrders] = useState([])
     const safeConfig = useMemo(() => config ?? { pauseOrders: false }, [config])
+
+    // 🚫 TRIAL LOCKOUT: Block all interactions if trial expired
+    if (trialExpired) {
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh',
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                color: '#fff',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                padding: '24px',
+                textAlign: 'center'
+            }}>
+                <div style={{
+                    fontSize: '64px',
+                    marginBottom: '24px'
+                }}>⏰</div>
+                <h1 style={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    marginBottom: '12px',
+                    background: 'linear-gradient(90deg, #ff6b6b, #ffa502)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                }}>Tu período de prueba terminó</h1>
+                <p style={{
+                    opacity: 0.8,
+                    maxWidth: '400px',
+                    marginBottom: '32px',
+                    lineHeight: 1.6
+                }}>
+                    El trial de <strong>{tenantData?.business_name || 'tu negocio'}</strong> ha expirado.
+                    Actualizá tu plan para seguir recibiendo pedidos y gestionar tu menú.
+                </p>
+                <a
+                    href="https://wa.me/5491123456789?text=Quiero%20activar%20mi%20cuenta%20FoodSpot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '16px 32px',
+                        background: 'linear-gradient(90deg, #25D366, #128C7E)',
+                        color: '#fff',
+                        fontWeight: 600,
+                        fontSize: '16px',
+                        borderRadius: '12px',
+                        textDecoration: 'none',
+                        boxShadow: '0 4px 20px rgba(37, 211, 102, 0.4)',
+                        transition: 'transform 0.2s'
+                    }}
+                >
+                    💬 Contactar Soporte
+                </a>
+            </div>
+        )
+    }
+
 
     // Track visit on app load
     useEffect(() => {
         incrementVisit()
     }, [])
 
-    // 🛡️ HARD STATE PURGE: Clear simulation state on auth changes
-    // Prevents "Staff mode sticking" when switching accounts
+    // Hard state purge on auth changes
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
             if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-                // Purge all simulation-related localStorage
                 localStorage.removeItem('admin_intent')
                 localStorage.removeItem('simulatedRole')
                 localStorage.removeItem('activeRoleView')
@@ -260,13 +323,11 @@ function App() {
         return () => authListener?.subscription.unsubscribe()
     }, [])
 
-    // 🛡️ SUPABASE: Fetch branding from cloud on mount (SINGLE SOURCE OF TRUTH)
-    // Hardware Readiness: Async fetch does NOT block static imports
+    // Fetch branding from Supabase on mount
     useEffect(() => {
         const loadCloudBranding = async () => {
             try {
-                const { data: cloudBranding, error } = await getBranding()
-                // Silent fallback: if error or no data, localStorage wins
+                const { data: cloudBranding, error } = await getBranding(businessId)
                 if (error || !cloudBranding) return
 
                 // Safe Config Protocol: Cloud data overrides localStorage
@@ -294,29 +355,25 @@ function App() {
                     // Logo from cloud
                     logo: cloudBranding.logo_url || prev.logo,
                 }))
-                setCloudBrandingLoaded(true)
             } catch {
-                // Silent fallback to localStorage - no UI break
+                // Silent fallback to localStorage
             }
         }
         loadCloudBranding()
     }, [])
 
-    // ☢️ NUCLEAR: Service Worker Killer - Purge zombie workers trapping Google Cache
+    // Service Worker cleanup
     useEffect(() => {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (const registration of registrations) {
-                    console.log('[SW] Unregistering zombie worker:', registration.scope)
                     registration.unregister()
                 }
             })
         }
-        // Also clear caches API if available
         if ('caches' in window) {
             caches.keys().then(names => {
                 for (const name of names) {
-                    console.log('[Cache] Purging cache:', name)
                     caches.delete(name)
                 }
             })
@@ -560,7 +617,8 @@ function App() {
 
         // 2. Fetch branding from Supabase (cloud wins)
         try {
-            const { data: cloudBranding } = await getBranding()
+            // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+            const { data: cloudBranding } = await getBranding(businessId)
 
             if (cloudBranding) {
                 // 3. Merge: Supabase wins for branding fields
@@ -604,13 +662,16 @@ function App() {
         let realtimeChannel = null
 
         const initCloudSync = async () => {
+            // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+            // (businessId is available from useTenant() at component level)
+
             // 1. GUEST HANDSHAKE: Check for guest token (Valet Ticket)
             const guestToken = localStorage.getItem('fs_guest_token')
             const customerPhone = localStorage.getItem('fs_customer_phone')
 
             if (guestToken) {
                 try {
-                    const { data: guestOrders } = await getOrdersByGuestToken(guestToken)
+                    const { data: guestOrders } = await getOrdersByGuestToken(guestToken, businessId)
                     if (guestOrders && guestOrders.length > 0) {
                         setOrders(guestOrders)
                     }
@@ -620,7 +681,7 @@ function App() {
             } else if (customerPhone) {
                 // FAIL-SAFE: Phone number anchor if no guest token
                 try {
-                    const { data: phoneOrders } = await getOrdersByPhone(customerPhone)
+                    const { data: phoneOrders } = await getOrdersByPhone(customerPhone, businessId)
                     if (phoneOrders && phoneOrders.length > 0) {
                         setOrders(phoneOrders)
                     }
@@ -632,6 +693,7 @@ function App() {
             // 2. REALTIME SUBSCRIPTION: Replace polling
             // ROBUST SYNC: Full spread for all field updates
             realtimeChannel = subscribeToOrders(
+                businessId, // 🏢 PHASE 3: Dynamic from TenantContext
                 // onInsert: New order created
                 (newOrder) => {
                     setOrders(prev => {
@@ -710,60 +772,73 @@ function App() {
                     ============================================ */}
                 <RouteAreaWrapper>
                     <Routes>
-                        {/* Customer Routes */}
-                        <Route path="/" element={<Home config={safeConfig} />} />
-                        <Route path="/menu" element={<Menu config={safeConfig} />} />
-                        <Route path="/envios" element={<Menu config={safeConfig} deliveryMode={true} />} />
-                        <Route path="/order" element={<Order config={safeConfig} />} />
+                        {/* 🚪 LOBBY REDIRECT: Root path → default tenant */}
+                        <Route path="/" element={<Navigate to="/grub-club" replace />} />
 
-                        <Route path="/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
-                        <Route path="/rewards" element={<Rewards config={safeConfig} />} />
-                        <Route path="/share" element={<ShareFood config={safeConfig} />} />
-                        <Route path="/game" element={<PerfectPour />} />
-                        <Route path="/info" element={<Info config={safeConfig} />} />
-                        <Route path="/promos" element={<Promos config={safeConfig} />} />
+                        {/* 🎯 TRIAL FUNNEL: Landing page signup */}
+                        <Route path="/start-trial" element={<TrialSignup />} />
 
-                        {/* Staff Routes */}
-                        <Route path="/staff" element={<StaffLogin />} />
-                        <Route path="/staff/dashboard" element={
+                        {/* ============================================
+                            TENANT-SCOPED CUSTOMER ROUTES
+                            All customer routes are prefixed with :tenantSlug
+                            ============================================ */}
+                        <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
+                        <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
+                        <Route path="/:tenantSlug/envios" element={<Menu config={safeConfig} deliveryMode={true} />} />
+                        <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
+
+                        <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
+                        <Route path="/:tenantSlug/rewards" element={<Rewards config={safeConfig} />} />
+                        <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
+                        <Route path="/:tenantSlug/game" element={<PerfectPour />} />
+                        <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
+                        <Route path="/:tenantSlug/promos" element={<Promos config={safeConfig} />} />
+
+                        {/* ============================================
+                            TENANT-SCOPED STAFF ROUTES
+                            ============================================ */}
+                        <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
+                        <Route path="/:tenantSlug/staff/dashboard" element={
                             <ProtectedRoute requiredRole="staff">
                                 <StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />
                             </ProtectedRoute>
                         } />
 
-                        {/* Owner Routes */}
-                        <Route path="/owner" element={<OwnerLogin />} />
-                        <Route path="/owner/summary" element={
+                        {/* ============================================
+                            TENANT-SCOPED OWNER ROUTES
+                            ============================================ */}
+                        <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
+                        <Route path="/:tenantSlug/owner/summary" element={
                             <ProtectedRoute requiredRole="owner">
                                 <OwnerSummary config={safeConfig} />
                             </ProtectedRoute>
                         } />
-                        <Route path="/owner/menu" element={
+                        <Route path="/:tenantSlug/owner/menu" element={
                             <ProtectedRoute requiredRole="owner">
                                 <MenuManager config={safeConfig} />
                             </ProtectedRoute>
                         } />
-                        <Route path="/owner/delivery" element={
+                        <Route path="/:tenantSlug/owner/delivery" element={
                             <ProtectedRoute requiredRole="owner">
                                 <DeliveryManager config={safeConfig} />
                             </ProtectedRoute>
                         } />
-                        <Route path="/owner/rewards" element={
+                        <Route path="/:tenantSlug/owner/rewards" element={
                             <ProtectedRoute requiredRole="owner">
                                 <RewardsManager config={safeConfig} />
                             </ProtectedRoute>
                         } />
-                        <Route path="/owner/settings" element={
+                        <Route path="/:tenantSlug/owner/settings" element={
                             <ProtectedRoute requiredRole="owner">
                                 <Settings config={safeConfig} />
                             </ProtectedRoute>
                         } />
-                        <Route path="/owner/analytics" element={
+                        <Route path="/:tenantSlug/owner/analytics" element={
                             <ProtectedRoute requiredRole="owner">
                                 <Analytics orders={orders} />
                             </ProtectedRoute>
                         } />
-                        <Route path="/owner/branding" element={
+                        <Route path="/:tenantSlug/owner/branding" element={
                             <ProtectedRoute requiredRole="owner">
                                 <Settings config={safeConfig} />
                             </ProtectedRoute>

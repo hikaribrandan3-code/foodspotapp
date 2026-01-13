@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getMenu, formatPrice, reorderCategoryItems } from '../../config/menuData.js'
+import { formatPrice, reorderCategoryItems } from '../../config/menuData.js'
 import { getMenuCloud } from '../../lib/supabaseClient.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
@@ -8,6 +8,7 @@ import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getSession } from '../../utils/auth.js'
 import { isInDemoMode } from '../../utils/demoSession.js'
+import { useBusinessId } from '../../contexts/TenantContext.jsx'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
@@ -17,35 +18,32 @@ const ENABLE_AUTO_SCROLL = true
 const AUTO_SCROLL_ZONE_PERCENT = 0.10 // Top/bottom 10% of viewport
 const AUTO_SCROLL_SPEED = 4 // Pixels per frame (slow and controlled)
 
+
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
 
 function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const navigate = useNavigate()
-    const [menu, setMenu] = useState(() => getMenu())
+    const businessId = useBusinessId()
+    const [menu, setMenu] = useState({ categories: [] })
     const [cart, setCart] = useState(() => getCurrentOrder())
-    const [addedItem, setAddedItem] = useState(null) // For visual feedback
+    const [addedItem, setAddedItem] = useState(null)
     const categoryRefs = useRef({})
 
-    // DEMO SIMULATION REMOVED: Always use real menu
-    // No demo mode detection, no demo menu overlay
-
-    // 🛡️ SUPABASE: Cloud-first menu loading with localStorage fallback
-    const [cloudMenuLoaded, setCloudMenuLoaded] = useState(false)
+    // Cloud-first menu loading (Supabase is source of truth)
     useEffect(() => {
         const loadCloudMenu = async () => {
             try {
-                const { data: cloudMenu, error } = await getMenuCloud()
-                // Silent fallback: if error or no data, localStorage wins
-                if (error || !cloudMenu || !cloudMenu.categories?.length) return
-                setMenu(cloudMenu)
-                setCloudMenuLoaded(true)
+                const { data: cloudMenu, error } = await getMenuCloud(businessId)
+                if (!error && cloudMenu?.categories?.length) {
+                    setMenu(cloudMenu)
+                }
             } catch {
-                // Silent fallback to localStorage - no UI break
+                // Cloud failed - menu stays empty
             }
         }
         loadCloudMenu()
-    }, [])
+    }, [businessId])
 
     // Use dividerPresetId from normalized config
     const effectiveDividerPresetId = config?.dividerPresetId

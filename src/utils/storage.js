@@ -3,7 +3,24 @@
 import { emitDemoEvent } from './demoEvents.js'
 import { isInDemoMode } from './demoSession.js'
 
-const STORAGE_PREFIX = "grub_";
+// 🏢 PHASE 3: Dynamic tenant-aware storage prefix
+// Default is "fs_global_" until TenantContext resolves the businessId
+let STORAGE_PREFIX = "fs_global_";
+
+/**
+ * Initialize tenant-scoped localStorage
+ * Called by TenantContext after businessId resolves
+ * @param {string} businessId - The tenant's unique business ID
+ */
+export function setTenantStoragePrefix(businessId) {
+    if (!businessId) {
+        console.warn('[Storage] No businessId provided, using global prefix')
+        return
+    }
+    STORAGE_PREFIX = `fs_${businessId}_`;
+    console.log(`[Storage] 🏢 Initialized for tenant: ${businessId}`)
+}
+
 
 // Generic storage operations
 export function getItem(key) {

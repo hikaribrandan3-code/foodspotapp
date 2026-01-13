@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { TenantProvider } from './contexts/TenantContext.jsx'
 import App from './App.jsx'
 import './index.css'
 
@@ -30,7 +31,9 @@ if ('serviceWorker' in navigator) {
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <BrowserRouter>
-            <App />
+            <TenantProvider>
+                <App />
+            </TenantProvider>
         </BrowserRouter>
     </React.StrictMode>,
 )

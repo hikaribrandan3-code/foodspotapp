@@ -16,6 +16,7 @@ import CoverImageEditor from '../../components/CoverImageEditor.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
+import { useBusinessId } from '../../contexts/TenantContext.jsx'
 
 // Generate seeded demo analytics data (30 days)
 function generateDemoData() {
@@ -77,6 +78,7 @@ function isValidLogoUrl(value) {
 function SuperAdmin({ config }) {
     const navigate = useNavigate()
     const location = useLocation()
+    const businessId = useBusinessId() // 🏢 PHASE 3: Dynamic tenant identity
     // NOTE: config comes from props, not local state
     const [menu, setMenu] = useState(() => getMenu())
     const [orders, setOrders] = useState(() => getOrders())
@@ -141,9 +143,11 @@ function SuperAdmin({ config }) {
 
     // 🛡️ SUPABASE: Cloud-first orders fetch with realtime subscription
     useEffect(() => {
+        // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+
         const loadCloudOrders = async () => {
             try {
-                const { data: cloudOrders, error } = await getOrdersCloud()
+                const { data: cloudOrders, error } = await getOrdersCloud(businessId)
                 if (!error && cloudOrders?.length > 0) {
                     setOrders(cloudOrders)
                 }
@@ -155,6 +159,7 @@ function SuperAdmin({ config }) {
 
         // Realtime subscription for live order updates
         const subscription = subscribeToOrders(
+            businessId, // 🏢 Dynamic from TenantContext
             // onInsert: New order arrives
             (newOrder) => {
                 setOrders(prev => [newOrder, ...prev])
@@ -266,10 +271,12 @@ function SuperAdmin({ config }) {
         const column = columnMap[field]
         if (!column) return
 
+        // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+
         setSaveStatus('saving')
 
         // 1. Write to cloud first
-        const { error } = await updateBranding({ [column]: value })
+        const { error } = await updateBranding({ [column]: value }, businessId)
 
         // 2. Only update local on success
         if (!error) {
@@ -296,10 +303,12 @@ function SuperAdmin({ config }) {
         const column = columnMap[field]
         if (!column) return
 
+        // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+
         setSaveStatus('saving')
 
         // 1. Write to cloud first
-        const { error } = await updateBranding({ [column]: value })
+        const { error } = await updateBranding({ [column]: value }, businessId)
 
         // 2. Only update local on success
         if (!error) {
@@ -325,10 +334,10 @@ function SuperAdmin({ config }) {
 
     // Update menu item (CLOUD-FIRST: Safe Config Protocol)
     const handleUpdateMenuItem = async (categoryId, itemId, updates) => {
-        setSaveStatus('saving')
+        // 🏢 PHASE 3: Using dynamic businessId from TenantContext
 
         // 1. Write to cloud first
-        const { error } = await updateMenuItemCloud(itemId, updates)
+        const { error } = await updateMenuItemCloud(itemId, updates, businessId)
 
         // 2. Only update local on success
         if (!error) {
@@ -355,10 +364,12 @@ function SuperAdmin({ config }) {
             displayOrder: menu.categories.find(c => c.id === categoryId)?.items?.length || 0
         }
 
+        // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+
         setSaveStatus('saving')
 
         // 1. Write to cloud first
-        const { error } = await addMenuItemCloud(newItem)
+        const { error } = await addMenuItemCloud(newItem, businessId)
 
         // 2. Only update local on success
         if (!error) {

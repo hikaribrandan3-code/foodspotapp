@@ -21,6 +21,7 @@ import {
     clearDeliveryMode,
     calculateDeliveryFee
 } from '../../utils/deliveryUtils.js'
+import { useBusinessId } from '../../contexts/TenantContext.jsx'
 
 // Placeholder food images for items without images
 const placeholderImages = [
@@ -31,6 +32,7 @@ const placeholderImages = [
 
 function Order({ config }) {
     const navigate = useNavigate()
+    const businessId = useBusinessId() // 🏢 PHASE 3: Dynamic tenant identity
     const [order, setOrder] = useState(() => getCurrentOrder())
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitted, setSubmitted] = useState(false)
@@ -154,6 +156,8 @@ function Order({ config }) {
                 localStorage.setItem('fs_customer_phone', customerInfo.phone)
             }
 
+            // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+
             await createOrderWithGuestToken({
                 orderNumber: newOrder.orderNumber,
                 items: newOrder.items,
@@ -164,7 +168,7 @@ function Order({ config }) {
                 deliveryMode: deliveryMode,
                 deliveryAddress: customerInfo?.address || null,
                 paymentMethod: paymentMethod || null
-            }, guestToken)
+            }, guestToken, businessId) // 🏢 Dynamic from TenantContext
         } catch {
             // Silent fallback - localStorage still works
         }
