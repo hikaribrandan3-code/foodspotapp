@@ -772,8 +772,8 @@ function App() {
                     ============================================ */}
                 <RouteAreaWrapper>
                     <Routes>
-                        {/* 🚪 LOBBY REDIRECT: Root path → default tenant */}
-                        <Route path="/" element={<Navigate to="/grub-club" replace />} />
+                        {/* 🏠 ROOT PATH: Show trial signup (no tenant lookup) */}
+                        <Route path="/" element={<TrialSignup />} />
 
                         {/* 🎯 TRIAL FUNNEL: Landing page signup */}
                         <Route path="/start-trial" element={<TrialSignup />} />

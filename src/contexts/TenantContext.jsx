@@ -7,9 +7,9 @@
  * It resolves the business from URL slug and enforces trial expiration.
  * 
  * URL Detection:
- *   - /grub-club/menu → slug = "grub-club"
- *   - /pizza-palace/order → slug = "pizza-palace"
- *   - / or /menu (no slug) → fallback to "grub-club"
+ *   - /pizza-palace/menu → slug = "pizza-palace"
+ *   - /tacos-locos/order → slug = "tacos-locos"
+ *   - / or /start-trial → NO LOOKUP (neutral state, no tenant required)
  * 
  * Exports:
  *   - useTenant() → { businessId, tenantData, trialExpired, loading }
@@ -19,9 +19,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../utils/storage.js'
-
-// 🛡️ FALLBACK: Default demo tenant when no slug detected
-const DEFAULT_SLUG = 'grub-club'
 
 // Context
 const TenantContext = createContext(null)
@@ -43,19 +40,22 @@ export function TenantProvider({ children }) {
         const resolveTenant = async () => {
             try {
                 // 1. EXTRACT SLUG FROM URL
-                // Supports: /grub-club/menu, /pizza-palace/order, etc.
                 const pathname = window.location.pathname
                 const pathSegments = pathname.split('/').filter(Boolean)
 
-                // First segment could be the tenant slug
-                // We check if it looks like a tenant slug (not a known route)
-                // 🚪 TRIAL BYPASS: 'start-trial' skips tenant lookup entirely
-                const knownRoutes = ['menu', 'order', 'info', 'login', 'staff', 'owner', 'admin', 'demo', 'superadmin', 'start-trial']
-                let slug = DEFAULT_SLUG
+                // 🚫 NO-LOOKUP ROUTES: These paths bypass tenant resolution entirely
+                // Root path (/) and known non-tenant routes skip Supabase lookup
+                const noLookupRoutes = ['start-trial', 'menu', 'order', 'info', 'login', 'staff', 'owner', 'admin', 'demo', 'superadmin']
 
-                if (pathSegments.length > 0 && !knownRoutes.includes(pathSegments[0])) {
-                    slug = pathSegments[0]
+                // If root path OR first segment is a no-lookup route → skip tenant lookup
+                if (pathSegments.length === 0 || noLookupRoutes.includes(pathSegments[0])) {
+                    // 🏠 NEUTRAL STATE: No tenant, no error - just render children
+                    setLoading(false)
+                    return
                 }
+
+                // First segment is the tenant slug
+                const slug = pathSegments[0]
 
                 // 2. FETCH TENANT FROM SUPABASE
                 const { data: tenant, error: fetchError } = await supabase
@@ -65,26 +65,8 @@ export function TenantProvider({ children }) {
                     .single()
 
                 if (fetchError || !tenant) {
-                    // Fallback: If slug not found, try default
-                    if (slug !== DEFAULT_SLUG) {
-                        console.warn(`[TenantContext] Slug "${slug}" not found, falling back to "${DEFAULT_SLUG}"`)
-                        const { data: fallbackTenant } = await supabase
-                            .from('branding')
-                            .select('business_id, business_name, slug, is_paid, trial_ends_at, primary_color')
-                            .eq('slug', DEFAULT_SLUG)
-                            .single()
-
-                        if (fallbackTenant) {
-                            setBusinessId(fallbackTenant.business_id)
-                            setTenantStoragePrefix(fallbackTenant.business_id) // 🏢 Scope localStorage
-                            setTenantData(fallbackTenant)
-                            checkTrialStatus(fallbackTenant)
-                        } else {
-                            throw new Error(`[TENANT ERROR] Default tenant "${DEFAULT_SLUG}" not found in database`)
-                        }
-                    } else {
-                        throw new Error(`[TENANT ERROR] Tenant "${slug}" not found in database`)
-                    }
+                    // Tenant not found - show error
+                    throw new Error(`[TENANT ERROR] Tenant "${slug}" not found in database`)
                 } else {
                     // Success: Tenant found
                     setBusinessId(tenant.business_id)

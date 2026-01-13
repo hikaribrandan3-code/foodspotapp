@@ -127,7 +127,7 @@ function ProtectedRoute({ children, requiredRole }) {
     }, [])
 
     const { isLoading, session, role, businessId: userBusinessId } = authState
-    const currentSlug = tenantSlug || tenantData?.slug || 'grub-club'
+    const currentSlug = tenantSlug || tenantData?.slug || ''
 
     // ============================================
     // STATE 1: LOADING (Supabase session hydrating)
