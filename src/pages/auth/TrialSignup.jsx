@@ -83,7 +83,7 @@ function TrialSignup() {
             const trialEndsAt = new Date()
             trialEndsAt.setDate(trialEndsAt.getDate() + 14) // 14-day trial
 
-            // 🔥 JESUS CATCH-BLOCK: Try to create branding, but redirect regardless
+            // 🔥 BRUTE-FORCE INSERT: Only 4 fields, no ID (auto-generated int8)
             try {
                 const { error: siloError } = await supabase
                     .from('branding')
@@ -95,10 +95,12 @@ function TrialSignup() {
                     })
 
                 if (siloError) {
-                    console.error('[TRIAL] Silo creation failed (non-blocking):', siloError)
+                    console.error('[TRIAL] Silo creation failed:', JSON.stringify(siloError, null, 2))
+                } else {
+                    console.log('[TRIAL] ✅ Branding row created successfully!')
                 }
             } catch (brandingErr) {
-                console.error('[TRIAL] Branding insert error (non-blocking):', brandingErr)
+                console.error('[TRIAL] Branding insert exception:', brandingErr)
             }
 
             // 3. INITIALIZE TENANT STORAGE
