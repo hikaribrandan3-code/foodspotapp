@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { getMenu } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
-import { isInDemoMode } from '../../utils/demoSession.js'
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
@@ -44,7 +43,7 @@ function Home({ config }) {
         }
         fetchSession()
     }, [])
-    const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner' || isInDemoMode()
+    const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner'
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false)
@@ -616,27 +615,7 @@ function Home({ config }) {
                 })}
 
                 {/* Role Badges - Centered in Grid */}
-                {isInDemoMode() && session?.role !== 'superadmin' && session?.role !== 'owner' && (
-                    <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        zIndex: 10,
-                        background: '#F59E0B',
-                        color: '#FFFFFF',
-                        padding: '2px 8px',
-                        borderRadius: 12,
-                        fontWeight: 700,
-                        fontSize: 9,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        pointerEvents: 'none',
-                        letterSpacing: 0.5,
-                        whiteSpace: 'nowrap'
-                    }}>
-                        DEMO
-                    </div>
-                )}
+
 
                 {session?.role === 'superadmin' && (
                     <div style={{

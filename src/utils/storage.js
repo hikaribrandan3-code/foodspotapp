@@ -1,8 +1,5 @@
 // localStorage utility functions for Grub Club App
 
-import { emitDemoEvent } from './demoEvents.js'
-import { isInDemoMode } from './demoSession.js'
-
 // 🏢 PHASE 3: Dynamic tenant-aware storage prefix
 // Default is "fs_global_" until TenantContext resolves the businessId
 let STORAGE_PREFIX = "fs_global_";
@@ -78,57 +75,19 @@ export function saveOrders(orders) {
 export function addOrder(order) {
     const orders = getOrders();
     orders.unshift(order); // Add to beginning (newest first)
-    const result = saveOrders(orders);
-
-    // Demo webhook event
-    if (result && isInDemoMode()) {
-        emitDemoEvent('order.created', {
-            orderId: order.id,
-            orderNumber: order.orderNumber,
-            items: order.items,
-            total: order.total,
-            deliveryMode: order.deliveryMode || false,
-            createdAt: order.createdAt
-        })
-    }
-
-    return result;
+    return saveOrders(orders);
 }
 
 export function updateOrder(orderId, updates) {
     const orders = getOrders();
     const index = orders.findIndex(o => o.id === orderId);
     if (index !== -1) {
-        const oldStatus = orders[index].status;
         orders[index] = { ...orders[index], ...updates };
-        const newStatus = orders[index].status;
-
-        // Demo webhook event: status_updated (only when status actually changes)
-        if (isInDemoMode() && updates.status && oldStatus !== newStatus) {
-            emitDemoEvent('order.status_updated', {
-                orderId,
-                orderNumber: orders[index].orderNumber,
-                oldStatus,
-                newStatus,
-                updatedAt: new Date().toISOString()
-            })
-        }
 
         // ============================================
         // ORDER LIFECYCLE V1: Auto-archive on entregado
         // ============================================
         if (updates.status === 'entregado') {
-            // Demo webhook event: order.completed (fires once on completion)
-            if (isInDemoMode()) {
-                emitDemoEvent('order.completed', {
-                    orderId,
-                    orderNumber: orders[index].orderNumber,
-                    items: orders[index].items,
-                    total: orders[index].total,
-                    paymentMethod: orders[index].paymentMethod,
-                    completedAt: new Date().toISOString()
-                })
-            }
 
             // 1. Archive the completed order
             const completedOrder = {

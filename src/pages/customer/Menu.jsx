@@ -7,7 +7,6 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
 import { getSession } from '../../utils/auth.js'
-import { isInDemoMode } from '../../utils/demoSession.js'
 import { useBusinessId } from '../../contexts/TenantContext.jsx'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
@@ -83,7 +82,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         }
         fetchSession()
     }, [])
-    const isOwnerMode = session?.role === 'owner' || session?.role === 'superadmin' || isInDemoMode()
+    const isOwnerMode = session?.role === 'owner' || session?.role === 'superadmin'
 
     // Edit mode state (owner only)
     const [isEditMode, setIsEditMode] = useState(false)

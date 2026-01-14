@@ -40,10 +40,6 @@ import DeliveryManager from './pages/owner/DeliveryManager.jsx'
 const SuperAdmin = lazy(() => import('./pages/admin/SuperAdmin.jsx'))
 import CoverPreview from './components/CoverPreview.jsx'
 
-// Demo Pages (Lazy-loaded)
-const DemoBackend = lazy(() => import('./pages/demo/DemoBackend.jsx'))
-import Demo from './pages/demo/Demo.jsx'
-
 // Auth Pages
 import TrialSignup from './pages/auth/TrialSignup.jsx'
 
@@ -66,7 +62,6 @@ const LazyFallback = () => (
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
 
-// Route Area Wrapper - Forces unmount when switching between role areas
 function RouteAreaWrapper({ children }) {
     const location = useLocation()
     const getRouteArea = () => {
@@ -74,7 +69,6 @@ function RouteAreaWrapper({ children }) {
         if (path.includes('/admin')) return 'admin'
         if (path.includes('/owner')) return 'owner'
         if (path.includes('/staff')) return 'staff'
-        if (path.includes('/demo')) return 'demo'
         return 'customer'
     }
     const routeArea = getRouteArea()
@@ -230,6 +224,19 @@ function App() {
         };
         loadCloudBranding();
     }, [businessId]);
+
+    // Metadata Injection: Set document title and favicon from tenant branding
+    useEffect(() => {
+        if (!tenantData) return;
+        document.title = tenantData.business_name || 'FoodSpot';
+        let favicon = document.querySelector("link[rel~='icon']");
+        if (!favicon) {
+            favicon = document.createElement('link');
+            favicon.rel = 'icon';
+            document.head.appendChild(favicon);
+        }
+        favicon.href = tenantData.logo_url || '/favicon.ico';
+    }, [tenantData?.business_name, tenantData?.logo_url]);
 
     useEffect(() => {
         if ('serviceWorker' in navigator) {
@@ -446,14 +453,7 @@ function App() {
                         <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
                         <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
 
-                        <Route path="/demo" element={<Demo />} />
-                        <Route path="/demo/menu" element={<MenuManager config={safeConfig} demoMode={true} />} />
-                        <Route path="/demo/branding" element={<Settings config={safeConfig} demoMode={true} />} />
-                        <Route path="/demo/orders" element={<DeliveryManager config={safeConfig} demoMode={true} />} />
-                        <Route path="/demo/analytics" element={<Analytics demoMode={true} />} />
-                        <Route path="/demo/new" element={<Demo />} />
-                        <Route path="/demo/backend/dashboard" element={<Suspense fallback={<LazyFallback />}><DemoBackend /></Suspense>} />
-                        <Route path="/demo/backend" element={<Navigate to="/demo/backend/dashboard" replace />} />
+
 
                         <Route path="/admin" element={<Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense>} />
                         <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
@@ -465,7 +465,7 @@ function App() {
                 {(() => {
                     const p = location.pathname;
                     const isBackendRoute = p.includes('/owner') || p.includes('/staff') || p.includes('/admin');
-                    const isGlobalRoute = p === '/' || p.includes('start-trial') || p.includes('/login') || p.includes('/demo');
+                    const isGlobalRoute = p === '/' || p.includes('start-trial') || p.includes('/login');
                     if (isBackendRoute) return <BackendNav role="owner" useRoutes={true} />;
                     if (!isGlobalRoute) return <BottomNav config={safeConfig} />;
                     return null;

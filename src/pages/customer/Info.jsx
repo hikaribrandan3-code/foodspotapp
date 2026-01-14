@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
 const WhatsAppIcon = () => (
@@ -38,6 +38,7 @@ const MapIcon = () => (
 
 function Info({ config }) {
     const navigate = useNavigate()
+    const { tenantSlug } = useParams()
 
     // INVARIANT: config prop is ALREADY normalized and includes demo branding
     // DO NOT merge demo branding here - it bypasses normalizeConfig()
@@ -204,7 +205,7 @@ function Info({ config }) {
             )}
 
             <button
-                onClick={() => navigate('/staff')}
+                onClick={() => navigate(`/${tenantSlug}/owner`)}
                 style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -227,33 +228,7 @@ function Info({ config }) {
                 Acceso administrador
             </button>
 
-            {/* Demo Mode Entry Button - Entry point to demo (simplified) */}
-            <button
-                onClick={() => {
-                    import('../../utils/demoSession.js').then(({ createDemoSession }) => {
-                        createDemoSession()
-                        navigate('/demo')
-                    })
-                }}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    padding: '12px 24px',
-                    backgroundColor: getPillStyle('demo').backgroundColor,
-                    color: getPillStyle('demo').color,
-                    borderRadius: 28,
-                    border: 'none',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    marginBottom: 12,
-                    boxSizing: 'border-box'
-                }}
-            >
-                DEMO
-            </button>
+
 
             {/* Super Admin Escape Button - NAVIGATION ONLY */}
             <button
