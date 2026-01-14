@@ -65,11 +65,22 @@ export function TenantProvider({ children }) {
 
                 // 2. FETCH TENANT FROM SUPABASE (with 1 retry after 1 second)
                 const fetchTenant = async (retryCount = 0) => {
-                    const { data: tenant, error: fetchError } = await supabase
+                    // Try fetch by slug first
+                    let { data: tenant, error: fetchError } = await supabase
                         .from('branding')
                         .select('user_id, business_name, slug, is_paid, trial_ends_at, primary_color')
                         .eq('slug', slug)
-                        .maybeSingle() // 🛡️ Prevents 406 errors - returns null instead of throwing
+                        .maybeSingle()
+
+                    // 🔄 FALLBACK: If no slug match, try business_name (case-insensitive)
+                    if (!tenant) {
+                        const { data: tenantByName } = await supabase
+                            .from('branding')
+                            .select('user_id, business_name, slug, is_paid, trial_ends_at, primary_color')
+                            .ilike('business_name', slug)
+                            .maybeSingle()
+                        tenant = tenantByName
+                    }
 
                     if (fetchError || !tenant) {
                         if (retryCount < 1) {
