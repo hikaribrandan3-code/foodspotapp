@@ -260,7 +260,29 @@ function App() {
         return <TrialSignup />
     }
 
-    const { businessId, tenantData, trialExpired } = useTenant()
+    const tenant = useTenant();
+
+    /**
+     * 🛡️ THE HYDRATION SHIELD
+     * This prevents the "null destructuring" crash (f[v] error).
+     * If the Tenant handshake is pending, we render a branded loader
+     * instead of letting the app hit illegal null states.
+     */
+    if (!tenant) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-black">
+                <div className="flex flex-col items-center gap-4">
+                    {/* Replaces white screen with professional brand loader */}
+                    <div className="w-10 h-10 border-4 border-[#DB0007] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-white text-xs font-mono uppercase tracking-widest animate-pulse">
+                        Hydrating Silo...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    const { businessId, tenantData, trialExpired } = tenant;
 
     const [config, setConfig] = useState(() => getConfig())
     const [orders, setOrders] = useState([])
