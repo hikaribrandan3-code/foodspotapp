@@ -913,10 +913,19 @@ function App() {
                     </Routes>
                 </RouteAreaWrapper>
 
-                {/* Bottom Navigation (hidden on signup pages) */}
-                {window.location.pathname !== '/' && window.location.pathname !== '/start-trial' && (
-                    <BottomNav config={safeConfig} />
-                )}
+                {/* Bottom Navigation - ONLY for customer-facing pages */}
+                {/* Hide on: /, /start-trial, /login*, /owner*, /staff*, /admin* */}
+                {(() => {
+                    const p = window.location.pathname
+                    const isCustomerRoute =
+                        p !== '/' &&
+                        !p.includes('start-trial') &&
+                        !p.includes('/login') &&
+                        !p.includes('/owner') &&
+                        !p.includes('/staff') &&
+                        !p.includes('/admin')
+                    return isCustomerRoute ? <BottomNav config={safeConfig} /> : null
+                })()}
 
                 {/* ============================================
                     RULE 1: PERSISTENT ADMIN BADGE (GLOBAL OVERLAY)

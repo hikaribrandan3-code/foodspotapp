@@ -112,10 +112,10 @@ function BackendHeader({
         reader.readAsDataURL(file)
     }
 
-    // 🏢 SILO-AWARE: Open customer store in new tab
+    // 🏢 SILO-AWARE: Navigate to customer store (same tab)
     const handleViewStore = () => {
         if (tenantSlug) {
-            window.open(`/${tenantSlug}`, '_blank')
+            navigate(`/${tenantSlug}`)
         }
     }
 
