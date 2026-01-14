@@ -325,6 +325,10 @@ function App() {
 
     // Fetch branding from Supabase on mount
     useEffect(() => {
+        // 🚫 SIGNUP ISOLATION: Skip branding fetch on trial signup page
+        if (window.location.pathname === '/' || window.location.pathname === '/start-trial') return
+        if (!businessId) return
+
         const loadCloudBranding = async () => {
             try {
                 const { data: cloudBranding, error } = await getBranding(businessId)
@@ -659,11 +663,13 @@ function App() {
     // REPLACES 2000ms polling with Supabase Realtime
     // ============================================
     useEffect(() => {
+        // 🚫 SIGNUP ISOLATION: Skip realtime subscription on trial signup page
+        if (window.location.pathname === '/' || window.location.pathname === '/start-trial') return
+        if (!businessId) return
+
         let realtimeChannel = null
 
         const initCloudSync = async () => {
-            // 🏢 PHASE 3: Using dynamic businessId from TenantContext
-            // (businessId is available from useTenant() at component level)
 
             // 1. GUEST HANDSHAKE: Check for guest token (Valet Ticket)
             const guestToken = localStorage.getItem('fs_guest_token')
@@ -874,8 +880,10 @@ function App() {
                     </Routes>
                 </RouteAreaWrapper>
 
-                {/* Bottom Navigation (visible on main customer pages) */}
-                <BottomNav config={safeConfig} />
+                {/* Bottom Navigation (hidden on signup pages) */}
+                {window.location.pathname !== '/' && window.location.pathname !== '/start-trial' && (
+                    <BottomNav config={safeConfig} />
+                )}
 
                 {/* ============================================
                     RULE 1: PERSISTENT ADMIN BADGE (GLOBAL OVERLAY)
