@@ -616,12 +616,15 @@ function App() {
     // INVARIANT: setConfig must NEVER receive undefined (atomic replacement only)
     // 🛡️ SUPABASE: Now fetches branding from cloud (SINGLE SOURCE OF TRUTH)
     const refreshConfig = useCallback(async () => {
+        // 🚨 ABSOLUTE GUARD: Skip on signup routes
+        if (window.location.pathname === '/' || window.location.pathname.includes('start-trial')) return
+        if (!businessId) return
+
         // 1. Get local config (for non-branding fields like menu, orders)
         const localConfig = getConfig()
 
         // 2. Fetch branding from Supabase (cloud wins)
         try {
-            // 🏢 PHASE 3: Using dynamic businessId from TenantContext
             const { data: cloudBranding } = await getBranding(businessId)
 
             if (cloudBranding) {
