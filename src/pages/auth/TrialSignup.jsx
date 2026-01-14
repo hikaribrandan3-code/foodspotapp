@@ -86,12 +86,14 @@ function TrialSignup() {
             const { error: siloError } = await supabase
                 .from('branding')
                 .insert({
+                    id: userId,
                     business_id: userId,
+                    owner_id: userId,
                     business_name: businessName,
                     slug: slug,
                     is_paid: false,
                     trial_ends_at: trialEndsAt.toISOString(),
-                    primary_color: '#8B7355', // Default warm brown
+                    primary_color: '#8B7355',
                     created_at: new Date().toISOString()
                 })
 
