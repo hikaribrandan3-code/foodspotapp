@@ -63,23 +63,33 @@ export function TenantProvider({ children }) {
                 // First segment is the tenant slug
                 const slug = pathSegments[0]
 
-                // 2. FETCH TENANT FROM SUPABASE
-                const { data: tenant, error: fetchError } = await supabase
-                    .from('branding')
-                    .select('business_id, business_name, slug, is_paid, trial_ends_at, primary_color')
-                    .eq('slug', slug)
-                    .single()
+                // 2. FETCH TENANT FROM SUPABASE (with 1 retry after 1 second)
+                const fetchTenant = async (retryCount = 0) => {
+                    const { data: tenant, error: fetchError } = await supabase
+                        .from('branding')
+                        .select('user_id, business_name, slug, is_paid, trial_ends_at, primary_color')
+                        .eq('slug', slug)
+                        .single()
 
-                if (fetchError || !tenant) {
-                    // Tenant not found - show error
-                    throw new Error(`[TENANT ERROR] Tenant "${slug}" not found in database`)
-                } else {
-                    // Success: Tenant found
-                    setBusinessId(tenant.business_id)
-                    setTenantStoragePrefix(tenant.business_id) // 🏢 Scope localStorage
-                    setTenantData(tenant)
-                    checkTrialStatus(tenant)
+                    if (fetchError || !tenant) {
+                        if (retryCount < 1) {
+                            // 🔄 RETRY: Wait 1 second and try again (handles race conditions)
+                            console.log(`[TenantContext] Tenant "${slug}" not found, retrying in 1s...`)
+                            await new Promise(resolve => setTimeout(resolve, 1000))
+                            return fetchTenant(retryCount + 1)
+                        }
+                        throw new Error(`[TENANT ERROR] Tenant "${slug}" not found in database`)
+                    }
+                    return tenant
                 }
+
+                const tenant = await fetchTenant()
+
+                // Success: Tenant found
+                setBusinessId(tenant.user_id) // Use user_id as business_id
+                setTenantStoragePrefix(tenant.user_id)
+                setTenantData(tenant)
+                checkTrialStatus(tenant)
             } catch (err) {
                 console.error('[TenantContext] Error resolving tenant:', err)
                 setError(err.message)
