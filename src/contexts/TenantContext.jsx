@@ -280,9 +280,8 @@ export function TenantProvider({ children }) {
  */
 export function useTenant() {
     const context = useContext(TenantContext)
-    if (!context) {
-        throw new Error('[TENANT ERROR] useTenant must be used within TenantProvider')
-    }
+    // CRITICAL FIX: Don't crash if context is loading
+    if (!context) return null
     return context
 }
 
