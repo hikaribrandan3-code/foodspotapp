@@ -5,7 +5,7 @@ import { incrementVisit, updateOrder, getOrders } from './utils/storage.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
 import { useTenant } from './contexts/TenantContext.jsx'
-import { getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
+import { supabase, getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
 
 // Components
 import BottomNav from './components/BottomNav.jsx'
