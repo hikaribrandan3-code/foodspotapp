@@ -9,6 +9,8 @@
  * 3. INSERT branding row with 14-day trial
  * 4. Initialize tenant storage
  * 5. Redirect to owner dashboard
+ * 
+ * DEPLOY: Saturday Lockdown v1.0
  */
 
 import { useState, useEffect } from 'react'
