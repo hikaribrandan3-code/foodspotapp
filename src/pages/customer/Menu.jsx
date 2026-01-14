@@ -27,24 +27,45 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
     const businessId = useBusinessId()
     const [menu, setMenu] = useState({ categories: [] })
+    const [isLoading, setIsLoading] = useState(true);
     const [cart, setCart] = useState(() => getCurrentOrder())
     const [addedItem, setAddedItem] = useState(null)
     const categoryRefs = useRef({})
 
-    // Cloud-first menu loading (Supabase is source of truth)
     useEffect(() => {
-        const loadCloudMenu = async () => {
-            try {
-                const { data: cloudMenu, error } = await getMenuCloud(businessId)
-                if (!error && cloudMenu?.categories?.length) {
-                    setMenu(cloudMenu)
+        let isMounted = true;
+
+        // 1. HANDSHAKE VERIFICATION
+        if (!businessId) {
+            // FAIL-SAFE: If handshake takes > 2s, nuke and redirect Home.
+            const timeout = setTimeout(() => {
+                if (isMounted) {
+                    navigate('/');
                 }
-            } catch {
-                // Cloud failed - menu stays empty
-            }
+            }, 2000);
+            return () => clearTimeout(timeout);
         }
-        loadCloudMenu()
-    }, [businessId])
+
+        // 2. DATA LOAD
+        const fetchMenu = async () => {
+            try {
+                // Ensure the call is scoped to the verified businessId silo
+                const { data, error } = await getMenuCloud(businessId);
+                if (isMounted) {
+                    if (data) setMenu(data);
+                    setIsLoading(false);
+                }
+            } catch (err) {
+                console.error("Critical Backend Error:", err);
+                if (isMounted) setIsLoading(false);
+            }
+        };
+
+        fetchMenu();
+
+        // 3. TEARDOWN
+        return () => { isMounted = false; };
+    }, [businessId, navigate]);
 
     // Use dividerPresetId from normalized config
     const effectiveDividerPresetId = config?.dividerPresetId
@@ -559,6 +580,21 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
         // DO NOT use 'index' here - that caused the identity crisis
         const stableIndex = getStableIndex(item.id)
         return placeholderImages[stableIndex % placeholderImages.length]
+    }
+
+    // 3. CRASH PROTECTION: This gate prevents the white screen
+    if (!businessId || isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-[#000000]">
+                <div className="text-center">
+                    {/* Professional Loader: Replaces the White Screen */}
+                    <div className="w-10 h-10 border-4 border-[#DB0007] border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
+                    <p className="text-white uppercase tracking-tighter font-bold animate-pulse">
+                        Configuring Store Silo...
+                    </p>
+                </div>
+            </div>
+        );
     }
 
     return (

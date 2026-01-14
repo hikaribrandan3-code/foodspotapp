@@ -292,9 +292,12 @@ export function useTenant() {
  * Returns just the businessId string for simpler use cases.
  */
 export function useBusinessId() {
-    const { businessId } = useTenant()
-    if (!businessId) {
-        throw new Error('[SILO VIOLATION] businessId not available - TenantProvider may still be loading')
-    }
-    return businessId
+    const context = useContext(TenantContext);
+
+    // Instead of throwing a terminal Error, we return null.
+    // This allows components to remain in a 'Pending' state rather than 
+    // crashing the entire Silicon thread.
+    if (!context) return null;
+
+    return context.businessId;
 }
