@@ -104,8 +104,10 @@ function TrialSignup() {
             // 3. INITIALIZE TENANT STORAGE
             setTenantStoragePrefix(userId)
 
-            // 4. INSTANT REDIRECT TO OWNER DASHBOARD - ALWAYS EXECUTE
-            navigate(`/${slug}/owner`, { replace: true })
+            // 4. HARD TELEPORT TO OWNER DASHBOARD
+            // Using window.location.href to force full page refresh and clear loading state
+            setLoading(false)
+            window.location.href = `/${slug}/owner`
 
         } catch (err) {
             console.error('[TRIAL] Signup error:', err)
