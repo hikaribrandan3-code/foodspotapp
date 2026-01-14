@@ -27,17 +27,19 @@ function OwnerLogin() {
 
             if (authError) throw authError
 
-            // Get role from user metadata
-            const role = data.user?.user_metadata?.role || 'owner'
+            // Extract identity from user metadata
+            const metadata = data.user?.user_metadata || {}
+            const role = metadata.role || 'owner'
+            const slug = metadata.slug || metadata.business_name || 'default'
 
-            // Navigate based on role
+            // Navigate based on role (with tenant slug for silo isolation)
             if (role === 'superadmin') {
                 navigate('/admin')
             } else if (role === 'owner') {
-                navigate('/owner/summary')
+                navigate(`/${slug}/owner/summary`)
             } else {
-                // Fallback for staff (shouldn't use this login page)
-                navigate('/staff/dashboard')
+                // Staff fallback (shouldn't use this login page)
+                navigate(`/${slug}/staff/dashboard`)
             }
         } catch (err) {
             console.error('Login error:', err)

@@ -46,7 +46,8 @@ function ProtectedRoute({ children, requiredRole }) {
         isLoading: true,
         session: null,
         role: null,
-        businessId: null
+        businessId: null,
+        slug: null
     })
 
     // 🛡️ SUPABASE DIRECT: Fetch session from Supabase auth
@@ -70,18 +71,20 @@ function ProtectedRoute({ children, requiredRole }) {
                     return
                 }
 
-                // 🔐 EXTRACT METADATA: Role and Business ID from Supabase
+                // 🔐 EXTRACT METADATA: Role, Business ID, and Slug from Supabase
                 const user = session.user
                 const metadata = user?.user_metadata || {}
                 const role = metadata.role || null
                 const businessId = metadata.business_id || null
+                const slug = metadata.slug || metadata.business_name || null
 
                 if (isMounted) {
                     setAuthState({
                         isLoading: false,
                         session,
                         role,
-                        businessId
+                        businessId,
+                        slug
                     })
                 }
             } catch {
@@ -108,14 +111,16 @@ function ProtectedRoute({ children, requiredRole }) {
                     isLoading: false,
                     session,
                     role: metadata.role || null,
-                    businessId: metadata.business_id || null
+                    businessId: metadata.business_id || null,
+                    slug: metadata.slug || metadata.business_name || null
                 })
             } else {
                 setAuthState({
                     isLoading: false,
                     session: null,
                     role: null,
-                    businessId: null
+                    businessId: null,
+                    slug: null
                 })
             }
         })
@@ -126,7 +131,7 @@ function ProtectedRoute({ children, requiredRole }) {
         }
     }, [])
 
-    const { isLoading, session, role, businessId: userBusinessId } = authState
+    const { isLoading, session, role, businessId: userBusinessId, slug: userSlug } = authState
     const currentSlug = tenantSlug || tenantData?.slug || ''
 
     // ============================================
@@ -172,12 +177,11 @@ function ProtectedRoute({ children, requiredRole }) {
     // ============================================
     // STATE 3: SILO GUARD (Multi-Tenant Isolation)
     // ============================================
-    // 🛡️ CRITICAL: If no business_id in metadata, user is "orphaned"
-    // They cannot access any protected route until assigned to a business
-    // This is a NON-NEGOTIABLE security invariant for multi-tenancy
-    if (!userBusinessId) {
-        console.error('[SILO GUARD] User has no business_id in metadata:', session.user?.email)
-        // Redirect to root with error state (could show a "Contact Admin" page)
+    // 🛡️ User must have either business_id OR slug in metadata
+    // New trial users have slug but not business_id (auto-seed creates it)
+    const hasTenantIdentity = userBusinessId || userSlug
+    if (!hasTenantIdentity) {
+        console.error('[SILO GUARD] User has no tenant identity in metadata:', session.user?.email)
         return <Navigate to="/" replace state={{ siloError: true }} />
     }
 
@@ -185,19 +189,25 @@ function ProtectedRoute({ children, requiredRole }) {
     // STATE 3.5: URL SILO GUARD (Cross-Tenant Jump Prevention)
     // ============================================
     // 🛡️ CRITICAL: Prevent user from accessing a different tenant's routes
-    // Compare user's business_id from metadata against URL's businessId
+    // Compare user's slug against URL's tenantSlug (primary check for new users)
     // SuperAdmins bypass this check (they can view any tenant)
     const userRole = role
-    if (userRole !== 'superadmin' && urlBusinessId && userBusinessId !== urlBusinessId) {
-        console.warn('[SILO JUMP BLOCKED] User attempted cross-tenant access:', {
-            userBusinessId,
-            urlBusinessId,
-            email: session.user?.email
-        })
-        // Redirect them to their own tenant's dashboard
-        // We need to look up their tenant's slug from their businessId
-        // For now, redirect to root and let TenantContext figure it out
-        return <Navigate to="/" replace state={{ siloJump: true }} />
+    if (userRole !== 'superadmin' && currentSlug) {
+        // Check slug match (works for new trial users with only slug in metadata)
+        const slugMatch = userSlug && userSlug.toLowerCase() === currentSlug.toLowerCase()
+        // Check business_id match (works for established users with full branding)
+        const businessMatch = userBusinessId && urlBusinessId && userBusinessId === urlBusinessId
+
+        if (!slugMatch && !businessMatch) {
+            console.warn('[SILO JUMP BLOCKED] User attempted cross-tenant access:', {
+                userSlug,
+                userBusinessId,
+                urlSlug: currentSlug,
+                urlBusinessId,
+                email: session.user?.email
+            })
+            return <Navigate to="/" replace state={{ siloJump: true }} />
+        }
     }
 
     // ============================================

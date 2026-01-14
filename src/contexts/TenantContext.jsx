@@ -89,6 +89,47 @@ export function TenantProvider({ children }) {
                             await new Promise(resolve => setTimeout(resolve, 1000))
                             return fetchTenant(retryCount + 1)
                         }
+
+                        // 🌱 AUTO-SEED: Check if authenticated user's metadata matches URL slug
+                        console.log(`[TenantContext] No branding found for "${slug}", attempting auto-seed...`)
+                        const { data: { session } } = await supabase.auth.getSession()
+
+                        if (session?.user) {
+                            const userMeta = session.user.user_metadata || {}
+                            const userSlug = userMeta.slug || userMeta.business_name
+
+                            // 🛡️ SECURITY: Only auto-seed if user's metadata slug matches URL slug
+                            if (userSlug && userSlug.toLowerCase() === slug.toLowerCase()) {
+                                console.log(`[TenantContext] ✅ Auth match! Auto-seeding branding for "${slug}"`)
+
+                                // Calculate trial end date (7 days from now)
+                                const trialEndsAt = new Date()
+                                trialEndsAt.setDate(trialEndsAt.getDate() + 7)
+
+                                // INSERT new branding row
+                                const { data: newTenant, error: insertError } = await supabase
+                                    .from('branding')
+                                    .insert({
+                                        business_name: userMeta.business_name || slug,
+                                        slug: userSlug,
+                                        business_id: session.user.id, // 🔐 SILO-CORRECT: Primary isolation column
+                                        trial_ends_at: trialEndsAt.toISOString(),
+                                        is_paid: false
+                                    })
+                                    .select('*')
+                                    .single()
+
+                                if (!insertError && newTenant) {
+                                    console.log(`[TenantContext] 🚀 Auto-seed successful:`, newTenant)
+                                    return newTenant
+                                } else {
+                                    console.error(`[TenantContext] Auto-seed INSERT failed:`, insertError)
+                                }
+                            } else {
+                                console.warn(`[TenantContext] Auth slug mismatch: user="${userSlug}" vs url="${slug}"`)
+                            }
+                        }
+
                         throw new Error(`[TENANT ERROR] Tenant "${slug}" not found in database`)
                     }
                     return tenant
