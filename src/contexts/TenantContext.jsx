@@ -140,8 +140,39 @@ export function TenantProvider({ children }) {
         )
     }
 
-    // ❌ ERROR STATE (suppressed on signup routes)
-    if (error && window.location.pathname !== '/' && window.location.pathname !== '/start-trial') {
+    // ❌ ERROR STATE (suppressed on signup routes + show setup spinner for owner routes)
+    if (error && window.location.pathname !== '/' && !window.location.pathname.includes('start-trial')) {
+        // 🚀 AUTO-ENTRY: If user is on /owner route, show setup spinner instead of error
+        if (window.location.pathname.includes('/owner')) {
+            return (
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100vh',
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                    color: '#fff',
+                    fontFamily: 'Inter, system-ui, sans-serif'
+                }}>
+                    <div style={{
+                        width: '48px',
+                        height: '48px',
+                        border: '4px solid rgba(255,255,255,0.1)',
+                        borderTop: '4px solid #fff',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                    <p style={{ marginTop: '16px', opacity: 0.7 }}>Configurando tu espacio...</p>
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
+            )
+        }
         return (
             <div style={{
                 display: 'flex',
