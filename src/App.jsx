@@ -251,10 +251,12 @@ function App() {
         )
     }
 
-    // 🚨 NUCLEAR BYPASS: Kill entire engine for signup routes
-    // These routes don't need TenantContext
-    const isSignupRoute = path === '/' || path.includes('start-trial')
-    if (isSignupRoute) {
+    // 🚨 NUCLEAR BYPASS: Trial Signup for unauthenticated guests ONLY
+    // Strict path matching: ONLY / and /start-trial (not tenant-scoped paths)
+    // Check: path must be exactly root OR contain start-trial
+    // AND path must NOT be a tenant-scoped path (e.g., /krappypatty, /krappypatty/owner)
+    const isStrictSignupRoute = (path === '/' || path === '/start-trial') && !path.includes('/owner') && !path.includes('/staff')
+    if (isStrictSignupRoute) {
         return <TrialSignup />
     }
 
@@ -913,18 +915,27 @@ function App() {
                     </Routes>
                 </RouteAreaWrapper>
 
-                {/* Bottom Navigation - ONLY for customer-facing pages */}
-                {/* Hide on: /, /start-trial, /login*, /owner*, /staff*, /admin* */}
+                {/* ============================================
+                    NAVIGATION ISOLATION
+                    - Customer BottomNav: ONLY for /{tenantSlug}/* customer routes
+                    - Backend BackendNav: ONLY for /owner, /staff paths
+                    ============================================ */}
                 {(() => {
                     const p = window.location.pathname
-                    const isCustomerRoute =
-                        p !== '/' &&
-                        !p.includes('start-trial') &&
-                        !p.includes('/login') &&
-                        !p.includes('/owner') &&
-                        !p.includes('/staff') &&
-                        !p.includes('/admin')
-                    return isCustomerRoute ? <BottomNav config={safeConfig} /> : null
+                    const isBackendRoute = p.includes('/owner') || p.includes('/staff') || p.includes('/admin')
+                    const isGlobalRoute = p === '/' || p.includes('start-trial') || p.includes('/login') || p.includes('/demo')
+
+                    // Backend routes: Show BackendNav
+                    if (isBackendRoute) {
+                        return <BackendNav role="owner" useRoutes={true} />
+                    }
+
+                    // Customer routes: Show BottomNav
+                    if (!isGlobalRoute) {
+                        return <BottomNav config={safeConfig} />
+                    }
+
+                    return null
                 })()}
 
                 {/* ============================================

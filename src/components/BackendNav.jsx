@@ -183,12 +183,24 @@ function BackendNav({
 }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Extract tenant from URL
+    const params = useParams()
     const lastTapRef = useRef(0)
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
+    // 🏢 SILO-AWARE: Extract tenant from URL
+    // Fallback: extract from pathname if useParams doesn't return it
+    const tenantSlug = params.tenantSlug || (() => {
+        const segments = location.pathname.split('/').filter(Boolean)
+        // If path is /{tenantSlug}/owner/... or /{tenantSlug}/staff/...
+        if (segments.length >= 2 && (segments[1] === 'owner' || segments[1] === 'staff')) {
+            return segments[0]
+        }
+        return null
+    })()
+
     // Generate route maps dynamically based on current tenant
-    const ROUTE_MAPS = getRouteMaps(tenantSlug || 'default')
+    // If no tenantSlug, routes will be null (prevents bad navigation)
+    const ROUTE_MAPS = tenantSlug ? getRouteMaps(tenantSlug) : null
 
     // Check reduced motion preference
     useEffect(() => {
