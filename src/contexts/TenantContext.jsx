@@ -274,29 +274,34 @@ export function TenantProvider({ children }) {
 }
 
 /**
- * useTenant Hook
- * 
- * Returns full tenant context: { businessId, tenantData, trialExpired, loading }
+ * useTenant Hook - Hardened
+ * returns the full tenant object or null during bootstrap
  */
 export function useTenant() {
-    const context = useContext(TenantContext)
-    // CRITICAL FIX: Don't crash if context is loading
-    if (!context) return null
-    return context
+    const context = useContext(TenantContext);
+
+    // 🔥 THE FIX: Stop thread death. 
+    // If context is null (initialization phase), return null.
+    if (!context) {
+        return null;
+    }
+
+    return context;
 }
 
 /**
- * useBusinessId Hook (Shortcut)
- * 
- * Returns just the businessId string for simpler use cases.
+ * useBusinessId Hook - Hardened
+ * returns the active business UUID or null during bootstrap
  */
 export function useBusinessId() {
     const context = useContext(TenantContext);
 
-    // Instead of throwing a terminal Error, we return null.
-    // This allows components to remain in a 'Pending' state rather than 
-    // crashing the entire Silicon thread.
-    if (!context) return null;
+    // 🔥 THE FIX: Stop the "TypeError: null is not an object" crash.
+    // If context is still initializing, return null so Menu.jsx/Order.jsx can wait.
+    if (!context) {
+        return null;
+    }
 
+    // Safe to access property now
     return context.businessId;
 }
