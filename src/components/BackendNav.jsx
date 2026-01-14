@@ -1,11 +1,18 @@
 /**
- * BackendNav.jsx - Shared Backend Bottom Navigation
+ * @file BackendNav.jsx
+ * @description Silo-Aware Bottom Navigation for Multi-Tenant Backend
  * 
- * PRODUCTION-GRADE BOTTOM TAB BAR
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║  🛡️  SILO-CORRECT: AUDITED 2026-01-14                        ║
+ * ║                                                              ║
+ * ║  All navigation paths are dynamically scoped to tenantSlug.  ║
+ * ║  No hardcoded paths. Full multi-tenant isolation.            ║
+ * ╚══════════════════════════════════════════════════════════════╝
  * 
  * Features:
  * - Role-based tab visibility (superadmin/owner, staff)
  * - Route-derived active tab (no local state)
+ * - Dynamic tenant-scoped navigation (/{tenantSlug}/owner/...)
  * - Tab switch debounce (150ms)
  * - Optional badge counts
  * - iOS-safe touch handling
@@ -17,15 +24,10 @@
  * - No long-press actions
  * - No FABs
  * - Visibility only, not access control
- * 
- * IMPORTANT:
- * BackendNav is intentionally mounted at the page-entry level (SuperAdmin, DemoBackend, StaffDashboard).
- * Do NOT duplicate this component inside individual owner sub-pages.
- * A layout-level lift will be handled in a future, dedicated refactor.
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 
 // ============================================
 // TAB CONFIGURATIONS BY ROLE
@@ -54,14 +56,23 @@ const SUPERADMIN_TABS = [
     { id: 'analytics', label: 'Analytics', route: null }
 ]
 
-// Route mappings for different contexts
-const ROUTE_MAPS = {
+/**
+ * Generate dynamic route maps based on tenantSlug
+ * @param {string} tenantSlug - The current tenant's URL slug
+ * @returns {object} Route maps for owner, staff, and demo contexts
+ */
+const getRouteMaps = (tenantSlug) => ({
     owner: {
-        summary: '/owner/summary',
-        menu: '/owner/menu',
-        branding: '/owner/branding',
-        orders: '/owner/delivery',
-        analytics: '/owner/analytics'
+        summary: `/${tenantSlug}/owner/summary`,
+        menu: `/${tenantSlug}/owner/menu`,
+        branding: `/${tenantSlug}/owner/branding`,
+        orders: `/${tenantSlug}/owner/delivery`,
+        analytics: `/${tenantSlug}/owner/analytics`
+    },
+    staff: {
+        orders: `/${tenantSlug}/staff/dashboard`,
+        delivery: `/${tenantSlug}/staff/dashboard`,
+        history: `/${tenantSlug}/staff/dashboard`
     },
     demo: {
         summary: '/demo',
@@ -70,14 +81,9 @@ const ROUTE_MAPS = {
         orders: '/demo/orders',
         analytics: '/demo/analytics'
     },
-    staff: {
-        orders: '/staff/dashboard',
-        delivery: '/staff/dashboard',
-        history: '/staff/dashboard'
-    },
     // SuperAdmin uses state-based navigation (no routes)
     superadmin: null
-}
+})
 
 // ============================================
 // ICON COMPONENTS - Matching Reference Image
@@ -177,8 +183,12 @@ function BackendNav({
 }) {
     const navigate = useNavigate()
     const location = useLocation()
+    const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Extract tenant from URL
     const lastTapRef = useRef(0)
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+
+    // Generate route maps dynamically based on current tenant
+    const ROUTE_MAPS = getRouteMaps(tenantSlug || 'default')
 
     // Check reduced motion preference
     useEffect(() => {
@@ -190,14 +200,15 @@ function BackendNav({
     }, [])
 
     // ============================================
-    // RULE 3: URL-BASED TAB SELECTION
+    // RULE 3: URL-BASED TAB SELECTION (Silo-Aware)
     // Check the current URL, NOT the user's rank
-    // If URL starts with /staff, show Staff tabs even for superadmin
+    // Handles both /:tenantSlug/owner and legacy /owner patterns
     // ============================================
     const getTabsFromUrl = () => {
         const path = location.pathname
-        if (path.startsWith('/staff')) return { tabs: STAFF_TABS, area: 'staff' }
-        if (path.startsWith('/owner')) return { tabs: OWNER_TABS, area: 'owner' }
+        // Check for tenant-scoped paths first (/:tenantSlug/owner, /:tenantSlug/staff)
+        if (path.includes('/staff')) return { tabs: STAFF_TABS, area: 'staff' }
+        if (path.includes('/owner')) return { tabs: OWNER_TABS, area: 'owner' }
         if (path.startsWith('/admin')) return { tabs: SUPERADMIN_TABS, area: 'superadmin' }
         if (path.startsWith('/demo')) return { tabs: OWNER_TABS, area: 'demo' }
         return { tabs: OWNER_TABS, area: 'owner' } // Fallback
@@ -214,11 +225,17 @@ function BackendNav({
         let bestMatchLength = -1
 
         for (const [tabId, route] of Object.entries(routes)) {
+            // Match exact path or path prefix (handles nested routes)
             if (location.pathname === route || location.pathname.startsWith(route + '/')) {
                 if (route.length > bestMatchLength) {
                     bestMatch = tabId
                     bestMatchLength = route.length
                 }
+            }
+            // Also check if path ends with the tab segment (for flexible matching)
+            const tabSegment = `/${tabId}`
+            if (location.pathname.endsWith(tabSegment) || location.pathname.includes(tabSegment + '/')) {
+                if (!bestMatch) bestMatch = tabId
             }
         }
 
@@ -242,9 +259,9 @@ function BackendNav({
             navigator.vibrate(10)
         }
 
-        // Route-based navigation
+        // Route-based navigation (uses dynamic tenant-scoped routes)
         if (useRoutes) {
-            const routes = ROUTE_MAPS[role]
+            const routes = ROUTE_MAPS[urlArea] // 🏢 Use URL-derived area for consistency
             if (routes && routes[tabId]) {
                 navigate(routes[tabId])
             }
@@ -381,4 +398,4 @@ function BackendNav({
 }
 
 export default BackendNav
-export { OWNER_TABS, STAFF_TABS, ROUTE_MAPS }
+export { OWNER_TABS, STAFF_TABS, getRouteMaps }

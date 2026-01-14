@@ -363,7 +363,7 @@ function TrialSignup() {
             }}>
                 ¿Ya tenés cuenta?{' '}
                 <a
-                    href="/login"
+                    href="/login/owner"
                     style={{ color: '#8B7355', textDecoration: 'none', fontWeight: 500 }}
                 >
                     Iniciá sesión

@@ -74,13 +74,14 @@ import Camera from './components/Camera/index.jsx'
 function RouteAreaWrapper({ children }) {
     const location = useLocation()
 
-    // Derive area from first path segment
+    // Derive area from path segments (handles tenant-scoped URLs)
     const getRouteArea = () => {
         const path = location.pathname
-        if (path.startsWith('/admin')) return 'admin'
-        if (path.startsWith('/owner')) return 'owner'
-        if (path.startsWith('/staff')) return 'staff'
-        if (path.startsWith('/demo')) return 'demo'
+        // Check for tenant-scoped patterns: /:tenantSlug/owner, /:tenantSlug/staff
+        if (path.includes('/admin')) return 'admin'
+        if (path.includes('/owner')) return 'owner'
+        if (path.includes('/staff')) return 'staff'
+        if (path.includes('/demo')) return 'demo'
         return 'customer' // Default for / and other customer routes
     }
 
@@ -239,11 +240,21 @@ function StackedAdminBadge() {
 
 
 function App() {
+    // 🚨 ABSOLUTE INTERCEPTOR: Force Owner Login on /login paths
+    // This MUST be at the TOP before any hooks or other logic
+    const path = window.location.pathname
+    if (path === '/login/owner' || path === '/login') {
+        return (
+            <Routes>
+                <Route path="*" element={<OwnerLogin />} />
+            </Routes>
+        )
+    }
+
     // 🚨 NUCLEAR BYPASS: Kill entire engine for signup routes
-    // This MUST be before any hooks to prevent React hook order violations
-    const isSignupRoute = window.location.pathname === '/' || window.location.pathname.includes('start-trial')
+    // These routes don't need TenantContext
+    const isSignupRoute = path === '/' || path.includes('start-trial')
     if (isSignupRoute) {
-        // Render ONLY the signup page, no App logic at all
         return <TrialSignup />
     }
 
@@ -796,6 +807,15 @@ function App() {
 
                         {/* 🎯 TRIAL FUNNEL: Landing page signup */}
                         <Route path="/start-trial" element={<TrialSignup />} />
+
+                        {/* ============================================
+                            GLOBAL LOGIN ROUTES (No Tenant Context)
+                            Users log in here and get redirected to their
+                            tenant-scoped dashboard based on user_metadata.slug
+                            ============================================ */}
+                        <Route path="/login" element={<OwnerLogin />} />
+                        <Route path="/login/owner" element={<OwnerLogin />} />
+                        <Route path="/login/staff" element={<StaffLogin />} />
 
                         {/* ============================================
                             TENANT-SCOPED CUSTOMER ROUTES

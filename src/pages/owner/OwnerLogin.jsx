@@ -34,12 +34,12 @@ function OwnerLogin() {
 
             // Navigate based on role (with tenant slug for silo isolation)
             if (role === 'superadmin') {
-                navigate('/admin')
+                navigate('/admin', { replace: true })
             } else if (role === 'owner') {
-                navigate(`/${slug}/owner/summary`)
+                navigate(`/${slug}/owner/summary`, { replace: true })
             } else {
                 // Staff fallback (shouldn't use this login page)
-                navigate(`/${slug}/staff/dashboard`)
+                navigate(`/${slug}/staff/dashboard`, { replace: true })
             }
         } catch (err) {
             console.error('Login error:', err)
