@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link, useLocation } from 'react-router-dom'
+import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
+import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
@@ -16,6 +17,7 @@ import BackendNav from '../../components/BackendNav.jsx'
  */
 function MenuManager({ config, demoMode = false }) {
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
 
     const currentUser = getAuth()
@@ -43,9 +45,11 @@ function MenuManager({ config, demoMode = false }) {
     // NOTE: Auth check removed - ProtectedRoute handles authentication
     // The old getAuth() was using localStorage, not Supabase Auth
 
-    const handleLogout = () => {
+    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
         clearAuth()
-        navigate('/')
+        window.location.href = demoMode ? '/' : `/${tenantSlug}`
     }
 
     const handleEdit = (categoryId, item) => {

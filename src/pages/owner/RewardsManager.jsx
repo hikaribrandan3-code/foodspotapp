@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useParams } from 'react-router-dom'
+import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
@@ -7,14 +8,17 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 // INVARIANT: config must come from prop (App.jsx safeConfig)
 function RewardsManager({ config }) {
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [stampsRequired, setStampsRequired] = useState(config?.rewards?.stampsRequired || 10)
     const [rewardDescription, setRewardDescription] = useState(config?.rewards?.rewardDescription || '')
 
     // NOTE: Auth check removed - ProtectedRoute handles authentication
 
-    const handleLogout = () => {
+    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
         clearAuth()
-        navigate('/')
+        window.location.href = `/${tenantSlug}`
     }
 
     const handleSave = () => {

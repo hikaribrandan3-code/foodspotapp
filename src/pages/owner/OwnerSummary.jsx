@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { getAuth, clearAuth, getOrders } from '../../utils/storage.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import { supabase } from '../../lib/supabaseClient.js'
 
 /**
  * OwnerSummary - Summary dashboard for Owner (matches SuperAdmin Summary layout)
@@ -13,6 +14,7 @@ import BackendNav from '../../components/BackendNav.jsx'
  */
 function OwnerSummary({ config }) {
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [orders, setOrders] = useState(() => getOrders())
 
     // NOTE: Auth check removed - ProtectedRoute handles authentication
@@ -25,9 +27,12 @@ function OwnerSummary({ config }) {
         return () => clearInterval(interval)
     }, [])
 
-    const handleLogout = () => {
+    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
         clearAuth()
-        navigate('/')
+        // Redirect to customer home of this business, not landing page
+        window.location.href = `/${tenantSlug}`
     }
 
     // Stats calculations

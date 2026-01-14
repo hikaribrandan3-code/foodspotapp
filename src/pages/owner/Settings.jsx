@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useParams } from 'react-router-dom'
+import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
 import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
@@ -44,6 +45,7 @@ function Card({ children, style = {} }) {
 // Do NOT call getConfig() locally - breaks invariant during saves
 function Settings({ config, demoMode = false }) {
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     // Local form state for editable messages (initialized from prop)
     const [maintenanceMessage, setMaintenanceMessage] = useState(config?.maintenanceMessage || '')
     const [pauseMessage, setPauseMessage] = useState(config?.pauseOrdersMessage || '')
@@ -53,9 +55,11 @@ function Settings({ config, demoMode = false }) {
     // NOTE: Auth check removed - ProtectedRoute handles authentication
     // demoMode components bypass ProtectedRoute entirely via separate routes
 
-    const handleLogout = () => {
+    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
         clearAuth()
-        navigate('/')
+        window.location.href = demoMode ? '/' : `/${tenantSlug}`
     }
 
     const handleToggleMaintenance = () => {

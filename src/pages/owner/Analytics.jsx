@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { supabase } from '../../lib/supabaseClient.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { formatPrice } from '../../config/menuData.js'
@@ -8,10 +9,16 @@ import { logout } from '../../utils/auth.js'
 /* --- ANALYTICS COMPONENT (SUPABASE-READY READ LAYER) --- */
 const Analytics = ({ orders = [] }) => {
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
 
     // Navigation Exit Strategy: Prevents Admin Sub-Page Trap
-    const handleBack = () => navigate('/owner/summary')
-    const handleLogout = () => { logout(); navigate('/') }
+    const handleBack = () => navigate(`/${tenantSlug}/owner/summary`)
+    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        logout()
+        window.location.href = `/${tenantSlug}`
+    }
 
     // Data Logic: Purely functional, derived from 'orders' prop to ensure Single Source of Truth
     const stats = useMemo(() => {

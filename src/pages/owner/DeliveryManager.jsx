@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useParams } from 'react-router-dom'
+import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.v2.js'
@@ -15,6 +16,7 @@ import BackendNav from '../../components/BackendNav.jsx'
  */
 function DeliveryManager({ config, demoMode = false }) {
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [orders, setOrders] = useState(() => getOrders())
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
@@ -30,9 +32,11 @@ function DeliveryManager({ config, demoMode = false }) {
         return () => clearInterval(interval)
     }, [])
 
-    const handleLogout = () => {
+    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
         clearAuth()
-        navigate('/')
+        window.location.href = demoMode ? '/' : `/${tenantSlug}`
     }
 
     // Helper for status info (reusing Staff logic)
