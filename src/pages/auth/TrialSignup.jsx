@@ -102,11 +102,9 @@ function TrialSignup() {
             // 3. INITIALIZE TENANT STORAGE
             setTenantStoragePrefix(userId)
 
-            // 4. REDIRECT TO OWNER DASHBOARD
-            // Small delay to ensure auth state propagates
-            setTimeout(() => {
-                navigate(`/${slug}/owner/summary`, { replace: true })
-            }, 500)
+            // 4. INSTANT REDIRECT TO OWNER DASHBOARD
+            // Email confirmation is OFF - redirect immediately
+            navigate(`/${slug}/owner`, { replace: true })
 
         } catch (err) {
             console.error('[TRIAL] Signup error:', err)
