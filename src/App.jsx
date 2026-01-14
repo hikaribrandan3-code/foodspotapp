@@ -326,7 +326,8 @@ function App() {
     // Fetch branding from Supabase on mount
     useEffect(() => {
         // 🚫 SIGNUP ISOLATION: Skip branding fetch on trial signup page
-        if (window.location.pathname === '/' || window.location.pathname === '/start-trial') return
+        const path = window.location.pathname
+        if (path === '/' || path.includes('start-trial')) return
         if (!businessId) return
 
         const loadCloudBranding = async () => {
