@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { incrementInstagramShare } from '../../utils/storage.js'
 
 function ShareFood({ config }) {
@@ -9,6 +9,7 @@ function ShareFood({ config }) {
         return null
     }
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
     const appConfig = config
     const [shared, setShared] = useState(false)
 
@@ -165,7 +166,7 @@ function ShareFood({ config }) {
             <button
                 className="btn btn-secondary btn-block"
                 style={{ marginTop: 'var(--space-4)' }}
-                onClick={() => navigate('/')}
+                onClick={() => navigate(`/${tenantSlug}`)}
             >
                 Volver al inicio
             </button>

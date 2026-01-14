@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { formatPrice, reorderCategoryItems } from '../../config/menuData.js'
 import { getMenuCloud } from '../../lib/supabaseClient.js'
 import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
@@ -24,6 +24,7 @@ const LONG_PRESS_DURATION = 1800
 
 function Menu({ config, deliveryMode: deliveryModeProp = false }) {
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
     const businessId = useBusinessId()
     const [menu, setMenu] = useState({ categories: [] })
     const [cart, setCart] = useState(() => getCurrentOrder())
@@ -1037,7 +1038,7 @@ function Menu({ config, deliveryMode: deliveryModeProp = false }) {
                     justifyContent: 'center'
                 }}>
                     <button
-                        onClick={() => { clearDeliveryMode(); navigate('/') }}
+                        onClick={() => { clearDeliveryMode(); navigate(`/${tenantSlug}`) }}
                         style={{
                             background: '#22C55E',
                             color: '#FFFFFF',

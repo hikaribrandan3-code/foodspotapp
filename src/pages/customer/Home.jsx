@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { getMenu } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
@@ -11,20 +11,25 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 const LONG_PRESS_DURATION = 1800
 
 // Action definitions (using shared HeroIcons)
-const ACTION_DEFINITIONS = {
-    menu: { icon: MenuIcon, label: 'Menu', path: '/menu' },
-    envios: { icon: DeliveryIcon, label: 'Envíos', path: '/envios' },
-    promos: { icon: PromosIcon, label: 'Promos', path: '/promos' },
-    game: { icon: GameIcon, label: 'Mini Game', path: '/game' },
-    rewards: { icon: PromosIcon, label: 'Promos', path: '/promos' } // ALIAS: Fix stale cache
-}
+// 🏢 SILO-AWARE: Paths are generated dynamically based on tenantSlug
+const getActionDefinitions = (tenantSlug) => ({
+    menu: { icon: MenuIcon, label: 'Menu', path: `/${tenantSlug}/menu` },
+    envios: { icon: DeliveryIcon, label: 'Envíos', path: `/${tenantSlug}/envios` },
+    promos: { icon: PromosIcon, label: 'Promos', path: `/${tenantSlug}/promos` },
+    game: { icon: GameIcon, label: 'Mini Game', path: `/${tenantSlug}/game` },
+    rewards: { icon: PromosIcon, label: 'Promos', path: `/${tenantSlug}/promos` } // ALIAS: Fix stale cache
+})
 
 // --- MAIN COMPONENT ---
 
 function Home({ config }) {
     const navigate = useNavigate()
     const location = useLocation()
+    const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
     const menu = getMenu()
+
+    // Generate tenant-scoped action definitions
+    const ACTION_DEFINITIONS = getActionDefinitions(tenantSlug || 'default')
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const [session, setSession] = useState(null)
@@ -769,7 +774,7 @@ function Home({ config }) {
                                         handleLongPressEnd(e)
                                     }
                                 }}
-                                onClick={(e) => handleTileClick(e, '/menu')}
+                                onClick={(e) => handleTileClick(e, `/${tenantSlug}/menu`)}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...cardStyle,
@@ -786,7 +791,7 @@ function Home({ config }) {
                     return (
                         <Link
                             key={item.id}
-                            to="/menu"
+                            to={`/${tenantSlug}/menu`}
                             style={cardStyle}
                         >
                             {cardContent}

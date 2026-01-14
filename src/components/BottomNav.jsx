@@ -45,8 +45,15 @@ function BottomNav({ config }) {
     const tenantSlug = params.tenantSlug || (() => {
         const segments = location.pathname.split('/').filter(Boolean)
         // If path is /{tenantSlug}/something, first segment is the slug
-        // But only if it's not a reserved route
-        const RESERVED = ['login', 'admin', 'demo', 'staff', 'owner', 'camera', 'start-trial']
+        // But only if it's not a reserved/system route
+        const RESERVED = [
+            // Auth & System
+            'login', 'admin', 'demo', 'staff', 'owner', 'camera', 'start-trial',
+            // Customer pages - these are NOT slugs, they're page names
+            'menu', 'status', 'info', 'envios', 'order', 'rewards', 'share', 'game', 'promos',
+            // API & Assets
+            'api', 'assets', 'receipt'
+        ]
         if (segments.length >= 1 && !RESERVED.includes(segments[0])) {
             return segments[0]
         }
