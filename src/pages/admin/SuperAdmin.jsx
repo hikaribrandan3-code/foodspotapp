@@ -144,6 +144,11 @@ function SuperAdmin({ config }) {
     // 🛡️ SUPABASE: Cloud-first orders fetch with realtime subscription
     useEffect(() => {
         // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+        // 🛡️ NULL GUARD: Super Admin may not have tenant context
+        if (!businessId) {
+            console.log('[SuperAdmin] No businessId, skipping cloud order fetch')
+            return
+        }
 
         const loadCloudOrders = async () => {
             try {
@@ -175,7 +180,7 @@ function SuperAdmin({ config }) {
         return () => {
             subscription.unsubscribe()
         }
-    }, [])
+    }, [businessId]) // 🛡️ Add businessId to dependency array
 
     // 🛡️ FIX: Update activeTab when returning from CoverPreview (navigation state change)
     // This fixes the "white void" where the branding tab content doesn't render after returning
@@ -272,6 +277,14 @@ function SuperAdmin({ config }) {
         if (!column) return
 
         // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+        // 🛡️ NULL GUARD: Skip cloud write if no businessId (super admin mode)
+        if (!businessId) {
+            // Local-only update for super admin
+            const newInfo = { ...config.businessInfo, [field]: value }
+            updateConfig({ businessInfo: newInfo })
+            window.dispatchEvent(new CustomEvent('frontendSync'))
+            return
+        }
 
         setSaveStatus('saving')
 
@@ -304,6 +317,22 @@ function SuperAdmin({ config }) {
         if (!column) return
 
         // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+        // 🛡️ NULL GUARD: Skip cloud write if no businessId (super admin mode)
+        if (!businessId) {
+            // Local-only update for super admin
+            if (field === 'businessName') {
+                updateConfig({ businessName: value })
+            } else if (field === 'primaryColor') {
+                updateConfig({
+                    branding: { ...config.branding, primaryColor: value },
+                    colors: { ...config.colors, primary: value }
+                })
+            } else {
+                updateConfig({ branding: { ...config.branding, [field]: value } })
+            }
+            window.dispatchEvent(new CustomEvent('frontendSync'))
+            return
+        }
 
         setSaveStatus('saving')
 
@@ -335,6 +364,13 @@ function SuperAdmin({ config }) {
     // Update menu item (CLOUD-FIRST: Safe Config Protocol)
     const handleUpdateMenuItem = async (categoryId, itemId, updates) => {
         // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+        // 🛡️ NULL GUARD: Skip cloud write if no businessId
+        if (!businessId) {
+            // Local-only update
+            updateMenuItem(categoryId, itemId, updates)
+            setMenu(getMenu())
+            return
+        }
 
         // 1. Write to cloud first
         const { error } = await updateMenuItemCloud(itemId, updates, businessId)
@@ -365,6 +401,13 @@ function SuperAdmin({ config }) {
         }
 
         // 🏢 PHASE 3: Using dynamic businessId from TenantContext
+        // 🛡️ NULL GUARD: Skip cloud write if no businessId
+        if (!businessId) {
+            // Local-only update
+            addMenuItem(categoryId, { name: 'Nuevo item', price: 0 })
+            setMenu(getMenu())
+            return
+        }
 
         setSaveStatus('saving')
 
