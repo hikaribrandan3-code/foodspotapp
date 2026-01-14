@@ -65,10 +65,10 @@ export function TenantProvider({ children }) {
 
                 // 2. FETCH TENANT FROM SUPABASE (with 1 retry after 1 second)
                 const fetchTenant = async (retryCount = 0) => {
-                    // Try fetch by slug first
+                    // Try fetch by slug first - use * to avoid column mismatch
                     let { data: tenant, error: fetchError } = await supabase
                         .from('branding')
-                        .select('user_id, business_name, slug, is_paid, trial_ends_at, primary_color')
+                        .select('*')
                         .eq('slug', slug)
                         .maybeSingle()
 
@@ -76,7 +76,7 @@ export function TenantProvider({ children }) {
                     if (!tenant) {
                         const { data: tenantByName } = await supabase
                             .from('branding')
-                            .select('user_id, business_name, slug, is_paid, trial_ends_at, primary_color')
+                            .select('*')
                             .ilike('business_name', slug)
                             .maybeSingle()
                         tenant = tenantByName
