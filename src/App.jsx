@@ -237,7 +237,16 @@ function StackedAdminBadge() {
 }
 
 
+
 function App() {
+    // 🚨 NUCLEAR BYPASS: Kill entire engine for signup routes
+    // This MUST be before any hooks to prevent React hook order violations
+    const isSignupRoute = window.location.pathname === '/' || window.location.pathname.includes('start-trial')
+    if (isSignupRoute) {
+        // Render ONLY the signup page, no App logic at all
+        return <TrialSignup />
+    }
+
     const { businessId, tenantData, trialExpired } = useTenant()
 
     const [config, setConfig] = useState(() => getConfig())

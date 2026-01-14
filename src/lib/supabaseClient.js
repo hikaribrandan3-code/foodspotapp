@@ -70,9 +70,15 @@ export async function uploadAsset(file, businessId, bucketName = 'assets') {
  * @returns {Promise<{data: object, error: Error|null}>}
  */
 export async function getBranding(businessId) {
+    // 🚨 NETWORK INTERCEPTOR: Kill request on signup routes
+    if (typeof window !== 'undefined' &&
+        (window.location.pathname === '/' || window.location.pathname.includes('start-trial'))) {
+        return { data: null, error: null }
+    }
+
     // 🛡️ STRICT GUARDRAIL: Prevent global branding fetch
     if (!businessId) {
-        throw new Error('[SILO VIOLATION] getBranding requires businessId for tenant isolation')
+        return { data: null, error: new Error('[SILO VIOLATION] getBranding requires businessId') }
     }
 
     const { data, error } = await supabase
