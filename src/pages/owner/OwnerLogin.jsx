@@ -32,22 +32,22 @@ function OwnerLogin() {
             const role = metadata.role || 'owner'
             const slug = metadata.slug || metadata.business_name || 'default'
 
-            // Navigate based on role (with tenant slug for silo isolation)
+            // 🚀 HARD TELEPORT: Force full page reload to re-evaluate App interceptors
+            // navigate() doesn't work because App.jsx checks window.location.pathname at mount
             if (role === 'superadmin') {
-                navigate('/admin', { replace: true })
+                window.location.href = '/admin'
             } else if (role === 'owner') {
-                navigate(`/${slug}/owner/summary`, { replace: true })
+                window.location.href = `/${slug}/owner/summary`
             } else {
-                // Staff fallback (shouldn't use this login page)
-                navigate(`/${slug}/staff/dashboard`, { replace: true })
+                window.location.href = `/${slug}/staff/dashboard`
             }
         } catch (err) {
             console.error('Login error:', err)
             setError(err.message || 'Credenciales incorrectas')
             setTimeout(() => setError(''), 5000)
-        } finally {
             setLoading(false)
         }
+        // Note: Don't setLoading(false) on success - page will reload
     }
 
     return (
