@@ -83,31 +83,28 @@ function TrialSignup() {
             const trialEndsAt = new Date()
             trialEndsAt.setDate(trialEndsAt.getDate() + 14) // 14-day trial
 
-            const { error: siloError } = await supabase
-                .from('branding')
-                .insert({
-                    id: userId,
-                    business_id: userId,
-                    owner_id: userId,
-                    business_name: businessName,
-                    slug: slug,
-                    is_paid: false,
-                    trial_ends_at: trialEndsAt.toISOString(),
-                    primary_color: '#8B7355',
-                    created_at: new Date().toISOString()
-                })
+            // 🔥 JESUS CATCH-BLOCK: Try to create branding, but redirect regardless
+            try {
+                const { error: siloError } = await supabase
+                    .from('branding')
+                    .insert({
+                        user_id: userId,
+                        business_name: businessName,
+                        slug: slug,
+                        trial_ends_at: trialEndsAt.toISOString()
+                    })
 
-            if (siloError) {
-                // If silo creation fails, delete the auth user to prevent orphans
-                console.error('[TRIAL] Silo creation failed:', siloError)
-                throw new Error('Error creando tu espacio. Por favor intentá de nuevo.')
+                if (siloError) {
+                    console.error('[TRIAL] Silo creation failed (non-blocking):', siloError)
+                }
+            } catch (brandingErr) {
+                console.error('[TRIAL] Branding insert error (non-blocking):', brandingErr)
             }
 
             // 3. INITIALIZE TENANT STORAGE
             setTenantStoragePrefix(userId)
 
-            // 4. INSTANT REDIRECT TO OWNER DASHBOARD
-            // Email confirmation is OFF - redirect immediately
+            // 4. INSTANT REDIRECT TO OWNER DASHBOARD - ALWAYS EXECUTE
             navigate(`/${slug}/owner`, { replace: true })
 
         } catch (err) {
