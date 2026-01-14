@@ -38,9 +38,15 @@ export function TenantProvider({ children }) {
 
     useEffect(() => {
         const resolveTenant = async () => {
+            // 🚨 KILL-SWITCH: Absolute bypass for signup routes - NO Supabase calls
+            const pathname = window.location.pathname
+            if (pathname === '/' || pathname === '/start-trial') {
+                setLoading(false)
+                return
+            }
+
             try {
                 // 1. EXTRACT SLUG FROM URL
-                const pathname = window.location.pathname
                 const pathSegments = pathname.split('/').filter(Boolean)
 
                 // 🚫 NO-LOOKUP ROUTES: These paths bypass tenant resolution entirely
@@ -134,8 +140,8 @@ export function TenantProvider({ children }) {
         )
     }
 
-    // ❌ ERROR STATE
-    if (error) {
+    // ❌ ERROR STATE (suppressed on signup routes)
+    if (error && window.location.pathname !== '/' && window.location.pathname !== '/start-trial') {
         return (
             <div style={{
                 display: 'flex',

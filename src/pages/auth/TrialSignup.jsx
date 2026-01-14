@@ -122,7 +122,7 @@ function TrialSignup() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            background: '#FFFFFF',
             padding: '24px',
             fontFamily: 'Inter, system-ui, sans-serif'
         }}>
@@ -134,14 +134,14 @@ function TrialSignup() {
                 <h1 style={{
                     fontSize: '32px',
                     fontWeight: 700,
-                    color: '#fff',
+                    color: '#1a1a2e',
                     margin: 0,
                     marginBottom: '8px'
                 }}>
                     🍔 FoodSpot
                 </h1>
                 <p style={{
-                    color: 'rgba(255,255,255,0.7)',
+                    color: '#6B7280',
                     fontSize: '14px',
                     margin: 0
                 }}>
@@ -153,14 +153,14 @@ function TrialSignup() {
             <div style={{
                 width: '100%',
                 maxWidth: '400px',
-                background: 'rgba(255,255,255,0.05)',
+                background: '#F9FAFB',
                 borderRadius: '16px',
                 padding: '32px',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.1)'
+                border: '1px solid #E5E7EB',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
             }}>
                 <h2 style={{
-                    color: '#fff',
+                    color: '#1a1a2e',
                     fontSize: '24px',
                     fontWeight: 600,
                     marginTop: 0,
@@ -170,7 +170,7 @@ function TrialSignup() {
                     Comenzá tu prueba gratis
                 </h2>
                 <p style={{
-                    color: 'rgba(255,255,255,0.6)',
+                    color: '#6B7280',
                     fontSize: '14px',
                     textAlign: 'center',
                     marginBottom: '24px'
@@ -199,7 +199,7 @@ function TrialSignup() {
                     <div style={{ marginBottom: '16px' }}>
                         <label style={{
                             display: 'block',
-                            color: 'rgba(255,255,255,0.8)',
+                            color: '#374151',
                             fontSize: '13px',
                             fontWeight: 500,
                             marginBottom: '6px'
@@ -217,9 +217,9 @@ function TrialSignup() {
                                 padding: '14px 16px',
                                 fontSize: '16px',
                                 borderRadius: '10px',
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                background: 'rgba(255,255,255,0.1)',
-                                color: '#fff',
+                                border: '1px solid #D1D5DB',
+                                background: '#FFFFFF',
+                                color: '#1a1a2e',
                                 outline: 'none',
                                 boxSizing: 'border-box',
                                 transition: 'border-color 0.2s'
@@ -227,7 +227,7 @@ function TrialSignup() {
                         />
                         {businessName && (
                             <p style={{
-                                color: 'rgba(255,255,255,0.5)',
+                                color: '#6B7280',
                                 fontSize: '12px',
                                 marginTop: '4px',
                                 marginBottom: 0
@@ -241,7 +241,7 @@ function TrialSignup() {
                     <div style={{ marginBottom: '16px' }}>
                         <label style={{
                             display: 'block',
-                            color: 'rgba(255,255,255,0.8)',
+                            color: '#374151',
                             fontSize: '13px',
                             fontWeight: 500,
                             marginBottom: '6px'
@@ -259,9 +259,9 @@ function TrialSignup() {
                                 padding: '14px 16px',
                                 fontSize: '16px',
                                 borderRadius: '10px',
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                background: 'rgba(255,255,255,0.1)',
-                                color: '#fff',
+                                border: '1px solid #D1D5DB',
+                                background: '#FFFFFF',
+                                color: '#1a1a2e',
                                 outline: 'none',
                                 boxSizing: 'border-box'
                             }}
@@ -272,7 +272,7 @@ function TrialSignup() {
                     <div style={{ marginBottom: '24px' }}>
                         <label style={{
                             display: 'block',
-                            color: 'rgba(255,255,255,0.8)',
+                            color: '#374151',
                             fontSize: '13px',
                             fontWeight: 500,
                             marginBottom: '6px'
@@ -291,9 +291,9 @@ function TrialSignup() {
                                 padding: '14px 16px',
                                 fontSize: '16px',
                                 borderRadius: '10px',
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                background: 'rgba(255,255,255,0.1)',
-                                color: '#fff',
+                                border: '1px solid #D1D5DB',
+                                background: '#FFFFFF',
+                                color: '#1a1a2e',
                                 outline: 'none',
                                 boxSizing: 'border-box'
                             }}
@@ -340,7 +340,7 @@ function TrialSignup() {
 
                 {/* Terms */}
                 <p style={{
-                    color: 'rgba(255,255,255,0.4)',
+                    color: '#9CA3AF',
                     fontSize: '11px',
                     textAlign: 'center',
                     marginTop: '16px',
@@ -354,7 +354,7 @@ function TrialSignup() {
 
             {/* Login Link */}
             <p style={{
-                color: 'rgba(255,255,255,0.6)',
+                color: '#6B7280',
                 fontSize: '14px',
                 marginTop: '24px'
             }}>
@@ -373,7 +373,7 @@ function TrialSignup() {
                     to { transform: rotate(360deg); }
                 }
                 input::placeholder {
-                    color: rgba(255,255,255,0.4);
+                    color: #9CA3AF;
                 }
                 input:focus {
                     border-color: #8B7355 !important;
