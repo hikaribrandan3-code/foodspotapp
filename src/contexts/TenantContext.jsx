@@ -69,7 +69,7 @@ export function TenantProvider({ children }) {
                         .from('branding')
                         .select('user_id, business_name, slug, is_paid, trial_ends_at, primary_color')
                         .eq('slug', slug)
-                        .single()
+                        .maybeSingle() // 🛡️ Prevents 406 errors - returns null instead of throwing
 
                     if (fetchError || !tenant) {
                         if (retryCount < 1) {
