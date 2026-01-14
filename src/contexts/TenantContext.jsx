@@ -49,12 +49,21 @@ export function TenantProvider({ children }) {
                 // 1. EXTRACT SLUG FROM URL
                 const pathSegments = pathname.split('/').filter(Boolean)
 
-                // 🚫 NO-LOOKUP ROUTES: These paths bypass tenant resolution entirely
-                // Root path (/) and known non-tenant routes skip Supabase lookup
-                const noLookupRoutes = ['start-trial', 'menu', 'order', 'info', 'login', 'staff', 'owner', 'admin', 'demo', 'superadmin']
+                // 🚫 RESERVED ROUTES: These are system routes, NOT tenant slugs
+                // If the first segment is a reserved keyword, skip tenant resolution
+                const RESERVED_ROUTES = [
+                    // Auth & Signup
+                    'start-trial', 'login', 'signup', 'register',
+                    // Customer pages (must be nested under tenant, e.g., /krappypatty/menu)
+                    'menu', 'order', 'status', 'info', 'envios', 'rewards', 'share', 'game', 'promos',
+                    // Backend routes
+                    'staff', 'owner', 'admin', 'demo', 'superadmin',
+                    // System
+                    'camera', 'receipt', 'api', 'assets'
+                ]
 
-                // If root path OR first segment is a no-lookup route → skip tenant lookup
-                if (pathSegments.length === 0 || noLookupRoutes.includes(pathSegments[0])) {
+                // If root path OR first segment is a reserved route → skip tenant lookup
+                if (pathSegments.length === 0 || RESERVED_ROUTES.includes(pathSegments[0])) {
                     // 🏠 NEUTRAL STATE: No tenant, no error - just render children
                     setLoading(false)
                     return

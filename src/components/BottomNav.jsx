@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { getCameraIcon } from './CameraIcons.jsx'
 
@@ -38,12 +38,28 @@ const InfoIcon = () => (
 // INVARIANT: config must come from prop (App.jsx safeConfig)
 function BottomNav({ config }) {
     const location = useLocation()
+    const params = useParams()
 
-    // Hide nav on certain pages
-    const hiddenPaths = ['/staff', '/owner', '/admin', '/demo', '/game', '/receipt', '/camera']
-    const shouldHide = hiddenPaths.some(path => location.pathname.startsWith(path))
+    // 🏢 SILO-AWARE: Extract tenant from URL
+    // Fallback: extract from pathname if useParams doesn't return it
+    const tenantSlug = params.tenantSlug || (() => {
+        const segments = location.pathname.split('/').filter(Boolean)
+        // If path is /{tenantSlug}/something, first segment is the slug
+        // But only if it's not a reserved route
+        const RESERVED = ['login', 'admin', 'demo', 'staff', 'owner', 'camera', 'start-trial']
+        if (segments.length >= 1 && !RESERVED.includes(segments[0])) {
+            return segments[0]
+        }
+        return null
+    })()
 
-    if (shouldHide) return null
+    // Hide nav on certain pages (backend, admin, system routes)
+    const hiddenPaths = ['/staff', '/owner', '/admin', '/demo', '/game', '/receipt', '/camera', '/login']
+    const shouldHide = hiddenPaths.some(path =>
+        location.pathname.includes(path)
+    )
+
+    if (shouldHide || !tenantSlug) return null
 
     // Direct branding values from config
     const navBgColor = config.branding?.primaryColor || '#8B7355'
@@ -70,22 +86,32 @@ function BottomNav({ config }) {
         return luminance > 0.5
     }
 
+    // 🏢 SILO-AWARE: Generate tenant-scoped routes
+    const routes = {
+        home: `/${tenantSlug}`,
+        menu: `/${tenantSlug}/menu`,
+        status: `/${tenantSlug}/status`,
+        info: `/${tenantSlug}/info`,
+        camera: '/camera' // Camera is global, not tenant-scoped
+    }
+
     return (
         <nav
             className="bottom-nav"
             style={{ backgroundColor: navBgColor }}
         >
             <NavLink
-                to="/"
+                to={routes.home}
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                 style={{ color: navIconColor }}
+                end
             >
                 <HomeIcon />
                 <span className="nav-label">Home</span>
             </NavLink>
 
             <NavLink
-                to="/menu"
+                to={routes.menu}
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                 style={{ color: navIconColor }}
             >
@@ -94,14 +120,14 @@ function BottomNav({ config }) {
             </NavLink>
 
             {/* CENTER CAMERA BUTTON - Customizable icon and color */}
-            <NavLink to="/camera" className="camera-button">
+            <NavLink to={routes.camera} className="camera-button">
                 <div className="camera-inner" style={{ backgroundColor: cameraBgColor }}>
                     <CameraIconComponent style={{ color: cameraIconColor }} />
                 </div>
             </NavLink>
 
             <NavLink
-                to="/status"
+                to={routes.status}
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                 style={{ color: navIconColor }}
             >
@@ -110,7 +136,7 @@ function BottomNav({ config }) {
             </NavLink>
 
             <NavLink
-                to="/info"
+                to={routes.info}
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                 style={{ color: navIconColor }}
             >
@@ -122,3 +148,4 @@ function BottomNav({ config }) {
 }
 
 export default BottomNav
+
