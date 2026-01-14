@@ -5,6 +5,7 @@ import { updateConfig } from '../../config/appConfig.v2.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
+import { getSession } from '../../utils/auth.js'
 
 /**
  * OwnerSummary - Summary dashboard for Owner (matches SuperAdmin Summary layout)
@@ -25,6 +26,20 @@ function OwnerSummary({ config }) {
             setOrders(getOrders())
         }, 5000)
         return () => clearInterval(interval)
+    }, [])
+
+    // 🔐 GHOST ADMIN: Fetch session to detect superadmin role
+    const [session, setSession] = useState(null)
+    useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const sessionData = await getSession()
+                setSession(sessionData)
+            } catch {
+                setSession(null)
+            }
+        }
+        fetchSession()
     }, [])
 
     // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
@@ -185,6 +200,32 @@ function OwnerSummary({ config }) {
                 </div>
 
             </div>
+
+            {/* 🔐 GHOST ADMIN: Hidden Super Admin Portal (superadmin only) */}
+            {session?.role === 'superadmin' && (
+                <div style={{ marginTop: 24 }}>
+                    <button
+                        onClick={() => navigate('/admin')}
+                        style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            border: '1px solid rgba(124, 58, 237, 0.3)',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            background: 'rgba(124, 58, 237, 0.1)',
+                            color: '#7C3AED',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8
+                        }}
+                    >
+                        🔧 System Admin
+                    </button>
+                </div>
+            )}
 
             {/* Backend Navigation */}
             <BackendNav

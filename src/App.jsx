@@ -75,93 +75,6 @@ function RouteAreaWrapper({ children }) {
     return <div key={routeArea}>{children}</div>
 }
 
-// Stacked Admin Badge Component
-function StackedAdminBadge() {
-    const [session, setSession] = useState(null)
-    const [showMenu, setShowMenu] = useState(false)
-    const { isSimulated, activeRoleView, exitSimulation } = useAdminIntent()
-    const navigate = useNavigate()
-
-    useEffect(() => {
-        const fetchSession = async () => {
-            try {
-                const sessionData = await getSession()
-                setSession(sessionData)
-            } catch {
-                setSession(null)
-            }
-        }
-        fetchSession()
-    }, [])
-
-    if (!session || session?.role !== 'superadmin') return null
-
-    const handleNavigate = (path) => {
-        setShowMenu(false)
-        navigate(path, { replace: true })
-        window.scrollTo(0, 0)
-    }
-
-    return (
-        <>
-            <div
-                onClick={() => setShowMenu(!showMenu)}
-                style={{
-                    position: 'fixed', bottom: 90, left: 20, padding: '8px 12px',
-                    background: 'rgba(26, 26, 26, 0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-                    color: '#00ff00', fontSize: 12, fontWeight: 700, borderRadius: 10, zIndex: 2000,
-                    display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)', border: '1px solid rgba(0,255,0,0.2)', userSelect: 'none'
-                }}
-            >
-                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>🔧 SUPER ADMIN</span>
-                <span style={{ fontSize: 10, opacity: 0.7 }}>{showMenu ? '▼' : '▲'}</span>
-            </div>
-            {showMenu && (
-                <>
-                    <div onClick={() => setShowMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 1999, background: 'rgba(0,0,0,0.2)' }} />
-                    <div style={{
-                        position: 'fixed', bottom: 130, left: 20, background: '#1a1a1a', borderRadius: 12, padding: 8,
-                        zIndex: 2000, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', minWidth: 160
-                    }}>
-                        <div style={{ fontSize: 10, color: '#888', padding: '4px 12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Switch</div>
-                        {[
-                            { label: '🎛️ Admin Panel', path: '/admin', color: '#7C3AED' },
-                            { label: '👤 Owner View', path: '/owner/summary', color: '#3B82F6' },
-                            { label: '📋 Staff View', path: '/staff/dashboard', color: '#22C55E' }
-                        ].map(item => (
-                            <div
-                                key={item.path}
-                                onClick={() => handleNavigate(item.path)}
-                                style={{
-                                    padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 500, borderRadius: 8, cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.15s'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                            >
-                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
-                                {item.label}
-                            </div>
-                        ))}
-                        {isSimulated && (
-                            <div
-                                onClick={() => { exitSimulation(); setShowMenu(false) }}
-                                style={{
-                                    padding: '10px 12px', color: '#EF4444', fontSize: 13, fontWeight: 500, borderRadius: 8, cursor: 'pointer',
-                                    borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 4
-                                }}
-                            >
-                                ✕ Exit Simulation
-                            </div>
-                        )}
-                    </div>
-                </>
-            )}
-        </>
-    )
-}
-
 function App() {
     // ============================================
     // 1. MANDATORY HOOK CHAIN (ALL HOOKS MUST BE TOP-LEVEL)
@@ -471,7 +384,7 @@ function App() {
                     return null;
                 })()}
 
-                <StackedAdminBadge />
+
             </div>
         </AdminIntentProvider>
     );
