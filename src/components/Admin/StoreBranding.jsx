@@ -438,7 +438,7 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
             <button
                 onClick={() => {
                     window.dispatchEvent(new CustomEvent('frontendSync'));
-                    alert('✅ Branding applied to frontend!');
+                    alert('✅ ¡Branding aplicado al frontend!');
                 }}
                 style={{
                     width: '100%',
@@ -453,7 +453,7 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
                     boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
                 }}
             >
-                ✨ Apply to Frontend
+                ✨ Actualizar Frontend
             </button>
         </div>
     );
