@@ -18,10 +18,13 @@ const ALERT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-p
 function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrders }) {
     const config = configProp || {};
     const navigate = useNavigate()
-    const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
+    const { tenantSlug, tab } = useParams() // 🏢 SILO-AWARE: Get tenant and tab from URL
     const { isLoaded } = useTenant() // 🛡️ GUARD: Wait for tenant context to resolve
     const [menu, setMenu] = useState(() => getMenu())
-    const [activeTab, setActiveTab] = useState('orders')
+
+    // 🧠 URL MEMORY: Tab state from URL, not volatile useState
+    const activeTab = tab || 'orders'
+    const setActiveTab = (newTab) => navigate(`/${tenantSlug}/staff/dashboard/${newTab}`, { replace: true })
 
     // INVARIANT: Use config prop from App.jsx (single source of truth)
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({}) // orderId -> 'cash' | 'mercado_pago'
