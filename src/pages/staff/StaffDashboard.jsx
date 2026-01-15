@@ -169,8 +169,9 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
         delivery: pendingDeliveries.length
     }), [activeOrders.length, pendingDeliveries.length])
 
-    // 🛡️ LOADING GUARD: Block interactions until tenant context is loaded
-    if (!isLoaded) {
+    // 🛡️ SAFARI FORCE RENDER: Bypass isLoaded if we have tenantSlug
+    // This ensures the UI is interactive THE MOMENT it paints
+    if (!tenantSlug) {
         return (
             <div style={{
                 display: 'flex',
@@ -187,7 +188,15 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
     }
 
     return (
-        <div className="page backend-surface staff-dashboard" style={{ paddingBottom: 'var(--space-4)', pointerEvents: 'auto' }}>
+        <div
+            className="page backend-surface staff-dashboard"
+            style={{
+                paddingBottom: 'var(--space-4)',
+                pointerEvents: 'auto',
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+            }}
+        >
             <BackendHeader
                 title="Staff"
                 onLogout={handleLogout}
