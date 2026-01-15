@@ -18,7 +18,8 @@ const SmileyIcon = () => (
     </svg>
 )
 
-function OrderStatus({ config, featuredItems = [] }) {
+function OrderStatus({ config: configProp, featuredItems = [] }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const [orders, setOrders] = useState([])
 

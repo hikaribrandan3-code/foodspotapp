@@ -21,7 +21,8 @@ const getActionDefinitions = (tenantSlug) => ({
 
 // --- MAIN COMPONENT ---
 
-function Home({ config }) {
+function Home({ config: configProp }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const location = useLocation()
     const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL

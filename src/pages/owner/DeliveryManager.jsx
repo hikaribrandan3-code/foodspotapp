@@ -14,7 +14,8 @@ import BackendNav from '../../components/BackendNav.jsx'
  * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
  * Payment gate logic MUST use canAdvanceOrder() from orderStateGuard.js.
  */
-function DeliveryManager({ config, demoMode = false }) {
+function DeliveryManager({ config: configProp, demoMode = false }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [orders, setOrders] = useState(() => getOrders())

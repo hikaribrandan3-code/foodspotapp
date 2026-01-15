@@ -21,7 +21,8 @@ const AUTO_SCROLL_SPEED = 4 // Pixels per frame (slow and controlled)
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
 
-function Menu({ config, deliveryMode: deliveryModeProp = false }) {
+function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
     const businessId = useBusinessId()

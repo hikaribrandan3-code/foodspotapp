@@ -36,7 +36,8 @@ const MapIcon = () => (
     </svg>
 )
 
-function Info({ config }) {
+function Info({ config: configProp }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
 

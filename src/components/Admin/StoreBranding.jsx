@@ -15,7 +15,8 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
  * 3. Navigation & Colors
  */
 
-export default function StoreBranding({ config, isDemo = false }) {
+export default function StoreBranding({ config: configProp, isDemo = false }) {
+    const config = configProp || {};
     // Local copy for mutations (syncs back to parent via frontendSync)
     const [localConfig, setLocalConfig] = useState(config || {})
     const [uploadStatus, setUploadStatus] = useState(null)

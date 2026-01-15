@@ -6,7 +6,8 @@ import { updateConfig } from '../../config/appConfig.v2.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 
 // INVARIANT: config must come from prop (App.jsx safeConfig)
-function RewardsManager({ config }) {
+function RewardsManager({ config: configProp }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [stampsRequired, setStampsRequired] = useState(config?.rewards?.stampsRequired || 10)

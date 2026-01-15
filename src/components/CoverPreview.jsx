@@ -65,7 +65,8 @@ function CameraButton() {
     )
 }
 
-function CoverPreview({ config }) {
+function CoverPreview({ config: configProp }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const location = useLocation()
 

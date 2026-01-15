@@ -43,7 +43,8 @@ function Card({ children, style = {} }) {
 
 // INVARIANT: Settings receives config via prop from App.jsx (single source of truth)
 // Do NOT call getConfig() locally - breaks invariant during saves
-function Settings({ config, demoMode = false }) {
+function Settings({ config: configProp, demoMode = false }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     // Local form state for editable messages (initialized from prop)

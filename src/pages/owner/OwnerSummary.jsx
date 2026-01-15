@@ -13,7 +13,8 @@ import { getSession } from '../../utils/auth.js'
  * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
  * This ensures Single Source of Truth from App.jsx.
  */
-function OwnerSummary({ config }) {
+function OwnerSummary({ config: configProp }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [orders, setOrders] = useState(() => getOrders())

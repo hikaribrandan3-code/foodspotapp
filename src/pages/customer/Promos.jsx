@@ -90,7 +90,8 @@ function RewardsPill({ stamps, total }) {
     )
 }
 
-function Promos({ config }) {
+function Promos({ config: configProp }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const [timeRemaining, setTimeRemaining] = useState('')
     const [happyHourEnd] = useState(() => getHappyHourEnd())

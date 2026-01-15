@@ -10,7 +10,8 @@
 
 import AppHeader from './AppHeader.jsx'
 
-function HeaderClamp({ config }) {
+function HeaderClamp({ config: configProp }) {
+    const config = configProp || {};
     // Pass config through to AppHeader
     return <AppHeader config={config} />
 }

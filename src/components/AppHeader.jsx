@@ -27,7 +27,8 @@ function getBreakpoint() {
 }
 
 // INVARIANT: config must come from prop, not getConfig()
-function AppHeader({ config }) {
+function AppHeader({ config: configProp }) {
+    const config = configProp || {};
     const canvasMode = config?.canvasMode || 'light'
     const businessName = config?.businessName || 'FoodSpot'
     const headerMode = config?.headerBranding?.mode || 'cover'

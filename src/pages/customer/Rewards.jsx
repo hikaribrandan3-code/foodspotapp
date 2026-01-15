@@ -61,7 +61,8 @@ const CoffeeStampIcon = ({ filled }) => (
 )
 
 // --- MAIN COMPONENT ---
-function Rewards({ config }) {
+function Rewards({ config: configProp }) {
+    const config = configProp || {};
     // BATTLE 2: Config MUST come from props (App.jsx is source of truth)
     if (!config) {
         console.error('[FATAL] Rewards: Missing config prop — check App.jsx routing')

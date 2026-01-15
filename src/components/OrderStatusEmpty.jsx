@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom'
  * - Battle 5: All strings in Spanish
  * - Z-Index: Primary CTA at z-index 10 (below Camera at z-50+)
  */
-const OrderStatusEmpty = ({ config, featuredItems = [] }) => {
+const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
+    const config = configProp || {};
     const navigate = useNavigate()
 
     // INVARIANT: config MUST come from props (Battle 2: Single Source of Truth)

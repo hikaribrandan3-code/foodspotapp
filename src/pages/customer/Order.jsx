@@ -30,7 +30,8 @@ const placeholderImages = [
     'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop',
 ]
 
-function Order({ config }) {
+function Order({ config: configProp }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const businessId = useBusinessId() // 🏢 PHASE 3: Dynamic tenant identity
     const [order, setOrder] = useState(() => getCurrentOrder())

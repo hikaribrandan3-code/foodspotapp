@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { incrementInstagramShare } from '../../utils/storage.js'
 
-function ShareFood({ config }) {
+function ShareFood({ config: configProp }) {
+    const config = configProp || {};
     // BATTLE 2: Config MUST come from props (App.jsx is source of truth)
     if (!config) {
         console.error('[FATAL] ShareFood: Missing config prop — check App.jsx routing')

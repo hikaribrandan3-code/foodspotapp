@@ -15,7 +15,8 @@ import BackendNav from '../../components/BackendNav.jsx'
  * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
  * This ensures Single Source of Truth from App.jsx.
  */
-function MenuManager({ config, demoMode = false }) {
+function MenuManager({ config: configProp, demoMode = false }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()

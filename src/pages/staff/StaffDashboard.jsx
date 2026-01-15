@@ -14,7 +14,8 @@ const ALERT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-p
 // ideally we would use a local asset or a generated data URI for "Rush-Proof" speed.
 // Using a short, sharp beep.
 
-function StaffDashboard({ config, orders = [], updateOrder, setOrders }) {
+function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrders }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const [menu, setMenu] = useState(() => getMenu())
     const [activeTab, setActiveTab] = useState('orders')
