@@ -247,6 +247,55 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
                         <option key={weight.value} value={weight.value}>{weight.label}</option>
                     ))}
                 </select>
+
+                {/* Header Display Mode Toggle */}
+                <label style={labelStyle}>Header Display Mode</label>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                    <button
+                        onClick={() => handleConfigUpdate({ headerMode: 'logo' })}
+                        style={{
+                            flex: 1,
+                            padding: '12px',
+                            borderRadius: 8,
+                            border: (config.headerMode === 'logo' || !config.headerMode)
+                                ? '2px solid #3B82F6'
+                                : '1px solid #E5E7EB',
+                            background: '#FFFFFF',
+                            color: '#1E293B',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6
+                        }}
+                    >
+                        🖼️ Logo
+                    </button>
+                    <button
+                        onClick={() => handleConfigUpdate({ headerMode: 'text' })}
+                        style={{
+                            flex: 1,
+                            padding: '12px',
+                            borderRadius: 8,
+                            border: config.headerMode === 'text'
+                                ? '2px solid #3B82F6'
+                                : '1px solid #E5E7EB',
+                            background: '#FFFFFF',
+                            color: '#1E293B',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6
+                        }}
+                    >
+                        ✍️ Solo Texto
+                    </button>
+                </div>
             </div>
 
             {/* ==================== SECTION 3: NAVIGATION & COLORS ==================== */}

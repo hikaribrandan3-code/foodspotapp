@@ -21,13 +21,14 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTenant } from '../contexts/TenantContext.jsx'
 
 // Local storage keys (cosmetic only, no auth implications)
 const AVATAR_KEY = 'foodspot_backend_avatar'
 const BUSINESS_LOGO_KEY = 'foodspot_business_logo'
 
 function BackendHeader({
-    title = 'FoodSpot',
+    title, // Now optional - defaults to tenantData.business_name
     onLogout,
     showDateSelector = false,
     showNotifications = true,
@@ -38,6 +39,10 @@ function BackendHeader({
 }) {
     const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
     const navigate = useNavigate()
+    const { tenantData } = useTenant() // 🏢 SILO-AWARE: Get business identity
+
+    // Derive display title: prop > tenantData > fallback
+    const displayTitle = title || tenantData?.business_name || 'FoodSpot'
 
     // Dropdown state
     const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -186,7 +191,7 @@ function BackendHeader({
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                 }}>
-                    {title}
+                    {displayTitle}
                 </span>
             </div>
 
