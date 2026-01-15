@@ -20,12 +20,29 @@ function BackendHeader({ title, onLogout }) {
     const navigate = useNavigate()
     const { tenantData, branding } = useTenant()
     const [showRoleDropdown, setShowRoleDropdown] = useState(false)
+    const [userRole, setUserRole] = useState(null)
     const dropdownRef = useRef(null)
 
     // 🎛️ HEADER MODE: Use branding.headerMode (default to 'text')
     const headerMode = branding?.headerMode || tenantData?.branding?.headerMode || 'text'
     const businessName = title || tenantData?.business_name || 'FoodSpot'
     const logoUrl = branding?.logoURL || tenantData?.logo_url || tenantData?.branding?.logoURL
+
+    // 🔐 ROLE DETECTION: Check current user role for bidirectional nav
+    const isOwner = userRole === 'owner' || userRole === 'superadmin'
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+    const isInStaffView = currentPath.includes('/staff')
+
+    // Fetch user role on mount
+    useEffect(() => {
+        const fetchRole = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session?.user) {
+                setUserRole(session.user.user_metadata?.role || null)
+            }
+        }
+        fetchRole()
+    }, [])
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -59,11 +76,24 @@ function BackendHeader({ title, onLogout }) {
         }
     }
 
+    // Navigate back to owner view
+    const handleGoToOwner = () => {
+        setShowRoleDropdown(false)
+        if (tenantSlug) {
+            navigate(`/${tenantSlug}/owner/summary`)
+        }
+    }
+
     // Navigate to customer store
     const handleViewStore = () => {
         if (tenantSlug) {
             window.open(`/${tenantSlug}`, '_blank')
         }
+    }
+
+    // Force refresh (hardware-level cache purge)
+    const handleRefreshApp = () => {
+        window.location.reload(true)
     }
 
     return (
@@ -114,13 +144,32 @@ function BackendHeader({ title, onLogout }) {
                 )}
             </div>
 
-            {/* RIGHT: Actions (CLEANED - No Alert Bell, No Generic Profile SVG) */}
+            {/* RIGHT: Actions */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 12,
+                gap: 10,
                 flexShrink: 0
             }}>
+                {/* 🔄 Actualizar App Button */}
+                <button
+                    onClick={handleRefreshApp}
+                    style={{
+                        padding: '6px 10px',
+                        fontSize: 11,
+                        fontWeight: 500,
+                        color: '#6B7280',
+                        background: 'transparent',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        opacity: 0.8
+                    }}
+                >
+                    🔄 Actualizar
+                </button>
+
                 {/* Ver Tienda Button */}
                 {tenantSlug && (
                     <button
@@ -156,10 +205,11 @@ function BackendHeader({ title, onLogout }) {
                             background: '#F3F4F6',
                             border: 'none',
                             borderRadius: 8,
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            textTransform: 'uppercase'
                         }}
                     >
-                        OWNER
+                        {isInStaffView ? 'STAFF' : 'OWNER'}
                         <span style={{ fontSize: 10 }}>▾</span>
                     </button>
 
@@ -190,8 +240,30 @@ function BackendHeader({ title, onLogout }) {
                                 Cambiar Vista
                             </div>
 
-                            {/* Staff View Option */}
-                            {tenantSlug && (
+                            {/* Bidirectional Navigation: Owner ↔ Staff */}
+                            {isOwner && isInStaffView && tenantSlug && (
+                                <button
+                                    onClick={handleGoToOwner}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 10,
+                                        padding: '12px 16px',
+                                        width: '100%',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: 13,
+                                        color: '#3B82F6',
+                                        fontWeight: 700,
+                                        textAlign: 'left'
+                                    }}
+                                >
+                                    👑 Volver a Owner
+                                </button>
+                            )}
+
+                            {isOwner && !isInStaffView && tenantSlug && (
                                 <button
                                     onClick={handleGoToStaff}
                                     style={{
