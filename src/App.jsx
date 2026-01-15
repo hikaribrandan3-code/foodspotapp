@@ -100,10 +100,17 @@ function App() {
 
     useEffect(() => { incrementVisit(); }, []);
 
-    // 🧹 CLEAN-MOUNT GUARD: Sanitize environment when entering Admin routes
+    // 🛑 HARD STOP: 100ms delay when entering Admin to flush tenant memory
+    const [adminReady, setAdminReady] = useState(!location.pathname.startsWith('/admin'));
     useEffect(() => {
         if (location.pathname.startsWith('/admin')) {
+            setAdminReady(false);
             sanitizeForAdmin();
+            // Allow browser to completely flush tenant memory
+            const timer = setTimeout(() => setAdminReady(true), 100);
+            return () => clearTimeout(timer);
+        } else {
+            setAdminReady(true);
         }
     }, [location.pathname]);
 
@@ -352,6 +359,25 @@ function App() {
     // ============================================
     // 5. FINAL RENDER - PARTITIONED BY CONTEXT
     // ============================================
+
+    // 🛑 HARD STOP GATE: Don't render admin until memory is flushed
+    if (location.pathname.startsWith('/admin') && !adminReady) {
+        return (
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh',
+                background: '#1a1a2e',
+                color: '#7C3AED'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>🧹</div>
+                    <div style={{ fontSize: '12px', opacity: 0.8 }}>Cleaning memory...</div>
+                </div>
+            </div>
+        );
+    }
 
     // 🌐 GLOBAL ROUTES: Minimal tree, no tenant providers
     if (isGlobalPath) {

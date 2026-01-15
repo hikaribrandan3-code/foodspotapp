@@ -13,14 +13,27 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- 🛡️ GLOBAL OBJECT FIREWALL V2: Recursive Proxy prevents ANY null access -->
+  <!-- 🔬 ERROR SNIFFER: Identify exact crash source -->
   <script>
-    // Recursive proxy handler - any nested access returns a safe proxy
+    window.onerror = function (msg, url, lineNo, columnNo, error) {
+      console.log('🔴 --- CRASH DETECTED ---');
+      console.log('Message:', msg);
+      console.log('Location:', url, 'Line:', lineNo, 'Col:', columnNo);
+      console.log('Error Object:', error);
+      console.log('Stack:', error?.stack);
+      // Don't suppress - let React Error Boundary catch it too
+      return false;
+    };
+  </script>
+
+  <!-- 🛡️ GLOBAL OBJECT FIREWALL V3: Extended Proxy coverage for ALL possible globals -->
+  <script>
     (function () {
+      // Recursive proxy handler - any nested access returns a safe proxy
       function createSafeProxy() {
         return new Proxy({}, {
           get: function (target, prop) {
-            // Return empty string for string-coercion, empty array for iteration
+            // Return empty string for string-coercion
             if (prop === Symbol.toPrimitive || prop === 'toString' || prop === 'valueOf') {
               return function () { return ''; };
             }
@@ -33,10 +46,22 @@
         });
       }
 
-      // Apply to global objects that might be accessed before React hydrates
+      // FULL COVERAGE: Apply to ALL possible global objects
+      // Original suspects
       window.tenant = window.tenant || createSafeProxy();
       window.config = window.config || createSafeProxy();
       window.branding = window.branding || createSafeProxy();
+
+      // Extended suspects (Task 2)
+      window.theme = window.theme || createSafeProxy();
+      window.lucide = window.lucide || createSafeProxy();
+      window.user = window.user || createSafeProxy();
+      window.auth = window.auth || createSafeProxy();
+      window.supabaseConfig = window.supabaseConfig || createSafeProxy();
+      window.appConfig = window.appConfig || createSafeProxy();
+      window.store = window.store || createSafeProxy();
+      window.state = window.state || createSafeProxy();
+
       window.__ADMIN_SANITIZED__ = false;
     })();
   </script>
