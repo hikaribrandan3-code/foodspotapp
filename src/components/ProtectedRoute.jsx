@@ -39,7 +39,9 @@ const getRoleLoginRoute = (role, tenantSlug) => {
 
 function ProtectedRoute({ children, requiredRole }) {
     // 🏢 PHASE 3: Get URL tenant context
-    const { businessId: urlBusinessId, tenantData } = useTenant()
+    // 🛡️ NULL GUARD: useTenant returns null during initialization or global routes
+    const tenant = useTenant() || {}
+    const { businessId: urlBusinessId, tenantData } = tenant
     const { tenantSlug } = useParams()
 
     const [authState, setAuthState] = useState({
