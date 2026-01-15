@@ -336,19 +336,37 @@ function App() {
     }
 
     // ============================================
-    // 5. FINAL RENDER
+    // 5. FINAL RENDER - PARTITIONED BY CONTEXT
     // ============================================
-    return (
-        <AdminIntentProvider>
-            <div className="app-container">
-                <RouteAreaWrapper>
+
+    // 🌐 GLOBAL ROUTES: Minimal tree, no tenant providers
+    if (isGlobalPath) {
+        return (
+            <AdminIntentProvider>
+                <div className="app-container">
                     <Routes>
                         <Route path="/" element={<TrialSignup />} />
                         <Route path="/start-trial" element={<TrialSignup />} />
                         <Route path="/login" element={<OwnerLogin />} />
                         <Route path="/login/owner" element={<OwnerLogin />} />
                         <Route path="/login/staff" element={<StaffLogin />} />
+                        <Route path="/admin" element={<Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense>} />
+                        <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
+                        <Route path="/camera" element={<Camera />} />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                    {location.pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
+                </div>
+            </AdminIntentProvider>
+        );
+    }
 
+    // 🏢 TENANT ROUTES: Full provider tree with all context
+    return (
+        <AdminIntentProvider>
+            <div className="app-container">
+                <RouteAreaWrapper>
+                    <Routes>
                         <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
                         <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
                         <Route path="/:tenantSlug/envios" element={<Menu config={safeConfig} deliveryMode={true} />} />
@@ -372,25 +390,16 @@ function App() {
                         <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
                         <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
 
-
-
-                        <Route path="/admin" element={<Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense>} />
-                        <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
-                        <Route path="/camera" element={<Camera />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </RouteAreaWrapper>
 
                 {(() => {
                     const p = location.pathname;
-                    const isBackendRoute = p.includes('/owner') || p.includes('/staff') || p.includes('/admin');
-                    const isGlobalRoute = p === '/' || p.includes('start-trial') || p.includes('/login');
+                    const isBackendRoute = p.includes('/owner') || p.includes('/staff');
                     if (isBackendRoute) return <BackendNav role="owner" useRoutes={true} />;
-                    if (!isGlobalRoute) return <BottomNav config={safeConfig} />;
-                    return null;
+                    return <BottomNav config={safeConfig} />;
                 })()}
-
-
             </div>
         </AdminIntentProvider>
     );
