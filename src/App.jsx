@@ -86,7 +86,7 @@ function App() {
     const tenant = useTenant();
 
     const [config, setConfig] = useState(() => getConfig());
-    const [orders, setOrders] = useState([]);
+    const [orders, setOrders] = useState(() => getOrders());
     const safeConfig = useMemo(() => config ?? { pauseOrders: false }, [config]);
 
     const businessId = tenant?.businessId;

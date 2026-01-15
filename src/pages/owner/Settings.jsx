@@ -97,7 +97,7 @@ function Settings({ config: configProp, demoMode = false }) {
                 <button
                     onClick={() => {
                         window.dispatchEvent(new CustomEvent('frontendSync'))
-                        alert('✅ Frontend synced!')
+                        alert('✅ ¡Frontend sincronizado!')
                     }}
                     style={{
                         width: '100%',
@@ -115,7 +115,7 @@ function Settings({ config: configProp, demoMode = false }) {
                         gap: 8
                     }}
                 >
-                    🔄 Refresh Frontend
+                    🔄 Actualizar Frontend
                 </button>
             </div>
 
