@@ -294,7 +294,12 @@ function App() {
     // ============================================
     // 3. 🛡️ THE HYDRATION SHIELD (SAFE POSITION)
     // ============================================
-    if (!tenant) {
+    // 🌐 GLOBAL ROUTE IMMUNITY: These paths don't require tenant context
+    const GLOBAL_PATHS = ['/', '/login', '/login/owner', '/admin', '/start-trial'];
+    const path = location.pathname;
+    const isGlobalPath = GLOBAL_PATHS.includes(path) || path.startsWith('/admin');
+
+    if (!tenant && !isGlobalPath) {
         return (
             <div className="flex h-screen items-center justify-center bg-black">
                 <div className="flex flex-col items-center gap-4">
@@ -308,7 +313,7 @@ function App() {
     // ============================================
     // 4. LOGIC INTERCEPTORS (NOW SAFE)
     // ============================================
-    const path = location.pathname;
+    // Note: 'path' already declared above in Global Route Immunity
 
     if (path === '/login/owner' || path === '/login') {
         return <Routes><Route path="*" element={<OwnerLogin />} /></Routes>;
