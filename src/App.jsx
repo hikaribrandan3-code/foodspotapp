@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
 import { incrementVisit, updateOrder, getOrders } from './utils/storage.js'
+import { sanitizeForAdmin } from './utils/adminSanitize.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
 import { useTenant } from './contexts/TenantContext.jsx'
@@ -98,6 +99,13 @@ function App() {
     // ============================================
 
     useEffect(() => { incrementVisit(); }, []);
+
+    // 🧹 CLEAN-MOUNT GUARD: Sanitize environment when entering Admin routes
+    useEffect(() => {
+        if (location.pathname.startsWith('/admin')) {
+            sanitizeForAdmin();
+        }
+    }, [location.pathname]);
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
