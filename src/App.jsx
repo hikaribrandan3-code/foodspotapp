@@ -39,6 +39,7 @@ import DeliveryManager from './pages/owner/DeliveryManager.jsx'
 // Admin Pages (Lazy-loaded)
 const SuperAdmin = lazy(() => import('./pages/admin/SuperAdmin.jsx'))
 import CoverPreview from './components/CoverPreview.jsx'
+import AdminErrorBoundary from './components/Error/AdminErrorBoundary.jsx'
 
 // Auth Pages
 import TrialSignup from './pages/auth/TrialSignup.jsx'
@@ -355,7 +356,7 @@ function App() {
                         <Route path="/login" element={<OwnerLogin />} />
                         <Route path="/login/owner" element={<OwnerLogin />} />
                         <Route path="/login/staff" element={<StaffLogin />} />
-                        <Route path="/admin" element={<Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense>} />
+                        <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                         <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
                         <Route path="/camera" element={<Camera />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
