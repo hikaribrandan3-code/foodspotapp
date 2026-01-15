@@ -50,8 +50,18 @@ export const AdminIntentProvider = ({ children }) => {
 
 export const useAdminIntent = () => {
     const context = useContext(AdminIntentContext)
+    // 🛡️ NULL GUARD: Return safe fallback instead of throwing
+    // This prevents crashes when component renders before provider mounts
     if (!context) {
-        throw new Error('useAdminIntent must be used within an AdminIntentProvider')
+        return {
+            activeRoleView: 'superadmin',
+            impersonatingBusinessId: null,
+            impersonatingUserId: null,
+            isSimulated: false,
+            enterOwnerView: () => { },
+            enterStaffView: () => { },
+            exitSimulation: () => { }
+        }
     }
     return context
 }
