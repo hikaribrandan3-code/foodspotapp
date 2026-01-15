@@ -36,7 +36,10 @@ const InfoIcon = () => (
 // CAMERA ICON: Removed - now imported from CameraIcons.jsx
 
 // INVARIANT: config must come from prop (App.jsx safeConfig)
-function BottomNav({ config }) {
+function BottomNav({ config: configProp }) {
+    // 🛡️ NULL GUARD: Ensure config is always an object (prevents f[b] crash)
+    const config = configProp || {};
+
     const location = useLocation()
     const params = useParams()
 
