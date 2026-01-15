@@ -450,8 +450,20 @@ function App() {
 
                 {(() => {
                     const p = location.pathname;
-                    const isBackendRoute = p.includes('/owner') || p.includes('/staff');
-                    if (isBackendRoute) return <BackendNav role="owner" useRoutes={true} />;
+                    const isOwner = p.includes('/owner');
+                    const isStaff = p.includes('/staff');
+
+                    if (isOwner || isStaff) {
+                        return (
+                            <div style={{ position: 'relative', zIndex: 9999 }}>
+                                <BackendNav
+                                    role={isOwner ? "owner" : "staff"}
+                                    useRoutes={true}
+                                />
+                            </div>
+                        );
+                    }
+
                     return <BottomNav config={safeConfig} />;
                 })()}
             </div>
