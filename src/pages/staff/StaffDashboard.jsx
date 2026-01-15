@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { getAuth, clearAuth, addStamp } from '../../utils/storage.js'
 import { getMenu, toggleItemAvailability, formatPrice } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
@@ -17,6 +17,7 @@ const ALERT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-p
 function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrders }) {
     const config = configProp || {};
     const navigate = useNavigate()
+    const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
     const [menu, setMenu] = useState(() => getMenu())
     const [activeTab, setActiveTab] = useState('orders')
 
@@ -75,7 +76,8 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
 
     const handleLogout = () => {
         clearAuth()
-        navigate('/')
+        // 🏢 SILO-AWARE: Navigate to tenant-scoped login
+        navigate(tenantSlug ? `/${tenantSlug}` : '/')
     }
 
     const handleStatusChange = (orderId, newStatus) => {
@@ -212,14 +214,6 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
                     </div>
                 </div>
 
-                <div style={{ padding: '8px 16px', borderTop: '1px solid #DBEAFE' }}>
-                    <button
-                        onClick={() => window.location.reload()}
-                        style={{ background: 'none', border: 'none', color: '#3B82F6', fontSize: 11, fontWeight: 600, cursor: 'pointer', width: '100%' }}
-                    >
-                        🔄 Actualizar Frontend
-                    </button>
-                </div>
             </div>
 
             <div style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>

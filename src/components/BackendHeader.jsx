@@ -167,7 +167,7 @@ function BackendHeader({ title, onLogout }) {
                         opacity: 0.8
                     }}
                 >
-                    🔄 Actualizar
+                    🔄 Actualizar App
                 </button>
 
                 {/* Ver Tienda Button */}
