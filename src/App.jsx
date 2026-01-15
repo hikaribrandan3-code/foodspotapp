@@ -92,6 +92,20 @@ function App() {
     const trialExpired = tenant?.trialExpired;
 
     // ============================================
+    // 🚨 EMERGENCY BYPASS: Admin Isolation Protocol
+    // ============================================
+    // Bypasses ALL providers and routing for /admin to force load
+    if (location.pathname.startsWith('/admin')) {
+        return (
+            <AdminIntentProvider>
+                <Suspense fallback={<div className="flex h-screen items-center justify-center bg-black"><div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+                    <SuperAdmin config={safeConfig} />
+                </Suspense>
+            </AdminIntentProvider>
+        );
+    }
+
+    // ============================================
     // 2. EFFECT HOOKS (INTERNAL NULL GUARDS)
     // ============================================
 

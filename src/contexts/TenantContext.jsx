@@ -274,19 +274,16 @@ export function TenantProvider({ children }) {
 }
 
 /**
- * useTenant Hook - Hardened
- * returns the full tenant object or null during bootstrap
+ * useTenant Hook - NUCLEAR HARDENED
+ * returns the full tenant object or EMPTY OBJECT (never null)
  */
 export function useTenant() {
     const context = useContext(TenantContext);
 
-    // 🔥 THE FIX: Stop thread death. 
-    // If context is null (initialization phase), return null.
-    if (!context) {
-        return null;
-    }
-
-    return context;
+    // 🔥 NUCLEAR FIX: Return empty object instead of null
+    // This prevents `const { businessId } = useTenant()` from crashing
+    // Components get `undefined` instead of fatal f[b] error
+    return context || {};
 }
 
 /**
