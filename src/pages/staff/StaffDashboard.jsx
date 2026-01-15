@@ -196,6 +196,8 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
             style={{
                 paddingBottom: 'var(--space-4)',
                 pointerEvents: 'auto',
+                position: 'relative',
+                zIndex: 1,
                 WebkitTapHighlightColor: 'transparent',
                 touchAction: 'manipulation'
             }}
