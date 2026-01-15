@@ -187,7 +187,7 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
     }
 
     return (
-        <div className="page backend-surface" style={{ paddingBottom: 'var(--space-4)' }}>
+        <div className="page backend-surface staff-dashboard" style={{ paddingBottom: 'var(--space-4)', pointerEvents: 'auto' }}>
             <BackendHeader
                 title="Staff"
                 onLogout={handleLogout}

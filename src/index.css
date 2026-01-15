@@ -1400,3 +1400,32 @@ h3 {
   background: #FFFFFF !important;
   color: #1F2937 !important;
 }
+
+/* =============================================
+   GLASS WALL FIX - Ensure no invisible overlays block taps
+   Safari Mobile Optimization
+   ============================================= */
+#root {
+  pointer-events: auto !important;
+}
+
+/* Force loading spinners to be non-blocking */
+.loading-overlay,
+.spinner-container,
+.loading-screen {
+  pointer-events: none !important;
+}
+
+/* Owner Summary Grid - Responsive alignment */
+.owner-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* Staff Dashboard - Force interactivity */
+.staff-dashboard {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+}
