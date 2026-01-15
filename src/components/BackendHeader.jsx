@@ -151,25 +151,6 @@ function BackendHeader({ title, onLogout }) {
                 gap: 10,
                 flexShrink: 0
             }}>
-                {/* 🔄 Actualizar App Button */}
-                <button
-                    onClick={handleRefreshApp}
-                    style={{
-                        padding: '6px 10px',
-                        fontSize: 11,
-                        fontWeight: 500,
-                        color: '#6B7280',
-                        background: 'transparent',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                        opacity: 0.8
-                    }}
-                >
-                    🔄 Actualizar App
-                </button>
-
                 {/* Ver Tienda Button */}
                 {tenantSlug && (
                     <button

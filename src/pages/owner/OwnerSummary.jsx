@@ -111,7 +111,7 @@ function OwnerSummary({ config: configProp }) {
                         gap: 8
                     }}
                 >
-                    🔄 Refresh Frontend
+                    🔄 Actualizar Frontend
                 </button>
             </div>
 

@@ -5,6 +5,7 @@ import { getMenu, toggleItemAvailability, formatPrice } from '../../config/menuD
 import { updateConfig } from '../../config/appConfig.v2.js'
 import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
 import { canAdvanceOrder, getOrderStatusInfo } from '../../utils/orderStateGuard.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
@@ -18,6 +19,7 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
     const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
+    const { isLoaded } = useTenant() // 🛡️ GUARD: Wait for tenant context to resolve
     const [menu, setMenu] = useState(() => getMenu())
     const [activeTab, setActiveTab] = useState('orders')
 
@@ -166,6 +168,23 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
         orders: activeOrders.length,
         delivery: pendingDeliveries.length
     }), [activeOrders.length, pendingDeliveries.length])
+
+    // 🛡️ LOADING GUARD: Block interactions until tenant context is loaded
+    if (!isLoaded) {
+        return (
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh',
+                background: '#F5F2EE',
+                fontSize: 14,
+                color: '#6B7280'
+            }}>
+                Cargando Staff...
+            </div>
+        )
+    }
 
     return (
         <div className="page backend-surface" style={{ paddingBottom: 'var(--space-4)' }}>
