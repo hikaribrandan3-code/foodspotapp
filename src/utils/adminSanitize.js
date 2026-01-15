@@ -40,28 +40,41 @@ export function sanitizeForAdmin() {
     window.styles = {};
     window.customProperties = {};
 
-    // 4. 🔥 STYLE FIREWALL: Remove ALL custom tenant styling before Admin mounts
+    // 4. 🧪 ACID WASH: Total purge of ALL tenant pollution from DOM
     const html = document.documentElement;
     const body = document.body;
 
-    // Clear ALL inline styles from html and body (removes tenant CSS variables)
+    // 4a. Physically remove the 'style' attribute to kill ALL custom CSS variables
     html.removeAttribute('style');
     body.removeAttribute('style');
 
-    // Force standard admin theme
-    html.setAttribute('data-theme', 'admin');
-    html.setAttribute('data-admin', 'true');
+    // 4b. Clear ALL data-attributes that might trigger CSS selectors
+    if (html.dataset) {
+        Object.keys(html.dataset).forEach(key => delete html.dataset[key]);
+    }
+    if (body.dataset) {
+        Object.keys(body.dataset).forEach(key => delete body.dataset[key]);
+    }
 
-    // Re-apply only admin-safe CSS variables
-    html.style.setProperty('--nav-primary-color', '#7C3AED'); // Admin purple
+    // 4c. Set clean Admin flags for CSS engine (fresh slate)
+    html.setAttribute('data-admin-mode', 'true');
+    html.setAttribute('data-theme', 'admin');
+
+    // 4d. Force white background as clean slate (prevents flash)
+    html.style.backgroundColor = '#1a1a2e';
+    html.style.setProperty('--nav-primary-color', '#7C3AED');
     html.style.setProperty('--nav-icon-color', '#FFFFFF');
     html.style.setProperty('--canvas-bg', '#1a1a2e');
     html.style.setProperty('--canvas-text', '#ffffff');
 
+    // 4e. Remove any lingering class names that could trigger tenant styles
+    html.className = '';
+    body.className = 'admin-mode';
+
     // 5. Mark as sanitized
     window.__ADMIN_SANITIZED__ = true;
 
-    console.log('✅ [AdminSanitize] Environment clean for Admin mount');
+    console.log('✅ [AdminSanitize] ACID WASH complete - Environment clean for Admin mount');
 }
 
 /**
