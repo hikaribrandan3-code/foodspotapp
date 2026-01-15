@@ -1438,3 +1438,35 @@ body {
 .loading-overlay {
   pointer-events: none;
 }
+
+/* =============================================
+   ZOMBIE OVERLAY KILL - Neutralize Header/Dropdown Ghosts
+   Prevents invisible full-screen sheets from blocking content
+   ============================================= */
+
+/* Header: Only clickable on visible elements, not backdrop */
+.backend-header::before,
+.backend-header::after {
+  pointer-events: none !important;
+  display: none !important;
+}
+
+/* Dropdown backdrop: Force destruction when closed */
+.dropdown-backdrop,
+.modal-backdrop,
+[class*="overlay"]:not(.loading-overlay) {
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* When dropdown IS open, only the dropdown itself catches clicks */
+.dropdown-menu[data-open="true"],
+.dropdown-menu:focus-within {
+  pointer-events: auto !important;
+  z-index: 1001 !important;
+}
+
+/* Kill any invisible divs with full-viewport coverage */
+div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard) {
+  pointer-events: none !important;
+}
