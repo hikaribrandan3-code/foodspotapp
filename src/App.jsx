@@ -455,12 +455,10 @@ function App() {
 
                     if (isOwner || isStaff) {
                         return (
-                            <div style={{ position: 'relative', zIndex: 9999 }}>
-                                <BackendNav
-                                    role={isOwner ? "owner" : "staff"}
-                                    useRoutes={true}
-                                />
-                            </div>
+                            <BackendNav
+                                role={isOwner ? "owner" : "staff"}
+                                useRoutes={true}
+                            />
                         );
                     }
 

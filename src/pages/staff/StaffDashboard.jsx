@@ -7,7 +7,6 @@ import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
 import { canAdvanceOrder, getOrderStatusInfo } from '../../utils/orderStateGuard.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
-import BackendNav from '../../components/BackendNav.jsx'
 
 // High-pitched "Beep-Beep" equivalent (using a placeholder or standard sound)
 // For now, we will use a reliable high-pitched beep sound.
@@ -601,12 +600,7 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
                 )}
             </div>
 
-            <BackendNav
-                role="staff"
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                badges={navBadges}
-            />
+            {/* Nav is handled by App.jsx with dynamic role assignment */}
         </div>
     )
 }
