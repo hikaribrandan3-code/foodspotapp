@@ -13,14 +13,32 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- 🛡️ GLOBAL OBJECT FIREWALL: Prevent "null is not an object" during route transitions -->
+  <!-- 🛡️ GLOBAL OBJECT FIREWALL V2: Recursive Proxy prevents ANY null access -->
   <script>
-    // Ensure global objects always exist as empty objects, never null
-    // This prevents m[x] crashes during SPA transitions
-    window.tenant = window.tenant || {};
-    window.config = window.config || {};
-    window.branding = window.branding || {};
-    window.__ADMIN_SANITIZED__ = false;
+    // Recursive proxy handler - any nested access returns a safe proxy
+    (function () {
+      function createSafeProxy() {
+        return new Proxy({}, {
+          get: function (target, prop) {
+            // Return empty string for string-coercion, empty array for iteration
+            if (prop === Symbol.toPrimitive || prop === 'toString' || prop === 'valueOf') {
+              return function () { return ''; };
+            }
+            if (prop === Symbol.iterator) {
+              return function* () { };
+            }
+            // Return another safe proxy for any property access
+            return createSafeProxy();
+          }
+        });
+      }
+
+      // Apply to global objects that might be accessed before React hydrates
+      window.tenant = window.tenant || createSafeProxy();
+      window.config = window.config || createSafeProxy();
+      window.branding = window.branding || createSafeProxy();
+      window.__ADMIN_SANITIZED__ = false;
+    })();
   </script>
 
 
