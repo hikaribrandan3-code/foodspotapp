@@ -1429,3 +1429,20 @@ h3 {
   pointer-events: auto !important;
   touch-action: manipulation;
 }
+
+/* =============================================
+   GLASS WALL HAMMER - Safari Mobile Emergency Fix
+   Forces all staff and nav elements to be interactive
+   ============================================= */
+.staff-dashboard *,
+.bottom-nav,
+.bottom-nav * {
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}
+
+/* Ensure no overlays from app wrapper block the staff view */
+.backend-surface,
+.backend-surface * {
+  pointer-events: auto !important;
+}
