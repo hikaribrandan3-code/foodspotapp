@@ -48,7 +48,6 @@ function Settings({ config: configProp, demoMode = false }) {
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     // Local form state for editable messages (initialized from prop)
-    const [maintenanceMessage, setMaintenanceMessage] = useState(config?.maintenanceMessage || '')
     const [pauseMessage, setPauseMessage] = useState(config?.pauseOrdersMessage || '')
     const [businessInfo, setBusinessInfo] = useState(config?.businessInfo || {})
     const [showCoverEditor, setShowCoverEditor] = useState(false)
@@ -63,11 +62,6 @@ function Settings({ config: configProp, demoMode = false }) {
         window.location.href = demoMode ? '/' : `/${tenantSlug}`
     }
 
-    const handleToggleMaintenance = () => {
-        updateConfig({ maintenanceMode: !config.maintenanceMode })
-        window.dispatchEvent(new CustomEvent('frontendSync'))
-    }
-
     const handleTogglePause = () => {
         updateConfig({ pauseOrders: !config.pauseOrders })
         window.dispatchEvent(new CustomEvent('frontendSync'))
@@ -75,7 +69,6 @@ function Settings({ config: configProp, demoMode = false }) {
 
     const handleSaveMessages = () => {
         updateConfig({
-            maintenanceMessage,
             pauseOrdersMessage: pauseMessage
         })
         alert('¡Mensajes guardados!')
@@ -127,28 +120,7 @@ function Settings({ config: configProp, demoMode = false }) {
                         <div style={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            alignItems: 'center',
-                            paddingBottom: 12,
-                            borderBottom: '1px solid #F1F5F9'
-                        }}>
-                            <div>
-                                <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>Modo mantenimiento</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Cierra todo el local</p>
-                            </div>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={config.maintenanceMode}
-                                    onChange={handleToggleMaintenance}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            paddingTop: 12
+                            alignItems: 'center'
                         }}>
                             <div>
                                 <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>Pausar pedidos</p>
@@ -317,16 +289,6 @@ function Settings({ config: configProp, demoMode = false }) {
                 <div style={{ marginBottom: 20 }}>
                     <SectionHeader title="Mensajes" />
                     <Card>
-                        <div className="form-group">
-                            <label className="form-label">Mensaje de mantenimiento</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={maintenanceMessage}
-                                onChange={(e) => setMaintenanceMessage(e.target.value)}
-                                placeholder="Ej: Volvemos a las 17:00"
-                            />
-                        </div>
                         <div className="form-group">
                             <label className="form-label">Mensaje de pausa</label>
                             <input
