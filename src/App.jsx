@@ -432,8 +432,8 @@ function App() {
                         <Route path="/:tenantSlug/promos" element={<Promos config={safeConfig} />} />
 
                         <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
-                        <Route path="/:tenantSlug/staff/dashboard" element={<ProtectedRoute requiredRole="staff"><StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} /></ProtectedRoute>} />
-                        <Route path="/:tenantSlug/staff/dashboard/:tab" element={<ProtectedRoute requiredRole="staff"><StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} /></ProtectedRoute>} />
+                        <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
+                        <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
 
                         <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
                         <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
