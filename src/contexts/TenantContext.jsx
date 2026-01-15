@@ -146,7 +146,39 @@ export function TenantProvider({ children }) {
 
                 const tenant = await fetchTenant()
 
-                // Success: Tenant found
+                // 🪂 EJECTION SEAT: Verify current user has silo access before committing
+                const { data: currentUser } = await supabase.auth.getUser()
+                if (currentUser?.user) {
+                    const userMeta = currentUser.user.user_metadata || {}
+                    const userRole = userMeta.role
+                    const userBusinessId = userMeta.business_id
+                    const userSlug = userMeta.slug
+
+                    // Only check for Owner/Staff - customers can view any tenant
+                    const isOwnerOrStaff = userRole === 'owner' || userRole === 'staff'
+                    const isSuperAdmin = userRole === 'superadmin'
+
+                    if (isOwnerOrStaff && !isSuperAdmin) {
+                        // Check if user belongs to this tenant (by ID or slug)
+                        const matchById = userBusinessId && userBusinessId === tenant.business_id
+                        const matchBySlug = userSlug && userSlug.toLowerCase() === slug.toLowerCase()
+
+                        if (!matchById && !matchBySlug) {
+                            console.error('[Silo Guard] 🪂 EJECTION SEAT: Unauthorized Silo Jump detected', {
+                                userSlug,
+                                userBusinessId,
+                                tenantSlug: slug,
+                                tenantBusinessId: tenant.business_id
+                            })
+                            setLoading(false)
+                            // Hard redirect to home with warning flag
+                            window.location.href = '/?siloJump=true'
+                            return
+                        }
+                    }
+                }
+
+                // Success: Tenant found and user has access
                 setBusinessId(tenant.user_id) // Use user_id as business_id
                 setTenantStoragePrefix(tenant.user_id)
                 setTenantData(tenant)
