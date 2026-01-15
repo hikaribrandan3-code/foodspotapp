@@ -274,16 +274,33 @@ export function TenantProvider({ children }) {
 }
 
 /**
- * useTenant Hook - NUCLEAR HARDENED
- * returns the full tenant object or EMPTY OBJECT (never null)
+ * useTenant Hook - NUCLEAR HARDENED V2
+ * returns the full tenant object with SAFE DEFAULTS (never null, never undefined nested)
  */
 export function useTenant() {
     const context = useContext(TenantContext);
 
-    // 🔥 NUCLEAR FIX: Return empty object instead of null
-    // This prevents `const { businessId } = useTenant()` from crashing
-    // Components get `undefined` instead of fatal f[b] error
-    return context || {};
+    // 🔥 NUCLEAR FIX V2: Return object with all nested defaults
+    // This prevents `tenant.branding.color` and `tenant.settings.x` from g[x] crash
+    if (!context) {
+        return {
+            businessId: null,
+            tenantData: {},
+            branding: {},
+            settings: {},
+            trialExpired: false,
+            loading: false,
+            error: null
+        };
+    }
+
+    // Ensure nested properties exist even if context is partial
+    return {
+        ...context,
+        tenantData: context.tenantData || {},
+        branding: context.tenantData?.branding || context.branding || {},
+        settings: context.tenantData?.settings || context.settings || {}
+    };
 }
 
 /**

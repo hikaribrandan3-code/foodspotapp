@@ -26,6 +26,23 @@
     };
   </script>
 
+  <!-- 🔇 STYLE MUTE BUTTON: Block invalid setProperty calls on /admin -->
+  <script>
+    (function () {
+      const originalSetProperty = CSSStyleDeclaration.prototype.setProperty;
+      CSSStyleDeclaration.prototype.setProperty = function (property, value, priority) {
+        // Block invalid values on admin paths
+        if (window.location.pathname.startsWith('/admin')) {
+          if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
+            console.log('🔇 [MUTE] Blocked invalid style:', property, '=', value);
+            return; // Physically cut off the style injector
+          }
+        }
+        originalSetProperty.call(this, property, value, priority);
+      };
+    })();
+  </script>
+
   <!-- 🛡️ GLOBAL OBJECT FIREWALL V3: Extended Proxy coverage for ALL possible globals -->
   <script>
     (function () {
