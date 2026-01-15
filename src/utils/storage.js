@@ -32,7 +32,18 @@ export function getItem(key) {
 
 export function setItem(key, value) {
     try {
-        localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+        // 🛡️ NULL GUARD: Prevent storing null/undefined that could crash Tenant on reload
+        if (value === null || value === undefined) {
+            console.warn(`[storage.js] Blocked setItem for "${key}" with null/undefined value`);
+            return false;
+        }
+        const stringified = JSON.stringify(value);
+        // Block "null" or "undefined" strings
+        if (stringified === 'null' || stringified === 'undefined' || stringified === '"null"' || stringified === '"undefined"') {
+            console.warn(`[storage.js] Blocked setItem for "${key}" with invalid stringified value`);
+            return false;
+        }
+        localStorage.setItem(STORAGE_PREFIX + key, stringified);
         return true;
     } catch (e) {
         console.error(`Error setting ${key}:`, e);
