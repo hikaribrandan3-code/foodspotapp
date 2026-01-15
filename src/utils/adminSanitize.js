@@ -36,11 +36,27 @@ export function sanitizeForAdmin() {
     window.tenant = {};
     window.config = {};
     window.branding = {};
+    window.theme = {};
+    window.styles = {};
+    window.customProperties = {};
 
-    // 4. Remove any tenant-specific CSS variables
-    const root = document.documentElement;
-    root.style.setProperty('--nav-primary-color', '#7C3AED'); // Admin purple
-    root.style.setProperty('--nav-icon-color', '#FFFFFF');
+    // 4. 🔥 STYLE FIREWALL: Remove ALL custom tenant styling before Admin mounts
+    const html = document.documentElement;
+    const body = document.body;
+
+    // Clear ALL inline styles from html and body (removes tenant CSS variables)
+    html.removeAttribute('style');
+    body.removeAttribute('style');
+
+    // Force standard admin theme
+    html.setAttribute('data-theme', 'admin');
+    html.setAttribute('data-admin', 'true');
+
+    // Re-apply only admin-safe CSS variables
+    html.style.setProperty('--nav-primary-color', '#7C3AED'); // Admin purple
+    html.style.setProperty('--nav-icon-color', '#FFFFFF');
+    html.style.setProperty('--canvas-bg', '#1a1a2e');
+    html.style.setProperty('--canvas-text', '#ffffff');
 
     // 5. Mark as sanitized
     window.__ADMIN_SANITIZED__ = true;

@@ -62,6 +62,12 @@
       window.store = window.store || createSafeProxy();
       window.state = window.state || createSafeProxy();
 
+      // Style/Theme suspects (g[x] crash)
+      window.styles = window.styles || createSafeProxy();
+      window.customProperties = window.customProperties || createSafeProxy();
+      window.cssVars = window.cssVars || createSafeProxy();
+      window.themeColors = window.themeColors || createSafeProxy();
+
       window.__ADMIN_SANITIZED__ = false;
     })();
   </script>
