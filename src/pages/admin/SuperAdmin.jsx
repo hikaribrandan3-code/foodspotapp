@@ -75,7 +75,10 @@ function isValidLogoUrl(value) {
 
 // INVARIANT: SuperAdmin receives config via prop from App.jsx (single source of truth)
 // Do NOT call getConfig() locally - breaks invariant during saves
-function SuperAdmin({ config }) {
+function SuperAdmin({ config: configProp }) {
+    // 🛡️ NULL GUARD: Ensure config is always an object (prevents f[b] crash)
+    const config = configProp || {};
+
     const navigate = useNavigate()
     const location = useLocation()
     const businessId = useBusinessId() // 🏢 PHASE 3: Dynamic tenant identity
