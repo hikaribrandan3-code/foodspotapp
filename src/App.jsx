@@ -140,16 +140,21 @@ function App() {
     }, [businessId]);
 
     // Metadata Injection: Set document title and favicon from tenant branding
+    // 🛡️ FUTURE-PROOF: Defaults to FoodSpot when tenant data missing, auto-swaps when available
     useEffect(() => {
-        if (!tenantData) return;
-        document.title = tenantData.business_name || 'FoodSpot';
+        // Generator pattern: safe fallbacks prevent m[x] crash
+        const title = tenantData?.business_name || 'FoodSpot';
+        const icon = tenantData?.logo_url || '/favicon.ico';
+
+        document.title = title;
+
         let favicon = document.querySelector("link[rel~='icon']");
         if (!favicon) {
             favicon = document.createElement('link');
             favicon.rel = 'icon';
             document.head.appendChild(favicon);
         }
-        favicon.href = tenantData.logo_url || '/favicon.ico';
+        favicon.href = icon;
     }, [tenantData?.business_name, tenantData?.logo_url]);
 
     useEffect(() => {
