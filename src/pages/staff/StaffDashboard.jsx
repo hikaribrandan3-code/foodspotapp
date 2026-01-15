@@ -194,12 +194,17 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
         <div
             className="page backend-surface staff-dashboard"
             style={{
-                paddingBottom: 'var(--space-4)',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 50,
                 pointerEvents: 'auto',
-                position: 'relative',
-                zIndex: 1,
+                overflowY: 'auto',
                 WebkitTapHighlightColor: 'transparent',
-                touchAction: 'manipulation'
+                touchAction: 'manipulation',
+                background: '#F5F2EE'
             }}
         >
             <BackendHeader
