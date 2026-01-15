@@ -192,19 +192,12 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
 
     return (
         <div
-            className="page backend-surface staff-dashboard"
+            className="backend-surface staff-dashboard"
             style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 50,
-                pointerEvents: 'auto',
-                overflowY: 'auto',
-                WebkitTapHighlightColor: 'transparent',
-                touchAction: 'manipulation',
-                background: '#F5F2EE'
+                minHeight: '100vh',
+                background: '#F5F2EE',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                position: 'relative'
             }}
         >
             <BackendHeader
