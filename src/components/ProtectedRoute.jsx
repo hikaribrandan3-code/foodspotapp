@@ -39,9 +39,9 @@ const getRoleLoginRoute = (role, tenantSlug) => {
 
 function ProtectedRoute({ children, requiredRole }) {
     // 🏢 PHASE 3: Get URL tenant context
-    // 🛡️ NULL GUARD: useTenant returns null during initialization or global routes
+    // 🛡️ NULL GUARD: useTenant returns safe defaults during initialization
     const tenant = useTenant() || {}
-    const { businessId: urlBusinessId, tenantData } = tenant
+    const { businessId: urlBusinessId, tenantData, isLoaded: tenantLoaded } = tenant
     const { tenantSlug } = useParams()
 
     const [authState, setAuthState] = useState({
@@ -137,11 +137,11 @@ function ProtectedRoute({ children, requiredRole }) {
     const currentSlug = tenantSlug || tenantData?.slug || ''
 
     // ============================================
-    // STATE 1: LOADING (Supabase session hydrating)
+    // STATE 1: LOADING (Auth + Tenant hydrating)
     // ============================================
-    // Show spinner while waiting for Supabase to resolve session
-    // This prevents false redirects on initial page load
-    if (isLoading) {
+    // Show spinner while waiting for BOTH Supabase session AND TenantContext to resolve
+    // This prevents false redirects and premature Silo Guard evaluation
+    if (isLoading || (tenantSlug && !tenantLoaded)) {
         return (
             <div style={{
                 display: 'flex',

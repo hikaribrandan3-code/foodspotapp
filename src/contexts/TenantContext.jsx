@@ -267,7 +267,7 @@ export function TenantProvider({ children }) {
     }
 
     return (
-        <TenantContext.Provider value={{ businessId, tenantData, trialExpired, loading }}>
+        <TenantContext.Provider value={{ businessId, tenantData, trialExpired, loading, isLoaded: !loading }}>
             {children}
         </TenantContext.Provider>
     )
@@ -290,6 +290,7 @@ export function useTenant() {
             settings: {},
             trialExpired: false,
             loading: false,
+            isLoaded: false, // 🔐 VAULT-SEAL: Explicit false until context mounts
             error: null
         };
     }
@@ -299,7 +300,8 @@ export function useTenant() {
         ...context,
         tenantData: context.tenantData || {},
         branding: context.tenantData?.branding || context.branding || {},
-        settings: context.tenantData?.settings || context.settings || {}
+        settings: context.tenantData?.settings || context.settings || {},
+        isLoaded: context.isLoaded ?? !context.loading // 🔐 Ensure isLoaded is always present
     };
 }
 
