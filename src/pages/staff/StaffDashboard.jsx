@@ -6,6 +6,7 @@ import { updateConfig } from '../../config/appConfig.v2.js'
 import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
 import { canAdvanceOrder, getOrderStatusInfo } from '../../utils/orderStateGuard.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { supabase } from '../../lib/supabaseClient.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 
 // High-pitched "Beep-Beep" equivalent (using a placeholder or standard sound)
@@ -140,9 +141,29 @@ function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrder
         setMenu(getMenu())
     }
 
-    const handlePauseOrders = () => {
-        updateConfig({ pauseOrders: !config.pauseOrders })
-        window.dispatchEvent(new CustomEvent('frontendSync'))
+    const handlePauseOrders = async () => {
+        // 1. Calculate the inverted state
+        const newStatus = !config.pauseOrders;
+
+        try {
+            // 2. PERSIST TO CLOUD: Update the 'branding' table where slug matches
+            const { error } = await supabase
+                .from('branding')
+                .update({ pause_orders: newStatus })
+                .eq('slug', tenantSlug);
+
+            if (error) throw error;
+
+            // 3. PERSIST TO LOCAL: Keep the local config in sync for immediate UI feedback
+            updateConfig({ pauseOrders: newStatus });
+
+            // 4. BROADCAST: Trigger the global sync event
+            window.dispatchEvent(new CustomEvent('frontendSync'));
+
+        } catch (err) {
+            console.error('❌ Cloud Sync Failed:', err);
+            alert('Error al sincronizar. Intenta de nuevo.');
+        }
     }
 
     const handleAddStamp = () => {
