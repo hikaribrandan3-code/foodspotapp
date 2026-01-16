@@ -5,6 +5,11 @@
 
 /* CSS Custom Properties */
 :root {
+  /* 🚀 NUCLEAR LIGHT MODE - Forces white for all admin/owner views */
+  --bg-primary: #FFFFFF !important;
+  --bg-secondary: #F8FAFC !important;
+  --text-primary: #1F2937 !important;
+
   /* Colors - Warm Beige/Brown Palette */
   --color-background: #F5F0E8;
   --color-card: #E8DFD3;
@@ -100,6 +105,18 @@
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
   --transition-slow: 350ms ease;
+}
+
+/* 🛡️ LIGHT THEME MONARCHY - Explicit overrides for all theme contexts */
+[data-theme="light"],
+.backend-surface,
+.admin-surface {
+  --canvas-bg: #FFFFFF !important;
+  --canvas-text: #1F2937 !important;
+  --surface-bg: #FFFFFF !important;
+  --surface-raised-bg: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  color: #1F2937 !important;
 }
 
 /* =============================================

@@ -8,6 +8,7 @@ import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
+import ColorPickerModal from '../../components/ColorPickerModal.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
@@ -48,6 +49,9 @@ function Settings({ config: configProp, demoMode = false }) {
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [showCoverEditor, setShowCoverEditor] = useState(false)
+
+    // 🎨 MONARCH PICKERS: State for custom ColorPickerModal (replaces native X pickers)
+    const [activeColorPicker, setActiveColorPicker] = useState(null) // 'primary' | 'secondary' | 'confirmation' | 'poweredBy' | null
 
     // 🏢 CLOUD-FIRST: Get businessId from tenant context
     const { businessId } = useTenant() || {}
@@ -259,56 +263,106 @@ function Settings({ config: configProp, demoMode = false }) {
                 {/* SECTION 3: COLORES Y TEMA */}
                 <h3 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, marginTop: 24, textTransform: 'uppercase', letterSpacing: '0.05em' }}>3. Colores y Tema</h3>
                 <Card>
-                    {/* Color Pickers (Parity with Super Admin) */}
+                    {/* 🎨 MONARCH PICKERS: Custom ColorPickerModal (no native X) */}
                     <div className="form-group">
                         <label className="form-label">Colores del tema</label>
                         <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+                            {/* Primary Color Swatch */}
                             <div>
                                 <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Primario</p>
-                                <input
-                                    type="color"
-                                    value={config.colors?.primary || '#B8956A'}
-                                    onChange={(e) => {
-                                        updateSettingsCloud({ colors: { ...config.colors, primary: e.target.value } })
+                                <button
+                                    onClick={() => setActiveColorPicker('primary')}
+                                    style={{
+                                        width: 50, height: 40, border: '2px solid #E5E7EB', borderRadius: 8,
+                                        backgroundColor: config.colors?.primary || '#B8956A', cursor: 'pointer'
                                     }}
-                                    style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    aria-label="Elegir color primario"
                                 />
                             </div>
+                            {/* Secondary Color Swatch */}
                             <div>
                                 <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Secundario</p>
-                                <input
-                                    type="color"
-                                    value={config.colors?.primaryLight || '#A89070'}
-                                    onChange={(e) => {
-                                        updateSettingsCloud({ colors: { ...config.colors, primaryLight: e.target.value } })
+                                <button
+                                    onClick={() => setActiveColorPicker('secondary')}
+                                    style={{
+                                        width: 50, height: 40, border: '2px solid #E5E7EB', borderRadius: 8,
+                                        backgroundColor: config.colors?.primaryLight || '#A89070', cursor: 'pointer'
                                     }}
-                                    style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    aria-label="Elegir color secundario"
                                 />
                             </div>
+                            {/* Confirmation Color Swatch */}
                             <div>
                                 <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Confirmación</p>
-                                <input
-                                    type="color"
-                                    value={config.colors?.confirmation || '#22C55E'}
-                                    onChange={(e) => {
-                                        updateSettingsCloud({ colors: { ...config.colors, confirmation: e.target.value } })
+                                <button
+                                    onClick={() => setActiveColorPicker('confirmation')}
+                                    style={{
+                                        width: 50, height: 40, border: '2px solid #E5E7EB', borderRadius: 8,
+                                        backgroundColor: config.colors?.confirmation || '#22C55E', cursor: 'pointer'
                                     }}
-                                    style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    aria-label="Elegir color de confirmación"
                                 />
                             </div>
+                            {/* Powered By Color Swatch */}
                             <div>
                                 <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Powered by</p>
-                                <input
-                                    type="color"
-                                    value={config.branding?.poweredByColor || '#C4856A'}
-                                    onChange={(e) => {
-                                        updateSettingsCloud({ branding: { ...config.branding, poweredByColor: e.target.value } })
+                                <button
+                                    onClick={() => setActiveColorPicker('poweredBy')}
+                                    style={{
+                                        width: 50, height: 40, border: '2px solid #E5E7EB', borderRadius: 8,
+                                        backgroundColor: config.branding?.poweredByColor || '#C4856A', cursor: 'pointer'
                                     }}
-                                    style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    aria-label="Elegir color de Powered by"
                                 />
                             </div>
                         </div>
                     </div>
+
+                    {/* 🎨 COLOR PICKER MODALS (single instance, controlled by state) */}
+                    {activeColorPicker === 'primary' && (
+                        <ColorPickerModal
+                            title="Color Primario"
+                            initialColor={config.colors?.primary || '#B8956A'}
+                            onLiveChange={(color) => updateSettingsCloud({ colors: { ...config.colors, primary: color } })}
+                            onApply={(color) => {
+                                updateSettingsCloud({ colors: { ...config.colors, primary: color } })
+                                setActiveColorPicker(null)
+                            }}
+                        />
+                    )}
+                    {activeColorPicker === 'secondary' && (
+                        <ColorPickerModal
+                            title="Color Secundario"
+                            initialColor={config.colors?.primaryLight || '#A89070'}
+                            onLiveChange={(color) => updateSettingsCloud({ colors: { ...config.colors, primaryLight: color } })}
+                            onApply={(color) => {
+                                updateSettingsCloud({ colors: { ...config.colors, primaryLight: color } })
+                                setActiveColorPicker(null)
+                            }}
+                        />
+                    )}
+                    {activeColorPicker === 'confirmation' && (
+                        <ColorPickerModal
+                            title="Color de Confirmación"
+                            initialColor={config.colors?.confirmation || '#22C55E'}
+                            onLiveChange={(color) => updateSettingsCloud({ colors: { ...config.colors, confirmation: color } })}
+                            onApply={(color) => {
+                                updateSettingsCloud({ colors: { ...config.colors, confirmation: color } })
+                                setActiveColorPicker(null)
+                            }}
+                        />
+                    )}
+                    {activeColorPicker === 'poweredBy' && (
+                        <ColorPickerModal
+                            title="Color Powered By"
+                            initialColor={config.branding?.poweredByColor || '#C4856A'}
+                            onLiveChange={(color) => updateSettingsCloud({ branding: { ...config.branding, poweredByColor: color } })}
+                            onApply={(color) => {
+                                updateSettingsCloud({ branding: { ...config.branding, poweredByColor: color } })
+                                setActiveColorPicker(null)
+                            }}
+                        />
+                    )}
 
                     <BrandingColorPicker
                         primaryColor={config.branding?.primaryColor || '#8B7355'}
