@@ -216,13 +216,20 @@ export default function ColorPickerModal({
         }
     }
 
-    // Close handler (Done or backdrop tap)
-    const handleClose = () => {
+    // Close handler (Done or backdrop tap) - NERVE REPAIR: No setTimeout race condition
+    const handleClose = async (e) => {
+        e?.stopPropagation() // Stop click from bubbling to backdrop
+
+        // 1. Force Immediate Reactivity (The "2026 Snap")
+        // Call the parent's apply function immediately without timeout
+        if (onApply) {
+            // If parent function is async (updateSettingsCloud), await it
+            await onApply(tempColor)
+        }
+
+        // 2. Animate & Unmount
         setIsVisible(false)
-        // Delay to allow slide-out animation
-        setTimeout(() => {
-            onApply?.(tempColor)
-        }, 150)
+        // Parent (BrandingColorPicker) handles the 'showPicker' state
     }
 
     // Backdrop tap = close with current color
@@ -288,7 +295,7 @@ export default function ColorPickerModal({
                     margin: '0 auto 12px'
                 }} />
 
-                {/* Header: Title + Done */}
+                {/* Header: Title + Green Checkmark - NERVE REPAIR */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -298,20 +305,30 @@ export default function ColorPickerModal({
                     <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', margin: 0 }}>
                         {title}
                     </h3>
+
+                    {/* THE NERVE REPAIR: Direct onClick binding without wrapper functions */}
                     <button
+                        type="button"
                         onClick={handleClose}
                         style={{
-                            padding: '8px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 36,
+                            height: 36,
                             background: '#22C55E',
                             color: 'white',
                             border: 'none',
-                            borderRadius: 8,
-                            fontSize: 14,
-                            fontWeight: 600,
-                            cursor: 'pointer'
+                            borderRadius: '50%',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                            cursor: 'pointer',
+                            transition: 'transform 0.1s'
                         }}
+                        title="Confirmar y Guardar"
                     >
-                        Listo
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
                     </button>
                 </div>
 

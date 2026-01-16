@@ -163,7 +163,11 @@ export default function BrandingColorPicker({
                 </label>
                 <div style={{ display: 'flex', gap: 8 }}>
                     <button
-                        onClick={() => onIconModeChange?.('white')}
+                        onClick={() => {
+                            onIconModeChange?.('white')
+                            // 🚀 NERVE REPAIR: Dispatch Sync Event (Safety Net)
+                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                        }}
                         style={{
                             flex: 1,
                             padding: '12px 16px',
@@ -181,7 +185,11 @@ export default function BrandingColorPicker({
                         ⚪ Blanco
                     </button>
                     <button
-                        onClick={() => onIconModeChange?.('black')}
+                        onClick={() => {
+                            onIconModeChange?.('black')
+                            // 🚀 NERVE REPAIR: Dispatch Sync Event (Safety Net)
+                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                        }}
                         style={{
                             flex: 1,
                             padding: '12px 16px',
