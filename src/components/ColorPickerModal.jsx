@@ -109,8 +109,12 @@ export default function ColorPickerModal({
         setTempColor(newColor)
         setHexInput(newColor)
         // LIVE PREVIEW: Notify parent immediately
+        // NOTE: onLiveChange intentionally excluded from deps to prevent infinite
+        // re-render loop when parent passes inline arrow function. The callback's
+        // behavior remains stable; only its reference changes between renders.
         onLiveChange?.(newColor)
-    }, [hsv, onLiveChange])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hsv])
 
     // Draw spectrum canvas
     const drawSpectrum = useCallback(() => {
