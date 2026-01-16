@@ -160,6 +160,9 @@ function OwnerSummary({ config: configProp }) {
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Horarios</label>
                     <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config?.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfo('hours', e.target.value)} style={inputStyle} />
 
+                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Instagram</label>
+                    <input type="text" placeholder="@tunegocio" value={config?.businessInfo?.instagram || ''} onChange={(e) => updateBusinessInfo('instagram', e.target.value)} style={inputStyle} />
+
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps (reseñas)</label>
                     <input type="text" placeholder="https://maps.google.com/..." value={config?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={inputStyle} />
 
