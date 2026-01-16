@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
-import { getAuth, clearAuth, getOrders, setItem, getItem } from '../../utils/storage.js'
+import { clearAuth } from '../../utils/storage.js'
 import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
-import { canChangeDeliveryConfig, recordDeliveryConfigChange, getDeliveryChangesThisMonth } from '../../utils/deliveryUtils.js'
 import BrandingColorPicker from '../../components/BrandingColorPicker.jsx'
 import HeroIconPicker from '../../components/HeroIconPicker.jsx'
 import CoverImageEditor from '../../components/CoverImageEditor.jsx'
@@ -47,9 +46,6 @@ function Settings({ config: configProp, demoMode = false }) {
     const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
-    // Local form state for editable messages (initialized from prop)
-    const [pauseMessage, setPauseMessage] = useState(config?.pauseOrdersMessage || '')
-    const [businessInfo, setBusinessInfo] = useState(config?.businessInfo || {})
     const [showCoverEditor, setShowCoverEditor] = useState(false)
 
     // NOTE: Auth check removed - ProtectedRoute handles authentication
@@ -60,23 +56,6 @@ function Settings({ config: configProp, demoMode = false }) {
         await supabase.auth.signOut()
         clearAuth()
         window.location.href = demoMode ? '/' : `/${tenantSlug}`
-    }
-
-    const handleTogglePause = () => {
-        updateConfig({ pauseOrders: !config.pauseOrders })
-        window.dispatchEvent(new CustomEvent('frontendSync'))
-    }
-
-    const handleSaveMessages = () => {
-        updateConfig({
-            pauseOrdersMessage: pauseMessage
-        })
-        alert('¡Mensajes guardados!')
-    }
-
-    const handleSaveBusinessInfo = () => {
-        updateConfig({ businessInfo })
-        alert('¡Info guardada!')
     }
 
     return (
@@ -113,251 +92,6 @@ function Settings({ config: configProp, demoMode = false }) {
             </div>
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
-                {/* Status Controls */}
-                <div style={{ marginBottom: 20 }}>
-                    <SectionHeader title="Estado del local" />
-                    <Card>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
-                            <div>
-                                <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>Pausar pedidos</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Solo desactiva pedidos</p>
-                            </div>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={config.pauseOrders}
-                                    onChange={handleTogglePause}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </Card>
-                </div>
-
-                {/* Order Archive Info */}
-                <div style={{ marginBottom: 20 }}>
-                    <SectionHeader title="Archivo de pedidos" />
-                    <Card>
-                        <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>
-                            ✓ Los pedidos se archivan automáticamente al marcarlos como entregados.
-                        </p>
-                    </Card>
-                </div>
-
-                {/* Delivery Configuration */}
-                <div style={{ marginBottom: 20 }}>
-                    <SectionHeader title="Configuración de Envíos" />
-                    <Card>
-                        {(() => {
-                            const { allowed, remaining, message } = canChangeDeliveryConfig()
-                            return (
-                                <div style={{
-                                    background: allowed ? '#ECFDF5' : '#FEF2F2',
-                                    padding: 10,
-                                    borderRadius: 8,
-                                    marginBottom: 16,
-                                    fontSize: 12
-                                }}>
-                                    <p style={{
-                                        color: allowed ? '#065F46' : '#991B1B',
-                                        margin: 0,
-                                        fontWeight: 500
-                                    }}>
-                                        {message}
-                                    </p>
-                                </div>
-                            )
-                        })()}
-
-                        <div className="form-group">
-                            <label className="form-label">Dirección de origen (para radio)</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={config.delivery?.originAddress || config.businessInfo?.address || ''}
-                                onChange={(e) => {
-                                    const { allowed } = canChangeDeliveryConfig()
-                                    if (!allowed) {
-                                        alert('❌ Límite de cambios alcanzado (2 por mes)')
-                                        return
-                                    }
-                                    if (!confirm('¿Confirmar cambio de dirección de origen? (Cuenta como 1 de 2 cambios mensuales)')) {
-                                        return
-                                    }
-                                    const oldValue = config.delivery?.originAddress || ''
-                                    recordDeliveryConfigChange('originAddress', oldValue, e.target.value)
-                                    updateConfig({
-                                        delivery: {
-                                            ...config.delivery,
-                                            originAddress: e.target.value
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                placeholder="Usar dirección del local"
-                            />
-                            <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                                Si está vacío, se usa la dirección del Info del local
-                            </p>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Radio de entrega: {config.delivery?.radiusKm || 5} km</label>
-                            <input
-                                type="range"
-                                min="1"
-                                max="15"
-                                value={config.delivery?.radiusKm || 5}
-                                onChange={(e) => {
-                                    const { allowed } = canChangeDeliveryConfig()
-                                    if (!allowed) {
-                                        alert('❌ Límite de cambios alcanzado (2 por mes)')
-                                        return
-                                    }
-                                    const newValue = parseInt(e.target.value)
-                                    const oldValue = config.delivery?.radiusKm || 5
-                                    if (newValue !== oldValue) {
-                                        if (!confirm(`¿Cambiar radio a ${newValue} km? (Cuenta como 1 de 2 cambios mensuales)`)) {
-                                            return
-                                        }
-                                        recordDeliveryConfigChange('radiusKm', oldValue, newValue)
-                                    }
-                                    updateConfig({
-                                        delivery: {
-                                            ...config.delivery,
-                                            radiusKm: newValue
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                style={{ width: '100%' }}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Tarifa de envío fija ($)</label>
-                            <input
-                                type="number"
-                                className="form-input"
-                                min="0"
-                                step="50"
-                                value={config.delivery?.flatFee || 0}
-                                onChange={(e) => {
-                                    updateConfig({
-                                        delivery: {
-                                            ...config.delivery,
-                                            flatFee: parseInt(e.target.value) || 0
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                placeholder="0 = gratis"
-                            />
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Envío gratis desde ($)</label>
-                            <input
-                                type="number"
-                                className="form-input"
-                                min="0"
-                                step="100"
-                                value={config.delivery?.freeDeliveryThreshold || 0}
-                                onChange={(e) => {
-                                    updateConfig({
-                                        delivery: {
-                                            ...config.delivery,
-                                            freeDeliveryThreshold: parseInt(e.target.value) || 0
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                placeholder="0 = sin umbral"
-                            />
-                            <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                                Si el pedido supera este monto, el envío es gratis
-                            </p>
-                        </div>
-                    </Card>
-                </div>
-
-                {/* Messages */}
-                <div style={{ marginBottom: 20 }}>
-                    <SectionHeader title="Mensajes" />
-                    <Card>
-                        <div className="form-group">
-                            <label className="form-label">Mensaje de pausa</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={pauseMessage}
-                                onChange={(e) => setPauseMessage(e.target.value)}
-                                placeholder="Ej: Estamos con muchos pedidos"
-                            />
-                        </div>
-                        <button
-                            className="btn btn-primary btn-block"
-                            onClick={handleSaveMessages}
-                        >
-                            Guardar mensajes
-                        </button>
-                    </Card>
-                </div>
-
-                {/* Business Info */}
-                <div style={{ marginBottom: 20 }}>
-                    <SectionHeader title="Info del local" />
-                    <Card>
-                        <div className="form-group">
-                            <label className="form-label">Dirección</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={businessInfo.address || ''}
-                                onChange={(e) => setBusinessInfo({ ...businessInfo, address: e.target.value })}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Teléfono</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={businessInfo.phone || ''}
-                                onChange={(e) => setBusinessInfo({ ...businessInfo, phone: e.target.value })}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Instagram</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={businessInfo.instagram || ''}
-                                onChange={(e) => setBusinessInfo({ ...businessInfo, instagram: e.target.value })}
-                                placeholder="@usuario"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Descripción</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={businessInfo.description || ''}
-                                onChange={(e) => setBusinessInfo({ ...businessInfo, description: e.target.value })}
-                            />
-                        </div>
-                        <button
-                            className="btn btn-primary btn-block"
-                            onClick={handleSaveBusinessInfo}
-                        >
-                            Guardar info
-                        </button>
-                    </Card>
-                </div>
-
                 {/* Branding Customization */}
                 <div style={{ marginBottom: 20 }}>
                     <SectionHeader title="Personalización de marca" />

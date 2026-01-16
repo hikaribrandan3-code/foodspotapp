@@ -5,6 +5,7 @@ import { getAuth, clearAuth } from '../../utils/storage.js'
 import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
+import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
@@ -42,6 +43,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [showAddCategory, setShowAddCategory] = useState(false)
     const [newCategoryName, setNewCategoryName] = useState('')
     const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
+
+    // Operational controls state
+    const [pauseMessage, setPauseMessage] = useState(config?.pauseOrdersMessage || '')
 
     // NOTE: Auth check removed - ProtectedRoute handles authentication
     // The old getAuth() was using localStorage, not Supabase Auth
@@ -200,6 +204,121 @@ function MenuManager({ config: configProp, demoMode = false }) {
             />
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
+                {/* ==================== OPERATIONAL COMMAND CENTER ==================== */}
+                <div style={{ marginBottom: 24 }}>
+                    {/* Pause Orders Toggle */}
+                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ Pausar pedidos</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Desactiva temporalmente los pedidos</p>
+                            </div>
+                            <label className="toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={config.pauseOrders}
+                                    onChange={() => {
+                                        updateConfig({ pauseOrders: !config.pauseOrders })
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    }}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        </div>
+                        {/* Pause Message */}
+                        {config.pauseOrders && (
+                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Mensaje para clientes</label>
+                                <input
+                                    type="text"
+                                    value={pauseMessage}
+                                    onChange={(e) => setPauseMessage(e.target.value)}
+                                    onBlur={() => {
+                                        updateConfig({ pauseOrdersMessage: pauseMessage })
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    }}
+                                    placeholder="Ej: Estamos con muchos pedidos"
+                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Archive Info */}
+                    <div style={{ background: '#F0FDF4', borderRadius: 12, border: '1px solid #BBF7D0', padding: 12, marginBottom: 12 }}>
+                        <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
+                    </div>
+
+                    {/* Delivery Configuration */}
+                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
+                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
+                        {(() => {
+                            const { allowed, message } = canChangeDeliveryConfig()
+                            return (
+                                <div style={{ background: allowed ? '#ECFDF5' : '#FEF2F2', padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 12 }}>
+                                    <p style={{ color: allowed ? '#065F46' : '#991B1B', margin: 0, fontWeight: 500 }}>{message}</p>
+                                </div>
+                            )
+                        })()}
+                        <div style={{ marginBottom: 12 }}>
+                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {config.delivery?.radiusKm || 5} km</label>
+                            <input
+                                type="range"
+                                min="1"
+                                max="15"
+                                value={config.delivery?.radiusKm || 5}
+                                onChange={(e) => {
+                                    const { allowed } = canChangeDeliveryConfig()
+                                    if (!allowed) { alert('❌ Límite de cambios alcanzado (2 por mes)'); return }
+                                    const newValue = parseInt(e.target.value)
+                                    const oldValue = config.delivery?.radiusKm || 5
+                                    if (newValue !== oldValue) {
+                                        if (!confirm(`¿Cambiar radio a ${newValue} km?`)) return
+                                        recordDeliveryConfigChange('radiusKm', oldValue, newValue)
+                                    }
+                                    updateConfig({ delivery: { ...config.delivery, radiusKm: newValue } })
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                }}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div>
+                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="50"
+                                    value={config.delivery?.flatFee || 0}
+                                    onChange={(e) => {
+                                        updateConfig({ delivery: { ...config.delivery, flatFee: parseInt(e.target.value) || 0 } })
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    }}
+                                    placeholder="0"
+                                    style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="100"
+                                    value={config.delivery?.freeDeliveryThreshold || 0}
+                                    onChange={(e) => {
+                                        updateConfig({ delivery: { ...config.delivery, freeDeliveryThreshold: parseInt(e.target.value) || 0 } })
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    }}
+                                    placeholder="0"
+                                    style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ==================== VISUAL DIVIDER ==================== */}
+                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
                 {/* 1. FEATURED SECTION (TOP 4) */}
                 <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Destaques de Inicio (Top 4)
