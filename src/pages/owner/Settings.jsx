@@ -129,7 +129,7 @@ function Settings({ config: configProp, demoMode = false }) {
     }
 
     return (
-        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+        <div className="backend-surface" data-theme="light" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
                 title={demoMode ? "Demo Branding" : "Config"}
                 onLogout={handleLogout}
@@ -559,6 +559,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                 <div style={{ display: 'flex', gap: 8 }}>
                                     {['auto', 'white', 'black'].map(mode => {
                                         const isSelected = (config.camera?.textColor || 'auto') === mode
+                                        const labelMap = { auto: 'Automático', white: 'Blanco', black: 'Negro' }
                                         return (
                                             <button
                                                 key={mode}
@@ -574,11 +575,10 @@ function Settings({ config: configProp, demoMode = false }) {
                                                     color: mode === 'black' ? '#FFFFFF' : mode === 'white' ? '#1E293B' : '#64748B',
                                                     fontSize: 12,
                                                     fontWeight: 500,
-                                                    cursor: 'pointer',
-                                                    textTransform: 'capitalize'
+                                                    cursor: 'pointer'
                                                 }}
                                             >
-                                                {mode}
+                                                {labelMap[mode]}
                                             </button>
                                         )
                                     })}
