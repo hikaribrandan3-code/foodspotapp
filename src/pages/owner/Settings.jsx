@@ -251,7 +251,10 @@ function Settings({ config: configProp, demoMode = false }) {
                         primaryColor={config.branding?.primaryColor || '#8B7355'}
                         iconColorMode={config.branding?.iconColorMode || 'white'}
                         onColorChange={(color) => {
-                            updateConfig({ branding: { ...config.branding, primaryColor: color } })
+                            updateConfig({
+                                branding: { ...config.branding, primaryColor: color },
+                                colors: { ...config.colors, primary: color }
+                            })
                             window.dispatchEvent(new CustomEvent('frontendSync'))
                         }}
                         onIconModeChange={(mode) => {
@@ -475,9 +478,39 @@ function Settings({ config: configProp, demoMode = false }) {
                                                     gap: 4
                                                 }}
                                             >
-                                                <span style={{ fontSize: 20 }}>
-                                                    {icon.id === 'default' ? '📷' : icon.id === 'camera' ? '📸' : icon.id === 'aperture' ? '🎯' : '🖥️'}
-                                                </span>
+                                                {/* Camera SVG Icons */}
+                                                {icon.id === 'default' && (
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                                        <circle cx="12" cy="13" r="4" />
+                                                    </svg>
+                                                )}
+                                                {icon.id === 'camera' && (
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                                        <circle cx="12" cy="13" r="4" />
+                                                        <circle cx="12" cy="13" r="1" />
+                                                    </svg>
+                                                )}
+                                                {icon.id === 'aperture' && (
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="12" r="10" />
+                                                        <line x1="14.31" y1="8" x2="20.05" y2="17.94" />
+                                                        <line x1="9.69" y1="8" x2="21.17" y2="8" />
+                                                        <line x1="7.38" y1="12" x2="13.12" y2="2.06" />
+                                                        <line x1="9.69" y1="16" x2="3.95" y2="6.06" />
+                                                        <line x1="14.31" y1="16" x2="2.83" y2="16" />
+                                                        <line x1="16.62" y1="12" x2="10.88" y2="21.94" />
+                                                    </svg>
+                                                )}
+                                                {icon.id === 'webcam' && (
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="10" r="7" />
+                                                        <circle cx="12" cy="10" r="3" />
+                                                        <path d="M7 20h10" />
+                                                        <path d="M12 17v3" />
+                                                    </svg>
+                                                )}
                                                 <span style={{ fontSize: 10, color: '#64748B' }}>{icon.label}</span>
                                             </button>
                                         )
@@ -629,140 +662,6 @@ function Settings({ config: configProp, demoMode = false }) {
                 </Card>
             </div>
 
-            {/* External Ordering Links */}
-            <div style={{ marginBottom: 20 }}>
-                <SectionHeader title="Pedidos externos" />
-                <Card>
-                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 16, marginTop: 0 }}>
-                        Links externos para delivery. Aparecen en la pestaña Info.
-                    </p>
-
-                    {/* Rappi */}
-                    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #F1F5F9' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                            <span style={{ fontWeight: 500, fontSize: 14, color: '#1E293B' }}>Rappi</span>
-                            <button
-                                onClick={() => {
-                                    const current = config.externalOrdering || {}
-                                    updateConfig({
-                                        externalOrdering: {
-                                            ...current,
-                                            rappiEnabled: !current.rappiEnabled
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                style={{
-                                    padding: '4px 12px',
-                                    borderRadius: 12,
-                                    border: 'none',
-                                    background: config.externalOrdering?.rappiEnabled ? '#22C55E' : '#E2E8F0',
-                                    color: config.externalOrdering?.rappiEnabled ? 'white' : '#64748B',
-                                    fontSize: 11,
-                                    fontWeight: 500,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {config.externalOrdering?.rappiEnabled ? 'ON' : 'OFF'}
-                            </button>
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={config.externalOrdering?.rappiUrl || ''}
-                                onChange={(e) => {
-                                    const current = config.externalOrdering || {}
-                                    updateConfig({
-                                        externalOrdering: {
-                                            ...current,
-                                            rappiUrl: e.target.value
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                placeholder="https://..."
-                            />
-                        </div>
-                    </div>
-
-                    {/* PedidosYa */}
-                    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #F1F5F9' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                            <span style={{ fontWeight: 500, fontSize: 14, color: '#1E293B' }}>PedidosYa</span>
-                            <button
-                                onClick={() => {
-                                    const current = config.externalOrdering || {}
-                                    updateConfig({
-                                        externalOrdering: {
-                                            ...current,
-                                            pedidosYaEnabled: !current.pedidosYaEnabled
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                style={{
-                                    padding: '4px 12px',
-                                    borderRadius: 12,
-                                    border: 'none',
-                                    background: config.externalOrdering?.pedidosYaEnabled ? '#22C55E' : '#E2E8F0',
-                                    color: config.externalOrdering?.pedidosYaEnabled ? 'white' : '#64748B',
-                                    fontSize: 11,
-                                    fontWeight: 500,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {config.externalOrdering?.pedidosYaEnabled ? 'ON' : 'OFF'}
-                            </button>
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={config.externalOrdering?.pedidosYaUrl || ''}
-                                onChange={(e) => {
-                                    const current = config.externalOrdering || {}
-                                    updateConfig({
-                                        externalOrdering: {
-                                            ...current,
-                                            pedidosYaUrl: e.target.value
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                placeholder="https://..."
-                            />
-                        </div>
-                    </div>
-
-                    {/* Mercado Pago Alias */}
-                    <div>
-                        <span style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', display: 'block', marginBottom: 8 }}>Mercado Pago</span>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Alias (para copiar)</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={config.payments?.mercadoPagoAlias || ''}
-                                onChange={(e) => {
-                                    const current = config.payments || {}
-                                    updateConfig({
-                                        payments: {
-                                            ...current,
-                                            mercadoPagoAlias: e.target.value
-                                        }
-                                    })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                placeholder="ej: grubclub.mp"
-                            />
-                            <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                                Si está vacío, no aparece el botón en Info
-                            </p>
-                        </div>
-                    </div>
-                </Card>
-            </div>
 
             {/* Cover Image Editor Modal (Parity with Super Admin) */}
             <CoverImageEditor
