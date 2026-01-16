@@ -319,7 +319,9 @@ function App() {
         initCloudSync();
         const handleVisibility = () => { if (document.visibilityState === 'visible') refreshConfig(); };
         const handleStorage = (e) => { if (e.key === 'grub_config' || e.key === null) refreshConfig(); };
-        const handleFrontend = () => refreshConfig();
+        // 🚀 INSTANT REACTIVITY: Read localStorage directly (already updated by updateSettingsCloud)
+        // Cloud write is async in Settings.jsx, but UI update is instant here
+        const handleFrontend = () => setConfig(getConfig());
         document.addEventListener('visibilitychange', handleVisibility);
         window.addEventListener('storage', handleStorage);
         window.addEventListener('frontendSync', handleFrontend);
