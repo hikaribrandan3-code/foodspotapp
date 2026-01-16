@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link, useParams } from 'react-router-dom'
-import { supabase } from '../../lib/supabaseClient.js'
+import { supabase, updateBranding } from '../../lib/supabaseClient.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import { clearAuth } from '../../utils/storage.js'
 import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, CONFIRMATION_COLORS, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
@@ -48,8 +49,77 @@ function Settings({ config: configProp, demoMode = false }) {
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [showCoverEditor, setShowCoverEditor] = useState(false)
 
+    // 🏢 CLOUD-FIRST: Get businessId from tenant context
+    const { businessId } = useTenant() || {}
+    const [saveStatus, setSaveStatus] = useState(null) // null | 'saving' | 'saved' | 'error'
+
     // NOTE: Auth check removed - ProtectedRoute handles authentication
     // demoMode components bypass ProtectedRoute entirely via separate routes
+
+    // =========================================================
+    // 🌐 CLOUD-FIRST WRITE HANDLER
+    // Maps frontend fields to Supabase columns and persists to cloud
+    // =========================================================
+    const updateSettingsCloud = async (updates, cloudOverrides = {}) => {
+        // Column mapping: frontend key → Supabase column
+        const columnMap = {
+            // Simple text fields
+            businessName: 'business_name',
+            'branding.primaryColor': 'primary_color',
+            'branding.fontFamily': 'font_family',
+            'branding.fontWeight': 'font_weight',
+            'branding.iconColorMode': 'icon_color_mode',
+            'branding.poweredByColor': 'powered_by_color',
+            canvasMode: 'canvas_mode',
+            dividerPresetId: 'divider_preset_id',
+            // JSONB columns (whole objects)
+            heroIcons: 'hero_icons',
+            colors: 'colors',
+            camera: 'camera',
+            infoPills: 'info_pills'
+        }
+
+        // Build Supabase update payload
+        const supabasePayload = { ...cloudOverrides }
+
+        // Map simple fields from updates
+        for (const [frontendKey, column] of Object.entries(columnMap)) {
+            const keys = frontendKey.split('.')
+            let value = updates
+            for (const k of keys) {
+                value = value?.[k]
+            }
+            if (value !== undefined) {
+                supabasePayload[column] = value
+            }
+        }
+
+        // 🏢 CLOUD WRITE: Persist to Supabase if we have businessId
+        if (businessId && Object.keys(supabasePayload).length > 0) {
+            setSaveStatus('saving')
+            try {
+                const { error } = await updateBranding(supabasePayload, businessId)
+                if (error) {
+                    console.error('[Settings] Cloud write failed:', error)
+                    setSaveStatus('error')
+                    setTimeout(() => setSaveStatus(null), 2000)
+                } else {
+                    setSaveStatus('saved')
+                    setTimeout(() => setSaveStatus(null), 1500)
+                }
+            } catch (e) {
+                console.error('[Settings] Cloud write exception:', e)
+                setSaveStatus('error')
+                setTimeout(() => setSaveStatus(null), 2000)
+            }
+        }
+
+        // LOCAL UPDATE: Update localStorage for immediate reactivity
+        updateConfig(updates)
+
+        // SYNC EVENT: Trigger App.jsx re-render
+        window.dispatchEvent(new CustomEvent('frontendSync'))
+    }
 
     // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
     const handleLogout = async () => {
@@ -102,8 +172,7 @@ function Settings({ config: configProp, demoMode = false }) {
                         type="text"
                         value={config.businessName || ''}
                         onChange={(e) => {
-                            updateConfig({ businessName: e.target.value })
-                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                            updateSettingsCloud({ businessName: e.target.value })
                         }}
                         style={{ width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', marginBottom: 12 }}
                     />
@@ -114,13 +183,12 @@ function Settings({ config: configProp, demoMode = false }) {
                             className="form-input"
                             value={config.branding?.fontFamily || 'Inter'}
                             onChange={(e) => {
-                                updateConfig({
+                                updateSettingsCloud({
                                     branding: {
                                         ...config.branding,
                                         fontFamily: e.target.value
                                     }
                                 })
-                                window.dispatchEvent(new CustomEvent('frontendSync'))
                             }}
                             style={{ fontFamily: config.branding?.fontFamily || 'Inter' }}
                         >
@@ -142,13 +210,12 @@ function Settings({ config: configProp, demoMode = false }) {
                             className="form-input"
                             value={config.branding?.fontWeight || '400'}
                             onChange={(e) => {
-                                updateConfig({
+                                updateSettingsCloud({
                                     branding: {
                                         ...config.branding,
                                         fontWeight: e.target.value
                                     }
                                 })
-                                window.dispatchEvent(new CustomEvent('frontendSync'))
                             }}
                             style={{ fontWeight: config.branding?.fontWeight || '400' }}
                         >
@@ -181,7 +248,7 @@ function Settings({ config: configProp, demoMode = false }) {
                     </button>
                     {config.headerCover?.image && (
                         <button
-                            onClick={() => { updateConfig({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } }); window.dispatchEvent(new CustomEvent('frontendSync')); }}
+                            onClick={() => { updateSettingsCloud({ headerCover: { image: null, scale: 1, offsetX: 0, offsetY: 0 } }); }}
                             style={{ width: '100%', marginTop: 8, padding: '8px', background: 'white', color: '#EF4444', border: '1px solid #EF4444', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                         >
                             🗑️ Eliminar Portada
@@ -202,8 +269,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                     type="color"
                                     value={config.colors?.primary || '#B8956A'}
                                     onChange={(e) => {
-                                        updateConfig({ colors: { ...config.colors, primary: e.target.value } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        updateSettingsCloud({ colors: { ...config.colors, primary: e.target.value } })
                                     }}
                                     style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                 />
@@ -214,8 +280,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                     type="color"
                                     value={config.colors?.primaryLight || '#A89070'}
                                     onChange={(e) => {
-                                        updateConfig({ colors: { ...config.colors, primaryLight: e.target.value } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        updateSettingsCloud({ colors: { ...config.colors, primaryLight: e.target.value } })
                                     }}
                                     style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                 />
@@ -226,8 +291,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                     type="color"
                                     value={config.colors?.confirmation || '#22C55E'}
                                     onChange={(e) => {
-                                        updateConfig({ colors: { ...config.colors, confirmation: e.target.value } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        updateSettingsCloud({ colors: { ...config.colors, confirmation: e.target.value } })
                                     }}
                                     style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                 />
@@ -238,8 +302,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                     type="color"
                                     value={config.branding?.poweredByColor || '#C4856A'}
                                     onChange={(e) => {
-                                        updateConfig({ branding: { ...config.branding, poweredByColor: e.target.value } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        updateSettingsCloud({ branding: { ...config.branding, poweredByColor: e.target.value } })
                                     }}
                                     style={{ width: 50, height: 40, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                 />
@@ -251,15 +314,13 @@ function Settings({ config: configProp, demoMode = false }) {
                         primaryColor={config.branding?.primaryColor || '#8B7355'}
                         iconColorMode={config.branding?.iconColorMode || 'white'}
                         onColorChange={(color) => {
-                            updateConfig({
+                            updateSettingsCloud({
                                 branding: { ...config.branding, primaryColor: color },
                                 colors: { ...config.colors, primary: color }
                             })
-                            window.dispatchEvent(new CustomEvent('frontendSync'))
                         }}
                         onIconModeChange={(mode) => {
-                            updateConfig({ branding: { ...config.branding, iconColorMode: mode } })
-                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                            updateSettingsCloud({ branding: { ...config.branding, iconColorMode: mode } })
                         }}
                     />
 
@@ -280,26 +341,22 @@ function Settings({ config: configProp, demoMode = false }) {
                                         color={iconConfig.color}
                                         iconColorMode={iconConfig.iconColorMode}
                                         onColorChange={(newColor) => {
-                                            updateConfig({
+                                            updateSettingsCloud({
                                                 heroIcons: {
                                                     ...config.heroIcons,
                                                     [iconId]: { ...iconConfig, color: newColor },
-                                                    // FORCE SYNC: Double-write
                                                     ...(iconId === 'promos' ? { rewards: { ...iconConfig, color: newColor } } : {})
                                                 }
                                             })
-                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                         onIconModeChange={(mode) => {
-                                            updateConfig({
+                                            updateSettingsCloud({
                                                 heroIcons: {
                                                     ...config.heroIcons,
                                                     [iconId]: { ...iconConfig, iconColorMode: mode },
-                                                    // FORCE SYNC: Double-write
                                                     ...(iconId === 'promos' ? { rewards: { ...iconConfig, iconColorMode: mode } } : {})
                                                 }
                                             })
-                                            window.dispatchEvent(new CustomEvent('frontendSync'))
                                         }}
                                     />
                                 )
@@ -315,8 +372,7 @@ function Settings({ config: configProp, demoMode = false }) {
                         <div style={{ display: 'flex', gap: 8 }}>
                             <button
                                 onClick={() => {
-                                    updateConfig({ canvasMode: 'light' })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    updateSettingsCloud({ canvasMode: 'light' })
                                 }}
                                 style={{
                                     flex: 1,
@@ -334,8 +390,7 @@ function Settings({ config: configProp, demoMode = false }) {
                             </button>
                             <button
                                 onClick={() => {
-                                    updateConfig({ canvasMode: 'dark' })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    updateSettingsCloud({ canvasMode: 'dark' })
                                 }}
                                 style={{
                                     flex: 1,
@@ -401,13 +456,12 @@ function Settings({ config: configProp, demoMode = false }) {
                                             type="color"
                                             value={bgColor}
                                             onChange={(e) => {
-                                                updateConfig({
+                                                updateSettingsCloud({
                                                     infoPills: {
                                                         ...config.infoPills,
                                                         [pill.id]: { ...pillConfig, bgColor: e.target.value }
                                                     }
                                                 })
-                                                window.dispatchEvent(new CustomEvent('frontendSync'))
                                             }}
                                             style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
                                         />
@@ -429,8 +483,7 @@ function Settings({ config: configProp, demoMode = false }) {
                             <span style={{ fontSize: 13, fontWeight: 500, color: '#1E293B' }}>Estilo personalizado</span>
                             <button
                                 onClick={() => {
-                                    updateConfig({ camera: { ...config.camera, enabled: !config.camera?.enabled } })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    updateSettingsCloud({ camera: { ...config.camera, enabled: !config.camera?.enabled } })
                                 }}
                                 style={{
                                     padding: '6px 12px',
@@ -463,8 +516,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                             <button
                                                 key={icon.id}
                                                 onClick={() => {
-                                                    updateConfig({ camera: { ...config.camera, icon: icon.id } })
-                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                    updateSettingsCloud({ camera: { ...config.camera, icon: icon.id } })
                                                 }}
                                                 style={{
                                                     padding: '12px 8px',
@@ -524,8 +576,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                         type="color"
                                         value={config.camera?.color || '#8B7355'}
                                         onChange={(e) => {
-                                            updateConfig({ camera: { ...config.camera, color: e.target.value } })
-                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            updateSettingsCloud({ camera: { ...config.camera, color: e.target.value } })
                                         }}
                                         style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                                     />
@@ -551,8 +602,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                             <button
                                                 key={mode}
                                                 onClick={() => {
-                                                    updateConfig({ camera: { ...config.camera, textColor: mode } })
-                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                    updateSettingsCloud({ camera: { ...config.camera, textColor: mode } })
                                                 }}
                                                 style={{
                                                     flex: 1,
@@ -583,13 +633,12 @@ function Settings({ config: configProp, demoMode = false }) {
                                 <button
                                     key={color.value}
                                     onClick={() => {
-                                        updateConfig({
+                                        updateSettingsCloud({
                                             colors: {
                                                 ...config.colors,
                                                 confirmation: color.value
                                             }
                                         })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     style={{
                                         width: 36,
@@ -614,13 +663,12 @@ function Settings({ config: configProp, demoMode = false }) {
                             type="color"
                             value={config.branding?.poweredByColor || '#C4856A'}
                             onChange={(e) => {
-                                updateConfig({
+                                updateSettingsCloud({
                                     branding: {
                                         ...config.branding,
                                         poweredByColor: e.target.value
                                     }
                                 })
-                                window.dispatchEvent(new CustomEvent('frontendSync'))
                             }}
                             style={{
                                 width: 60,
@@ -643,8 +691,7 @@ function Settings({ config: configProp, demoMode = false }) {
                                 <div
                                     key={preset.id}
                                     onClick={() => {
-                                        updateConfig({ dividerPresetId: preset.id })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        updateSettingsCloud({ dividerPresetId: preset.id })
                                     }}
                                     style={{
                                         cursor: 'pointer',
@@ -668,8 +715,7 @@ function Settings({ config: configProp, demoMode = false }) {
                 isOpen={showCoverEditor}
                 onClose={() => setShowCoverEditor(false)}
                 onSave={(coverData) => {
-                    updateConfig({ headerCover: coverData })
-                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                    updateSettingsCloud({ headerCover: coverData })
                     setShowCoverEditor(false)
                 }}
                 initialData={config.headerCover}
