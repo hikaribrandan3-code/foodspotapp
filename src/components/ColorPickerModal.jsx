@@ -239,13 +239,13 @@ export default function ColorPickerModal({
         }
     }
 
-    // Event handlers for dragging
-    const onSpectrumDown = (e) => { isDraggingSpectrum.current = true; handleSpectrumInteraction(e) }
-    const onSpectrumMove = (e) => { if (isDraggingSpectrum.current) handleSpectrumInteraction(e) }
+    // Event handlers for dragging - 🚨 TOUCH REPAIR: preventDefault stops page scroll
+    const onSpectrumDown = (e) => { e.preventDefault?.(); isDraggingSpectrum.current = true; handleSpectrumInteraction(e) }
+    const onSpectrumMove = (e) => { e.preventDefault?.(); if (isDraggingSpectrum.current) handleSpectrumInteraction(e) }
     const onSpectrumUp = () => { isDraggingSpectrum.current = false }
 
-    const onHueDown = (e) => { isDraggingHue.current = true; handleHueInteraction(e) }
-    const onHueMove = (e) => { if (isDraggingHue.current) handleHueInteraction(e) }
+    const onHueDown = (e) => { e.preventDefault?.(); isDraggingHue.current = true; handleHueInteraction(e) }
+    const onHueMove = (e) => { e.preventDefault?.(); if (isDraggingHue.current) handleHueInteraction(e) }
     const onHueUp = () => { isDraggingHue.current = false }
 
     useEffect(() => {
@@ -322,7 +322,10 @@ export default function ColorPickerModal({
                             borderRadius: '50%',
                             boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
                             cursor: 'pointer',
-                            transition: 'transform 0.1s'
+                            transition: 'transform 0.1s',
+                            zIndex: 10001,
+                            position: 'relative',
+                            pointerEvents: 'auto'
                         }}
                         title="Confirmar y Guardar"
                     >

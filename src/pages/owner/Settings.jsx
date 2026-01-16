@@ -193,6 +193,8 @@ function Settings({ config: configProp, demoMode = false }) {
                                         fontFamily: e.target.value
                                     }
                                 })
+                                // 🚀 TYPOGRAPHY SNAP: Immediate UI update
+                                window.dispatchEvent(new CustomEvent('frontendSync'))
                             }}
                             style={{ fontFamily: config.branding?.fontFamily || 'Inter' }}
                         >
@@ -220,6 +222,8 @@ function Settings({ config: configProp, demoMode = false }) {
                                         fontWeight: e.target.value
                                     }
                                 })
+                                // 🚀 TYPOGRAPHY SNAP: Immediate UI update
+                                window.dispatchEvent(new CustomEvent('frontendSync'))
                             }}
                             style={{ fontWeight: config.branding?.fontWeight || '400' }}
                         >
