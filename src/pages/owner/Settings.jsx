@@ -65,28 +65,28 @@ function Settings({ config: configProp, demoMode = false }) {
     // Maps frontend fields to Supabase columns and persists to cloud
     // =========================================================
     const updateSettingsCloud = async (updates, cloudOverrides = {}) => {
-        // Column mapping: frontend key → Supabase column
+        // 1. 🚀 OPTIMISTIC UPDATE (ZERO LATENCY)
+        // Update local storage and UI immediately. Do not wait for network.
+        updateConfig(updates)
+        window.dispatchEvent(new CustomEvent('frontendSync'))
+
+        // 2. PREPARE NETWORK PAYLOAD
         const columnMap = {
-            // Simple text fields
             businessName: 'business_name',
             'branding.primaryColor': 'primary_color',
             'branding.fontFamily': 'font_family',
             'branding.fontWeight': 'font_weight',
             'branding.iconColorMode': 'icon_color_mode',
             'branding.poweredByColor': 'powered_by_color',
-            // canvasMode: 'canvas_mode',  // 🚫 DEPRECATED: Dark mode is Super Admin only
             dividerPresetId: 'divider_preset_id',
-            // JSONB columns (whole objects)
             heroIcons: 'hero_icons',
             colors: 'colors',
             camera: 'camera',
             infoPills: 'info_pills'
         }
 
-        // Build Supabase update payload
         const supabasePayload = { ...cloudOverrides }
 
-        // Map simple fields from updates
         for (const [frontendKey, column] of Object.entries(columnMap)) {
             const keys = frontendKey.split('.')
             let value = updates
@@ -98,7 +98,7 @@ function Settings({ config: configProp, demoMode = false }) {
             }
         }
 
-        // 🏢 CLOUD WRITE: Persist to Supabase if we have businessId
+        // 3. ☁️ BACKGROUND SYNC (The "Save" happens silently)
         if (businessId && Object.keys(supabasePayload).length > 0) {
             setSaveStatus('saving')
             try {
@@ -117,12 +117,6 @@ function Settings({ config: configProp, demoMode = false }) {
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
-
-        // LOCAL UPDATE: Update localStorage for immediate reactivity
-        updateConfig(updates)
-
-        // SYNC EVENT: Trigger App.jsx re-render
-        window.dispatchEvent(new CustomEvent('frontendSync'))
     }
 
     // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant

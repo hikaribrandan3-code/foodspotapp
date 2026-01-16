@@ -176,26 +176,66 @@ export default function ColorPickerModal({
         drawHueSlider()
     }, [drawSpectrum, drawHueSlider])
 
-    const handleSpectrumInteraction = (e) => {
+    // UNIFIED POINTER LOGIC (Works for Mouse, Touch, and Pen)
+    const handleSpectrumPointer = (e) => {
         const canvas = spectrumRef.current
         if (!canvas) return
         const rect = canvas.getBoundingClientRect()
-        const x = Math.max(0, Math.min(canvas.width, (e.clientX || e.touches?.[0]?.clientX) - rect.left))
-        const y = Math.max(0, Math.min(canvas.height, (e.clientY || e.touches?.[0]?.clientY) - rect.top))
+        // Use clientX/Y directly from PointerEvent
+        const x = Math.max(0, Math.min(canvas.width, e.clientX - rect.left))
+        const y = Math.max(0, Math.min(canvas.height, e.clientY - rect.top))
+
         const s = x / canvas.width
         const v = 1 - y / canvas.height
         setHsv(prev => ({ ...prev, s, v }))
     }
 
-    const handleHueInteraction = (e) => {
+    const handleHuePointer = (e) => {
         const canvas = hueRef.current
         if (!canvas) return
         const rect = canvas.getBoundingClientRect()
-        const x = Math.max(0, Math.min(canvas.width, (e.clientX || e.touches?.[0]?.clientX) - rect.left))
+        const x = Math.max(0, Math.min(canvas.width, e.clientX - rect.left))
         const h = (x / canvas.width) * 360
         setHsv(prev => ({ ...prev, h }))
     }
 
+    // SPECTRUM HANDLERS
+    const onSpectrumPointerDown = (e) => {
+        e.preventDefault() // Stop scrolling
+        e.currentTarget.setPointerCapture(e.pointerId) // 🔒 LOCK FINGER TO ELEMENT
+        isDraggingSpectrum.current = true
+        handleSpectrumPointer(e)
+    }
+    const onSpectrumPointerMove = (e) => {
+        if (isDraggingSpectrum.current) {
+            e.preventDefault()
+            handleSpectrumPointer(e)
+        }
+    }
+    const onSpectrumPointerUp = (e) => {
+        isDraggingSpectrum.current = false
+        e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+
+    // HUE HANDLERS
+    const onHuePointerDown = (e) => {
+        e.preventDefault()
+        e.currentTarget.setPointerCapture(e.pointerId) // 🔒 LOCK FINGER TO ELEMENT
+        isDraggingHue.current = true
+        handleHuePointer(e)
+    }
+    const onHuePointerMove = (e) => {
+        if (isDraggingHue.current) {
+            e.preventDefault()
+            handleHuePointer(e)
+        }
+    }
+    const onHuePointerUp = (e) => {
+        isDraggingHue.current = false
+        e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+
+    // HEX INPUT HANDLER
     const handleHexChange = (value) => {
         setHexInput(value)
         if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
@@ -203,7 +243,7 @@ export default function ColorPickerModal({
         }
     }
 
-    // Eyedropper handler
+    // EYEDROPPER HANDLER
     const handleEyeDropper = async () => {
         if (!hasEyeDropper) return
         try {
@@ -216,50 +256,25 @@ export default function ColorPickerModal({
         }
     }
 
-    // Close handler (Done or backdrop tap) - NERVE REPAIR: No setTimeout race condition
+    // CLOSE HANDLER - NERVE REPAIR: No setTimeout race condition
     const handleClose = async (e) => {
         e?.stopPropagation() // Stop click from bubbling to backdrop
 
         // 1. Force Immediate Reactivity (The "2026 Snap")
-        // Call the parent's apply function immediately without timeout
         if (onApply) {
-            // If parent function is async (updateSettingsCloud), await it
             await onApply(tempColor)
         }
 
         // 2. Animate & Unmount
         setIsVisible(false)
-        // Parent (BrandingColorPicker) handles the 'showPicker' state
     }
 
-    // Backdrop tap = close with current color
+    // BACKDROP TAP = close with current color
     const handleBackdropClick = (e) => {
         if (e.target === e.currentTarget) {
             handleClose()
         }
     }
-
-    // Event handlers for dragging - 🚨 TOUCH REPAIR: preventDefault stops page scroll
-    const onSpectrumDown = (e) => { e.preventDefault?.(); isDraggingSpectrum.current = true; handleSpectrumInteraction(e) }
-    const onSpectrumMove = (e) => { e.preventDefault?.(); if (isDraggingSpectrum.current) handleSpectrumInteraction(e) }
-    const onSpectrumUp = () => { isDraggingSpectrum.current = false }
-
-    const onHueDown = (e) => { e.preventDefault?.(); isDraggingHue.current = true; handleHueInteraction(e) }
-    const onHueMove = (e) => { e.preventDefault?.(); if (isDraggingHue.current) handleHueInteraction(e) }
-    const onHueUp = () => { isDraggingHue.current = false }
-
-    useEffect(() => {
-        const handleGlobalUp = () => {
-            isDraggingSpectrum.current = false
-            isDraggingHue.current = false
-        }
-        window.addEventListener('mouseup', handleGlobalUp)
-        window.addEventListener('touchend', handleGlobalUp)
-        return () => {
-            window.removeEventListener('mouseup', handleGlobalUp)
-            window.removeEventListener('touchend', handleGlobalUp)
-        }
-    }, [])
 
     return (
         <div
@@ -387,12 +402,10 @@ export default function ColorPickerModal({
                         marginBottom: 12,
                         touchAction: 'none'
                     }}
-                    onMouseDown={onHueDown}
-                    onMouseMove={onHueMove}
-                    onMouseUp={onHueUp}
-                    onTouchStart={onHueDown}
-                    onTouchMove={onHueMove}
-                    onTouchEnd={onHueUp}
+                    onPointerDown={onHuePointerDown}
+                    onPointerMove={onHuePointerMove}
+                    onPointerUp={onHuePointerUp}
+                    onPointerLeave={onHuePointerUp}
                 />
 
                 {/* Spectrum (S/V) */}
@@ -408,12 +421,10 @@ export default function ColorPickerModal({
                         marginBottom: 12,
                         touchAction: 'none'
                     }}
-                    onMouseDown={onSpectrumDown}
-                    onMouseMove={onSpectrumMove}
-                    onMouseUp={onSpectrumUp}
-                    onTouchStart={onSpectrumDown}
-                    onTouchMove={onSpectrumMove}
-                    onTouchEnd={onSpectrumUp}
+                    onPointerDown={onSpectrumPointerDown}
+                    onPointerMove={onSpectrumPointerMove}
+                    onPointerUp={onSpectrumPointerUp}
+                    onPointerLeave={onSpectrumPointerUp}
                 />
 
                 {/* HEX Input + Eyedropper */}
