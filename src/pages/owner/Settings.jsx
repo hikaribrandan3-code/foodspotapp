@@ -70,7 +70,7 @@ function Settings({ config: configProp, demoMode = false }) {
             'branding.fontWeight': 'font_weight',
             'branding.iconColorMode': 'icon_color_mode',
             'branding.poweredByColor': 'powered_by_color',
-            canvasMode: 'canvas_mode',
+            // canvasMode: 'canvas_mode',  // 🚫 DEPRECATED: Dark mode is Super Admin only
             dividerPresetId: 'divider_preset_id',
             // JSONB columns (whole objects)
             heroIcons: 'hero_icons',
@@ -364,50 +364,11 @@ function Settings({ config: configProp, demoMode = false }) {
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label">🌙 Modo Oscuro</label>
-                        <p style={{ fontSize: 11, color: '#64748B', marginBottom: 12 }}>
-                            Tema de la aplicación
-                        </p>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            <button
-                                onClick={() => {
-                                    updateSettingsCloud({ canvasMode: 'light' })
-                                }}
-                                style={{
-                                    flex: 1,
-                                    padding: '12px 16px',
-                                    borderRadius: 8,
-                                    border: config.canvasMode === 'light' || !config.canvasMode ? '2px solid #3B82F6' : '1px solid #E2E8F0',
-                                    background: '#FFFFFF',
-                                    color: '#1E293B',
-                                    fontSize: 13,
-                                    fontWeight: 500,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                ☀️ Claro
-                            </button>
-                            <button
-                                onClick={() => {
-                                    updateSettingsCloud({ canvasMode: 'dark' })
-                                }}
-                                style={{
-                                    flex: 1,
-                                    padding: '12px 16px',
-                                    borderRadius: 8,
-                                    border: config.canvasMode === 'dark' ? '2px solid #3B82F6' : '1px solid #E2E8F0',
-                                    background: '#1E293B',
-                                    color: '#FFFFFF',
-                                    fontSize: 13,
-                                    fontWeight: 500,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                🌙 Oscuro
-                            </button>
-                        </div>
-                    </div>
+                    {/* 🚫 MODO OSCURO DEPRECATED FOR OWNERS
+                     * Dark mode toggle is now Super Admin only.
+                     * Owner dashboards force light mode for UX consistency.
+                     * See SuperAdmin.jsx for the active implementation.
+                     */}
 
                     {/* INFO PILL COLORS — Pill customization */}
                     <div className="form-group">
