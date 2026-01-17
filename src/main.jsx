@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 
 // =============================================================================
@@ -11,18 +10,14 @@ if ('serviceWorker' in navigator) {
         if (registrations.length > 0) {
             console.log('🧹 [Dev] Found stale Service Workers. Unregistering all...')
             for (let registration of registrations) {
-                registration.unregister().then(success => {
-                    console.log(success ? '✅ Unregistered SW' : '❌ Failed to unregister SW')
-                })
+                registration.unregister()
             }
-        } else {
-            console.log('✅ [Dev] No stale Service Workers found.')
         }
     })
 }
 
 // =============================================================================
-// 🛡️ STRICT BIFURCATION: Physically separate Admin and Tenant runtimes
+// 🛡️ UNIFIED ENTRY POINT: App.jsx now handles Router & TenantProvider
 // =============================================================================
 const path = window.location.pathname
 const root = ReactDOM.createRoot(document.getElementById('root'))
@@ -30,22 +25,22 @@ const root = ReactDOM.createRoot(document.getElementById('root'))
 if (path.startsWith('/admin')) {
     // =====================================================================
     // 🛡️ ADMIN MODE: Render ONLY the Admin System
-    // This bypasses TenantProvider, ThemeProvider, and all tenant logic
+    // This bypasses TenantProvider and all tenant logic
     // =====================================================================
     console.log('🛡️ [main.jsx] ADMIN MODE - Bypassing TenantProvider')
 
-    // Dynamically import AdminApp to avoid any tenant code loading
     import('./AdminApp.jsx').then(({ default: AdminApp }) => {
-        root.render(
-            <React.StrictMode>
-                <BrowserRouter>
-                    <AdminApp />
-                </BrowserRouter>
-            </React.StrictMode>
-        )
+        import('react-router-dom').then(({ BrowserRouter }) => {
+            root.render(
+                <React.StrictMode>
+                    <BrowserRouter>
+                        <AdminApp />
+                    </BrowserRouter>
+                </React.StrictMode>
+            )
+        })
     }).catch(err => {
         console.error('❌ Failed to load AdminApp:', err)
-        // Fallback: Show error UI
         root.render(
             <div style={{
                 display: 'flex',
@@ -78,22 +73,15 @@ if (path.startsWith('/admin')) {
     })
 } else {
     // =====================================================================
-    // 🍔 TENANT MODE: Render the standard SaaS App with TenantProvider
+    // 🍔 TENANT MODE: App.jsx handles Router + TenantProvider internally
     // =====================================================================
-    console.log('🍔 [main.jsx] TENANT MODE - Loading Full App with TenantProvider')
+    console.log('🍔 [main.jsx] TENANT MODE - Loading App (self-contained)')
 
-    // Standard imports for tenant mode
-    import('./contexts/TenantContext.jsx').then(({ TenantProvider }) => {
-        import('./App.jsx').then(({ default: App }) => {
-            root.render(
-                <React.StrictMode>
-                    <BrowserRouter>
-                        <TenantProvider>
-                            <App />
-                        </TenantProvider>
-                    </BrowserRouter>
-                </React.StrictMode>
-            )
-        })
+    import('./App.jsx').then(({ default: App }) => {
+        root.render(
+            <React.StrictMode>
+                <App />
+            </React.StrictMode>
+        )
     })
 }
