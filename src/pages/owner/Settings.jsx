@@ -59,22 +59,41 @@ function Card({ children, style = {} }) {
     );
 }
 
-function ColorSwatch({ label, color, onClick }) {
+function ColorSwatch({ label, color, onClick, onNativeFallback }) {
     return (
-        <div>
+        <div style={{ position: 'relative' }}>
             <p style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>{label}</p>
-            <button
-                onClick={onClick}
-                style={{
-                    width: 50,
-                    height: 40,
-                    border: '2px solid #E5E7EB',
-                    borderRadius: 8,
-                    backgroundColor: color,
-                    cursor: 'pointer'
-                }}
-                aria-label={`Elegir ${label}`}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <button
+                    onClick={onClick}
+                    style={{
+                        width: 50,
+                        height: 40,
+                        border: '2px solid #E5E7EB',
+                        borderRadius: 8,
+                        backgroundColor: color,
+                        cursor: 'pointer'
+                    }}
+                    aria-label={`Elegir ${label}`}
+                />
+                {/* 🆘 NATIVE FALLBACK: If color picker modal fails on mobile */}
+                {onNativeFallback && (
+                    <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => onNativeFallback(e.target.value)}
+                        title="Selector nativo (fallback)"
+                        style={{
+                            width: 28,
+                            height: 28,
+                            border: '1px solid #E5E7EB',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            padding: 0
+                        }}
+                    />
+                )}
+            </div>
         </div>
     );
 }
@@ -293,6 +312,12 @@ function Settings() {
                             label="Color Primario"
                             color={config.primaryColor || '#8B7355'}
                             onClick={() => setActiveColorPicker('primary')}
+                            onNativeFallback={(color) => {
+                                // 🆘 Native fallback: Direct save without modal
+                                injectCSSVariable('--color-primary', color);
+                                injectCSSVariable('--nav-primary-color', color);
+                                updateSettingsCloud({ branding: { primaryColor: color } });
+                            }}
                         />
 
                         {/* Icon Contrast Mode */}
@@ -383,6 +408,10 @@ function Settings() {
                         label="Color de Confirmación"
                         color={config.confirmationColor || '#22C55E'}
                         onClick={() => setActiveColorPicker('confirmation')}
+                        onNativeFallback={(color) => {
+                            injectCSSVariable('--color-confirmation', color);
+                            updateSettingsCloud({ colors: { confirmation: color } });
+                        }}
                     />
                     <p style={{ fontSize: 11, color: '#64748B', marginTop: 8 }}>
                         Para botones de confirmar pedido y acciones positivas
@@ -461,6 +490,9 @@ function Settings() {
                         label="Color 'Powered by FoodSpot'"
                         color={config.poweredByColor || '#C4856A'}
                         onClick={() => setActiveColorPicker('poweredBy')}
+                        onNativeFallback={(color) => {
+                            updateSettingsCloud({ branding: { poweredByColor: color } });
+                        }}
                     />
                 </Card>
 
