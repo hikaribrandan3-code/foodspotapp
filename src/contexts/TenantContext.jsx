@@ -1,238 +1,288 @@
 /**
- * 🛡️ OPERATION VAULT-SEAL: STRIKE 1
- * TenantContext.jsx — Blocking Identity Anchor & Silo Guard
+ * TenantContext.jsx
  * 
- * MISSION: Resolve tenant identity from URL slug BEFORE app renders.
- * PREVENTS: null context crashes, branding desync, silo violations.
+ * 🏢 Multi-Tenant Identity Provider
  * 
- * Architecture:
- *   1. Parse URL slug → Query Supabase branding table
- *   2. Normalize snake_case (DB) → camelCase (Frontend)
- *   3. Inject CSS variables via Direct DOM (zero-latency hydration)
- *   4. Block render until identity is established
+ * This context provides tenant-scoped identity throughout the app.
+ * It resolves the business from URL slug and enforces trial expiration.
+ * 
+ * URL Detection:
+ *   - /pizza-palace/menu → slug = "pizza-palace"
+ *   - /tacos-locos/order → slug = "tacos-locos"
+ *   - / or /start-trial → NO LOOKUP (neutral state, no tenant required)
+ * 
+ * Exports:
+ *   - useTenant() → { businessId, tenantData, trialExpired, loading }
+ *   - useBusinessId() → string (shortcut for businessId)
  */
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { setTenantStoragePrefix } from '../utils/storage.js';
+import { createContext, useContext, useState, useEffect } from 'react'
+import { supabase } from '../lib/supabaseClient.js'
+import { setTenantStoragePrefix } from '../utils/storage.js'
 
-const TenantContext = createContext(null);
-
-/**
- * 🔄 WIRING MISMATCH FIX: snake_case → camelCase normalizer
- * Single source of truth for DB → Frontend field mapping
- */
-function normalizeBranding(dbRow) {
-    if (!dbRow) return null;
-
-    return {
-        // Core Identity
-        businessId: dbRow.business_id || dbRow.user_id || null,
-        businessName: dbRow.business_name || 'FoodSpot',
-        slug: dbRow.slug || null,
-
-        // Branding Colors
-        primaryColor: dbRow.primary_color || '#8B7355',
-        secondaryColor: dbRow.secondary_color || '#A89070',
-        confirmationColor: dbRow.confirmation_color || '#22C55E',
-        poweredByColor: dbRow.powered_by_color || '#C4856A',
-
-        // Typography
-        fontFamily: dbRow.font_family || 'Inter',
-        fontWeight: dbRow.font_weight || '400',
-
-        // Nav Theming
-        iconColorMode: dbRow.icon_color_mode || 'white',
-
-        // Assets
-        logoUrl: dbRow.logo_url || null,
-        heroUrl: dbRow.hero_url || null,
-
-        // JSON Objects (pass-through, already camelCase inside)
-        heroIcons: dbRow.hero_icons || {},
-        infoPills: dbRow.info_pills || {},
-        colors: dbRow.colors || {},
-        camera: dbRow.camera || {},
-
-        // Trial Status
-        isPaid: dbRow.is_paid || false,
-        trialEndsAt: dbRow.trial_ends_at || null,
-
-        // Metadata
-        createdAt: dbRow.created_at,
-        updatedAt: dbRow.updated_at,
-    };
-}
+// Context
+const TenantContext = createContext(null)
 
 /**
- * 🎨 DIRECT-DOM HYDRATION: Inject CSS variables before React paints
- * This ensures zero-latency visual consistency on cold boot.
- */
-function injectBrandingCSS(branding) {
-    if (!branding) return;
-
-    const root = document.documentElement;
-
-    // Primary Theme Colors
-    root.style.setProperty('--color-primary', branding.primaryColor);
-    root.style.setProperty('--color-primary-light', branding.secondaryColor);
-    root.style.setProperty('--color-confirmation', branding.confirmationColor);
-
-    // Navigation Bar
-    root.style.setProperty('--nav-primary-color', branding.primaryColor);
-    root.style.setProperty('--nav-icon-color', branding.iconColorMode === 'black' ? '#000000' : '#FFFFFF');
-
-    // Typography
-    root.style.setProperty('--font-family-brand', `"${branding.fontFamily}", system-ui, sans-serif`);
-    root.style.setProperty('--font-weight-brand', branding.fontWeight);
-
-    // Apply font to body immediately
-    document.body.style.fontFamily = `"${branding.fontFamily}", system-ui, sans-serif`;
-}
-
-/**
- * 🛡️ TenantProvider — Blocking Identity Anchor
+ * TenantProvider Component
+ * 
+ * Wraps the entire app to provide tenant identity.
+ * Must be placed inside BrowserRouter (needs access to location).
  */
 export function TenantProvider({ children }) {
-    const [tenant, setTenant] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [trialExpired, setTrialExpired] = useState(false);
-
-    const resolveTenant = useCallback(async () => {
-        const pathname = window.location.pathname;
-        const pathSegments = pathname.split('/').filter(Boolean);
-
-        // 🛡️ SILO GUARD: Explicit bypass for system routes
-        // These routes do NOT require tenant context
-        const SYSTEM_ROUTES = [
-            'admin', 'superadmin',           // Admin panel
-            'start-trial', 'login', 'signup', // Auth flows
-            'camera', 'receipt', 'api'        // Utilities
-        ];
-
-        if (pathSegments.length === 0 || SYSTEM_ROUTES.includes(pathSegments[0])) {
-            // 🏠 NEUTRAL STATE: No tenant, no error — just render children
-            setLoading(false);
-            return;
-        }
-
-        const slug = pathSegments[0];
-
-        try {
-            // 🛡️ SILO GUARD: Single source of truth fetch from Supabase
-            const { data: business, error: fetchError } = await supabase
-                .from('branding')
-                .select('*')
-                .eq('slug', slug)
-                .maybeSingle();
-
-            if (fetchError) throw fetchError;
-
-            // 🔄 FALLBACK: Try case-insensitive business_name match
-            let resolvedBusiness = business;
-            if (!resolvedBusiness) {
-                const { data: byName } = await supabase
-                    .from('branding')
-                    .select('*')
-                    .ilike('business_name', slug)
-                    .maybeSingle();
-                resolvedBusiness = byName;
-            }
-
-            if (!resolvedBusiness) {
-                throw new Error(`Business "${slug}" not found. Check URL or contact support.`);
-            }
-
-            // 🔄 NORMALIZE: snake_case → camelCase
-            const branding = normalizeBranding(resolvedBusiness);
-
-            // 🎨 DIRECT-DOM HYDRATION: Inject CSS before paint
-            injectBrandingCSS(branding);
-
-            // 🗄️ STORAGE ISOLATION: Prefix localStorage keys with tenant ID
-            const tenantId = branding.businessId || resolvedBusiness.user_id;
-            if (tenantId) {
-                setTenantStoragePrefix(tenantId);
-            }
-
-            // ⏰ TRIAL CHECK: Lock app if trial expired
-            if (!branding.isPaid && branding.trialEndsAt) {
-                const trialEnd = new Date(branding.trialEndsAt);
-                if (new Date() > trialEnd) {
-                    console.warn(`[Vault-Seal] Trial expired for ${branding.businessName}`);
-                    setTrialExpired(true);
-                }
-            }
-
-            // ✅ SUCCESS: Set tenant state (single update, no cascade)
-            setTenant({
-                businessId: tenantId,
-                slug: resolvedBusiness.slug,
-                tenantData: resolvedBusiness,  // Raw DB row for edge cases
-                branding: branding,             // Normalized for components
-                isLoaded: true,
-            });
-
-        } catch (err) {
-            console.error('[Vault-Seal] Identity Resolution Failure:', err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const [loading, setLoading] = useState(true)
+    const [businessId, setBusinessId] = useState(null)
+    const [tenantData, setTenantData] = useState(null)
+    const [trialExpired, setTrialExpired] = useState(false)
+    const [error, setError] = useState(null)
 
     useEffect(() => {
-        resolveTenant();
-    }, [resolveTenant]);
+        const resolveTenant = async () => {
+            // 🚨 KILL-SWITCH: Absolute bypass for signup routes - NO Supabase calls
+            const pathname = window.location.pathname
+            if (pathname === '/' || pathname === '/start-trial') {
+                setLoading(false)
+                return
+            }
 
-    // 🛡️ BLOCKING GUARD: Prevent null context crashes
-    // App will NOT render until Silo identity is established
+            try {
+                // 1. EXTRACT SLUG FROM URL
+                const pathSegments = pathname.split('/').filter(Boolean)
+
+                // 🚫 RESERVED ROUTES: These are system routes, NOT tenant slugs
+                // If the first segment is a reserved keyword, skip tenant resolution
+                const RESERVED_ROUTES = [
+                    // Auth & Signup
+                    'start-trial', 'login', 'signup', 'register',
+                    // Customer pages (must be nested under tenant, e.g., /krappypatty/menu)
+                    'menu', 'order', 'status', 'info', 'envios', 'rewards', 'share', 'game', 'promos',
+                    // Backend routes
+                    'staff', 'owner', 'admin', 'demo', 'superadmin',
+                    // System
+                    'camera', 'receipt', 'api', 'assets'
+                ]
+
+                // If root path OR first segment is a reserved route → skip tenant lookup
+                if (pathSegments.length === 0 || RESERVED_ROUTES.includes(pathSegments[0])) {
+                    // 🏠 NEUTRAL STATE: No tenant, no error - just render children
+                    setLoading(false)
+                    return
+                }
+
+                // First segment is the tenant slug
+                const slug = pathSegments[0]
+
+                // 2. FETCH TENANT FROM SUPABASE (with 1 retry after 1 second)
+                const fetchTenant = async (retryCount = 0) => {
+                    // Try fetch by slug first - use * to avoid column mismatch
+                    let { data: tenant, error: fetchError } = await supabase
+                        .from('branding')
+                        .select('*')
+                        .eq('slug', slug)
+                        .maybeSingle()
+
+                    // 🔄 FALLBACK: If no slug match, try business_name (case-insensitive)
+                    if (!tenant) {
+                        const { data: tenantByName } = await supabase
+                            .from('branding')
+                            .select('*')
+                            .ilike('business_name', slug)
+                            .maybeSingle()
+                        tenant = tenantByName
+                    }
+
+                    if (fetchError || !tenant) {
+                        if (retryCount < 1) {
+                            // 🔄 RETRY: Wait 1 second and try again (handles race conditions)
+                            console.log(`[TenantContext] Tenant "${slug}" not found, retrying in 1s...`)
+                            await new Promise(resolve => setTimeout(resolve, 1000))
+                            return fetchTenant(retryCount + 1)
+                        }
+
+                        // 🌱 AUTO-SEED: Check if authenticated user's metadata matches URL slug
+                        console.log(`[TenantContext] No branding found for "${slug}", attempting auto-seed...`)
+                        const { data: { session } } = await supabase.auth.getSession()
+
+                        if (session?.user) {
+                            const userMeta = session.user.user_metadata || {}
+                            const userSlug = userMeta.slug || userMeta.business_name
+
+                            // 🛡️ SECURITY: Only auto-seed if user's metadata slug matches URL slug
+                            if (userSlug && userSlug.toLowerCase() === slug.toLowerCase()) {
+                                console.log(`[TenantContext] ✅ Auth match! Auto-seeding branding for "${slug}"`)
+
+                                // Calculate trial end date (7 days from now)
+                                const trialEndsAt = new Date()
+                                trialEndsAt.setDate(trialEndsAt.getDate() + 7)
+
+                                // INSERT new branding row
+                                const { data: newTenant, error: insertError } = await supabase
+                                    .from('branding')
+                                    .insert({
+                                        business_name: userMeta.business_name || slug,
+                                        slug: userSlug,
+                                        business_id: session.user.id, // 🔐 SILO-CORRECT: Primary isolation column
+                                        trial_ends_at: trialEndsAt.toISOString(),
+                                        is_paid: false
+                                    })
+                                    .select('*')
+                                    .single()
+
+                                if (!insertError && newTenant) {
+                                    console.log(`[TenantContext] 🚀 Auto-seed successful:`, newTenant)
+                                    return newTenant
+                                } else {
+                                    console.error(`[TenantContext] Auto-seed INSERT failed:`, insertError)
+                                }
+                            } else {
+                                console.warn(`[TenantContext] Auth slug mismatch: user="${userSlug}" vs url="${slug}"`)
+                            }
+                        }
+
+                        throw new Error(`[TENANT ERROR] Tenant "${slug}" not found in database`)
+                    }
+                    return tenant
+                }
+
+                const tenant = await fetchTenant()
+
+                // 🪂 EJECTION SEAT: Verify current user has silo access before committing
+                const { data: currentUser } = await supabase.auth.getUser()
+                if (currentUser?.user) {
+                    const userMeta = currentUser.user.user_metadata || {}
+                    const userRole = userMeta.role
+                    const userBusinessId = userMeta.business_id
+                    const userSlug = userMeta.slug
+
+                    // Only check for Owner/Staff - customers can view any tenant
+                    const isOwnerOrStaff = userRole === 'owner' || userRole === 'staff'
+                    const isSuperAdmin = userRole === 'superadmin'
+
+                    if (isOwnerOrStaff && !isSuperAdmin) {
+                        // Check if user belongs to this tenant (by ID or slug)
+                        const matchById = userBusinessId && userBusinessId === tenant.business_id
+                        const matchBySlug = userSlug && userSlug.toLowerCase() === slug.toLowerCase()
+
+                        if (!matchById && !matchBySlug) {
+                            console.error('[Silo Guard] 🪂 EJECTION SEAT: Unauthorized Silo Jump detected', {
+                                userSlug,
+                                userBusinessId,
+                                tenantSlug: slug,
+                                tenantBusinessId: tenant.business_id
+                            })
+                            setLoading(false)
+                            // Hard redirect to home with warning flag
+                            window.location.href = '/?siloJump=true'
+                            return
+                        }
+                    }
+                }
+
+                // Success: Tenant found and user has access
+                setBusinessId(tenant.user_id) // Use user_id as business_id
+                setTenantStoragePrefix(tenant.user_id)
+                setTenantData(tenant)
+                checkTrialStatus(tenant)
+            } catch (err) {
+                console.error('[TenantContext] Error resolving tenant:', err)
+                setError(err.message)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        /**
+         * 3. TRIAL EXPIRATION CHECK
+         * If is_paid === false AND current date > trial_ends_at → lock the app
+         */
+        const checkTrialStatus = (tenant) => {
+            if (!tenant.is_paid && tenant.trial_ends_at) {
+                const trialEnd = new Date(tenant.trial_ends_at)
+                const now = new Date()
+
+                if (now > trialEnd) {
+                    console.warn(`[TenantContext] Trial expired for ${tenant.business_name}`)
+                    setTrialExpired(true)
+                }
+            }
+        }
+
+        resolveTenant()
+    }, [])
+
+    // 🔄 LOADING STATE: Prevent Silo Violations
+    // The app must wait for businessId before making any Supabase calls
     if (loading) {
         return (
-            <div className="vault-seal-loading">
-                <style>{`
-                    .vault-seal-loading {
-                        height: 100vh;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-                        font-family: 'Inter', system-ui, sans-serif;
-                    }
-                    .anchor-spinner {
-                        width: 48px;
-                        height: 48px;
-                        border: 4px solid rgba(255,255,255,0.1);
-                        border-top: 4px solid #fff;
-                        border-radius: 50%;
-                        animation: anchor-spin 0.8s linear infinite;
-                    }
-                    @keyframes anchor-spin { to { transform: rotate(360deg); } }
-                    .vault-seal-loading p {
-                        margin-top: 16px;
-                        color: rgba(255,255,255,0.7);
-                        font-weight: 500;
-                        font-size: 14px;
-                    }
-                `}</style>
-                <div className="anchor-spinner"></div>
-                <p>Cargando FoodSpot...</p>
-            </div>
-        );
-    }
-
-    // 🚨 ERROR BOUNDARY: Fallback if slug resolution fails
-    // Only show for tenant routes, not system routes
-    if (error && !['/', '/start-trial', '/login', '/admin'].includes(window.location.pathname)) {
-        return (
             <div style={{
-                height: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
+                height: '100vh',
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                color: '#fff',
+                fontFamily: 'Inter, system-ui, sans-serif'
+            }}>
+                <div style={{
+                    width: '48px',
+                    height: '48px',
+                    border: '4px solid rgba(255,255,255,0.1)',
+                    borderTop: '4px solid #fff',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                }} />
+                <p style={{ marginTop: '16px', opacity: 0.7 }}>Cargando FoodSpot...</p>
+                <style>{`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `}</style>
+            </div>
+        )
+    }
+
+    // ❌ ERROR STATE (suppressed on signup routes + show setup spinner for owner routes)
+    if (error && window.location.pathname !== '/' && !window.location.pathname.includes('start-trial')) {
+        // 🚀 AUTO-ENTRY: If user is on /owner route, show setup spinner instead of error
+        if (window.location.pathname.includes('/owner')) {
+            return (
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100vh',
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                    color: '#fff',
+                    fontFamily: 'Inter, system-ui, sans-serif'
+                }}>
+                    <div style={{
+                        width: '48px',
+                        height: '48px',
+                        border: '4px solid rgba(255,255,255,0.1)',
+                        borderTop: '4px solid #fff',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                    <p style={{ marginTop: '16px', opacity: 0.7 }}>Configurando tu espacio...</p>
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
+            )
+        }
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh',
                 background: '#1a1a2e',
                 color: '#fff',
                 fontFamily: 'Inter, system-ui, sans-serif',
@@ -240,76 +290,66 @@ export function TenantProvider({ children }) {
                 textAlign: 'center'
             }}>
                 <h1 style={{ fontSize: '24px', marginBottom: '12px' }}>🏢 Negocio no encontrado</h1>
-                <p style={{ opacity: 0.7, maxWidth: '400px', marginBottom: '24px' }}>{error}</p>
-                <button
-                    onClick={() => window.location.href = '/'}
-                    style={{
-                        padding: '12px 24px',
-                        background: '#7C3AED',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: 600,
-                        cursor: 'pointer'
-                    }}
-                >
-                    Volver al Inicio
-                </button>
+                <p style={{ opacity: 0.7, maxWidth: '400px' }}>
+                    No pudimos encontrar el negocio solicitado.
+                    Verificá la URL o contactá al soporte.
+                </p>
             </div>
-        );
+        )
     }
 
-    // ✅ PROVIDE CONTEXT: Includes refresh callback for manual re-sync
     return (
-        <TenantContext.Provider value={{
-            ...tenant,
-            loading,
-            error,
-            trialExpired,
-            refresh: resolveTenant
-        }}>
+        <TenantContext.Provider value={{ businessId, tenantData, trialExpired, loading, isLoaded: !loading }}>
             {children}
         </TenantContext.Provider>
-    );
+    )
 }
 
 /**
- * 🪝 useTenant — Primary hook for consuming tenant context
- * Returns safe defaults when context is null (for system routes)
+ * useTenant Hook - NUCLEAR HARDENED V2
+ * returns the full tenant object with SAFE DEFAULTS (never null, never undefined nested)
  */
 export function useTenant() {
     const context = useContext(TenantContext);
 
-    // 🛡️ SAFE DEFAULTS: Return empty object for system routes
-    // This prevents crashes on /admin, /start-trial, etc.
+    // 🔥 NUCLEAR FIX V2: Return object with all nested defaults
+    // This prevents `tenant.branding.color` and `tenant.settings.x` from g[x] crash
     if (!context) {
         return {
             businessId: null,
-            slug: null,
             tenantData: {},
             branding: {},
-            loading: false,
-            isLoaded: false,
+            settings: {},
             trialExpired: false,
-            error: null,
-            refresh: () => { }
+            loading: false,
+            isLoaded: false, // 🔐 VAULT-SEAL: Explicit false until context mounts
+            error: null
         };
     }
 
+    // Ensure nested properties exist even if context is partial
     return {
         ...context,
         tenantData: context.tenantData || {},
-        branding: context.branding || {},
-        isLoaded: context.isLoaded ?? !context.loading
+        branding: context.tenantData?.branding || context.branding || {},
+        settings: context.tenantData?.settings || context.settings || {},
+        isLoaded: context.isLoaded ?? !context.loading // 🔐 Ensure isLoaded is always present
     };
 }
 
 /**
- * 🪝 useBusinessId — Shortcut hook for businessId only
- * Used by Supabase functions for silo-scoped queries
+ * useBusinessId Hook - Hardened
+ * returns the active business UUID or null during bootstrap
  */
 export function useBusinessId() {
     const context = useContext(TenantContext);
-    if (!context) return null;
+
+    // 🔥 THE FIX: Stop the "TypeError: null is not an object" crash.
+    // If context is still initializing, return null so Menu.jsx/Order.jsx can wait.
+    if (!context) {
+        return null;
+    }
+
+    // Safe to access property now
     return context.businessId;
 }

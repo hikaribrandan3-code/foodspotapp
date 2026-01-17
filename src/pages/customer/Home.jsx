@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom'
-import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT, getConfig } from '../../config/appConfig.v2.js'
+import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { getMenu } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
-import { useTenant } from '../../contexts/TenantContext.jsx'
 
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
@@ -22,20 +21,8 @@ const getActionDefinitions = (tenantSlug) => ({
 
 // --- MAIN COMPONENT ---
 
-function Home() {
-    // 🛡️ SILO ANCHOR: Get branding from context
-    const tenant = useTenant();
-    const branding = tenant?.branding || {};
-
-    // Merge context branding with local config for visual settings
-    const config = {
-        ...getConfig(),
-        heroIcons: branding.heroIcons,
-        canvasMode: branding.canvasMode || 'light',
-        homeConfig: getConfig()?.homeConfig,
-        featuredPhotos: getConfig()?.featuredPhotos || []
-    };
-
+function Home({ config: configProp }) {
+    const config = configProp || {};
     const navigate = useNavigate()
     const location = useLocation()
     const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
