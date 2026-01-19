@@ -130,6 +130,11 @@ function App() {
         if (path === '/' || path.includes('start-trial')) return;
         if (!businessId) return;
 
+        // 🛡️ RACE CONDITION FIX: Only hydrate once per session
+        // This prevents cloud data from overwriting local changes during active editing
+        const isHydrated = sessionStorage.getItem('fs_branding_hydrated');
+        if (isHydrated) return;
+
         const loadCloudBranding = async () => {
             try {
                 const { data: cloudBranding, error } = await getBranding(businessId);
@@ -150,6 +155,8 @@ function App() {
                     headerCover: cloudBranding.hero_url ? { ...prev.headerCover, image: cloudBranding.hero_url } : prev.headerCover,
                     logo: cloudBranding.logo_url || prev.logo,
                 }));
+                // ✅ Mark as hydrated so we don't fetch again this session
+                sessionStorage.setItem('fs_branding_hydrated', 'true');
             } catch { /* Silent */ }
         };
         loadCloudBranding();

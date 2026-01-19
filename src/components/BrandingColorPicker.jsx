@@ -21,19 +21,11 @@ export default function BrandingColorPicker({
     primaryColor = '#8B7355',
     iconColorMode = 'white',
     iconColorLabel = 'Color de íconos', // Allow customization of this label
-    onColorChange,
+    onColorPreview, // NEW: DOM injection
+    onColorSave,    // NEW: Cloud Save
     onIconModeChange
 }) {
     const [showPicker, setShowPicker] = useState(false)
-
-    const handleApply = (newColor) => {
-        onColorChange?.(newColor)
-        setShowPicker(false)
-    }
-
-    const handleCancel = () => {
-        setShowPicker(false)
-    }
 
     return (
         <div style={{ marginBottom: 16 }}>
@@ -92,7 +84,7 @@ export default function BrandingColorPicker({
                     {COLOR_PRESETS.map(color => (
                         <button
                             key={color.value}
-                            onClick={() => onColorChange?.(color.value)}
+                            onClick={() => onColorSave?.(color.value)}
                             style={{
                                 width: 36,
                                 height: 36,
@@ -137,9 +129,9 @@ export default function BrandingColorPicker({
                 <ColorPickerModal
                     title="Selector de color"
                     initialColor={primaryColor}
-                    onLiveChange={onColorChange}  // Live preview: updates as user picks
+                    onLiveChange={onColorPreview}  // Live preview: updates DOM only
                     onApply={(color) => {
-                        onColorChange?.(color)    // Final confirmation
+                        onColorSave?.(color)    // Final confirmation: updates Config + Cloud
                         setShowPicker(false)
                     }}
                 />

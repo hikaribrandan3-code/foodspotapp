@@ -1,0 +1,244 @@
+/* src/pages/owner/Settings.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;600;800&family=Lora:wght@400;600;700&display=swap');
+
+.settings-vault {
+    padding: 20px;
+    background: #F8FAFC;
+    min-height: 100vh;
+    padding-bottom: 100px;
+    /* Space for BottomNav */
+}
+
+/* Card Styling */
+.branding-card {
+    background: #FFF;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E2E8F0;
+}
+
+.branding-card h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* INPUTS */
+.fs-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #1E293B;
+    background: #F8FAFC;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+}
+
+.fs-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background: #FFF;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.typo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.typo-grid select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #FFF;
+    font-size: 14px;
+    color: #1E293B;
+}
+
+/* HERO STAGE + CROSSHAIR FIX */
+.hero-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #E2E8F0;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #CBD5E1;
+    touch-action: none;
+    /* 🛡️ CRITICAL: Allow touch-through for zoom */
+}
+
+.editor-crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40px;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-preview-text {
+    width: 100%;
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    color: white;
+    font-size: 24px;
+    /* Use CSS variables if available, otherwise direct application */
+    font-family: var(--font-main, 'Inter'), sans-serif;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.hero-upload-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 20;
+}
+
+/* NATIVE PICKERS */
+.color-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.color-pillar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pillar-label {
+    font-size: 11px;
+    color: #64748B;
+    margin: 0;
+    font-weight: 500;
+}
+
+.native-swatch {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #F1F5F9;
+    padding: 0;
+}
+
+.native-swatch::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.native-swatch::-webkit-color-swatch {
+    border: none;
+    border-radius: 7px;
+}
+
+/* TOGGLES */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-header h3 {
+    margin: 0;
+}
+
+.mode-toggle {
+    display: flex;
+    background: #F1F5F9;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.mode-toggle button {
+    border: none;
+    background: transparent;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748B;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-toggle button.active {
+    background: #FFF;
+    color: #1E293B;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.mode-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.mode-row:last-child {
+    border-bottom: none;
+}
+
+.mode-row p {
+    margin: 0;
+    font-size: 14px;
+    color: #1E293B;
+    font-weight: 500;
+}
+
+.toggle-group {
+    display: flex;
+    gap: 8px;
+}
+
+.toggle-group button {
+    padding: 6px 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    background: #FFF;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.toggle-group button.active {
+    background: #1E293B;
+    color: white;
+    border-color: #1E293B;
+}

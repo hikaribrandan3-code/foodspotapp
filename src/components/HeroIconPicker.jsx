@@ -10,7 +10,8 @@ export default function HeroIconPicker({
     iconId = 'menu',
     color = '#FFFFFF',
     iconColorMode = 'black',
-    onColorChange,
+    onColorPreview, // NEW: DOM injection
+    onColorSave,    // NEW: Cloud Save
     onIconModeChange
 }) {
     const [showPicker, setShowPicker] = useState(false)
@@ -53,9 +54,9 @@ export default function HeroIconPicker({
                 <ColorPickerModal
                     title={`Color: ${label}`}
                     initialColor={displayColor}
-                    onLiveChange={onColorChange}  // Live preview: updates as user picks
+                    onLiveChange={onColorPreview}  // Live preview: updates DOM only
                     onApply={(newColor) => {
-                        onColorChange?.(newColor)  // Final confirmation
+                        onColorSave?.(newColor)  // Final confirmation: Cloud Save
                         setShowPicker(false)
                     }}
                 />
