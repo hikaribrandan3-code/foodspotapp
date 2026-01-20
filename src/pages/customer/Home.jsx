@@ -11,8 +11,8 @@ export default function Home() {
     // 🛡️ THE NEW POWER SOURCE: Context instead of Props
     const { branding: cloudBranding, tenantData, loading, slug: tenantSlug } = useTenant();
 
-    // 🔄 FALLBACKS: If the Silo is loading, show a skeleton or nothing
-    if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+    // 🔄 FALLBACKS: If the Silo is loading OR no data yet, show skeleton
+    if (loading || !tenantData?.business_name) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
 
     // 🛡️ DATA NORMALIZATION (CamelCase vs Snake_Case Armor)
     const branding = {

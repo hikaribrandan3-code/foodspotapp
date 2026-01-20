@@ -343,7 +343,7 @@ function App() {
     const path = location.pathname;
     const isGlobalPath = GLOBAL_PATHS.includes(path) || path.startsWith('/admin');
 
-    if (!tenant && !isGlobalPath) {
+    if (!tenant?.isLoaded && !isGlobalPath) {
         return (
             <div className="flex h-screen items-center justify-center bg-black">
                 <div className="flex flex-col items-center gap-4">
