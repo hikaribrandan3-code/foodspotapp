@@ -317,34 +317,35 @@ export function TenantProvider({ children }) {
 }
 
 /**
- * useTenant Hook - NUCLEAR HARDENED V2
+ * useTenant Hook - NUCLEAR HARDENED V3 (FLAT DATA)
  * returns the full tenant object with SAFE DEFAULTS (never null, never undefined nested)
  */
 export function useTenant() {
     const context = useContext(TenantContext);
 
-    // 🔥 NUCLEAR FIX V2: Return object with all nested defaults
-    // This prevents `tenant.branding.color` and `tenant.settings.x` from g[x] crash
+    // 🔥 NUCLEAR FIX V3: Return object with all nested defaults
     if (!context) {
         return {
             businessId: null,
             tenantData: {},
-            branding: {},
+            branding: {},  // Safe empty object for destructuring
             settings: {},
             trialExpired: false,
             loading: false,
-            isLoaded: false, // 🔐 VAULT-SEAL: Explicit false until context mounts
-            error: null
+            isLoaded: false,
+            error: null,
+            slug: null
         };
     }
 
-    // Ensure nested properties exist even if context is partial
+    // 🛡️ FLAT DATA: tenantData IS the branding (no nesting)
     return {
         ...context,
         tenantData: context.tenantData || {},
-        branding: context.tenantData?.branding || context.branding || {},
-        settings: context.tenantData?.settings || context.settings || {},
-        isLoaded: context.isLoaded ?? !context.loading // 🔐 Ensure isLoaded is always present
+        branding: context.tenantData || {},  // 🔐 FIXED: tenantData IS branding
+        settings: context.tenantData?.settings || {},
+        isLoaded: context.isLoaded ?? !context.loading,
+        slug: context.tenantData?.slug || null
     };
 }
 
