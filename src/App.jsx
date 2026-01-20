@@ -125,42 +125,8 @@ function App() {
         return () => authListener?.subscription.unsubscribe();
     }, []);
 
-    useEffect(() => {
-        const path = window.location.pathname;
-        if (path === '/' || path.includes('start-trial')) return;
-        if (!businessId) return;
-
-        // 🛡️ RACE CONDITION FIX: Only hydrate once per session
-        // This prevents cloud data from overwriting local changes during active editing
-        const isHydrated = sessionStorage.getItem('fs_branding_hydrated');
-        if (isHydrated) return;
-
-        const loadCloudBranding = async () => {
-            try {
-                const { data: cloudBranding, error } = await getBranding(businessId);
-                if (error || !cloudBranding) return;
-                setConfig(prev => ({
-                    ...prev,
-                    businessName: cloudBranding.business_name || prev.businessName,
-                    branding: {
-                        ...prev.branding,
-                        primaryColor: cloudBranding.primary_color || prev.branding?.primaryColor,
-                        fontFamily: cloudBranding.font_family || prev.branding?.fontFamily,
-                    },
-                    colors: {
-                        ...prev.colors,
-                        primary: cloudBranding.primary_color || prev.colors?.primary,
-                        secondary: cloudBranding.secondary_color || prev.colors?.secondary,
-                    },
-                    headerCover: cloudBranding.hero_url ? { ...prev.headerCover, image: cloudBranding.hero_url } : prev.headerCover,
-                    logo: cloudBranding.logo_url || prev.logo,
-                }));
-                // ✅ Mark as hydrated so we don't fetch again this session
-                sessionStorage.setItem('fs_branding_hydrated', 'true');
-            } catch { /* Silent */ }
-        };
-        loadCloudBranding();
-    }, [businessId]);
+    // 🗑️ REMOVED: loadCloudBranding double-fetch
+    // TenantContext already provides branding data - no need to fetch again
 
     // Metadata Injection: Set document title and favicon from tenant branding
     // 🛡️ FUTURE-PROOF: Defaults to FoodSpot when tenant data missing, auto-swaps when available
