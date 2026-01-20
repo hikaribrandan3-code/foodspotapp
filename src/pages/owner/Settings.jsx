@@ -27,16 +27,18 @@ const Settings = () => {
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
 
-    // START: Initialize local state from Context on mount
+    // 🛡️ REINFORCED INITIALIZATION (Fixes "Load on Refresh")
+    // Simplified dependency to catch ANY tenant update
     useEffect(() => {
-        if (tenant?.branding) {
+        if (tenant && tenant.branding) {
+            console.log("Vault Loaded:", tenant.branding); // Debug log
             setLocalIdentity({
                 business_name: tenant.branding.business_name || '',
                 font_family: tenant.branding.font_family || 'Inter',
                 font_weight: tenant.branding.font_weight || '600'
             });
         }
-    }, [tenant?.branding?.business_name, tenant?.branding?.font_family, tenant?.branding?.font_weight]);
+    }, [tenant]);
 
     // TAP OUTSIDE: Close dropdowns when clicking outside
     useEffect(() => {
@@ -61,47 +63,67 @@ const Settings = () => {
         setLocalIdentity(prev => ({ ...prev, business_name: e.target.value }));
     };
 
-    // FINISH: Save on blur (tap outside input)
+    // 🛡️ REINFORCED SAVE: BUSINESS NAME
     const handleNameBlur = async () => {
-        if (!businessId) return;
+        if (!businessId) {
+            console.error("Save failed: No Business ID");
+            return;
+        }
+
         try {
-            await updateBranding({ business_name: localIdentity.business_name }, businessId);
+            const { error } = await updateBranding({
+                business_name: localIdentity.business_name
+            }, businessId);
+
+            if (error) throw error;
+
             syncContext({ business_name: localIdentity.business_name });
         } catch (error) {
             console.error("Name save failed:", error);
+            alert("Error saving name. Check console."); // Temporary Phone Debug
         }
     };
 
-    // FONT SELECT: Handle font family selection with stopPropagation
+    // 🛡️ REINFORCED SAVE: FONT SELECT
     const handleFontSelect = async (family) => {
-        // A. PROCESS: Update local state & CSS immediately
+        // A. PROCESS: Update Visuals Immediately (Optimistic)
         setLocalIdentity(prev => ({ ...prev, font_family: family }));
         document.documentElement.style.setProperty('--font-main', family);
-
-        // B. Close menu
         setIsFontMenuOpen(false);
 
-        // C. FINISH: Save to DB async
+        if (!businessId) return;
+
+        // B. FINISH: Save to DB
         try {
-            await updateBranding({ font_family: family }, businessId);
+            const { error } = await updateBranding({
+                font_family: family
+            }, businessId);
+
+            if (error) throw error;
+
             syncContext({ font_family: family });
         } catch (error) {
             console.error("Font save failed:", error);
         }
     };
 
-    // WEIGHT SELECT: Handle font weight selection with stopPropagation
+    // 🛡️ REINFORCED SAVE: WEIGHT SELECT
     const handleWeightSelect = async (weight) => {
-        // A. PROCESS: Update local state & CSS immediately
+        // A. PROCESS: Update Visuals Immediately (Optimistic)
         setLocalIdentity(prev => ({ ...prev, font_weight: weight }));
         document.documentElement.style.setProperty('--font-weight-hero', weight);
-
-        // B. Close menu
         setIsWeightMenuOpen(false);
 
-        // C. FINISH: Save to DB async
+        if (!businessId) return;
+
+        // B. FINISH: Save to DB
         try {
-            await updateBranding({ font_weight: weight }, businessId);
+            const { error } = await updateBranding({
+                font_weight: weight
+            }, businessId);
+
+            if (error) throw error;
+
             syncContext({ font_weight: weight });
         } catch (error) {
             console.error("Weight save failed:", error);
