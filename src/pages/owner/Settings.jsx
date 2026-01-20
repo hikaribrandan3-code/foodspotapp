@@ -63,24 +63,33 @@ const Settings = () => {
         setLocalIdentity(prev => ({ ...prev, business_name: e.target.value }));
     };
 
-    // 🛡️ REINFORCED SAVE: BUSINESS NAME
+    // 🛡️ DIAGNOSTIC SAVE HANDLER (The Truth Serum)
     const handleNameBlur = async () => {
+        // 1. CHECK THE ID
         if (!businessId) {
-            console.error("Save failed: No Business ID");
+            alert("🚨 CRITICAL: No Business ID! Check your URL.");
+            console.error("Missing ID context:", { tenant, businessId });
             return;
         }
 
+        // 2. ATTEMPT THE HANDSHAKE
         try {
-            const { error } = await updateBranding({
+            alert(`⏳ Saving to ID: ${businessId.slice(0, 8)}...`);
+
+            const { data, error } = await updateBranding({
                 business_name: localIdentity.business_name
             }, businessId);
 
             if (error) throw error;
 
+            // 3. SUCCESS
+            alert("✅ SAVE SUCCESS! Refresh now.");
             syncContext({ business_name: localIdentity.business_name });
+
         } catch (error) {
-            console.error("Name save failed:", error);
-            alert("Error saving name. Check console."); // Temporary Phone Debug
+            // 4. DATABASE REJECTION
+            alert("❌ DB BLOCKED: " + error.message);
+            console.error("Save Error:", error);
         }
     };
 
