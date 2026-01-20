@@ -40,6 +40,7 @@
     background: #F8FAFC;
     transition: all 0.2s;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .fs-input:focus {
@@ -64,6 +65,100 @@
     background: #FFF;
     font-size: 14px;
     color: #1E293B;
+}
+
+/* CUSTOM DROPDOWN - Fixes Event Bubbling */
+.custom-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-trigger {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #FFF;
+    font-size: 14px;
+    color: #1E293B;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dropdown-trigger:hover {
+    border-color: #94A3B8;
+}
+
+.dropdown-trigger:active {
+    transform: scale(0.99);
+}
+
+.dropdown-arrow {
+    font-size: 10px;
+    color: #94A3B8;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #FFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    overflow: hidden;
+    animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-option {
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #F1F5F9;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dropdown-option:last-child {
+    border-bottom: none;
+}
+
+.dropdown-option:hover {
+    background: #F8FAFC;
+}
+
+.dropdown-option:active {
+    background: #F1F5F9;
+}
+
+.dropdown-option.active {
+    background: #EFF6FF;
+    color: #3B82F6;
+}
+
+.dropdown-option .check {
+    color: #3B82F6;
+    font-weight: 600;
 }
 
 /* HERO STAGE + CROSSHAIR FIX */

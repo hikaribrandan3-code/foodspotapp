@@ -1,5 +1,5 @@
 // src/pages/owner/Settings.jsx - OPERATION VAULT-SEAL FINAL
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext'; // SILO SOURCE OF TRUTH
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
@@ -13,6 +13,100 @@ const Settings = () => {
     const { tenantData: tenant, businessId } = useTenant();
     const [isSaving, setIsSaving] = useState(false);
     const navigate = useNavigate();
+
+    // 🛡️ LOCAL STATE: Critical for 60fps typing (START-PROCESS-FINISH pattern)
+    const [localIdentity, setLocalIdentity] = useState({
+        business_name: '',
+        font_family: 'Inter',
+        font_weight: '600'
+    });
+
+    // 🛡️ DROPDOWN STATE: Independent control for Font Selector
+    const [isFontMenuOpen, setIsFontMenuOpen] = useState(false);
+    const [isWeightMenuOpen, setIsWeightMenuOpen] = useState(false);
+    const fontMenuRef = useRef(null);
+    const weightMenuRef = useRef(null);
+
+    // START: Initialize local state from Context on mount
+    useEffect(() => {
+        if (tenant?.branding) {
+            setLocalIdentity({
+                business_name: tenant.branding.business_name || '',
+                font_family: tenant.branding.font_family || 'Inter',
+                font_weight: tenant.branding.font_weight || '600'
+            });
+        }
+    }, [tenant?.branding?.business_name, tenant?.branding?.font_family, tenant?.branding?.font_weight]);
+
+    // TAP OUTSIDE: Close dropdowns when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (fontMenuRef.current && !fontMenuRef.current.contains(event.target)) {
+                setIsFontMenuOpen(false);
+            }
+            if (weightMenuRef.current && !weightMenuRef.current.contains(event.target)) {
+                setIsWeightMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, []);
+
+    // PROCESS: Handle typing (local state only - no DB calls)
+    const handleNameChange = (e) => {
+        setLocalIdentity(prev => ({ ...prev, business_name: e.target.value }));
+    };
+
+    // FINISH: Save on blur (tap outside input)
+    const handleNameBlur = async () => {
+        if (!businessId) return;
+        try {
+            await updateBranding({ business_name: localIdentity.business_name }, businessId);
+            syncContext({ business_name: localIdentity.business_name });
+        } catch (error) {
+            console.error("Name save failed:", error);
+        }
+    };
+
+    // FONT SELECT: Handle font family selection with stopPropagation
+    const handleFontSelect = async (family) => {
+        // A. PROCESS: Update local state & CSS immediately
+        setLocalIdentity(prev => ({ ...prev, font_family: family }));
+        document.documentElement.style.setProperty('--font-main', family);
+
+        // B. Close menu
+        setIsFontMenuOpen(false);
+
+        // C. FINISH: Save to DB async
+        try {
+            await updateBranding({ font_family: family }, businessId);
+            syncContext({ font_family: family });
+        } catch (error) {
+            console.error("Font save failed:", error);
+        }
+    };
+
+    // WEIGHT SELECT: Handle font weight selection with stopPropagation
+    const handleWeightSelect = async (weight) => {
+        // A. PROCESS: Update local state & CSS immediately
+        setLocalIdentity(prev => ({ ...prev, font_weight: weight }));
+        document.documentElement.style.setProperty('--font-weight-hero', weight);
+
+        // B. Close menu
+        setIsWeightMenuOpen(false);
+
+        // C. FINISH: Save to DB async
+        try {
+            await updateBranding({ font_weight: weight }, businessId);
+            syncContext({ font_weight: weight });
+        } catch (error) {
+            console.error("Weight save failed:", error);
+        }
+    };
 
     // 🛡️ GLOBAL OPTIMISTIC SYNC ADAPTER
     const syncContext = (updates) => {
@@ -124,37 +218,91 @@ const Settings = () => {
             />
 
             <div className="settings-vault">
-                {/* IDENTITY SECTION */}
+                {/* IDENTITY SECTION - LOCAL STATE PATTERN */}
                 <section className="branding-card">
                     <h3>Identidad y Texto</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* BUSINESS NAME: onChange (PROCESS) + onBlur (FINISH) */}
                         <input
                             type="text"
                             className="fs-input"
-                            value={tenant.branding?.business_name || ''}
-                            onChange={(e) => handleFieldUpdate('business_name', e.target.value)}
+                            value={localIdentity.business_name}
+                            onChange={handleNameChange}
+                            onBlur={handleNameBlur}
                             placeholder="Nombre del Negocio"
                         />
                         <div className="typo-grid">
-                            <select
-                                value={tenant.branding?.font_family || 'Inter'}
-                                onChange={(e) => handleFieldUpdate('font_family', e.target.value)}
-                            >
-                                <option value="Inter">Inter (Clean)</option>
-                                <option value="Roboto">Roboto (Modern)</option>
-                                <option value="Outfit">Outfit (Bold)</option>
-                                <option value="Lora">Lora (Serif)</option>
-                            </select>
-                            <select
-                                value={tenant.branding?.font_weight || '600'}
-                                onChange={(e) => handleFieldUpdate('font_weight', e.target.value)}
-                            >
-                                <option value="400">Normal</option>
-                                <option value="500">Medium</option>
-                                <option value="600">Semi-Bold</option>
-                                <option value="700">Bold</option>
-                                <option value="800">Extra Bold</option>
-                            </select>
+                            {/* FONT FAMILY: Custom Dropdown */}
+                            <div className="custom-dropdown" ref={fontMenuRef}>
+                                <button
+                                    type="button"
+                                    className="dropdown-trigger"
+                                    onClick={() => setIsFontMenuOpen(!isFontMenuOpen)}
+                                >
+                                    <span>{localIdentity.font_family}</span>
+                                    <span className="dropdown-arrow">▼</span>
+                                </button>
+                                {isFontMenuOpen && (
+                                    <div className="dropdown-menu">
+                                        {['Inter', 'Roboto', 'Outfit', 'Lora'].map((font) => (
+                                            <div
+                                                key={font}
+                                                className={`dropdown-option ${localIdentity.font_family === font ? 'active' : ''}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleFontSelect(font);
+                                                }}
+                                                style={{ fontFamily: font }}
+                                            >
+                                                {font}
+                                                {localIdentity.font_family === font && <span className="check">✓</span>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* FONT WEIGHT: Custom Dropdown */}
+                            <div className="custom-dropdown" ref={weightMenuRef}>
+                                <button
+                                    type="button"
+                                    className="dropdown-trigger"
+                                    onClick={() => setIsWeightMenuOpen(!isWeightMenuOpen)}
+                                >
+                                    <span>
+                                        {localIdentity.font_weight === '400' ? 'Normal' :
+                                            localIdentity.font_weight === '500' ? 'Medium' :
+                                                localIdentity.font_weight === '600' ? 'Semi-Bold' :
+                                                    localIdentity.font_weight === '700' ? 'Bold' :
+                                                        localIdentity.font_weight === '800' ? 'Extra Bold' : 'Semi-Bold'}
+                                    </span>
+                                    <span className="dropdown-arrow">▼</span>
+                                </button>
+                                {isWeightMenuOpen && (
+                                    <div className="dropdown-menu">
+                                        {[
+                                            { value: '400', label: 'Normal' },
+                                            { value: '500', label: 'Medium' },
+                                            { value: '600', label: 'Semi-Bold' },
+                                            { value: '700', label: 'Bold' },
+                                            { value: '800', label: 'Extra Bold' }
+                                        ].map((option) => (
+                                            <div
+                                                key={option.value}
+                                                className={`dropdown-option ${localIdentity.font_weight === option.value ? 'active' : ''}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleWeightSelect(option.value);
+                                                }}
+                                                style={{ fontWeight: option.value }}
+                                            >
+                                                {option.label}
+                                                {localIdentity.font_weight === option.value && <span className="check">✓</span>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </section>
