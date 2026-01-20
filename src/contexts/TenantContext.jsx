@@ -69,26 +69,37 @@ export function TenantProvider({ children }) {
                     return
                 }
 
-                // First segment is the tenant slug
-                const slug = pathSegments[0]
+                // First segment is the tenant slug (NORMALIZED TO LOWERCASE)
+                const slug = pathSegments[0].toLowerCase()
 
                 // 2. FETCH TENANT FROM SUPABASE (with 1 retry after 1 second)
                 const fetchTenant = async (retryCount = 0) => {
-                    // Try fetch by slug first - use * to avoid column mismatch
+                    console.log('[TenantContext] 🔍 Looking for slug:', slug)
+
+                    // Try fetch by slug first - CASE INSENSITIVE
                     let { data: tenant, error: fetchError } = await supabase
                         .from('branding')
                         .select('*')
-                        .eq('slug', slug)
+                        .ilike('slug', slug)  // 🔐 CASE-INSENSITIVE MATCH
                         .maybeSingle()
 
                     // 🔄 FALLBACK: If no slug match, try business_name (case-insensitive)
                     if (!tenant) {
+                        console.log('[TenantContext] ⚠️ No slug match, trying business_name...')
                         const { data: tenantByName } = await supabase
                             .from('branding')
                             .select('*')
                             .ilike('business_name', slug)
                             .maybeSingle()
                         tenant = tenantByName
+                    }
+
+                    if (tenant) {
+                        console.log('[TenantContext] ✅ VAULT LOADED:', {
+                            business_name: tenant.business_name,
+                            business_id: tenant.business_id,
+                            slug: tenant.slug
+                        })
                     }
 
                     if (fetchError || !tenant) {
