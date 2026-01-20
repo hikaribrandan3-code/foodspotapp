@@ -27,16 +27,25 @@ const Settings = () => {
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
 
-    // 🛡️ REINFORCED INITIALIZATION (Fixes "Load on Refresh")
-    // Simplified dependency to catch ANY tenant update
+    // 🛡️ THE DATA PUMP: SYNC CONTEXT TO UI
     useEffect(() => {
-        if (tenant && tenant.branding) {
-            console.log("Vault Loaded:", tenant.branding); // Debug log
+        if (tenant) {
+            console.log("🔄 PUMPING DATA TO UI:", tenant);
+
+            // 1. Update the Inputs (data is directly on tenant, NOT tenant.branding)
             setLocalIdentity({
-                business_name: tenant.branding.business_name || '',
-                font_family: tenant.branding.font_family || 'Inter',
-                font_weight: tenant.branding.font_weight || '600'
+                business_name: tenant.business_name || '',
+                font_family: tenant.font_family || 'Inter',
+                font_weight: tenant.font_weight || '600'
             });
+
+            // 2. Force the CSS Visuals
+            if (tenant.font_family) {
+                document.documentElement.style.setProperty('--font-main', tenant.font_family);
+            }
+            if (tenant.font_weight) {
+                document.documentElement.style.setProperty('--font-weight-hero', tenant.font_weight);
+            }
         }
     }, [tenant]);
 
