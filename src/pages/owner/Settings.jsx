@@ -118,8 +118,8 @@ const Settings = () => {
 
         // Also manually mutate the local tenant object for immediate React re-render if needed
         // (Though direct DOM manipulation handles the visuals)
-        if (tenant && tenant.branding) {
-            Object.assign(tenant.branding, updates);
+        if (tenant) {
+            Object.assign(tenant, updates);
         }
     };
 
@@ -317,24 +317,24 @@ const Settings = () => {
                         <div className="mode-toggle">
                             <button
                                 onClick={() => handleFieldUpdate('hero_mode', 'text')}
-                                className={tenant.branding?.hero_mode === 'text' ? 'active' : ''}
+                                className={tenant?.hero_mode === 'text' ? 'active' : ''}
                             >
                                 Texto
                             </button>
                             <button
                                 onClick={() => handleFieldUpdate('hero_mode', 'image')}
-                                className={tenant.branding?.hero_mode === 'image' ? 'active' : ''}
+                                className={tenant?.hero_mode === 'image' ? 'active' : ''}
                             >
                                 Imagen
                             </button>
                         </div>
                     </div>
 
-                    {tenant.branding?.hero_mode === 'image' ? (
+                    {tenant?.hero_mode === 'image' ? (
                         <div className="hero-stage">
                             <div className="editor-crosshair">+</div>
-                            {tenant.branding?.hero_url ? (
-                                <img src={tenant.branding.hero_url} className="preview-img" alt="Hero" />
+                            {tenant?.hero_url ? (
+                                <img src={tenant.hero_url} className="preview-img" alt="Hero" />
                             ) : (
                                 <div style={{ color: '#94A3B8' }}>No image set</div>
                             )}
@@ -349,11 +349,11 @@ const Settings = () => {
                         <div
                             className="hero-preview-text"
                             style={{
-                                fontFamily: tenant.branding?.font_family,
-                                fontWeight: tenant.branding?.font_weight
+                                fontFamily: tenant?.font_family,
+                                fontWeight: tenant?.font_weight
                             }}
                         >
-                            {tenant.branding?.business_name || 'Business Name'}
+                            {tenant?.business_name || 'Business Name'}
                         </div>
                     )}
                 </section>
@@ -377,13 +377,13 @@ const Settings = () => {
                         <div className="toggle-group">
                             <button
                                 onClick={() => handleFieldUpdate('hero_icon_mode', 'white')}
-                                className={tenant.branding?.hero_icon_mode === 'white' ? 'active' : ''}
+                                className={tenant?.hero_icon_mode === 'white' ? 'active' : ''}
                             >
                                 Blanco
                             </button>
                             <button
                                 onClick={() => handleFieldUpdate('hero_icon_mode', 'black')}
-                                className={tenant.branding?.hero_icon_mode === 'black' ? 'active' : ''}
+                                className={tenant?.hero_icon_mode === 'black' ? 'active' : ''}
                             >
                                 Oscuro
                             </button>
@@ -394,13 +394,13 @@ const Settings = () => {
                         <div className="toggle-group">
                             <button
                                 onClick={() => handleFieldUpdate('nav_icon_mode', 'white')}
-                                className={tenant.branding?.nav_icon_mode === 'white' ? 'active' : ''}
+                                className={tenant?.nav_icon_mode === 'white' ? 'active' : ''}
                             >
                                 Blanco
                             </button>
                             <button
                                 onClick={() => handleFieldUpdate('nav_icon_mode', 'black')}
-                                className={tenant.branding?.nav_icon_mode === 'black' ? 'active' : ''}
+                                className={tenant?.nav_icon_mode === 'black' ? 'active' : ''}
                             >
                                 Oscuro
                             </button>
@@ -413,7 +413,7 @@ const Settings = () => {
                             <input
                                 type="color"
                                 className="native-swatch"
-                                value={tenant.branding?.navbar_color || '#1F2937'}
+                                value={tenant?.navbar_color || '#1F2937'}
                                 onChange={(e) => {
                                     handleFieldUpdate('navbar_color', e.target.value);
                                     document.documentElement.style.setProperty('--color-navbar-bg', e.target.value);
@@ -429,7 +429,7 @@ const Settings = () => {
                     <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Activa solo lo necesario.</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         {['whatsapp', 'rappi', 'mercadopago', 'pedidosya', 'admin'].map(pillId => {
-                            const pills = tenant.branding?.info_pills || {};
+                            const pills = tenant?.info_pills || {};
                             const isActive = pills[pillId]?.enabled;
 
                             const togglePill = () => {
