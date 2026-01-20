@@ -63,80 +63,43 @@ const Settings = () => {
         setLocalIdentity(prev => ({ ...prev, business_name: e.target.value }));
     };
 
-    // 🛡️ DIAGNOSTIC SAVE HANDLER (The Truth Serum)
-    const handleNameBlur = async () => {
-        // 1. CHECK THE ID
+    // 🛡️ THE FLIGHT RECORDER WRAPPER
+    const runDiagnosticSave = async (label, saveFn, updates) => {
         if (!businessId) {
-            alert("🚨 CRITICAL: No Business ID! Check your URL.");
-            console.error("Missing ID context:", { tenant, businessId });
+            alert(`🚨 [${label}] FAILED: No Business ID found.`);
             return;
         }
 
-        // 2. ATTEMPT THE HANDSHAKE
         try {
-            alert(`⏳ Saving to ID: ${businessId.slice(0, 8)}...`);
-
-            const { data, error } = await updateBranding({
-                business_name: localIdentity.business_name
-            }, businessId);
-
+            const { data, error } = await saveFn(updates, businessId);
             if (error) throw error;
 
-            // 3. SUCCESS
-            alert("✅ SAVE SUCCESS! Refresh now.");
-            syncContext({ business_name: localIdentity.business_name });
-
-        } catch (error) {
-            // 4. DATABASE REJECTION
-            alert("❌ DB BLOCKED: " + error.message);
-            console.error("Save Error:", error);
+            // Success Logic
+            syncContext(updates);
+            console.log(`✅ [${label}] Saved:`, updates);
+        } catch (err) {
+            alert(`❌ [${label}] DB ERROR: ${err.message}\nTip: Check for duplicate rows.`);
+            console.error(`${label} Error Details:`, err);
         }
     };
 
-    // 🛡️ REINFORCED SAVE: FONT SELECT
-    const handleFontSelect = async (family) => {
-        // A. PROCESS: Update Visuals Immediately (Optimistic)
+    // 🛡️ UPDATED BOX 1 HANDLERS
+    const handleNameBlur = () => {
+        runDiagnosticSave("Identity Name", updateBranding, { business_name: localIdentity.business_name });
+    };
+
+    const handleFontSelect = (family) => {
         setLocalIdentity(prev => ({ ...prev, font_family: family }));
         document.documentElement.style.setProperty('--font-main', family);
         setIsFontMenuOpen(false);
-
-        if (!businessId) return;
-
-        // B. FINISH: Save to DB
-        try {
-            const { error } = await updateBranding({
-                font_family: family
-            }, businessId);
-
-            if (error) throw error;
-
-            syncContext({ font_family: family });
-        } catch (error) {
-            console.error("Font save failed:", error);
-        }
+        runDiagnosticSave("Typography Font", updateBranding, { font_family: family });
     };
 
-    // 🛡️ REINFORCED SAVE: WEIGHT SELECT
-    const handleWeightSelect = async (weight) => {
-        // A. PROCESS: Update Visuals Immediately (Optimistic)
+    const handleWeightSelect = (weight) => {
         setLocalIdentity(prev => ({ ...prev, font_weight: weight }));
         document.documentElement.style.setProperty('--font-weight-hero', weight);
         setIsWeightMenuOpen(false);
-
-        if (!businessId) return;
-
-        // B. FINISH: Save to DB
-        try {
-            const { error } = await updateBranding({
-                font_weight: weight
-            }, businessId);
-
-            if (error) throw error;
-
-            syncContext({ font_weight: weight });
-        } catch (error) {
-            console.error("Weight save failed:", error);
-        }
+        runDiagnosticSave("Typography Weight", updateBranding, { font_weight: weight });
     };
 
     // 🛡️ GLOBAL OPTIMISTIC SYNC ADAPTER
