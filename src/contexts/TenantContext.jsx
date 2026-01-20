@@ -179,8 +179,8 @@ export function TenantProvider({ children }) {
                 }
 
                 // Success: Tenant found and user has access
-                setBusinessId(tenant.user_id) // Use user_id as business_id
-                setTenantStoragePrefix(tenant.user_id)
+                setBusinessId(tenant.business_id) // 🔐 CORRECT: Use business_id column
+                setTenantStoragePrefix(tenant.business_id)
                 setTenantData(tenant)
                 checkTrialStatus(tenant)
             } catch (err) {
