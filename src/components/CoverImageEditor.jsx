@@ -1,202 +1,311 @@
 /**
- * CoverImageEditor.jsx - Facebook-Grade Cover Photo Editor
+ * CoverImageEditor.jsx - PROJECT RESTORATION
  * 
- * META DESIGN SYSTEM (vFB.5):
- *   - 220px mobile viewport (16:9 cinematic)
- *   - Pure gesture manipulation (no buttons)
- *   - Grid fades in only on touch
- *   - Minimal Cancel/Save top bar
+ * MERGE: Dec 19 UX + V6 Supabase Backend
+ * 
+ * FROM DEC 19:
+ *   - Pinch-to-zoom + drag-to-pan gesture math
+ *   - Magnetic snap lines (green when centered)
+ *   - Frozen Home preview at 30% opacity
+ *   - 220px mobile / 280px tablet dimensions
+ * 
+ * FROM V6:
+ *   - uploadAsset(file, businessId, 'branding')
+ *   - updateBranding(payload, businessId)
+ *   - refreshTenant() with error handling
+ * 
+ * AUDIT FIXES:
+ *   - touch-action: none on crop frame
+ *   - pointer-events: auto on topBar buttons
+ *   - try/catch around refreshTenant()
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTenant } from '../contexts/TenantContext.jsx'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
+import Home from '../pages/customer/Home.jsx'
+import { getConfig } from '../config/appConfig.v2.js'
 
 // ============================================
-// STRICT DIMENSIONS (Facebook Cover Ratio)
+// CONSTANTS (Dec 19 Spec)
 // ============================================
-const VIEWPORT = { mobile: 220, tablet: 320 }
-const ZOOM = { min: 1, max: 3 }
+const COVER_HEIGHTS = { mobile: 220, tablet: 280 }
+const SNAP_THRESHOLD = 8 // Magnetic snap distance
 
-const getViewport = () => window.innerWidth >= 768 ? VIEWPORT.tablet : VIEWPORT.mobile
+function getBreakpoint() {
+    return window.innerWidth >= 768 ? 'tablet' : 'mobile'
+}
 
 // ============================================
-// FACEBOOK-GRADE COVER EDITOR
+// STATIC NAV BAR (Dec 19)
 // ============================================
-export default function CoverImageEditor({ isOpen, onClose, onSave }) {
+function StaticBottomNav() {
+    return (
+        <nav style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 64,
+            background: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            borderTop: '1px solid #E5E7EB',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            zIndex: 1
+        }}>
+            <NavItem icon="home" label="Home" active />
+            <NavItem icon="menu" label="Menú" />
+            <CameraButton />
+            <NavItem icon="status" label="Estado" />
+            <NavItem icon="info" label="Info" />
+        </nav>
+    )
+}
+
+function NavItem({ icon, label, active }) {
+    const icons = {
+        home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10" />,
+        menu: <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>,
+        status: <><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>,
+        info: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>
+    }
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: active ? 1 : 0.5 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#111' : 'currentColor'} strokeWidth="2">
+                {icons[icon]}
+            </svg>
+            <span style={{ fontSize: 10, color: active ? '#111' : '#666', marginTop: 2 }}>{label}</span>
+        </div>
+    )
+}
+
+function CameraButton() {
+    return (
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: -20 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+            </svg>
+        </div>
+    )
+}
+
+// ============================================
+// RESTORED COVER IMAGE EDITOR
+// ============================================
+function CoverImageEditor({ isOpen, onClose, onSave }) {
     const { tenantData, businessId, refreshTenant } = useTenant()
+
+    // Step State
+    const [step, setStep] = useState('edit') // 'edit' | 'preview'
 
     // Image State
     const [image, setImage] = useState(null)
-    const [file, setFile] = useState(null)
-    const [zoom, setZoom] = useState(1)
-    const [offset, setOffset] = useState({ x: 0, y: 0 })
-    const [height, setHeight] = useState(getViewport())
+    const [originalFile, setOriginalFile] = useState(null)
+    const [scale, setScale] = useState(1)
+    const [offsetX, setOffsetX] = useState(0)
+    const [offsetY, setOffsetY] = useState(0)
+    const [breakpoint, setBreakpoint] = useState(getBreakpoint())
 
-    // Interaction State
-    const [isTouching, setIsTouching] = useState(false)
+    // Snap State (Dec 19 Green Lines)
+    const [snappedX, setSnappedX] = useState(false)
+    const [snappedY, setSnappedY] = useState(false)
+
+    // UI State
     const [isSaving, setIsSaving] = useState(false)
-    const [error, setError] = useState(null)
 
-    // Refs
-    const dragRef = useRef({ active: false, x: 0, y: 0 })
-    const pinchRef = useRef({ dist: 0, zoom: 1 })
-    const inputRef = useRef(null)
-    const fadeTimer = useRef(null)
+    // Gesture Refs (Dec 19 Core)
+    const isDragging = useRef(false)
+    const lastTouch = useRef({ x: 0, y: 0 })
+    const initialPinchDistance = useRef(0)
+    const initialScale = useRef(1)
+    const fileInputRef = useRef(null)
+
+    const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
     // LIFECYCLE
     // ============================================
     useEffect(() => {
-        const resize = () => setHeight(getViewport())
-        window.addEventListener('resize', resize)
-        return () => window.removeEventListener('resize', resize)
+        const handleResize = () => setBreakpoint(getBreakpoint())
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
     }, [])
+
+    useEffect(() => {
+        if (isOpen) {
+            setStep('edit')
+            // Load existing image from tenant
+            if (tenantData?.hero_url && !image) {
+                setImage(tenantData.hero_url)
+            }
+            // Auto-open file picker if no image
+            if (!tenantData?.hero_url && !image) {
+                setTimeout(() => fileInputRef.current?.click(), 150)
+            }
+        }
+    }, [isOpen])
 
     useEffect(() => {
         return () => {
             if (image?.startsWith('blob:')) URL.revokeObjectURL(image)
-            if (fadeTimer.current) clearTimeout(fadeTimer.current)
         }
     }, [image])
 
-    useEffect(() => {
-        if (isOpen && !image) {
-            setTimeout(() => inputRef.current?.click(), 100)
+    // ============================================
+    // MAGNETIC SNAP LOGIC (Dec 19)
+    // ============================================
+    const applyMagneticSnap = (newX, newY) => {
+        let finalX = newX
+        let finalY = newY
+
+        // Snap to center X
+        if (Math.abs(newX) <= SNAP_THRESHOLD) {
+            finalX = 0
+            setSnappedX(true)
+        } else {
+            setSnappedX(false)
         }
-    }, [isOpen, image])
 
-    // ============================================
-    // TOUCH FADE LOGIC
-    // ============================================
-    const showGrid = useCallback(() => {
-        setIsTouching(true)
-        if (fadeTimer.current) clearTimeout(fadeTimer.current)
-    }, [])
+        // Snap to center Y
+        if (Math.abs(newY) <= SNAP_THRESHOLD) {
+            finalY = 0
+            setSnappedY(true)
+        } else {
+            setSnappedY(false)
+        }
 
-    const hideGrid = useCallback(() => {
-        if (fadeTimer.current) clearTimeout(fadeTimer.current)
-        fadeTimer.current = setTimeout(() => setIsTouching(false), 600)
-    }, [])
+        return { finalX, finalY }
+    }
 
     // ============================================
     // FILE HANDLER
     // ============================================
-    const onFileChange = async (e) => {
-        const f = e.target.files?.[0]
-        if (!f) return
+    const handleFileSelect = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
         try {
-            setFile(f)
-            const { dataURI } = await processAndStoreImage(f)
+            setOriginalFile(file)
+            const { dataURI } = await processAndStoreImage(file)
             setImage(dataURI)
-            setZoom(1)
-            setOffset({ x: 0, y: 0 })
+            setScale(1)
+            setOffsetX(0)
+            setOffsetY(0)
         } catch (err) {
             alert('Error loading image')
         }
     }
 
     // ============================================
-    // GESTURE: TOUCH (Pinch + Drag)
+    // GESTURE: DRAG TO PAN (Dec 19 Math)
     // ============================================
-    const onTouchStart = (e) => {
-        e.preventDefault()
-        showGrid()
+    const handlePointerDown = (e) => {
+        if (e.touches && e.touches.length > 1) return
+        isDragging.current = true
+        const point = e.touches ? e.touches[0] : e
+        lastTouch.current = { x: point.clientX, y: point.clientY }
+    }
 
+    const handlePointerMove = (e) => {
+        if (!isDragging.current) return
+        if (e.touches && e.touches.length > 1) return
+
+        const point = e.touches ? e.touches[0] : e
+        const dx = point.clientX - lastTouch.current.x
+        const dy = point.clientY - lastTouch.current.y
+
+        const { finalX, finalY } = applyMagneticSnap(offsetX + dx, offsetY + dy)
+        setOffsetX(finalX)
+        setOffsetY(finalY)
+
+        lastTouch.current = { x: point.clientX, y: point.clientY }
+    }
+
+    const handlePointerUp = () => {
+        isDragging.current = false
+    }
+
+    // ============================================
+    // GESTURE: PINCH TO ZOOM (Dec 19 Math)
+    // ============================================
+    const handleTouchStart = (e) => {
         if (e.touches.length === 2) {
-            // Pinch start
+            e.preventDefault()
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
-            pinchRef.current = { dist: Math.hypot(dx, dy), zoom }
-        } else if (e.touches.length === 1) {
-            // Drag start
-            dragRef.current = { active: true, x: e.touches[0].clientX, y: e.touches[0].clientY }
+            initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
+            initialScale.current = scale
+        } else {
+            handlePointerDown(e)
         }
     }
 
-    const onTouchMove = (e) => {
-        e.preventDefault()
-
+    const handleTouchMove = (e) => {
         if (e.touches.length === 2) {
-            // Pinch zoom
+            e.preventDefault()
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
-            const dist = Math.hypot(dx, dy)
-            const newZoom = Math.min(ZOOM.max, Math.max(ZOOM.min,
-                pinchRef.current.zoom * (dist / pinchRef.current.dist)
-            ))
-            setZoom(newZoom)
-        } else if (e.touches.length === 1 && dragRef.current.active) {
-            // Drag pan
-            const dx = e.touches[0].clientX - dragRef.current.x
-            const dy = e.touches[0].clientY - dragRef.current.y
-            setOffset(o => ({ x: o.x + dx, y: o.y + dy }))
-            dragRef.current.x = e.touches[0].clientX
-            dragRef.current.y = e.touches[0].clientY
+            const distance = Math.sqrt(dx * dx + dy * dy)
+            const newScale = Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current)))
+            setScale(newScale)
+        } else {
+            handlePointerMove(e)
         }
     }
 
-    const onTouchEnd = () => {
-        dragRef.current.active = false
-        hideGrid()
-    }
+    // ============================================
+    // STEP TRANSITIONS
+    // ============================================
+    const enterPreview = () => setStep('preview')
+    const exitPreview = () => setStep('edit')
 
     // ============================================
-    // GESTURE: MOUSE (Desktop Fallback)
-    // ============================================
-    const onMouseDown = (e) => {
-        dragRef.current = { active: true, x: e.clientX, y: e.clientY }
-        showGrid()
-    }
-
-    const onMouseMove = (e) => {
-        if (!dragRef.current.active) return
-        const dx = e.clientX - dragRef.current.x
-        const dy = e.clientY - dragRef.current.y
-        setOffset(o => ({ x: o.x + dx, y: o.y + dy }))
-        dragRef.current.x = e.clientX
-        dragRef.current.y = e.clientY
-    }
-
-    const onMouseUp = () => {
-        dragRef.current.active = false
-        hideGrid()
-    }
-
-    // ============================================
-    // SMART SAVE
+    // V6 SUPABASE SAVE (with Stuck State Fix)
     // ============================================
     const handleSave = async () => {
-        if (!businessId) return setError('No business ID')
+        if (!businessId) {
+            alert('Error: No business ID')
+            return
+        }
 
         setIsSaving(true)
-        setError(null)
 
         try {
             let url = image
 
-            if (file) {
-                const res = await uploadAsset(file, businessId, 'branding')
-                if (res.error) throw new Error(res.error.message || 'Upload failed')
+            // Upload if we have a new file
+            if (originalFile) {
+                const res = await uploadAsset(originalFile, businessId, 'branding')
+                if (res.error) throw res.error
                 url = res.url
             }
 
-            // Force hero_mode: 'image'
-            const { error: dbErr } = await updateBranding({
+            // Save to Supabase
+            const { error } = await updateBranding({
                 hero_url: url,
                 hero_mode: 'image',
-                hero_settings: JSON.stringify({ zoom, offset }),
+                hero_settings: JSON.stringify({ scale, offsetX, offsetY }),
                 updated_at: new Date().toISOString()
             }, businessId)
 
-            if (dbErr) throw new Error(dbErr.message || 'Save failed')
+            if (error) throw error
 
-            await refreshTenant?.()
-            onSave?.({ image: url, zoom, offset })
+            // Refresh tenant (wrapped in try/catch to prevent stuck state)
+            try {
+                await refreshTenant?.()
+            } catch (refreshErr) {
+                console.warn('[CoverImageEditor] refreshTenant failed:', refreshErr)
+            }
+
+            onSave?.({ image: url, scale, offsetX, offsetY })
             onClose?.()
+
         } catch (err) {
-            setError(err.message)
+            alert('Save Failed: ' + (err.message || 'Unknown error'))
         } finally {
             setIsSaving(false)
         }
@@ -208,207 +317,323 @@ export default function CoverImageEditor({ isOpen, onClose, onSave }) {
     const handleCancel = () => {
         if (image?.startsWith('blob:')) URL.revokeObjectURL(image)
         setImage(null)
-        setFile(null)
+        setOriginalFile(null)
+        setStep('edit')
         onClose?.()
     }
 
     if (!isOpen) return null
 
     // ============================================
-    // RENDER
+    // RENDER: EDIT MODE (Dec 19 UX)
     // ============================================
-    return (
-        <div style={S.screen}>
-            {/* Hidden Input */}
-            <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                onChange={onFileChange}
-                style={{ display: 'none' }}
-            />
-
-            {/* Top Bar */}
-            <div style={S.topBar}>
-                <button onClick={handleCancel} style={S.cancelBtn}>Cancel</button>
-                <button
-                    onClick={handleSave}
-                    disabled={!image || isSaving}
-                    style={{ ...S.saveBtn, opacity: (!image || isSaving) ? 0.5 : 1 }}
-                >
-                    {isSaving ? 'Saving...' : 'Save'}
-                </button>
-            </div>
-
-            {/* Cover Viewport */}
-            <div
-                style={{ ...S.viewport, height }}
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
-                onMouseDown={onMouseDown}
-                onMouseMove={onMouseMove}
-                onMouseUp={onMouseUp}
-                onMouseLeave={onMouseUp}
-            >
-                {image ? (
-                    <div style={{
-                        position: 'absolute',
-                        width: '200%',
-                        height: '200%',
-                        left: '-50%',
-                        top: '-50%',
-                        backgroundImage: `url(${image})`,
-                        backgroundSize: `${zoom * 100}%`,
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
-                        transform: `translate3d(${offset.x}px, ${offset.y}px, 0)`,
-                        willChange: 'transform'
-                    }} />
-                ) : (
-                    <div style={S.placeholder} onClick={() => inputRef.current?.click()}>
-                        <span style={{ fontSize: 40 }}>📷</span>
-                        <span style={{ fontSize: 13, opacity: 0.6 }}>Tap to select cover</span>
-                    </div>
-                )}
-
-                {/* Rule of Thirds Grid (fades on touch) */}
-                <div style={{ ...S.gridV, left: '33.33%', opacity: isTouching ? 0.4 : 0 }} />
-                <div style={{ ...S.gridV, left: '66.66%', opacity: isTouching ? 0.4 : 0 }} />
-                <div style={{ ...S.gridH, top: '33.33%', opacity: isTouching ? 0.4 : 0 }} />
-                <div style={{ ...S.gridH, top: '66.66%', opacity: isTouching ? 0.4 : 0 }} />
-            </div>
-
-            {/* Dark Area Below */}
-            <div style={{ ...S.darkArea, top: height + 56 }} />
-
-            {/* Error */}
-            {error && <div style={S.error}>{error}</div>}
-
-            {/* Hint */}
-            {image && (
-                <div style={{ ...S.hint, top: height + 16 }}>
-                    Pinch to zoom • Drag to position
+    if (step === 'edit') {
+        return (
+            <div style={{
+                position: 'fixed',
+                inset: 0,
+                background: '#000',
+                zIndex: 9999
+            }}>
+                {/* Frozen Home (30% opacity - Dec 19) */}
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.3 }}>
+                    <Home config={getConfig()} />
+                    <StaticBottomNav />
                 </div>
-            )}
-        </div>
-    )
+
+                {/* Dark Overlay Below Crop (Dec 19) */}
+                <div style={{
+                    position: 'absolute',
+                    top: coverHeight,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.75)',
+                    pointerEvents: 'none',
+                    zIndex: 5
+                }} />
+
+                {/* CROP FRAME (Dec 19 + touch-action fix) */}
+                <div
+                    onMouseDown={handlePointerDown}
+                    onMouseMove={handlePointerMove}
+                    onMouseUp={handlePointerUp}
+                    onMouseLeave={handlePointerUp}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handlePointerUp}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: coverHeight,
+                        overflow: 'hidden',
+                        cursor: 'move',
+                        zIndex: 6,
+                        border: '3px solid #22C55E',
+                        boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
+                        touchAction: 'none', // AUDIT FIX: Prevent browser scroll
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none'
+                    }}
+                >
+                    {/* Image */}
+                    {image ? (
+                        <div style={{
+                            position: 'absolute',
+                            width: '200%',
+                            height: '200%',
+                            left: '-50%',
+                            top: '-50%',
+                            backgroundImage: `url(${image})`,
+                            backgroundSize: `${scale * 100}%`,
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            transform: `translate(${offsetX}px, ${offsetY}px)`,
+                            willChange: 'transform'
+                        }} />
+                    ) : (
+                        <div
+                            onClick={() => fileInputRef.current?.click()}
+                            style={{
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap to select image</span>
+                        </div>
+                    )}
+
+                    {/* MAGNETIC SNAP LINES (Dec 19 Green) */}
+                    {snappedX && (
+                        <div style={{
+                            position: 'absolute',
+                            left: '50%',
+                            top: 0,
+                            bottom: 0,
+                            width: 2,
+                            background: '#22C55E',
+                            transform: 'translateX(-50%)',
+                            pointerEvents: 'none',
+                            zIndex: 10,
+                            boxShadow: '0 0 8px rgba(34,197,94,0.6)'
+                        }} />
+                    )}
+                    {snappedY && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: 0,
+                            right: 0,
+                            height: 2,
+                            background: '#22C55E',
+                            transform: 'translateY(-50%)',
+                            pointerEvents: 'none',
+                            zIndex: 10,
+                            boxShadow: '0 0 8px rgba(34,197,94,0.6)'
+                        }} />
+                    )}
+                    {(snappedX && snappedY) && (
+                        <div style={{
+                            position: 'absolute',
+                            left: '50%',
+                            top: '50%',
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            background: '#22C55E',
+                            transform: 'translate(-50%, -50%)',
+                            pointerEvents: 'none',
+                            zIndex: 11,
+                            boxShadow: '0 0 12px rgba(34,197,94,0.8)'
+                        }} />
+                    )}
+                </div>
+
+                {/* Hidden file input */}
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                />
+
+                {/* FLOATING CONTROLS (pointer-events: auto fix) */}
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    paddingTop: 'max(12px, env(safe-area-inset-top))',
+                    paddingLeft: 12,
+                    paddingRight: 12,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    zIndex: 100,
+                    pointerEvents: 'none' // Container: none
+                }}>
+                    <button
+                        onClick={handleCancel}
+                        style={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            padding: '8px 14px',
+                            background: 'rgba(0,0,0,0.7)',
+                            color: '#EF4444',
+                            border: 'none',
+                            borderRadius: 10,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            pointerEvents: 'auto', // AUDIT FIX
+                            touchAction: 'manipulation'
+                        }}
+                    >
+                        ✕ Cancel
+                    </button>
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            padding: '8px 14px',
+                            background: 'rgba(0,0,0,0.7)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 10,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            pointerEvents: 'auto', // AUDIT FIX
+                            touchAction: 'manipulation'
+                        }}
+                    >
+                        📷
+                    </button>
+                    <button
+                        onClick={enterPreview}
+                        disabled={!image}
+                        style={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            padding: '8px 14px',
+                            background: image ? '#3B82F6' : 'rgba(59,130,246,0.4)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 10,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: image ? 'pointer' : 'not-allowed',
+                            pointerEvents: 'auto', // AUDIT FIX
+                            touchAction: 'manipulation'
+                        }}
+                    >
+                        Continue →
+                    </button>
+                </div>
+
+                {/* Zoom Indicator (Dec 19) */}
+                <div style={{
+                    position: 'absolute',
+                    top: coverHeight + 12,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: '#22C55E',
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    zIndex: 10,
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none'
+                }}>
+                    ↕ Drag • Pinch to zoom • {Math.round(scale * 100)}%
+                </div>
+            </div>
+        )
+    }
+
+    // ============================================
+    // RENDER: PREVIEW MODE (Dec 19 UX)
+    // ============================================
+    if (step === 'preview') {
+        return (
+            <>
+                {/* Real Home (Full Color) */}
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 9999,
+                    background: 'var(--canvas-bg, #fff)'
+                }}>
+                    <Home config={getConfig()} />
+                    <StaticBottomNav />
+                </div>
+
+                {/* Floating Buttons (Top Right) */}
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    right: 0,
+                    paddingTop: 'max(12px, env(safe-area-inset-top))',
+                    paddingRight: 12,
+                    display: 'flex',
+                    gap: 8,
+                    zIndex: 10000
+                }}>
+                    <button
+                        onClick={exitPreview}
+                        style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: '50%',
+                            background: 'rgba(0,0,0,0.6)',
+                            color: '#fff',
+                            border: 'none',
+                            fontSize: 18,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            touchAction: 'manipulation'
+                        }}
+                    >
+                        ←
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: '50%',
+                            background: isSaving ? '#666' : '#22C55E',
+                            color: '#fff',
+                            border: 'none',
+                            fontSize: 20,
+                            fontWeight: 700,
+                            cursor: isSaving ? 'wait' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(34,197,94,0.4)',
+                            touchAction: 'manipulation'
+                        }}
+                    >
+                        {isSaving ? '...' : '✓'}
+                    </button>
+                </div>
+            </>
+        )
+    }
+
+    return null
 }
 
-// ============================================
-// STYLES (Meta Design System)
-// ============================================
-const S = {
-    screen: {
-        position: 'fixed',
-        inset: 0,
-        background: '#000',
-        zIndex: 9999
-    },
-    topBar: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 56,
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingLeft: 16,
-        paddingRight: 16,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        zIndex: 100
-    },
-    cancelBtn: {
-        padding: '8px 16px',
-        background: 'transparent',
-        border: 'none',
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: 500,
-        cursor: 'pointer'
-    },
-    saveBtn: {
-        padding: '8px 20px',
-        background: '#0866FF',
-        border: 'none',
-        borderRadius: 6,
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: 600,
-        cursor: 'pointer'
-    },
-    viewport: {
-        position: 'absolute',
-        top: 56,
-        left: 0,
-        right: 0,
-        overflow: 'hidden',
-        cursor: 'move',
-        touchAction: 'none',
-        userSelect: 'none',
-        WebkitUserSelect: 'none'
-    },
-    placeholder: {
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        color: '#888',
-        cursor: 'pointer'
-    },
-    gridV: {
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        width: 1,
-        background: '#fff',
-        pointerEvents: 'none',
-        transition: 'opacity 0.3s ease',
-        zIndex: 10
-    },
-    gridH: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        height: 1,
-        background: '#fff',
-        pointerEvents: 'none',
-        transition: 'opacity 0.3s ease',
-        zIndex: 10
-    },
-    darkArea: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: '#000',
-        pointerEvents: 'none'
-    },
-    hint: {
-        position: 'absolute',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        color: '#666',
-        fontSize: 12,
-        fontWeight: 500,
-        textAlign: 'center',
-        zIndex: 10
-    },
-    error: {
-        position: 'absolute',
-        bottom: 40,
-        left: 16,
-        right: 16,
-        padding: 12,
-        background: '#DC2626',
-        borderRadius: 8,
-        color: '#fff',
-        fontSize: 13,
-        textAlign: 'center',
-        zIndex: 100
-    }
-}
+export default CoverImageEditor
