@@ -75,11 +75,14 @@ function Home({ config: configProp }) {
             ...(configProp?.headerCover || defaultConfig.headerCover || {}),
             // 1. Force the image URL
             image: tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image,
-            // 2. FORCE THE TITLE (Double-bagging it here to ensure HeaderClamp sees it)
+            // 2. FORCE THE TITLE 
             title: tenantData?.business_name || branding?.business_name || 'FoodSpot',
             // 3. FORCE THE SHOW/HIDE LOGIC
-            showTitle: true, // Force it to true so we can see if it renders
-            useLogo: !!(tenantData?.logo_url || branding?.logo_url) // Only use logo if URL exists
+            showTitle: true,
+            useLogo: !!(tenantData?.logo_url || branding?.logo_url),
+            // 4. TEXT FIRST FALLBACK LOGIC
+            useImage: !!(tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image),
+            backgroundColor: branding?.primaryColor || tenantData?.primary_color || '#1A1A1A'
         }
     }
 
