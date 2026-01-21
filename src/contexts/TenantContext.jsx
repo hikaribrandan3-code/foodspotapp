@@ -16,14 +16,14 @@
  *   - useBusinessId() → string (shortcut for businessId)
  */
 
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../utils/storage.js'
 
 // Context
 const TenantContext = createContext(null)
 
-// 🛡️ FIX 2: Timeout utility for Promise.race
+// 🛡️ Timeout utility for Promise.race
 const withTimeout = (promise, ms, errorMessage) => {
     const timeout = new Promise((_, reject) =>
         setTimeout(() => reject(new Error(errorMessage)), ms)
@@ -43,6 +43,27 @@ export function TenantProvider({ children }) {
     const [tenantData, setTenantData] = useState(null)
     const [trialExpired, setTrialExpired] = useState(false)
     const [error, setError] = useState(null)
+
+    // 🛡️ RISK 1 FIX: Track if we hit the emergency timeout
+    const [emergencyUnblock, setEmergencyUnblock] = useState(false)
+    const timeoutRef = useRef(null)
+
+    // 🛡️ RISK 1 FIX: 8-second emergency unblock timer
+    useEffect(() => {
+        if (loading) {
+            timeoutRef.current = setTimeout(() => {
+                console.warn('[TenantContext] ⏰ 8-second emergency timeout triggered. Unblocking children.')
+                setEmergencyUnblock(true)
+                setLoading(false)
+            }, 8000)
+        }
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+        }
+    }, []) // Run only on mount
 
     useEffect(() => {
         const resolveTenant = async () => {
@@ -91,7 +112,7 @@ export function TenantProvider({ children }) {
                 const fetchTenant = async (retryCount = 0) => {
                     console.log('[TenantContext] 🔍 Looking for slug:', slug)
 
-                    // 🛡️ FIX 2: Wrap Supabase call in 10-second timeout
+                    // Wrap Supabase call in 10-second timeout
                     const supabaseQuery = supabase
                         .from('branding')
                         .select('*')
@@ -258,9 +279,10 @@ export function TenantProvider({ children }) {
         resolveTenant()
     }, [])
 
-    // 🔄 LOADING STATE: Prevent Silo Violations
-    // The app must wait for businessId before making any Supabase calls
-    if (loading) {
+    // 🛡️ RISK 1 FIX: ALWAYS render children after 8 seconds
+    // This ensures App.jsx can mount and show its own Retry UI
+    // The loading spinner only shows for up to 8 seconds max
+    if (loading && !emergencyUnblock) {
         return (
             <div style={{
                 display: 'flex',
@@ -325,7 +347,7 @@ export function TenantProvider({ children }) {
             )
         }
 
-        // 🛡️ FIX 2.5: Show Retry button on error instead of dead end
+        // Show Retry button on error instead of dead end
         return (
             <div style={{
                 display: 'flex',
@@ -363,7 +385,14 @@ export function TenantProvider({ children }) {
     }
 
     return (
-        <TenantContext.Provider value={{ businessId, tenantData, trialExpired, loading, isLoaded: !loading }}>
+        <TenantContext.Provider value={{
+            businessId,
+            tenantData,
+            trialExpired,
+            loading,
+            isLoaded: !loading,
+            emergencyUnblock // Pass this so App.jsx knows if we hit timeout
+        }}>
             {children}
         </TenantContext.Provider>
     )
@@ -387,7 +416,8 @@ export function useTenant() {
             loading: false,
             isLoaded: false,
             error: null,
-            slug: null
+            slug: null,
+            emergencyUnblock: false
         };
     }
 
