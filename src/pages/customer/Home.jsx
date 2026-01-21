@@ -62,7 +62,19 @@ function Home({ config: configProp }) {
         // Ensure homeConfig is properly mapped
         homeConfig: branding?.homeConfig || tenantData?.home_config || configProp?.homeConfig || defaultConfig.homeConfig,
         // Ensure canvasMode is set
-        canvasMode: branding?.canvasMode || tenantData?.canvas_mode || configProp?.canvasMode || 'light'
+        canvasMode: branding?.canvasMode || tenantData?.canvas_mode || configProp?.canvasMode || 'light',
+
+        // 🩹 IDENTITY PATCH: Map snake_case DB fields to camelCase (Fixes HeaderClamp)
+        businessName: tenantData?.business_name || branding?.business_name || configProp?.businessName || 'FoodSpot',
+        // Map logos (Fallback to same URL for both light/dark if only one exists)
+        logo: tenantData?.logo_url || branding?.logo_url || configProp?.logo,
+        logoLight: tenantData?.logo_url || branding?.logo_url || configProp?.logoLight,
+        logoDark: tenantData?.logo_url || branding?.logo_url || configProp?.logoDark,
+        // Map header cover
+        headerCover: {
+            ...(configProp?.headerCover || defaultConfig.headerCover || {}),
+            image: tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image
+        }
     }
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
