@@ -1,10 +1,9 @@
 /**
- * CoverImageEditor.jsx — SCROLL-LOCKED BUILD
+ * CoverImageEditor.jsx — BUTTON-FIX BUILD
  * * FIXES:
- *   - Global body lock: overflow=hidden, touchAction=none
- *   - Cleanup on unmount restores body scroll
- *   - Solid black background (no Home in edit mode)
- *   - Dec 19 physics intact
+ *   - REMOVED onTouchMove preventDefault from outer container (was killing buttons)
+ *   - Added pointerEvents: 'auto' to all buttons
+ *   - Scroll lock via body styles only (not container events)
  */
 
 import { useState, useRef, useEffect } from 'react'
@@ -44,28 +43,27 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // SCROLL LOCK (Global Body Trap)
+    // SCROLL LOCK (Body Only - No Event Blocking)
     // ============================================
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'
-            document.body.style.touchAction = 'none'
             document.body.style.position = 'fixed'
             document.body.style.width = '100%'
-            document.body.style.height = '100%'
+            document.body.style.top = `-${window.scrollY}px`
         } else {
+            const scrollY = document.body.style.top
             document.body.style.overflow = ''
-            document.body.style.touchAction = ''
             document.body.style.position = ''
             document.body.style.width = ''
-            document.body.style.height = ''
+            document.body.style.top = ''
+            window.scrollTo(0, parseInt(scrollY || '0') * -1)
         }
         return () => {
             document.body.style.overflow = ''
-            document.body.style.touchAction = ''
             document.body.style.position = ''
             document.body.style.width = ''
-            document.body.style.height = ''
+            document.body.style.top = ''
         }
     }, [isOpen])
 
@@ -118,6 +116,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const handlePointerMove = (e) => {
         if (!image) return
         if (!isDragging.current || (e.touches && e.touches.length > 1)) return
+        e.preventDefault() // Prevent scroll ONLY during active drag
         const point = e.touches ? e.touches[0] : e
         let newX = offsetX + (point.clientX - lastTouch.current.x)
         let newY = offsetY + (point.clientY - lastTouch.current.y)
@@ -153,8 +152,8 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
 
     const handleTouchMove = (e) => {
         if (!image) return
+        e.preventDefault() // Prevent scroll during crop manipulation
         if (e.touches.length === 2) {
-            e.preventDefault()
             e.stopPropagation()
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
@@ -195,23 +194,17 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     if (!isOpen) return null
 
     // ============================================
-    // RENDER: EDIT MODE (Solid Black, No Home)
+    // RENDER: EDIT MODE
     // ============================================
     if (step === 'edit') {
         return (
-            <div
-                style={{
-                    position: 'fixed',
-                    inset: 0,
-                    background: '#000',
-                    zIndex: 99999,
-                    touchAction: 'none',
-                    overscrollBehavior: 'none',
-                    WebkitOverflowScrolling: 'touch'
-                }}
-                onTouchMove={(e) => e.preventDefault()}
-            >
-                {/* CROP FRAME */}
+            <div style={{
+                position: 'fixed',
+                inset: 0,
+                background: '#000',
+                zIndex: 99999
+            }}>
+                {/* CROP FRAME - Touch events only here */}
                 <div
                     onMouseDown={handlePointerDown}
                     onMouseMove={handlePointerMove}
@@ -231,7 +224,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         border: image ? '3px solid #22C55E' : '3px dashed rgba(255,255,255,0.4)',
                         background: image ? '#111' : 'rgba(255,255,255,0.05)',
                         cursor: image ? 'move' : 'pointer',
-                        touchAction: 'none'
+                        touchAction: 'none' // Only on the crop frame
                     }}
                     onClick={() => !image && fileInputRef.current?.click()}
                 >
@@ -274,17 +267,88 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                 </div>
 
                 {/* DARK MASK BELOW */}
-                <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 5 }} />
+                <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 5, pointerEvents: 'none' }} />
 
-                {/* TOP BAR */}
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 16, paddingTop: 'max(16px, env(safe-area-inset-top))', display: 'flex', justifyContent: 'space-between', zIndex: 99999 }}>
-                    <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.9)', color: '#ff6b6b', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '700', fontSize: 14 }}>✕ Cancel</button>
-                    <button onClick={() => fileInputRef.current?.click()} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '600', fontSize: 14 }}>📷</button>
-                    <button onClick={() => setStep('preview')} disabled={!image} style={{ background: image ? '#3B82F6' : '#333', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '700', fontSize: 14, opacity: image ? 1 : 0.4 }}>Continue →</button>
+                {/* TOP BAR - Buttons explicitly enabled */}
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    padding: 16,
+                    paddingTop: 'max(16px, env(safe-area-inset-top))',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    zIndex: 2147483647,
+                    pointerEvents: 'none'
+                }}>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            pointerEvents: 'auto',
+                            background: 'rgba(0,0,0,0.9)',
+                            color: '#ff6b6b',
+                            border: 'none',
+                            padding: '12px 20px',
+                            borderRadius: 24,
+                            fontWeight: '700',
+                            fontSize: 15,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        ✕ Cancel
+                    </button>
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                            pointerEvents: 'auto',
+                            background: 'rgba(255,255,255,0.2)',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '12px 20px',
+                            borderRadius: 24,
+                            fontWeight: '600',
+                            fontSize: 20,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        📷
+                    </button>
+                    <button
+                        onClick={() => setStep('preview')}
+                        disabled={!image}
+                        style={{
+                            pointerEvents: 'auto',
+                            background: image ? '#3B82F6' : '#333',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '12px 20px',
+                            borderRadius: 24,
+                            fontWeight: '700',
+                            fontSize: 15,
+                            opacity: image ? 1 : 0.4,
+                            cursor: image ? 'pointer' : 'not-allowed'
+                        }}
+                    >
+                        Continue →
+                    </button>
                 </div>
 
                 {image && (
-                    <div style={{ position: 'absolute', top: coverHeight + 24, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', padding: '8px 20px', borderRadius: 24, fontSize: 12, fontWeight: 800, zIndex: 99999 }}>
+                    <div style={{
+                        position: 'absolute',
+                        top: coverHeight + 24,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#22C55E',
+                        color: '#fff',
+                        padding: '8px 20px',
+                        borderRadius: 24,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        zIndex: 99999,
+                        pointerEvents: 'none'
+                    }}>
                         ↕ Drag • Pinch to zoom • {Math.round(scale * 100)}%
                     </div>
                 )}
@@ -299,7 +363,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     // ============================================
     if (step === 'preview') {
         return (
-            <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999, touchAction: 'none' }}>
+            <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999 }}>
                 <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
                     <Home config={getConfig()} />
                 </div>
@@ -315,11 +379,12 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     justifyContent: 'flex-end',
                     gap: 12,
                     zIndex: 2147483647,
-                    pointerEvents: 'auto'
+                    pointerEvents: 'none'
                 }}>
                     <button
                         onClick={() => setStep('edit')}
                         style={{
+                            pointerEvents: 'auto',
                             background: 'rgba(0,0,0,0.8)',
                             color: '#fff',
                             border: 'none',
@@ -337,6 +402,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         onClick={handleSave}
                         disabled={isSaving}
                         style={{
+                            pointerEvents: 'auto',
                             background: '#22C55E',
                             color: '#fff',
                             border: 'none',
