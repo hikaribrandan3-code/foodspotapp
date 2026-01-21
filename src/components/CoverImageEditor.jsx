@@ -108,6 +108,13 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         }
     }, [image])
 
+    // SYNC HEARTBEAT: Keep Physics Ref in sync with React State
+    useEffect(() => {
+        posRef.current.x = offsetX
+        posRef.current.y = offsetY
+        posRef.current.scale = scale
+    }, [offsetX, offsetY, scale])
+
     const handleFileSelect = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -127,9 +134,17 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     // ============================================
     const handlePointerDown = (e) => {
         if (!image) return
-        e.currentTarget.setPointerCapture(e.pointerId) // LOCK FINGER
+
+        // LOCK THE FINGER
+        e.currentTarget.setPointerCapture(e.pointerId)
+
+        // STARTING POSITION
         isDragging.current = true
         lastTouch.current = { x: e.clientX, y: e.clientY }
+
+        // SYNC REF TO CURRENT STATE BEFORE MOVING
+        posRef.current.x = offsetX
+        posRef.current.y = offsetY
     }
 
     const handlePointerMove = (e) => {
