@@ -306,41 +306,44 @@ function App() {
     // ============================================
     // 🌐 GLOBAL ROUTE IMMUNITY: These paths don't require tenant context
     const GLOBAL_PATHS = ['/', '/login', '/login/owner', '/admin', '/start-trial'];
-    const path = location.pathname;
-    const isGlobalPath = GLOBAL_PATHS.includes(path) || path.startsWith('/admin');
+    // 🛡️ FIX 2 (Simplified): Single Source of Truth Hydration Guard
+    // We rely on TenantContext to handle the timeouts (Risk 1 Fix).
+    // This local timer is just a visual fallback for the "Retry" button.
+    const [showRetry, setShowRetry] = useState(false);
 
-    // 🛡️ FIX 3: Timed Hydration Guard with Retry Button
-    const [hydrationTimeout, setHydrationTimeout] = React.useState(false);
-    React.useEffect(() => {
+    useEffect(() => {
+        let timer;
         if (!tenant?.isLoaded && !isGlobalPath) {
-            const timer = setTimeout(() => setHydrationTimeout(true), 8000);
-            return () => clearTimeout(timer);
+            timer = setTimeout(() => setShowRetry(true), 8000);
         }
+        return () => clearTimeout(timer);
     }, [tenant?.isLoaded, isGlobalPath]);
 
     if (!tenant?.isLoaded && !isGlobalPath) {
         return (
-            <div className="flex h-screen items-center justify-center bg-black">
-                <div className="flex flex-col items-center gap-4">
-                    {hydrationTimeout ? (
-                        <>
-                            <div className="text-4xl">⏱️</div>
-                            <p className="text-white text-sm font-medium">Connection Timeout</p>
-                            <p className="text-white/60 text-xs max-w-xs text-center">The server is taking too long to respond. Please check your connection.</p>
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="mt-4 px-6 py-3 bg-[#7C3AED] text-white rounded-lg font-semibold hover:bg-[#6D28D9] transition-colors"
-                            >
-                                Retry Connection
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <div className="w-10 h-10 border-4 border-[#DB0007] border-t-transparent rounded-full animate-spin"></div>
-                            <p className="text-white text-xs font-mono uppercase tracking-widest animate-pulse">Hydrating Silo...</p>
-                        </>
-                    )}
-                </div>
+            <div className="flex h-screen items-center justify-center bg-[#1a1a2e] flex-col gap-6 px-4 text-center font-sans">
+                {showRetry ? (
+                    <div className="animate-fade-in flex flex-col items-center gap-4">
+                        <div className="text-5xl">📡</div>
+                        <h2 className="text-white text-xl font-bold">Connection Check</h2>
+                        <p className="text-white/60 text-sm max-w-[280px] leading-relaxed">
+                            Taking longer than expected to reach the Vault.
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="mt-2 px-8 py-3 bg-[#7C3AED] text-white rounded-xl font-bold tracking-wide shadow-lg active:scale-95 transition-all"
+                        >
+                            Retry Now
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-[#DB0007] border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-white/50 text-xs font-mono uppercase tracking-[0.2em] animate-pulse">
+                            Accessing Silo...
+                        </p>
+                    </div>
+                )}
             </div>
         );
     }
