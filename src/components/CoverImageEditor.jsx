@@ -1,15 +1,10 @@
 /**
- * CoverImageEditor.jsx — UPLOAD-FIRST WORKFLOW
- * * PROTOCOL: Every action is a "Replace" action. No re-editing existing assets.
- * * ON OPEN:
- *   1. Image state resets to NULL
- *   2. Existing hero shown as darkened, non-interactive background
- *   3. User MUST upload new file to activate crop/zoom
- * * FIXES RETAINED:
- *   - e.preventDefault() on pinch-zoom
- *   - Haptic feedback on snap
- *   - Z-Index elevation
- *   - Preview mode isolation
+ * CoverImageEditor.jsx — NUCLEAR ISOLATION BUILD
+ * * FIXES:
+ *   - REMOVED <Home /> from edit mode (was hijacking document events)
+ *   - Static dark background (#1a1a1a) replaces context preview
+ *   - Preview buttons hardened to z-index: 2147483647
+ *   - Dec 19 physics intact
  */
 
 import { useState, useRef, useEffect } from 'react'
@@ -47,8 +42,6 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const fileInputRef = useRef(null)
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
-
-    // Existing hero URL for background context (read-only)
     const existingHeroUrl = tenantData?.hero_url
 
     useEffect(() => {
@@ -57,24 +50,18 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    // ============================================
-    // UPLOAD-FIRST INITIALIZATION
-    // Force null state on every open. User MUST upload new.
-    // ============================================
     useEffect(() => {
         if (isOpen) {
             setStep('edit')
-            setImage(null)           // FORCE RESET
-            setOriginalFile(null)    // FORCE RESET
+            setImage(null)
+            setOriginalFile(null)
             setScale(1)
             setOffsetX(0)
             setOffsetY(0)
-            // Auto-prompt file picker after brief delay
             setTimeout(() => fileInputRef.current?.click(), 300)
         }
     }, [isOpen])
 
-    // Cleanup blob URLs on unmount
     useEffect(() => {
         return () => {
             if (image?.startsWith('blob:')) URL.revokeObjectURL(image)
@@ -92,8 +79,11 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         } catch (err) { alert('Error loading image') }
     }
 
+    // ============================================
+    // DEC 19 PHYSICS (Untouched)
+    // ============================================
     const handlePointerDown = (e) => {
-        if (!image) return // Crop only works after upload
+        if (!image) return
         if (e.touches && e.touches.length > 1) return
         isDragging.current = true
         const point = e.touches ? e.touches[0] : e
@@ -101,7 +91,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     const handlePointerMove = (e) => {
-        if (!image) return // Crop only works after upload
+        if (!image) return
         if (!isDragging.current || (e.touches && e.touches.length > 1)) return
         const point = e.touches ? e.touches[0] : e
         let newX = offsetX + (point.clientX - lastTouch.current.x)
@@ -123,7 +113,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     const handleTouchStart = (e) => {
-        if (!image) return // Crop only works after upload
+        if (!image) return
         if (e.touches.length === 2) {
             e.preventDefault()
             const dx = e.touches[0].clientX - e.touches[1].clientX
@@ -134,7 +124,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     const handleTouchMove = (e) => {
-        if (!image) return // Crop only works after upload
+        if (!image) return
         if (e.touches.length === 2) {
             e.preventDefault()
             const dx = e.touches[0].clientX - e.touches[1].clientX
@@ -173,127 +163,177 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
 
     if (!isOpen) return null
 
-    return (
-        <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 99999, touchAction: 'none' }}>
-            {step === 'edit' && (
-                <>
-                    {/* STATIC CONTEXT BACKGROUND: Existing Hero (Darkened, Non-Interactive) */}
-                    {existingHeroUrl && !image && (
+    // ============================================
+    // RENDER: EDIT MODE (NO HOME COMPONENT)
+    // ============================================
+    if (step === 'edit') {
+        return (
+            <div style={{
+                position: 'fixed',
+                inset: 0,
+                background: '#1a1a1a',
+                zIndex: 99999,
+                touchAction: 'none'
+            }}>
+                {/* STATIC BACKGROUND: Existing Hero (Blurred, if exists) */}
+                {existingHeroUrl && !image && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: `url(${existingHeroUrl})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        opacity: 0.1,
+                        filter: 'blur(8px)',
+                        pointerEvents: 'none'
+                    }} />
+                )}
+
+                {/* CROP FRAME */}
+                <div
+                    onMouseDown={handlePointerDown}
+                    onMouseMove={handlePointerMove}
+                    onMouseUp={() => isDragging.current = false}
+                    onMouseLeave={() => isDragging.current = false}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={() => isDragging.current = false}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: coverHeight,
+                        zIndex: 10000,
+                        overflow: 'hidden',
+                        border: image ? '3px solid #22C55E' : '3px dashed rgba(255,255,255,0.4)',
+                        background: image ? 'transparent' : 'rgba(0,0,0,0.3)',
+                        cursor: image ? 'move' : 'pointer'
+                    }}
+                    onClick={() => !image && fileInputRef.current?.click()}
+                >
+                    {image && (
                         <div style={{
                             position: 'absolute',
-                            inset: 0,
-                            backgroundImage: `url(${existingHeroUrl})`,
-                            backgroundSize: 'cover',
+                            width: '200%',
+                            height: '200%',
+                            left: '-50%',
+                            top: '-50%',
+                            backgroundImage: `url(${image})`,
+                            backgroundSize: `${scale * 100}%`,
                             backgroundPosition: 'center',
-                            opacity: 0.15,
-                            filter: 'blur(4px)',
-                            pointerEvents: 'none'
+                            backgroundRepeat: 'no-repeat',
+                            transform: `translate(${offsetX}px, ${offsetY}px)`,
+                            willChange: 'transform'
                         }} />
                     )}
 
-                    {/* FROZEN HOME (Context only, if no existing hero) */}
-                    {!existingHeroUrl && !image && (
-                        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.2, overflow: 'hidden' }}>
-                            <Home config={getConfig()} />
-                        </div>
-                    )}
-
-                    {/* INTERACTION LAYER */}
-                    <div
-                        onMouseDown={handlePointerDown}
-                        onMouseMove={handlePointerMove}
-                        onMouseUp={() => isDragging.current = false}
-                        onMouseLeave={() => isDragging.current = false}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={() => isDragging.current = false}
-                        style={{
+                    {!image && (
+                        <div style={{
                             position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: coverHeight,
-                            zIndex: 10000,
-                            overflow: 'hidden',
-                            border: image ? '3px solid #22C55E' : '3px dashed rgba(255,255,255,0.3)',
-                            cursor: image ? 'move' : 'pointer'
-                        }}
-                        onClick={() => !image && fileInputRef.current?.click()}
-                    >
-                        {/* NEW IMAGE (After Upload) */}
-                        {image && (
-                            <div style={{
-                                position: 'absolute',
-                                width: '200%',
-                                height: '200%',
-                                left: '-50%',
-                                top: '-50%',
-                                backgroundImage: `url(${image})`,
-                                backgroundSize: `${scale * 100}%`,
-                                backgroundPosition: 'center',
-                                backgroundRepeat: 'no-repeat',
-                                transform: `translate(${offsetX}px, ${offsetY}px)`,
-                                willChange: 'transform'
-                            }} />
-                        )}
-
-                        {/* UPLOAD PROMPT (Before Upload) */}
-                        {!image && (
-                            <div style={{
-                                position: 'absolute',
-                                inset: 0,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 12,
-                                background: 'rgba(0,0,0,0.5)'
-                            }}>
-                                <div style={{ fontSize: 48 }}>📷</div>
-                                <p style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>Tap to Upload New Image</p>
-                                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>This will replace your current hero</p>
-                            </div>
-                        )}
-
-                        {/* SNAP LINES */}
-                        {image && snappedX && <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11 }} />}
-                        {image && snappedY && <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11 }} />}
-                    </div>
-
-                    {/* DARK MASK BELOW VIEWPORT */}
-                    <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 5, pointerEvents: 'none' }} />
-
-                    {/* TOP BAR */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 16, paddingTop: 'max(16px, env(safe-area-inset-top))', display: 'flex', justifyContent: 'space-between', zIndex: 99999 }}>
-                        <button onClick={onClose} style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.8)', color: '#ff6b6b', border: 'none', padding: '8px 16px', borderRadius: 20, fontWeight: '700' }}>✕ Cancel</button>
-                        <button onClick={() => fileInputRef.current?.click()} style={{ pointerEvents: 'auto', background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 20, fontWeight: '600' }}>📷 Select</button>
-                        <button onClick={() => setStep('preview')} disabled={!image} style={{ pointerEvents: 'auto', background: image ? '#3B82F6' : '#333', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 20, fontWeight: '700', opacity: image ? 1 : 0.5 }}>Continue →</button>
-                    </div>
-
-                    {/* INFO PILL */}
-                    {image && (
-                        <div style={{ position: 'absolute', top: coverHeight + 20, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', padding: '6px 18px', borderRadius: 20, fontSize: 11, fontWeight: 800, zIndex: 99999 }}>
-                            ↕ Drag • Pinch to zoom • {Math.round(scale * 100)}%
+                            inset: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 12
+                        }}>
+                            <div style={{ fontSize: 56 }}>📷</div>
+                            <p style={{ color: '#fff', fontSize: 18, fontWeight: 700 }}>Tap to Upload</p>
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Replaces current hero</p>
                         </div>
                     )}
-                </>
-            )}
 
-            {step === 'preview' && (
-                <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999 }}>
-                    <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
-                        <Home config={getConfig()} />
-                    </div>
-                    <div style={{ position: 'absolute', top: 0, right: 0, padding: 16, paddingTop: 'max(16px, env(safe-area-inset-top))', display: 'flex', gap: 12, zIndex: 99999 }}>
-                        <button onClick={() => setStep('edit')} style={{ background: '#444', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 24, fontWeight: 600 }}>← Back</button>
-                        <button onClick={handleSave} disabled={isSaving} style={{ background: '#22C55E', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 24, fontWeight: 700 }}>{isSaving ? 'Saving...' : '✓ Save'}</button>
-                    </div>
+                    {image && snappedX && <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11 }} />}
+                    {image && snappedY && <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11 }} />}
                 </div>
-            )}
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
-        </div>
-    )
+                {/* DARK MASK BELOW */}
+                <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#111', zIndex: 5, pointerEvents: 'none' }} />
+
+                {/* TOP BAR */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 16, paddingTop: 'max(16px, env(safe-area-inset-top))', display: 'flex', justifyContent: 'space-between', zIndex: 99999 }}>
+                    <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.9)', color: '#ff6b6b', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '700', fontSize: 14 }}>✕ Cancel</button>
+                    <button onClick={() => fileInputRef.current?.click()} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '600', fontSize: 14 }}>📷 Select</button>
+                    <button onClick={() => setStep('preview')} disabled={!image} style={{ background: image ? '#3B82F6' : '#333', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '700', fontSize: 14, opacity: image ? 1 : 0.4 }}>Continue →</button>
+                </div>
+
+                {image && (
+                    <div style={{ position: 'absolute', top: coverHeight + 24, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', padding: '8px 20px', borderRadius: 24, fontSize: 12, fontWeight: 800, zIndex: 99999 }}>
+                        ↕ Drag • Pinch to zoom • {Math.round(scale * 100)}%
+                    </div>
+                )}
+
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
+            </div>
+        )
+    }
+
+    // ============================================
+    // RENDER: PREVIEW MODE (MAX Z-INDEX BUTTONS)
+    // ============================================
+    if (step === 'preview') {
+        return (
+            <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999 }}>
+                {/* Preview Home (Isolated) */}
+                <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
+                    <Home config={getConfig()} />
+                </div>
+
+                {/* HARDENED BUTTON CONTAINER (Max Int Z-Index) */}
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    padding: 16,
+                    paddingTop: 'max(16px, env(safe-area-inset-top))',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 12,
+                    zIndex: 2147483647,
+                    pointerEvents: 'auto'
+                }}>
+                    <button
+                        onClick={() => setStep('edit')}
+                        style={{
+                            background: 'rgba(0,0,0,0.8)',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '12px 24px',
+                            borderRadius: 28,
+                            fontWeight: 700,
+                            fontSize: 15,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        ← Back
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        style={{
+                            background: '#22C55E',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '12px 28px',
+                            borderRadius: 28,
+                            fontWeight: 800,
+                            fontSize: 15,
+                            boxShadow: '0 4px 16px rgba(34,197,94,0.4)',
+                            cursor: isSaving ? 'wait' : 'pointer',
+                            opacity: isSaving ? 0.7 : 1
+                        }}
+                    >
+                        {isSaving ? 'Saving...' : '✓ Save'}
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    return null
 }
 
 export default CoverImageEditor
