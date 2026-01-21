@@ -55,9 +55,14 @@ export default function Home() {
 
     // 💊 PILLS DATA: Database -> fallback
     const menuData = getMenu(); // Static fallback list
-    const pillsData = (branding?.infoPills && Object.keys(branding.infoPills).length > 0)
-        ? Object.entries(branding.infoPills).map(([k, v]) => ({ label: v.label || k, icon: v.icon || '🍽️' }))
-        : menuData.map(cat => ({ label: cat.name, icon: '🍽️' })); // Map static menu to pills
+
+    // 🛡️ CRASH FIX: Ensure pillsData is ALWAYS an array
+    const rawPills = branding?.infoPills || tenantData?.info_pills || [];
+    const pillsArray = (Array.isArray(rawPills) && rawPills.length > 0)
+        ? rawPills
+        : (typeof rawPills === 'object' && rawPills !== null && Object.keys(rawPills).length > 0)
+            ? Object.entries(rawPills).map(([k, v]) => ({ label: v.label || k, icon: v.icon || '🍽️' }))
+            : menuData.map(cat => ({ label: cat.name, icon: '🍽️' }));
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 relative font-sans">
@@ -152,7 +157,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto pb-6 pr-4 scrollbar-hide">
-                    {pillsData.map((item, index) => (
+                    {(Array.isArray(pillsArray) ? pillsArray : []).map((item, index) => (
                         <div key={index} className="flex flex-col items-center gap-2 min-w-[70px] cursor-pointer active:opacity-70">
                             <div className="w-16 h-16 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-2xl">
                                 {item.icon}
@@ -164,7 +169,7 @@ export default function Home() {
                     ))}
 
                     {/* Fallback if list is dangerously empty */}
-                    {pillsData.length === 0 && ['Burgers', 'Pizza', 'Sushi'].map((label, i) => (
+                    {(Array.isArray(pillsArray) && pillsArray.length === 0) && ['Burgers', 'Pizza', 'Sushi'].map((label, i) => (
                         <div key={i} className="flex flex-col items-center gap-2 min-w-[70px] cursor-pointer">
                             <div className="w-16 h-16 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-2xl">🍽️</div>
                             <span className="text-xs font-medium text-gray-600">{label}</span>
