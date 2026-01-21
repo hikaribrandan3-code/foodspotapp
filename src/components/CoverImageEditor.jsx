@@ -1,26 +1,14 @@
 /**
- * CoverImageEditor.jsx - PROJECT RESTORATION
+ * CoverImageEditor.jsx - MOBILE TOUCH FIX
  * 
- * MERGE: Dec 19 UX + V6 Supabase Backend
- * 
- * FROM DEC 19:
- *   - Pinch-to-zoom + drag-to-pan gesture math
- *   - Magnetic snap lines (green when centered)
- *   - Frozen Home preview at 30% opacity
- *   - 220px mobile / 280px tablet dimensions
- * 
- * FROM V6:
- *   - uploadAsset(file, businessId, 'branding')
- *   - updateBranding(payload, businessId)
- *   - refreshTenant() with error handling
- * 
- * AUDIT FIXES:
- *   - touch-action: none on crop frame
- *   - pointer-events: auto on topBar buttons
- *   - try/catch around refreshTenant()
+ * CRITICAL iOS FIXES:
+ *   - touch-action: none on ALL layers
+ *   - e.preventDefault() in ALL touch handlers
+ *   - onTouchEnd explicitly handles button taps
+ *   - Buttons use onTouchEnd instead of onClick (iOS Safari)
  */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTenant } from '../contexts/TenantContext.jsx'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
@@ -28,101 +16,39 @@ import Home from '../pages/customer/Home.jsx'
 import { getConfig } from '../config/appConfig.v2.js'
 
 // ============================================
-// CONSTANTS (Dec 19 Spec)
+// CONSTANTS
 // ============================================
 const COVER_HEIGHTS = { mobile: 220, tablet: 280 }
-const SNAP_THRESHOLD = 8 // Magnetic snap distance
+const SNAP_THRESHOLD = 8
 
 function getBreakpoint() {
     return window.innerWidth >= 768 ? 'tablet' : 'mobile'
 }
 
 // ============================================
-// STATIC NAV BAR (Dec 19)
-// ============================================
-function StaticBottomNav() {
-    return (
-        <nav style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 64,
-            background: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-            borderTop: '1px solid #E5E7EB',
-            paddingBottom: 'env(safe-area-inset-bottom)',
-            zIndex: 1
-        }}>
-            <NavItem icon="home" label="Home" active />
-            <NavItem icon="menu" label="Menú" />
-            <CameraButton />
-            <NavItem icon="status" label="Estado" />
-            <NavItem icon="info" label="Info" />
-        </nav>
-    )
-}
-
-function NavItem({ icon, label, active }) {
-    const icons = {
-        home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10" />,
-        menu: <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>,
-        status: <><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>,
-        info: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>
-    }
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: active ? 1 : 0.5 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#111' : 'currentColor'} strokeWidth="2">
-                {icons[icon]}
-            </svg>
-            <span style={{ fontSize: 10, color: active ? '#111' : '#666', marginTop: 2 }}>{label}</span>
-        </div>
-    )
-}
-
-function CameraButton() {
-    return (
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: -20 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-            </svg>
-        </div>
-    )
-}
-
-// ============================================
-// RESTORED COVER IMAGE EDITOR
+// RESTORED COVER IMAGE EDITOR (MOBILE FIXED)
 // ============================================
 function CoverImageEditor({ isOpen, onClose, onSave }) {
     const { tenantData, businessId, refreshTenant } = useTenant()
 
-    // Step State
-    const [step, setStep] = useState('edit') // 'edit' | 'preview'
-
-    // Image State
+    const [step, setStep] = useState('edit')
     const [image, setImage] = useState(null)
     const [originalFile, setOriginalFile] = useState(null)
     const [scale, setScale] = useState(1)
     const [offsetX, setOffsetX] = useState(0)
     const [offsetY, setOffsetY] = useState(0)
     const [breakpoint, setBreakpoint] = useState(getBreakpoint())
-
-    // Snap State (Dec 19 Green Lines)
     const [snappedX, setSnappedX] = useState(false)
     const [snappedY, setSnappedY] = useState(false)
-
-    // UI State
     const [isSaving, setIsSaving] = useState(false)
 
-    // Gesture Refs (Dec 19 Core)
+    // Refs
     const isDragging = useRef(false)
     const lastTouch = useRef({ x: 0, y: 0 })
     const initialPinchDistance = useRef(0)
     const initialScale = useRef(1)
     const fileInputRef = useRef(null)
+    const cropRef = useRef(null)
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
@@ -138,11 +64,9 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     useEffect(() => {
         if (isOpen) {
             setStep('edit')
-            // Load existing image from tenant
             if (tenantData?.hero_url && !image) {
                 setImage(tenantData.hero_url)
             }
-            // Auto-open file picker if no image
             if (!tenantData?.hero_url && !image) {
                 setTimeout(() => fileInputRef.current?.click(), 150)
             }
@@ -156,13 +80,35 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }, [image])
 
     // ============================================
-    // MAGNETIC SNAP LOGIC (Dec 19)
+    // iOS TOUCH EVENT PREVENTION
     // ============================================
-    const applyMagneticSnap = (newX, newY) => {
-        let finalX = newX
-        let finalY = newY
+    useEffect(() => {
+        if (!isOpen) return
 
-        // Snap to center X
+        // Prevent all default touch behavior on body when editor is open
+        const preventTouch = (e) => {
+            if (e.target.closest('[data-crop-frame]')) {
+                e.preventDefault()
+            }
+        }
+
+        document.body.style.overflow = 'hidden'
+        document.body.style.touchAction = 'none'
+        document.addEventListener('touchmove', preventTouch, { passive: false })
+
+        return () => {
+            document.body.style.overflow = ''
+            document.body.style.touchAction = ''
+            document.removeEventListener('touchmove', preventTouch)
+        }
+    }, [isOpen])
+
+    // ============================================
+    // MAGNETIC SNAP
+    // ============================================
+    const applySnap = useCallback((newX, newY) => {
+        let finalX = newX, finalY = newY
+
         if (Math.abs(newX) <= SNAP_THRESHOLD) {
             finalX = 0
             setSnappedX(true)
@@ -170,7 +116,6 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             setSnappedX(false)
         }
 
-        // Snap to center Y
         if (Math.abs(newY) <= SNAP_THRESHOLD) {
             finalY = 0
             setSnappedY(true)
@@ -179,7 +124,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         }
 
         return { finalX, finalY }
-    }
+    }, [])
 
     // ============================================
     // FILE HANDLER
@@ -201,90 +146,121 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // GESTURE: DRAG TO PAN (Dec 19 Math)
+    // TOUCH HANDLERS (iOS FIXED)
     // ============================================
-    const handlePointerDown = (e) => {
-        if (e.touches && e.touches.length > 1) return
-        isDragging.current = true
-        const point = e.touches ? e.touches[0] : e
-        lastTouch.current = { x: point.clientX, y: point.clientY }
-    }
+    const handleTouchStart = useCallback((e) => {
+        e.preventDefault() // CRITICAL for iOS
+        e.stopPropagation()
 
-    const handlePointerMove = (e) => {
-        if (!isDragging.current) return
-        if (e.touches && e.touches.length > 1) return
-
-        const point = e.touches ? e.touches[0] : e
-        const dx = point.clientX - lastTouch.current.x
-        const dy = point.clientY - lastTouch.current.y
-
-        const { finalX, finalY } = applyMagneticSnap(offsetX + dx, offsetY + dy)
-        setOffsetX(finalX)
-        setOffsetY(finalY)
-
-        lastTouch.current = { x: point.clientX, y: point.clientY }
-    }
-
-    const handlePointerUp = () => {
-        isDragging.current = false
-    }
-
-    // ============================================
-    // GESTURE: PINCH TO ZOOM (Dec 19 Math)
-    // ============================================
-    const handleTouchStart = (e) => {
         if (e.touches.length === 2) {
-            e.preventDefault()
+            // Pinch start
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
             initialScale.current = scale
-        } else {
-            handlePointerDown(e)
+        } else if (e.touches.length === 1) {
+            // Drag start
+            isDragging.current = true
+            lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         }
-    }
+    }, [scale])
 
-    const handleTouchMove = (e) => {
+    const handleTouchMove = useCallback((e) => {
+        e.preventDefault() // CRITICAL for iOS
+        e.stopPropagation()
+
         if (e.touches.length === 2) {
-            e.preventDefault()
+            // Pinch zoom
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             const distance = Math.sqrt(dx * dx + dy * dy)
             const newScale = Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current)))
             setScale(newScale)
-        } else {
-            handlePointerMove(e)
+        } else if (e.touches.length === 1 && isDragging.current) {
+            // Drag pan
+            const dx = e.touches[0].clientX - lastTouch.current.x
+            const dy = e.touches[0].clientY - lastTouch.current.y
+            const { finalX, finalY } = applySnap(offsetX + dx, offsetY + dy)
+            setOffsetX(finalX)
+            setOffsetY(finalY)
+            lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         }
+    }, [offsetX, offsetY, applySnap])
+
+    const handleTouchEnd = useCallback((e) => {
+        e.preventDefault()
+        isDragging.current = false
+    }, [])
+
+    // ============================================
+    // MOUSE HANDLERS (Desktop)
+    // ============================================
+    const handleMouseDown = (e) => {
+        isDragging.current = true
+        lastTouch.current = { x: e.clientX, y: e.clientY }
+    }
+
+    const handleMouseMove = (e) => {
+        if (!isDragging.current) return
+        const dx = e.clientX - lastTouch.current.x
+        const dy = e.clientY - lastTouch.current.y
+        const { finalX, finalY } = applySnap(offsetX + dx, offsetY + dy)
+        setOffsetX(finalX)
+        setOffsetY(finalY)
+        lastTouch.current = { x: e.clientX, y: e.clientY }
+    }
+
+    const handleMouseUp = () => {
+        isDragging.current = false
     }
 
     // ============================================
-    // STEP TRANSITIONS
+    // BUTTON HANDLERS (iOS uses onTouchEnd)
     // ============================================
-    const enterPreview = () => setStep('preview')
-    const exitPreview = () => setStep('edit')
+    const handleCancelTap = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (image?.startsWith('blob:')) URL.revokeObjectURL(image)
+        setImage(null)
+        setOriginalFile(null)
+        onClose?.()
+    }
 
-    // ============================================
-    // V6 SUPABASE SAVE (with Stuck State Fix)
-    // ============================================
-    const handleSave = async () => {
-        if (!businessId) {
-            alert('Error: No business ID')
-            return
-        }
+    const handleCameraTap = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        fileInputRef.current?.click()
+    }
+
+    const handleContinueTap = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (image) setStep('preview')
+    }
+
+    const handleBackTap = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setStep('edit')
+    }
+
+    const handleSaveTap = async (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        if (!businessId || isSaving) return
 
         setIsSaving(true)
 
         try {
             let url = image
 
-            // Upload if we have a new file
             if (originalFile) {
                 const res = await uploadAsset(originalFile, businessId, 'branding')
                 if (res.error) throw res.error
                 url = res.url
             }
 
-            // Save to Supabase
             const { error } = await updateBranding({
                 hero_url: url,
                 hero_mode: 'image',
@@ -294,12 +270,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
 
             if (error) throw error
 
-            // Refresh tenant (wrapped in try/catch to prevent stuck state)
-            try {
-                await refreshTenant?.()
-            } catch (refreshErr) {
-                console.warn('[CoverImageEditor] refreshTenant failed:', refreshErr)
-            }
+            try { await refreshTenant?.() } catch (e) { /* ignore */ }
 
             onSave?.({ image: url, scale, offsetX, offsetY })
             onClose?.()
@@ -311,21 +282,10 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         }
     }
 
-    // ============================================
-    // CANCEL
-    // ============================================
-    const handleCancel = () => {
-        if (image?.startsWith('blob:')) URL.revokeObjectURL(image)
-        setImage(null)
-        setOriginalFile(null)
-        setStep('edit')
-        onClose?.()
-    }
-
     if (!isOpen) return null
 
     // ============================================
-    // RENDER: EDIT MODE (Dec 19 UX)
+    // RENDER: EDIT MODE
     // ============================================
     if (step === 'edit') {
         return (
@@ -333,15 +293,18 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                 position: 'fixed',
                 inset: 0,
                 background: '#000',
-                zIndex: 9999
+                zIndex: 9999,
+                touchAction: 'none', // CRITICAL
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                userSelect: 'none'
             }}>
-                {/* Frozen Home (30% opacity - Dec 19) */}
+                {/* Frozen Home */}
                 <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.3 }}>
                     <Home config={getConfig()} />
-                    <StaticBottomNav />
                 </div>
 
-                {/* Dark Overlay Below Crop (Dec 19) */}
+                {/* Dark Overlay Below */}
                 <div style={{
                     position: 'absolute',
                     top: coverHeight,
@@ -353,15 +316,17 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     zIndex: 5
                 }} />
 
-                {/* CROP FRAME (Dec 19 + touch-action fix) */}
+                {/* CROP FRAME */}
                 <div
-                    onMouseDown={handlePointerDown}
-                    onMouseMove={handlePointerMove}
-                    onMouseUp={handlePointerUp}
-                    onMouseLeave={handlePointerUp}
+                    ref={cropRef}
+                    data-crop-frame="true"
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
-                    onTouchEnd={handlePointerUp}
+                    onTouchEnd={handleTouchEnd}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
                     style={{
                         position: 'absolute',
                         top: 0,
@@ -372,13 +337,11 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         cursor: 'move',
                         zIndex: 6,
                         border: '3px solid #22C55E',
-                        boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
-                        touchAction: 'none', // AUDIT FIX: Prevent browser scroll
-                        userSelect: 'none',
-                        WebkitUserSelect: 'none'
+                        boxShadow: '0 0 0 4px rgba(34,197,94,0.4)',
+                        touchAction: 'none', // CRITICAL
+                        WebkitTouchCallout: 'none'
                     }}
                 >
-                    {/* Image */}
                     {image ? (
                         <div style={{
                             position: 'absolute',
@@ -390,12 +353,14 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             backgroundSize: `${scale * 100}%`,
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',
-                            transform: `translate(${offsetX}px, ${offsetY}px)`,
-                            willChange: 'transform'
+                            transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
+                            willChange: 'transform',
+                            pointerEvents: 'none'
                         }} />
                     ) : (
                         <div
-                            onClick={() => fileInputRef.current?.click()}
+                            onTouchEnd={handleCameraTap}
+                            onClick={handleCameraTap}
                             style={{
                                 height: '100%',
                                 display: 'flex',
@@ -408,7 +373,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         </div>
                     )}
 
-                    {/* MAGNETIC SNAP LINES (Dec 19 Green) */}
+                    {/* Snap Lines */}
                     {snappedX && (
                         <div style={{
                             position: 'absolute',
@@ -419,8 +384,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             background: '#22C55E',
                             transform: 'translateX(-50%)',
                             pointerEvents: 'none',
-                            zIndex: 10,
-                            boxShadow: '0 0 8px rgba(34,197,94,0.6)'
+                            zIndex: 10
                         }} />
                     )}
                     {snappedY && (
@@ -433,28 +397,12 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             background: '#22C55E',
                             transform: 'translateY(-50%)',
                             pointerEvents: 'none',
-                            zIndex: 10,
-                            boxShadow: '0 0 8px rgba(34,197,94,0.6)'
-                        }} />
-                    )}
-                    {(snappedX && snappedY) && (
-                        <div style={{
-                            position: 'absolute',
-                            left: '50%',
-                            top: '50%',
-                            width: 12,
-                            height: 12,
-                            borderRadius: '50%',
-                            background: '#22C55E',
-                            transform: 'translate(-50%, -50%)',
-                            pointerEvents: 'none',
-                            zIndex: 11,
-                            boxShadow: '0 0 12px rgba(34,197,94,0.8)'
+                            zIndex: 10
                         }} />
                     )}
                 </div>
 
-                {/* Hidden file input */}
+                {/* Hidden Input */}
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -463,7 +411,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     style={{ display: 'none' }}
                 />
 
-                {/* FLOATING CONTROLS (pointer-events: auto fix) */}
+                {/* FLOATING BUTTONS - onTouchEnd for iOS */}
                 <div style={{
                     position: 'absolute',
                     top: 0,
@@ -474,49 +422,50 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     paddingRight: 12,
                     display: 'flex',
                     justifyContent: 'space-between',
-                    zIndex: 100,
-                    pointerEvents: 'none' // Container: none
+                    zIndex: 100
                 }}>
                     <button
-                        onClick={handleCancel}
+                        onTouchEnd={handleCancelTap}
+                        onClick={handleCancelTap}
                         style={{
                             minWidth: 44,
                             minHeight: 44,
                             padding: '8px 14px',
-                            background: 'rgba(0,0,0,0.7)',
+                            background: 'rgba(0,0,0,0.8)',
                             color: '#EF4444',
                             border: 'none',
                             borderRadius: 10,
                             fontSize: 14,
                             fontWeight: 600,
                             cursor: 'pointer',
-                            pointerEvents: 'auto', // AUDIT FIX
-                            touchAction: 'manipulation'
+                            touchAction: 'manipulation',
+                            WebkitTapHighlightColor: 'transparent'
                         }}
                     >
                         ✕ Cancel
                     </button>
                     <button
-                        onClick={() => fileInputRef.current?.click()}
+                        onTouchEnd={handleCameraTap}
+                        onClick={handleCameraTap}
                         style={{
                             minWidth: 44,
                             minHeight: 44,
                             padding: '8px 14px',
-                            background: 'rgba(0,0,0,0.7)',
+                            background: 'rgba(0,0,0,0.8)',
                             color: '#fff',
                             border: 'none',
                             borderRadius: 10,
-                            fontSize: 14,
-                            fontWeight: 600,
+                            fontSize: 20,
                             cursor: 'pointer',
-                            pointerEvents: 'auto', // AUDIT FIX
-                            touchAction: 'manipulation'
+                            touchAction: 'manipulation',
+                            WebkitTapHighlightColor: 'transparent'
                         }}
                     >
                         📷
                     </button>
                     <button
-                        onClick={enterPreview}
+                        onTouchEnd={handleContinueTap}
+                        onClick={handleContinueTap}
                         disabled={!image}
                         style={{
                             minWidth: 44,
@@ -529,15 +478,16 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             fontSize: 14,
                             fontWeight: 600,
                             cursor: image ? 'pointer' : 'not-allowed',
-                            pointerEvents: 'auto', // AUDIT FIX
-                            touchAction: 'manipulation'
+                            opacity: image ? 1 : 0.5,
+                            touchAction: 'manipulation',
+                            WebkitTapHighlightColor: 'transparent'
                         }}
                     >
                         Continue →
                     </button>
                 </div>
 
-                {/* Zoom Indicator (Dec 19) */}
+                {/* Zoom Indicator */}
                 <div style={{
                     position: 'absolute',
                     top: coverHeight + 12,
@@ -550,7 +500,6 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     padding: '6px 14px',
                     borderRadius: 20,
                     zIndex: 10,
-                    whiteSpace: 'nowrap',
                     pointerEvents: 'none'
                 }}>
                     ↕ Drag • Pinch to zoom • {Math.round(scale * 100)}%
@@ -560,23 +509,19 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // RENDER: PREVIEW MODE (Dec 19 UX)
+    // RENDER: PREVIEW MODE
     // ============================================
     if (step === 'preview') {
         return (
-            <>
-                {/* Real Home (Full Color) */}
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 9999,
-                    background: 'var(--canvas-bg, #fff)'
-                }}>
-                    <Home config={getConfig()} />
-                    <StaticBottomNav />
-                </div>
+            <div style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                background: 'var(--canvas-bg, #fff)'
+            }}>
+                <Home config={getConfig()} />
 
-                {/* Floating Buttons (Top Right) */}
+                {/* Floating Buttons */}
                 <div style={{
                     position: 'fixed',
                     top: 0,
@@ -588,12 +533,13 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     zIndex: 10000
                 }}>
                     <button
-                        onClick={exitPreview}
+                        onTouchEnd={handleBackTap}
+                        onClick={handleBackTap}
                         style={{
                             width: 44,
                             height: 44,
                             borderRadius: '50%',
-                            background: 'rgba(0,0,0,0.6)',
+                            background: 'rgba(0,0,0,0.7)',
                             color: '#fff',
                             border: 'none',
                             fontSize: 18,
@@ -607,7 +553,8 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         ←
                     </button>
                     <button
-                        onClick={handleSave}
+                        onTouchEnd={handleSaveTap}
+                        onClick={handleSaveTap}
                         disabled={isSaving}
                         style={{
                             width: 44,
@@ -629,7 +576,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         {isSaving ? '...' : '✓'}
                     </button>
                 </div>
-            </>
+            </div>
         )
     }
 
