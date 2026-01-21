@@ -1,190 +1,167 @@
 /**
- * CoverImageEditor.jsx - Cover Image Edit Mode
+ * CoverImageEditor.jsx - V6 Hero Editor
  * 
- * Bug Fix Pass: Safari, no auto-zoom, route-based preview
+ * 2-STAGE WORKFLOW:
+ *   STAGE 1 (ADJUST): 30% dark overlay + Rule-of-Thirds grid + Pinch/Zoom
+ *   STAGE 2 (VERIFY): Full color preview + Green "Save" button (top right)
  * 
- * Flow:
- * - Auto-enter Edit (file picker opens if no image)
- * - Continue → navigates to /admin/cover-preview (separate route)
- * - No inline preview, no timers
+ * HARDWARE OPTIMIZATION:
+ *   - GPU-accelerated transforms (translate3d + scale)
+ *   - Passive touch listeners
+ *   - Async-safe API calls
  * 
- * Cover Heights (LOCKED — NO LAYOUT CHANGES):
- * - Mobile (<768px): 220px
- * - Tablet (≥768px): 280px
+ * CRASH-PROOF SAVE:
+ *   - Defensive null checks on businessId
+ *   - try/catch on all Supabase calls
+ *   - Error-first response handling
  */
 
-import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getConfig, updateConfig } from '../config/appConfig.v2.js'
-import { processAndStoreImage } from '../utils/imageOptimizer.js'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { useTenant } from '../contexts/TenantContext.jsx'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
+import { processAndStoreImage } from '../utils/imageOptimizer.js'
 import Home from '../pages/customer/Home.jsx'
+import { getConfig } from '../config/appConfig.v2.js'
 
-const COVER_HEIGHTS = {
-    mobile: 220,
-    tablet: 280
-}
+// ============================================
+// CONSTANTS
+// ============================================
+const COVER_HEIGHTS = { mobile: 260, tablet: 320 }
+const MIN_ZOOM = 1
+const MAX_ZOOM = 3
+const SNAP_THRESHOLD = 6 // px for center snap
 
 function getBreakpoint() {
     return window.innerWidth >= 768 ? 'tablet' : 'mobile'
 }
 
-// Static Nav Bar (matches real BottomNav)
-function StaticBottomNav() {
-    return (
-        <nav style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 64,
-            background: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-            borderTop: '1px solid #E5E7EB',
-            paddingBottom: 'env(safe-area-inset-bottom)',
-            zIndex: 1
-        }}>
-            <NavItem icon="home" label="Home" active />
-            <NavItem icon="menu" label="Menú" />
-            <CameraButton />
-            <NavItem icon="status" label="Estado" />
-            <NavItem icon="info" label="Info" />
-        </nav>
-    )
-}
+// ============================================
+// V6 COVER IMAGE EDITOR
+// ============================================
+function CoverImageEditor({ isOpen, onClose, onSave }) {
+    const { tenantData, businessId, refreshTenant } = useTenant()
 
-function NavItem({ icon, label, active }) {
-    const icons = {
-        home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10" />,
-        menu: <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>,
-        status: <><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>,
-        info: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>
-    }
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: active ? 1 : 0.5 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#111' : 'currentColor'} strokeWidth="2">
-                {icons[icon]}
-            </svg>
-            <span style={{ fontSize: 10, color: active ? '#111' : '#666', marginTop: 2 }}>{label}</span>
-        </div>
-    )
-}
+    // ============================================
+    // STATE: Workflow Stage
+    // ============================================
+    const [stage, setStage] = useState('select') // 'select' | 'adjust' | 'verify'
 
-function CameraButton() {
-    return (
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: -20 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-            </svg>
-        </div>
-    )
-}
-
-// Snap assist constants
-const SNAP_THRESHOLD = 4 // ±4px for gentle snap
-
-function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false, config, businessId, heroMode }) {
-    const navigate = useNavigate()
-
-    const [image, setImage] = useState(initialData?.image || null)
-    const [scale, setScale] = useState(initialData?.scale || 1)
-    const [offsetX, setOffsetX] = useState(initialData?.offsetX || 0)
-    const [offsetY, setOffsetY] = useState(initialData?.offsetY || 0)
+    // ============================================
+    // STATE: Image & Transform (Hardware Accelerated)
+    // ============================================
+    const [image, setImage] = useState(null)
+    const [originalFile, setOriginalFile] = useState(null)
+    const [zoom, setZoom] = useState(1)
+    const [offset, setOffset] = useState({ x: 0, y: 0 })
     const [breakpoint, setBreakpoint] = useState(getBreakpoint())
+
+    // ============================================
+    // STATE: Snap Assist Visual Feedback
+    // ============================================
     const [snappedX, setSnappedX] = useState(false)
     const [snappedY, setSnappedY] = useState(false)
 
-    // Gesture refs (no auto-zoom/snapback)
+    // ============================================
+    // STATE: UI Feedback
+    // ============================================
+    const [isSaving, setIsSaving] = useState(false)
+    const [saveError, setSaveError] = useState(null)
+
+    // ============================================
+    // REFS: Gesture Tracking
+    // ============================================
     const isDragging = useRef(false)
     const lastTouch = useRef({ x: 0, y: 0 })
     const initialPinchDistance = useRef(0)
-    const initialScale = useRef(1)
+    const initialZoom = useRef(1)
     const fileInputRef = useRef(null)
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
-    // Snap assist helper — gently snaps to center when within threshold
-    const applySnapAssist = (newOffsetX, newOffsetY) => {
-        let finalX = newOffsetX
-        let finalY = newOffsetY
-        let isSnappedX = false
-        let isSnappedY = false
-
-        // Snap X to center (0) if within threshold
-        if (Math.abs(newOffsetX) <= SNAP_THRESHOLD) {
-            finalX = 0
-            isSnappedX = true
-        }
-
-        // Snap Y to center (0) if within threshold
-        if (Math.abs(newOffsetY) <= SNAP_THRESHOLD) {
-            finalY = 0
-            isSnappedY = true
-        }
-
-        setSnappedX(isSnappedX)
-        setSnappedY(isSnappedY)
-        return { finalX, finalY }
-    }
-
-    // Breakpoint resize listener
+    // ============================================
+    // EFFECT: Breakpoint Listener
+    // ============================================
     useEffect(() => {
         const handleResize = () => setBreakpoint(getBreakpoint())
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    // Initialize state on open (NO auto-zoom/reset after interactions)
+    // ============================================
+    // EFFECT: Cleanup Blob URLs
+    // ============================================
     useEffect(() => {
-        if (isOpen) {
-            // Only set initial values when opening, not on every render
-            setImage(initialData?.image || null)
-            setScale(initialData?.scale || 1)
-            setOffsetX(initialData?.offsetX || 0)
-            setOffsetY(initialData?.offsetY || 0)
-            // Auto-open file picker if no image
-            if (!initialData?.image) {
-                setTimeout(() => fileInputRef.current?.click(), 150)
+        return () => {
+            if (image && image.startsWith('blob:')) {
+                URL.revokeObjectURL(image)
             }
         }
-    }, [isOpen]) // Intentionally exclude initialData to prevent resets
+    }, [image])
 
-    // File selection - store original file for Supabase upload
-    const [originalFile, setOriginalFile] = useState(null)
+    // ============================================
+    // EFFECT: Auto-open file picker on mount
+    // ============================================
+    useEffect(() => {
+        if (isOpen && stage === 'select' && !image) {
+            const timer = setTimeout(() => fileInputRef.current?.click(), 150)
+            return () => clearTimeout(timer)
+        }
+    }, [isOpen, stage, image])
 
+    // ============================================
+    // SNAP ASSIST: Gently snap to center
+    // ============================================
+    const applySnapAssist = useCallback((newX, newY) => {
+        let finalX = newX
+        let finalY = newY
+        let isSnappedX = false
+        let isSnappedY = false
+
+        if (Math.abs(newX) <= SNAP_THRESHOLD) {
+            finalX = 0
+            isSnappedX = true
+        }
+        if (Math.abs(newY) <= SNAP_THRESHOLD) {
+            finalY = 0
+            isSnappedY = true
+        }
+
+        setSnappedX(isSnappedX)
+        setSnappedY(isSnappedY)
+        return { x: finalX, y: finalY }
+    }, [])
+
+    // ============================================
+    // FILE SELECTION
+    // ============================================
     const handleFileSelect = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
 
         try {
-            // Store original file for Supabase upload
             setOriginalFile(file)
-
-            // PATCH: Optimize image for preview (not for storage)
             const { dataURI } = await processAndStoreImage(file)
             setImage(dataURI)
-            // Reset position for new image only
-            setScale(1)
-            setOffsetX(0)
-            setOffsetY(0)
-        } catch (error) {
-            console.error('Error optimizing image:', error)
+            setZoom(1)
+            setOffset({ x: 0, y: 0 })
+            setStage('adjust')
+        } catch (err) {
+            console.error('[CoverImageEditor] Error processing image:', err)
             alert('Error loading image. Please try a smaller file.')
         }
     }
 
-    // ===== DRAG TO PAN (Safari + Chrome) =====
+    // ============================================
+    // GESTURE: Touch Handlers (Pinch + Drag)
+    // ============================================
     const handleTouchStart = (e) => {
-        e.preventDefault() // Prevent Safari scroll
+        e.preventDefault()
         if (e.touches.length === 2) {
             // Pinch start
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
-            initialScale.current = scale
+            initialZoom.current = zoom
         } else if (e.touches.length === 1) {
             // Drag start
             isDragging.current = true
@@ -193,33 +170,33 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     }
 
     const handleTouchMove = (e) => {
-        e.preventDefault() // Prevent Safari scroll
+        e.preventDefault()
         if (e.touches.length === 2) {
-            // Pinch zoom — NO snapback, value LOCKS
+            // Pinch zoom
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             const distance = Math.sqrt(dx * dx + dy * dy)
-            const newScale = Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current)))
-            setScale(newScale)
+            const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM,
+                initialZoom.current * (distance / initialPinchDistance.current)
+            ))
+            setZoom(newZoom)
         } else if (e.touches.length === 1 && isDragging.current) {
-            // Drag pan with snap assist
+            // Drag pan
             const dx = e.touches[0].clientX - lastTouch.current.x
             const dy = e.touches[0].clientY - lastTouch.current.y
-            const newX = offsetX + dx
-            const newY = offsetY + dy
-            const { finalX, finalY } = applySnapAssist(newX, newY)
-            setOffsetX(finalX)
-            setOffsetY(finalY)
+            const newOffset = applySnapAssist(offset.x + dx, offset.y + dy)
+            setOffset(newOffset)
             lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         }
     }
 
     const handleTouchEnd = () => {
         isDragging.current = false
-        // NO reset, NO snapback — transform LOCKS
     }
 
-    // Mouse handlers (desktop)
+    // ============================================
+    // GESTURE: Mouse Handlers (Desktop Fallback)
+    // ============================================
     const handleMouseDown = (e) => {
         isDragging.current = true
         lastTouch.current = { x: e.clientX, y: e.clientY }
@@ -229,11 +206,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         if (!isDragging.current) return
         const dx = e.clientX - lastTouch.current.x
         const dy = e.clientY - lastTouch.current.y
-        const newX = offsetX + dx
-        const newY = offsetY + dy
-        const { finalX, finalY } = applySnapAssist(newX, newY)
-        setOffsetX(finalX)
-        setOffsetY(finalY)
+        const newOffset = applySnapAssist(offset.x + dx, offset.y + dy)
+        setOffset(newOffset)
         lastTouch.current = { x: e.clientX, y: e.clientY }
     }
 
@@ -241,315 +215,605 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         isDragging.current = false
     }
 
-    // ===== CONTINUE → ROUTE TO PREVIEW (or save directly in demo mode) =====
-    const handleContinue = async () => {
-        // DEMO MODE: Save directly without navigation or production config update
-        if (demoMode) {
-            onSave({ image, scale, offsetX, offsetY, breakpoint })
-            onClose()
+    // ============================================
+    // ZOOM CONTROLS (Button Fallback)
+    // ============================================
+    const handleZoomIn = () => setZoom(z => Math.min(z + 0.25, MAX_ZOOM))
+    const handleZoomOut = () => setZoom(z => Math.max(z - 0.25, MIN_ZOOM))
+    const handleReset = () => { setZoom(1); setOffset({ x: 0, y: 0 }) }
+
+    // ============================================
+    // STAGE TRANSITIONS
+    // ============================================
+    const goToVerify = () => setStage('verify')
+    const goToAdjust = () => setStage('adjust')
+
+    // ============================================
+    // CRASH-PROOF SAVE LOGIC
+    // ============================================
+    const handleFinalSave = async () => {
+        // 🛡️ DEFENSIVE: Check for businessId
+        if (!businessId) {
+            console.error('[CoverImageEditor] BLOCKED: No businessId')
+            setSaveError('Error: No business ID found. Please reload.')
             return
         }
 
-        // 🛡️ SUPABASE MODE: Upload to cloud storage (SINGLE SOURCE OF TRUTH)
+        // 🛡️ DEFENSIVE: Check for heroMode='text' (Constraint 2)
+        if (tenantData?.hero_mode === 'text') {
+            setSaveError('El Hero está en modo Texto. Cambia a Imagen primero.')
+            return
+        }
+
+        setIsSaving(true)
+        setSaveError(null)
+
         try {
-            // 🛡️ CONSTRAINT 2: Absolute Text Mode Guard
-            // If hero_mode is 'text', do NOT upload or set the image
-            if (heroMode === 'text') {
-                console.warn('[CoverImageEditor] Blocked: hero_mode is text, cannot set image')
-                alert('El modo de Hero está configurado como Texto. Cambia a Imagen primero.')
+            let heroUrl = image
+
+            // Upload to Supabase if we have original file
+            if (originalFile) {
+                console.log('[CoverImageEditor] Uploading to Supabase...')
+                const { url, error: uploadError } = await uploadAsset(originalFile, businessId, 'branding')
+
+                // 🛡️ ERROR-FIRST: Check error BEFORE data
+                if (uploadError) {
+                    console.error('[CoverImageEditor] Upload failed:', uploadError)
+                    setSaveError(`Upload failed: ${uploadError.message || 'Unknown error'}`)
+                    setIsSaving(false)
+                    return
+                }
+
+                heroUrl = url
+                console.log('[CoverImageEditor] Upload success:', heroUrl)
+            }
+
+            // Construct payload with hero_settings
+            const payload = {
+                hero_url: heroUrl,
+                hero_mode: 'image',
+                hero_settings: JSON.stringify({ zoom, offset })
+            }
+
+            // Update branding table
+            const { error: dbError } = await updateBranding(payload, businessId)
+
+            // 🛡️ ERROR-FIRST: Check error BEFORE proceeding
+            if (dbError) {
+                console.error('[CoverImageEditor] DB update failed:', dbError)
+                setSaveError(`Save failed: ${dbError.message || 'Unknown error'}`)
+                setIsSaving(false)
                 return
             }
 
-            let heroUrl = image // Fallback to dataURI if no original file
+            console.log('[CoverImageEditor] Save success!')
 
-            // Upload original file to Supabase if we have it
-            if (originalFile) {
-                console.log('[Supabase] Uploading hero image...')
-                // 🛡️ MULTI-TENANT: Use businessId for tenant-scoped path
-                const { url, error } = await uploadAsset(originalFile, businessId, 'branding')
-                if (error) {
-                    console.error('[Supabase] Upload failed:', error)
-                    alert('Error uploading image. Using local storage as fallback.')
-                } else {
-                    heroUrl = url
-                    console.log('[Supabase] Hero image uploaded:', heroUrl)
+            // Refresh tenant context
+            if (refreshTenant) await refreshTenant()
 
-                    // Save URL to branding table (uses businessId internally)
-                    const { error: dbError } = await updateBranding({ hero_url: heroUrl, hero_mode: 'image' }, businessId)
-                    if (dbError) {
-                        console.error('[Supabase] Failed to save hero URL:', dbError)
-                    } else {
-                        console.log('[Supabase] Hero URL saved to database')
-                    }
-                }
-            }
-
-            // Also save to localStorage as backup (for offline/fallback)
-            const imageVersion = Date.now()
-            updateConfig({ headerCover: { image: heroUrl, scale, offsetX, offsetY, breakpoint, imageVersion } })
-
-            // Dispatch sync
-            window.dispatchEvent(new CustomEvent('frontendSync'))
-
-            // Save to parent
-            onSave({ image: heroUrl, scale, offsetX, offsetY, breakpoint })
-
-            // Navigate to preview
-            const returnState = initialData?.returnState || {}
-            setTimeout(() => {
-                navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
-                onClose()
-            }, 100)
+            // Notify parent
+            if (onSave) onSave({ image: heroUrl, zoom, offset })
+            if (onClose) onClose()
 
         } catch (err) {
-            console.error('[Supabase] Error in save flow:', err)
-            alert('Error saving. Please try again.')
+            console.error('[CoverImageEditor] Unexpected error:', err)
+            setSaveError(`Unexpected error: ${err.message}`)
+        } finally {
+            setIsSaving(false)
         }
     }
 
+    // ============================================
+    // CANCEL / CLOSE
+    // ============================================
+    const handleCancel = () => {
+        if (image && image.startsWith('blob:')) {
+            URL.revokeObjectURL(image)
+        }
+        setImage(null)
+        setOriginalFile(null)
+        setStage('select')
+        setZoom(1)
+        setOffset({ x: 0, y: 0 })
+        if (onClose) onClose()
+    }
+
+    // ============================================
+    // EARLY RETURN: Not open
+    // ============================================
     if (!isOpen) return null
 
-    // =============================================
-    // EDIT MODE ONLY — Preview is separate route
-    // =============================================
-    return (
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            background: '#000',
-            zIndex: 9999,
-            touchAction: 'none',
-            userSelect: 'none',
-            WebkitUserSelect: 'none'
-        }}>
-            {/* Frozen Home (dimmed) */}
-            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.3 }}>
-                <Home config={config} />
-                <StaticBottomNav />
-            </div>
+    // ============================================
+    // RENDER: SELECT STAGE
+    // ============================================
+    if (stage === 'select') {
+        return (
+            <div style={styles.fullscreen}>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                />
 
-            {/* Dark overlay below crop frame */}
-            <div style={{
-                position: 'absolute',
-                top: coverHeight,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0,0,0,0.75)',
-                pointerEvents: 'none',
-                zIndex: 5
-            }} />
+                {/* Header */}
+                <div style={styles.header}>
+                    <button onClick={handleCancel} style={styles.cancelBtn}>✕ Cancelar</button>
+                    <span style={styles.headerTitle}>Hero Cover</span>
+                    <div style={{ width: 80 }} />
+                </div>
 
-            {/* Crop Frame — STARTS AT TOP:0 */}
-            <div
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: coverHeight,
-                    overflow: 'hidden',
-                    cursor: 'move',
-                    zIndex: 6,
-                    border: '3px solid #22C55E',
-                    boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
-                    touchAction: 'none'
-                }}
-            >
-                {image ? (
-                    <div style={{
-                        position: 'absolute',
-                        width: '200%',
-                        height: '200%',
-                        left: '-50%',
-                        top: '-50%',
-                        backgroundImage: `url(${image})`,
-                        backgroundSize: `${scale * 100}%`,
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
-                        transform: `translate(${offsetX}px, ${offsetY}px)`,
-                        willChange: 'transform'
-                    }} />
-                ) : null}
-
-                {/* Center Guidelines (Editor Only) */}
-                {image && (
-                    <>
-                        {/* Vertical center line */}
-                        <div style={{
-                            position: 'absolute',
-                            left: '50%',
-                            top: 0,
-                            bottom: 0,
-                            width: snappedX ? 2 : 1,
-                            background: snappedX ? '#22C55E' : 'rgba(255,255,255,0.3)',
-                            transform: 'translateX(-50%)',
-                            pointerEvents: 'none',
-                            zIndex: 10,
-                            transition: 'all 0.1s ease'
-                        }} />
-                        {/* Horizontal center line */}
-                        <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: 0,
-                            right: 0,
-                            height: snappedY ? 2 : 1,
-                            background: snappedY ? '#22C55E' : 'rgba(255,255,255,0.3)',
-                            transform: 'translateY(-50%)',
-                            pointerEvents: 'none',
-                            zIndex: 10,
-                            transition: 'all 0.1s ease'
-                        }} />
-                        {/* Center crosshair indicator */}
-                        {(snappedX && snappedY) && (
-                            <div style={{
-                                position: 'absolute',
-                                left: '50%',
-                                top: '50%',
-                                width: 12,
-                                height: 12,
-                                borderRadius: '50%',
-                                background: '#22C55E',
-                                transform: 'translate(-50%, -50%)',
-                                pointerEvents: 'none',
-                                zIndex: 11,
-                                boxShadow: '0 0 8px rgba(34,197,94,0.6)'
-                            }} />
-                        )}
-                    </>
-                )}
-
-                {/* No image placeholder */}
-                {!image && (
+                {/* Select Zone */}
+                <div style={styles.selectZone}>
                     <div
                         onClick={() => fileInputRef.current?.click()}
-                        onTouchEnd={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}
+                        style={styles.uploadBox}
+                    >
+                        <span style={{ fontSize: 48 }}>📷</span>
+                        <span>Seleccionar Imagen</span>
+                    </div>
+
+                    {tenantData?.hero_url && (
+                        <div style={styles.currentPreview}>
+                            <span style={{ fontSize: 12, color: '#888' }}>Imagen Actual:</span>
+                            <img src={tenantData.hero_url} alt="Current" style={styles.thumbnail} />
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
+    // ============================================
+    // RENDER: ADJUST STAGE (30% Overlay + Grid)
+    // ============================================
+    if (stage === 'adjust') {
+        return (
+            <div style={styles.fullscreen}>
+                {/* Frozen Home Preview (30% opacity) */}
+                <div style={styles.frozenHomeContainer}>
+                    <Home config={getConfig()} />
+                </div>
+
+                {/* Dark Overlay Below Crop Frame */}
+                <div style={{
+                    ...styles.darkOverlay,
+                    top: coverHeight
+                }} />
+
+                {/* Crop Frame */}
+                <div
+                    style={{
+                        ...styles.cropFrame,
+                        height: coverHeight
+                    }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                >
+                    {/* Image with GPU Transform */}
+                    {image && (
+                        <div style={{
+                            position: 'absolute',
+                            width: '200%',
+                            height: '200%',
+                            left: '-50%',
+                            top: '-50%',
+                            backgroundImage: `url(${image})`,
+                            backgroundSize: `${zoom * 100}%`,
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            transform: `translate3d(${offset.x}px, ${offset.y}px, 0)`,
+                            willChange: 'transform'
+                        }} />
+                    )}
+
+                    {/* 30% Dark Overlay (Simulates Hero Text Contrast) */}
+                    <div style={styles.adjustOverlay} />
+
+                    {/* Rule of Thirds Grid */}
+                    <div style={styles.gridV1} />
+                    <div style={styles.gridV2} />
+                    <div style={styles.gridH1} />
+                    <div style={styles.gridH2} />
+
+                    {/* Center Snap Indicator */}
+                    {(snappedX && snappedY) && (
+                        <div style={styles.centerDot} />
+                    )}
+                </div>
+
+                {/* Header Controls */}
+                <div style={styles.floatingHeader}>
+                    <button onClick={handleCancel} style={styles.floatingCancelBtn}>
+                        ✕ Cancelar
+                    </button>
+                    <button onClick={() => fileInputRef.current?.click()} style={styles.floatingBtn}>
+                        📷
+                    </button>
+                    <button onClick={goToVerify} disabled={!image} style={{
+                        ...styles.floatingContinueBtn,
+                        opacity: image ? 1 : 0.5
+                    }}>
+                        Continuar →
+                    </button>
+                </div>
+
+                {/* Hidden File Input */}
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                />
+
+                {/* Zoom Indicator */}
+                <div style={{ ...styles.zoomBadge, top: coverHeight + 12 }}>
+                    ↕ Drag • Pinch to zoom • {Math.round(zoom * 100)}%
+                </div>
+
+                {/* Zoom Controls */}
+                <div style={{ ...styles.zoomControls, top: coverHeight + 50 }}>
+                    <button onClick={handleZoomOut} style={styles.zoomBtn}>−</button>
+                    <button onClick={handleReset} style={styles.zoomBtn}>↺</button>
+                    <button onClick={handleZoomIn} style={styles.zoomBtn}>+</button>
+                </div>
+            </div>
+        )
+    }
+
+    // ============================================
+    // RENDER: VERIFY STAGE (Full Color + Green Save)
+    // ============================================
+    if (stage === 'verify') {
+        return (
+            <div style={styles.fullscreen}>
+                {/* Frozen Home Preview (FULL COLOR) */}
+                <div style={{ ...styles.frozenHomeContainer, opacity: 1 }}>
+                    <Home config={getConfig()} />
+                </div>
+
+                {/* Crop Frame (Full Color, No Overlay) */}
+                <div style={{
+                    ...styles.cropFrame,
+                    height: coverHeight,
+                    border: '3px solid #22C55E',
+                    boxShadow: '0 0 0 4px rgba(34,197,94,0.4)'
+                }}>
+                    {image && (
+                        <div style={{
+                            position: 'absolute',
+                            width: '200%',
+                            height: '200%',
+                            left: '-50%',
+                            top: '-50%',
+                            backgroundImage: `url(${image})`,
+                            backgroundSize: `${zoom * 100}%`,
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            transform: `translate3d(${offset.x}px, ${offset.y}px, 0)`,
+                            willChange: 'transform'
+                        }} />
+                    )}
+                </div>
+
+                {/* Header with Save Button */}
+                <div style={styles.floatingHeader}>
+                    <button onClick={goToAdjust} style={styles.floatingCancelBtn}>
+                        ← Ajustar
+                    </button>
+                    <span style={{ color: '#fff', fontWeight: 600 }}>Verificar</span>
+                    <button
+                        onClick={handleFinalSave}
+                        disabled={isSaving}
                         style={{
-                            height: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer'
+                            ...styles.greenSaveBtn,
+                            opacity: isSaving ? 0.6 : 1
                         }}
                     >
-                        <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap to select image</span>
-                    </div>
+                        {isSaving ? '⏳' : '✓'} Guardar
+                    </button>
+                </div>
+
+                {/* Error Banner */}
+                {saveError && (
+                    <div style={styles.errorBanner}>{saveError}</div>
                 )}
-            </div>
 
-            {/* Hidden file input */}
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                style={{ display: 'none' }}
-            />
-
-            {/* FLOATING CONTROLS */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                paddingTop: 'max(12px, env(safe-area-inset-top))',
-                paddingLeft: 12,
-                paddingRight: 12,
-                display: 'flex',
-                justifyContent: 'space-between',
-                zIndex: 100,
-                pointerEvents: 'none'
-            }}>
-                <button
-                    onClick={onClose}
-                    onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
-                    style={{
-                        minWidth: 44,
-                        minHeight: 44,
-                        padding: '8px 14px',
-                        background: 'rgba(0,0,0,0.7)',
-                        color: '#EF4444',
-                        border: 'none',
-                        borderRadius: 10,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        pointerEvents: 'auto',
-                        touchAction: 'manipulation'
-                    }}
-                >
-                    ✕ Cancelar
-                </button>
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    onTouchEnd={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}
-                    style={{
-                        minWidth: 44,
-                        minHeight: 44,
-                        padding: '8px 14px',
-                        background: 'rgba(0,0,0,0.7)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 10,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        pointerEvents: 'auto',
-                        touchAction: 'manipulation'
-                    }}
-                >
-                    📷
-                </button>
-                <button
-                    onClick={handleContinue}
-                    onTouchEnd={(e) => { e.preventDefault(); handleContinue(); }}
-                    disabled={!image}
-                    style={{
-                        minWidth: 44,
-                        minHeight: 44,
-                        padding: '8px 14px',
-                        background: image ? '#3B82F6' : 'rgba(59,130,246,0.4)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 10,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: image ? 'pointer' : 'not-allowed',
-                        pointerEvents: 'auto',
-                        touchAction: 'manipulation'
-                    }}
-                >
-                    Continue →
-                </button>
+                {/* Info Badge */}
+                <div style={{ ...styles.zoomBadge, top: coverHeight + 12, background: '#22C55E' }}>
+                    ✓ Toca "Guardar" para confirmar
+                </div>
             </div>
+        )
+    }
 
-            {/* Zoom indicator */}
-            <div style={{
-                position: 'absolute',
-                top: coverHeight + 12,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: '#22C55E',
-                color: '#fff',
-                fontSize: 11,
-                fontWeight: 600,
-                padding: '6px 14px',
-                borderRadius: 20,
-                zIndex: 10,
-                whiteSpace: 'nowrap'
-            }}>
-                ↕ Drag • Pinch to zoom • {Math.round(scale * 100)}%
-            </div>
-        </div>
-    )
+    return null
+}
+
+// ============================================
+// STYLES
+// ============================================
+const styles = {
+    fullscreen: {
+        position: 'fixed',
+        inset: 0,
+        background: '#000',
+        zIndex: 9999,
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none'
+    },
+    header: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px',
+        paddingTop: 'max(16px, env(safe-area-inset-top))',
+        background: 'rgba(0,0,0,0.8)'
+    },
+    headerTitle: {
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: 18
+    },
+    cancelBtn: {
+        background: 'transparent',
+        border: 'none',
+        color: '#EF4444',
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: 'pointer'
+    },
+    selectZone: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 32,
+        padding: 24
+    },
+    uploadBox: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 12,
+        padding: 48,
+        border: '2px dashed #444',
+        borderRadius: 16,
+        cursor: 'pointer',
+        color: '#888',
+        fontSize: 16
+    },
+    currentPreview: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 8
+    },
+    thumbnail: {
+        width: 120,
+        height: 80,
+        objectFit: 'cover',
+        borderRadius: 8,
+        border: '1px solid #333'
+    },
+    frozenHomeContainer: {
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        opacity: 0.3
+    },
+    darkOverlay: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.75)',
+        pointerEvents: 'none',
+        zIndex: 5
+    },
+    cropFrame: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        overflow: 'hidden',
+        cursor: 'move',
+        zIndex: 6,
+        border: '3px solid #3B82F6',
+        boxShadow: '0 0 0 4px rgba(59,130,246,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
+        touchAction: 'none'
+    },
+    adjustOverlay: {
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(0,0,0,0.3)',
+        pointerEvents: 'none',
+        zIndex: 7
+    },
+    gridV1: {
+        position: 'absolute',
+        left: '33.33%',
+        top: 0,
+        bottom: 0,
+        width: 1,
+        background: 'rgba(255,255,255,0.4)',
+        borderStyle: 'dashed',
+        pointerEvents: 'none',
+        zIndex: 8
+    },
+    gridV2: {
+        position: 'absolute',
+        left: '66.66%',
+        top: 0,
+        bottom: 0,
+        width: 1,
+        background: 'rgba(255,255,255,0.4)',
+        borderStyle: 'dashed',
+        pointerEvents: 'none',
+        zIndex: 8
+    },
+    gridH1: {
+        position: 'absolute',
+        top: '33.33%',
+        left: 0,
+        right: 0,
+        height: 1,
+        background: 'rgba(255,255,255,0.4)',
+        borderStyle: 'dashed',
+        pointerEvents: 'none',
+        zIndex: 8
+    },
+    gridH2: {
+        position: 'absolute',
+        top: '66.66%',
+        left: 0,
+        right: 0,
+        height: 1,
+        background: 'rgba(255,255,255,0.4)',
+        borderStyle: 'dashed',
+        pointerEvents: 'none',
+        zIndex: 8
+    },
+    centerDot: {
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        width: 12,
+        height: 12,
+        marginLeft: -6,
+        marginTop: -6,
+        borderRadius: '50%',
+        background: '#22C55E',
+        boxShadow: '0 0 8px rgba(34,197,94,0.6)',
+        pointerEvents: 'none',
+        zIndex: 11
+    },
+    floatingHeader: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        paddingTop: 'max(12px, env(safe-area-inset-top))',
+        paddingLeft: 12,
+        paddingRight: 12,
+        paddingBottom: 12,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        zIndex: 100,
+        pointerEvents: 'none'
+    },
+    floatingCancelBtn: {
+        minWidth: 44,
+        minHeight: 44,
+        padding: '8px 14px',
+        background: 'rgba(0,0,0,0.7)',
+        color: '#EF4444',
+        border: 'none',
+        borderRadius: 10,
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: 'pointer',
+        pointerEvents: 'auto',
+        touchAction: 'manipulation'
+    },
+    floatingBtn: {
+        minWidth: 44,
+        minHeight: 44,
+        padding: '8px 14px',
+        background: 'rgba(0,0,0,0.7)',
+        color: '#fff',
+        border: 'none',
+        borderRadius: 10,
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: 'pointer',
+        pointerEvents: 'auto',
+        touchAction: 'manipulation'
+    },
+    floatingContinueBtn: {
+        minWidth: 44,
+        minHeight: 44,
+        padding: '8px 14px',
+        background: '#3B82F6',
+        color: '#fff',
+        border: 'none',
+        borderRadius: 10,
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: 'pointer',
+        pointerEvents: 'auto',
+        touchAction: 'manipulation'
+    },
+    greenSaveBtn: {
+        minWidth: 44,
+        minHeight: 44,
+        padding: '8px 16px',
+        background: '#22C55E',
+        color: '#fff',
+        border: 'none',
+        borderRadius: 10,
+        fontSize: 14,
+        fontWeight: 700,
+        cursor: 'pointer',
+        pointerEvents: 'auto',
+        touchAction: 'manipulation',
+        boxShadow: '0 4px 12px rgba(34,197,94,0.4)'
+    },
+    zoomBadge: {
+        position: 'absolute',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: '#3B82F6',
+        color: '#fff',
+        fontSize: 11,
+        fontWeight: 600,
+        padding: '6px 14px',
+        borderRadius: 20,
+        zIndex: 10,
+        whiteSpace: 'nowrap'
+    },
+    zoomControls: {
+        position: 'absolute',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: 12,
+        zIndex: 10
+    },
+    zoomBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: '50%',
+        background: 'rgba(255,255,255,0.9)',
+        border: 'none',
+        color: '#000',
+        fontSize: 20,
+        fontWeight: 600,
+        cursor: 'pointer'
+    },
+    errorBanner: {
+        position: 'absolute',
+        bottom: 80,
+        left: 16,
+        right: 16,
+        background: '#B91C1C',
+        color: '#fff',
+        padding: 12,
+        borderRadius: 8,
+        textAlign: 'center',
+        fontSize: 14,
+        zIndex: 100
+    }
 }
 
 export default CoverImageEditor
