@@ -1,9 +1,9 @@
 /**
- * CoverImageEditor.jsx — NUCLEAR ISOLATION BUILD
+ * CoverImageEditor.jsx — SCROLL-LOCKED BUILD
  * * FIXES:
- *   - REMOVED <Home /> from edit mode (was hijacking document events)
- *   - Static dark background (#1a1a1a) replaces context preview
- *   - Preview buttons hardened to z-index: 2147483647
+ *   - Global body lock: overflow=hidden, touchAction=none
+ *   - Cleanup on unmount restores body scroll
+ *   - Solid black background (no Home in edit mode)
  *   - Dec 19 physics intact
  */
 
@@ -42,7 +42,32 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const fileInputRef = useRef(null)
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
-    const existingHeroUrl = tenantData?.hero_url
+
+    // ============================================
+    // SCROLL LOCK (Global Body Trap)
+    // ============================================
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden'
+            document.body.style.touchAction = 'none'
+            document.body.style.position = 'fixed'
+            document.body.style.width = '100%'
+            document.body.style.height = '100%'
+        } else {
+            document.body.style.overflow = ''
+            document.body.style.touchAction = ''
+            document.body.style.position = ''
+            document.body.style.width = ''
+            document.body.style.height = ''
+        }
+        return () => {
+            document.body.style.overflow = ''
+            document.body.style.touchAction = ''
+            document.body.style.position = ''
+            document.body.style.width = ''
+            document.body.style.height = ''
+        }
+    }, [isOpen])
 
     useEffect(() => {
         const handleResize = () => setBreakpoint(getBreakpoint())
@@ -80,7 +105,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // DEC 19 PHYSICS (Untouched)
+    // DEC 19 PHYSICS
     // ============================================
     const handlePointerDown = (e) => {
         if (!image) return
@@ -116,22 +141,28 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         if (!image) return
         if (e.touches.length === 2) {
             e.preventDefault()
+            e.stopPropagation()
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
             initialScale.current = scale
-        } else handlePointerDown(e)
+        } else {
+            handlePointerDown(e)
+        }
     }
 
     const handleTouchMove = (e) => {
         if (!image) return
         if (e.touches.length === 2) {
             e.preventDefault()
+            e.stopPropagation()
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             const distance = Math.sqrt(dx * dx + dy * dy)
             setScale(Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current))))
-        } else handlePointerMove(e)
+        } else {
+            handlePointerMove(e)
+        }
     }
 
     const handleSave = async () => {
@@ -164,31 +195,22 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     if (!isOpen) return null
 
     // ============================================
-    // RENDER: EDIT MODE (NO HOME COMPONENT)
+    // RENDER: EDIT MODE (Solid Black, No Home)
     // ============================================
     if (step === 'edit') {
         return (
-            <div style={{
-                position: 'fixed',
-                inset: 0,
-                background: '#1a1a1a',
-                zIndex: 99999,
-                touchAction: 'none'
-            }}>
-                {/* STATIC BACKGROUND: Existing Hero (Blurred, if exists) */}
-                {existingHeroUrl && !image && (
-                    <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        backgroundImage: `url(${existingHeroUrl})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        opacity: 0.1,
-                        filter: 'blur(8px)',
-                        pointerEvents: 'none'
-                    }} />
-                )}
-
+            <div
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: '#000',
+                    zIndex: 99999,
+                    touchAction: 'none',
+                    overscrollBehavior: 'none',
+                    WebkitOverflowScrolling: 'touch'
+                }}
+                onTouchMove={(e) => e.preventDefault()}
+            >
                 {/* CROP FRAME */}
                 <div
                     onMouseDown={handlePointerDown}
@@ -207,8 +229,9 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         zIndex: 10000,
                         overflow: 'hidden',
                         border: image ? '3px solid #22C55E' : '3px dashed rgba(255,255,255,0.4)',
-                        background: image ? 'transparent' : 'rgba(0,0,0,0.3)',
-                        cursor: image ? 'move' : 'pointer'
+                        background: image ? '#111' : 'rgba(255,255,255,0.05)',
+                        cursor: image ? 'move' : 'pointer',
+                        touchAction: 'none'
                     }}
                     onClick={() => !image && fileInputRef.current?.click()}
                 >
@@ -224,7 +247,8 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',
                             transform: `translate(${offsetX}px, ${offsetY}px)`,
-                            willChange: 'transform'
+                            willChange: 'transform',
+                            pointerEvents: 'none'
                         }} />
                     )}
 
@@ -244,17 +268,18 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         </div>
                     )}
 
-                    {image && snappedX && <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11 }} />}
-                    {image && snappedY && <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11 }} />}
+                    {image && snappedX && <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11, transform: 'translateX(-50%)' }} />}
+                    {image && snappedY && <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11, transform: 'translateY(-50%)' }} />}
+                    {image && snappedX && snappedY && <div style={{ position: 'absolute', top: '50%', left: '50%', width: 12, height: 12, background: '#22C55E', borderRadius: '50%', transform: 'translate(-50%, -50%)', boxShadow: '0 0 16px #22C55E', zIndex: 12 }} />}
                 </div>
 
                 {/* DARK MASK BELOW */}
-                <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#111', zIndex: 5, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 5 }} />
 
                 {/* TOP BAR */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 16, paddingTop: 'max(16px, env(safe-area-inset-top))', display: 'flex', justifyContent: 'space-between', zIndex: 99999 }}>
                     <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.9)', color: '#ff6b6b', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '700', fontSize: 14 }}>✕ Cancel</button>
-                    <button onClick={() => fileInputRef.current?.click()} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '600', fontSize: 14 }}>📷 Select</button>
+                    <button onClick={() => fileInputRef.current?.click()} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '600', fontSize: 14 }}>📷</button>
                     <button onClick={() => setStep('preview')} disabled={!image} style={{ background: image ? '#3B82F6' : '#333', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 24, fontWeight: '700', fontSize: 14, opacity: image ? 1 : 0.4 }}>Continue →</button>
                 </div>
 
@@ -270,17 +295,15 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // RENDER: PREVIEW MODE (MAX Z-INDEX BUTTONS)
+    // RENDER: PREVIEW MODE
     // ============================================
     if (step === 'preview') {
         return (
-            <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999 }}>
-                {/* Preview Home (Isolated) */}
+            <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999, touchAction: 'none' }}>
                 <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
                     <Home config={getConfig()} />
                 </div>
 
-                {/* HARDENED BUTTON CONTAINER (Max Int Z-Index) */}
                 <div style={{
                     position: 'fixed',
                     top: 0,
