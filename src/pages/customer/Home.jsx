@@ -99,7 +99,7 @@ function Home({ config: configProp }) {
                 textAlign: 'center',
                 lineHeight: '0.95',
                 width: '100%',
-                color: 'var(--canvas-text)',
+                color: '#000000',
                 textShadow: 'none'
             },
 
