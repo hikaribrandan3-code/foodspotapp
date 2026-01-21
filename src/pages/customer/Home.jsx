@@ -99,7 +99,8 @@ function Home({ config: configProp }) {
                 textAlign: 'center',
                 lineHeight: '0.95',
                 width: '100%',
-                textShadow: '0 4px 20px rgba(0,0,0,0.2)' // Subtle depth
+                color: 'var(--canvas-text)',
+                textShadow: 'none'
             },
 
             containerStyle: {
@@ -108,7 +109,7 @@ function Home({ config: configProp }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '40px 24px',
-                backgroundColor: branding?.primaryColor || tenantData?.primary_color || '#1A1A1A'
+                backgroundColor: 'var(--canvas-bg)'
             },
 
             useLogo: !!(tenantData?.logo_url || branding?.logo_url)
