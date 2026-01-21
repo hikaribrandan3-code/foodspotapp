@@ -279,36 +279,53 @@ export function TenantProvider({ children }) {
         resolveTenant()
     }, [])
 
-    // 🛡️ RISK 1 FIX: ALWAYS render children after 8 seconds
-    // This ensures App.jsx can mount and show its own Retry UI
-    // The loading spinner only shows for up to 8 seconds max
+    // 🔍 DIAGNOSTIC MODE: Replace the spinner with raw data visibility
     if (loading && !emergencyUnblock) {
+        const currentPath = window.location.pathname;
+        const rawSlug = currentPath.split('/').filter(Boolean)[0] || 'UNDEFINED';
+
         return (
             <div style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                backgroundColor: '#000000',
+                color: '#00FF00',
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                padding: '24px',
+                overflow: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100vh',
-                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-                color: '#fff',
-                fontFamily: 'Inter, system-ui, sans-serif'
+                gap: '12px'
             }}>
-                <div style={{
-                    width: '48px',
-                    height: '48px',
-                    border: '4px solid rgba(255,255,255,0.1)',
-                    borderTop: '4px solid #fff',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                }} />
-                <p style={{ marginTop: '16px', opacity: 0.7 }}>Cargando FoodSpot...</p>
-                <style>{`
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                `}</style>
+                <h2 style={{ borderBottom: '1px solid #333', paddingBottom: '8px' }}>🤖 SYSTEM DIAGNOSTIC</h2>
+
+                <div>
+                    <strong>STATUS:</strong> <span style={{ color: 'yellow' }}>LOADING...</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <strong>📍 URL TELEMETRY:</strong>
+                    <span>Full Path: {currentPath}</span>
+                    <span>Detected Slug: <span style={{ color: 'white', backgroundColor: '#333', padding: '2px 4px' }}>{rawSlug}</span></span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <strong>🔌 ENV CHECK:</strong>
+                    <span>VITE_SUPABASE_URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ SET' : '❌ MISSING'}</span>
+                    <span>VITE_SUPABASE_ANON_KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ SET' : '❌ MISSING'}</span>
+                </div>
+
+                <div style={{ marginTop: '20px' }}>
+                    <p style={{ color: '#666', fontSize: '10px' }}>If this screen persists > 5 seconds, Supabase connection has failed.</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        style={{ padding: '10px 20px', backgroundColor: '#333', color: 'white', border: '1px solid #666', marginTop: '10px' }}
+                    >
+                        FORCE RELOAD
+                    </button>
+                </div>
             </div>
         )
     }
