@@ -5,8 +5,9 @@ import { useTenant } from '../../contexts/TenantContext'; // SILO SOURCE OF TRUT
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
-import HeroStudio from '../../components/HeroStudio'; // 🎨 RESTORED: Studio Workflow
+import CoverImageEditor from '../../components/CoverImageEditor'; // 🎨 RESTORED: Dec 19 Studio
 import { clearAuth } from '../../utils/storage';
+import { getConfig } from '../../config/appConfig.v2.js'; // For Live Home preview
 import './Settings.css';
 
 const Settings = () => {
@@ -24,7 +25,7 @@ const Settings = () => {
 
     const [isFontMenuOpen, setIsFontMenuOpen] = useState(false);
     const [isWeightMenuOpen, setIsWeightMenuOpen] = useState(false);
-    const [showHeroStudio, setShowHeroStudio] = useState(false); // 🎨 STUDIO TOGGLE
+    const [showCoverEditor, setShowCoverEditor] = useState(false); // 🎨 STUDIO TOGGLE
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
 
@@ -336,7 +337,7 @@ const Settings = () => {
                             {/* STUDIO TRIGGER: Opens Full Screen Editor */}
                             <div
                                 className="hero-studio-trigger"
-                                onClick={() => setShowHeroStudio(true)}
+                                onClick={() => setShowCoverEditor(true)}
                             >
                                 {tenant?.hero_url ? (
                                     <>
@@ -486,16 +487,19 @@ const Settings = () => {
             </div>
 
             <BackendNav role="owner" useRoutes={true} />
-            {/* 🎨 HERO STUDIO MODAL */}
-            {showHeroStudio && (
-                <HeroStudio
-                    onClose={() => setShowHeroStudio(false)}
-                    onSave={(newUrl) => {
-                        handleFieldUpdate('hero_url', newUrl);
-                        setShowHeroStudio(false);
-                    }}
-                />
-            )}
+            {/* 🎨 COVER IMAGE EDITOR (Dec 19 Restored) */}
+            <CoverImageEditor
+                isOpen={showCoverEditor}
+                onClose={() => setShowCoverEditor(false)}
+                onSave={(data) => {
+                    if (data?.image) handleFieldUpdate('hero_url', data.image);
+                    setShowCoverEditor(false);
+                }}
+                initialData={{ image: tenant?.hero_url }}
+                config={getConfig()}
+                businessId={businessId}
+                heroMode={tenant?.hero_mode}
+            />
         </div>
     );
 };

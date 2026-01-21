@@ -86,7 +86,7 @@ function CameraButton() {
 // Snap assist constants
 const SNAP_THRESHOLD = 4 // ±4px for gentle snap
 
-function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false, config }) {
+function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false, config, businessId, heroMode }) {
     const navigate = useNavigate()
 
     const [image, setImage] = useState(initialData?.image || null)
@@ -252,12 +252,21 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
         // 🛡️ SUPABASE MODE: Upload to cloud storage (SINGLE SOURCE OF TRUTH)
         try {
+            // 🛡️ CONSTRAINT 2: Absolute Text Mode Guard
+            // If hero_mode is 'text', do NOT upload or set the image
+            if (heroMode === 'text') {
+                console.warn('[CoverImageEditor] Blocked: hero_mode is text, cannot set image')
+                alert('El modo de Hero está configurado como Texto. Cambia a Imagen primero.')
+                return
+            }
+
             let heroUrl = image // Fallback to dataURI if no original file
 
             // Upload original file to Supabase if we have it
             if (originalFile) {
                 console.log('[Supabase] Uploading hero image...')
-                const { url, error } = await uploadAsset(originalFile, 'assets')
+                // 🛡️ MULTI-TENANT: Use businessId for tenant-scoped path
+                const { url, error } = await uploadAsset(originalFile, businessId, 'branding')
                 if (error) {
                     console.error('[Supabase] Upload failed:', error)
                     alert('Error uploading image. Using local storage as fallback.')
@@ -265,8 +274,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     heroUrl = url
                     console.log('[Supabase] Hero image uploaded:', heroUrl)
 
-                    // Save URL to branding table
-                    const { error: dbError } = await updateBranding({ hero_url: heroUrl })
+                    // Save URL to branding table (uses businessId internally)
+                    const { error: dbError } = await updateBranding({ hero_url: heroUrl, hero_mode: 'image' }, businessId)
                     if (dbError) {
                         console.error('[Supabase] Failed to save hero URL:', dbError)
                     } else {
