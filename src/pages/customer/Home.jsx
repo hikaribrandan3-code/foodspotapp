@@ -22,7 +22,9 @@ export default function Home() {
         primaryColor: cloudBranding?.primaryColor || tenantData?.primary_color || '#8B7355',
         businessName: cloudBranding?.businessName || tenantData?.business_name || 'FoodSpot',
         logoUrl: cloudBranding?.logoUrl || tenantData?.logo_url,
-        heroUrl: cloudBranding?.heroUrl || tenantData?.hero_url
+        heroUrl: cloudBranding?.heroUrl || tenantData?.hero_url,
+        // 📸 FEATURE PHOTOS MAPPING (Array of objects)
+        featuredPhotos: cloudBranding?.featuredPhotos || tenantData?.featured_photos || []
     };
 
     // 🎨 EXTRACT COLORS & ASSETS
@@ -31,13 +33,22 @@ export default function Home() {
     const heroUrl = branding.heroUrl;
 
     // 📸 RESTORED: The "Lost" Feature Grid
-    // Mapped directly from DB columns feature_1...feature_4
-    const featurePhotos = [
-        tenantData?.feature_1,
-        tenantData?.feature_2,
-        tenantData?.feature_3,
-        tenantData?.feature_4
-    ].filter(Boolean); // Only show valid images
+    // Parse the array: [{ slot: 1, image: 'url' }, ...] -> Just the URLs
+    const featurePhotos = Array.isArray(branding.featuredPhotos)
+        ? branding.featuredPhotos
+            .filter(item => item && item.image) // Only items with images
+            .sort((a, b) => (a.slot || 0) - (b.slot || 0)) // Sort by slot
+            .map(item => item.image) // Extract URL
+            .slice(0, 4) // Limit to 4
+        : [];
+
+    // Fallback: If DB uses old "feature_1" columns (legacy bridging)
+    if (featurePhotos.length === 0) {
+        if (tenantData?.feature_1) featurePhotos.push(tenantData.feature_1);
+        if (tenantData?.feature_2) featurePhotos.push(tenantData.feature_2);
+        if (tenantData?.feature_3) featurePhotos.push(tenantData.feature_3);
+        if (tenantData?.feature_4) featurePhotos.push(tenantData.feature_4);
+    }
 
     // 🎛️ HERO ICONS WIRING
     const heroIcons = branding?.heroIcons || {};
@@ -56,7 +67,8 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 relative font-sans">
+        // 🛡️ CONTAINER FIX: Added pb-24 to ensure content clears global BottomNav
+        <div className="min-h-screen bg-gray-50 relative font-sans w-full pb-24">
 
             {/* 1. HERO HEADER (Cover + Logo) - GUCCI TIER */}
             <div className="relative h-64 w-full bg-gray-900 overflow-hidden shadow-2xl">
@@ -97,12 +109,13 @@ export default function Home() {
             <div className="h-8 w-full" />
 
             {/* 2. THE BIG 4 HERO ICONS (2x2 GRID) - RESTORED LAYOUT */}
-            <div className="px-5 mt-10 grid grid-cols-2 gap-4">
+            {/* 🛡️ GRID FIX: Forced grid-cols-2 and gap-4 with full width */}
+            <div className="px-5 mt-10 grid grid-cols-2 gap-4 w-full">
 
                 {/* MENU CARD - Primary Brand Color */}
                 <button
                     onClick={() => handleNav('/menu')}
-                    className="relative h-36 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10"
+                    className="relative h-36 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10 w-full"
                     style={getHeroStyle('menu', primaryColor)}
                 >
                     <span className="text-4xl mb-2 drop-shadow-md transform group-hover:scale-110 transition-transform"><MenuIcon /></span>
@@ -112,7 +125,7 @@ export default function Home() {
                 {/* ENVIOS CARD - Green */}
                 <button
                     onClick={() => handleNav('/envios')}
-                    className="relative h-36 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10"
+                    className="relative h-36 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10 w-full"
                     style={getHeroStyle('delivery', '#22C55E')}
                 >
                     <span className="text-4xl mb-2 drop-shadow-md"><DeliveryIcon /></span>
@@ -122,7 +135,7 @@ export default function Home() {
                 {/* PROMOS CARD - Amber */}
                 <button
                     onClick={() => handleNav('/promos')}
-                    className="relative h-28 rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10"
+                    className="relative h-28 rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10 w-full"
                     style={getHeroStyle('promos', '#F59E0B')}
                 >
                     <span className="text-3xl drop-shadow-md"><PromosIcon /></span>
@@ -132,7 +145,7 @@ export default function Home() {
                 {/* GAME CARD - Purple */}
                 <button
                     onClick={() => handleNav('/game')}
-                    className="relative h-28 rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10"
+                    className="relative h-28 rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10 w-full"
                     style={getHeroStyle('game', '#8B5CF6')}
                 >
                     <span className="text-3xl drop-shadow-md"><GameIcon /></span>
@@ -142,19 +155,16 @@ export default function Home() {
 
             {/* 3. FEATURE PHOTOS GRID (2x2) - RESTORED */}
             {featurePhotos.length > 0 && (
-                <div className="px-5 mt-6 grid grid-cols-2 gap-4 pb-12">
+                <div className="px-5 mt-6 grid grid-cols-2 gap-4 pb-4 w-full">
                     {featurePhotos.map((url, i) => (
                         <div
                             key={i}
-                            className="aspect-square rounded-2xl bg-cover bg-center shadow-md border border-gray-100"
+                            className="aspect-square rounded-2xl bg-cover bg-center shadow-md border border-gray-100 w-full"
                             style={{ backgroundImage: `url(${url})` }}
                         />
                     ))}
                 </div>
             )}
-
-            {/* 4. CLEAN FOOTER (PURGED "Powered By") */}
-            <div className="pb-10" />
 
         </div>
     );
