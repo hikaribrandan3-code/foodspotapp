@@ -1,12 +1,12 @@
 /**
- * CoverImageEditor.jsx — BUTTON-FIX BUILD
+ * CoverImageEditor.jsx — iOS NATIVE TOUCH FIX
  * * FIXES:
- *   - REMOVED onTouchMove preventDefault from outer container (was killing buttons)
- *   - Added pointerEvents: 'auto' to all buttons
- *   - Scroll lock via body styles only (not container events)
+ *   - Native touch listeners with { passive: false } for iOS Safari
+ *   - useRef for crop frame + useEffect to attach/detach listeners
+ *   - This bypasses React's synthetic event system which can fail on iOS
  */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTenant } from '../contexts/TenantContext.jsx'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
@@ -39,11 +39,28 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const initialPinchDistance = useRef(0)
     const initialScale = useRef(1)
     const fileInputRef = useRef(null)
+    const cropFrameRef = useRef(null)
+
+    // Store current values in refs for native listeners
+    const scaleRef = useRef(scale)
+    const offsetXRef = useRef(offsetX)
+    const offsetYRef = useRef(offsetY)
+    const snappedXRef = useRef(snappedX)
+    const snappedYRef = useRef(snappedY)
+    const imageRef = useRef(image)
+
+    // Keep refs in sync
+    useEffect(() => { scaleRef.current = scale }, [scale])
+    useEffect(() => { offsetXRef.current = offsetX }, [offsetX])
+    useEffect(() => { offsetYRef.current = offsetY }, [offsetY])
+    useEffect(() => { snappedXRef.current = snappedX }, [snappedX])
+    useEffect(() => { snappedYRef.current = snappedY }, [snappedY])
+    useEffect(() => { imageRef.current = image }, [image])
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // SCROLL LOCK (Body Only - No Event Blocking)
+    // SCROLL LOCK
     // ============================================
     useEffect(() => {
         if (isOpen) {
@@ -103,66 +120,86 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // DEC 19 PHYSICS
+    // NATIVE TOUCH HANDLERS (iOS Safari Fix)
     // ============================================
-    const handlePointerDown = (e) => {
-        if (!image) return
-        if (e.touches && e.touches.length > 1) return
-        isDragging.current = true
-        const point = e.touches ? e.touches[0] : e
-        lastTouch.current = { x: point.clientX, y: point.clientY }
-    }
+    const handleNativeTouchStart = useCallback((e) => {
+        if (!imageRef.current) return
 
-    const handlePointerMove = (e) => {
-        if (!image) return
-        if (!isDragging.current || (e.touches && e.touches.length > 1)) return
-        e.preventDefault() // Prevent scroll ONLY during active drag
-        const point = e.touches ? e.touches[0] : e
-        let newX = offsetX + (point.clientX - lastTouch.current.x)
-        let newY = offsetY + (point.clientY - lastTouch.current.y)
-
-        let isX = false, isY = false
-        if (Math.abs(newX) < SNAP_THRESHOLD) {
-            newX = 0; isX = true
-            if (!snappedX && navigator.vibrate) navigator.vibrate(10)
-        }
-        if (Math.abs(newY) < SNAP_THRESHOLD) {
-            newY = 0; isY = true
-            if (!snappedY && navigator.vibrate) navigator.vibrate(10)
-        }
-
-        setSnappedX(isX); setSnappedY(isY)
-        setOffsetX(newX); setOffsetY(newY)
-        lastTouch.current = { x: point.clientX, y: point.clientY }
-    }
-
-    const handleTouchStart = (e) => {
-        if (!image) return
         if (e.touches.length === 2) {
             e.preventDefault()
-            e.stopPropagation()
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
-            initialScale.current = scale
-        } else {
-            handlePointerDown(e)
+            initialScale.current = scaleRef.current
+        } else if (e.touches.length === 1) {
+            isDragging.current = true
+            lastTouch.current = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY
+            }
         }
-    }
+    }, [])
 
-    const handleTouchMove = (e) => {
-        if (!image) return
-        e.preventDefault() // Prevent scroll during crop manipulation
+    const handleNativeTouchMove = useCallback((e) => {
+        if (!imageRef.current) return
+        e.preventDefault() // CRITICAL: Must call this
+
         if (e.touches.length === 2) {
-            e.stopPropagation()
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             const distance = Math.sqrt(dx * dx + dy * dy)
-            setScale(Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current))))
-        } else {
-            handlePointerMove(e)
+            const newScale = Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current)))
+            setScale(newScale)
+        } else if (e.touches.length === 1 && isDragging.current) {
+            const dx = e.touches[0].clientX - lastTouch.current.x
+            const dy = e.touches[0].clientY - lastTouch.current.y
+
+            let newX = offsetXRef.current + dx
+            let newY = offsetYRef.current + dy
+
+            let isX = false, isY = false
+            if (Math.abs(newX) < SNAP_THRESHOLD) {
+                newX = 0; isX = true
+                if (!snappedXRef.current && navigator.vibrate) navigator.vibrate(10)
+            }
+            if (Math.abs(newY) < SNAP_THRESHOLD) {
+                newY = 0; isY = true
+                if (!snappedYRef.current && navigator.vibrate) navigator.vibrate(10)
+            }
+
+            setSnappedX(isX)
+            setSnappedY(isY)
+            setOffsetX(newX)
+            setOffsetY(newY)
+
+            lastTouch.current = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY
+            }
         }
-    }
+    }, [])
+
+    const handleNativeTouchEnd = useCallback(() => {
+        isDragging.current = false
+    }, [])
+
+    // ============================================
+    // ATTACH NATIVE LISTENERS TO CROP FRAME
+    // ============================================
+    useEffect(() => {
+        const cropFrame = cropFrameRef.current
+        if (!cropFrame || step !== 'edit') return
+
+        cropFrame.addEventListener('touchstart', handleNativeTouchStart, { passive: false })
+        cropFrame.addEventListener('touchmove', handleNativeTouchMove, { passive: false })
+        cropFrame.addEventListener('touchend', handleNativeTouchEnd, { passive: false })
+
+        return () => {
+            cropFrame.removeEventListener('touchstart', handleNativeTouchStart)
+            cropFrame.removeEventListener('touchmove', handleNativeTouchMove)
+            cropFrame.removeEventListener('touchend', handleNativeTouchEnd)
+        }
+    }, [step, handleNativeTouchStart, handleNativeTouchMove, handleNativeTouchEnd])
 
     const handleSave = async () => {
         if (!businessId) return alert('No Business ID')
@@ -204,15 +241,9 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                 background: '#000',
                 zIndex: 99999
             }}>
-                {/* CROP FRAME - Touch events only here */}
+                {/* CROP FRAME - Native touch listeners attached via ref */}
                 <div
-                    onMouseDown={handlePointerDown}
-                    onMouseMove={handlePointerMove}
-                    onMouseUp={() => isDragging.current = false}
-                    onMouseLeave={() => isDragging.current = false}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={() => isDragging.current = false}
+                    ref={cropFrameRef}
                     style={{
                         position: 'absolute',
                         top: 0,
@@ -224,7 +255,10 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         border: image ? '3px solid #22C55E' : '3px dashed rgba(255,255,255,0.4)',
                         background: image ? '#111' : 'rgba(255,255,255,0.05)',
                         cursor: image ? 'move' : 'pointer',
-                        touchAction: 'none' // Only on the crop frame
+                        touchAction: 'none',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        WebkitTouchCallout: 'none'
                     }}
                     onClick={() => !image && fileInputRef.current?.click()}
                 >
@@ -261,15 +295,15 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         </div>
                     )}
 
-                    {image && snappedX && <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11, transform: 'translateX(-50%)' }} />}
-                    {image && snappedY && <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11, transform: 'translateY(-50%)' }} />}
-                    {image && snappedX && snappedY && <div style={{ position: 'absolute', top: '50%', left: '50%', width: 12, height: 12, background: '#22C55E', borderRadius: '50%', transform: 'translate(-50%, -50%)', boxShadow: '0 0 16px #22C55E', zIndex: 12 }} />}
+                    {image && snappedX && <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11, transform: 'translateX(-50%)', pointerEvents: 'none' }} />}
+                    {image && snappedY && <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11, transform: 'translateY(-50%)', pointerEvents: 'none' }} />}
+                    {image && snappedX && snappedY && <div style={{ position: 'absolute', top: '50%', left: '50%', width: 12, height: 12, background: '#22C55E', borderRadius: '50%', transform: 'translate(-50%, -50%)', boxShadow: '0 0 16px #22C55E', zIndex: 12, pointerEvents: 'none' }} />}
                 </div>
 
                 {/* DARK MASK BELOW */}
                 <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 5, pointerEvents: 'none' }} />
 
-                {/* TOP BAR - Buttons explicitly enabled */}
+                {/* TOP BAR */}
                 <div style={{
                     position: 'absolute',
                     top: 0,
