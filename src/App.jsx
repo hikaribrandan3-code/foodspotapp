@@ -91,7 +91,9 @@ function App() {
 
     const businessId = tenant?.businessId;
     const tenantData = tenant?.tenantData;
-    const trialExpired = tenant?.trialExpired;
+    // 🛡️ TEMPORARY BYPASS: Force trial to be active for testing
+    // TODO: REMOVE BEFORE PRODUCTION
+    const trialExpired = false; // tenant?.trialExpired;
 
 
     // ============================================
@@ -362,9 +364,10 @@ function App() {
 
     if (trialExpired) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', color: '#fff', fontFamily: 'Inter, system-ui, sans-serif', padding: '24px', textAlign: 'center' }}>
+            // 🛡️ VISUAL DEBUG: White background to verify Hero renders behind
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#ffffff', color: '#000', fontFamily: 'Inter, system-ui, sans-serif', padding: '24px', textAlign: 'center' }}>
                 <div style={{ fontSize: '64px', marginBottom: '24px' }}>⏰</div>
-                <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '12px', background: 'linear-gradient(90deg, #ff6b6b, #ffa502)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Tu período de prueba terminó</h1>
+                <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '12px', color: '#ef4444' }}>Tu período de prueba terminó</h1>
                 <p style={{ opacity: 0.8, maxWidth: '400px', marginBottom: '32px', lineHeight: 1.6 }}>El trial de <strong>{tenantData?.business_name || 'tu negocio'}</strong> ha expirado. Actualizá tu plan para seguir recibiendo pedidos.</p>
                 <a href="https://wa.me/5491123456789?text=Quiero%20activar%20mi%20cuenta%20FoodSpot" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '16px 32px', background: 'linear-gradient(90deg, #25D366, #128C7E)', color: '#fff', fontWeight: 600, fontSize: '16px', borderRadius: '12px', textDecoration: 'none', boxShadow: '0 4px 20px rgba(37, 211, 102, 0.4)' }}>💬 Contactar Soporte</a>
             </div>
