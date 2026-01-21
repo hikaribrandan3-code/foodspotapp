@@ -1,26 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
-// 🔌 ASSETS: Keeping real imports for visual fidelity
+// 🔌 ASSETS: Restoring High-Fidelity 4x4 Icons
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
 
 export default function Home() {
     const navigate = useNavigate();
 
-    // 🛡️ THE NEW POWER SOURCE: Context instead of Props
+    // 🛡️ THE POWER SOURCE: Tenant Context
     const { branding: cloudBranding, tenantData, loading, slug: tenantSlug } = useTenant();
 
-    // 1. HARDCODED FALLBACK (Safety Net)
-    const DEFAULT_CATEGORIES = [
-        { label: 'Burgers', icon: '🍔' },
-        { label: 'Pizza', icon: '🍕' },
-        { label: 'Sushi', icon: '🍣' },
-        { label: 'Drinks', icon: '🥤' }
-    ];
-
+    // 🛡️ SAFETY GUARD: Prevent White Screen
     if (loading || !tenantData) return <div className="min-h-screen flex items-center justify-center bg-black text-green-500 font-mono">Loading Vault...</div>;
 
-    // 🛡️ DATA NORMALIZATION (CamelCase vs Snake_Case Armor)
+    // 🛡️ DATA NORMALIZATION & ASSET MAPPING
     const branding = {
         ...cloudBranding,
         ...tenantData,
@@ -28,20 +21,25 @@ export default function Home() {
         heroIcons: cloudBranding?.heroIcons || tenantData?.hero_icons || {},
         primaryColor: cloudBranding?.primaryColor || tenantData?.primary_color || '#8B7355',
         businessName: cloudBranding?.businessName || tenantData?.business_name || 'FoodSpot',
-        infoPills: cloudBranding?.infoPills || tenantData?.info_pills || {},
-        poweredByColor: cloudBranding?.poweredByColor || tenantData?.powered_by_color || '#C4856A',
         logoUrl: cloudBranding?.logoUrl || tenantData?.logo_url,
         heroUrl: cloudBranding?.heroUrl || tenantData?.hero_url
     };
 
-    // 🎨 EXTRACT COLORS (With Safety Defaults)
+    // 🎨 EXTRACT COLORS & ASSETS
     const primaryColor = branding.primaryColor;
     const logoUrl = branding.logoUrl;
-    // Hero URL: Try branding, then tenantData, then null
     const heroUrl = branding.heroUrl;
 
+    // 📸 RESTORED: The "Lost" Feature Grid
+    // Mapped directly from DB columns feature_1...feature_4
+    const featurePhotos = [
+        tenantData?.feature_1,
+        tenantData?.feature_2,
+        tenantData?.feature_3,
+        tenantData?.feature_4
+    ].filter(Boolean); // Only show valid images
+
     // 🎛️ HERO ICONS WIRING
-    // This connects the "Big 4" to the Admin Settings
     const heroIcons = branding?.heroIcons || {};
     const getHeroStyle = (key, defaultColor) => {
         const config = heroIcons[key] || {};
@@ -53,144 +51,111 @@ export default function Home() {
 
     // 🚀 NAVIGATION HANDLER
     const handleNav = (path) => {
-        // Ensure we don't double-slash or miss slug
         const safeSlug = tenantSlug || 'demo';
         navigate(`/${safeSlug}${path}`);
     };
 
-    // 2. UNBREAKABLE PILLS LOGIC
-    let finalPills = [];
-    const rawPills = branding?.infoPills || tenantData?.info_pills;
-
-    try {
-        if (Array.isArray(rawPills) && rawPills.length > 0) {
-            finalPills = rawPills;
-        } else if (typeof rawPills === 'object' && rawPills !== null) {
-            // Convert Object to Array safely
-            finalPills = Object.values(rawPills).map(p => ({
-                label: p.label || 'Item',
-                icon: p.icon || '🍽️'
-            }));
-        }
-    } catch (err) {
-        console.error("Pills normalization failed:", err);
-    }
-
-    // 3. FINAL GUARANTEE
-    if (finalPills.length === 0) {
-        finalPills = DEFAULT_CATEGORIES;
-    }
-
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 relative font-sans">
+        <div className="min-h-screen bg-gray-50 relative font-sans">
 
-            {/* 1. HERO HEADER (Cover + Logo) */}
-            <div className="relative h-64 w-full bg-gray-900 overflow-hidden shadow-md">
+            {/* 1. HERO HEADER (Cover + Logo) - GUCCI TIER */}
+            <div className="relative h-64 w-full bg-gray-900 overflow-hidden shadow-2xl">
                 {heroUrl ? (
                     <div
                         className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
                         style={{ backgroundImage: `url(${heroUrl})` }}
                     />
                 ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white/20 text-4xl">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black flex items-center justify-center text-white/20 text-5xl">
                         🏠
                     </div>
                 )}
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                {/* Cinema Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
-                {/* Logo & Title */}
-                <div className="absolute bottom-4 left-4 right-4 flex items-end gap-4 z-10">
-                    <div className="w-20 h-20 rounded-full bg-white p-1 shadow-lg relative -mb-8 z-20 overflow-hidden flex-shrink-0">
+                {/* Floating Logo & Title */}
+                <div className="absolute bottom-6 left-5 right-5 flex items-end gap-5 z-10">
+                    <div className="w-24 h-24 rounded-full bg-white p-1.5 shadow-2xl relative -mb-10 z-20 overflow-hidden flex-shrink-0 ring-4 ring-black/10">
                         {logoUrl ? (
                             <img src={logoUrl} alt="Logo" className="w-full h-full rounded-full object-cover" />
                         ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-2xl">🏪</div>
+                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-3xl">🏪</div>
                         )}
                     </div>
                     <div className="mb-2 text-white">
-                        <h1 className="text-2xl font-bold leading-tight shadow-black drop-shadow-md">
-                            {branding?.businessName || tenantData?.business_name || 'FoodSpot'}
+                        <h1 className="text-3xl font-extrabold leading-tight drop-shadow-xl tracking-tight">
+                            {branding.businessName}
                         </h1>
-                        <p className="text-sm text-white/90 font-light">
-                            ¡Pedí lo que más te guste!
+                        <p className="text-sm text-white/80 font-medium tracking-wide">
+                            Experiencia Gastronómica
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* Spacer for floating logo */}
-            <div className="h-6 w-full" />
+            {/* Spacer for floating logo overlap */}
+            <div className="h-8 w-full" />
 
-            {/* 2. THE BIG 4 HERO ICONS (Wired to Admin) */}
-            <div className="px-4 mt-8 grid grid-cols-2 gap-3">
+            {/* 2. THE BIG 4 HERO ICONS (2x2 GRID) - RESTORED LAYOUT */}
+            <div className="px-5 mt-10 grid grid-cols-2 gap-4">
 
-                {/* MENU CARD */}
+                {/* MENU CARD - Primary Brand Color */}
                 <button
                     onClick={() => handleNav('/menu')}
-                    className="relative h-32 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
+                    className="relative h-36 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10"
                     style={getHeroStyle('menu', primaryColor)}
                 >
-                    <span className="text-3xl mb-1 drop-shadow-sm"><MenuIcon /></span>
-                    <span className="font-bold tracking-wide text-sm mt-2">MENÚ</span>
+                    <span className="text-4xl mb-2 drop-shadow-md transform group-hover:scale-110 transition-transform"><MenuIcon /></span>
+                    <span className="font-bold tracking-wider text-sm mt-1 uppercase">Menú</span>
                 </button>
 
-                {/* ENVIOS CARD */}
+                {/* ENVIOS CARD - Green */}
                 <button
                     onClick={() => handleNav('/envios')}
-                    className="relative h-32 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
+                    className="relative h-36 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10"
                     style={getHeroStyle('delivery', '#22C55E')}
                 >
-                    <span className="text-3xl mb-1 drop-shadow-sm"><DeliveryIcon /></span>
-                    <span className="font-bold tracking-wide text-sm mt-2">ENVÍOS</span>
+                    <span className="text-4xl mb-2 drop-shadow-md"><DeliveryIcon /></span>
+                    <span className="font-bold tracking-wider text-sm mt-1 uppercase">Envíos</span>
                 </button>
 
-                {/* PROMOS CARD */}
+                {/* PROMOS CARD - Amber */}
                 <button
                     onClick={() => handleNav('/promos')}
-                    className="relative h-24 rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95"
+                    className="relative h-28 rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10"
                     style={getHeroStyle('promos', '#F59E0B')}
                 >
-                    <span className="text-2xl drop-shadow-sm"><PromosIcon /></span>
-                    <span className="font-bold tracking-wide text-sm">PROMOS</span>
+                    <span className="text-3xl drop-shadow-md"><PromosIcon /></span>
+                    <span className="font-bold tracking-wider text-sm uppercase">Promos</span>
                 </button>
 
-                {/* GAME/REWARDS CARD */}
+                {/* GAME CARD - Purple */}
                 <button
                     onClick={() => handleNav('/game')}
-                    className="relative h-24 rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95"
+                    className="relative h-28 rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/10"
                     style={getHeroStyle('game', '#8B5CF6')}
                 >
-                    <span className="text-2xl drop-shadow-sm"><GameIcon /></span>
-                    <span className="font-bold tracking-wide text-sm">PREMIOS</span>
+                    <span className="text-3xl drop-shadow-md"><GameIcon /></span>
+                    <span className="font-bold tracking-wider text-sm uppercase">Premios</span>
                 </button>
             </div>
 
-            {/* 3. SAFE PILLS RENDER */}
-            <div className="mt-8 pl-4">
-                <div className="flex items-center justify-between pr-4 mb-3">
-                    <h3 className="font-bold text-gray-800 text-lg">Categorías</h3>
-                    <button onClick={() => handleNav('/menu')} className="text-xs text-blue-600 font-medium">Ver todas</button>
-                </div>
-
-                <div className="flex gap-4 overflow-x-auto pb-6 pr-4 scrollbar-hide">
-                    {finalPills.map((item, index) => (
-                        <div key={index} className="flex flex-col items-center gap-2 min-w-[70px] cursor-pointer active:opacity-70">
-                            <div className="w-16 h-16 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-2xl">
-                                {item.icon}
-                            </div>
-                            <span className="text-xs font-medium text-gray-600 truncate w-full text-center">
-                                {item.label}
-                            </span>
-                        </div>
+            {/* 3. FEATURE PHOTOS GRID (2x2) - RESTORED */}
+            {featurePhotos.length > 0 && (
+                <div className="px-5 mt-6 grid grid-cols-2 gap-4 pb-12">
+                    {featurePhotos.map((url, i) => (
+                        <div
+                            key={i}
+                            className="aspect-square rounded-2xl bg-cover bg-center shadow-md border border-gray-100"
+                            style={{ backgroundImage: `url(${url})` }}
+                        />
                     ))}
                 </div>
-            </div>
+            )}
 
-            {/* 4. FOOTER */}
-            <div className="mt-auto py-8 text-center text-xs text-gray-400">
-                Powered by <span style={{ color: branding?.poweredByColor || '#C4856A', fontWeight: 'bold' }}>FoodSpot</span>
-            </div>
+            {/* 4. CLEAN FOOTER (PURGED "Powered By") */}
+            <div className="pb-10" />
+
         </div>
     );
 }
