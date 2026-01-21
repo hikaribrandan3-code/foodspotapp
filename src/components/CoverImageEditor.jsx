@@ -226,11 +226,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         onClose?.()
     }
 
-    const handleCameraTap = (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        fileInputRef.current?.click()
-    }
+    // Camera tap handler REMOVED - using label htmlFor instead
 
     const handleContinueTap = (e) => {
         e.preventDefault()
@@ -358,9 +354,8 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             pointerEvents: 'none'
                         }} />
                     ) : (
-                        <div
-                            onTouchEnd={handleCameraTap}
-                            onClick={handleCameraTap}
+                        <label
+                            htmlFor="hero-file-input"
                             style={{
                                 height: '100%',
                                 display: 'flex',
@@ -370,7 +365,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             }}
                         >
                             <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap to select image</span>
-                        </div>
+                        </label>
                     )}
 
                     {/* Snap Lines */}
@@ -402,13 +397,20 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     )}
                 </div>
 
-                {/* Hidden Input */}
+                {/* File Input - VISIBLE via label, not programmatic click */}
                 <input
                     ref={fileInputRef}
+                    id="hero-file-input"
                     type="file"
                     accept="image/*"
                     onChange={handleFileSelect}
-                    style={{ display: 'none' }}
+                    style={{
+                        position: 'absolute',
+                        width: 1,
+                        height: 1,
+                        opacity: 0,
+                        pointerEvents: 'none'
+                    }}
                 />
 
                 {/* FLOATING BUTTONS - onTouchEnd for iOS */}
@@ -444,9 +446,9 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     >
                         ✕ Cancel
                     </button>
-                    <button
-                        onTouchEnd={handleCameraTap}
-                        onClick={handleCameraTap}
+                    {/* CAMERA BUTTON - Using label for iOS Safari */}
+                    <label
+                        htmlFor="hero-file-input"
                         style={{
                             minWidth: 44,
                             minHeight: 44,
@@ -458,11 +460,14 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             fontSize: 20,
                             cursor: 'pointer',
                             touchAction: 'manipulation',
-                            WebkitTapHighlightColor: 'transparent'
+                            WebkitTapHighlightColor: 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                         }}
                     >
                         📷
-                    </button>
+                    </label>
                     <button
                         onTouchEnd={handleContinueTap}
                         onClick={handleContinueTap}
