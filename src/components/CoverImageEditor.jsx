@@ -45,27 +45,40 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // SCROLL LOCK
+    // SCROLL LOCK + SAFARI PULL-TO-REFRESH BLOCK
     // ============================================
     useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden'
-            document.body.style.position = 'fixed'
-            document.body.style.width = '100%'
-            document.body.style.top = `-${window.scrollY}px`
-        } else {
-            const scrollY = document.body.style.top
-            document.body.style.overflow = ''
-            document.body.style.position = ''
-            document.body.style.width = ''
-            document.body.style.top = ''
-            window.scrollTo(0, parseInt(scrollY || '0') * -1)
+        if (!isOpen) return
+
+        const scrollY = window.scrollY
+
+        // Lock body
+        document.body.style.overflow = 'hidden'
+        document.body.style.position = 'fixed'
+        document.body.style.width = '100%'
+        document.body.style.top = `-${scrollY}px`
+        document.body.style.overscrollBehavior = 'none'
+        document.documentElement.style.overscrollBehavior = 'none'
+
+        // SAFARI PULL-TO-REFRESH KILLER
+        const preventPullToRefresh = (e) => {
+            // Block all touchmove on document when editor is open
+            if (e.touches.length === 1) {
+                e.preventDefault()
+            }
         }
+
+        document.addEventListener('touchmove', preventPullToRefresh, { passive: false })
+
         return () => {
             document.body.style.overflow = ''
             document.body.style.position = ''
             document.body.style.width = ''
             document.body.style.top = ''
+            document.body.style.overscrollBehavior = ''
+            document.documentElement.style.overscrollBehavior = ''
+            document.removeEventListener('touchmove', preventPullToRefresh)
+            window.scrollTo(0, scrollY)
         }
     }, [isOpen])
 
