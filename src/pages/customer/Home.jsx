@@ -70,6 +70,10 @@ function Home({ config: configProp }) {
         logo: tenantData?.logo_url || branding?.logo_url || configProp?.logo,
         logoLight: tenantData?.logo_url || branding?.logo_url || configProp?.logoLight,
         logoDark: tenantData?.logo_url || branding?.logo_url || configProp?.logoDark,
+        // 🩹 HEADER MODE PATCH: Connect Tenant Mode
+        headerBranding: {
+            mode: (tenantData?.hero_mode === 'text' || (!tenantData?.hero_url && !branding?.hero_url && !configProp?.headerCover?.image)) ? 'text' : 'cover'
+        },
         // Map header cover
         headerCover: {
             ...(configProp?.headerCover || defaultConfig.headerCover || {}),

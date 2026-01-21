@@ -285,8 +285,25 @@ export function TenantProvider({ children }) {
 
         const root = document.documentElement.style;
 
+        // 0. Dynamic Font Loader (Google Fonts)
+        if (tenantData.font_family && tenantData.font_family !== 'Inter') {
+            const fontName = tenantData.font_family;
+            const linkId = 'tenant-font-loader';
+            let link = document.getElementById(linkId);
+            if (!link) {
+                link = document.createElement('link');
+                link.id = linkId;
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+            }
+            const formattedFont = fontName.replace(/\s+/g, '+');
+            link.href = `https://fonts.googleapis.com/css2?family=${formattedFont}:wght@300;400;500;600;700;800&display=swap`;
+        }
+
         // 1. Typography Hydration
-        root.setProperty('--font-family-brand', tenantData.font_family || 'Inter, system-ui, sans-serif');
+        // Ensure fonts with spaces are quoted
+        const fontFamily = tenantData.font_family ? `'${tenantData.font_family}', sans-serif` : 'Inter, system-ui, sans-serif';
+        root.setProperty('--font-family-brand', fontFamily);
         root.setProperty('--font-weight-brand', tenantData.font_weight || '700');
 
         // 2. Color Hydration (The Big 4)
