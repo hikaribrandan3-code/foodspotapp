@@ -305,7 +305,10 @@ function App() {
     // 3. 🛡️ THE HYDRATION SHIELD (SAFE POSITION)
     // ============================================
     // 🌐 GLOBAL ROUTE IMMUNITY: These paths don't require tenant context
+    // 🔍 Define Global Path logic
     const GLOBAL_PATHS = ['/', '/login', '/login/owner', '/admin', '/start-trial'];
+    const path = location.pathname;
+    const isGlobalPath = GLOBAL_PATHS.includes(path) || path.startsWith('/admin');
     // 🛡️ FIX 2 (Simplified): Single Source of Truth Hydration Guard
     // We rely on TenantContext to handle the timeouts (Risk 1 Fix).
     // This local timer is just a visual fallback for the "Retry" button.

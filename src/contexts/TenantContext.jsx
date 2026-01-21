@@ -318,7 +318,7 @@ export function TenantProvider({ children }) {
                 </div>
 
                 <div style={{ marginTop: '20px' }}>
-                    <p style={{ color: '#666', fontSize: '10px' }}>If this screen persists > 5 seconds, Supabase connection has failed.</p>
+                    <p style={{ color: '#666', fontSize: '10px' }}>If this screen persists &gt; 5 seconds, Supabase connection has failed.</p>
                     <button
                         onClick={() => window.location.reload()}
                         style={{ padding: '10px 20px', backgroundColor: '#333', color: 'white', border: '1px solid #666', marginTop: '10px' }}
