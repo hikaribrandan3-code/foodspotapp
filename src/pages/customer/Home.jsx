@@ -77,23 +77,41 @@ function Home({ config: configProp }) {
         // Map header cover
         headerCover: {
             ...(configProp?.headerCover || defaultConfig.headerCover || {}),
-            // 1. Force the image URL
-            image: tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image,
-            // 2. FORCE THE TITLE 
+
+            // 1. DATA MAPPING
             title: tenantData?.business_name || branding?.business_name || 'FoodSpot',
-            // 3. FONT STYLING (From Owner Branding > Identity)
-            fontFamily: tenantData?.font_family || branding?.font_family,
-            fontWeight: tenantData?.font_weight || branding?.font_weight,
-            // 4. LOGIC: Text Mode vs Image Mode
-            // If user explicitly chose 'text' mode -> NO IMAGE
-            // If user chose 'image' mode but has NO URL -> NO IMAGE (Fallback to text)
-            useImage: (tenantData?.hero_mode === 'text')
-                ? false
-                : !!(tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image),
-            // 5. Visibility Controls
+            image: tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image,
+
+            // 2. MODE SWITCHING (Strict Text Mode Priority)
+            useImage: (tenantData?.hero_mode === 'text') ? false : !!(tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image),
             showTitle: true,
-            useLogo: !!(tenantData?.logo_url || branding?.logo_url),
-            backgroundColor: branding?.primaryColor || tenantData?.primary_color || '#1A1A1A'
+
+            // 3. TYPOGRAPHY INJECTION (The "Gucci" Look)
+            fontFamily: tenantData?.font_family || branding?.font_family,
+            fontWeight: tenantData?.font_weight || '800', // Default to ExtraBold if missing
+
+            // 4. "FULLER" VISUAL OVERRIDES
+            // These props need to be passed to HeaderClamp to override defaults
+            titleStyle: {
+                fontSize: (tenantData?.hero_mode === 'text' || (!tenantData?.hero_url && !branding?.hero_url && !configProp?.headerCover?.image)) ? 'clamp(32px, 8vw, 48px)' : '24px',
+                textTransform: 'uppercase',
+                letterSpacing: '-0.03em',
+                textAlign: 'center',
+                lineHeight: '0.95',
+                width: '100%',
+                textShadow: '0 4px 20px rgba(0,0,0,0.2)' // Subtle depth
+            },
+
+            containerStyle: {
+                minHeight: (tenantData?.hero_mode === 'text' || (!tenantData?.hero_url && !branding?.hero_url && !configProp?.headerCover?.image)) ? '260px' : '180px', // Taller box for text mode
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '40px 24px',
+                backgroundColor: branding?.primaryColor || tenantData?.primary_color || '#1A1A1A'
+            },
+
+            useLogo: !!(tenantData?.logo_url || branding?.logo_url)
         }
     }
 

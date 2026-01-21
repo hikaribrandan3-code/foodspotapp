@@ -157,14 +157,16 @@ function AppHeader({ config: configProp }) {
             height: '100%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            ...(config?.headerCover?.containerStyle || {})
         }}>
             <span style={{
                 fontSize: 24,
                 fontWeight: 'var(--font-weight-brand)',
                 color: 'var(--canvas-text)',
                 letterSpacing: '-0.02em',
-                pointerEvents: 'none'
+                pointerEvents: 'none',
+                ...(config?.headerCover?.titleStyle || {})
             }}>
                 {businessName}
             </span>
