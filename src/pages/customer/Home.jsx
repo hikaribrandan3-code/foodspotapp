@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 // 🔌 ASSETS: Keeping real imports for visual fidelity
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
-import { getMenu } from '../../config/menuData.js'
 
 export default function Home() {
     const navigate = useNavigate();
@@ -11,9 +10,15 @@ export default function Home() {
     // 🛡️ THE NEW POWER SOURCE: Context instead of Props
     const { branding: cloudBranding, tenantData, loading, slug: tenantSlug } = useTenant();
 
-    // 🔄 FIX 4: Relaxed guard - only check for tenantData existence, not business_name
-    // This prevents blocking the entire page if business_name is empty or delayed
-    if (loading || !tenantData) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+    // 1. HARDCODED FALLBACK (Safety Net)
+    const DEFAULT_CATEGORIES = [
+        { label: 'Burgers', icon: '🍔' },
+        { label: 'Pizza', icon: '🍕' },
+        { label: 'Sushi', icon: '🍣' },
+        { label: 'Drinks', icon: '🥤' }
+    ];
+
+    if (loading || !tenantData) return <div className="min-h-screen flex items-center justify-center bg-black text-green-500 font-mono">Loading Vault...</div>;
 
     // 🛡️ DATA NORMALIZATION (CamelCase vs Snake_Case Armor)
     const branding = {
@@ -53,17 +58,28 @@ export default function Home() {
         navigate(`/${safeSlug}${path}`);
     };
 
-    // 💊 PILLS DATA: Database -> fallback
-    const menuData = getMenu(); // Static fallback list
+    // 2. UNBREAKABLE PILLS LOGIC
+    let finalPills = [];
+    const rawPills = branding?.infoPills || tenantData?.info_pills;
 
-    // 🛡️ CRASH FIX: Ensure pillsData is ALWAYS an array of valid objects
-    const rawPills = branding?.infoPills || tenantData?.info_pills || [];
+    try {
+        if (Array.isArray(rawPills) && rawPills.length > 0) {
+            finalPills = rawPills;
+        } else if (typeof rawPills === 'object' && rawPills !== null) {
+            // Convert Object to Array safely
+            finalPills = Object.values(rawPills).map(p => ({
+                label: p.label || 'Item',
+                icon: p.icon || '🍽️'
+            }));
+        }
+    } catch (err) {
+        console.error("Pills normalization failed:", err);
+    }
 
-    // Convert to Array and filter out any non-objects to prevent .map() crashes
-    const safePills = (Array.isArray(rawPills) ? rawPills : (typeof rawPills === 'object' && rawPills !== null ? Object.values(rawPills) : []))
-        .filter(item => item && typeof item === 'object');
-
-    const pillsArray = safePills.length > 0 ? safePills : menuData.map(cat => ({ label: cat.name, icon: '🍽️' }));
+    // 3. FINAL GUARANTEE
+    if (finalPills.length === 0) {
+        finalPills = DEFAULT_CATEGORIES;
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 relative font-sans">
@@ -150,7 +166,7 @@ export default function Home() {
                 </button>
             </div>
 
-            {/* 3. THE 60+ PILLS (Horizontal Scroll) */}
+            {/* 3. SAFE PILLS RENDER */}
             <div className="mt-8 pl-4">
                 <div className="flex items-center justify-between pr-4 mb-3">
                     <h3 className="font-bold text-gray-800 text-lg">Categorías</h3>
@@ -158,7 +174,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto pb-6 pr-4 scrollbar-hide">
-                    {(Array.isArray(pillsArray) ? pillsArray : []).map((item, index) => (
+                    {finalPills.map((item, index) => (
                         <div key={index} className="flex flex-col items-center gap-2 min-w-[70px] cursor-pointer active:opacity-70">
                             <div className="w-16 h-16 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-2xl">
                                 {item.icon}
@@ -166,14 +182,6 @@ export default function Home() {
                             <span className="text-xs font-medium text-gray-600 truncate w-full text-center">
                                 {item.label}
                             </span>
-                        </div>
-                    ))}
-
-                    {/* Fallback if list is dangerously empty */}
-                    {(Array.isArray(pillsArray) && pillsArray.length === 0) && ['Burgers', 'Pizza', 'Sushi'].map((label, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 min-w-[70px] cursor-pointer">
-                            <div className="w-16 h-16 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-2xl">🍽️</div>
-                            <span className="text-xs font-medium text-gray-600">{label}</span>
                         </div>
                     ))}
                 </div>
