@@ -1,4 +1,10 @@
 {
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ],
     "headers": [
         {
             "source": "/index.html",
@@ -14,15 +20,6 @@
                 {
                     "key": "Expires",
                     "value": "0"
-                }
-            ]
-        },
-        {
-            "source": "/",
-            "headers": [
-                {
-                    "key": "Cache-Control",
-                    "value": "no-cache, no-store, must-revalidate"
                 }
             ]
         }
