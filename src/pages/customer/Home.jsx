@@ -77,11 +77,18 @@ function Home({ config: configProp }) {
             image: tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image,
             // 2. FORCE THE TITLE 
             title: tenantData?.business_name || branding?.business_name || 'FoodSpot',
-            // 3. FORCE THE SHOW/HIDE LOGIC
+            // 3. FONT STYLING (From Owner Branding > Identity)
+            fontFamily: tenantData?.font_family || branding?.font_family,
+            fontWeight: tenantData?.font_weight || branding?.font_weight,
+            // 4. LOGIC: Text Mode vs Image Mode
+            // If user explicitly chose 'text' mode -> NO IMAGE
+            // If user chose 'image' mode but has NO URL -> NO IMAGE (Fallback to text)
+            useImage: (tenantData?.hero_mode === 'text')
+                ? false
+                : !!(tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image),
+            // 5. Visibility Controls
             showTitle: true,
             useLogo: !!(tenantData?.logo_url || branding?.logo_url),
-            // 4. TEXT FIRST FALLBACK LOGIC
-            useImage: !!(tenantData?.hero_url || branding?.hero_url || configProp?.headerCover?.image),
             backgroundColor: branding?.primaryColor || tenantData?.primary_color || '#1A1A1A'
         }
     }
