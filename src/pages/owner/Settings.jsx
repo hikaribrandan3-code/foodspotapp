@@ -5,6 +5,7 @@ import { useTenant } from '../../contexts/TenantContext'; // SILO SOURCE OF TRUT
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
+import HeroStudio from '../../components/HeroStudio'; // 🎨 RESTORED: Studio Workflow
 import { clearAuth } from '../../utils/storage';
 import './Settings.css';
 
@@ -21,9 +22,9 @@ const Settings = () => {
         font_weight: '600'
     });
 
-    // 🛡️ DROPDOWN STATE: Independent control for Font Selector
     const [isFontMenuOpen, setIsFontMenuOpen] = useState(false);
     const [isWeightMenuOpen, setIsWeightMenuOpen] = useState(false);
+    const [showHeroStudio, setShowHeroStudio] = useState(false); // 🎨 STUDIO TOGGLE
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
 
@@ -332,18 +333,26 @@ const Settings = () => {
 
                     {tenant?.hero_mode === 'image' ? (
                         <div className="hero-stage">
-                            <div className="editor-crosshair">+</div>
-                            {tenant?.hero_url ? (
-                                <img src={tenant.hero_url} className="preview-img" alt="Hero" />
-                            ) : (
-                                <div style={{ color: '#94A3B8' }}>No image set</div>
-                            )}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="hero-upload-input"
-                                onChange={handleHeroUpload}
-                            />
+                            {/* STUDIO TRIGGER: Opens Full Screen Editor */}
+                            <div
+                                className="hero-studio-trigger"
+                                onClick={() => setShowHeroStudio(true)}
+                            >
+                                {tenant?.hero_url ? (
+                                    <>
+                                        <div className="editor-crosshair">+</div>
+                                        <img src={tenant.hero_url} className="preview-img" alt="Hero" />
+                                        <div className="edit-overlay">
+                                            <span>✎ Editar Imagen</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="empty-state">
+                                        <span className="plus-icon">+</span>
+                                        <span>Subir Logo/Cover</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <div
@@ -477,6 +486,16 @@ const Settings = () => {
             </div>
 
             <BackendNav role="owner" useRoutes={true} />
+            {/* 🎨 HERO STUDIO MODAL */}
+            {showHeroStudio && (
+                <HeroStudio
+                    onClose={() => setShowHeroStudio(false)}
+                    onSave={(newUrl) => {
+                        handleFieldUpdate('hero_url', newUrl);
+                        setShowHeroStudio(false);
+                    }}
+                />
+            )}
         </div>
     );
 };
