@@ -1,12 +1,13 @@
 /**
- * CoverImageEditor.jsx — POINTER CAPTURE PHYSICS
- * * FIXES:
- *   - setPointerCapture() locks finger to element
- *   - posRef for synchronous position tracking (bypasses React lag)
- *   - Unified pointer events for mouse/touch
+ * CoverImageEditor.jsx — HARD-SYNCED PHYSICS BUILD
+ * 
+ * FIXES IMPLEMENTED:
+ * 1. CSS !important Override — Forces browser to yield gesture control
+ * 2. Heartbeat Sync — posRef always matches React state
+ * 3. Hardware Pointer Capture — Locks finger to element
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTenant } from '../contexts/TenantContext.jsx'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
@@ -40,47 +41,51 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const initialPinchDistance = useRef(0)
     const initialScale = useRef(1)
     const fileInputRef = useRef(null)
-    const posRef = useRef({ x: 0, y: 0, scale: 1 }) // LIVE PHYSICS STATE
+    const posRef = useRef({ x: 0, y: 0, scale: 1 })
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // SCROLL LOCK + SAFARI PULL-TO-REFRESH BLOCK
+    // 1. CSS !important OVERRIDE (Safari Gesture Unlock)
     // ============================================
     useEffect(() => {
         if (!isOpen) return
 
         const scrollY = window.scrollY
 
-        // Lock body
+        // Lock body scroll
         document.body.style.overflow = 'hidden'
         document.body.style.position = 'fixed'
         document.body.style.width = '100%'
         document.body.style.top = `-${scrollY}px`
-        document.body.style.overscrollBehavior = 'none'
-        document.documentElement.style.overscrollBehavior = 'none'
 
-        // SAFARI PULL-TO-REFRESH KILLER
-        const preventPullToRefresh = (e) => {
-            // Block all touchmove on document when editor is open
-            if (e.touches.length === 1) {
-                e.preventDefault()
-            }
-        }
-
-        document.addEventListener('touchmove', preventPullToRefresh, { passive: false })
+        // FORCE OVERRIDE — breaks Safari's pan-x pan-y lock
+        document.body.style.setProperty('touch-action', 'none', 'important')
+        document.documentElement.style.setProperty('touch-action', 'none', 'important')
+        document.body.style.setProperty('overscroll-behavior', 'none', 'important')
+        document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important')
 
         return () => {
             document.body.style.overflow = ''
             document.body.style.position = ''
             document.body.style.width = ''
             document.body.style.top = ''
-            document.body.style.overscrollBehavior = ''
-            document.documentElement.style.overscrollBehavior = ''
-            document.removeEventListener('touchmove', preventPullToRefresh)
+            document.body.style.removeProperty('touch-action')
+            document.documentElement.style.removeProperty('touch-action')
+            document.body.style.removeProperty('overscroll-behavior')
+            document.documentElement.style.removeProperty('overscroll-behavior')
             window.scrollTo(0, scrollY)
         }
     }, [isOpen])
+
+    // ============================================
+    // 2. HEARTBEAT SYNC (DeepSeek Fix)
+    // ============================================
+    useEffect(() => {
+        posRef.current.x = offsetX
+        posRef.current.y = offsetY
+        posRef.current.scale = scale
+    }, [offsetX, offsetY, scale])
 
     useEffect(() => {
         const handleResize = () => setBreakpoint(getBreakpoint())
@@ -96,7 +101,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             setScale(1)
             setOffsetX(0)
             setOffsetY(0)
-            posRef.current = { x: 0, y: 0, scale: 1 } // RESET PHYSICS
+            posRef.current = { x: 0, y: 0, scale: 1 }
             initialPinchDistance.current = 0
             setTimeout(() => fileInputRef.current?.click(), 300)
         }
@@ -107,13 +112,6 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             if (image?.startsWith('blob:')) URL.revokeObjectURL(image)
         }
     }, [image])
-
-    // SYNC HEARTBEAT: Keep Physics Ref in sync with React State
-    useEffect(() => {
-        posRef.current.x = offsetX
-        posRef.current.y = offsetY
-        posRef.current.scale = scale
-    }, [offsetX, offsetY, scale])
 
     const handleFileSelect = async (e) => {
         const file = e.target.files?.[0]
@@ -130,15 +128,14 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // POINTER CAPTURE PHYSICS (The Fix)
+    // 3. HARDWARE POINTER CAPTURE (With Ref Sync)
     // ============================================
     const handlePointerDown = (e) => {
         if (!image) return
 
-        // LOCK THE FINGER
+        // LOCK THE FINGER TO THIS ELEMENT
         e.currentTarget.setPointerCapture(e.pointerId)
 
-        // STARTING POSITION
         isDragging.current = true
         lastTouch.current = { x: e.clientX, y: e.clientY }
 
@@ -148,37 +145,33 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     const handlePointerMove = (e) => {
-        if (!image) return
+        if (!image || !isDragging.current) return
         e.preventDefault()
-        if (!isDragging.current) return
 
-        // Calculate Delta
         const dx = e.clientX - lastTouch.current.x
         const dy = e.clientY - lastTouch.current.y
 
-        // UPDATE REF (Immediate Physics)
-        const newX = posRef.current.x + dx
-        const newY = posRef.current.y + dy
+        let newX = posRef.current.x + dx
+        let newY = posRef.current.y + dy
 
         // Magnetic Snap Logic
-        let finalX = newX
-        let finalY = newY
         let isX = false, isY = false
-
         if (Math.abs(newX) < SNAP_THRESHOLD) {
-            finalX = 0; isX = true
+            newX = 0
+            isX = true
             if (!snappedX && navigator.vibrate) navigator.vibrate(10)
         }
         if (Math.abs(newY) < SNAP_THRESHOLD) {
-            finalY = 0; isY = true
+            newY = 0
+            isY = true
             if (!snappedY && navigator.vibrate) navigator.vibrate(10)
         }
 
-        // Commit to Ref & State
-        posRef.current.x = finalX
-        posRef.current.y = finalY
-        setOffsetX(finalX)
-        setOffsetY(finalY)
+        // Atomic Update: Ref + State
+        posRef.current.x = newX
+        posRef.current.y = newY
+        setOffsetX(newX)
+        setOffsetY(newY)
         setSnappedX(isX)
         setSnappedY(isY)
 
@@ -187,30 +180,31 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
 
     const handlePointerUp = (e) => {
         isDragging.current = false
-        e.currentTarget.releasePointerCapture(e.pointerId) // UNLOCK
+        try {
+            e.currentTarget.releasePointerCapture(e.pointerId)
+        } catch (err) { /* ignore */ }
     }
 
-    // ZOOM HANDLER (Separate for 2-Finger Pinch)
+    // PINCH ZOOM (Two-Finger Touch)
     const handleTouchMove = (e) => {
-        if (!image) return
-        if (e.touches.length === 2) {
-            e.preventDefault()
-            e.stopPropagation()
-            const dx = e.touches[0].clientX - e.touches[1].clientX
-            const dy = e.touches[0].clientY - e.touches[1].clientY
-            const distance = Math.sqrt(dx * dx + dy * dy)
+        if (!image || e.touches.length !== 2) return
+        e.preventDefault()
+        e.stopPropagation()
 
-            if (initialPinchDistance.current === 0) {
-                initialPinchDistance.current = distance
-                initialScale.current = posRef.current.scale
-                return
-            }
-            const scaleFactor = distance / initialPinchDistance.current
-            const newScale = Math.min(3, Math.max(0.5, initialScale.current * scaleFactor))
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        const distance = Math.sqrt(dx * dx + dy * dy)
 
-            setScale(newScale)
-            posRef.current.scale = newScale
+        if (initialPinchDistance.current === 0) {
+            initialPinchDistance.current = distance
+            initialScale.current = posRef.current.scale
+            return
         }
+
+        const scaleFactor = distance / initialPinchDistance.current
+        const newScale = Math.min(3, Math.max(0.5, initialScale.current * scaleFactor))
+        setScale(newScale)
+        posRef.current.scale = newScale
     }
 
     const handleTouchEnd = () => {
@@ -255,9 +249,10 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                 position: 'fixed',
                 inset: 0,
                 background: '#000',
-                zIndex: 99999
+                zIndex: 99999,
+                touchAction: 'none'
             }}>
-                {/* CROP FRAME - Pointer Capture */}
+                {/* CROP FRAME */}
                 <div
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
@@ -295,7 +290,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             backgroundSize: `${scale * 100}%`,
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',
-                            transform: `translate(${offsetX}px, ${offsetY}px)`,
+                            transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
                             willChange: 'transform',
                             pointerEvents: 'none'
                         }} />
@@ -317,6 +312,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         </div>
                     )}
 
+                    {/* GREEN SNAP LINES */}
                     {image && snappedX && <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11, transform: 'translateX(-50%)', pointerEvents: 'none' }} />}
                     {image && snappedY && <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: '#22C55E', boxShadow: '0 0 12px #22C55E', zIndex: 11, transform: 'translateY(-50%)', pointerEvents: 'none' }} />}
                     {image && snappedX && snappedY && <div style={{ position: 'absolute', top: '50%', left: '50%', width: 12, height: 12, background: '#22C55E', borderRadius: '50%', transform: 'translate(-50%, -50%)', boxShadow: '0 0 16px #22C55E', zIndex: 12, pointerEvents: 'none' }} />}
@@ -420,9 +416,33 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     if (step === 'preview') {
         return (
             <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999 }}>
-                <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
-                    <Home config={getConfig()} />
+                {/* Show cropped preview */}
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: coverHeight,
+                    overflow: 'hidden',
+                    background: '#111'
+                }}>
+                    <div style={{
+                        position: 'absolute',
+                        width: '200%',
+                        height: '200%',
+                        left: '-50%',
+                        top: '-50%',
+                        backgroundImage: `url(${image})`,
+                        backgroundSize: `${scale * 100}%`,
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
+                        pointerEvents: 'none'
+                    }} />
                 </div>
+
+                {/* Rest of page placeholder */}
+                <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#f5f5f5' }} />
 
                 <div style={{
                     position: 'fixed',
