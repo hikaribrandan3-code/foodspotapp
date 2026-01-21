@@ -256,7 +256,10 @@ export function TenantProvider({ children }) {
                 console.error('[TenantContext] Error resolving tenant:', err)
                 setError(err.message)
             } finally {
-                setLoading(false)
+                // 🕵️ DEBUG: Force 2s delay so we can see the telemetry screen
+                setTimeout(() => {
+                    setLoading(false)
+                }, 2000)
             }
         }
 

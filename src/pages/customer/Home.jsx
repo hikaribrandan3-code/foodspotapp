@@ -56,13 +56,14 @@ export default function Home() {
     // 💊 PILLS DATA: Database -> fallback
     const menuData = getMenu(); // Static fallback list
 
-    // 🛡️ CRASH FIX: Ensure pillsData is ALWAYS an array
+    // 🛡️ CRASH FIX: Ensure pillsData is ALWAYS an array of valid objects
     const rawPills = branding?.infoPills || tenantData?.info_pills || [];
-    const pillsArray = (Array.isArray(rawPills) && rawPills.length > 0)
-        ? rawPills
-        : (typeof rawPills === 'object' && rawPills !== null && Object.keys(rawPills).length > 0)
-            ? Object.entries(rawPills).map(([k, v]) => ({ label: v.label || k, icon: v.icon || '🍽️' }))
-            : menuData.map(cat => ({ label: cat.name, icon: '🍽️' }));
+
+    // Convert to Array and filter out any non-objects to prevent .map() crashes
+    const safePills = (Array.isArray(rawPills) ? rawPills : (typeof rawPills === 'object' && rawPills !== null ? Object.values(rawPills) : []))
+        .filter(item => item && typeof item === 'object');
+
+    const pillsArray = safePills.length > 0 ? safePills : menuData.map(cat => ({ label: cat.name, icon: '🍽️' }));
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 relative font-sans">
