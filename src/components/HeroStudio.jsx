@@ -417,6 +417,11 @@ const styles = {
         cursor: 'pointer',
         color: '#888',
         fontSize: '16px',
+        // 🛡️ iOS TOUCH FIX: Enable interaction
+        WebkitTouchCallout: 'default',
+        WebkitUserSelect: 'none',
+        touchAction: 'auto',
+        pointerEvents: 'auto',
     },
     uploadIcon: {
         fontSize: '48px',
