@@ -309,12 +309,37 @@ function App() {
     const path = location.pathname;
     const isGlobalPath = GLOBAL_PATHS.includes(path) || path.startsWith('/admin');
 
+    // 🛡️ FIX 3: Timed Hydration Guard with Retry Button
+    const [hydrationTimeout, setHydrationTimeout] = React.useState(false);
+    React.useEffect(() => {
+        if (!tenant?.isLoaded && !isGlobalPath) {
+            const timer = setTimeout(() => setHydrationTimeout(true), 8000);
+            return () => clearTimeout(timer);
+        }
+    }, [tenant?.isLoaded, isGlobalPath]);
+
     if (!tenant?.isLoaded && !isGlobalPath) {
         return (
             <div className="flex h-screen items-center justify-center bg-black">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-[#DB0007] border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-white text-xs font-mono uppercase tracking-widest animate-pulse">Hydrating Silo...</p>
+                    {hydrationTimeout ? (
+                        <>
+                            <div className="text-4xl">⏱️</div>
+                            <p className="text-white text-sm font-medium">Connection Timeout</p>
+                            <p className="text-white/60 text-xs max-w-xs text-center">The server is taking too long to respond. Please check your connection.</p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="mt-4 px-6 py-3 bg-[#7C3AED] text-white rounded-lg font-semibold hover:bg-[#6D28D9] transition-colors"
+                            >
+                                Retry Connection
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="w-10 h-10 border-4 border-[#DB0007] border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-white text-xs font-mono uppercase tracking-widest animate-pulse">Hydrating Silo...</p>
+                        </>
+                    )}
                 </div>
             </div>
         );

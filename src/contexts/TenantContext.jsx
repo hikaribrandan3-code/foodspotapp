@@ -23,6 +23,14 @@ import { setTenantStoragePrefix } from '../utils/storage.js'
 // Context
 const TenantContext = createContext(null)
 
+// 🛡️ FIX 2: Timeout utility for Promise.race
+const withTimeout = (promise, ms, errorMessage) => {
+    const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(errorMessage)), ms)
+    )
+    return Promise.race([promise, timeout])
+}
+
 /**
  * TenantProvider Component
  * 
@@ -72,26 +80,55 @@ export function TenantProvider({ children }) {
                 // First segment is the tenant slug (NORMALIZED TO LOWERCASE)
                 const slug = pathSegments[0].toLowerCase()
 
-                // 2. FETCH TENANT FROM SUPABASE (with 1 retry after 1 second)
+                // 🛡️ GUARD: Prevent empty slug queries
+                if (!slug || slug.trim() === '') {
+                    console.warn('[TenantContext] Empty slug detected, skipping lookup')
+                    setLoading(false)
+                    return
+                }
+
+                // 2. FETCH TENANT FROM SUPABASE (with timeout + 1 retry after 1 second)
                 const fetchTenant = async (retryCount = 0) => {
                     console.log('[TenantContext] 🔍 Looking for slug:', slug)
 
-                    // Try fetch by slug first - CASE INSENSITIVE
-                    let { data: tenant, error: fetchError } = await supabase
+                    // 🛡️ FIX 2: Wrap Supabase call in 10-second timeout
+                    const supabaseQuery = supabase
                         .from('branding')
                         .select('*')
-                        .ilike('slug', slug)  // 🔐 CASE-INSENSITIVE MATCH
+                        .ilike('slug', slug)
                         .maybeSingle()
+
+                    let tenant, fetchError
+                    try {
+                        const result = await withTimeout(
+                            supabaseQuery,
+                            10000,
+                            'Connection timeout. Please check your network.'
+                        )
+                        tenant = result.data
+                        fetchError = result.error
+                    } catch (timeoutErr) {
+                        console.error('[TenantContext] ⏱️ Timeout:', timeoutErr.message)
+                        throw timeoutErr
+                    }
 
                     // 🔄 FALLBACK: If no slug match, try business_name (case-insensitive)
                     if (!tenant) {
                         console.log('[TenantContext] ⚠️ No slug match, trying business_name...')
-                        const { data: tenantByName } = await supabase
-                            .from('branding')
-                            .select('*')
-                            .ilike('business_name', slug)
-                            .maybeSingle()
-                        tenant = tenantByName
+                        try {
+                            const fallbackQuery = supabase
+                                .from('branding')
+                                .select('*')
+                                .ilike('business_name', slug)
+                                .maybeSingle()
+
+                            const fallbackResult = await withTimeout(
+                                fallbackQuery,
+                                10000,
+                                'Connection timeout on fallback lookup.'
+                            )
+                            tenant = fallbackResult.data
+                        } catch { /* Silent fallback failure */ }
                     }
 
                     if (tenant) {
@@ -287,6 +324,8 @@ export function TenantProvider({ children }) {
                 </div>
             )
         }
+
+        // 🛡️ FIX 2.5: Show Retry button on error instead of dead end
         return (
             <div style={{
                 display: 'flex',
@@ -301,10 +340,24 @@ export function TenantProvider({ children }) {
                 textAlign: 'center'
             }}>
                 <h1 style={{ fontSize: '24px', marginBottom: '12px' }}>🏢 Negocio no encontrado</h1>
-                <p style={{ opacity: 0.7, maxWidth: '400px' }}>
+                <p style={{ opacity: 0.7, maxWidth: '400px', marginBottom: '24px' }}>
                     No pudimos encontrar el negocio solicitado.
                     Verificá la URL o contactá al soporte.
                 </p>
+                <button
+                    onClick={() => window.location.reload()}
+                    style={{
+                        padding: '12px 24px',
+                        background: '#7C3AED',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 600
+                    }}
+                >
+                    Reintentar
+                </button>
             </div>
         )
     }
