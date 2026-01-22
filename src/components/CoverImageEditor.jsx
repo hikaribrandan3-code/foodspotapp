@@ -1,10 +1,11 @@
 /**
- * CoverImageEditor.jsx — NATIVE TOUCH ENGINE
+ * CoverImageEditor.jsx — FORM-HEURISTIC DECLASSIFIED
  * 
  * FIXES:
- * 1. NATIVE DOM EVENTS — Bypasses React synthetic events entirely
- * 2. { passive: false } — Allows preventDefault on touch events in Safari
- * 3. Direct ref injection — frame.addEventListener instead of onTouchMove
+ * 1. DECLASSIFIED UI — role="presentation", autoComplete="off" breaks Safari form detection
+ * 2. BUTTON HARDENING — type="button" + randomized names prevent submit detection
+ * 3. NATIVE TOUCH ENGINE — Direct DOM listeners with { passive: false }
+ * 4. POINTER DOMINANCE — Proper touch-action and pointer-events isolation
  */
 
 import { useState, useRef, useEffect } from 'react'
@@ -15,6 +16,9 @@ import { getConfig } from '../config/appConfig.v2.js'
 
 const COVER_HEIGHTS = { mobile: 220, tablet: 280 }
 const SNAP_THRESHOLD = 12
+
+// Randomized button name generator (breaks Safari heuristics)
+const rndName = () => `ign_${Math.random().toString(36).slice(2, 8)}`
 
 function getBreakpoint() {
     return window.innerWidth >= 768 ? 'tablet' : 'mobile'
@@ -45,7 +49,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // SCROLL LOCK
+    // SCROLL LOCK + FORM DECLASSIFICATION
     // ============================================
     useEffect(() => {
         if (!isOpen) return
@@ -124,23 +128,22 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // NATIVE TOUCH ENGINE (Bypasses React)
+    // NATIVE TOUCH ENGINE (Bypasses React + Safari)
     // ============================================
     useEffect(() => {
         const frame = cropFrameRef.current
         if (!frame || !image || step !== 'edit') return
 
         const handleStart = (e) => {
-            e.preventDefault() // Kills Safari System Menu
+            e.preventDefault()
+            e.stopPropagation()
             const touch = e.touches ? e.touches[0] : e
             isDragging.current = true
             lastTouch.current = { x: touch.clientX, y: touch.clientY }
 
-            // Sync ref to current state
             posRef.current.x = offsetX
             posRef.current.y = offsetY
 
-            // Handle Pinch Init
             if (e.touches && e.touches.length === 2) {
                 const dx = e.touches[0].clientX - e.touches[1].clientX
                 const dy = e.touches[0].clientY - e.touches[1].clientY
@@ -150,10 +153,12 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         }
 
         const handleMove = (e) => {
-            if (e.cancelable) e.preventDefault() // Kills Page Scroll
+            if (e.cancelable) {
+                e.preventDefault()
+                e.stopPropagation()
+            }
 
             if (e.touches && e.touches.length === 2) {
-                // PINCH MATH
                 const dx = e.touches[0].clientX - e.touches[1].clientX
                 const dy = e.touches[0].clientY - e.touches[1].clientY
                 const dist = Math.sqrt(dx * dx + dy * dy)
@@ -163,14 +168,12 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     setScale(newScale)
                 }
             } else if (isDragging.current && e.touches && e.touches.length === 1) {
-                // DRAG MATH
                 const touch = e.touches[0]
                 const dx = touch.clientX - lastTouch.current.x
                 const dy = touch.clientY - lastTouch.current.y
                 let nx = posRef.current.x + dx
                 let ny = posRef.current.y + dy
 
-                // Magnetic Snap
                 let isX = false, isY = false
                 if (Math.abs(nx) < SNAP_THRESHOLD) { nx = 0; isX = true }
                 if (Math.abs(ny) < SNAP_THRESHOLD) { ny = 0; isY = true }
@@ -185,20 +188,20 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             }
         }
 
-        const handleEnd = () => {
+        const handleEnd = (e) => {
+            e.preventDefault()
             isDragging.current = false
             initialPinchDist.current = 0
         }
 
-        // THE DIRECT INJECTION
-        frame.addEventListener('touchstart', handleStart, { passive: false })
-        frame.addEventListener('touchmove', handleMove, { passive: false })
-        frame.addEventListener('touchend', handleEnd)
+        frame.addEventListener('touchstart', handleStart, { passive: false, capture: true })
+        frame.addEventListener('touchmove', handleMove, { passive: false, capture: true })
+        frame.addEventListener('touchend', handleEnd, { passive: false, capture: true })
 
         return () => {
-            frame.removeEventListener('touchstart', handleStart)
-            frame.removeEventListener('touchmove', handleMove)
-            frame.removeEventListener('touchend', handleEnd)
+            frame.removeEventListener('touchstart', handleStart, { capture: true })
+            frame.removeEventListener('touchmove', handleMove, { capture: true })
+            frame.removeEventListener('touchend', handleEnd, { capture: true })
         }
     }, [image, step, offsetX, offsetY])
 
@@ -230,7 +233,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
 
     if (!isOpen) return null
 
-    // SHARED CONTAINER STYLES
+    // DECLASSIFIED CONTAINER STYLES
     const containerStyles = {
         position: 'fixed',
         inset: 0,
@@ -239,7 +242,18 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         touchAction: 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        WebkitTouchCallout: 'none'
+        WebkitTouchCallout: 'none',
+        MozUserSelect: 'none'
+    }
+
+    // HARDENED BUTTON STYLES
+    const btnBase = {
+        pointerEvents: 'auto',
+        border: 'none',
+        cursor: 'pointer',
+        WebkitAppearance: 'none',
+        MozAppearance: 'none',
+        appearance: 'none'
     }
 
     // ============================================
@@ -247,10 +261,17 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     // ============================================
     if (step === 'edit') {
         return (
-            <div style={containerStyles}>
-                {/* CROP FRAME — Only ref, no event handlers */}
+            <div
+                role="presentation"
+                aria-hidden="true"
+                autoComplete="off"
+                data-form-type="other"
+                style={containerStyles}
+            >
+                {/* CROP FRAME */}
                 <div
                     ref={cropFrameRef}
+                    role="none"
                     style={{
                         position: 'absolute',
                         top: 0,
@@ -270,20 +291,24 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     onClick={() => !image && fileInputRef.current?.click()}
                 >
                     {image && (
-                        <div style={{
-                            position: 'absolute',
-                            width: '200%',
-                            height: '200%',
-                            left: '-50%',
-                            top: '-50%',
-                            backgroundImage: `url(${image})`,
-                            backgroundSize: `${scale * 100}%`,
-                            backgroundPosition: 'center',
-                            backgroundRepeat: 'no-repeat',
-                            transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
-                            willChange: 'transform',
-                            pointerEvents: 'none'
-                        }} />
+                        <div
+                            role="img"
+                            aria-label="Hero image preview"
+                            style={{
+                                position: 'absolute',
+                                width: '200%',
+                                height: '200%',
+                                left: '-50%',
+                                top: '-50%',
+                                backgroundImage: `url(${image})`,
+                                backgroundSize: `${scale * 100}%`,
+                                backgroundPosition: 'center',
+                                backgroundRepeat: 'no-repeat',
+                                transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
+                                willChange: 'transform',
+                                pointerEvents: 'none'
+                            }}
+                        />
                     )}
 
                     {!image && (
@@ -313,58 +338,65 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                 <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 5, pointerEvents: 'none' }} />
 
                 {/* TOP BAR */}
-                <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    padding: 16,
-                    paddingTop: 'max(16px, env(safe-area-inset-top))',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    zIndex: 2147483647,
-                    pointerEvents: 'none'
-                }}>
+                <div
+                    role="presentation"
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        padding: 16,
+                        paddingTop: 'max(16px, env(safe-area-inset-top))',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        zIndex: 2147483647,
+                        pointerEvents: 'none'
+                    }}
+                >
                     <button
+                        type="button"
+                        name={rndName()}
+                        autoComplete="off"
                         onClick={onClose}
                         style={{
-                            pointerEvents: 'auto',
+                            ...btnBase,
                             background: 'rgba(0,0,0,0.9)',
                             color: '#ff6b6b',
-                            border: 'none',
                             padding: '12px 20px',
                             borderRadius: 24,
                             fontWeight: '700',
-                            fontSize: 15,
-                            cursor: 'pointer'
+                            fontSize: 15
                         }}
                     >
                         ✕ Cancel
                     </button>
                     <button
+                        type="button"
+                        name={rndName()}
+                        autoComplete="off"
                         onClick={() => fileInputRef.current?.click()}
                         style={{
-                            pointerEvents: 'auto',
+                            ...btnBase,
                             background: 'rgba(255,255,255,0.2)',
                             color: '#fff',
-                            border: 'none',
                             padding: '12px 20px',
                             borderRadius: 24,
                             fontWeight: '600',
-                            fontSize: 20,
-                            cursor: 'pointer'
+                            fontSize: 20
                         }}
                     >
                         📷
                     </button>
                     <button
+                        type="button"
+                        name={rndName()}
+                        autoComplete="off"
                         onClick={() => setStep('preview')}
                         disabled={!image}
                         style={{
-                            pointerEvents: 'auto',
+                            ...btnBase,
                             background: image ? '#3B82F6' : '#333',
                             color: '#fff',
-                            border: 'none',
                             padding: '12px 20px',
                             borderRadius: 24,
                             fontWeight: '700',
@@ -396,7 +428,15 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     </div>
                 )}
 
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    name={rndName()}
+                    autoComplete="off"
+                    style={{ display: 'none' }}
+                />
             </div>
         )
     }
@@ -406,7 +446,12 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     // ============================================
     if (step === 'preview') {
         return (
-            <div style={{ ...containerStyles, background: '#1a1a1a' }}>
+            <div
+                role="presentation"
+                aria-hidden="true"
+                autoComplete="off"
+                style={{ ...containerStyles, background: '#1a1a1a' }}
+            >
                 {/* STATIC HERO PREVIEW */}
                 <div style={{
                     position: 'absolute',
@@ -471,42 +516,48 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                 </div>
 
                 {/* ACTION BUTTONS */}
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    padding: 16,
-                    paddingTop: 'max(16px, env(safe-area-inset-top))',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    zIndex: 2147483647,
-                    pointerEvents: 'none'
-                }}>
+                <div
+                    role="presentation"
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        padding: 16,
+                        paddingTop: 'max(16px, env(safe-area-inset-top))',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        zIndex: 2147483647,
+                        pointerEvents: 'none'
+                    }}
+                >
                     <button
+                        type="button"
+                        name={rndName()}
+                        autoComplete="off"
                         onClick={() => setStep('edit')}
                         style={{
-                            pointerEvents: 'auto',
+                            ...btnBase,
                             background: 'rgba(0,0,0,0.9)',
                             color: '#fff',
-                            border: 'none',
                             padding: '12px 24px',
                             borderRadius: 28,
                             fontWeight: 700,
-                            fontSize: 15,
-                            cursor: 'pointer'
+                            fontSize: 15
                         }}
                     >
                         ← Back
                     </button>
                     <button
+                        type="button"
+                        name={rndName()}
+                        autoComplete="off"
                         onClick={handleSave}
                         disabled={isSaving}
                         style={{
-                            pointerEvents: 'auto',
+                            ...btnBase,
                             background: '#22C55E',
                             color: '#fff',
-                            border: 'none',
                             padding: '12px 28px',
                             borderRadius: 28,
                             fontWeight: 800,
