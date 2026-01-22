@@ -1,17 +1,18 @@
 /**
- * CoverImageEditor.jsx — HARD-SYNCED PHYSICS BUILD
+ * CoverImageEditor.jsx — STATIC PREVIEW + SYSTEM MENU KILL
  * 
- * FIXES IMPLEMENTED:
- * 1. CSS !important Override — Forces browser to yield gesture control
- * 2. Heartbeat Sync — posRef always matches React state
- * 3. Hardware Pointer Capture — Locks finger to element
+ * FIXES:
+ * 1. STATIC PREVIEW — No <Home /> component, just cropped image
+ * 2. SYSTEM MENU KILL — WebkitTouchCallout: 'none' stops copy/paste popup
+ * 3. CSS !important Override — Forces browser gesture control
+ * 4. Heartbeat Sync — posRef always matches React state
+ * 5. Hardware Pointer Capture — Locks finger to element
  */
 
 import { useState, useRef, useEffect } from 'react'
 import { useTenant } from '../contexts/TenantContext.jsx'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
-import Home from '../pages/customer/Home.jsx'
 import { getConfig } from '../config/appConfig.v2.js'
 
 const COVER_HEIGHTS = { mobile: 220, tablet: 280 }
@@ -35,7 +36,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const [snappedY, setSnappedY] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
 
-    // Physics Refs (Synchronous, bypasses React render lag)
+    // Physics Refs
     const isDragging = useRef(false)
     const lastTouch = useRef({ x: 0, y: 0 })
     const initialPinchDistance = useRef(0)
@@ -46,7 +47,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // 1. CSS !important OVERRIDE (Safari Gesture Unlock)
+    // 1. CSS !important OVERRIDE + SYSTEM MENU KILL
     // ============================================
     useEffect(() => {
         if (!isOpen) return
@@ -65,6 +66,11 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         document.body.style.setProperty('overscroll-behavior', 'none', 'important')
         document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important')
 
+        // KILL SYSTEM MENU
+        document.body.style.setProperty('-webkit-touch-callout', 'none', 'important')
+        document.body.style.setProperty('user-select', 'none', 'important')
+        document.body.style.setProperty('-webkit-user-select', 'none', 'important')
+
         return () => {
             document.body.style.overflow = ''
             document.body.style.position = ''
@@ -74,12 +80,15 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             document.documentElement.style.removeProperty('touch-action')
             document.body.style.removeProperty('overscroll-behavior')
             document.documentElement.style.removeProperty('overscroll-behavior')
+            document.body.style.removeProperty('-webkit-touch-callout')
+            document.body.style.removeProperty('user-select')
+            document.body.style.removeProperty('-webkit-user-select')
             window.scrollTo(0, scrollY)
         }
     }, [isOpen])
 
     // ============================================
-    // 2. HEARTBEAT SYNC (DeepSeek Fix)
+    // 2. HEARTBEAT SYNC
     // ============================================
     useEffect(() => {
         posRef.current.x = offsetX
@@ -93,6 +102,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
+    // UPLOAD-FIRST FLOW
     useEffect(() => {
         if (isOpen) {
             setStep('edit')
@@ -128,18 +138,19 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // 3. HARDWARE POINTER CAPTURE (With Ref Sync)
+    // 3. POINTER CAPTURE PHYSICS
     // ============================================
     const handlePointerDown = (e) => {
         if (!image) return
 
-        // LOCK THE FINGER TO THIS ELEMENT
+        e.preventDefault()
+        e.stopPropagation()
         e.currentTarget.setPointerCapture(e.pointerId)
 
         isDragging.current = true
         lastTouch.current = { x: e.clientX, y: e.clientY }
 
-        // SYNC REF TO CURRENT STATE BEFORE MOVING
+        // SYNC REF TO CURRENT STATE
         posRef.current.x = offsetX
         posRef.current.y = offsetY
     }
@@ -147,6 +158,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     const handlePointerMove = (e) => {
         if (!image || !isDragging.current) return
         e.preventDefault()
+        e.stopPropagation()
 
         const dx = e.clientX - lastTouch.current.x
         const dy = e.clientY - lastTouch.current.y
@@ -154,7 +166,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         let newX = posRef.current.x + dx
         let newY = posRef.current.y + dy
 
-        // Magnetic Snap Logic
+        // Magnetic Snap
         let isX = false, isY = false
         if (Math.abs(newX) < SNAP_THRESHOLD) {
             newX = 0
@@ -167,7 +179,6 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             if (!snappedY && navigator.vibrate) navigator.vibrate(10)
         }
 
-        // Atomic Update: Ref + State
         posRef.current.x = newX
         posRef.current.y = newY
         setOffsetX(newX)
@@ -185,7 +196,16 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         } catch (err) { /* ignore */ }
     }
 
-    // PINCH ZOOM (Two-Finger Touch)
+    // PINCH ZOOM
+    const handleTouchStart = (e) => {
+        if (!image || e.touches.length !== 2) return
+        e.preventDefault()
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
+        initialScale.current = scale
+    }
+
     const handleTouchMove = (e) => {
         if (!image || e.touches.length !== 2) return
         e.preventDefault()
@@ -195,16 +215,12 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         const dy = e.touches[0].clientY - e.touches[1].clientY
         const distance = Math.sqrt(dx * dx + dy * dy)
 
-        if (initialPinchDistance.current === 0) {
-            initialPinchDistance.current = distance
-            initialScale.current = posRef.current.scale
-            return
+        if (initialPinchDistance.current > 0) {
+            const scaleFactor = distance / initialPinchDistance.current
+            const newScale = Math.min(3, Math.max(0.5, initialScale.current * scaleFactor))
+            setScale(newScale)
+            posRef.current.scale = newScale
         }
-
-        const scaleFactor = distance / initialPinchDistance.current
-        const newScale = Math.min(3, Math.max(0.5, initialScale.current * scaleFactor))
-        setScale(newScale)
-        posRef.current.scale = newScale
     }
 
     const handleTouchEnd = () => {
@@ -218,10 +234,9 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         try {
             const res = await uploadAsset(originalFile, businessId, 'branding')
             if (res.error) throw res.error
-            const finalUrl = res.url
 
             const { error } = await updateBranding({
-                hero_url: finalUrl,
+                hero_url: res.url,
                 hero_mode: 'image',
                 hero_settings: JSON.stringify({ scale, offsetX, offsetY }),
                 updated_at: new Date().toISOString()
@@ -229,7 +244,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             if (error) throw error
 
             try { await refreshTenant?.() } catch (e) { console.warn(e) }
-            onSave?.({ image: finalUrl, scale, offsetX, offsetY })
+            onSave?.({ image: res.url, scale, offsetX, offsetY })
             onClose?.()
         } catch (err) {
             alert('Save Failed: ' + err.message)
@@ -240,18 +255,26 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
 
     if (!isOpen) return null
 
+    // SHARED STYLES — SYSTEM MENU KILL
+    const containerStyles = {
+        position: 'fixed',
+        inset: 0,
+        background: '#000',
+        zIndex: 99999,
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
+        MozUserSelect: 'none',
+        msUserSelect: 'none'
+    }
+
     // ============================================
     // RENDER: EDIT MODE
     // ============================================
     if (step === 'edit') {
         return (
-            <div style={{
-                position: 'fixed',
-                inset: 0,
-                background: '#000',
-                zIndex: 99999,
-                touchAction: 'none'
-            }}>
+            <div style={containerStyles}>
                 {/* CROP FRAME */}
                 <div
                     onPointerDown={handlePointerDown}
@@ -259,6 +282,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     onPointerUp={handlePointerUp}
                     onPointerLeave={handlePointerUp}
                     onPointerCancel={handlePointerUp}
+                    onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                     style={{
@@ -304,7 +328,8 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 12
+                            gap: 12,
+                            pointerEvents: 'none'
                         }}>
                             <div style={{ fontSize: 56 }}>📷</div>
                             <p style={{ color: '#fff', fontSize: 18, fontWeight: 700 }}>Tap to Upload</p>
@@ -411,12 +436,12 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // RENDER: PREVIEW MODE
+    // RENDER: STATIC PREVIEW MODE (No <Home />)
     // ============================================
     if (step === 'preview') {
         return (
-            <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999 }}>
-                {/* Show cropped preview */}
+            <div style={{ ...containerStyles, background: '#1a1a1a' }}>
+                {/* STATIC HERO PREVIEW */}
                 <div style={{
                     position: 'absolute',
                     top: 0,
@@ -441,9 +466,45 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     }} />
                 </div>
 
-                {/* Rest of page placeholder */}
-                <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: '#f5f5f5' }} />
+                {/* PREVIEW LABEL */}
+                <div style={{
+                    position: 'absolute',
+                    top: coverHeight / 2,
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'rgba(0,0,0,0.7)',
+                    color: '#fff',
+                    padding: '8px 24px',
+                    borderRadius: 20,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: 1,
+                    zIndex: 100,
+                    pointerEvents: 'none'
+                }}>
+                    PREVIEW
+                </div>
 
+                {/* PAGE PLACEHOLDER */}
+                <div style={{
+                    position: 'absolute',
+                    top: coverHeight,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(to bottom, #2a2a2a, #1a1a1a)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    paddingTop: 40,
+                    gap: 16
+                }}>
+                    <div style={{ width: '80%', height: 20, background: 'rgba(255,255,255,0.1)', borderRadius: 10 }} />
+                    <div style={{ width: '60%', height: 20, background: 'rgba(255,255,255,0.08)', borderRadius: 10 }} />
+                    <div style={{ width: '70%', height: 20, background: 'rgba(255,255,255,0.05)', borderRadius: 10 }} />
+                </div>
+
+                {/* ACTION BUTTONS */}
                 <div style={{
                     position: 'fixed',
                     top: 0,
@@ -452,8 +513,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                     padding: 16,
                     paddingTop: 'max(16px, env(safe-area-inset-top))',
                     display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: 12,
+                    justifyContent: 'space-between',
                     zIndex: 2147483647,
                     pointerEvents: 'none'
                 }}>
@@ -461,14 +521,13 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
                         onClick={() => setStep('edit')}
                         style={{
                             pointerEvents: 'auto',
-                            background: 'rgba(0,0,0,0.8)',
+                            background: 'rgba(0,0,0,0.9)',
                             color: '#fff',
                             border: 'none',
                             padding: '12px 24px',
                             borderRadius: 28,
                             fontWeight: 700,
                             fontSize: 15,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                             cursor: 'pointer'
                         }}
                     >
