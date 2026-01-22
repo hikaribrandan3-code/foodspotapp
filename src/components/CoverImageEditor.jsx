@@ -1,16 +1,11 @@
 /**
- * CoverImageEditor.jsx — BULLETPROOF TOUCH v12.0
+ * CoverImageEditor.jsx — STABLE TOUCH v13.0
  * 
  * FIXES:
- * 1. NATIVE TOUCH EVENTS: addEventListener with { passive: false }
- *    - React onTouchXxx gets swallowed by Safari. Native events don't.
- * 
- * 2. REF-BASED POSITION: No stale closures.
- *    - All mutable values in refs, synced to state on touchend.
- * 
- * 3. SAFARI SEAL: Icon buttons + dynamic file input + data-form-type.
- * 
- * 4. INLINE VIEWS: No router. Step state ('edit' | 'preview').
+ * 1. STABLE INIT: Only reset state on fresh open, not on initialData changes
+ * 2. DIRECT TOUCH: Handlers on image container (no glass overlay)
+ * 3. NATIVE EVENTS: addEventListener with { passive: false }
+ * 4. ICON BUTTONS: No text labels for Safari seal
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -18,7 +13,6 @@ import { getConfig, updateConfig } from '../config/appConfig.v2.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import Home from '../pages/customer/Home.jsx'
-import { useTenant } from '../contexts/TenantContext.jsx'
 
 const COVER_HEIGHTS = {
     mobile: 220,
@@ -49,203 +43,204 @@ const SNAP_THRESHOLD = 4
 
 function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false, config, businessId, heroMode }) {
     // ============================================
-    // 1. INLINE VIEW STATE
+    // 1. STATE
     // ============================================
     const [step, setStep] = useState('edit')
     const [breakpoint, setBreakpoint] = useState(getBreakpoint())
     const [isSaving, setIsSaving] = useState(false)
     const [originalFile, setOriginalFile] = useState(null)
 
-    // ============================================
-    // 2. REF-BASED POSITION (Avoids Stale Closures)
-    // ============================================
-    const posRef = useRef({
-        image: initialData?.image || null,
-        scale: initialData?.scale || 1,
-        offsetX: initialData?.offsetX || 0,
-        offsetY: initialData?.offsetY || 0
-    })
-
-    // State for React re-renders (synced from refs)
-    const [image, setImage] = useState(posRef.current.image)
-    const [scale, setScale] = useState(posRef.current.scale)
-    const [offsetX, setOffsetX] = useState(posRef.current.offsetX)
-    const [offsetY, setOffsetY] = useState(posRef.current.offsetY)
+    const [image, setImage] = useState(null)
+    const [scale, setScale] = useState(1)
+    const [offsetX, setOffsetX] = useState(0)
+    const [offsetY, setOffsetY] = useState(0)
     const [snappedX, setSnappedX] = useState(false)
     const [snappedY, setSnappedY] = useState(false)
 
-    // Touch tracking refs
-    const glassRef = useRef(null)
+    // Refs
+    const containerRef = useRef(null)
     const isDragging = useRef(false)
     const lastTouch = useRef({ x: 0, y: 0 })
     const initialPinchDistance = useRef(0)
-    const initialScale = useRef(1)
+    const initialScaleRef = useRef(1)
+    const posRef = useRef({ offsetX: 0, offsetY: 0, scale: 1 })
+    const hasInitialized = useRef(false)
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // 3. NATIVE TOUCH EVENT HANDLERS
-    // ============================================
-    const handleTouchStart = useCallback((e) => {
-        e.preventDefault()
-        e.stopPropagation()
-
-        if (e.touches.length === 2) {
-            const dx = e.touches[0].clientX - e.touches[1].clientX
-            const dy = e.touches[0].clientY - e.touches[1].clientY
-            initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
-            initialScale.current = posRef.current.scale
-        } else if (e.touches.length === 1) {
-            isDragging.current = true
-            lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-        }
-
-        // Lock body scroll
-        document.body.style.overflow = 'hidden'
-        document.body.style.touchAction = 'none'
-    }, [])
-
-    const handleTouchMove = useCallback((e) => {
-        e.preventDefault()
-        e.stopPropagation()
-
-        if (e.touches.length === 2 && initialPinchDistance.current > 0) {
-            // Pinch zoom
-            const dx = e.touches[0].clientX - e.touches[1].clientX
-            const dy = e.touches[0].clientY - e.touches[1].clientY
-            const distance = Math.sqrt(dx * dx + dy * dy)
-            const newScale = Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current)))
-
-            posRef.current.scale = newScale
-            setScale(newScale)
-
-        } else if (e.touches.length === 1 && isDragging.current) {
-            // Pan
-            const touch = e.touches[0]
-            const dx = touch.clientX - lastTouch.current.x
-            const dy = touch.clientY - lastTouch.current.y
-
-            let newX = posRef.current.offsetX + dx
-            let newY = posRef.current.offsetY + dy
-
-            // Snap assist
-            let isSnappedX = false
-            let isSnappedY = false
-            if (Math.abs(newX) <= SNAP_THRESHOLD) { newX = 0; isSnappedX = true }
-            if (Math.abs(newY) <= SNAP_THRESHOLD) { newY = 0; isSnappedY = true }
-
-            posRef.current.offsetX = newX
-            posRef.current.offsetY = newY
-
-            setOffsetX(newX)
-            setOffsetY(newY)
-            setSnappedX(isSnappedX)
-            setSnappedY(isSnappedY)
-
-            lastTouch.current = { x: touch.clientX, y: touch.clientY }
-        }
-    }, [])
-
-    const handleTouchEnd = useCallback((e) => {
-        e.preventDefault()
-        isDragging.current = false
-        initialPinchDistance.current = 0
-
-        // Restore body
-        document.body.style.overflow = ''
-        document.body.style.touchAction = ''
-    }, [])
-
-    // ============================================
-    // 4. ATTACH NATIVE LISTENERS
+    // 2. STABLE INITIALIZATION (Only on fresh open)
     // ============================================
     useEffect(() => {
-        const glass = glassRef.current
-        if (!glass || step !== 'edit') return
+        if (isOpen && !hasInitialized.current) {
+            hasInitialized.current = true
+            const initImage = initialData?.image || null
+            const initScale = initialData?.scale || 1
+            const initX = initialData?.offsetX || 0
+            const initY = initialData?.offsetY || 0
 
-        glass.addEventListener('touchstart', handleTouchStart, { passive: false })
-        glass.addEventListener('touchmove', handleTouchMove, { passive: false })
-        glass.addEventListener('touchend', handleTouchEnd, { passive: false })
-        glass.addEventListener('touchcancel', handleTouchEnd, { passive: false })
+            setImage(initImage)
+            setScale(initScale)
+            setOffsetX(initX)
+            setOffsetY(initY)
+            setStep('edit')
 
-        // Mouse fallback for desktop testing
-        const handleMouseDown = (e) => {
-            isDragging.current = true
-            lastTouch.current = { x: e.clientX, y: e.clientY }
+            posRef.current = { offsetX: initX, offsetY: initY, scale: initScale }
+
+            if (!initImage) {
+                setTimeout(() => triggerFileInput(), 150)
+            }
+
+            document.body.style.overflow = 'hidden'
+            document.documentElement.style.overflow = 'hidden'
+            document.body.style.touchAction = 'none'
+            document.documentElement.style.touchAction = 'none'
         }
-        const handleMouseMove = (e) => {
-            if (!isDragging.current) return
-            const dx = e.clientX - lastTouch.current.x
-            const dy = e.clientY - lastTouch.current.y
 
-            let newX = posRef.current.offsetX + dx
-            let newY = posRef.current.offsetY + dy
-            if (Math.abs(newX) <= SNAP_THRESHOLD) newX = 0
-            if (Math.abs(newY) <= SNAP_THRESHOLD) newY = 0
-
-            posRef.current.offsetX = newX
-            posRef.current.offsetY = newY
-            setOffsetX(newX)
-            setOffsetY(newY)
-            lastTouch.current = { x: e.clientX, y: e.clientY }
+        if (!isOpen) {
+            hasInitialized.current = false
+            document.body.style.overflow = ''
+            document.documentElement.style.overflow = ''
+            document.body.style.touchAction = ''
+            document.documentElement.style.touchAction = ''
         }
-        const handleMouseUp = () => { isDragging.current = false }
-
-        glass.addEventListener('mousedown', handleMouseDown)
-        glass.addEventListener('mousemove', handleMouseMove)
-        glass.addEventListener('mouseup', handleMouseUp)
-        glass.addEventListener('mouseleave', handleMouseUp)
 
         return () => {
-            glass.removeEventListener('touchstart', handleTouchStart)
-            glass.removeEventListener('touchmove', handleTouchMove)
-            glass.removeEventListener('touchend', handleTouchEnd)
-            glass.removeEventListener('touchcancel', handleTouchEnd)
-            glass.removeEventListener('mousedown', handleMouseDown)
-            glass.removeEventListener('mousemove', handleMouseMove)
-            glass.removeEventListener('mouseup', handleMouseUp)
-            glass.removeEventListener('mouseleave', handleMouseUp)
+            document.body.style.overflow = ''
+            document.documentElement.style.overflow = ''
+            document.body.style.touchAction = ''
+            document.documentElement.style.touchAction = ''
         }
-    }, [step, handleTouchStart, handleTouchMove, handleTouchEnd])
+    }, [isOpen])
 
-    // ============================================
-    // 5. INITIALIZATION
-    // ============================================
     useEffect(() => {
         const handleResize = () => setBreakpoint(getBreakpoint())
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
+    // ============================================
+    // 3. NATIVE TOUCH HANDLERS
+    // ============================================
     useEffect(() => {
-        if (isOpen) {
-            setStep('edit')
-            posRef.current = {
-                image: initialData?.image || null,
-                scale: initialData?.scale || 1,
-                offsetX: initialData?.offsetX || 0,
-                offsetY: initialData?.offsetY || 0
-            }
-            setImage(posRef.current.image)
-            setScale(posRef.current.scale)
-            setOffsetX(posRef.current.offsetX)
-            setOffsetY(posRef.current.offsetY)
+        const container = containerRef.current
+        if (!container || step !== 'edit') return
 
-            if (!initialData?.image) {
-                setTimeout(() => triggerFileInput(), 150)
+        const handleTouchStart = (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX
+                const dy = e.touches[0].clientY - e.touches[1].clientY
+                initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
+                initialScaleRef.current = posRef.current.scale
+            } else if (e.touches.length === 1) {
+                isDragging.current = true
+                lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
             }
-            document.body.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = ''
         }
-        return () => { document.body.style.overflow = '' }
-    }, [isOpen, initialData])
+
+        const handleTouchMove = (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+
+            if (e.touches.length === 2 && initialPinchDistance.current > 0) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX
+                const dy = e.touches[0].clientY - e.touches[1].clientY
+                const distance = Math.sqrt(dx * dx + dy * dy)
+                const newScale = Math.min(3, Math.max(0.5, initialScaleRef.current * (distance / initialPinchDistance.current)))
+
+                posRef.current.scale = newScale
+                setScale(newScale)
+            } else if (e.touches.length === 1 && isDragging.current) {
+                const touch = e.touches[0]
+                const dx = touch.clientX - lastTouch.current.x
+                const dy = touch.clientY - lastTouch.current.y
+
+                let newX = posRef.current.offsetX + dx
+                let newY = posRef.current.offsetY + dy
+
+                let isSnappedX = false
+                let isSnappedY = false
+
+                if (Math.abs(newX) <= SNAP_THRESHOLD) { newX = 0; isSnappedX = true }
+                if (Math.abs(newY) <= SNAP_THRESHOLD) { newY = 0; isSnappedY = true }
+
+                posRef.current.offsetX = newX
+                posRef.current.offsetY = newY
+
+                setOffsetX(newX)
+                setOffsetY(newY)
+                setSnappedX(isSnappedX)
+                setSnappedY(isSnappedY)
+
+                lastTouch.current = { x: touch.clientX, y: touch.clientY }
+            }
+        }
+
+        const handleTouchEnd = (e) => {
+            e.preventDefault()
+            isDragging.current = false
+            initialPinchDistance.current = 0
+        }
+
+        // Mouse handlers for desktop
+        const handleMouseDown = (e) => {
+            isDragging.current = true
+            lastTouch.current = { x: e.clientX, y: e.clientY }
+        }
+
+        const handleMouseMove = (e) => {
+            if (!isDragging.current) return
+
+            const dx = e.clientX - lastTouch.current.x
+            const dy = e.clientY - lastTouch.current.y
+
+            let newX = posRef.current.offsetX + dx
+            let newY = posRef.current.offsetY + dy
+
+            if (Math.abs(newX) <= SNAP_THRESHOLD) newX = 0
+            if (Math.abs(newY) <= SNAP_THRESHOLD) newY = 0
+
+            posRef.current.offsetX = newX
+            posRef.current.offsetY = newY
+
+            setOffsetX(newX)
+            setOffsetY(newY)
+
+            lastTouch.current = { x: e.clientX, y: e.clientY }
+        }
+
+        const handleMouseUp = () => {
+            isDragging.current = false
+        }
+
+        container.addEventListener('touchstart', handleTouchStart, { passive: false })
+        container.addEventListener('touchmove', handleTouchMove, { passive: false })
+        container.addEventListener('touchend', handleTouchEnd, { passive: false })
+        container.addEventListener('touchcancel', handleTouchEnd, { passive: false })
+        container.addEventListener('mousedown', handleMouseDown)
+        container.addEventListener('mousemove', handleMouseMove)
+        container.addEventListener('mouseup', handleMouseUp)
+        container.addEventListener('mouseleave', handleMouseUp)
+
+        return () => {
+            container.removeEventListener('touchstart', handleTouchStart)
+            container.removeEventListener('touchmove', handleTouchMove)
+            container.removeEventListener('touchend', handleTouchEnd)
+            container.removeEventListener('touchcancel', handleTouchEnd)
+            container.removeEventListener('mousedown', handleMouseDown)
+            container.removeEventListener('mousemove', handleMouseMove)
+            container.removeEventListener('mouseup', handleMouseUp)
+            container.removeEventListener('mouseleave', handleMouseUp)
+        }
+    }, [step])
 
     // ============================================
-    // 6. DYNAMIC FILE INPUT (Safari Seal)
+    // 4. DYNAMIC FILE INPUT
     // ============================================
     const triggerFileInput = useCallback(() => {
-        // Create input on-demand, destroy after use
         const input = document.createElement('input')
         input.type = 'file'
         input.accept = 'image/*'
@@ -258,19 +253,15 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 try {
                     setOriginalFile(file)
                     const { dataURI } = await processAndStoreImage(file)
-                    posRef.current.image = dataURI
-                    posRef.current.scale = 1
-                    posRef.current.offsetX = 0
-                    posRef.current.offsetY = 0
                     setImage(dataURI)
                     setScale(1)
                     setOffsetX(0)
                     setOffsetY(0)
+                    posRef.current = { offsetX: 0, offsetY: 0, scale: 1 }
                 } catch (error) {
                     alert('Error loading image.')
                 }
             }
-            // Destroy input
             document.body.removeChild(input)
         }
 
@@ -279,14 +270,14 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     }, [])
 
     // ============================================
-    // 7. STEP HANDLERS
+    // 5. STEP HANDLERS
     // ============================================
     const handleNext = useCallback(() => {
         if (!image) return
 
         const lsKey = `hero_${businessId}`
         const storageData = {
-            image: posRef.current.image,
+            image: image,
             scale: posRef.current.scale,
             offsetX: posRef.current.offsetX,
             offsetY: posRef.current.offsetY,
@@ -323,7 +314,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             }
 
             onSave?.({
-                image: posRef.current.image,
+                image: image,
                 scale: posRef.current.scale,
                 offsetX: posRef.current.offsetX,
                 offsetY: posRef.current.offsetY,
@@ -334,12 +325,12 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             console.error("Save failed:", err)
             setIsSaving(false)
         }
-    }, [originalFile, demoMode, businessId, onSave, onClose])
+    }, [originalFile, demoMode, businessId, image, onSave, onClose])
 
     if (!isOpen) return null
 
     // ============================================
-    // 8. RENDER
+    // 6. RENDER
     // ============================================
 
     // PREVIEW STEP
@@ -348,7 +339,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             <div
                 data-form-type="other"
                 style={{
-                    position: 'fixed', inset: 0, background: '#000', zIndex: 9999,
+                    position: 'fixed', inset: 0, background: '#000', zIndex: 99999,
                     touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none'
                 }}
             >
@@ -417,7 +408,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         <div
             data-form-type="other"
             style={{
-                position: 'fixed', inset: 0, background: '#000', zIndex: 9999,
+                position: 'fixed', inset: 0, background: '#000', zIndex: 99999,
                 touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none'
             }}
         >
@@ -428,23 +419,44 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
             <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', pointerEvents: 'none', zIndex: 5 }} />
 
-            {/* IMAGE LAYER (Visual Only) */}
-            <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, height: coverHeight,
-                overflow: 'hidden', zIndex: 6,
-                border: '3px solid #22C55E',
-                boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
-                pointerEvents: 'none'
-            }}>
+            {/* INTERACTIVE CROP FRAME */}
+            <div
+                ref={containerRef}
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: coverHeight,
+                    overflow: 'hidden',
+                    cursor: 'move',
+                    zIndex: 1000,
+                    border: '3px solid #22C55E',
+                    boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
+                    touchAction: 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none'
+                }}
+            >
                 {image ? (
                     <div
                         style={{
-                            position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
-                            backgroundImage: `url(${image})`, backgroundSize: `${scale * 100}%`,
-                            backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
+                            position: 'absolute',
+                            width: '200%',
+                            height: '200%',
+                            left: '-50%',
+                            top: '-50%',
+                            backgroundImage: `url(${image})`,
+                            backgroundSize: `${scale * 100}%`,
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
                             transform: `translate(${offsetX}px, ${offsetY}px)`,
                             willChange: 'transform',
-                            pointerEvents: 'none'
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            WebkitTouchCallout: 'none'
                         }}
                     />
                 ) : null}
@@ -458,32 +470,16 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
                 {!image && (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                        <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap 📷 to select</span>
+                        <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap 📷</span>
                     </div>
                 )}
             </div>
 
-            {/* GLASS OVERLAY (Native Touch Capture) */}
-            <div
-                ref={glassRef}
-                style={{
-                    position: 'absolute',
-                    top: 0, left: 0, right: 0, height: coverHeight,
-                    zIndex: 10001,
-                    cursor: 'move',
-                    touchAction: 'none',
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                    background: 'transparent'
-                }}
-            />
-
-            {/* BUTTONS (Icon-only for Safari Seal) */}
+            {/* BUTTONS */}
             <div style={{
                 position: 'absolute', top: 0, left: 0, right: 0,
                 paddingTop: 'max(12px, env(safe-area-inset-top))', paddingLeft: 12, paddingRight: 12,
-                display: 'flex', justifyContent: 'space-between', zIndex: 10002, pointerEvents: 'none'
+                display: 'flex', justifyContent: 'space-between', zIndex: 2000, pointerEvents: 'none'
             }}>
                 <div
                     onClick={onClose}
