@@ -60,6 +60,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     const [breakpoint, setBreakpoint] = useState(getBreakpoint())
     const [snappedX, setSnappedX] = useState(false)
     const [snappedY, setSnappedY] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
 
     // Refs for Drag Logic only (Not for Position)
     const isDragging = useRef(false)
@@ -184,61 +185,56 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     // 3. DEEPSEEK SAVE STRATEGY (Local Storage)
     // ============================================
     const handleContinue = async () => {
-        if (demoMode) {
-            onSave({ image, scale, offsetX, offsetY, breakpoint })
-            onClose(); return
-        }
-
         try {
-            if (heroMode === 'text') {
-                alert('Modo texto activo. Cambia a Imagen primero.'); return
-            }
+            if (!image) return;
+            setIsSaving(true);
 
-            let heroUrl = image // Fallback
+            const lsKey = `hero_${businessId}`;
+            const storageData = {
+                image: image, // Ensure this is the DataURI
+                scale: scale,
+                offsetX: offsetX,
+                offsetY: offsetY,
+                updatedAt: Date.now()
+            };
 
-            // A. Upload to Supabase (Backup)
-            if (originalFile) {
-                const { url, error } = await uploadAsset(originalFile, businessId, 'branding')
-                if (!error) {
-                    heroUrl = url
-                    // Update DB Reference
-                    await updateBranding({ hero_url: heroUrl, hero_mode: 'image' }, businessId)
+            // 1. Atomic LocalStorage Update
+            localStorage.removeItem(lsKey);
+            localStorage.setItem(lsKey, JSON.stringify(storageData));
+
+            // 2. Config Sync
+            updateConfig({
+                headerCover: {
+                    ...storageData,
+                    imageVersion: storageData.updatedAt
                 }
+            });
+
+            // 3. Supabase Backup (Async, don't block UI)
+            if (originalFile && !demoMode) {
+                uploadAsset(originalFile, businessId, 'branding').then(({ url, error }) => {
+                    if (!error) updateBranding({ hero_url: url, hero_mode: 'image' }, businessId);
+                });
             }
 
-            // B. LOCAL STORAGE MANAGEMENT (The Memory Fix)
-            const lsKey = `hero_${businessId}`
+            // 4. Safe Navigation
+            window.dispatchEvent(new CustomEvent('frontendSync'));
+            onSave?.(storageData);
 
-            // 1. DELETE OLD (Prevent Buildup)
-            localStorage.removeItem(lsKey)
-
-            // 2. SAVE NEW (Optimized DataURI for Instant Load)
-            try {
-                const storageData = {
-                    image: image, // Uses the DataURI (Base64) for instant offline load
-                    scale, offsetX, offsetY,
-                    version: Date.now()
-                }
-                localStorage.setItem(lsKey, JSON.stringify(storageData))
-                console.log('✅ Hero saved to LocalStorage')
-            } catch (e) {
-                console.warn('LocalStorage full, falling back to network', e)
-            }
-
-            // C. SYNC & NAVIGATE
-            updateConfig({ headerCover: { image: heroUrl, scale, offsetX, offsetY, breakpoint, imageVersion: Date.now() } })
-            window.dispatchEvent(new CustomEvent('frontendSync'))
-            onSave({ image: heroUrl, scale, offsetX, offsetY, breakpoint })
-
-            const returnState = initialData?.returnState || {}
+            // Use a slight delay to ensure state is committed before route change
             setTimeout(() => {
-                navigate('/admin/cover-preview', { state: { ...returnState, returnTo: window.location.pathname } })
-                onClose()
-            }, 100)
+                navigate('/admin/cover-preview', {
+                    state: {
+                        businessId,
+                        fromEditor: true
+                    }
+                });
+                onClose();
+            }, 150);
 
         } catch (err) {
-            console.error('Save error:', err)
-            alert('Error saving.')
+            console.error("Navigation Handshake Failed:", err);
+            setIsSaving(false);
         }
     }
 
@@ -269,22 +265,33 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onContextMenu={(e) => e.preventDefault()}
                 style={{
                     position: 'absolute', top: 0, left: 0, right: 0, height: coverHeight,
                     overflow: 'hidden', cursor: 'move', zIndex: 6,
                     border: '3px solid #22C55E',
                     boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
-                    touchAction: 'none'
+                    touchAction: 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none'
                 }}
             >
                 {image ? (
-                    <div style={{
-                        position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
-                        backgroundImage: `url(${image})`, backgroundSize: `${scale * 100}%`,
-                        backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-                        transform: `translate(${offsetX}px, ${offsetY}px)`,
-                        willChange: 'transform'
-                    }} />
+                    <div
+                        onContextMenu={(e) => e.preventDefault()}
+                        style={{
+                            position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
+                            backgroundImage: `url(${image})`, backgroundSize: `${scale * 100}%`,
+                            backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
+                            transform: `translate(${offsetX}px, ${offsetY}px)`,
+                            willChange: 'transform',
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            WebkitTouchCallout: 'none'
+                        }}
+                    />
                 ) : null}
 
                 {/* Guidelines */}
