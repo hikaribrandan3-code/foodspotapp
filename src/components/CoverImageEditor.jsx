@@ -1,23 +1,23 @@
 /**
- * CoverImageEditor.jsx — HARD-SEALED PRODUCTION BUILD v10.0
+ * CoverImageEditor.jsx — INLINE-VIEW ARCHITECTURE v11.0
  * 
  * CORE LOGIC:
- * 1. PHYSICS: Dec 19 State-Based (Simple, Reliable).
- *    - Uses standard onTouchStart/Move/End.
- *    - Trusts React State for coordinates (Fixes "Frozen" bug).
+ * 1. INLINE VIEWS: No router navigation. Uses step state ('edit' | 'preview').
+ *    - Eliminates TypeError crashes from unmount race conditions.
  * 
- * 2. STORAGE: Hybrid Strategy with Transaction Integrity.
- *    - Uploads to Supabase (Backup/SSOT) as non-blocking background task.
- *    - Saves to LocalStorage (Performance) with atomic remove/set.
- *    - 300ms deferred navigation to prevent k[F] null TypeError.
+ * 2. GLASS OVERLAY: Transparent touch capture layer (z-index 10001).
+ *    - No text/images = invisible to Safari's Form detection.
+ *    - All gesture listeners live here, not on the image.
  * 
- * 3. IDENTITY SEAL: Safari AutoFill Hardening.
+ * 3. PHYSICS: Dec 19 State-Based (Simple, Reliable).
+ *    - Uses standard onTouchStart/Move/End on the glass overlay.
+ *    - Trusts React State for coordinates.
+ * 
+ * 4. IDENTITY SEAL: Safari AutoFill Hardening.
  *    - Root container: role="presentation", inputMode="none", autoComplete="off".
- *    - Button text: "Next →" instead of "Continue" to de-classify form signature.
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { getConfig, updateConfig } from '../config/appConfig.v2.js'
 import { processAndStoreImage } from '../utils/imageOptimizer.js'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
@@ -53,11 +53,13 @@ function StaticBottomNav() {
 const SNAP_THRESHOLD = 4
 
 function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false, config, businessId, heroMode }) {
-    const navigate = useNavigate()
-    // const { tenantData } = useTenant() // Optional if needed
+    // ============================================
+    // 1. INLINE VIEW STATE (No Router)
+    // ============================================
+    const [step, setStep] = useState('edit') // 'edit' | 'preview'
 
     // ============================================
-    // 1. STATE-BASED PHYSICS (The Dec 19 Fix)
+    // 2. STATE-BASED PHYSICS (The Dec 19 Fix)
     // ============================================
     const [image, setImage] = useState(initialData?.image || null)
     const [scale, setScale] = useState(initialData?.scale || 1)
@@ -86,6 +88,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
     useEffect(() => {
         if (isOpen) {
+            setStep('edit') // Reset to edit on open
             setImage(initialData?.image || null)
             setScale(initialData?.scale || 1)
             setOffsetX(initialData?.offsetX || 0)
@@ -115,7 +118,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     }
 
     // ============================================
-    // 2. THE WORKING INTERACTION ENGINE (Dec 19)
+    // 3. THE GLASS OVERLAY INTERACTION ENGINE
     // ============================================
 
     // Helper for Magnetic Snap
@@ -131,7 +134,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     }
 
     const handleTouchStart = (e) => {
-        // Simple preventDefault is all Dec 19 needed
         if (e.cancelable) e.preventDefault()
 
         if (e.touches.length === 2) {
@@ -149,18 +151,15 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         if (e.cancelable) e.preventDefault()
 
         if (e.touches.length === 2) {
-            // Pinch Math
             const dx = e.touches[0].clientX - e.touches[1].clientX
             const dy = e.touches[0].clientY - e.touches[1].clientY
             const distance = Math.sqrt(dx * dx + dy * dy)
             const newScale = Math.min(3, Math.max(0.5, initialScale.current * (distance / initialPinchDistance.current)))
             setScale(newScale)
         } else if (e.touches.length === 1 && isDragging.current) {
-            // Drag Math (State Based)
             const dx = e.touches[0].clientX - lastTouch.current.x
             const dy = e.touches[0].clientY - lastTouch.current.y
 
-            // Calculate new position based on CURRENT STATE
             const newX = offsetX + dx
             const newY = offsetY + dy
 
@@ -174,7 +173,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
     const handleTouchEnd = () => { isDragging.current = false }
 
-    // Desktop Mouse Handlers (Mirroring Logic)
+    // Desktop Mouse Handlers
     const handleMouseDown = (e) => { isDragging.current = true; lastTouch.current = { x: e.clientX, y: e.clientY } }
     const handleMouseMove = (e) => {
         if (!isDragging.current) return
@@ -186,67 +185,154 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     }
     const handleMouseUp = () => { isDragging.current = false }
 
+    // ============================================
+    // 4. INLINE STEP HANDLERS
+    // ============================================
+    const handleNext = () => {
+        if (!image) return
+        // Commit to localStorage and config immediately
+        const lsKey = `hero_${businessId}`
+        const storageData = {
+            image: image,
+            scale: scale,
+            offsetX: offsetX,
+            offsetY: offsetY,
+            updatedAt: Date.now()
+        }
+        localStorage.removeItem(lsKey)
+        localStorage.setItem(lsKey, JSON.stringify(storageData))
+        updateConfig({
+            headerCover: {
+                ...storageData,
+                imageVersion: storageData.updatedAt
+            }
+        })
+        window.dispatchEvent(new CustomEvent('frontendSync'))
+        setStep('preview')
+    }
 
-    // ============================================
-    // 3. HARD-SEALED SAVE STRATEGY (v10.0)
-    // ============================================
-    const handleContinue = async () => {
+    const handleBack = () => {
+        setStep('edit')
+    }
+
+    const handleSave = async () => {
         try {
-            if (!image) return;
-            setIsSaving(true);
-
-            const lsKey = `hero_${businessId}`;
+            setIsSaving(true)
             const storageData = {
                 image: image,
                 scale: scale,
                 offsetX: offsetX,
                 offsetY: offsetY,
                 updatedAt: Date.now()
-            };
-
-            // 1. Force the Write (Atomic LocalStorage Update)
-            localStorage.removeItem(lsKey);
-            localStorage.setItem(lsKey, JSON.stringify(storageData));
-
-            // 2. Explicitly update Config to prevent null-reads
-            updateConfig({
-                headerCover: {
-                    ...storageData,
-                    imageVersion: storageData.updatedAt
-                }
-            });
-
-            // 3. Supabase Background Sync (Non-blocking)
-            if (originalFile && !demoMode) {
-                uploadAsset(originalFile, businessId, 'branding').then(({ url, error }) => {
-                    if (!error) updateBranding({ hero_url: url, hero_mode: 'image' }, businessId);
-                }).catch(err => console.warn('Background upload failed:', err));
             }
 
-            // 4. Dispatch sync event
-            window.dispatchEvent(new CustomEvent('frontendSync'));
-            onSave?.(storageData);
+            // Supabase Upload (Final Save)
+            if (originalFile && !demoMode) {
+                const { url, error } = await uploadAsset(originalFile, businessId, 'branding')
+                if (!error) {
+                    await updateBranding({ hero_url: url, hero_mode: 'image' }, businessId)
+                }
+            }
 
-            // 5. Deferred Navigation (300ms to ensure serialization)
-            setTimeout(() => {
-                navigate('/admin/cover-preview', {
-                    state: { fromEditor: true },
-                    replace: true
-                });
-                onClose();
-            }, 300);
-
+            onSave?.(storageData)
+            onClose()
         } catch (err) {
-            console.error("Crash during save/nav:", err);
-            setIsSaving(false);
+            console.error("Save failed:", err)
+            setIsSaving(false)
         }
     }
 
     if (!isOpen) return null
 
     // ============================================
-    // 4. RENDER (Hard-Sealed Layout)
+    // 5. RENDER (Inline Views)
     // ============================================
+
+    // PREVIEW STEP
+    if (step === 'preview') {
+        return (
+            <div
+                role="presentation"
+                inputMode="none"
+                autoComplete="off"
+                contentEditable="false"
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: '#000',
+                    zIndex: 9999,
+                    touchAction: 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none'
+                }}
+            >
+                {/* Preview Background */}
+                <div style={{ position: 'absolute', inset: 0 }}>
+                    <Home config={config} />
+                    <StaticBottomNav />
+                </div>
+
+                {/* Preview Image */}
+                <div style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, height: coverHeight,
+                    overflow: 'hidden', zIndex: 6
+                }}>
+                    {image && (
+                        <div style={{
+                            position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
+                            backgroundImage: `url(${image})`, backgroundSize: `${scale * 100}%`,
+                            backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
+                            transform: `translate(${offsetX}px, ${offsetY}px)`,
+                            pointerEvents: 'none'
+                        }} />
+                    )}
+                </div>
+
+                {/* Preview Buttons */}
+                <div style={{
+                    position: 'absolute', top: 0, left: 0, right: 0,
+                    paddingTop: 'max(12px, env(safe-area-inset-top))', paddingLeft: 12, paddingRight: 12,
+                    display: 'flex', justifyContent: 'space-between', zIndex: 100
+                }}>
+                    <button
+                        onClick={handleBack}
+                        onTouchEnd={(e) => { e.preventDefault(); handleBack() }}
+                        style={{
+                            minWidth: 44, minHeight: 44, padding: '8px 14px', background: 'rgba(0,0,0,0.7)',
+                            color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        ← Back
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        onTouchEnd={(e) => { e.preventDefault(); handleSave() }}
+                        disabled={isSaving}
+                        style={{
+                            minWidth: 44, minHeight: 44, padding: '8px 14px',
+                            background: isSaving ? 'rgba(34,197,94,0.5)' : '#22C55E',
+                            color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600,
+                            cursor: isSaving ? 'not-allowed' : 'pointer'
+                        }}
+                    >
+                        {isSaving ? 'Saving...' : '✓ Save'}
+                    </button>
+                </div>
+
+                <div style={{
+                    position: 'absolute', top: coverHeight + 12, left: '50%', transform: 'translateX(-50%)',
+                    background: '#3B82F6', color: '#fff', fontSize: 12, fontWeight: 600,
+                    padding: '8px 16px', borderRadius: 20, zIndex: 10, whiteSpace: 'nowrap'
+                }}>
+                    Preview — Tap Save to confirm
+                </div>
+            </div>
+        )
+    }
+
+    // EDIT STEP
     return (
         <div
             role="presentation"
@@ -272,27 +358,14 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
             <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', pointerEvents: 'none', zIndex: 5 }} />
 
-            {/* INTERACTIVE CROP FRAME */}
-            <div
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onContextMenu={(e) => e.preventDefault()}
-                style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, height: coverHeight,
-                    overflow: 'hidden', cursor: 'move', zIndex: 6,
-                    border: '3px solid #22C55E',
-                    boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
-                    touchAction: 'none',
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    WebkitTouchCallout: 'none'
-                }}
-            >
+            {/* IMAGE LAYER (Visual Only) */}
+            <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, height: coverHeight,
+                overflow: 'hidden', zIndex: 6,
+                border: '3px solid #22C55E',
+                boxShadow: '0 0 0 4px rgba(34,197,94,0.4), inset 0 0 30px rgba(0,0,0,0.3)',
+                pointerEvents: 'none'
+            }}>
                 {image ? (
                     <div
                         onContextMenu={(e) => e.preventDefault()}
@@ -319,11 +392,37 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 )}
 
                 {!image && (
-                    <div onClick={() => fileInputRef.current?.click()} onTouchEnd={(e) => { e.preventDefault(); fileInputRef.current?.click() }} style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                        <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap to select image</span>
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap 📷 to select image</span>
                     </div>
                 )}
             </div>
+
+            {/* GLASS OVERLAY (Touch Capture Layer) */}
+            <div
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onContextMenu={(e) => e.preventDefault()}
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: coverHeight,
+                    zIndex: 10001,
+                    cursor: 'move',
+                    touchAction: 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                    background: 'transparent'
+                }}
+            />
 
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
 
@@ -331,7 +430,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             <div style={{
                 position: 'absolute', top: 0, left: 0, right: 0,
                 paddingTop: 'max(12px, env(safe-area-inset-top))', paddingLeft: 12, paddingRight: 12,
-                display: 'flex', justifyContent: 'space-between', zIndex: 100, pointerEvents: 'none'
+                display: 'flex', justifyContent: 'space-between', zIndex: 10002, pointerEvents: 'none'
             }}>
                 <button
                     onClick={onClose}
@@ -356,17 +455,17 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     📷
                 </button>
                 <button
-                    onClick={handleContinue}
-                    onTouchEnd={(e) => { e.preventDefault(); handleContinue() }}
-                    disabled={!image || isSaving}
+                    onClick={handleNext}
+                    onTouchEnd={(e) => { e.preventDefault(); handleNext() }}
+                    disabled={!image}
                     style={{
                         minWidth: 44, minHeight: 44, padding: '8px 14px',
-                        background: image && !isSaving ? '#3B82F6' : 'rgba(59,130,246,0.4)',
+                        background: image ? '#3B82F6' : 'rgba(59,130,246,0.4)',
                         color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600,
-                        cursor: image && !isSaving ? 'pointer' : 'not-allowed', pointerEvents: 'auto'
+                        cursor: image ? 'pointer' : 'not-allowed', pointerEvents: 'auto'
                     }}
                 >
-                    {isSaving ? '...' : 'Next →'}
+                    Next →
                 </button>
             </div>
 
