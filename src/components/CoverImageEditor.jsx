@@ -1,13 +1,19 @@
 /**
- * CoverImageEditor.jsx — HYBRID MASTER BUILD
- * * CORE LOGIC:
- * 1. PHYSICS: Reverted to Dec 19 (Simple State-Based).
- * - Uses standard onTouchStart/Move/End.
- * - Trusts React State for coordinates (Fixes "Frozen" bug).
- * * 2. STORAGE: DeepSeek Hybrid Strategy.
- * - Uploads to Supabase (Backup/SSOT).
- * - Saves to LocalStorage (Performance).
- * - MEMORY FIX: Deletes old local image before saving new one (1 image limit).
+ * CoverImageEditor.jsx — HARD-SEALED PRODUCTION BUILD v10.0
+ * 
+ * CORE LOGIC:
+ * 1. PHYSICS: Dec 19 State-Based (Simple, Reliable).
+ *    - Uses standard onTouchStart/Move/End.
+ *    - Trusts React State for coordinates (Fixes "Frozen" bug).
+ * 
+ * 2. STORAGE: Hybrid Strategy with Transaction Integrity.
+ *    - Uploads to Supabase (Backup/SSOT) as non-blocking background task.
+ *    - Saves to LocalStorage (Performance) with atomic remove/set.
+ *    - 300ms deferred navigation to prevent k[F] null TypeError.
+ * 
+ * 3. IDENTITY SEAL: Safari AutoFill Hardening.
+ *    - Root container: role="presentation", inputMode="none", autoComplete="off".
+ *    - Button text: "Next →" instead of "Continue" to de-classify form signature.
  */
 
 import { useState, useRef, useEffect } from 'react'
@@ -182,7 +188,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
 
     // ============================================
-    // 3. DEEPSEEK SAVE STRATEGY (Local Storage)
+    // 3. HARD-SEALED SAVE STRATEGY (v10.0)
     // ============================================
     const handleContinue = async () => {
         try {
@@ -191,18 +197,18 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
             const lsKey = `hero_${businessId}`;
             const storageData = {
-                image: image, // Ensure this is the DataURI
+                image: image,
                 scale: scale,
                 offsetX: offsetX,
                 offsetY: offsetY,
                 updatedAt: Date.now()
             };
 
-            // 1. Atomic LocalStorage Update
+            // 1. Force the Write (Atomic LocalStorage Update)
             localStorage.removeItem(lsKey);
             localStorage.setItem(lsKey, JSON.stringify(storageData));
 
-            // 2. Config Sync
+            // 2. Explicitly update Config to prevent null-reads
             updateConfig({
                 headerCover: {
                     ...storageData,
@@ -210,30 +216,28 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 }
             });
 
-            // 3. Supabase Backup (Async, don't block UI)
+            // 3. Supabase Background Sync (Non-blocking)
             if (originalFile && !demoMode) {
                 uploadAsset(originalFile, businessId, 'branding').then(({ url, error }) => {
                     if (!error) updateBranding({ hero_url: url, hero_mode: 'image' }, businessId);
-                });
+                }).catch(err => console.warn('Background upload failed:', err));
             }
 
-            // 4. Safe Navigation
+            // 4. Dispatch sync event
             window.dispatchEvent(new CustomEvent('frontendSync'));
             onSave?.(storageData);
 
-            // Use a slight delay to ensure state is committed before route change
+            // 5. Deferred Navigation (300ms to ensure serialization)
             setTimeout(() => {
                 navigate('/admin/cover-preview', {
-                    state: {
-                        businessId,
-                        fromEditor: true
-                    }
+                    state: { fromEditor: true },
+                    replace: true
                 });
                 onClose();
-            }, 150);
+            }, 300);
 
         } catch (err) {
-            console.error("Navigation Handshake Failed:", err);
+            console.error("Crash during save/nav:", err);
             setIsSaving(false);
         }
     }
@@ -241,13 +245,25 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     if (!isOpen) return null
 
     // ============================================
-    // 4. RENDER (Exact Dec 19 Layout)
+    // 4. RENDER (Hard-Sealed Layout)
     // ============================================
     return (
-        <div style={{
-            position: 'fixed', inset: 0, background: '#000', zIndex: 9999,
-            touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none'
-        }}>
+        <div
+            role="presentation"
+            inputMode="none"
+            autoComplete="off"
+            contentEditable="false"
+            style={{
+                position: 'fixed',
+                inset: 0,
+                background: '#000',
+                zIndex: 9999,
+                touchAction: 'none',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none'
+            }}
+        >
             {/* Background */}
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.3 }}>
                 <Home config={config} />
@@ -342,15 +358,15 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 <button
                     onClick={handleContinue}
                     onTouchEnd={(e) => { e.preventDefault(); handleContinue() }}
-                    disabled={!image}
+                    disabled={!image || isSaving}
                     style={{
                         minWidth: 44, minHeight: 44, padding: '8px 14px',
-                        background: image ? '#3B82F6' : 'rgba(59,130,246,0.4)',
+                        background: image && !isSaving ? '#3B82F6' : 'rgba(59,130,246,0.4)',
                         color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600,
-                        cursor: image ? 'pointer' : 'not-allowed', pointerEvents: 'auto'
+                        cursor: image && !isSaving ? 'pointer' : 'not-allowed', pointerEvents: 'auto'
                     }}
                 >
-                    Continue →
+                    {isSaving ? '...' : 'Next →'}
                 </button>
             </div>
 
