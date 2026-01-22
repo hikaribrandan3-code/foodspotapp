@@ -427,16 +427,12 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     zIndex: 20, pointerEvents: 'none', paddingLeft: 20, paddingRight: 20
                 }}>
-                    {config.branding?.logo_url ? (
+                    {config.branding?.logo_url && (
                         <img
                             src={config.branding.logo_url}
                             alt="Brand"
                             style={{ maxHeight: 50, maxWidth: '80%', objectFit: 'contain' }}
                         />
-                    ) : (
-                        <span style={{ fontSize: 24, fontWeight: 800, color: '#1F2937', textAlign: 'center' }}>
-                            {config.branding?.business_name || 'FoodSpot'}
-                        </span>
                     )}
                 </div>
 
@@ -475,12 +471,19 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                                 { label: 'Mini Game', icon: HeroGameIcon }
                             ].map((action, i) => (
                                 <div key={i} style={{
-                                    background: 'white', borderRadius: 16, padding: 16, height: 100,
-                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                                    background: 'white',
+                                    borderRadius: 28,
+                                    padding: 16,
+                                    aspectRatio: '1 / 0.85',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 12,
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
                                 }}>
-                                    <div style={{ marginBottom: 8 }}><action.icon /></div>
-                                    <span style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{action.label}</span>
+                                    <div><action.icon /></div>
+                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', marginTop: 4 }}>{action.label}</span>
                                 </div>
                             ))}
                         </div>
