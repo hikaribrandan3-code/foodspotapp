@@ -512,14 +512,16 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 <div style={{
                     position: 'absolute', top: 0, left: 0, right: 0,
                     paddingTop: 'max(12px, env(safe-area-inset-top))', paddingLeft: 12, paddingRight: 12,
-                    display: 'flex', justifyContent: 'space-between', zIndex: 100
+                    display: 'flex', justifyContent: 'space-between', zIndex: 100,
+                    pointerEvents: 'none'
                 }}>
                     <div
                         onClick={handleBack}
                         style={{
                             minWidth: 44, minHeight: 44, padding: '8px 14px', background: 'rgba(0,0,0,0.5)',
                             color: '#fff', borderRadius: 10, fontSize: 18, fontWeight: 600,
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            pointerEvents: 'auto'
                         }}
                     >
                         ←
@@ -531,7 +533,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                             background: isSaving ? 'rgba(34,197,94,0.5)' : '#22C55E',
                             color: '#fff', borderRadius: 10, fontSize: 18, fontWeight: 600,
                             cursor: isSaving ? 'not-allowed' : 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            pointerEvents: 'auto'
                         }}
                     >
                         {isSaving ? '...' : '✓'}
