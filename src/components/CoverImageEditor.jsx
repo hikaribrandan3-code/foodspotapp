@@ -415,6 +415,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     if (step === 'preview') {
         return (
             <div
+                role="presentation"
+                inputMode="none"
                 data-form-type="other"
                 style={{
                     position: 'fixed', inset: 0, background: '#F9FAFB', zIndex: 99999,
@@ -542,6 +544,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     // EDIT STEP
     return (
         <div
+            role="presentation"
+            inputMode="none"
             data-form-type="other"
             style={{
                 position: 'fixed', inset: 0, background: '#000', zIndex: 99999,
