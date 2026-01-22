@@ -1,12 +1,10 @@
 /**
- * CoverImageEditor.jsx — STATIC PREVIEW + SYSTEM MENU KILL
+ * CoverImageEditor.jsx — NATIVE TOUCH ENGINE
  * 
  * FIXES:
- * 1. STATIC PREVIEW — No <Home /> component, just cropped image
- * 2. SYSTEM MENU KILL — WebkitTouchCallout: 'none' stops copy/paste popup
- * 3. CSS !important Override — Forces browser gesture control
- * 4. Heartbeat Sync — posRef always matches React state
- * 5. Hardware Pointer Capture — Locks finger to element
+ * 1. NATIVE DOM EVENTS — Bypasses React synthetic events entirely
+ * 2. { passive: false } — Allows preventDefault on touch events in Safari
+ * 3. Direct ref injection — frame.addEventListener instead of onTouchMove
  */
 
 import { useState, useRef, useEffect } from 'react'
@@ -39,37 +37,28 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     // Physics Refs
     const isDragging = useRef(false)
     const lastTouch = useRef({ x: 0, y: 0 })
-    const initialPinchDistance = useRef(0)
-    const initialScale = useRef(1)
+    const initialPinchDist = useRef(0)
     const fileInputRef = useRef(null)
-    const posRef = useRef({ x: 0, y: 0, scale: 1 })
+    const cropFrameRef = useRef(null)
+    const posRef = useRef({ x: 0, y: 0, scale: 1, initialScale: 1 })
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // 1. CSS !important OVERRIDE + SYSTEM MENU KILL
+    // SCROLL LOCK
     // ============================================
     useEffect(() => {
         if (!isOpen) return
 
         const scrollY = window.scrollY
-
-        // Lock body scroll
         document.body.style.overflow = 'hidden'
         document.body.style.position = 'fixed'
         document.body.style.width = '100%'
         document.body.style.top = `-${scrollY}px`
-
-        // FORCE OVERRIDE — breaks Safari's pan-x pan-y lock
         document.body.style.setProperty('touch-action', 'none', 'important')
         document.documentElement.style.setProperty('touch-action', 'none', 'important')
-        document.body.style.setProperty('overscroll-behavior', 'none', 'important')
-        document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important')
-
-        // KILL SYSTEM MENU
         document.body.style.setProperty('-webkit-touch-callout', 'none', 'important')
         document.body.style.setProperty('user-select', 'none', 'important')
-        document.body.style.setProperty('-webkit-user-select', 'none', 'important')
 
         return () => {
             document.body.style.overflow = ''
@@ -78,17 +67,14 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             document.body.style.top = ''
             document.body.style.removeProperty('touch-action')
             document.documentElement.style.removeProperty('touch-action')
-            document.body.style.removeProperty('overscroll-behavior')
-            document.documentElement.style.removeProperty('overscroll-behavior')
             document.body.style.removeProperty('-webkit-touch-callout')
             document.body.style.removeProperty('user-select')
-            document.body.style.removeProperty('-webkit-user-select')
             window.scrollTo(0, scrollY)
         }
     }, [isOpen])
 
     // ============================================
-    // 2. HEARTBEAT SYNC
+    // HEARTBEAT SYNC
     // ============================================
     useEffect(() => {
         posRef.current.x = offsetX
@@ -111,8 +97,8 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             setScale(1)
             setOffsetX(0)
             setOffsetY(0)
-            posRef.current = { x: 0, y: 0, scale: 1 }
-            initialPinchDistance.current = 0
+            posRef.current = { x: 0, y: 0, scale: 1, initialScale: 1 }
+            initialPinchDist.current = 0
             setTimeout(() => fileInputRef.current?.click(), 300)
         }
     }, [isOpen])
@@ -133,99 +119,88 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
             setScale(1)
             setOffsetX(0)
             setOffsetY(0)
-            posRef.current = { x: 0, y: 0, scale: 1 }
+            posRef.current = { x: 0, y: 0, scale: 1, initialScale: 1 }
         } catch (err) { alert('Error loading image') }
     }
 
     // ============================================
-    // 3. POINTER CAPTURE PHYSICS
+    // NATIVE TOUCH ENGINE (Bypasses React)
     // ============================================
-    const handlePointerDown = (e) => {
-        if (!image) return
+    useEffect(() => {
+        const frame = cropFrameRef.current
+        if (!frame || !image || step !== 'edit') return
 
-        e.preventDefault()
-        e.stopPropagation()
-        e.currentTarget.setPointerCapture(e.pointerId)
+        const handleStart = (e) => {
+            e.preventDefault() // Kills Safari System Menu
+            const touch = e.touches ? e.touches[0] : e
+            isDragging.current = true
+            lastTouch.current = { x: touch.clientX, y: touch.clientY }
 
-        isDragging.current = true
-        lastTouch.current = { x: e.clientX, y: e.clientY }
+            // Sync ref to current state
+            posRef.current.x = offsetX
+            posRef.current.y = offsetY
 
-        // SYNC REF TO CURRENT STATE
-        posRef.current.x = offsetX
-        posRef.current.y = offsetY
-    }
-
-    const handlePointerMove = (e) => {
-        if (!image || !isDragging.current) return
-        e.preventDefault()
-        e.stopPropagation()
-
-        const dx = e.clientX - lastTouch.current.x
-        const dy = e.clientY - lastTouch.current.y
-
-        let newX = posRef.current.x + dx
-        let newY = posRef.current.y + dy
-
-        // Magnetic Snap
-        let isX = false, isY = false
-        if (Math.abs(newX) < SNAP_THRESHOLD) {
-            newX = 0
-            isX = true
-            if (!snappedX && navigator.vibrate) navigator.vibrate(10)
-        }
-        if (Math.abs(newY) < SNAP_THRESHOLD) {
-            newY = 0
-            isY = true
-            if (!snappedY && navigator.vibrate) navigator.vibrate(10)
+            // Handle Pinch Init
+            if (e.touches && e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX
+                const dy = e.touches[0].clientY - e.touches[1].clientY
+                initialPinchDist.current = Math.sqrt(dx * dx + dy * dy)
+                posRef.current.initialScale = posRef.current.scale
+            }
         }
 
-        posRef.current.x = newX
-        posRef.current.y = newY
-        setOffsetX(newX)
-        setOffsetY(newY)
-        setSnappedX(isX)
-        setSnappedY(isY)
+        const handleMove = (e) => {
+            if (e.cancelable) e.preventDefault() // Kills Page Scroll
 
-        lastTouch.current = { x: e.clientX, y: e.clientY }
-    }
+            if (e.touches && e.touches.length === 2) {
+                // PINCH MATH
+                const dx = e.touches[0].clientX - e.touches[1].clientX
+                const dy = e.touches[0].clientY - e.touches[1].clientY
+                const dist = Math.sqrt(dx * dx + dy * dy)
+                if (initialPinchDist.current > 0) {
+                    const newScale = Math.min(3, Math.max(0.5, posRef.current.initialScale * (dist / initialPinchDist.current)))
+                    posRef.current.scale = newScale
+                    setScale(newScale)
+                }
+            } else if (isDragging.current && e.touches && e.touches.length === 1) {
+                // DRAG MATH
+                const touch = e.touches[0]
+                const dx = touch.clientX - lastTouch.current.x
+                const dy = touch.clientY - lastTouch.current.y
+                let nx = posRef.current.x + dx
+                let ny = posRef.current.y + dy
 
-    const handlePointerUp = (e) => {
-        isDragging.current = false
-        try {
-            e.currentTarget.releasePointerCapture(e.pointerId)
-        } catch (err) { /* ignore */ }
-    }
+                // Magnetic Snap
+                let isX = false, isY = false
+                if (Math.abs(nx) < SNAP_THRESHOLD) { nx = 0; isX = true }
+                if (Math.abs(ny) < SNAP_THRESHOLD) { ny = 0; isY = true }
 
-    // PINCH ZOOM
-    const handleTouchStart = (e) => {
-        if (!image || e.touches.length !== 2) return
-        e.preventDefault()
-        const dx = e.touches[0].clientX - e.touches[1].clientX
-        const dy = e.touches[0].clientY - e.touches[1].clientY
-        initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
-        initialScale.current = scale
-    }
-
-    const handleTouchMove = (e) => {
-        if (!image || e.touches.length !== 2) return
-        e.preventDefault()
-        e.stopPropagation()
-
-        const dx = e.touches[0].clientX - e.touches[1].clientX
-        const dy = e.touches[0].clientY - e.touches[1].clientY
-        const distance = Math.sqrt(dx * dx + dy * dy)
-
-        if (initialPinchDistance.current > 0) {
-            const scaleFactor = distance / initialPinchDistance.current
-            const newScale = Math.min(3, Math.max(0.5, initialScale.current * scaleFactor))
-            setScale(newScale)
-            posRef.current.scale = newScale
+                posRef.current.x = nx
+                posRef.current.y = ny
+                setOffsetX(nx)
+                setOffsetY(ny)
+                setSnappedX(isX)
+                setSnappedY(isY)
+                lastTouch.current = { x: touch.clientX, y: touch.clientY }
+            }
         }
-    }
 
-    const handleTouchEnd = () => {
-        initialPinchDistance.current = 0
-    }
+        const handleEnd = () => {
+            isDragging.current = false
+            initialPinchDist.current = 0
+        }
+
+        // THE DIRECT INJECTION
+        frame.addEventListener('touchstart', handleStart, { passive: false })
+        frame.addEventListener('touchmove', handleMove, { passive: false })
+        frame.addEventListener('touchend', handleEnd)
+
+        return () => {
+            frame.removeEventListener('touchstart', handleStart)
+            frame.removeEventListener('touchmove', handleMove)
+            frame.removeEventListener('touchend', handleEnd)
+        }
+    }, [image, step, offsetX, offsetY])
 
     const handleSave = async () => {
         if (!businessId) return alert('No Business ID')
@@ -255,7 +230,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
 
     if (!isOpen) return null
 
-    // SHARED STYLES — SYSTEM MENU KILL
+    // SHARED CONTAINER STYLES
     const containerStyles = {
         position: 'fixed',
         inset: 0,
@@ -264,9 +239,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
         touchAction: 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        WebkitTouchCallout: 'none',
-        MozUserSelect: 'none',
-        msUserSelect: 'none'
+        WebkitTouchCallout: 'none'
     }
 
     // ============================================
@@ -275,16 +248,9 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     if (step === 'edit') {
         return (
             <div style={containerStyles}>
-                {/* CROP FRAME */}
+                {/* CROP FRAME — Only ref, no event handlers */}
                 <div
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onPointerLeave={handlePointerUp}
-                    onPointerCancel={handlePointerUp}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
+                    ref={cropFrameRef}
                     style={{
                         position: 'absolute',
                         top: 0,
@@ -436,7 +402,7 @@ function CoverImageEditor({ isOpen, onClose, onSave }) {
     }
 
     // ============================================
-    // RENDER: STATIC PREVIEW MODE (No <Home />)
+    // RENDER: STATIC PREVIEW MODE
     // ============================================
     if (step === 'preview') {
         return (
