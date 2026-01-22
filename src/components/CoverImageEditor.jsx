@@ -1,11 +1,14 @@
 /**
- * CoverImageEditor.jsx — STABLE TOUCH v13.0
+ * CoverImageEditor.jsx — POINTER EVENTS v14.0
  * 
  * FIXES:
- * 1. STABLE INIT: Only reset state on fresh open, not on initialData changes
- * 2. DIRECT TOUCH: Handlers on image container (no glass overlay)
- * 3. NATIVE EVENTS: addEventListener with { passive: false }
- * 4. ICON BUTTONS: No text labels for Safari seal
+ * 1. POINTER EVENTS API: Unified mouse + touch handling
+ *    - Works in browser simulation AND real Safari
+ *    - setPointerCapture locks events to element during drag
+ * 
+ * 2. STABLE INIT: Only reset on fresh open (hasInitialized ref)
+ * 
+ * 3. SAFARI SEAL: Icon buttons + dynamic file input + data-form-type
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -60,16 +63,20 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     // Refs
     const containerRef = useRef(null)
     const isDragging = useRef(false)
-    const lastTouch = useRef({ x: 0, y: 0 })
-    const initialPinchDistance = useRef(0)
-    const initialScaleRef = useRef(1)
+    const lastPointer = useRef({ x: 0, y: 0 })
     const posRef = useRef({ offsetX: 0, offsetY: 0, scale: 1 })
     const hasInitialized = useRef(false)
+    const activePointerId = useRef(null)
+
+    // Multi-touch (pinch) tracking
+    const pointers = useRef(new Map())
+    const initialPinchDistance = useRef(0)
+    const initialScaleRef = useRef(1)
 
     const coverHeight = COVER_HEIGHTS[breakpoint]
 
     // ============================================
-    // 2. STABLE INITIALIZATION (Only on fresh open)
+    // 2. STABLE INITIALIZATION
     // ============================================
     useEffect(() => {
         if (isOpen && !hasInitialized.current) {
@@ -93,23 +100,17 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
             document.body.style.overflow = 'hidden'
             document.documentElement.style.overflow = 'hidden'
-            document.body.style.touchAction = 'none'
-            document.documentElement.style.touchAction = 'none'
         }
 
         if (!isOpen) {
             hasInitialized.current = false
             document.body.style.overflow = ''
             document.documentElement.style.overflow = ''
-            document.body.style.touchAction = ''
-            document.documentElement.style.touchAction = ''
         }
 
         return () => {
             document.body.style.overflow = ''
             document.documentElement.style.overflow = ''
-            document.body.style.touchAction = ''
-            document.documentElement.style.touchAction = ''
         }
     }, [isOpen])
 
@@ -120,122 +121,115 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     }, [])
 
     // ============================================
-    // 3. NATIVE TOUCH HANDLERS
+    // 3. POINTER EVENT HANDLERS
     // ============================================
-    useEffect(() => {
-        const container = containerRef.current
-        if (!container || step !== 'edit') return
+    const handlePointerDown = useCallback((e) => {
+        e.preventDefault()
+        e.stopPropagation()
 
-        const handleTouchStart = (e) => {
-            e.preventDefault()
-            e.stopPropagation()
+        // Track this pointer
+        pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
 
-            if (e.touches.length === 2) {
-                const dx = e.touches[0].clientX - e.touches[1].clientX
-                const dy = e.touches[0].clientY - e.touches[1].clientY
-                initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
-                initialScaleRef.current = posRef.current.scale
-            } else if (e.touches.length === 1) {
-                isDragging.current = true
-                lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-            }
+        // Capture pointer to this element
+        if (e.target.setPointerCapture) {
+            e.target.setPointerCapture(e.pointerId)
         }
 
-        const handleTouchMove = (e) => {
-            e.preventDefault()
-            e.stopPropagation()
+        if (pointers.current.size === 2) {
+            // Two fingers down - pinch start
+            const pts = Array.from(pointers.current.values())
+            const dx = pts[0].x - pts[1].x
+            const dy = pts[0].y - pts[1].y
+            initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy)
+            initialScaleRef.current = posRef.current.scale
+            isDragging.current = false
+        } else if (pointers.current.size === 1) {
+            // Single finger - drag start
+            isDragging.current = true
+            activePointerId.current = e.pointerId
+            lastPointer.current = { x: e.clientX, y: e.clientY }
+        }
 
-            if (e.touches.length === 2 && initialPinchDistance.current > 0) {
-                const dx = e.touches[0].clientX - e.touches[1].clientX
-                const dy = e.touches[0].clientY - e.touches[1].clientY
-                const distance = Math.sqrt(dx * dx + dy * dy)
+        console.log('[Pointer] Down:', e.pointerId, 'Total:', pointers.current.size)
+    }, [])
+
+    const handlePointerMove = useCallback((e) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        // Update this pointer's position
+        if (pointers.current.has(e.pointerId)) {
+            pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        }
+
+        if (pointers.current.size === 2) {
+            // Pinch zoom
+            const pts = Array.from(pointers.current.values())
+            const dx = pts[0].x - pts[1].x
+            const dy = pts[0].y - pts[1].y
+            const distance = Math.sqrt(dx * dx + dy * dy)
+
+            if (initialPinchDistance.current > 0) {
                 const newScale = Math.min(3, Math.max(0.5, initialScaleRef.current * (distance / initialPinchDistance.current)))
-
                 posRef.current.scale = newScale
                 setScale(newScale)
-            } else if (e.touches.length === 1 && isDragging.current) {
-                const touch = e.touches[0]
-                const dx = touch.clientX - lastTouch.current.x
-                const dy = touch.clientY - lastTouch.current.y
-
-                let newX = posRef.current.offsetX + dx
-                let newY = posRef.current.offsetY + dy
-
-                let isSnappedX = false
-                let isSnappedY = false
-
-                if (Math.abs(newX) <= SNAP_THRESHOLD) { newX = 0; isSnappedX = true }
-                if (Math.abs(newY) <= SNAP_THRESHOLD) { newY = 0; isSnappedY = true }
-
-                posRef.current.offsetX = newX
-                posRef.current.offsetY = newY
-
-                setOffsetX(newX)
-                setOffsetY(newY)
-                setSnappedX(isSnappedX)
-                setSnappedY(isSnappedY)
-
-                lastTouch.current = { x: touch.clientX, y: touch.clientY }
             }
-        }
-
-        const handleTouchEnd = (e) => {
-            e.preventDefault()
-            isDragging.current = false
-            initialPinchDistance.current = 0
-        }
-
-        // Mouse handlers for desktop
-        const handleMouseDown = (e) => {
-            isDragging.current = true
-            lastTouch.current = { x: e.clientX, y: e.clientY }
-        }
-
-        const handleMouseMove = (e) => {
-            if (!isDragging.current) return
-
-            const dx = e.clientX - lastTouch.current.x
-            const dy = e.clientY - lastTouch.current.y
+        } else if (isDragging.current && e.pointerId === activePointerId.current) {
+            // Pan
+            const dx = e.clientX - lastPointer.current.x
+            const dy = e.clientY - lastPointer.current.y
 
             let newX = posRef.current.offsetX + dx
             let newY = posRef.current.offsetY + dy
 
-            if (Math.abs(newX) <= SNAP_THRESHOLD) newX = 0
-            if (Math.abs(newY) <= SNAP_THRESHOLD) newY = 0
+            // Snap assist
+            let isSnappedX = false
+            let isSnappedY = false
+
+            if (Math.abs(newX) <= SNAP_THRESHOLD) { newX = 0; isSnappedX = true }
+            if (Math.abs(newY) <= SNAP_THRESHOLD) { newY = 0; isSnappedY = true }
 
             posRef.current.offsetX = newX
             posRef.current.offsetY = newY
 
             setOffsetX(newX)
             setOffsetY(newY)
+            setSnappedX(isSnappedX)
+            setSnappedY(isSnappedY)
 
-            lastTouch.current = { x: e.clientX, y: e.clientY }
+            lastPointer.current = { x: e.clientX, y: e.clientY }
+
+            console.log('[Pointer] Move:', newX, newY)
+        }
+    }, [])
+
+    const handlePointerUp = useCallback((e) => {
+        e.preventDefault()
+
+        // Release pointer capture
+        if (e.target.releasePointerCapture) {
+            try {
+                e.target.releasePointerCapture(e.pointerId)
+            } catch (err) { /* ignore */ }
         }
 
-        const handleMouseUp = () => {
+        // Remove this pointer
+        pointers.current.delete(e.pointerId)
+
+        if (pointers.current.size === 0) {
             isDragging.current = false
+            activePointerId.current = null
+            initialPinchDistance.current = 0
+        } else if (pointers.current.size === 1) {
+            // Transition from pinch to pan
+            isDragging.current = true
+            const remaining = Array.from(pointers.current.entries())[0]
+            activePointerId.current = remaining[0]
+            lastPointer.current = { x: remaining[1].x, y: remaining[1].y }
         }
 
-        container.addEventListener('touchstart', handleTouchStart, { passive: false })
-        container.addEventListener('touchmove', handleTouchMove, { passive: false })
-        container.addEventListener('touchend', handleTouchEnd, { passive: false })
-        container.addEventListener('touchcancel', handleTouchEnd, { passive: false })
-        container.addEventListener('mousedown', handleMouseDown)
-        container.addEventListener('mousemove', handleMouseMove)
-        container.addEventListener('mouseup', handleMouseUp)
-        container.addEventListener('mouseleave', handleMouseUp)
-
-        return () => {
-            container.removeEventListener('touchstart', handleTouchStart)
-            container.removeEventListener('touchmove', handleTouchMove)
-            container.removeEventListener('touchend', handleTouchEnd)
-            container.removeEventListener('touchcancel', handleTouchEnd)
-            container.removeEventListener('mousedown', handleMouseDown)
-            container.removeEventListener('mousemove', handleMouseMove)
-            container.removeEventListener('mouseup', handleMouseUp)
-            container.removeEventListener('mouseleave', handleMouseUp)
-        }
-    }, [step])
+        console.log('[Pointer] Up:', e.pointerId, 'Remaining:', pointers.current.size)
+    }, [])
 
     // ============================================
     // 4. DYNAMIC FILE INPUT
@@ -419,9 +413,14 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
             <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', pointerEvents: 'none', zIndex: 5 }} />
 
-            {/* INTERACTIVE CROP FRAME */}
+            {/* INTERACTIVE CROP FRAME - Pointer Events */}
             <div
                 ref={containerRef}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onPointerLeave={handlePointerUp}
                 style={{
                     position: 'absolute',
                     top: 0,
@@ -436,7 +435,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     touchAction: 'none',
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
-                    WebkitTouchCallout: 'none'
+                    WebkitTouchCallout: 'none',
+                    pointerEvents: 'auto'
                 }}
             >
                 {image ? (
