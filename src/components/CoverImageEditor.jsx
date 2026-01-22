@@ -26,18 +26,102 @@ function getBreakpoint() {
     return window.innerWidth >= 768 ? 'tablet' : 'mobile'
 }
 
-function StaticBottomNav() {
+// --- PREVIEW ICONS (Static Replicas) ---
+
+// 1. Bottom Nav Icons
+const NavHomeIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+)
+const NavMenuIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+)
+const NavStatusIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 11l3 3L22 4"></path>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+    </svg>
+)
+const NavInfoIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+)
+const NavCameraIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+        <circle cx="12" cy="13" r="4"></circle>
+    </svg>
+)
+
+// 2. Hero Action Icons
+const HeroMenuIcon = () => (
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M216,40V224a8,8,0,0,1-16,0V176H152a8,8,0,0,1-8-8,268.75,268.75,0,0,1,7.22-56.88c9.78-40.49,28.32-67.63,53.63-78.47A8,8,0,0,1,216,40Zm-96.11-1.31a8,8,0,1,0-15.78,2.63L111.89,88H88V40a8,8,0,0,0-16,0V88H48.11l7.78-46.68a8,8,0,1,0-15.78-2.63l-8,48A8.17,8.17,0,0,0,32,88a48.07,48.07,0,0,0,40,47.32V224a8,8,0,0,0,16,0V135.32A48.07,48.07,0,0,0,128,88a8.17,8.17,0,0,0-.11-1.31Z"></path>
+    </svg>
+)
+const HeroDeliveryIcon = () => (
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M208,40H167.2a40,40,0,0,0-78.4,0H48a8,8,0,0,0,0,16H88.8a40,40,0,0,0,12.58,21.82A64.08,64.08,0,0,0,64,136v64a16,16,0,0,0,16,16H96a32,32,0,0,0,64,0h16a16,16,0,0,0,16-16V136a64.08,64.08,0,0,0-37.38-58.18A40,40,0,0,0,167.2,56H208a8,8,0,0,0,0-16ZM144,216a16,16,0,0,1-32,0V168a16,16,0,0,1,32,0ZM128,72a24,24,0,1,1,24-24A24,24,0,0,1,128,72Z" />
+    </svg>
+)
+const HeroPromosIcon = () => (
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63ZM80,96A16,16,0,1,1,96,80,16,16,0,0,1,80,96Z"></path>
+    </svg>
+)
+const HeroGameIcon = () => (
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M247.44,173.75a.68.68,0,0,0,0-.14L231.05,89.44c0-.06,0-.12,0-.18A60.08,60.08,0,0,0,172,40H83.89a59.88,59.88,0,0,0-59,49.52L8.58,173.61a.68.68,0,0,0,0,.14,36,36,0,0,0,60.9,31.71l.35-.37L109.52,160h37l39.71,45.09c.11.13.23.25.35.37A36.08,36.08,0,0,0,212,216a36,36,0,0,0,35.43-42.25ZM104,112H96v8a8,8,0,0,1-16,0v-8H72a8,8,0,0,1,0-16h8V88a8,8,0,0,1,16,0v8h8a8,8,0,0,1,0,16Zm40-8a8,8,0,0,1,8-8h24a8,8,0,0,1,0,16H152A8,8,0,0,1,144,104Zm84.37,87.47a19.84,19.84,0,0,1-12.9,8.23A20.09,20.09,0,0,1,198,194.31L167.8,160H172a60,60,0,0,0,51-28.38l8.74,45A19.82,19.82,0,0,1,228.37,191.47Z"></path>
+    </svg>
+)
+
+function StaticBottomNav({ config = {} }) {
+    const primaryColor = config.branding?.primaryColor || '#8B7355'
+
     return (
         <nav style={{
-            position: 'fixed', bottom: 0, left: 0, right: 0, height: 64,
-            background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-around',
-            borderTop: '1px solid #E5E7EB', paddingBottom: 'env(safe-area-inset-bottom)', zIndex: 1
+            position: 'fixed', bottom: 0, left: 0, right: 0, height: 80,
+            background: 'white', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-around',
+            borderTop: '1px solid #E5E7EB', paddingBottom: 'env(safe-area-inset-bottom)', zIndex: 999999,
+            paddingTop: 8
         }}>
-            <div style={{ opacity: 1 }}><span style={{ fontSize: 20 }}>🏠</span></div>
-            <div style={{ opacity: 0.5 }}><span style={{ fontSize: 20 }}>📋</span></div>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#111', marginTop: -20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
-            <div style={{ opacity: 0.5 }}><span style={{ fontSize: 20 }}>📊</span></div>
-            <div style={{ opacity: 0.5 }}><span style={{ fontSize: 20 }}>ℹ️</span></div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 1 }}>
+                <div style={{ color: primaryColor }}><NavHomeIcon /></div>
+                <span style={{ fontSize: 10, marginTop: 4, fontWeight: 600, color: primaryColor }}>Home</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                <div style={{ color: '#9CA3AF' }}><NavMenuIcon /></div>
+                <span style={{ fontSize: 10, marginTop: 4, fontWeight: 500, color: '#9CA3AF' }}>Menú</span>
+            </div>
+
+            {/* Camera Button */}
+            <div style={{
+                width: 56, height: 56, borderRadius: '50%', background: primaryColor,
+                marginTop: -28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                border: '4px solid white',
+                zIndex: 10
+            }}>
+                <div style={{ color: 'white' }}><NavCameraIcon /></div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                <div style={{ color: '#9CA3AF' }}><NavStatusIcon /></div>
+                <span style={{ fontSize: 10, marginTop: 4, fontWeight: 500, color: '#9CA3AF' }}>Estado</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                <div style={{ color: '#9CA3AF' }}><NavInfoIcon /></div>
+                <span style={{ fontSize: 10, marginTop: 4, fontWeight: 500, color: '#9CA3AF' }}>Info</span>
+            </div>
         </nav>
     )
 }
@@ -333,30 +417,93 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             <div
                 data-form-type="other"
                 style={{
-                    position: 'fixed', inset: 0, background: '#000', zIndex: 99999,
+                    position: 'fixed', inset: 0, background: '#F9FAFB', zIndex: 99999,
                     touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none'
                 }}
             >
-                <div style={{ position: 'absolute', inset: 0 }}>
-                    <Home config={config} />
-                    <StaticBottomNav />
-                </div>
-
+                {/* 1. Header/Logo Layer - Standard HeaderClamp Position */}
                 <div style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, height: coverHeight,
-                    overflow: 'hidden', zIndex: 6
+                    position: 'absolute', top: 50, left: 0, right: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 20, pointerEvents: 'none', paddingLeft: 20, paddingRight: 20
                 }}>
-                    {image && (
-                        <div style={{
-                            position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
-                            backgroundImage: `url(${image})`, backgroundSize: `${scale * 100}%`,
-                            backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-                            transform: `translate(${offsetX}px, ${offsetY}px)`,
-                            pointerEvents: 'none'
-                        }} />
+                    {config.branding?.logo_url ? (
+                        <img
+                            src={config.branding.logo_url}
+                            alt="Brand"
+                            style={{ maxHeight: 50, maxWidth: '80%', objectFit: 'contain' }}
+                        />
+                    ) : (
+                        <span style={{ fontSize: 24, fontWeight: 800, color: '#1F2937', textAlign: 'center' }}>
+                            {config.branding?.business_name || 'FoodSpot'}
+                        </span>
                     )}
                 </div>
 
+                {/* 2. Content Layer */}
+                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', paddingBottom: 100 }}>
+                    {/* Hero Image */}
+                    <div style={{
+                        position: 'relative',
+                        height: coverHeight,
+                        width: '100%',
+                        overflow: 'hidden'
+                    }}>
+                        {image && (
+                            <div style={{
+                                position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
+                                backgroundImage: `url(${image})`, backgroundSize: `${scale * 100}%`,
+                                backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
+                                transform: `translate(${offsetX}px, ${offsetY}px)`,
+                                pointerEvents: 'none'
+                            }} />
+                        )}
+                    </div>
+
+                    {/* 3. Hero Actions + Ghost Grid */}
+                    <div style={{
+                        position: 'relative',
+                        padding: '12px 16px',
+                        display: 'flex', flexDirection: 'column', gap: 16
+                    }}>
+                        {/* HERO ACTIONS ROW */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            {[
+                                { label: 'Menu', icon: HeroMenuIcon },
+                                { label: 'Envíos', icon: HeroDeliveryIcon },
+                                { label: 'Promos', icon: HeroPromosIcon },
+                                { label: 'Mini Game', icon: HeroGameIcon }
+                            ].map((action, i) => (
+                                <div key={i} style={{
+                                    background: 'white', borderRadius: 16, padding: 16, height: 100,
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                                }}>
+                                    <div style={{ marginBottom: 8 }}><action.icon /></div>
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{action.label}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* GHOST GRID (2 Columns) */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            {[1, 2, 3, 4].map(n => (
+                                <div key={n} style={{
+                                    background: 'white', borderRadius: 16, overflow: 'hidden',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                                }}>
+                                    <div style={{ height: 120, background: '#E5E0D8' }} />
+                                    <div style={{ height: 40 }} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Navigation & Controls */}
+                <StaticBottomNav config={config} />
+
+                {/* Top Controls (Back/Save) - Floating over everything */}
                 <div style={{
                     position: 'absolute', top: 0, left: 0, right: 0,
                     paddingTop: 'max(12px, env(safe-area-inset-top))', paddingLeft: 12, paddingRight: 12,
@@ -365,7 +512,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     <div
                         onClick={handleBack}
                         style={{
-                            minWidth: 44, minHeight: 44, padding: '8px 14px', background: 'rgba(0,0,0,0.7)',
+                            minWidth: 44, minHeight: 44, padding: '8px 14px', background: 'rgba(0,0,0,0.5)',
                             color: '#fff', borderRadius: 10, fontSize: 18, fontWeight: 600,
                             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}
@@ -384,14 +531,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     >
                         {isSaving ? '...' : '✓'}
                     </div>
-                </div>
-
-                <div style={{
-                    position: 'absolute', top: coverHeight + 12, left: '50%', transform: 'translateX(-50%)',
-                    background: '#3B82F6', color: '#fff', fontSize: 12, fontWeight: 600,
-                    padding: '8px 16px', borderRadius: 20, zIndex: 10, whiteSpace: 'nowrap'
-                }}>
-                    Preview — Tap ✓ to save
                 </div>
             </div>
         )
