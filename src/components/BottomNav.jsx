@@ -38,7 +38,35 @@ const InfoIcon = () => (
 // INVARIANT: config must come from prop (App.jsx safeConfig)
 function BottomNav({ config: configProp }) {
     // 🛡️ NULL GUARD: Ensure config is always an object (prevents f[b] crash)
-    const config = configProp || {};
+    const initialConfig = configProp || {};
+
+    // ⚡ REAL-TIME SYNC STATE: Listen for instant updates
+    const [dynamicConfig, setDynamicConfig] = React.useState(initialConfig);
+
+    // Sync prop updates to state (if parent updates slowly)
+    React.useEffect(() => {
+        setDynamicConfig(configProp || {});
+    }, [configProp]);
+
+    // ⚡ LISTEN FOR 'frontendSync' EVENT (The "Starter Fluid")
+    React.useEffect(() => {
+        const handleSync = (e) => {
+            console.log('⚡ BottomNav caught sync:', e.detail);
+            setDynamicConfig(prev => ({
+                ...prev,
+                branding: {
+                    ...prev.branding,
+                    ...e.detail, // Merges navbar_color, nav_icon_mode, etc.
+                    // Special handling for hero keys if they leak here, but mainly for branding
+                }
+            }));
+        };
+
+        window.addEventListener('frontendSync', handleSync);
+        return () => window.removeEventListener('frontendSync', handleSync);
+    }, []);
+
+    const config = dynamicConfig;
 
     const location = useLocation()
     const params = useParams()
@@ -91,6 +119,7 @@ function BottomNav({ config: configProp }) {
 
     // Helper: Determine if color is light (for auto contrast)
     function isLightColor(hex) {
+        if (!hex) return false;
         const c = hex.replace('#', '')
         const r = parseInt(c.substr(0, 2), 16)
         const g = parseInt(c.substr(2, 2), 16)
@@ -111,7 +140,7 @@ function BottomNav({ config: configProp }) {
     return (
         <nav
             className="bottom-nav"
-            style={{ backgroundColor: navBgColor }}
+            style={{ backgroundColor: navBgColor, transition: 'background-color 0.2s ease' }}
         >
             <NavLink
                 to={routes.home}
@@ -134,7 +163,7 @@ function BottomNav({ config: configProp }) {
 
             {/* CENTER CAMERA BUTTON - Customizable icon and color */}
             <NavLink to={routes.camera} className="camera-button">
-                <div className="camera-inner" style={{ backgroundColor: cameraBgColor }}>
+                <div className="camera-inner" style={{ backgroundColor: cameraBgColor, transition: 'background-color 0.2s ease' }}>
                     <CameraIconComponent style={{ color: cameraIconColor }} />
                 </div>
             </NavLink>
