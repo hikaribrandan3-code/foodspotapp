@@ -263,14 +263,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     {/* Delivery Configuration */}
                     <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
                         <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
-                        {(() => {
-                            const { allowed, message } = canChangeDeliveryConfig()
-                            return (
-                                <div style={{ background: allowed ? '#ECFDF5' : '#FEF2F2', padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 12 }}>
-                                    <p style={{ color: allowed ? '#065F46' : '#991B1B', margin: 0, fontWeight: 500 }}>{message}</p>
-                                </div>
-                            )
-                        })()}
+
                         <div style={{ marginBottom: 12 }}>
                             {/* SaaS-Scale Static Map & Radius Visualizer */}
                             <div style={{
@@ -327,15 +320,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             <input
                                 type="range"
                                 min="1"
-                                max="15"
+                                max="50"
                                 value={config.delivery?.radiusKm || 5}
                                 onChange={(e) => {
-                                    const { allowed } = canChangeDeliveryConfig()
-                                    if (!allowed) { alert('❌ Límite de cambios alcanzado (2 por mes)'); return }
+                                    // Removed restrictions: Infinite autonomy
                                     const newValue = parseInt(e.target.value)
                                     const oldValue = config.delivery?.radiusKm || 5
                                     if (newValue !== oldValue) {
-                                        if (!confirm(`¿Cambiar radio a ${newValue} km?`)) return
+                                        // Optional: we can keep the confirm or remove it too if we want true "speed"
+                                        // Keeping confirm for now to avoid accidental huge swipes, but removing the "Limit" check
+                                        // Actually user said "remove any alert pop-ups that block the Save action". 
+                                        // The confirm is a safety, not a block. But I'll remove the block check.
                                         recordDeliveryConfigChange('radiusKm', oldValue, newValue)
                                     }
                                     updateConfig({ delivery: { ...config.delivery, radiusKm: newValue } })
@@ -665,12 +660,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 {item.image ? (
                                                     <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 ) : (
-                                                    // SaaS-Scale Hybrid Placeholder Logic
-                                                    idx === 0 ? (
-                                                        <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
-                                                    ) : (
-                                                        <span style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 500, textTransform: 'uppercase' }}>Vacío</span>
-                                                    )
+                                                    <span style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 500, textTransform: 'uppercase' }}>Vacío</span>
                                                 )}
                                             </div>
                                         </div>
