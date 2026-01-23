@@ -1,57 +1,128 @@
-// src/pages/owner/Settings.jsx - OPERATION VAULT-SEAL FINAL
+// src/pages/owner/Settings.jsx - VISUAL MIRROR v2.0
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTenant } from '../../contexts/TenantContext'; // SILO SOURCE OF TRUTH
+import { useTenant } from '../../contexts/TenantContext';
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
-import CoverImageEditor from '../../components/CoverImageEditor'; // 🎨 RESTORED: Dec 19 Studio
+import CoverImageEditor from '../../components/CoverImageEditor';
+import ColorPickerModal from '../../components/ColorPickerModal';
 import { clearAuth } from '../../utils/storage';
-import { getConfig } from '../../config/appConfig.v2.js'; // For Live Home preview
+import { getConfig } from '../../config/appConfig.v2.js';
+import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
 import './Settings.css';
 
+// --- MINI NAV ICONS (24px versions for compact preview) ---
+const NavHomeIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+)
+const NavMenuIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+)
+const NavCameraIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+        <circle cx="12" cy="13" r="4"></circle>
+    </svg>
+)
+const NavStatusIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 11l3 3L22 4"></path>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+    </svg>
+)
+const NavInfoIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+)
+
+// Hero icon definitions for the interactive grid
+const HERO_ICON_DEFS = [
+    { id: 'menu', label: 'Menú', Icon: MenuIcon },
+    { id: 'delivery', label: 'Envíos', Icon: DeliveryIcon },
+    { id: 'promos', label: 'Promos', Icon: PromosIcon },
+    { id: 'game', label: 'Juego', Icon: GameIcon }
+];
+
 const Settings = () => {
-    // 🛡️ Safe Destructuring: Alias tenantData to tenant to match snippet logic
     const { tenantData: tenant, businessId } = useTenant();
     const [isSaving, setIsSaving] = useState(false);
     const navigate = useNavigate();
 
-    // 🛡️ LOCAL STATE: Critical for 60fps typing (START-PROCESS-FINISH pattern)
+    // LOCAL STATE for 60fps typing
     const [localIdentity, setLocalIdentity] = useState({
         business_name: '',
         font_family: 'Inter',
         font_weight: '600'
     });
 
+    // Dropdown states
     const [isFontMenuOpen, setIsFontMenuOpen] = useState(false);
     const [isWeightMenuOpen, setIsWeightMenuOpen] = useState(false);
-    const [showCoverEditor, setShowCoverEditor] = useState(false); // 🎨 STUDIO TOGGLE
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
 
-    // 🛡️ THE DATA PUMP: SYNC CONTEXT TO UI
+    // Modal states
+    const [showCoverEditor, setShowCoverEditor] = useState(false);
+    const [colorPickerState, setColorPickerState] = useState({
+        isOpen: false,
+        title: '',
+        keyName: '',
+        cssVar: '',
+        initialColor: '#8B7355',
+        originalColor: '#8B7355' // For revert on cancel
+    });
+
+    // Local preview colors (for instant feedback without re-render)
+    const [heroIconColors, setHeroIconColors] = useState({
+        menu: '#FFFFFF',
+        delivery: '#FFFFFF',
+        promos: '#FFFFFF',
+        game: '#FFFFFF'
+    });
+
+    // Data Pump: Sync context to UI
     useEffect(() => {
         if (tenant) {
-            console.log("🔄 PUMPING DATA TO UI:", tenant);
-
-            // 1. Update the Inputs (data is directly on tenant, NOT tenant.branding)
             setLocalIdentity({
                 business_name: tenant.business_name || '',
                 font_family: tenant.font_family || 'Inter',
                 font_weight: tenant.font_weight || '600'
             });
 
-            // 2. Force the CSS Visuals
+            // Sync hero icon colors from tenant
+            const icons = tenant.hero_icons || {};
+            setHeroIconColors({
+                menu: icons.menu?.color || '#FFFFFF',
+                delivery: icons.delivery?.color || '#FFFFFF',
+                promos: icons.promos?.color || '#FFFFFF',
+                game: icons.game?.color || '#FFFFFF'
+            });
+
+            // Force CSS visuals
             if (tenant.font_family) {
                 document.documentElement.style.setProperty('--font-main', tenant.font_family);
             }
             if (tenant.font_weight) {
                 document.documentElement.style.setProperty('--font-weight-hero', tenant.font_weight);
             }
+            if (tenant.navbar_color) {
+                document.documentElement.style.setProperty('--color-navbar-bg', tenant.navbar_color);
+            }
         }
     }, [tenant]);
 
-    // TAP OUTSIDE: Close dropdowns when clicking outside
+    // Close dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (fontMenuRef.current && !fontMenuRef.current.contains(event.target)) {
@@ -69,79 +140,25 @@ const Settings = () => {
         };
     }, []);
 
-    // PROCESS: Handle typing (local state only - no DB calls)
-    const handleNameChange = (e) => {
-        setLocalIdentity(prev => ({ ...prev, business_name: e.target.value }));
-    };
-
-    // 🛡️ THE FLIGHT RECORDER WRAPPER
-    const runDiagnosticSave = async (label, saveFn, updates) => {
-        if (!businessId) {
-            alert(`🚨 [${label}] FAILED: No Business ID found.`);
-            return;
-        }
-
-        try {
-            const { data, error } = await saveFn(updates, businessId);
-            if (error) throw error;
-
-            // Success Logic
-            syncContext(updates);
-            console.log(`✅ [${label}] Saved:`, updates);
-        } catch (err) {
-            alert(`❌ [${label}] DB ERROR: ${err.message}\nTip: Check for duplicate rows.`);
-            console.error(`${label} Error Details:`, err);
-        }
-    };
-
-    // 🛡️ UPDATED BOX 1 HANDLERS
-    const handleNameBlur = () => {
-        runDiagnosticSave("Identity Name", updateBranding, { business_name: localIdentity.business_name });
-    };
-
-    const handleFontSelect = (family) => {
-        setLocalIdentity(prev => ({ ...prev, font_family: family }));
-        document.documentElement.style.setProperty('--font-main', family);
-        setIsFontMenuOpen(false);
-        runDiagnosticSave("Typography Font", updateBranding, { font_family: family });
-    };
-
-    const handleWeightSelect = (weight) => {
-        setLocalIdentity(prev => ({ ...prev, font_weight: weight }));
-        document.documentElement.style.setProperty('--font-weight-hero', weight);
-        setIsWeightMenuOpen(false);
-        runDiagnosticSave("Typography Weight", updateBranding, { font_weight: weight });
-    };
-
-    // 🛡️ GLOBAL OPTIMISTIC SYNC ADAPTER
+    // Optimistic Sync Adapter
     const syncContext = (updates) => {
-        // Dispatch event for App.jsx / TenantContext to catch
         window.dispatchEvent(new CustomEvent('frontendSync', { detail: updates }));
-
-        // Also manually mutate the local tenant object for immediate React re-render if needed
-        // (Though direct DOM manipulation handles the visuals)
         if (tenant) {
             Object.assign(tenant, updates);
         }
     };
 
-    // 1. IDENTITY & TYPOGRAPHY SYNC
+    // Field Update Handler
     const handleFieldUpdate = async (field, value) => {
         if (!businessId) return;
 
-        // Instant visual mapping for Typography
+        // Instant CSS mapping
         if (field === 'font_family') document.documentElement.style.setProperty('--font-main', value);
         if (field === 'font_weight') document.documentElement.style.setProperty('--font-weight-hero', value);
+        if (field === 'navbar_color') document.documentElement.style.setProperty('--color-navbar-bg', value);
 
-        // Instant mapping for Hero Mode
-        if (field === 'hero_mode') {
-            // Already handled by React state update via tenant mutation in syncContext
-        }
-
-        // Update local DOM state immediately
         syncContext({ [field]: value });
 
-        // Silo-Hardened Persistence
         try {
             await updateBranding({ [field]: value }, businessId);
         } catch (error) {
@@ -149,7 +166,124 @@ const Settings = () => {
         }
     };
 
-    // Helper to convert hex to RGB triplet for rgba() usage in CSS
+    // Hero Icon Color Update
+    const handleHeroIconColorUpdate = async (iconId, color) => {
+        if (!businessId) return;
+
+        const currentIcons = tenant?.hero_icons || {};
+        const updatedIcons = {
+            ...currentIcons,
+            [iconId]: {
+                ...(currentIcons[iconId] || {}),
+                color: color
+            }
+        };
+
+        // Update local state for instant preview
+        setHeroIconColors(prev => ({ ...prev, [iconId]: color }));
+        syncContext({ hero_icons: updatedIcons });
+
+        try {
+            await updateBranding({ hero_icons: updatedIcons }, businessId);
+        } catch (error) {
+            console.error("Hero icon color update failed:", error);
+        }
+    };
+
+    // Typography handlers
+    const handleNameChange = (e) => {
+        setLocalIdentity(prev => ({ ...prev, business_name: e.target.value }));
+    };
+
+    const handleNameBlur = async () => {
+        if (!businessId) return;
+        syncContext({ business_name: localIdentity.business_name });
+        try {
+            await updateBranding({ business_name: localIdentity.business_name }, businessId);
+        } catch (err) {
+            console.error("Name save failed:", err);
+        }
+    };
+
+    const handleFontSelect = (family) => {
+        setLocalIdentity(prev => ({ ...prev, font_family: family }));
+        document.documentElement.style.setProperty('--font-main', family);
+        setIsFontMenuOpen(false);
+        handleFieldUpdate('font_family', family);
+    };
+
+    const handleWeightSelect = (weight) => {
+        setLocalIdentity(prev => ({ ...prev, font_weight: weight }));
+        document.documentElement.style.setProperty('--font-weight-hero', weight);
+        setIsWeightMenuOpen(false);
+        handleFieldUpdate('font_weight', weight);
+    };
+
+    // Color Picker Modal Handlers
+    const openColorPicker = (title, keyName, cssVar, defaultColor) => {
+        const currentColor = tenant?.[keyName] || defaultColor;
+        setColorPickerState({
+            isOpen: true,
+            title,
+            keyName,
+            cssVar,
+            initialColor: currentColor,
+            originalColor: currentColor
+        });
+    };
+
+    const openHeroIconColorPicker = (iconId, label) => {
+        const currentColor = heroIconColors[iconId] || '#FFFFFF';
+        setColorPickerState({
+            isOpen: true,
+            title: `Color: ${label}`,
+            keyName: `hero_icon_${iconId}`,
+            cssVar: '',
+            initialColor: currentColor,
+            originalColor: currentColor,
+            isHeroIcon: true,
+            iconId: iconId
+        });
+    };
+
+    const handleColorPickerLiveChange = (newColor) => {
+        // Instant preview via CSS or local state
+        if (colorPickerState.cssVar) {
+            document.documentElement.style.setProperty(colorPickerState.cssVar, newColor);
+        }
+        if (colorPickerState.isHeroIcon) {
+            setHeroIconColors(prev => ({ ...prev, [colorPickerState.iconId]: newColor }));
+        }
+    };
+
+    const handleColorPickerApply = (finalColor) => {
+        if (colorPickerState.isHeroIcon) {
+            handleHeroIconColorUpdate(colorPickerState.iconId, finalColor);
+        } else {
+            handleFieldUpdate(colorPickerState.keyName, finalColor);
+        }
+        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+    };
+
+    const handleColorPickerClose = () => {
+        // Revert to original color
+        if (colorPickerState.cssVar) {
+            document.documentElement.style.setProperty(colorPickerState.cssVar, colorPickerState.originalColor);
+        }
+        if (colorPickerState.isHeroIcon) {
+            setHeroIconColors(prev => ({ ...prev, [colorPickerState.iconId]: colorPickerState.originalColor }));
+        }
+        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+    };
+
+    // Logout
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        clearAuth();
+        window.location.href = `/${tenant?.slug || ''}`;
+    };
+
+    // Helper: Hex to RGB
     const hexToRgb = (hex) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ?
@@ -157,9 +291,9 @@ const Settings = () => {
             '0, 0, 0';
     };
 
-    // 2. STANDARDIZED "GOAT" COLOR PILLAR
+    // Color Pillar Component
     const ColorPillar = ({ label, keyName, cssVar, defaultValue }) => {
-        const currentColor = tenant?.branding?.[keyName] || defaultValue;
+        const currentColor = tenant?.[keyName] || defaultValue;
         return (
             <div className="color-pillar">
                 <p className="pillar-label">{label}</p>
@@ -169,65 +303,30 @@ const Settings = () => {
                     value={currentColor}
                     onChange={(e) => {
                         const val = e.target.value;
-                        // 🛡️ DIRECT DOM BYPASS (Sub-16ms feedback)
                         document.documentElement.style.setProperty(cssVar, val);
-                        // Also set RGB version for semi-transparent backgrounds
                         document.documentElement.style.setProperty(`${cssVar}-rgb`, hexToRgb(val));
-
-                        // Silo-Hardened Persistence
-                        updateBranding({ [keyName]: val }, businessId);
-                        syncContext({ [keyName]: val });
+                        handleFieldUpdate(keyName, val);
                     }}
                 />
             </div>
         );
     };
 
-    // LOGOUT & NAVIGATION LOGIC
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        clearAuth();
-        window.location.href = `/${tenant?.slug || ''}`;
-    };
-
-    // HERO IMAGE UPLOAD LOGIC
-    const handleHeroUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file || !businessId) return;
-
-        try {
-            setIsSaving(true);
-            const { url, error } = await uploadAsset(file, businessId, 'branding');
-            if (error) throw error;
-
-            if (url) {
-                // Instant update
-                handleFieldUpdate('hero_url', url);
-                handleFieldUpdate('hero_mode', 'image');
-            }
-        } catch (err) {
-            console.error("Upload failed", err);
-            alert("Error uploading image");
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
     if (!tenant) return <div className="p-4 text-center text-gray-500">Loading Vault...</div>;
+
+    const heroIconMode = tenant?.hero_icon_mode || 'black';
+    const navIconMode = tenant?.nav_icon_mode || 'white';
+    const navbarColor = tenant?.navbar_color || '#1F2937';
 
     return (
         <div className="bg-[#F8FAFC] min-h-screen">
-            <BackendHeader
-                title="Configuración"
-                onLogout={handleLogout}
-            />
+            <BackendHeader title="Configuración" onLogout={handleLogout} />
 
             <div className="settings-vault">
-                {/* IDENTITY SECTION - LOCAL STATE PATTERN */}
+                {/* ========== 1. IDENTITY & TYPOGRAPHY ========== */}
                 <section className="branding-card">
-                    <h3>Identidad y Texto</h3>
+                    <h3>1. Identidad y Texto</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {/* BUSINESS NAME: onChange (PROCESS) + onBlur (FINISH) */}
                         <input
                             type="text"
                             className="fs-input"
@@ -237,7 +336,7 @@ const Settings = () => {
                             placeholder="Nombre del Negocio"
                         />
                         <div className="typo-grid">
-                            {/* FONT FAMILY: Custom Dropdown */}
+                            {/* Font Family Dropdown */}
                             <div className="custom-dropdown" ref={fontMenuRef}>
                                 <button
                                     type="button"
@@ -249,14 +348,11 @@ const Settings = () => {
                                 </button>
                                 {isFontMenuOpen && (
                                     <div className="dropdown-menu">
-                                        {['Inter', 'Roboto', 'Outfit', 'Lora'].map((font) => (
+                                        {['Inter', 'Roboto', 'Outfit', 'Lora', 'Poppins', 'Montserrat'].map((font) => (
                                             <div
                                                 key={font}
                                                 className={`dropdown-option ${localIdentity.font_family === font ? 'active' : ''}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleFontSelect(font);
-                                                }}
+                                                onClick={(e) => { e.stopPropagation(); handleFontSelect(font); }}
                                                 style={{ fontFamily: font }}
                                             >
                                                 {font}
@@ -267,7 +363,7 @@ const Settings = () => {
                                 )}
                             </div>
 
-                            {/* FONT WEIGHT: Custom Dropdown */}
+                            {/* Font Weight Dropdown */}
                             <div className="custom-dropdown" ref={weightMenuRef}>
                                 <button
                                     type="button"
@@ -295,10 +391,7 @@ const Settings = () => {
                                             <div
                                                 key={option.value}
                                                 className={`dropdown-option ${localIdentity.font_weight === option.value ? 'active' : ''}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleWeightSelect(option.value);
-                                                }}
+                                                onClick={(e) => { e.stopPropagation(); handleWeightSelect(option.value); }}
                                                 style={{ fontWeight: option.value }}
                                             >
                                                 {option.label}
@@ -312,10 +405,10 @@ const Settings = () => {
                     </div>
                 </section>
 
-                {/* HERO STAGE - SMART FALLBACK */}
+                {/* ========== 2. HERO COVER ========== */}
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>Hero Cover</h3>
+                        <h3>2. Hero Cover</h3>
                         <div className="mode-toggle">
                             <button
                                 onClick={() => handleFieldUpdate('hero_mode', 'text')}
@@ -334,18 +427,12 @@ const Settings = () => {
 
                     {tenant?.hero_mode === 'image' ? (
                         <div className="hero-stage">
-                            {/* STUDIO TRIGGER: Opens Full Screen Editor */}
-                            <div
-                                className="hero-studio-trigger"
-                                onClick={() => setShowCoverEditor(true)}
-                            >
+                            <div className="hero-studio-trigger" onClick={() => setShowCoverEditor(true)}>
                                 {tenant?.hero_url ? (
                                     <>
                                         <div className="editor-crosshair">+</div>
                                         <img src={tenant.hero_url} className="preview-img" alt="Hero" />
-                                        <div className="edit-overlay">
-                                            <span>✎ Editar Imagen</span>
-                                        </div>
+                                        <div className="edit-overlay"><span>✎ Editar Imagen</span></div>
                                     </>
                                 ) : (
                                     <div className="empty-state">
@@ -358,19 +445,165 @@ const Settings = () => {
                     ) : (
                         <div
                             className="hero-preview-text"
-                            style={{
-                                fontFamily: tenant?.font_family,
-                                fontWeight: tenant?.font_weight
-                            }}
+                            style={{ fontFamily: tenant?.font_family, fontWeight: tenant?.font_weight }}
                         >
                             {tenant?.business_name || 'Business Name'}
                         </div>
                     )}
                 </section>
 
-                {/* THE BIG FOUR COLORS */}
+                {/* ========== 3. HERO ICONS (NEW - WYSIWYG) ========== */}
                 <section className="branding-card">
-                    <h3>Colores de Tema</h3>
+                    <div className="section-header">
+                        <h3>3. Hero Icons</h3>
+                        <div className="mode-toggle">
+                            <button
+                                onClick={() => handleFieldUpdate('hero_icon_mode', 'white')}
+                                className={heroIconMode === 'white' ? 'active' : ''}
+                            >
+                                Blanco
+                            </button>
+                            <button
+                                onClick={() => handleFieldUpdate('hero_icon_mode', 'black')}
+                                className={heroIconMode === 'black' ? 'active' : ''}
+                            >
+                                Oscuro
+                            </button>
+                        </div>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Toca un icono para cambiar su color de fondo.</p>
+
+                    {/* 2x2 Hero Icons Grid */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 12,
+                        maxWidth: 280,
+                        margin: '0 auto'
+                    }}>
+                        {HERO_ICON_DEFS.map(({ id, label, Icon }) => {
+                            const bgColor = heroIconColors[id] || '#FFFFFF';
+                            const iconColor = heroIconMode === 'white' ? '#FFFFFF' : '#4A4036';
+
+                            return (
+                                <div
+                                    key={id}
+                                    onClick={() => openHeroIconColorPicker(id, label)}
+                                    style={{
+                                        background: bgColor,
+                                        borderRadius: 20,
+                                        padding: 16,
+                                        aspectRatio: '1 / 0.85',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 8,
+                                        cursor: 'pointer',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                        border: '2px solid transparent',
+                                        transition: 'all 0.2s ease',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <div style={{ color: iconColor }}><Icon /></div>
+                                    <span style={{
+                                        fontSize: 11,
+                                        fontWeight: 600,
+                                        color: iconColor,
+                                        opacity: 0.9
+                                    }}>{label}</span>
+                                    {/* Color dot indicator */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: 8,
+                                        right: 8,
+                                        width: 12,
+                                        height: 12,
+                                        borderRadius: '50%',
+                                        background: bgColor,
+                                        border: '2px solid white',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                                    }} />
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+
+                {/* ========== 4. NAVBAR STYLE (MiniNav Preview) ========== */}
+                <section className="branding-card">
+                    <div className="section-header">
+                        <h3>4. Estilo de Barra</h3>
+                        <div className="mode-toggle">
+                            <button
+                                onClick={() => handleFieldUpdate('nav_icon_mode', 'white')}
+                                className={navIconMode === 'white' ? 'active' : ''}
+                            >
+                                Blanco
+                            </button>
+                            <button
+                                onClick={() => handleFieldUpdate('nav_icon_mode', 'black')}
+                                className={navIconMode === 'black' ? 'active' : ''}
+                            >
+                                Oscuro
+                            </button>
+                        </div>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Toca la barra para cambiar el color de fondo.</p>
+
+                    {/* MiniNav Preview */}
+                    <div
+                        onClick={() => openColorPicker('Color de Barra', 'navbar_color', '--color-navbar-bg', '#1F2937')}
+                        style={{
+                            background: navbarColor,
+                            borderRadius: 16,
+                            padding: '12px 8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-around',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            maxWidth: 320,
+                            margin: '0 auto'
+                        }}
+                    >
+                        {[NavHomeIcon, NavMenuIcon, NavCameraIcon, NavStatusIcon, NavInfoIcon].map((NavIcon, i) => (
+                            <div
+                                key={i}
+                                style={{
+                                    color: navIconMode === 'white' ? '#FFFFFF' : '#1F2937',
+                                    opacity: i === 0 ? 1 : 0.6,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: 2
+                                }}
+                            >
+                                <NavIcon />
+                                {i === 2 && (
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        background: tenant?.primary_color || '#8B7355',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginTop: -24,
+                                        border: '2px solid white'
+                                    }}>
+                                        <NavCameraIcon />
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* ========== 5. THEME COLORS ========== */}
+                <section className="branding-card">
+                    <h3>5. Colores de Tema</h3>
                     <div className="color-grid">
                         <ColorPillar label="Primario" keyName="primary_color" cssVar="--color-primary" defaultValue="#B8956A" />
                         <ColorPillar label="Secundario" keyName="secondary_color" cssVar="--color-secondary" defaultValue="#A89070" />
@@ -379,63 +612,9 @@ const Settings = () => {
                     </div>
                 </section>
 
-                {/* MODO ICONOS - INDEPENDENT TOGGLES */}
+                {/* ========== 6. INFO PILLS ========== */}
                 <section className="branding-card">
-                    <h3>Estilo de Iconos</h3>
-                    <div className="mode-row">
-                        <p>Hero Icons (Inicio)</p>
-                        <div className="toggle-group">
-                            <button
-                                onClick={() => handleFieldUpdate('hero_icon_mode', 'white')}
-                                className={tenant?.hero_icon_mode === 'white' ? 'active' : ''}
-                            >
-                                Blanco
-                            </button>
-                            <button
-                                onClick={() => handleFieldUpdate('hero_icon_mode', 'black')}
-                                className={tenant?.hero_icon_mode === 'black' ? 'active' : ''}
-                            >
-                                Oscuro
-                            </button>
-                        </div>
-                    </div>
-                    <div className="mode-row">
-                        <p>Nav Icons (Barra inf.)</p>
-                        <div className="toggle-group">
-                            <button
-                                onClick={() => handleFieldUpdate('nav_icon_mode', 'white')}
-                                className={tenant?.nav_icon_mode === 'white' ? 'active' : ''}
-                            >
-                                Blanco
-                            </button>
-                            <button
-                                onClick={() => handleFieldUpdate('nav_icon_mode', 'black')}
-                                className={tenant?.nav_icon_mode === 'black' ? 'active' : ''}
-                            >
-                                Oscuro
-                            </button>
-                        </div>
-                    </div>
-                    {/* Unified Navbar Background */}
-                    <div className="mode-row" style={{ borderTop: '1px solid #F1F5F9', marginTop: 12, paddingTop: 12 }}>
-                        <p>Fondo de Barra</p>
-                        <div style={{ width: 60 }}>
-                            <input
-                                type="color"
-                                className="native-swatch"
-                                value={tenant?.navbar_color || '#1F2937'}
-                                onChange={(e) => {
-                                    handleFieldUpdate('navbar_color', e.target.value);
-                                    document.documentElement.style.setProperty('--color-navbar-bg', e.target.value);
-                                }}
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                {/* INFO PILLS - STANDARDIZED WITH CSS VARS */}
-                <section className="branding-card">
-                    <h3>Botones Info (Pills)</h3>
+                    <h3>6. Botones Info (Pills)</h3>
                     <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Activa solo lo necesario.</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         {['whatsapp', 'rappi', 'mercadopago', 'pedidosya', 'admin'].map(pillId => {
@@ -445,10 +624,7 @@ const Settings = () => {
                             const togglePill = () => {
                                 const newPills = {
                                     ...pills,
-                                    [pillId]: {
-                                        ...(pills[pillId] || {}),
-                                        enabled: !isActive
-                                    }
+                                    [pillId]: { ...(pills[pillId] || {}), enabled: !isActive }
                                 };
                                 handleFieldUpdate('info_pills', newPills);
                             };
@@ -487,7 +663,8 @@ const Settings = () => {
             </div>
 
             <BackendNav role="owner" useRoutes={true} />
-            {/* 🎨 COVER IMAGE EDITOR (Dec 19 Restored) */}
+
+            {/* Cover Image Editor Modal */}
             <CoverImageEditor
                 isOpen={showCoverEditor}
                 onClose={() => setShowCoverEditor(false)}
@@ -500,6 +677,17 @@ const Settings = () => {
                 businessId={businessId}
                 heroMode={tenant?.hero_mode}
             />
+
+            {/* Color Picker Modal */}
+            {colorPickerState.isOpen && (
+                <ColorPickerModal
+                    title={colorPickerState.title}
+                    initialColor={colorPickerState.initialColor}
+                    onLiveChange={handleColorPickerLiveChange}
+                    onApply={handleColorPickerApply}
+                    onClose={handleColorPickerClose}
+                />
+            )}
         </div>
     );
 };
