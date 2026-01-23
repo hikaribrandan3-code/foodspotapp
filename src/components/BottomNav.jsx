@@ -1,5 +1,5 @@
-import { useLocation, useParams } from 'react-router-dom'
-import { NavLink } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import { useLocation, useParams, NavLink } from 'react-router-dom';
 import { getCameraIcon } from './CameraIcons.jsx'
 
 // Icons as SVG components for crisp rendering
@@ -41,15 +41,15 @@ function BottomNav({ config: configProp }) {
     const initialConfig = configProp || {};
 
     // ⚡ REAL-TIME SYNC STATE: Listen for instant updates
-    const [dynamicConfig, setDynamicConfig] = React.useState(initialConfig);
+    const [dynamicConfig, setDynamicConfig] = useState(initialConfig);
 
     // Sync prop updates to state (if parent updates slowly)
-    React.useEffect(() => {
+    useEffect(() => {
         setDynamicConfig(configProp || {});
     }, [configProp]);
 
     // ⚡ LISTEN FOR 'frontendSync' EVENT (The "Starter Fluid")
-    React.useEffect(() => {
+    useEffect(() => {
         const handleSync = (e) => {
             console.log('⚡ BottomNav caught sync:', e.detail);
             setDynamicConfig(prev => ({
