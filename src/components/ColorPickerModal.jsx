@@ -2,26 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { HexColorPicker } from 'react-colorful';
 
 /**
- * 🛡️ OPERATION VAULT-SEAL: STRIKE 4.0 (THE COMPLETE PICKER)
- * ColorPickerModal - Hardware-Optimized Console with Power Presets
+ * 🛡️ OPERATION VAULT-SEAL: STRIKE 5.0 (FINAL PRODUCTION)
+ * ColorPickerModal - Hardware-Optimized Console with Rainbow Presets
  * 
  * FEATURES:
  * 1. POINTER LOCK: Overlay blocks ALL background touches
  * 2. BUTTON ISOLATION: Each button has pointerEvents: 'auto'
  * 3. TOUCH SAFE: touch-action: none on overlay prevents scroll bleed
- * 4. 8 POWER PRESETS: Quick branding color selection
+ * 4. RAINBOW PRESETS: Red, Orange, Yellow, Green, Blue, Purple, Brown, White
  */
 
-// 🎨 POWER PRESET COLORS
+// 🎨 RAINBOW + BROWN PRESETS
 const PRESET_COLORS = [
-    '#8B7355', // Warm Brown (Default)
-    '#2D3436', // Dark Slate
-    '#1E3A5F', // Navy Blue
-    '#1E5631', // Forest Green
-    '#8B0000', // Dark Red
-    '#C4856A', // Terracotta
-    '#22C55E', // Success Green
-    '#FFFFFF', // Pure White
+    '#EF4444', // Red 500
+    '#F97316', // Orange 500
+    '#FACC15', // Yellow 400
+    '#22C55E', // Green 500
+    '#3B82F6', // Blue 500
+    '#A855F7', // Purple 500
+    '#8B7355', // Brown (Cafe)
+    '#FFFFFF', // White
 ];
 
 export default function ColorPickerModal({
@@ -102,7 +102,7 @@ export default function ColorPickerModal({
                 WebkitBackdropFilter: 'blur(8px)',
                 padding: '20px',
                 pointerEvents: 'auto',
-                touchAction: 'none',
+                touchAction: 'none', // 🛡️ CRITICAL: Prevents background scroll on iOS
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
                 WebkitTouchCallout: 'none'
@@ -158,7 +158,7 @@ export default function ColorPickerModal({
                     />
                 </div>
 
-                {/* 2. POWER PRESETS ROW */}
+                {/* 2. RAINBOW POWER PRESETS ROW */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',

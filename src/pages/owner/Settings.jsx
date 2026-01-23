@@ -597,24 +597,7 @@ const Settings = () => {
                                     gap: 2
                                 }}
                             >
-                                {i !== 2 ? (
-                                    <NavIcon />
-                                ) : (
-                                    /* Camera button - UNIFIED with Nav Bar (no separate color) */
-                                    <div style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        background: 'transparent',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginTop: -24,
-                                        border: `2px solid ${navIconMode === 'white' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}`
-                                    }}>
-                                        <NavCameraIcon />
-                                    </div>
-                                )}
+                                <NavIcon />
                             </div>
                         ))}
                     </div>
