@@ -2,14 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { HexColorPicker } from 'react-colorful';
 
 /**
- * 🛡️ OPERATION VAULT-SEAL: STRIKE 3.0 (THE SEALED PICKER)
- * ColorPickerModal - Hardware-Optimized Console
+ * 🛡️ OPERATION VAULT-SEAL: STRIKE 4.0 (THE COMPLETE PICKER)
+ * ColorPickerModal - Hardware-Optimized Console with Power Presets
  * 
- * FIXES:
+ * FEATURES:
  * 1. POINTER LOCK: Overlay blocks ALL background touches
  * 2. BUTTON ISOLATION: Each button has pointerEvents: 'auto'
  * 3. TOUCH SAFE: touch-action: none on overlay prevents scroll bleed
+ * 4. 8 POWER PRESETS: Quick branding color selection
  */
+
+// 🎨 POWER PRESET COLORS
+const PRESET_COLORS = [
+    '#8B7355', // Warm Brown (Default)
+    '#2D3436', // Dark Slate
+    '#1E3A5F', // Navy Blue
+    '#1E5631', // Forest Green
+    '#8B0000', // Dark Red
+    '#C4856A', // Terracotta
+    '#22C55E', // Success Green
+    '#FFFFFF', // Pure White
+];
+
 export default function ColorPickerModal({
     title,
     initialColor,
@@ -36,6 +50,11 @@ export default function ColorPickerModal({
     const handleColorChange = (newColor) => {
         setColor(newColor);
         if (onLiveChange) onLiveChange(newColor);
+    };
+
+    const handlePresetClick = (presetColor) => {
+        setColor(presetColor);
+        if (onLiveChange) onLiveChange(presetColor);
     };
 
     const handleConfirm = (e) => {
@@ -131,15 +150,47 @@ export default function ColorPickerModal({
                 </div>
 
                 {/* 1. THE VISUAL WHEEL */}
-                <div style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden' }}>
+                <div style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden' }}>
                     <HexColorPicker
                         color={color}
                         onChange={handleColorChange}
-                        style={{ width: '100%', height: '200px' }}
+                        style={{ width: '100%', height: '180px' }}
                     />
                 </div>
 
-                {/* 2. THE HARDWARE FALLBACK (Native Picker + Hex Input) */}
+                {/* 2. POWER PRESETS ROW */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    marginBottom: '16px',
+                    padding: '8px 0'
+                }}>
+                    {PRESET_COLORS.map((presetColor) => (
+                        <div
+                            key={presetColor}
+                            onClick={() => handlePresetClick(presetColor)}
+                            style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                background: presetColor,
+                                border: color.toUpperCase() === presetColor.toUpperCase()
+                                    ? '3px solid #3B82F6'
+                                    : presetColor === '#FFFFFF'
+                                        ? '2px solid #E5E7EB'
+                                        : '2px solid transparent',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                transition: 'transform 0.15s ease',
+                                transform: color.toUpperCase() === presetColor.toUpperCase() ? 'scale(1.15)' : 'scale(1)',
+                                pointerEvents: 'auto'
+                            }}
+                        />
+                    ))}
+                </div>
+
+                {/* 3. THE HARDWARE FALLBACK (Native Picker + Hex Input) */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -186,7 +237,7 @@ export default function ColorPickerModal({
                     </div>
                 </div>
 
-                {/* 3. THE GREEN CHECK (The Save Signal) */}
+                {/* 4. THE GREEN CHECK (The Save Signal) */}
                 <button
                     type="button"
                     onClick={handleConfirm}

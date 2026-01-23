@@ -597,9 +597,10 @@ const Settings = () => {
                                     gap: 2
                                 }}
                             >
-                                <NavIcon />
-                                {/* Camera button - UNIFIED with Nav Bar (no separate color) */}
-                                {i === 2 && (
+                                {i !== 2 ? (
+                                    <NavIcon />
+                                ) : (
+                                    /* Camera button - UNIFIED with Nav Bar (no separate color) */
                                     <div style={{
                                         width: 32,
                                         height: 32,
