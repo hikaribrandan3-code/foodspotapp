@@ -101,10 +101,33 @@
   --header-height: 60px;
   --max-width: 430px;
 
-  /* Transitions */
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
   --transition-slow: 350ms ease;
+
+  /* 💎 HARDWARE TIER: Visual Rhyme Standard */
+  --radius-brand: 10px;
+  --radius-card: 12px;
+}
+
+/* ⚡ GLOBAL POLISH ENFORCEMENT */
+.fs-input,
+select,
+textarea,
+.form-input {
+  border-radius: var(--radius-brand) !important;
+  border: 1.5px solid #E2E8F0 !important;
+}
+
+.card,
+.dashboard-section,
+.branding-card {
+  border-radius: var(--radius-card) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-primary {
+  border-radius: var(--radius-brand) !important;
 }
 
 /* 🛡️ LIGHT THEME MONARCHY - Explicit overrides for all theme contexts */

@@ -295,7 +295,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     placeholder="0"
-                                    style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
                                 />
                             </div>
                             <div>
@@ -340,7 +340,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             <div key={i} style={{
                                 aspectRatio: '1/1',
                                 background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
-                                borderRadius: 8,
+                                borderRadius: 10,
                                 border: '1px dashed #CBD5E1',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -536,8 +536,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                             <div style={{
                                 background: '#FFFFFF',
-                                borderRadius: 10,
+                                borderRadius: 12,
                                 border: '1px solid #E2E8F0',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                             }}>
                                 {category.items.map((item, idx) => (
                                     <div key={item.id} style={{
@@ -554,14 +555,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 style={{
                                                     width: 60,
                                                     height: 60,
-                                                    borderRadius: 8,
+                                                    borderRadius: 10,
                                                     background: item.image ? 'none' : '#F3F4F6',
                                                     border: '2px dashed #D1D5DB',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     cursor: 'pointer',
-                                                    overflow: 'hidden'
+                                                    overflow: 'hidden',
+                                                    transition: 'transform 0.1s ease',
+                                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                                 }}
                                             >
                                                 {item.image ? (
@@ -696,7 +699,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             width: '100%',
                                             maxHeight: 120,
                                             objectFit: 'cover',
-                                            borderRadius: 8
+                                            borderRadius: 10
                                         }}
                                     />
                                 </div>

@@ -139,7 +139,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                 <div style={{
                     background: '#FEF3C7',
                     border: '1px solid #F59E0B',
-                    borderRadius: 8,
+                    borderRadius: 10,
                     padding: 12,
                     marginBottom: 20,
                     fontSize: 13
@@ -191,7 +191,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                 <div style={{ padding: 16 }}>
                                     {/* Customer Info */}
                                     {order.customerInfo && (
-                                        <div style={{ fontSize: 13, color: '#4B5563', marginBottom: 12, background: '#F9FAFB', padding: 12, borderRadius: 8 }}>
+                                        <div style={{ fontSize: 13, color: '#4B5563', marginBottom: 12, background: '#F9FAFB', padding: 12, borderRadius: 10 }}>
                                             <p style={{ margin: 0, fontWeight: 600, color: '#374151' }}>📍 {order.customerInfo.name}</p>
                                             <p style={{ margin: '4px 0 0' }}>{order.customerInfo.address}</p>
                                             <p style={{ margin: '4px 0 0', color: '#6B7280' }}>Tel: ***{getPhoneLast4(order.customerInfo.phone)}</p>
@@ -236,7 +236,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                     style={{
                                                         padding: '10px 12px',
                                                         border: '1px solid #E5E7EB',
-                                                        borderRadius: 8,
+                                                        borderRadius: 10,
                                                         fontSize: 13,
                                                         background: 'white',
                                                         minWidth: 110
@@ -279,7 +279,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                         width: '100%',
                                                         padding: '12px',
                                                         border: '1px solid #D1D5DB',
-                                                        borderRadius: 8,
+                                                        borderRadius: 10,
                                                         fontSize: 18,
                                                         textAlign: 'center',
                                                         letterSpacing: 4,
@@ -336,7 +336,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                         {completedOrders.map(order => (
                             <div key={order.id} style={{
                                 background: 'white',
-                                borderRadius: 8,
+                                borderRadius: 10,
                                 border: '1px solid #E5E7EB',
                                 padding: 12,
                                 marginBottom: 10,

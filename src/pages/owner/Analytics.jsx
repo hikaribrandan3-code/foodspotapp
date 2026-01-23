@@ -36,7 +36,7 @@ const Analytics = ({ orders = [] }) => {
     }, [orders])
 
     // Styles
-    const cardStyle = { padding: '20px', background: '#fff', borderRadius: '18px', border: '1px solid #eee', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }
+    const cardStyle = { padding: '20px', background: '#fff', borderRadius: '12px', border: '1px solid #eee', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }
     const labelStyle = { display: 'block', color: '#888', fontSize: '12px', marginBottom: '8px', textTransform: 'uppercase' }
     const valueStyle = { margin: 0, fontSize: '22px', fontWeight: 'bold', color: '#000' }
 
