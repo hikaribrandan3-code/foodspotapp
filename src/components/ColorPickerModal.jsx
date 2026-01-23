@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { HexColorPicker } from 'react-colorful';
+import React, { useState, useEffect, useRef } from 'react';
 
 /**
- * 🛡️ OPERATION VAULT-SEAL: STRIKE 3.0 (THE SEALED PICKER)
- * ColorPickerModal - Hardware-Optimized Console
+ * 🛡️ ColorPickerModal - NATIVE IOS 3-IN-1 PICKER
  * 
- * FIXES:
- * 1. POINTER LOCK: Overlay blocks ALL background touches
- * 2. BUTTON ISOLATION: Each button has pointerEvents: 'auto'
- * 3. TOUCH SAFE: touch-action: none on overlay prevents scroll bleed
+ * Uses the native <input type="color"> which triggers iOS's beautiful
+ * Grid/Spectrum/Sliders picker. Modal wrapper provides isolation from
+ * background touches (Ghost Touch fix).
  */
 export default function ColorPickerModal({
     title,
@@ -18,6 +15,7 @@ export default function ColorPickerModal({
     onClose
 }) {
     const [color, setColor] = useState(initialColor || '#8B7355');
+    const inputRef = useRef(null);
 
     useEffect(() => {
         if (initialColor) setColor(initialColor);
@@ -27,13 +25,21 @@ export default function ColorPickerModal({
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         document.documentElement.style.overflow = 'hidden';
+
+        // Auto-open the native picker after a short delay
+        const timer = setTimeout(() => {
+            inputRef.current?.click();
+        }, 100);
+
         return () => {
             document.body.style.overflow = '';
             document.documentElement.style.overflow = '';
+            clearTimeout(timer);
         };
     }, []);
 
-    const handleColorChange = (newColor) => {
+    const handleColorChange = (e) => {
+        const newColor = e.target.value;
         setColor(newColor);
         if (onLiveChange) onLiveChange(newColor);
     };
@@ -53,22 +59,13 @@ export default function ColorPickerModal({
     const handleBackdropClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // Only close if clicking the backdrop itself
         if (e.target === e.currentTarget) {
             if (onClose) onClose();
         }
     };
 
-    const handleModalClick = (e) => {
-        // Stop propagation to prevent backdrop from catching it
-        e.stopPropagation();
-    };
-
     return (
         <div
-            role="presentation"
-            inputMode="none"
-            data-form-type="other"
             onClick={handleBackdropClick}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
@@ -76,7 +73,7 @@ export default function ColorPickerModal({
             style={{
                 position: 'fixed',
                 inset: 0,
-                zIndex: 999999, // 🛡️ MAXIMUM Z-INDEX
+                zIndex: 999999,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -84,16 +81,12 @@ export default function ColorPickerModal({
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 padding: '20px',
-                // 🛡️ POINTER LOCK
                 pointerEvents: 'auto',
-                touchAction: 'none',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                WebkitTouchCallout: 'none'
+                touchAction: 'none'
             }}
         >
             <div
-                onClick={handleModalClick}
+                onClick={(e) => e.stopPropagation()}
                 style={{
                     background: '#FFFFFF',
                     borderRadius: '24px',
@@ -125,71 +118,94 @@ export default function ColorPickerModal({
                             color: '#6B7280',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            pointerEvents: 'auto'
+                            justifyContent: 'center'
                         }}
                     >
                         ✕
                     </button>
                 </div>
 
-                {/* 1. THE VISUAL WHEEL */}
-                <div style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden' }}>
-                    <HexColorPicker
-                        color={color}
-                        onChange={handleColorChange}
-                        style={{ width: '100%', height: '200px' }}
-                    />
-                </div>
-
-                {/* 2. THE HARDWARE FALLBACK (Native Picker + Hex Input) */}
+                {/* Native Color Picker - Triggers iOS 3-in-1 Picker */}
                 <div style={{
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '12px',
-                    background: '#F3F4F6',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    border: '1px solid #E5E7EB',
+                    gap: '16px',
                     marginBottom: '20px'
                 }}>
+                    {/* Large Color Preview */}
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '120px',
+                            borderRadius: '16px',
+                            background: color,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}
+                        onClick={() => inputRef.current?.click()}
+                    >
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '10px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: 'rgba(255,255,255,0.9)',
+                            padding: '4px 12px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: '#1F2937'
+                        }}>
+                            Toca para editar
+                        </div>
+                    </div>
+
+                    {/* Hidden Native Input - Triggers iOS Picker */}
                     <input
+                        ref={inputRef}
                         type="color"
                         value={color}
-                        onChange={(e) => handleColorChange(e.target.value)}
+                        onChange={handleColorChange}
                         style={{
-                            width: '44px',
-                            height: '44px',
-                            border: '2px solid #FFFFFF',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            padding: 0,
-                            background: 'transparent',
-                            pointerEvents: 'auto'
+                            position: 'absolute',
+                            opacity: 0,
+                            width: 1,
+                            height: 1,
+                            pointerEvents: 'none'
                         }}
                     />
-                    <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '10px', color: '#6B7280', margin: '0 0 2px 2px', textTransform: 'uppercase' }}>Hex Code</p>
-                        <input
-                            type="text"
-                            value={color.toUpperCase()}
-                            onChange={(e) => handleColorChange(e.target.value)}
-                            style={{
-                                width: '100%',
-                                border: 'none',
-                                background: 'transparent',
-                                padding: '0',
-                                fontSize: '16px',
-                                fontWeight: '600',
-                                fontFamily: 'monospace',
-                                color: '#1F2937',
-                                pointerEvents: 'auto'
-                            }}
-                        />
+
+                    {/* Hex Code Display */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        background: '#F3F4F6',
+                        padding: '12px 16px',
+                        borderRadius: '12px',
+                        width: '100%'
+                    }}>
+                        <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            background: color,
+                            border: '2px solid white',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }} />
+                        <div>
+                            <p style={{ fontSize: '10px', color: '#6B7280', margin: 0, textTransform: 'uppercase' }}>Hex Code</p>
+                            <p style={{ fontSize: '16px', fontWeight: '600', fontFamily: 'monospace', color: '#1F2937', margin: 0 }}>
+                                {color.toUpperCase()}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                {/* 3. THE GREEN CHECK (The Save Signal) */}
+                {/* Confirm Button */}
                 <button
                     type="button"
                     onClick={handleConfirm}
@@ -207,8 +223,7 @@ export default function ColorPickerModal({
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '10px',
-                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
-                        pointerEvents: 'auto'
+                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
                     }}
                 >
                     <span style={{ fontSize: '20px' }}>✓</span> CONFIRMAR COLOR
@@ -220,8 +235,6 @@ export default function ColorPickerModal({
                     from { opacity: 0; transform: scale(0.9); }
                     to { opacity: 1; transform: scale(1); }
                 }
-                .react-colorful { width: 100% !important; }
-                .react-colorful__interactive { touch-action: none !important; }
             `}</style>
         </div>
     );
