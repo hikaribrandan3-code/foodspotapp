@@ -194,7 +194,7 @@ export function getDeliveryChangesThisMonth(config) {
 }
 
 export function canChangeDeliveryConfig(config) {
-    return true; // Infinite autonomy enabled
+    return { allowed: true, message: 'Configuración habilitada' }; // Infinite autonomy enabled
 }
 
 /**
