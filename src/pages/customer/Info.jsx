@@ -342,7 +342,7 @@ function Info({ config: configProp }) {
                     style={{
                         fontSize: 28,
                         fontWeight: 700,
-                        color: effectivePoweredByColor,
+                        color: 'var(--color-powered)',
                         textDecoration: 'none'
                     }}
                 >
