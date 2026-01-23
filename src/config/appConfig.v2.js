@@ -284,7 +284,7 @@ const DEMO_INTENT_KEY = 'foodspot_demo_active'; // localStorage - source of trut
 // This is the single point of defense against undefined crashes.
 // Components should ONLY consume normalized config.
 
-function normalizeConfig(config) {
+export function normalizeConfig(config) {
     if (!config || typeof config !== 'object') {
         return { ...defaultConfig };
     }
