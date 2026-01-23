@@ -306,6 +306,15 @@ const Settings = () => {
     const handleColorPickerApply = (finalColor) => {
         if (colorPickerState.isHeroIcon) {
             handleHeroIconColorUpdate(colorPickerState.iconId, finalColor);
+        } else if (colorPickerState.keyName.startsWith('info_pill_')) {
+            // Interceptor for Nested Info Pills
+            const pillId = colorPickerState.keyName.replace('info_pill_', '');
+            const currentPills = tenant?.info_pills || {};
+            const newPills = {
+                ...currentPills,
+                [pillId]: { ...(currentPills[pillId] || {}), bgColor: finalColor }
+            };
+            handleFieldUpdate('info_pills', newPills);
         } else {
             handleFieldUpdate(colorPickerState.keyName, finalColor);
         }
@@ -647,21 +656,39 @@ const Settings = () => {
                 </section>
 
                 {/* ========== 6. INFO PILLS ========== */}
+                {/* ========== 6. INFO PILLS ========== */}
                 <section className="branding-card">
-                    <h3>6. Botones Info (Pills)</h3>
-                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Activa solo lo necesario.</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div className="section-header">
+                        <h3>6. Botones Info (Pills)</h3>
+                        <div className="mode-toggle">
+                            <button
+                                onClick={() => {
+                                    const currentPills = tenant?.info_pills || {};
+                                    handleFieldUpdate('info_pills', { ...currentPills, pill_icon_mode: 'white' });
+                                }}
+                                className={tenant?.info_pills?.pill_icon_mode === 'white' || !tenant?.info_pills?.pill_icon_mode ? 'active' : ''}
+                            >
+                                Blanco
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const currentPills = tenant?.info_pills || {};
+                                    handleFieldUpdate('info_pills', { ...currentPills, pill_icon_mode: 'dark' });
+                                }}
+                                className={tenant?.info_pills?.pill_icon_mode === 'dark' ? 'active' : ''}
+                            >
+                                Oscuro
+                            </button>
+                        </div>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Configura colores, enlaces y visibilidad.</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         {['whatsapp', 'rappi', 'mercadopago', 'pedidosya', 'admin'].map(pillId => {
                             const pills = tenant?.info_pills || {};
-                            const isActive = pills[pillId]?.enabled;
-
-                            const togglePill = () => {
-                                const newPills = {
-                                    ...pills,
-                                    [pillId]: { ...(pills[pillId] || {}), enabled: !isActive }
-                                };
-                                handleFieldUpdate('info_pills', newPills);
-                            };
+                            const pillData = pills[pillId] || {};
+                            const isActive = pillData.enabled;
+                            const bgColor = pillData.bgColor || '#EEEEEE';
+                            const content = pillData.content || '';
 
                             const labels = {
                                 whatsapp: 'WhatsApp',
@@ -671,25 +698,80 @@ const Settings = () => {
                                 admin: 'Admin Login'
                             };
 
+                            const placeHolders = {
+                                whatsapp: '+54 9 11 1234 5678',
+                                rappi: 'https://rappi.com/...',
+                                mercadopago: 'ALIAS.MP',
+                                pedidosya: 'https://pedidosya.com/...'
+                            };
+
+                            const handlePillUpdate = (updates) => {
+                                const newPills = {
+                                    ...pills,
+                                    [pillId]: { ...pillData, ...updates }
+                                };
+                                handleFieldUpdate('info_pills', newPills);
+                            };
+
                             return (
-                                <button
-                                    key={pillId}
-                                    onClick={togglePill}
-                                    style={{
-                                        padding: '10px',
-                                        borderRadius: '8px',
-                                        border: isActive ? '1.5px solid var(--color-primary)' : '1px solid #E2E8F0',
-                                        background: isActive ? 'rgba(var(--color-primary-rgb), 0.1)' : '#FFF',
-                                        color: isActive ? 'var(--color-primary)' : '#64748B',
-                                        fontSize: '13px',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        textAlign: 'center'
-                                    }}
-                                >
-                                    {labels[pillId] || pillId}
-                                </button>
+                                <div key={pillId} style={{
+                                    background: '#FFF',
+                                    borderRadius: 12,
+                                    padding: 12,
+                                    border: '1px solid #E2E8F0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 12
+                                }}>
+                                    {/* 1. Toggle & Color Swatch */}
+                                    <div
+                                        onClick={() => openColorPicker(`Color: ${labels[pillId]}`, `info_pill_${pillId}`, '', bgColor)}
+                                        style={{
+                                            width: 40,
+                                            height: 40,
+                                            borderRadius: 8,
+                                            background: bgColor,
+                                            border: '1px solid rgba(0,0,0,0.1)',
+                                            cursor: 'pointer',
+                                            flexShrink: 0
+                                        }}
+                                    />
+
+                                    {/* 2. Content Input */}
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{labels[pillId]}</span>
+                                            <label className="switch-label" style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                                                <span style={{ fontSize: 11, color: isActive ? '#22C55E' : '#94A3B8' }}>
+                                                    {isActive ? 'Visible' : 'Oculto'}
+                                                </span>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!isActive}
+                                                    onChange={(e) => handlePillUpdate({ enabled: e.target.checked })}
+                                                    style={{ accentColor: '#22C55E' }}
+                                                />
+                                            </label>
+                                        </div>
+                                        {pillId !== 'admin' && (
+                                            <input
+                                                type="text"
+                                                className="fs-input-sm"
+                                                defaultValue={content}
+                                                placeholder={placeHolders[pillId]}
+                                                onBlur={(e) => handlePillUpdate({ content: e.target.value })}
+                                                style={{
+                                                    fontSize: 12,
+                                                    padding: '6px 10px',
+                                                    width: '100%',
+                                                    background: '#F8FAFC',
+                                                    border: '1px solid #E2E8F0',
+                                                    borderRadius: 6
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
                             );
                         })}
                     </div>

@@ -48,32 +48,26 @@ function Info({ config: configProp }) {
     const businessInfo = config?.businessInfo || {}
     const hasBusinessInfo = infoDisplay.showAddress || infoDisplay.showHours || infoDisplay.showMapLink
 
-    // INFO PILL COLORS — Read directly from normalized config
-    const pillColors = config?.infoPills || {}
-    const defaultPillColors = {
-        whatsapp: { bgColor: '#C4856A', textColor: 'white' },
-        mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3' },
-        rappi: { bgColor: '#FF5A00', textColor: 'white' },
-        pedidosYa: { bgColor: '#E31837', textColor: 'white' },
-        adminAccess: { bgColor: 'var(--surface-alt-bg)', textColor: 'var(--canvas-text)', borderColor: 'var(--border-subtle)' },
-        demo: { bgColor: '#84CC16', textColor: 'white' },
-        custom: { bgColor: '#6366F1', textColor: 'white' }
-    }
+    // INFO PILL COLORS & CONTENT — Read directly from normalized info_pills
+    const infoPills = config?.infoPills || {}
+    const iconMode = infoPills.pill_icon_mode || 'white'
+
+    // Dynamic Style Generator
     const getPillStyle = (pillId) => {
-        const pill = pillColors[pillId] || defaultPillColors[pillId] || {}
+        const pill = infoPills[pillId] || {}
         return {
-            backgroundColor: pill.bgColor || defaultPillColors[pillId]?.bgColor,
-            color: pill.textColor || defaultPillColors[pillId]?.textColor,
-            borderColor: pill.borderColor || 'transparent'
+            backgroundColor: pill.bgColor || '#EEEEEE',
+            color: iconMode === 'white' ? '#FFFFFF' : '#1F2937',
+            borderColor: 'transparent'
         }
     }
 
-    // Powered by color from normalized config
-    const effectivePoweredByColor = config?.branding?.poweredByColor || '#C4856A'
-
-    // Theme-aware colors (use CSS tokens that switch for light/dark mode)
-    const primaryColor = 'var(--icon-primary)'
-    const textMuted = 'var(--icon-muted)'
+    // Helper: Normalize WhatsApp Link
+    const getWhatsAppLink = (input) => {
+        if (!input) return ''
+        const digits = input.replace(/\D/g, '')
+        return `https://wa.me/${digits}`
+    }
 
     return (
         <div className="page info-root" style={{
@@ -84,9 +78,10 @@ function Info({ config: configProp }) {
         }}>
             <HeaderClamp config={config} />
 
-            {infoDisplay.showWhatsApp && businessInfo.whatsapp && (
+            {/* 1. WHATSAPP */}
+            {infoPills.whatsapp?.enabled && (
                 <a
-                    href={`https://wa.me/${businessInfo.whatsapp.replace(/\D/g, '')}`}
+                    href={getWhatsAppLink(infoPills.whatsapp.content || config.businessInfo?.whatsapp)} // Fallback to legacy if empty
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -113,18 +108,20 @@ function Info({ config: configProp }) {
                 </a>
             )}
 
-            {/* Mercado Pago - Copy Alias */}
-            {config.payments?.mercadoPagoAlias && (
+            {/* 2. MERCADO PAGO */}
+            {infoPills.mercadoPago?.enabled && (
                 <button
                     onClick={async () => {
+                        const alias = infoPills.mercadoPago.content
+                        if (!alias) return alert('Alias no configurado')
                         try {
-                            await navigator.clipboard.writeText(config.payments.mercadoPagoAlias)
+                            await navigator.clipboard.writeText(alias)
                             const btn = document.getElementById('mp-copy-btn')
                             const originalText = btn.textContent
                             btn.textContent = '✓ Alias copiado'
                             setTimeout(() => { btn.textContent = originalText }, 2000)
                         } catch (err) {
-                            alert(`Alias: ${config.payments.mercadoPagoAlias}`)
+                            alert(`Alias: ${alias}`)
                         }
                     }}
                     id="mp-copy-btn"
@@ -151,9 +148,10 @@ function Info({ config: configProp }) {
                 </button>
             )}
 
-            {config.externalOrdering?.rappiEnabled && config.externalOrdering?.rappiUrl && (
+            {/* 3. RAPPI */}
+            {infoPills.rappi?.enabled && (
                 <a
-                    href={config.externalOrdering.rappiUrl}
+                    href={infoPills.rappi.content || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -178,9 +176,10 @@ function Info({ config: configProp }) {
                 </a>
             )}
 
-            {config.externalOrdering?.pedidosYaEnabled && config.externalOrdering?.pedidosYaUrl && (
+            {/* 4. PEDIDOS YA */}
+            {infoPills.pedidosYa?.enabled && (
                 <a
-                    href={config.externalOrdering.pedidosYaUrl}
+                    href={infoPills.pedidosYa.content || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -205,29 +204,32 @@ function Info({ config: configProp }) {
                 </a>
             )}
 
-            <button
-                onClick={() => navigate(`/${tenantSlug}/owner`)}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    width: '100%',
-                    padding: '12px 24px',
-                    backgroundColor: getPillStyle('adminAccess').backgroundColor,
-                    color: getPillStyle('adminAccess').color,
-                    borderRadius: 28,
-                    border: `1px solid ${getPillStyle('adminAccess').borderColor}`,
-                    fontSize: 14,
-                    fontWeight: 400,
-                    cursor: 'pointer',
-                    marginBottom: 10,
-                    boxSizing: 'border-box'
-                }}
-            >
-                <LockIcon />
-                Acceso administrador
-            </button>
+            {/* 5. ADMIN ACCESS */}
+            {infoPills.adminAccess?.enabled && (
+                <button
+                    onClick={() => navigate(`/${tenantSlug}/owner`)}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        width: '100%',
+                        padding: '12px 24px',
+                        backgroundColor: getPillStyle('adminAccess').backgroundColor,
+                        color: getPillStyle('adminAccess').color,
+                        borderRadius: 28,
+                        border: '1px solid var(--border-subtle)', // Always show subtle border for admin
+                        fontSize: 14,
+                        fontWeight: 400,
+                        cursor: 'pointer',
+                        marginBottom: 10,
+                        boxSizing: 'border-box'
+                    }}
+                >
+                    <LockIcon />
+                    Acceso administrador
+                </button>
+            )}
 
             {hasBusinessInfo && (
                 <div style={{
