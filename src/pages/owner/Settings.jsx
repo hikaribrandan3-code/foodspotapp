@@ -186,7 +186,8 @@ const Settings = () => {
             storageUpdates.branding = { [field]: value };
             // Also map to colors object for App.jsx CSS hydration
             if (['primary_color', 'secondary_color', 'confirmation_color', 'powered_by_color'].includes(field)) {
-                const colorKey = field.replace('_color', ''); // e.g., 'confirmation'
+                let colorKey = field.replace('_color', ''); // e.g., 'confirmation'
+                if (colorKey === 'powered_by') colorKey = 'powered'; // 🩹 FIX: App.jsx expects 'powered'
                 storageUpdates.colors = { [colorKey]: value };
             }
         } else if (field === 'hero_mode' || field === 'hero_url') {

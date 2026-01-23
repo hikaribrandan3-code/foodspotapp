@@ -309,6 +309,8 @@ export function TenantProvider({ children }) {
         // 2. Color Hydration (The Big 4)
         if (tenantData.primary_color) root.setProperty('--color-primary', tenantData.primary_color);
         if (tenantData.secondary_color) root.setProperty('--color-secondary', tenantData.secondary_color);
+        if (tenantData.confirmation_color) root.setProperty('--color-confirm', tenantData.confirmation_color);
+        if (tenantData.powered_by_color) root.setProperty('--color-powered', tenantData.powered_by_color);
         if (tenantData.background_color) root.setProperty('--color-bg', tenantData.background_color);
         if (tenantData.accent_color) root.setProperty('--color-accent', tenantData.accent_color);
 

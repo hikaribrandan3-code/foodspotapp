@@ -532,9 +532,15 @@ function Home({ config: configProp }) {
         if (isDraggingRef.current || isEditMode) {
             e.preventDefault()
             e.stopPropagation()
-            console.log('[DRAG SAFETY] Click blocked - edit/drag mode active')
             return
         }
+
+        // 🛡️ SILO GUARD: Prevent navigation if slug is undefined or loading
+        if (!tenantSlug) {
+            console.error('[SILO GUARD] Navigation blocked - tenantSlug is undefined')
+            return
+        }
+
         // Navigate with tenant-scoped path
         navigate(`/${tenantSlug}/${path}`)
     }, [navigate, isEditMode, tenantSlug])
