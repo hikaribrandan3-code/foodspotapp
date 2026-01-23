@@ -683,7 +683,7 @@ const Settings = () => {
                     </div>
                     <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Configura colores, enlaces y visibilidad.</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {['whatsapp', 'rappi', 'mercadopago', 'pedidosya', 'admin'].map(pillId => {
+                        {['whatsapp', 'rappi', 'mercadoPago', 'pedidosYa', 'adminAccess'].map(pillId => {
                             const pills = tenant?.info_pills || {};
                             const pillData = pills[pillId] || {};
                             const isActive = pillData.enabled;
@@ -693,16 +693,17 @@ const Settings = () => {
                             const labels = {
                                 whatsapp: 'WhatsApp',
                                 rappi: 'Rappi',
-                                mercadopago: 'Mercado Pago',
-                                pedidosya: 'PedidosYa',
-                                admin: 'Admin Login'
+                                mercadoPago: 'Mercado Pago',
+                                pedidosYa: 'PedidosYa',
+                                adminAccess: 'Admin Login'
                             };
 
                             const placeHolders = {
                                 whatsapp: '+54 9 11 1234 5678',
                                 rappi: 'https://rappi.com/...',
-                                mercadopago: 'ALIAS.MP',
-                                pedidosya: 'https://pedidosya.com/...'
+                                mercadoPago: 'ALIAS.MP',
+                                pedidosYa: 'https://pedidosya.com/...',
+                                adminAccess: 'N/A'
                             };
 
                             const handlePillUpdate = (updates) => {
@@ -753,7 +754,7 @@ const Settings = () => {
                                                 />
                                             </label>
                                         </div>
-                                        {pillId !== 'admin' && (
+                                        {pillId !== 'adminAccess' && (
                                             <input
                                                 type="text"
                                                 className="fs-input-sm"
