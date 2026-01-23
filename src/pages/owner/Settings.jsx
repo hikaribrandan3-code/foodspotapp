@@ -719,35 +719,20 @@ const Settings = () => {
                             };
 
                             return (
-                                <div key={pillId} style={{
-                                    background: '#FFF',
-                                    borderRadius: 12,
-                                    padding: 12,
-                                    border: '1px solid #E2E8F0',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 12
-                                }}>
+                                <div key={pillId} className="pill-row">
                                     {/* 1. Toggle & Color Swatch */}
                                     <div
                                         onClick={() => openColorPicker(`Color: ${labels[pillId]}`, `info_pill_${pillId}`, '', bgColor)}
-                                        style={{
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: 8,
-                                            background: bgColor,
-                                            border: '1px solid rgba(0,0,0,0.1)',
-                                            cursor: 'pointer',
-                                            flexShrink: 0
-                                        }}
+                                        className="pill-swatch"
+                                        style={{ background: bgColor }}
                                     />
 
                                     {/* 2. Content Input */}
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{labels[pillId]}</span>
-                                            <label className="switch-label" style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                                                <span style={{ fontSize: 11, color: isActive ? '#22C55E' : '#94A3B8' }}>
+                                            <label className="switch-label">
+                                                <span style={{ color: isActive ? '#22C55E' : '#94A3B8' }}>
                                                     {isActive ? 'Visible' : 'Oculto'}
                                                 </span>
                                                 <input
@@ -761,18 +746,10 @@ const Settings = () => {
                                         {pillId !== 'adminAccess' && (
                                             <input
                                                 type="text"
-                                                className="fs-input-sm"
+                                                className="pill-input"
                                                 defaultValue={content}
                                                 placeholder={placeHolders[pillId]}
                                                 onBlur={(e) => handlePillUpdate({ content: e.target.value })}
-                                                style={{
-                                                    fontSize: 12,
-                                                    padding: '6px 10px',
-                                                    width: '100%',
-                                                    background: '#F8FAFC',
-                                                    border: '1px solid #E2E8F0',
-                                                    borderRadius: 6
-                                                }}
                                             />
                                         )}
                                     </div>

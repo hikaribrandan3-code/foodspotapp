@@ -337,3 +337,63 @@
     color: white;
     border-color: #1E293B;
 }
+
+/* INFO PILLS POLISH (Section 6) */
+.pill-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px; /* Visual Rhyme: Matches Outfit/Inter feel */
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* Hardware-accelerated pop */
+}
+
+.pill-swatch:hover {
+    transform: scale(1.05); /* Tactile pop */
+}
+
+.pill-input {
+    width: 100%;
+    padding: 10px 14px; /* Tighter padding */
+    border: 1.5px solid #E2E8F0; /* Refined border */
+    border-radius: 10px; /* Consistent radius */
+    font-size: 13px;
+    color: #1E293B;
+    background: #F8FAFC;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.pill-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background: #FFF;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.pill-row {
+    background: #FFF;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #E2E8F0;
+    display: flex;
+    flex-wrap: nowrap; /* Drop-Proof stability */
+    align-items: center;
+    gap: 12px; /* Flexible gap */
+    transition: background-color 0.2s ease;
+}
+
+.pill-row:hover {
+    background: #F8FAFC;
+}
+
+.switch-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+}
