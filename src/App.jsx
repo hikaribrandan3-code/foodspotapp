@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
-import { getConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
+import { getConfig, normalizeConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
 import { incrementVisit, updateOrder, getOrders } from './utils/storage.js'
 import { sanitizeForAdmin } from './utils/adminSanitize.js'
 import { getSession } from './utils/auth.js'
@@ -87,7 +87,35 @@ function App() {
 
     const [config, setConfig] = useState(() => getConfig());
     const [orders, setOrders] = useState(() => getOrders());
-    const safeConfig = useMemo(() => config ?? { pauseOrders: false }, [config]);
+
+    // 🔥 HYDRATION V4: Sync Config with Tenant Data
+    // This allows Settings.jsx updates to immediately reflect in App.jsx via window event
+    // AND allows database state to override local defaults on load
+    useEffect(() => {
+        if (tenant?.tenantData) {
+            // Merge tenantData (branding, limits, settings) into config structure
+            // This bridge is critical for the "Info" tab to see "info_pills"
+            const merged = normalizeConfig({
+                ...config,
+                ...tenant.tenantData,
+                // Ensure deep objects like infoPills are preferred from tenantData if present
+                infoPills: tenant.tenantData.info_pills || config.infoPills,
+                businessInfo: tenant.tenantData.business_info || config.businessInfo
+            });
+            setConfig(merged);
+        }
+    }, [tenant?.tenantData]);
+
+    // Listen for optimistic updates from Settings.jsx
+    useEffect(() => {
+        const handleSync = (e) => {
+            setConfig(prev => normalizeConfig({ ...prev, ...e.detail }));
+        };
+        window.addEventListener('frontendSync', handleSync);
+        return () => window.removeEventListener('frontendSync', handleSync);
+    }, []);
+
+    const safeConfig = useMemo(() => config ?? normalizeConfig({}), [config]);
 
     const businessId = tenant?.businessId;
     const tenantData = tenant?.tenantData;
