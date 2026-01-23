@@ -176,9 +176,19 @@ const Settings = () => {
 
         // 💾 PERSIST TO STORAGE (Fixes BottomNav sync on route change)
         // Map Supabase (snake_case) to appConfig (structure)
+        // 🎨 VAULT SEAL: All 4 theme colors + branding fields
         const storageUpdates = {};
-        if (['navbar_color', 'nav_icon_mode', 'business_name', 'font_family', 'font_weight', 'primary_color', 'secondary_color'].includes(field)) {
+        const BRANDING_FIELDS = [
+            'navbar_color', 'nav_icon_mode', 'business_name', 'font_family', 'font_weight',
+            'primary_color', 'secondary_color', 'confirmation_color', 'powered_by_color'
+        ];
+        if (BRANDING_FIELDS.includes(field)) {
             storageUpdates.branding = { [field]: value };
+            // Also map to colors object for App.jsx CSS hydration
+            if (['primary_color', 'secondary_color', 'confirmation_color', 'powered_by_color'].includes(field)) {
+                const colorKey = field.replace('_color', ''); // e.g., 'confirmation'
+                storageUpdates.colors = { [colorKey]: value };
+            }
         } else if (field === 'hero_mode' || field === 'hero_url') {
             storageUpdates.headerBranding = { [field]: value };
             storageUpdates[field] = value; // Save at root too for Home.jsx polyfills

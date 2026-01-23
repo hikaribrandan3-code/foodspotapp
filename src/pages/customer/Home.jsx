@@ -13,11 +13,12 @@ import { useTenant } from '../../contexts/TenantContext'
 const LONG_PRESS_DURATION = 1800
 
 // Action definitions (using shared HeroIcons)
+// 🛡️ SILO-AWARE: Paths are now relative, tenantSlug is prepended at runtime
 const ACTION_DEFINITIONS = {
-    menu: { icon: MenuIcon, label: 'Menu', path: '/menu' },
-    envios: { icon: DeliveryIcon, label: 'Envíos', path: '/envios' },
-    promos: { icon: PromosIcon, label: 'Promos', path: '/promos' },
-    game: { icon: GameIcon, label: 'Mini Game', path: '/game' }
+    menu: { icon: MenuIcon, label: 'Menu', path: 'menu' },
+    envios: { icon: DeliveryIcon, label: 'Envíos', path: 'envios' },
+    promos: { icon: PromosIcon, label: 'Promos', path: 'promos' },
+    game: { icon: GameIcon, label: 'Mini Game', path: 'game' }
 }
 
 // --- MAIN COMPONENT ---
@@ -526,6 +527,7 @@ function Home({ config: configProp }) {
     })
 
     // Click handler that respects drag lock
+    // 🛡️ SILO-AWARE: Prepend tenantSlug to path
     const handleTileClick = useCallback((e, path) => {
         if (isDraggingRef.current || isEditMode) {
             e.preventDefault()
@@ -533,8 +535,9 @@ function Home({ config: configProp }) {
             console.log('[DRAG SAFETY] Click blocked - edit/drag mode active')
             return
         }
-        navigate(path)
-    }, [navigate, isEditMode])
+        // Navigate with tenant-scoped path
+        navigate(`/${tenantSlug}/${path}`)
+    }, [navigate, isEditMode, tenantSlug])
 
     return (
         <div
@@ -686,7 +689,7 @@ function Home({ config: configProp }) {
                     return (
                         <Link
                             key={actionId}
-                            to={action.path}
+                            to={`/${tenantSlug}/${action.path}`}
                             style={{ ...tileStyle, backgroundColor: getHeroBg(actionId) }}
                         >
                             {tileContent}

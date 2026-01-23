@@ -170,11 +170,22 @@ function App() {
     useEffect(() => {
         if (!config) return;
         const root = document.documentElement;
+
+        // 🎨 VAULT SEAL: The Big 4 Theme Colors
+        // Maps config.colors (synced via Settings.jsx) to global CSS vars
+        const c = config.colors || {};
+        root.style.setProperty('--color-primary', c.primary || '#8B7355');
+        root.style.setProperty('--color-secondary', c.secondary || '#A89070');
+        root.style.setProperty('--color-confirm', c.confirmation || '#22C55E');
+        root.style.setProperty('--color-powered', c.powered || '#C4856A');
+
+        // Legacy Nav Support
         root.style.setProperty('--nav-primary-color', config.branding?.primaryColor || '#8B7355');
         root.style.setProperty('--nav-icon-color', config.branding?.iconColorMode === 'black' ? '#000000' : '#FFFFFF');
+
         const nav = document.querySelector('.bottom-nav');
         if (nav) { nav.style.opacity = '0.99'; requestAnimationFrame(() => { nav.style.opacity = '1'; }); }
-    }, [config.branding?.primaryColor, config.branding?.iconColorMode]);
+    }, [config.branding?.primaryColor, config.branding?.iconColorMode, config.colors]);
 
     useEffect(() => {
         if (!config) return;
