@@ -8,7 +8,7 @@ import BackendNav from '../../components/BackendNav';
 import CoverImageEditor from '../../components/CoverImageEditor';
 import ColorPickerModal from '../../components/ColorPickerModal';
 import { clearAuth } from '../../utils/storage';
-import { getConfig } from '../../config/appConfig.v2.js';
+import { getConfig, updateConfig } from '../../config/appConfig.v2.js';
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
 import './Settings.css';
 
@@ -174,6 +174,19 @@ const Settings = () => {
 
         syncContext({ [field]: value });
 
+        // 💾 PERSIST TO STORAGE (Fixes BottomNav sync on route change)
+        // Map Supabase (snake_case) to appConfig (structure)
+        const storageUpdates = {};
+        if (['navbar_color', 'nav_icon_mode', 'business_name', 'font_family', 'font_weight', 'primary_color', 'secondary_color'].includes(field)) {
+            storageUpdates.branding = { [field]: value };
+        } else if (field === 'hero_mode' || field === 'hero_url') {
+            storageUpdates.headerBranding = { [field]: value };
+            storageUpdates[field] = value; // Save at root too for Home.jsx polyfills
+        } else {
+            storageUpdates[field] = value;
+        }
+        updateConfig(storageUpdates);
+
         try {
             await updateBranding({ [field]: value }, businessId);
         } catch (error) {
@@ -197,6 +210,14 @@ const Settings = () => {
         // Update local state for instant preview
         setHeroIconColors(prev => ({ ...prev, [iconId]: color }));
         syncContext({ hero_icons: updatedIcons });
+
+        // 💾 PERSIST TO STORAGE
+        updateConfig({
+            hero_icons: updatedIcons,
+            heroIcons: { // Attempt to map to camelCase structure for completeness
+                [iconId]: { color: color }
+            }
+        });
 
         try {
             await updateBranding({ hero_icons: updatedIcons }, businessId);
