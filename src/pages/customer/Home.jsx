@@ -469,13 +469,17 @@ function Home({ config: configProp }) {
     const getHeroIcon = useCallback((actionId) => {
         const iconKey = actionId === 'envios' ? 'delivery' : actionId
         const heroConfig = config?.heroIcons?.[iconKey] || HERO_DEFAULT
-        const mode = heroConfig?.iconColorMode
+
+        // 1. Check specific icon override (rare)
+        // 2. Check global DB mode (hero_icon_mode)
+        // 3. Fallback to 'auto' logic
+        const mode = heroConfig?.iconColorMode || config?.hero_icon_mode
 
         if (!mode || mode === 'auto') {
             return config?.canvasMode === 'dark' ? '#FFFFFF' : '#000000'
         }
         return mode === 'white' ? '#FFFFFF' : HERO_ICON_DARK
-    }, [config?.heroIcons, config?.canvasMode])
+    }, [config?.heroIcons, config?.canvasMode, config?.hero_icon_mode])
 
     const tileStyle = {
         borderRadius: 28,

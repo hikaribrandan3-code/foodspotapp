@@ -72,8 +72,11 @@ function BottomNav({ config: configProp }) {
     if (shouldHide || !tenantSlug) return null
 
     // Direct branding values from config
-    const navBgColor = config.branding?.primaryColor || '#8B7355'
-    const navIconColor = config.branding?.iconColorMode === 'black' ? '#000000' : '#FFFFFF'
+    const navBgColor = config.branding?.navbar_color || config.branding?.primaryColor || '#8B7355'
+
+    // ICON COLOR: Prioritize nav_icon_mode from DB, then fall back to iconColorMode or calculated contrast
+    const navMode = config.branding?.nav_icon_mode || config.branding?.iconColorMode
+    const navIconColor = navMode === 'black' ? '#1F2937' : '#FFFFFF'
 
     // CAMERA BRANDING: Use camera-specific styling when enabled
     const cameraConfig = config.camera || {}
