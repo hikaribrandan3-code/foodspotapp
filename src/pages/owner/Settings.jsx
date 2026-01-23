@@ -122,6 +122,21 @@ const Settings = () => {
         }
     }, [tenant]);
 
+    // 🛡️ BODY SCROLL LOCK: Prevent background scroll when ColorPicker is open
+    useEffect(() => {
+        if (colorPickerState.isOpen) {
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        };
+    }, [colorPickerState.isOpen]);
+
     // Close dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -581,17 +596,18 @@ const Settings = () => {
                                 }}
                             >
                                 <NavIcon />
+                                {/* Camera button - UNIFIED with Nav Bar (no separate color) */}
                                 {i === 2 && (
                                     <div style={{
                                         width: 32,
                                         height: 32,
                                         borderRadius: '50%',
-                                        background: tenant?.primary_color || '#8B7355',
+                                        background: 'transparent',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         marginTop: -24,
-                                        border: '2px solid white'
+                                        border: `2px solid ${navIconMode === 'white' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}`
                                     }}>
                                         <NavCameraIcon />
                                     </div>
