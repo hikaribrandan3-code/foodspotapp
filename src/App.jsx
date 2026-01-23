@@ -100,7 +100,14 @@ function App() {
                 ...tenant.tenantData,
                 // Ensure deep objects like infoPills are preferred from tenantData if present
                 infoPills: tenant.tenantData.info_pills || config.infoPills,
-                businessInfo: tenant.tenantData.business_info || config.businessInfo
+                businessInfo: tenant.tenantData.business_info || config.businessInfo,
+                // 🎨 RE-HYDRATION FIX: Map flat DB fields to App structure
+                colors: {
+                    primary: tenant.tenantData.primary_color || config.colors?.primary,
+                    secondary: tenant.tenantData.secondary_color || config.colors?.secondary,
+                    confirmation: tenant.tenantData.confirmation_color || config.colors?.confirmation,
+                    powered: tenant.tenantData.powered_by_color || config.colors?.powered // 🛡️ Fixes footer color
+                }
             });
             setConfig(merged);
         }
