@@ -152,6 +152,18 @@ export function addCategory(name, icon = '📦') {
     return id;
 }
 
+// Update an existing category
+export function updateCategory(categoryId, updates) {
+    const menu = getMenu();
+    const category = menu.categories.find(c => c.id === categoryId);
+    if (category) {
+        Object.assign(category, updates);
+        saveMenu(menu);
+        return true;
+    }
+    return false;
+}
+
 // Remove a menu item from a category
 export function removeMenuItem(categoryId, itemId) {
     const menu = getMenu();

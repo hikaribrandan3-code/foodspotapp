@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
-import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory } from '../../config/menuData.js'
+import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory, updateCategory } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
@@ -43,6 +43,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [showAddCategory, setShowAddCategory] = useState(false)
     const [newCategoryName, setNewCategoryName] = useState('')
     const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
+
+    // Category renaming state
+    const [editingCategory, setEditingCategory] = useState(null) // { id, name }
 
     // Operational controls state
     const [pauseMessage, setPauseMessage] = useState(config?.pauseOrdersMessage || '')
@@ -140,6 +143,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const handleToggleCategory = (categoryId) => {
         toggleCategoryEnabled(categoryId)
         setMenu(getMenu(targetBusinessId))
+    }
+
+    const handleRenameCategory = (categoryId) => {
+        if (editingCategory && editingCategory.name.trim()) {
+            updateCategory(categoryId, { name: editingCategory.name.trim() })
+            setMenu(getMenu(targetBusinessId))
+        }
+        setEditingCategory(null)
     }
 
     // --- CRUD HANDLERS ---
@@ -261,6 +272,57 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             )
                         })()}
                         <div style={{ marginBottom: 12 }}>
+                            {/* SaaS-Scale Static Map & Radius Visualizer */}
+                            <div style={{
+                                height: 160,
+                                background: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&q=80') center/cover",
+                                borderRadius: 10,
+                                marginBottom: 16,
+                                position: 'relative',
+                                overflow: 'hidden',
+                                border: '1px solid #CBD5E1'
+                            }}>
+                                {/* Dark overlay for contrast */}
+                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.2)' }} />
+
+                                {/* Center Pin */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%', left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    zIndex: 10,
+                                    fontSize: 24,
+                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                                }}>
+                                    🏪
+                                </div>
+
+                                {/* Dynamic Radius Circle */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%', left: '50%',
+                                    width: 40, height: 40, // Base size (represents ~1km visually)
+                                    marginLeft: -20, marginTop: -20,
+                                    borderRadius: '50%',
+                                    border: '2px solid #22C55E',
+                                    background: 'rgba(34, 197, 94, 0.15)',
+                                    transform: `scale(${config.delivery?.radiusKm || 5})`,
+                                    willChange: 'transform',
+                                    transition: 'transform 0.1s linear', // Ultra-fast hardware sync
+                                    pointerEvents: 'none',
+                                    boxShadow: '0 0 0 1000px rgba(0,0,0,0.1)' // Focus ring effect (inverted mask look)
+                                }} />
+
+                                <div style={{
+                                    position: 'absolute', bottom: 8, right: 8,
+                                    background: 'rgba(255,255,255,0.9)',
+                                    padding: '2px 6px', borderRadius: 4,
+                                    fontSize: 10, fontWeight: 600, color: '#64748B'
+                                }}>
+                                    Vista Previa
+                                </div>
+                            </div>
+
                             <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {config.delivery?.radiusKm || 5} km</label>
                             <input
                                 type="range"
@@ -515,15 +577,48 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 alignItems: 'center',
                                 marginBottom: 8
                             }}>
-                                <h3 style={{
-                                    fontSize: 14,
-                                    fontWeight: 600,
-                                    color: '#374151',
-                                    margin: 0
-                                }}>
-                                    {category.name}
-                                    {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444' }}>(oculta)</span>}
-                                </h3>
+                                <div style={{ flex: 1 }}>
+                                    {editingCategory?.id === category.id ? (
+                                        <input
+                                            type="text"
+                                            value={editingCategory.name}
+                                            onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                                            onBlur={() => handleRenameCategory(category.id)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleRenameCategory(category.id)}
+                                            autoFocus
+                                            style={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                color: '#374151',
+                                                border: '1px solid #3B82F6',
+                                                borderRadius: 4,
+                                                padding: '2px 6px',
+                                                width: '100%',
+                                                maxWidth: 200,
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    ) : (
+                                        <h3
+                                            onClick={() => setEditingCategory({ id: category.id, name: category.name })}
+                                            style={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                color: '#374151',
+                                                margin: 0,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 6
+                                            }}
+                                            title="Clic para renombrar"
+                                        >
+                                            {category.name}
+                                            <span style={{ fontSize: 10, opacity: 0.3 }}>✎</span>
+                                            {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
+                                        </h3>
+                                    )}
+                                </div>
                                 <label className="toggle">
                                     <input
                                         type="checkbox"
@@ -570,7 +665,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 {item.image ? (
                                                     <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 ) : (
-                                                    <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
+                                                    // SaaS-Scale Hybrid Placeholder Logic
+                                                    idx === 0 ? (
+                                                        <span style={{ fontSize: 20, color: '#9CA3AF' }}>📷</span>
+                                                    ) : (
+                                                        <span style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 500, textTransform: 'uppercase' }}>Vacío</span>
+                                                    )
                                                 )}
                                             </div>
                                         </div>

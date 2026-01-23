@@ -193,13 +193,8 @@ export function getDeliveryChangesThisMonth(config) {
     }).length
 }
 
-/**
- * Check if delivery config can be changed (3× per month limit)
- * @param {Object} config - App configuration object
- * @returns {boolean}
- */
 export function canChangeDeliveryConfig(config) {
-    return getDeliveryChangesThisMonth(config) < 3
+    return true; // Infinite autonomy enabled
 }
 
 /**
