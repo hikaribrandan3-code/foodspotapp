@@ -243,86 +243,65 @@ function Info({ config: configProp }) {
                     marginBottom: 20,
                     boxShadow: 'var(--shadow-card)'
                 }}>
-                    {infoDisplay.showAddress && businessInfo.address && (
+                    {/* 📍 HYBRID LOCATION PILL: Address + Link Merged */}
+                    {(infoDisplay.showAddress && businessInfo.address) || (infoDisplay.showMapLink && businessInfo.googleMapsLink) ? (
                         <div style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: 12,
-                            paddingBottom: 16,
                             marginBottom: 16,
-                            borderBottom: '1px solid var(--border-subtle)'
+                            borderBottom: '1px solid var(--border-subtle)',
+                            paddingBottom: 16
                         }}>
-                            <div style={{ color: textMuted, marginTop: 2 }}>
-                                <LocationIcon />
-                            </div>
-                            <div>
-                                <p style={{
-                                    fontWeight: 600,
-                                    fontSize: 15,
-                                    color: 'var(--canvas-text)',
-                                    marginBottom: 4
-                                }}>
-                                    Dirección:
-                                </p>
-                                <p style={{ fontSize: 14, color: 'var(--canvas-text-muted)', margin: 0 }}>
-                                    {businessInfo.address}
-                                </p>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                                <div style={{ color: textMuted, marginTop: 4 }}>
+                                    <LocationIcon />
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontWeight: 600, fontSize: 15, color: 'var(--canvas-text)', marginBottom: 4 }}>
+                                        Ubicación:
+                                    </p>
+
+                                    {/* LOGIC A: Link Exists -> Render as Pill Action */}
+                                    {businessInfo.googleMapsLink ? (
+                                        <a
+                                            href={businessInfo.googleMapsLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 8,
+                                                color: primaryColor,
+                                                textDecoration: 'none',
+                                                fontSize: 14,
+                                                fontWeight: 500,
+                                                marginTop: 4,
+                                                background: 'var(--color-background)',
+                                                padding: '8px 12px',
+                                                borderRadius: 8,
+                                                width: 'fit-content',
+                                                maxWidth: '100%'
+                                            }}
+                                        >
+                                            <span style={{
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                display: 'block',
+                                                maxWidth: '100%'
+                                            }}>
+                                                {businessInfo.address || 'Ver en Google Maps'}
+                                            </span>
+                                            <span style={{ fontSize: 16 }}>↗</span>
+                                        </a>
+                                    ) : (
+                                        /* LOGIC B: Address Only -> Render as Text */
+                                        <p style={{ fontSize: 14, color: 'var(--canvas-text-muted)', margin: 0 }}>
+                                            {businessInfo.address}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    )}
-
-                    {infoDisplay.showHours && (
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: 12,
-                            paddingBottom: 16,
-                            marginBottom: 16,
-                            borderBottom: '1px solid var(--border-subtle)'
-                        }}>
-                            <div style={{ color: textMuted, marginTop: 2 }}>
-                                <ClockIcon />
-                            </div>
-                            <div>
-                                <p style={{
-                                    fontWeight: 600,
-                                    fontSize: 15,
-                                    color: 'var(--canvas-text)',
-                                    marginBottom: 4
-                                }}>
-                                    Horarios:
-                                </p>
-                                <p style={{ fontSize: 14, color: 'var(--canvas-text-muted)', margin: 0, marginBottom: 2 }}>
-                                    Lun-Sáb 9:00-22:00
-                                </p>
-                                <p style={{ fontSize: 14, color: 'var(--canvas-text-muted)', margin: 0 }}>
-                                    Dom 10:00-20:00
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {infoDisplay.showMapLink && businessInfo.googleMapsLink && (
-                        <a
-                            href={businessInfo.googleMapsLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 12,
-                                color: primaryColor,
-                                textDecoration: 'none',
-                                fontSize: 15,
-                                fontWeight: 500
-                            }}
-                        >
-                            <div style={{ color: textMuted }}>
-                                <MapIcon />
-                            </div>
-                            Ver en Google Maps
-                        </a>
-                    )}
+                    ) : null}
                 </div>
             )
             }

@@ -154,17 +154,19 @@ function OwnerSummary({ config: configProp }) {
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>WhatsApp (contacto principal)</label>
                     <input type="text" placeholder="+54 11 1234-5678" value={config?.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
 
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección</label>
-                    <input type="text" placeholder="Av. Corrientes 1234" value={config?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={inputStyle} />
+                    {/* 📍 HYBRID LOCATION GROUP */}
+                    <div style={{ background: '#F9FAFB', borderRadius: 8, padding: 12, marginBottom: 12, border: '1px solid #E5E7EB' }}>
+                        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>📍 Localización (Unificada)</label>
 
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Horarios</label>
-                    <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config?.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfo('hours', e.target.value)} style={inputStyle} />
+                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección (Etiqueta)</label>
+                        <input type="text" placeholder="Av. Corrientes 1234" value={config?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={{ ...inputStyle, marginBottom: 10 }} />
 
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Instagram</label>
-                    <input type="text" placeholder="@tunegocio" value={config?.businessInfo?.instagram || ''} onChange={(e) => updateBusinessInfo('instagram', e.target.value)} style={inputStyle} />
-
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps (reseñas)</label>
-                    <input type="text" placeholder="https://maps.google.com/..." value={config?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={inputStyle} />
+                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps Link (Acción)</label>
+                        <input type="text" placeholder="https://maps.google.com/..." value={config?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={{ ...inputStyle, marginBottom: 4 }} />
+                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
+                            ℹ️ Si ambos están presentes, se mostrará un botón con la dirección que abre el mapa.
+                        </p>
+                    </div>
 
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Indicaciones / Notas</label>
                     <input type="text" placeholder="Timbre 2A, subir escaleras" value={config?.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />

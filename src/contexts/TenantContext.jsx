@@ -108,9 +108,25 @@ export function TenantProvider({ children }) {
                     return
                 }
 
-                // 2. FETCH TENANT FROM SUPABASE (with timeout + 1 retry after 1 second)
+                // 2. FETCH TENANT (Persistence Shield + SWR Pattern)
                 const fetchTenant = async (retryCount = 0) => {
                     console.log('[TenantContext] 🔍 Looking for slug:', slug)
+                    const cacheKey = `fs_vault_${slug}`
+
+                    // 🛡️ PERSISTENCE SHIELD: Attempt immediate hydration from cache
+                    try {
+                        const cached = sessionStorage.getItem(cacheKey)
+                        if (cached) {
+                            const parsed = JSON.parse(cached)
+                            // Immediate UI Paint - prevents "ghosting"
+                            console.log('[TenantContext] ⚡ Cache Hit! Hydrating immediately.')
+                            setBusinessId(parsed.business_id)
+                            setTenantData(parsed)
+                            setLoading(false) // Unblock UI
+                        }
+                    } catch (e) {
+                        console.warn('[TenantContext] Cache read error:', e)
+                    }
 
                     // Wrap Supabase call in 10-second timeout
                     const supabaseQuery = supabase
@@ -136,6 +152,8 @@ export function TenantProvider({ children }) {
                     // 🔄 FALLBACK: If no slug match, try business_name (case-insensitive)
                     if (!tenant) {
                         console.log('[TenantContext] ⚠️ No slug match, trying business_name...')
+                        // ... fallback logic (kept simple for brevity in this patch) ...
+                        // (Re-using existing fallback query logic if needed, or relying on main query)
                         try {
                             const fallbackQuery = supabase
                                 .from('branding')
@@ -158,6 +176,9 @@ export function TenantProvider({ children }) {
                             business_id: tenant.business_id,
                             slug: tenant.slug
                         })
+
+                        // 💾 PERSISTENCE WRITE: Update cache
+                        sessionStorage.setItem(cacheKey, JSON.stringify(tenant))
                     }
 
                     if (fetchError || !tenant) {
@@ -199,6 +220,7 @@ export function TenantProvider({ children }) {
 
                                 if (!insertError && newTenant) {
                                     console.log(`[TenantContext] 🚀 Auto-seed successful:`, newTenant)
+                                    sessionStorage.setItem(cacheKey, JSON.stringify(newTenant)) // Cache new tenant
                                     return newTenant
                                 } else {
                                     console.error(`[TenantContext] Auto-seed INSERT failed:`, insertError)
@@ -248,9 +270,19 @@ export function TenantProvider({ children }) {
                 }
 
                 // Success: Tenant found and user has access
-                setBusinessId(tenant.business_id) // 🔐 CORRECT: Use business_id column
+                // ⚡ SWR CHECK: Only update state if different from cache or if it's the first load
+                // (Since we set state early on cache hit, this acts as the "revalidate" phase)
+                setBusinessId(tenant.business_id)
                 setTenantStoragePrefix(tenant.business_id)
-                setTenantData(tenant)
+
+                // We always update to ensure latest data, React handles diffing efficiently enough here
+                // but strictly speaking for "Deep Compare", we rely on React's Virtual DOM 
+                // However, to prevent flicker if identical:
+                setTenantData(prev => {
+                    const isDiff = JSON.stringify(prev) !== JSON.stringify(tenant)
+                    return isDiff ? tenant : prev
+                })
+
                 checkTrialStatus(tenant)
             } catch (err) {
                 console.error('[TenantContext] Error resolving tenant:', err)
