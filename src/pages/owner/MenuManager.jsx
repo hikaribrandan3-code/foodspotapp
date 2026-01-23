@@ -604,12 +604,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: 6
+                                                gap: 8
                                             }}
                                             title="Clic para renombrar"
                                         >
                                             {category.name}
-                                            <span style={{ fontSize: 12, color: '#3B82F6' }}>✏️</span>
+                                            <span style={{ fontSize: 18, color: '#3B82F6' }}>✏️</span>
                                             {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
                                         </h3>
                                     )}
@@ -658,9 +658,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 }}
                                             >
                                                 {item.image ? (
-                                                    <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                                                 ) : (
-                                                    <span style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 500, textTransform: 'uppercase', pointerEvents: 'none' }}>Vacío</span>
+                                                    <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
                                                 )}
                                             </div>
                                         </div>
