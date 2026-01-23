@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { HexColorPicker } from 'react-colorful';
 
 /**
- * 🛡️ OPERATION VAULT-SEAL: STRIKE 2.5 (THE PICKER)
+ * 🛡️ OPERATION VAULT-SEAL: STRIKE 3.0 (THE SEALED PICKER)
  * ColorPickerModal - Hardware-Optimized Console
+ * 
+ * FIXES:
+ * 1. POINTER LOCK: Overlay blocks ALL background touches
+ * 2. BUTTON ISOLATION: Each button has pointerEvents: 'auto'
+ * 3. TOUCH SAFE: touch-action: none on overlay prevents scroll bleed
  */
 export default function ColorPickerModal({
     title,
@@ -18,48 +23,111 @@ export default function ColorPickerModal({
         if (initialColor) setColor(initialColor);
     }, [initialColor]);
 
+    // Lock body scroll while modal is open
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        };
+    }, []);
+
     const handleColorChange = (newColor) => {
         setColor(newColor);
-        // 🚀 INSTANT PREVIEW: Direct-DOM update via parent callback
         if (onLiveChange) onLiveChange(newColor);
     };
 
-    const handleConfirm = () => {
-        // 💾 COMMIT: Final save only on Green Check
+    const handleConfirm = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (onApply) onApply(color);
     };
 
+    const handleClose = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onClose) onClose();
+    };
+
+    const handleBackdropClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only close if clicking the backdrop itself
+        if (e.target === e.currentTarget) {
+            if (onClose) onClose();
+        }
+    };
+
+    const handleModalClick = (e) => {
+        // Stop propagation to prevent backdrop from catching it
+        e.stopPropagation();
+    };
+
     return (
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 99999, // 🛡️ Blocks all background interference
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
-            padding: '20px'
-        }}
-            onClick={(e) => e.target === e.currentTarget && onClose()}
+        <div
+            role="presentation"
+            inputMode="none"
+            data-form-type="other"
+            onClick={handleBackdropClick}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 999999, // 🛡️ MAXIMUM Z-INDEX
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                padding: '20px',
+                // 🛡️ POINTER LOCK
+                pointerEvents: 'auto',
+                touchAction: 'none',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none'
+            }}
         >
-            <div style={{
-                background: '#FFFFFF',
-                borderRadius: '24px',
-                width: '100%',
-                maxWidth: '340px',
-                padding: '24px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                animation: 'modalScale 0.2s ease-out'
-            }}>
+            <div
+                onClick={handleModalClick}
+                style={{
+                    background: '#FFFFFF',
+                    borderRadius: '24px',
+                    width: '100%',
+                    maxWidth: '340px',
+                    padding: '24px',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    animation: 'modalScale 0.2s ease-out',
+                    pointerEvents: 'auto',
+                    touchAction: 'auto'
+                }}
+            >
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#111827' }}>
                         {title}
                     </h3>
                     <button
-                        onClick={onClose}
-                        style={{ border: 'none', background: 'transparent', fontSize: '24px', cursor: 'pointer', color: '#9CA3AF' }}
+                        type="button"
+                        onClick={handleClose}
+                        style={{
+                            border: 'none',
+                            background: 'rgba(0,0,0,0.08)',
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            fontSize: '20px',
+                            cursor: 'pointer',
+                            color: '#6B7280',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            pointerEvents: 'auto'
+                        }}
                     >
                         ✕
                     </button>
@@ -74,7 +142,7 @@ export default function ColorPickerModal({
                     />
                 </div>
 
-                {/* 2. THE HARDWARE FALLBACK (Native Logic) */}
+                {/* 2. THE HARDWARE FALLBACK (Native Picker + Hex Input) */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -96,7 +164,8 @@ export default function ColorPickerModal({
                             borderRadius: '8px',
                             cursor: 'pointer',
                             padding: 0,
-                            background: 'transparent'
+                            background: 'transparent',
+                            pointerEvents: 'auto'
                         }}
                     />
                     <div style={{ flex: 1 }}>
@@ -113,7 +182,8 @@ export default function ColorPickerModal({
                                 fontSize: '16px',
                                 fontWeight: '600',
                                 fontFamily: 'monospace',
-                                color: '#1F2937'
+                                color: '#1F2937',
+                                pointerEvents: 'auto'
                             }}
                         />
                     </div>
@@ -121,6 +191,7 @@ export default function ColorPickerModal({
 
                 {/* 3. THE GREEN CHECK (The Save Signal) */}
                 <button
+                    type="button"
                     onClick={handleConfirm}
                     style={{
                         width: '100%',
@@ -136,7 +207,8 @@ export default function ColorPickerModal({
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '10px',
-                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
+                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
+                        pointerEvents: 'auto'
                     }}
                 >
                     <span style={{ fontSize: '20px' }}>✓</span> CONFIRMAR COLOR
@@ -149,6 +221,7 @@ export default function ColorPickerModal({
                     to { opacity: 1; transform: scale(1); }
                 }
                 .react-colorful { width: 100% !important; }
+                .react-colorful__interactive { touch-action: none !important; }
             `}</style>
         </div>
     );
