@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
-import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory, updateCategory } from '../../config/menuData.js'
+import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory, updateCategory, removeMenuItem, addMenuItem } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
@@ -609,7 +609,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             title="Clic para renombrar"
                                         >
                                             {category.name}
-                                            <span style={{ fontSize: 18, color: '#3B82F6' }}>✏️</span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M12 20h9"></path>
+                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                            </svg>
                                             {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
                                         </h3>
                                     )}
