@@ -306,21 +306,23 @@ const Settings = () => {
             '0, 0, 0';
     };
 
-    // Color Pillar Component
+    // Color Pillar Component - USES ColorPickerModal (no native input)
     const ColorPillar = ({ label, keyName, cssVar, defaultValue }) => {
         const currentColor = tenant?.[keyName] || defaultValue;
         return (
             <div className="color-pillar">
                 <p className="pillar-label">{label}</p>
-                <input
-                    type="color"
-                    className="native-swatch"
-                    value={currentColor}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        document.documentElement.style.setProperty(cssVar, val);
-                        document.documentElement.style.setProperty(`${cssVar}-rgb`, hexToRgb(val));
-                        handleFieldUpdate(keyName, val);
+                {/* Clickable swatch - opens ColorPickerModal */}
+                <div
+                    onClick={() => openColorPicker(label, keyName, cssVar, defaultValue)}
+                    style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 10,
+                        background: currentColor,
+                        border: '2px solid rgba(0,0,0,0.1)',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                     }}
                 />
             </div>

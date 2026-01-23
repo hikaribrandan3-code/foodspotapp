@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from 'react'
 import { updateConfig, CURATED_FONTS, FONT_WEIGHTS, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
+import ColorPickerModal from '../ColorPickerModal'
 
 /**
- * STORE BRANDING COMPONENT
+ * STORE BRANDING COMPONENT - VISUAL MIRROR v2.0
  * Unified branding settings for Owner and Demo modes.
  * 
- * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
- * This ensures Single Source of Truth from App.jsx.
- * 
- * Visual Hierarchy:
- * 1. Hero/Cover Image (Top priority)
- * 2. Brand Identity (Logos/Icons)
- * 3. Navigation & Colors
+ * FIXED: Now uses ColorPickerModal instead of native input[type=color]
+ * to avoid iOS native Grid/Spectrum/Sliders picker.
  */
 
 export default function StoreBranding({ config: configProp, isDemo = false }) {
     const config = configProp || {};
-    // Local copy for mutations (syncs back to parent via frontendSync)
     const [localConfig, setLocalConfig] = useState(config || {})
     const [uploadStatus, setUploadStatus] = useState(null)
+
+    // Color Picker Modal State
+    const [colorPickerState, setColorPickerState] = useState({
+        isOpen: false,
+        title: '',
+        path: [], // e.g., ['colors', 'primary'] or ['branding', 'primaryColor']
+        currentColor: '#8B7355',
+        originalColor: '#8B7355'
+    })
 
     // Sync with parent config changes
     useEffect(() => {
@@ -28,6 +32,21 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
         }
     }, [config])
 
+    // Body scroll lock when picker is open
+    useEffect(() => {
+        if (colorPickerState.isOpen) {
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        };
+    }, [colorPickerState.isOpen]);
+
     // Helper to update config and sync
     const handleConfigUpdate = (updates) => {
         const newConfig = { ...localConfig, ...updates }
@@ -35,6 +54,66 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
         setLocalConfig(newConfig)
         window.dispatchEvent(new CustomEvent('frontendSync'))
     }
+
+    // Open color picker
+    const openColorPicker = (title, path, defaultColor) => {
+        // Get current color from path
+        let currentColor = defaultColor;
+        if (path.length === 2) {
+            currentColor = config?.[path[0]]?.[path[1]] || defaultColor;
+        }
+        setColorPickerState({
+            isOpen: true,
+            title,
+            path,
+            currentColor,
+            originalColor: currentColor
+        });
+    };
+
+    // Handle color picker live change (instant preview)
+    const handleColorPickerLiveChange = (newColor) => {
+        const { path } = colorPickerState;
+        if (path.length === 2) {
+            const newConfig = {
+                ...localConfig,
+                [path[0]]: {
+                    ...localConfig[path[0]],
+                    [path[1]]: newColor
+                }
+            };
+            setLocalConfig(newConfig);
+        }
+    };
+
+    // Handle color picker apply (save to config)
+    const handleColorPickerApply = (finalColor) => {
+        const { path } = colorPickerState;
+        if (path.length === 2) {
+            handleConfigUpdate({
+                [path[0]]: {
+                    ...config[path[0]],
+                    [path[1]]: finalColor
+                }
+            });
+        }
+        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+    };
+
+    // Handle color picker close (revert)
+    const handleColorPickerClose = () => {
+        const { path, originalColor } = colorPickerState;
+        if (path.length === 2) {
+            setLocalConfig(prev => ({
+                ...prev,
+                [path[0]]: {
+                    ...prev[path[0]],
+                    [path[1]]: originalColor
+                }
+            }));
+        }
+        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+    };
 
     // Image upload handler
     const handleImageUpload = async (e, type) => {
@@ -69,6 +148,32 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
         } catch (error) {
             setUploadStatus({ success: false, message: error.message });
         }
+    };
+
+    // Color Swatch Component (replaces native input)
+    const ColorSwatch = ({ label, path, defaultColor }) => {
+        let currentColor = defaultColor;
+        if (path.length === 2) {
+            currentColor = localConfig?.[path[0]]?.[path[1]] || defaultColor;
+        }
+        return (
+            <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 6 }}>{label}</p>
+                <div
+                    onClick={() => openColorPicker(label, path, defaultColor)}
+                    style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 10,
+                        background: currentColor,
+                        border: '2px solid rgba(0,0,0,0.1)',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        margin: '0 auto'
+                    }}
+                />
+            </div>
+        );
     };
 
     // Styles
@@ -303,54 +408,10 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
                 <h3 style={sectionTitle}>🎨 Colors & Theme</h3>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
-                    {/* Primary */}
-                    <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 6 }}>Primary</p>
-                        <input
-                            type="color"
-                            value={config.colors?.primary || '#B8956A'}
-                            onChange={(e) => handleConfigUpdate({
-                                colors: { ...config.colors, primary: e.target.value }
-                            })}
-                            style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                        />
-                    </div>
-                    {/* Secondary */}
-                    <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 6 }}>Secondary</p>
-                        <input
-                            type="color"
-                            value={config.colors?.primaryLight || '#A89070'}
-                            onChange={(e) => handleConfigUpdate({
-                                colors: { ...config.colors, primaryLight: e.target.value }
-                            })}
-                            style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                        />
-                    </div>
-                    {/* Confirmation */}
-                    <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 6 }}>Confirm</p>
-                        <input
-                            type="color"
-                            value={config.colors?.confirmation || '#22C55E'}
-                            onChange={(e) => handleConfigUpdate({
-                                colors: { ...config.colors, confirmation: e.target.value }
-                            })}
-                            style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                        />
-                    </div>
-                    {/* Nav Color */}
-                    <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 6 }}>Nav Bar</p>
-                        <input
-                            type="color"
-                            value={config.branding?.primaryColor || '#8B7355'}
-                            onChange={(e) => handleConfigUpdate({
-                                branding: { ...config.branding, primaryColor: e.target.value }
-                            })}
-                            style={{ width: 48, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                        />
-                    </div>
+                    <ColorSwatch label="Primary" path={['colors', 'primary']} defaultColor="#B8956A" />
+                    <ColorSwatch label="Secondary" path={['colors', 'primaryLight']} defaultColor="#A89070" />
+                    <ColorSwatch label="Confirm" path={['colors', 'confirmation']} defaultColor="#22C55E" />
+                    <ColorSwatch label="Nav Bar" path={['branding', 'primaryColor']} defaultColor="#8B7355" />
                 </div>
 
                 {/* Dark Mode Toggle */}
@@ -399,35 +460,41 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
             <div style={cardStyle}>
                 <h3 style={sectionTitle}>🎯 Hero Icons (Home Page)</h3>
                 <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 16 }}>
-                    Customize the background color for each icon tile on the home page.
+                    Tap an icon to change its background color.
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-                    {['menu', 'delivery', 'rewards', 'game'].map(iconId => {
+                    {['menu', 'delivery', 'promos', 'game'].map(iconId => {
                         const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT;
-                        const labels = { menu: '🍔 Menu', delivery: '🚚 Delivery', rewards: '⭐ Rewards', game: '🎮 Game' };
+                        const currentColor = iconConfig.color || '#8B7355';
+                        const labels = { menu: '🍔 Menu', delivery: '🚚 Delivery', promos: '⭐ Promos', game: '🎮 Game' };
 
                         return (
-                            <div key={iconId} style={{
-                                background: '#F9FAFB',
-                                borderRadius: 10,
-                                padding: 12,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between'
-                            }}>
-                                <span style={{ fontSize: 13, fontWeight: 500 }}>{labels[iconId]}</span>
-                                <input
-                                    type="color"
-                                    value={iconConfig.color || '#8B7355'}
-                                    onChange={(e) => handleConfigUpdate({
-                                        heroIcons: {
-                                            ...config.heroIcons,
-                                            [iconId]: { ...iconConfig, color: e.target.value }
-                                        }
-                                    })}
-                                    style={{ width: 36, height: 36, border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                                />
+                            <div
+                                key={iconId}
+                                onClick={() => {
+                                    setColorPickerState({
+                                        isOpen: true,
+                                        title: labels[iconId],
+                                        path: ['heroIcons', iconId],
+                                        currentColor: currentColor,
+                                        originalColor: currentColor,
+                                        isHeroIcon: true,
+                                        iconId: iconId
+                                    });
+                                }}
+                                style={{
+                                    background: currentColor,
+                                    borderRadius: 12,
+                                    padding: 16,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                                }}
+                            >
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#FFF' }}>{labels[iconId]}</span>
                             </div>
                         );
                     })}
@@ -455,6 +522,58 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
             >
                 ✨ Actualizar Frontend
             </button>
+
+            {/* Color Picker Modal */}
+            {colorPickerState.isOpen && (
+                <ColorPickerModal
+                    title={colorPickerState.title}
+                    initialColor={colorPickerState.currentColor}
+                    onLiveChange={(color) => {
+                        // Handle hero icons separately
+                        if (colorPickerState.isHeroIcon) {
+                            const iconId = colorPickerState.iconId;
+                            setLocalConfig(prev => ({
+                                ...prev,
+                                heroIcons: {
+                                    ...prev.heroIcons,
+                                    [iconId]: { ...(prev.heroIcons?.[iconId] || {}), color: color }
+                                }
+                            }));
+                        } else {
+                            handleColorPickerLiveChange(color);
+                        }
+                    }}
+                    onApply={(color) => {
+                        if (colorPickerState.isHeroIcon) {
+                            const iconId = colorPickerState.iconId;
+                            handleConfigUpdate({
+                                heroIcons: {
+                                    ...config.heroIcons,
+                                    [iconId]: { ...(config.heroIcons?.[iconId] || {}), color: color }
+                                }
+                            });
+                        } else {
+                            handleColorPickerApply(color);
+                        }
+                        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+                    }}
+                    onClose={() => {
+                        if (colorPickerState.isHeroIcon) {
+                            const iconId = colorPickerState.iconId;
+                            setLocalConfig(prev => ({
+                                ...prev,
+                                heroIcons: {
+                                    ...prev.heroIcons,
+                                    [iconId]: { ...(prev.heroIcons?.[iconId] || {}), color: colorPickerState.originalColor }
+                                }
+                            }));
+                        } else {
+                            handleColorPickerClose();
+                        }
+                        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+                    }}
+                />
+            )}
         </div>
     );
 }
