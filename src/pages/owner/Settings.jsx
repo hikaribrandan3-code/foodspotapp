@@ -193,12 +193,16 @@ const Settings = () => {
         } else if (field === 'hero_mode' || field === 'hero_url') {
             storageUpdates.headerBranding = { [field]: value };
             storageUpdates[field] = value; // Save at root too for Home.jsx polyfills
+        } else if (field === 'info_pills') {
+            // 🩹 PATCH: Map snake_case (DB) to camelCase (App) for local storage
+            storageUpdates.infoPills = value;
         } else {
             storageUpdates[field] = value;
         }
         updateConfig(storageUpdates);
 
         try {
+            // Cloud Sync always uses the original field name (snake_case for DB)
             await updateBranding({ [field]: value }, businessId);
         } catch (error) {
             console.error("Sync failed:", error);

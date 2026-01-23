@@ -388,7 +388,8 @@ export function normalizeConfig(config) {
         },
         infoPills: {
             ...defaultConfig.infoPills,
-            ...(config.infoPills || {}), // 🔥 CRITICAL: Preserve pill_icon_mode and other root props
+            ...(config.infoPills || {}),
+            ...(config.info_pills || {}), // 🔥 CRITICAL: Map snake_case (legacy/DB) to camelCase
             whatsapp: { bgColor: '#C4856A', textColor: 'white', ...(config.infoPills?.whatsapp || {}) },
             mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3', ...(config.infoPills?.mercadoPago || {}) },
             rappi: { bgColor: '#FF5A00', textColor: 'white', ...(config.infoPills?.rappi || {}) },
