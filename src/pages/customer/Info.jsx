@@ -69,6 +69,10 @@ function Info({ config: configProp }) {
         return `https://wa.me/${digits}`
     }
 
+    // Theme-aware colors (use CSS tokens that switch for light/dark mode)
+    const primaryColor = 'var(--icon-primary)'
+    const textMuted = 'var(--icon-muted)'
+
     return (
         <div className="page info-root" style={{
             padding: '0 24px',
