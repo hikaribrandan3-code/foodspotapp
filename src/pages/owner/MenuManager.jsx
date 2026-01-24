@@ -683,7 +683,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 </div>
                                             </div>
                                             {/* Item Details - SuperAdmin Style */}
-                                            < div style={{ flex: 1 }}>
+                                            <div style={{ flex: 1 }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                     <div style={{ flex: 1 }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -768,10 +768,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         ➕ Agregar Ítem
                                     </div>
                                 </div>
-                            </div >
+                            </div>
                         )
                     })}
-                </div >
+                </div>
 
                 {/* Edit Modal */}
                 {
@@ -873,4 +873,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
         )
     }
 
-    export default MenuManager
+}
+
+export default MenuManager
