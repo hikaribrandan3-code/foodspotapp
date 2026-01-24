@@ -23,10 +23,14 @@ export default function Menu({ config: configProp }) {
     // Hydrate from TenantContext
     useEffect(() => {
         if (tenantLoaded && tenantData?.menu_data) {
-            setMenu(tenantData.menu_data)
+            // DEFENSIVE: Ensure categories exists even if DB data is malformed
+            const safeMenu = {
+                ...tenantData.menu_data,
+                categories: tenantData.menu_data.categories || []
+            }
+            setMenu(safeMenu)
             setIsDataLoaded(true)
         } else if (tenantLoaded) {
-            // Fallback if no menu_data exists yet
             setMenu({ categories: [] })
             setIsDataLoaded(true)
         }
@@ -352,9 +356,9 @@ export default function Menu({ config: configProp }) {
         return <MenuSkeleton />
     }
 
-    // Filter categories? User says "Categories (Sticky)". 
-    // Usually we show enabled categories, or all for owner.
-    const visibleCategories = menu.categories.filter(c => isOwnerMode || c.enabled !== false)
+    // DEFENSIVE: Default to empty array if undefined
+    const categories = menu?.categories || []
+    const visibleCategories = categories.filter(c => isOwnerMode || c.enabled !== false)
 
     return (
         <div style={{
@@ -440,7 +444,7 @@ export default function Menu({ config: configProp }) {
                                     <div style={{ height: 100, background: '#F3F4F6', borderRadius: 12 }}></div>
                                 </>
                             ) : (
-                                category.items.map((item, index) => {
+                                (category.items || []).map((item, index) => {
                                     // Filter unavailable if not owner?
                                     if (!isOwnerMode && !item.available) return null
 
