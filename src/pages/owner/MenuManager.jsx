@@ -34,7 +34,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
-    const [activeFeaturedSlot, setActiveFeaturedSlot] = useState(null) // New: Track which top slot is tapped
+    const activeFeaturedSlotRef = useRef(null) // New: Track which top slot is tapped (Ref to avoid stale closure)
     const [saveStatus, setSaveStatus] = useState(null) // New: Visual Confirmation Toast
     const fileInputRef = useRef(null)
 
@@ -134,7 +134,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
         if (!file) {
             console.log('No file selected')
             // If we canceled, reset the slot intent
-            if (activeFeaturedSlot !== null) setActiveFeaturedSlot(null)
+            activeFeaturedSlotRef.current = null
             return
         }
 
@@ -147,15 +147,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
             console.log('Image processed successfully:', result.optimizedSize)
 
             // BRANCH: Featured Slot Direct Upload
-            if (activeFeaturedSlot !== null) {
+            const targetSlot = activeFeaturedSlotRef.current
+
+            if (targetSlot !== null) {
                 const currentFeatured = [...(localConfig.featuredPhotos || [])]
                 // Ensure array has size up to the target index if sparse
-                while (currentFeatured.length <= activeFeaturedSlot) {
+                while (currentFeatured.length <= targetSlot) {
                     currentFeatured.push(null)
                 }
 
                 // Create new generic featured item
-                currentFeatured[activeFeaturedSlot] = {
+                currentFeatured[targetSlot] = {
                     name: 'Destacado',
                     price: 0,
                     image: result.dataURI
@@ -171,7 +173,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     success: true,
                     message: '✔ Foto destacada actualizada'
                 })
-                setActiveFeaturedSlot(null) // Reset intent
+                activeFeaturedSlotRef.current = null // Reset intent
             } else {
                 // BRANCH: Normal Menu Item Edit
                 setEditForm(prev => ({ ...prev, image: result.dataURI }))
@@ -186,7 +188,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 success: false,
                 message: error.message || 'Error al procesar imagen'
             })
-            if (activeFeaturedSlot !== null) setActiveFeaturedSlot(null)
+            activeFeaturedSlotRef.current = null
         } finally {
             setIsUploading(false)
 
@@ -347,7 +349,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const slot = activeFeaturedItems[index]
         // If empty, trigger upload
         if (!slot) {
-            setActiveFeaturedSlot(index)
+            activeFeaturedSlotRef.current = index
             // SYNC EXECUTION: Mobile-UX Protocol
             fileInputRef.current?.click()
         }
