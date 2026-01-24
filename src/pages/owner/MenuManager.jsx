@@ -35,6 +35,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
     const [activeFeaturedSlot, setActiveFeaturedSlot] = useState(null) // New: Track which top slot is tapped
+    const [saveStatus, setSaveStatus] = useState(null) // New: Visual Confirmation Toast
     const fileInputRef = useRef(null)
 
     // PHOENIX PATTERN: Key-based input reset for mobile browsers
@@ -212,6 +213,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 saveMenu(updatedMenu)
                 setMenu(updatedMenu)
                 syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
+                setSaveStatus({ message: 'Guardado correctamente' })
+                setTimeout(() => setSaveStatus(null), 2000)
             }
         }
         setEditingItem(null)
@@ -255,6 +258,31 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
         setEditingCategory(null)
     }
+
+    // --- DIRECT PRICE EDIT (The Unlock) ---
+    const handlePriceUpdate = (categoryId, itemId, newPrice) => {
+        const price = parseInt(newPrice)
+        if (isNaN(price)) return
+
+        const updatedMenu = { ...menu }
+        const category = updatedMenu.categories.find(c => c.id === categoryId)
+        if (category) {
+            const item = category.items.find(i => i.id === itemId)
+            if (item) {
+                item.price = price
+                // Optimistic UI update
+                setMenu(updatedMenu)
+                // Persist
+                saveMenu(updatedMenu)
+                // Cloud Sync
+                syncMenuToCloud(updatedMenu)
+                setSaveStatus({ message: 'Precio actualizado' })
+                setTimeout(() => setSaveStatus(null), 2000)
+            }
+        }
+    }
+
+
 
     // --- CRUD HANDLERS ---
     const handleRemoveItem = (categoryId, item) => {
@@ -816,9 +844,25 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                             ⭐
                                                         </div>
                                                     </div>
-                                                    <p style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, margin: 0 }}>
-                                                        ${item.price}
-                                                    </p>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                        <span style={{ fontSize: 13, color: '#22C55E', fontWeight: 600 }}>$</span>
+                                                        <input
+                                                            type="number"
+                                                            defaultValue={item.price}
+                                                            onBlur={(e) => handlePriceUpdate(category.id, item.id, e.target.value)}
+                                                            onClick={(e) => e.stopPropagation()} // Prevent card tap
+                                                            style={{
+                                                                fontSize: 13,
+                                                                color: '#22C55E',
+                                                                fontWeight: 600,
+                                                                border: 'none',
+                                                                background: 'transparent',
+                                                                width: 60,
+                                                                outline: 'none',
+                                                                padding: 0
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
                                                     <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
@@ -982,6 +1026,23 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 role={demoMode ? 'demo' : 'owner'}
                 useRoutes={true}
             />
+            {/* SAVE SUCCESS TOAST */}
+            {saveStatus && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: 24,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: '#22C55E', color: 'white',
+                    padding: '10px 24px', borderRadius: 50,
+                    boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
+                    fontWeight: 600, fontSize: 14, zIndex: 9999,
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <span>✓</span> {saveStatus.message}
+                </div>
+            )}
         </div >
     )
 }
