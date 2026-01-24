@@ -1,168 +1,51 @@
-// Image Optimization Utilities
-// Handles resize, compress, WebP conversion, metadata stripping
+import { supabase } from '../lib/supabaseClient'
 
-const MAX_WIDTH = 1200
-const TARGET_WIDTH = 950
-const MAX_FILE_SIZE = 400 * 1024 // 400KB hard limit
-const TARGET_FILE_SIZE = 220 * 1024 // ~220KB target
-const MIN_FILE_SIZE = 180 * 1024 // ~180KB minimum target
-
-/**
- * Optimize an image file for web delivery
- * @param {File} file - The input image file (JPG/PNG)
- * @returns {Promise<{blob: Blob, originalSize: number, optimizedSize: number, width: number, height: number}>}
- */
-export async function optimizeImage(file) {
-    // Validate file type
-    if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-        throw new Error('Solo se aceptan imágenes JPG o PNG')
-    }
-
-    const originalSize = file.size
-
-    // Load image
-    const img = await loadImage(file)
-
-    // Calculate new dimensions (maintain aspect ratio)
-    let width = img.width
-    let height = img.height
-
-    if (width > MAX_WIDTH) {
-        const ratio = TARGET_WIDTH / width
-        width = TARGET_WIDTH
-        height = Math.round(height * ratio)
-    }
-
-    // Draw to canvas (strips metadata automatically)
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-    const ctx = canvas.getContext('2d')
-    ctx.drawImage(img, 0, 0, width, height)
-
-    // Try WebP first, fallback to JPEG
-    let blob = await compressToTarget(canvas, 'image/webp')
-
-    // If WebP not supported or too large, try JPEG
-    if (!blob || blob.size > MAX_FILE_SIZE) {
-        blob = await compressToTarget(canvas, 'image/jpeg')
-    }
-
-    // Final size check
-    if (blob.size > MAX_FILE_SIZE) {
-        throw new Error(`La imagen es demasiado grande. Máximo: ${Math.round(MAX_FILE_SIZE / 1024)}KB`)
-    }
-
-    return {
-        blob,
-        originalSize,
-        optimizedSize: blob.size,
-        width,
-        height,
-        format: blob.type === 'image/webp' ? 'webp' : 'jpeg'
-    }
-}
+export const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 /**
- * Compress canvas to target file size
- */
-async function compressToTarget(canvas, mimeType) {
-    let quality = 0.85
-    let blob = await canvasToBlob(canvas, mimeType, quality)
-
-    // Reduce quality until we hit target size
-    while (blob.size > TARGET_FILE_SIZE && quality > 0.5) {
-        quality -= 0.05
-        blob = await canvasToBlob(canvas, mimeType, quality)
-    }
-
-    return blob
-}
-
-/**
- * Convert canvas to blob
- */
-function canvasToBlob(canvas, mimeType, quality) {
-    return new Promise((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), mimeType, quality)
-    })
-}
-
-/**
- * Load image from file
- */
-function loadImage(file) {
-    return new Promise((resolve, reject) => {
-        const img = new Image()
-        img.onload = () => resolve(img)
-        img.onerror = () => reject(new Error('Error al cargar la imagen'))
-        img.src = URL.createObjectURL(file)
-    })
-}
-
-// --- SUPABASE STORAGE ---
-import { supabase } from '../lib/supabaseClient.js'
-import { getAuth } from '../utils/storage.js'
-
-/**
- * Upload optimized blob to Supabase Storage
- */
-async function uploadToSupabase(blob) {
-    const auth = getAuth()
-    const businessId = auth?.businessId || 'anon'
-    const timestamp = Date.now()
-    const random = Math.round(Math.random() * 10000)
-    const filename = `${businessId}/${timestamp}-${random}.webp`
-
-    console.log('Uploading to Supabase:', filename)
-
-    const { data, error } = await supabase.storage
-        .from('menu-images')
-        .upload(filename, blob, {
-            cacheControl: '31536000',
-            upsert: false,
-            contentType: 'image/webp'
-        })
-
-    if (error) {
-        console.error('Supabase upload error:', error)
-        throw error
-    }
-
-    // Get Public URL
-    const { data: { publicUrl } } = supabase.storage
-        .from('menu-images')
-        .getPublicUrl(filename)
-
-    return publicUrl
-}
-
-/**
- * Format file size for display
- */
-export function formatFileSize(bytes) {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
-}
-
-/**
- * Process and store an optimized image
- * Returns a Public URL from Supabase
+ * Uploads a file directly to Supabase Storage and returns the Public URL.
+ * Bypasses local Base64 conversion to ensure true cloud persistence.
  */
 export async function processAndStoreImage(file) {
-    const result = await optimizeImage(file)
+    try {
+        if (!file) throw new Error('No file provided');
 
-    // OLD: const dataURI = await blobToDataURI(result.blob)
-    // NEW: Upload to Supabase
-    const publicUrl = await uploadToSupabase(result.blob)
+        // 1. Sanitize Filename (Critical for URL safety)
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-    return {
-        dataURI: publicUrl, // Keep property name 'dataURI' for compatibility, but value is URL
-        originalSize: result.originalSize,
-        optimizedSize: result.optimizedSize,
-        width: result.width,
-        height: result.height,
-        format: result.format
+        // 2. Upload directly to Supabase Bucket 'menu-images'
+        const { data, error: uploadError } = await supabase.storage
+            .from('menu-images')
+            .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (uploadError) throw uploadError;
+
+        // 3. Get the Public URL (The Anchor)
+        const { data: { publicUrl } } = supabase.storage
+            .from('menu-images')
+            .getPublicUrl(filePath);
+
+        if (!publicUrl) throw new Error('Failed to retrieve public URL');
+
+        return {
+            publicUrl: publicUrl, // <--- THIS is what the DB needs
+            originalSize: file.size,
+            optimizedSize: file.size // Approximate
+        };
+
+    } catch (error) {
+        console.error('Upload failed:', error);
+        throw new Error('Error al subir la imagen al servidor: ' + error.message);
     }
 }

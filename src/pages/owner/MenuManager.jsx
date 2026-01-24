@@ -150,7 +150,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
         try {
             const result = await processAndStoreImage(file)
-            console.log('Image processed successfully:', result.optimizedSize)
+            console.log('Image uploaded successfully:', result.publicUrl)
 
             // BRANCH: Featured Slot Direct Upload
             const targetSlot = activeFeaturedSlotRef.current
@@ -168,7 +168,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     currentFeatured[targetSlot] = {
                         name: 'Destacado',
                         price: 0,
-                        image: result.dataURI
+                        image: result.publicUrl
                     }
 
                     const newConfig = { ...prevConfig, featuredPhotos: currentFeatured }
@@ -187,10 +187,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 activeFeaturedSlotRef.current = null // Reset intent
             } else {
                 // BRANCH: Normal Menu Item Edit
-                setEditForm(prev => ({ ...prev, image: result.dataURI }))
+                setEditForm(prev => ({ ...prev, image: result.publicUrl }))
                 setUploadStatus({
                     success: true,
-                    message: `✔ Imagen optimizada: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
+                    message: `✔ Imagen subida correctamente`
                 })
             }
         } catch (error) {
