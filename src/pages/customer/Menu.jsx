@@ -129,7 +129,7 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
     const enabledCategories = useMemo(() => {
         return menu.categories.filter(cat => {
             if (isOwnerMode) return true // Show all categories to owner
-            return cat.enabled !== false && cat.items.some(item => item.available)
+            return cat.enabled !== false // CUSTOMER: Show category even if empty (Layout persistence)
         })
     }, [menu.categories, isOwnerMode])
 
@@ -846,6 +846,20 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                                         position: 'relative'
                                     }}
                                 >
+                                    {availableItems.length === 0 && (
+                                        <div style={{
+                                            gridColumn: '1 / -1',
+                                            textAlign: 'center',
+                                            padding: '24px 0',
+                                            color: '#9CA3AF',
+                                            fontSize: 13,
+                                            background: '#F9FAFB',
+                                            borderRadius: 12,
+                                            border: '1px dashed #E5E7EB'
+                                        }}>
+                                            No hay productos disponibles en esta categoría.
+                                        </div>
+                                    )}
                                     {availableItems.map((item, index) => {
                                         const isDragging = dragState?.itemId === item.id
                                         const isPlaceholder = isDraggingInCategory && dragState.targetIndex === index && !isDragging

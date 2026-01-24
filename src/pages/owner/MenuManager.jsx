@@ -41,6 +41,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
     const activeFeaturedSlotRef = useRef(null) // New: Track which top slot is tapped (Ref to avoid stale closure)
+    const activeCategoryItemRef = useRef(null) // New: Track which menu item is being uploaded to
     const [saveStatus, setSaveStatus] = useState(null) // New: Visual Confirmation Toast
     const fileInputRef = useRef(null)
 
@@ -130,6 +131,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
         // 2. If Vacío (Empty), Trigger Upload Immediately
         if (!item.image) {
+            // Set the detailed target ref for Instant Upload
+            activeCategoryItemRef.current = { categoryId, itemId: item.id }
             // SYNC EXECUTION: Must happen in the same event loop for mobile
             fileInputRef.current?.click()
         }
@@ -139,12 +142,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const file = e.target.files?.[0]
         if (!file) {
             activeFeaturedSlotRef.current = null
+            activeCategoryItemRef.current = null
             return
         }
 
         // 1. INSTANT PREVIEW (0ms Latency)
         const previewUrl = URL.createObjectURL(file)
         const targetSlot = activeFeaturedSlotRef.current
+        const targetItem = activeCategoryItemRef.current
 
         // Render Blob Immediately
         if (targetSlot !== null) {
@@ -157,7 +162,19 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 }
                 return { ...prev, featuredPhotos: newFeatured }
             })
+        } else if (targetItem) {
+            // UPDATE MENU STATE IMMEDIATELY (Preview)
+            setMenu(prevMenu => {
+                const newMenu = { ...prevMenu }
+                const cat = newMenu.categories.find(c => c.id === targetItem.categoryId)
+                const item = cat?.items.find(i => i.id === targetItem.itemId)
+                if (item) item.image = previewUrl
+                return newMenu
+            })
+            // Update Modal Form Too
+            setEditForm(prev => ({ ...prev, image: previewUrl }))
         } else {
+            // Fallback for manual button click in modal
             setEditForm(prev => ({ ...prev, image: previewUrl }))
         }
 
@@ -169,9 +186,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
             const result = await processAndStoreImage(file)
 
             // 3. THE SILENT SWAP
-            // We removed the 'await new Promise' preload block.
-            // We trust the browser to handle the image swap seamlessly.
-
             if (targetSlot !== null) {
                 setLocalConfig(prevConfig => {
                     const currentFeatured = [...(prevConfig.featuredPhotos || [])]
@@ -188,6 +202,24 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     syncConfigToCloud(newConfig)
                     return newConfig
                 })
+                setUploadStatus({ success: true, message: '✔ Guardado' })
+            } else if (targetItem) {
+                // PERMANENT MENU UPDATE
+                const finalMenu = await new Promise(resolve => {
+                    setMenu(prevMenu => {
+                        const newMenu = { ...prevMenu }
+                        const cat = newMenu.categories.find(c => c.id === targetItem.categoryId)
+                        const item = cat?.items.find(i => i.id === targetItem.itemId)
+                        if (item) item.image = result.publicUrl
+                        resolve(newMenu)
+                        return newMenu
+                    })
+                })
+
+                // Persist Layer
+                saveMenu(finalMenu)
+                syncMenuToCloud(finalMenu)
+                setEditForm(prev => ({ ...prev, image: result.publicUrl }))
                 setUploadStatus({ success: true, message: '✔ Guardado' })
             } else {
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
@@ -207,6 +239,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     }
                     return { ...prev, featuredPhotos: newFeatured }
                 })
+            } else if (targetItem) {
+                // Revert menu item
+                setMenu(getMenu(targetBusinessId)) // Reload from disk/state to revert
             } else {
                 setEditForm(prev => ({ ...prev, image: null }))
             }
@@ -214,6 +249,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             setIsUploading(false)
             setInputKey(prev => prev + 1)
             activeFeaturedSlotRef.current = null
+            activeCategoryItemRef.current = null
         }
     }
 
