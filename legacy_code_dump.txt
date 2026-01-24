@@ -1,0 +1,1965 @@
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getMenu, formatPrice, reorderCategoryItems } from '../../config/menuData.js'
+import { addToCurrentOrder, getCurrentOrder, updateItemQuantity } from '../../utils/storage.js'
+import { getConfig } from '../../config/appConfig.js'
+import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { getDividerPreset } from '../../config/dividerPresets.js'
+import { isDeliveryMode, clearDeliveryMode } from '../../utils/deliveryUtils.js'
+import { getUserMode } from '../../pages/admin/SuperAdmin.jsx'
+
+// ===== AUTO-SCROLL SAFETY TOGGLE =====
+// Set to false to disable auto-scroll and revert to 2A behavior
+const ENABLE_AUTO_SCROLL = true
+
+// Auto-scroll config
+const AUTO_SCROLL_ZONE_PERCENT = 0.10 // Top/bottom 10% of viewport
+const AUTO_SCROLL_SPEED = 4 // Pixels per frame (slow and controlled)
+
+// Long-press timing (1.8 seconds)
+const LONG_PRESS_DURATION = 1800
+
+function Menu({ deliveryMode: deliveryModeProp = false }) {
+    const navigate = useNavigate()
+    const [menu, setMenu] = useState(() => getMenu())
+    const [config] = useState(() => getConfig())
+    const [cart, setCart] = useState(() => getCurrentOrder())
+    const [addedItem, setAddedItem] = useState(null) // For visual feedback
+    const categoryRefs = useRef({})
+
+    // Owner mode detection (from localStorage)
+    const isOwnerMode = getUserMode() === 'owner'
+
+    // Edit mode state (owner only)
+    const [isEditMode, setIsEditMode] = useState(false)
+    const longPressTimerRef = useRef(null)
+    const longPressStartRef = useRef(null)
+
+    // Drag state (for edit mode reordering)
+    const [dragState, setDragState] = useState(null) // { categoryId, itemId, itemIndex, startX, startY, currentX, currentY, items }
+    const dragItemRef = useRef(null)
+    const autoScrollRef = useRef(null) // For auto-scroll interval
+
+    // Delivery mode: session is source of truth, route prop can set it
+    // This ensures persistence across page refresh and back navigation
+    const [deliveryMode, setDeliveryMode] = useState(() => {
+        // Check session first, then route prop
+        if (isDeliveryMode()) return true
+        return deliveryModeProp
+    })
+
+    // If route prop sets delivery mode, persist to session
+    useEffect(() => {
+        if (deliveryModeProp) {
+            sessionStorage.setItem('foodspot_delivery_mode', 'true')
+            setDeliveryMode(true)
+        }
+    }, [deliveryModeProp])
+
+    // Only show enabled categories with available items
+    const enabledCategories = menu.categories.filter(cat =>
+        cat.enabled !== false && cat.items.some(item => item.available)
+    )
+
+    const [activeCategory, setActiveCategory] = useState(enabledCategories[0]?.id || '')
+
+    // Refresh data periodically
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setMenu(getMenu())
+            setCart(getCurrentOrder())
+        }, 2000)
+        return () => clearInterval(interval)
+    }, [])
+
+    // Long-press handlers for edit mode (owner only)
+    const handleLongPressStart = useCallback((e) => {
+        if (!isOwnerMode || isEditMode) return
+
+        longPressStartRef.current = { x: e.touches?.[0]?.clientX || e.clientX, y: e.touches?.[0]?.clientY || e.clientY }
+
+        longPressTimerRef.current = setTimeout(() => {
+            // Haptic feedback if supported
+            console.log('EDIT MODE ACTIVATED — VIBRATE FIRED', {
+                hasVibrate: !!navigator.vibrate,
+                duration: LONG_PRESS_DURATION
+            })
+            if (navigator.vibrate) {
+                navigator.vibrate(50)
+            }
+            setIsEditMode(true)
+        }, LONG_PRESS_DURATION)
+    }, [isOwnerMode, isEditMode])
+
+    const handleLongPressEnd = useCallback(() => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current)
+            longPressTimerRef.current = null
+        }
+    }, [])
+
+    const handleLongPressMove = useCallback((e) => {
+        // Cancel if moved too far (> 10px)
+        if (longPressStartRef.current && longPressTimerRef.current) {
+            const currentX = e.touches?.[0]?.clientX || e.clientX
+            const currentY = e.touches?.[0]?.clientY || e.clientY
+            const deltaX = Math.abs(currentX - longPressStartRef.current.x)
+            const deltaY = Math.abs(currentY - longPressStartRef.current.y)
+
+            if (deltaX > 10 || deltaY > 10) {
+                clearTimeout(longPressTimerRef.current)
+                longPressTimerRef.current = null
+            }
+        }
+    }, [])
+
+    // Cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (longPressTimerRef.current) {
+                clearTimeout(longPressTimerRef.current)
+            }
+        }
+    }, [])
+
+    // ===== DRAG & DROP HANDLERS (Edit Mode Only) =====
+    const handleDragStart = useCallback((e, categoryId, item, itemIndex, availableItems) => {
+        if (!isOwnerMode || !isEditMode) return
+
+        // Haptic feedback
+        if (navigator.vibrate) {
+            navigator.vibrate(30)
+        }
+
+        // Disable page scroll
+        document.body.style.overflow = 'hidden'
+
+        const touch = e.touches?.[0] || e
+        const rect = e.currentTarget.getBoundingClientRect()
+
+        setDragState({
+            categoryId,
+            itemId: item.id,
+            itemIndex,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            currentX: touch.clientX,
+            currentY: touch.clientY,
+            offsetX: touch.clientX - rect.left,
+            offsetY: touch.clientY - rect.top,
+            itemWidth: rect.width,
+            itemHeight: rect.height,
+            items: availableItems.map(i => i.id), // Current order
+            targetIndex: itemIndex
+        })
+
+        dragItemRef.current = e.currentTarget
+    }, [isOwnerMode, isEditMode])
+
+    const handleDragMove = useCallback((e) => {
+        if (!dragState) return
+
+        e.preventDefault()
+        const touch = e.touches?.[0] || e
+        const touchY = touch.clientY
+
+        // ===== HOT ZONE AUTO-SCROLL =====
+        if (ENABLE_AUTO_SCROLL) {
+            const viewportHeight = window.innerHeight
+            const topZone = viewportHeight * AUTO_SCROLL_ZONE_PERCENT
+            const bottomZone = viewportHeight * (1 - AUTO_SCROLL_ZONE_PERCENT)
+
+            // Clear any existing auto-scroll
+            if (autoScrollRef.current) {
+                cancelAnimationFrame(autoScrollRef.current)
+                autoScrollRef.current = null
+            }
+
+            // Check if in hot zone
+            if (touchY < topZone) {
+                // Scroll UP
+                const scrollUp = () => {
+                    window.scrollBy(0, -AUTO_SCROLL_SPEED)
+                    autoScrollRef.current = requestAnimationFrame(scrollUp)
+                }
+                autoScrollRef.current = requestAnimationFrame(scrollUp)
+            } else if (touchY > bottomZone) {
+                // Scroll DOWN
+                const scrollDown = () => {
+                    window.scrollBy(0, AUTO_SCROLL_SPEED)
+                    autoScrollRef.current = requestAnimationFrame(scrollDown)
+                }
+                autoScrollRef.current = requestAnimationFrame(scrollDown)
+            }
+            // If in middle zone (80%), no scrolling - autoScrollRef stays null
+        }
+
+        // Get container bounds
+        const container = categoryRefs.current[dragState.categoryId]
+        if (!container) return
+
+        const grid = container.querySelector('.menu-grid')
+        if (!grid) return
+
+        const gridRect = grid.getBoundingClientRect()
+
+        // Clamp to grid bounds for target index calculation
+        const clampedX = Math.max(gridRect.left, Math.min(touch.clientX, gridRect.right))
+        const clampedY = Math.max(gridRect.top, Math.min(touchY, gridRect.bottom))
+
+        // Calculate target index based on position
+        const gridItems = grid.children
+        let targetIndex = dragState.itemIndex
+
+        for (let i = 0; i < gridItems.length; i++) {
+            const itemRect = gridItems[i].getBoundingClientRect()
+
+            if (clampedX > itemRect.left && clampedX < itemRect.right &&
+                clampedY > itemRect.top && clampedY < itemRect.bottom) {
+                targetIndex = i
+                break
+            }
+        }
+
+        // Use raw touch position for floating card (not clamped)
+        setDragState(prev => ({
+            ...prev,
+            currentX: touch.clientX,
+            currentY: touchY,
+            targetIndex
+        }))
+    }, [dragState])
+
+    const handleDragEnd = useCallback(() => {
+        if (!dragState) return
+
+        // Stop auto-scroll if active
+        if (autoScrollRef.current) {
+            cancelAnimationFrame(autoScrollRef.current)
+            autoScrollRef.current = null
+        }
+
+        // Re-enable page scroll
+        document.body.style.overflow = ''
+
+        // If position changed, reorder and save
+        if (dragState.itemIndex !== dragState.targetIndex) {
+            const newOrder = [...dragState.items]
+            const [movedItem] = newOrder.splice(dragState.itemIndex, 1)
+            newOrder.splice(dragState.targetIndex, 0, movedItem)
+
+            // Save to backend
+            reorderCategoryItems(dragState.categoryId, newOrder)
+
+            // Refresh menu
+            setMenu(getMenu())
+        }
+
+        setDragState(null)
+        dragItemRef.current = null
+    }, [dragState])
+
+    // Global touch/mouse event listeners for drag
+    useEffect(() => {
+        if (dragState) {
+            const handleMove = (e) => handleDragMove(e)
+            const handleEnd = () => handleDragEnd()
+
+            document.addEventListener('touchmove', handleMove, { passive: false })
+            document.addEventListener('touchend', handleEnd)
+            document.addEventListener('mousemove', handleMove)
+            document.addEventListener('mouseup', handleEnd)
+
+            return () => {
+                document.removeEventListener('touchmove', handleMove)
+                document.removeEventListener('touchend', handleEnd)
+                document.removeEventListener('mousemove', handleMove)
+                document.removeEventListener('mouseup', handleEnd)
+            }
+        }
+    }, [dragState, handleDragMove, handleDragEnd])
+
+    // Tap-to-add: instantly add item
+    const handleTapToAdd = (item) => {
+        if (!item.available) return
+        addToCurrentOrder(item, 1, [])
+        setCart(getCurrentOrder())
+        // Visual feedback
+        setAddedItem(item.id)
+        setTimeout(() => setAddedItem(null), 400)
+    }
+
+    // Remove/decrement item from order
+    const handleRemoveItem = (itemIndex) => {
+        const item = cart.items[itemIndex]
+        if (item.quantity > 1) {
+            updateItemQuantity(itemIndex, item.quantity - 1)
+        } else {
+            updateItemQuantity(itemIndex, 0) // This removes the item
+        }
+        setCart(getCurrentOrder())
+    }
+
+    // Scroll to category section
+    const scrollToCategory = (categoryId) => {
+        setActiveCategory(categoryId)
+        categoryRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    const cartTotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    const hasItems = cart.items.length > 0
+
+    // Placeholder food images (3x3 grid visual variety)
+    const placeholderImages = [
+        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=200&h=200&fit=crop',
+    ]
+
+    const getItemImage = (item, index) => {
+        if (item.image) return item.image
+        return placeholderImages[index % placeholderImages.length]
+    }
+
+    return (
+        <div style={{
+            minHeight: '100vh',
+            paddingBottom: hasItems ? 220 : 100
+        }}>
+            {/* Header - Shows "FoodSpot · Envíos" in delivery mode */}
+            <HeaderClamp />
+
+            {/* Edit Mode Done Button (Owner only) */}
+            {isEditMode && (
+                <div style={{
+                    position: 'fixed',
+                    top: 'env(safe-area-inset-top, 0px)',
+                    left: 0,
+                    right: 0,
+                    zIndex: 1000,
+                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#22C55E' }}>
+                        ✏️ Modo Edición
+                    </span>
+                    <button
+                        onClick={() => setIsEditMode(false)}
+                        style={{
+                            padding: '8px 20px',
+                            background: '#22C55E',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 20,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Done
+                    </button>
+                </div>
+            )}
+
+            {/* Slim Identity Strip - Uses selected divider preset */}
+            {(() => {
+                const dividerPreset = getDividerPreset(config.dividerPresetId)
+                return (
+                    <div style={{
+                        height: 64,
+                        margin: '0 16px 12px 16px',
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        position: 'relative'
+                    }}>
+                        {dividerPreset ? (
+                            <img
+                                src={dividerPreset.url}
+                                alt=""
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                }}
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE8E0 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <svg width="120" height="40" viewBox="0 0 120 40" fill="none" style={{ opacity: 0.3 }}>
+                                    <path d="M10 20 Q30 5, 60 20 T110 20" stroke="#8B7355" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                                    <circle cx="20" cy="15" r="3" fill="#8B7355" opacity="0.5" />
+                                    <circle cx="60" cy="10" r="2" fill="#8B7355" opacity="0.4" />
+                                    <circle cx="100" cy="15" r="2.5" fill="#8B7355" opacity="0.5" />
+                                </svg>
+                            </div>
+                        )}
+                    </div>
+                )
+            })()}
+
+            {/* Wrapped Category Rail */}
+            {enabledCategories.length > 1 && (
+                <div style={{
+                    margin: '0 16px 16px 16px',
+                    padding: '6px',
+                    background: '#F0EDE8',
+                    borderRadius: 14,
+                    position: 'sticky',
+                    top: 52,
+                    zIndex: 99
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        gap: 6,
+                        overflowX: 'auto',
+                        WebkitOverflowScrolling: 'touch',
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none'
+                    }}>
+                        {enabledCategories.map(category => (
+                            <button
+                                key={category.id}
+                                onClick={() => scrollToCategory(category.id)}
+                                style={{
+                                    padding: '10px 16px',
+                                    borderRadius: 10,
+                                    border: 'none',
+                                    background: activeCategory === category.id ? 'white' : 'transparent',
+                                    color: activeCategory === category.id ? '#1F2937' : '#6B7280',
+                                    fontSize: 14,
+                                    fontWeight: 500,
+                                    whiteSpace: 'nowrap',
+                                    cursor: 'pointer',
+                                    transition: 'background 0.2s ease, color 0.15s ease',
+                                    boxShadow: activeCategory === category.id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                                }}
+                            >
+                                {category.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Menu Content - All Categories */}
+            <div style={{ padding: '0 16px' }}>
+                {enabledCategories.map(category => (
+                    <div
+                        key={category.id}
+                        ref={el => categoryRefs.current[category.id] = el}
+                        style={{ marginBottom: 24 }}
+                    >
+                        {/* Section Title */}
+                        <h2 style={{
+                            fontSize: 20,
+                            fontWeight: 600,
+                            color: '#1F2937',
+                            marginBottom: 16
+                        }}>
+                            {category.name}
+                        </h2>
+
+                        {/* 3-Column Grid */}
+                        {(() => {
+                            const availableItems = category.items.filter(item => item.available)
+                            const isDraggingInCategory = dragState?.categoryId === category.id
+
+                            return (
+                                <div
+                                    className="menu-grid"
+                                    style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(3, 1fr)',
+                                        gap: 12,
+                                        position: 'relative'
+                                    }}
+                                >
+                                    {availableItems.map((item, index) => {
+                                        const isDragging = dragState?.itemId === item.id
+                                        const isPlaceholder = isDraggingInCategory && dragState.targetIndex === index && !isDragging
+
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => !isEditMode && !dragState && handleTapToAdd(item)}
+                                                onTouchStart={(e) => {
+                                                    if (isEditMode) {
+                                                        handleDragStart(e, category.id, item, index, availableItems)
+                                                    } else {
+                                                        handleLongPressStart(e)
+                                                    }
+                                                }}
+                                                onTouchEnd={!isEditMode ? handleLongPressEnd : undefined}
+                                                onTouchMove={!isEditMode ? handleLongPressMove : undefined}
+                                                onMouseDown={(e) => {
+                                                    if (isEditMode) {
+                                                        handleDragStart(e, category.id, item, index, availableItems)
+                                                    } else {
+                                                        handleLongPressStart(e)
+                                                    }
+                                                }}
+                                                onMouseUp={!isEditMode ? handleLongPressEnd : undefined}
+                                                onMouseLeave={!isEditMode ? handleLongPressEnd : undefined}
+                                                className={isEditMode && !isDragging ? 'menu-item-wiggle' : ''}
+                                                style={{
+                                                    cursor: isEditMode ? 'grab' : 'pointer',
+                                                    transform: addedItem === item.id ? 'scale(0.95)' : 'scale(1)',
+                                                    transition: isEditMode ? 'none' : 'transform 0.15s ease',
+                                                    opacity: isDragging ? 0.3 : (addedItem === item.id ? 0.7 : 1),
+                                                    boxShadow: isEditMode && !isDragging ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                                    borderRadius: isEditMode ? 8 : 0,
+                                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : 'transparent',
+                                                    border: isPlaceholder ? '2px dashed #22C55E' : 'none',
+                                                    touchAction: isEditMode ? 'none' : 'auto'
+                                                }}
+                                            >
+                                                {/* Item Image */}
+                                                <div style={{
+                                                    width: '100%',
+                                                    aspectRatio: '1',
+                                                    borderRadius: 12,
+                                                    overflow: 'hidden',
+                                                    background: '#E8E4DD',
+                                                    marginBottom: 8
+                                                }}>
+                                                    <img
+                                                        src={getItemImage(item, index)}
+                                                        alt={item.name}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover',
+                                                            pointerEvents: 'none'
+                                                        }}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none'
+                                                        }}
+                                                    />
+                                                </div>
+                                                {/* Item Name */}
+                                                <p style={{
+                                                    fontSize: 13,
+                                                    fontWeight: 500,
+                                                    color: 'var(--canvas-text)',
+                                                    marginBottom: 2,
+                                                    lineHeight: 1.3
+                                                }}>
+                                                    {item.name}
+                                                </p>
+                                                {/* Price */}
+                                                <p style={{
+                                                    fontSize: 12,
+                                                    color: '#6B7280'
+                                                }}>
+                                                    {formatPrice(item.price)}
+                                                </p>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )
+                        })()}
+                    </div>
+                ))}
+            </div>
+
+            {/* Order Summary Bar (Receipt Style) */}
+            {hasItems && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: 'calc(var(--nav-height, 60px) + 0px)',
+                    left: 0,
+                    right: 0,
+                    background: '#FDFCFA',
+                    borderTop: '1px dashed #E0DDD7',
+                    padding: '14px 16px',
+                    paddingBottom: 'calc(14px + env(safe-area-inset-bottom, 0px))',
+                    zIndex: 100,
+                    boxShadow: '0 -2px 12px rgba(0,0,0,0.06)'
+                }}>
+                    {/* Receipt Header */}
+                    <div style={{
+                        fontSize: 11,
+                        color: '#9CA3AF',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        marginBottom: 10,
+                        textAlign: 'center'
+                    }}>
+                        Tu pedido
+                    </div>
+
+                    {/* Order Items List */}
+                    <div style={{
+                        maxHeight: 90,
+                        overflowY: 'auto',
+                        marginBottom: 10
+                    }}>
+                        {cart.items.map((item, index) => (
+                            <div
+                                key={`${item.id}-${index}`}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    marginBottom: 6,
+                                    paddingBottom: 6,
+                                    borderBottom: '1px dotted #EBE8E3'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    {/* Minus Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleRemoveItem(index)
+                                        }}
+                                        style={{
+                                            width: 22,
+                                            height: 22,
+                                            borderRadius: 6,
+                                            border: '1px solid #E0DDD7',
+                                            background: '#FDFCFA',
+                                            color: '#8B8680',
+                                            fontSize: 14,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        −
+                                    </button>
+                                    <span style={{ fontSize: 14, color: '#374151', fontWeight: 450 }}>
+                                        {item.name}
+                                    </span>
+                                    <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                                        ×{item.quantity}
+                                    </span>
+                                </div>
+                                <span style={{ fontSize: 14, color: '#374151', fontFamily: 'system-ui' }}>
+                                    {formatPrice(item.price * item.quantity)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Total Line */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: 14,
+                        paddingTop: 10,
+                        borderTop: '1px solid #E0DDD7'
+                    }}>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>Total</span>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>{formatPrice(cartTotal)}</span>
+                    </div>
+
+                    {/* Place Order Button */}
+                    <button
+                        onClick={() => navigate('/order')}
+                        style={{
+                            width: '100%',
+                            padding: '14px 24px',
+                            background: config.colors?.confirmation || '#22C55E',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 12,
+                            fontSize: 16,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            letterSpacing: '-0.01em'
+                        }}
+                    >
+                        Confirmar Pedido
+                    </button>
+                </div>
+            )}
+
+            {/* Floating Drag Card */}
+            {dragState && (() => {
+                // Find the dragged item
+                const category = enabledCategories.find(c => c.id === dragState.categoryId)
+                const item = category?.items.find(i => i.id === dragState.itemId)
+                if (!item) return null
+
+                return (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            left: dragState.currentX - dragState.offsetX,
+                            top: dragState.currentY - dragState.offsetY,
+                            width: dragState.itemWidth,
+                            zIndex: 9999,
+                            pointerEvents: 'none',
+                            transform: 'scale(1.05)',
+                            opacity: 0.95
+                        }}
+                    >
+                        <div style={{
+                            background: 'white',
+                            borderRadius: 12,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                            overflow: 'hidden'
+                        }}>
+                            <div style={{
+                                width: '100%',
+                                aspectRatio: '1',
+                                borderRadius: 12,
+                                overflow: 'hidden',
+                                background: '#E8E4DD'
+                            }}>
+                                <img
+                                    src={getItemImage(item, dragState.itemIndex)}
+                                    alt={item.name}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}
+                                />
+                            </div>
+                            <div style={{ padding: '8px 4px' }}>
+                                <p style={{
+                                    fontSize: 13,
+                                    fontWeight: 500,
+                                    color: '#1F2937',
+                                    marginBottom: 2,
+                                    lineHeight: 1.3
+                                }}>
+                                    {item.name}
+                                </p>
+                                <p style={{
+                                    fontSize: 12,
+                                    color: '#6B7280'
+                                }}>
+                                    {formatPrice(item.price)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )
+            })()}
+
+            {/* Bottom Exit for Envíos (deliveryMode) */}
+            {deliveryMode && (
+                <div style={{
+                    marginTop: 32,
+                    marginBottom: 24,
+                    display: 'flex',
+                    justifyContent: 'center'
+                }}>
+                    <button
+                        onClick={() => { clearDeliveryMode(); navigate('/') }}
+                        style={{
+                            background: '#22C55E',
+                            color: '#FFFFFF',
+                            fontSize: 15,
+                            fontWeight: 600,
+                            padding: '14px 32px',
+                            borderRadius: 50,
+                            border: 'none',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(34, 197, 94, 0.3)',
+                            transition: 'transform 0.1s ease, box-shadow 0.1s ease'
+                        }}
+                        onTouchStart={(e) => {
+                            e.currentTarget.style.transform = 'scale(0.96)'
+                            e.currentTarget.style.boxShadow = '0 1px 4px rgba(34, 197, 94, 0.2)'
+                        }}
+                        onTouchEnd={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.3)'
+                        }}
+                        onMouseDown={(e) => {
+                            e.currentTarget.style.transform = 'scale(0.96)'
+                            e.currentTarget.style.boxShadow = '0 1px 4px rgba(34, 197, 94, 0.2)'
+                        }}
+                        onMouseUp={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.3)'
+                        }}
+                    >
+                        Salir de Envíos
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
+
+export default Menu
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { getAuth, clearAuth } from '../../utils/storage.js'
+import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled } from '../../config/menuData.js'
+import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
+
+function MenuManager() {
+    const navigate = useNavigate()
+    const [menu, setMenu] = useState(() => getMenu())
+    const [editingItem, setEditingItem] = useState(null)
+    const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
+    const [uploadStatus, setUploadStatus] = useState(null)
+    const [isUploading, setIsUploading] = useState(false)
+    const fileInputRef = useRef(null)
+
+    // Check auth
+    useEffect(() => {
+        const auth = getAuth()
+        if (!auth.authenticated || (auth.role !== 'owner' && auth.role !== 'superadmin')) {
+            navigate('/owner')
+        }
+    }, [navigate])
+
+    const handleLogout = () => {
+        clearAuth()
+        navigate('/')
+    }
+
+    const handleEdit = (categoryId, item) => {
+        setEditingItem({ categoryId, itemId: item.id })
+        setEditForm({ name: item.name, price: item.price.toString(), image: item.image || null })
+        setUploadStatus(null)
+    }
+
+    // Image upload handler with optimization
+    const handleImageUpload = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsUploading(true)
+        setUploadStatus(null)
+
+        try {
+            const result = await processAndStoreImage(file)
+            setEditForm(prev => ({ ...prev, image: result.dataURI }))
+            setUploadStatus({
+                success: true,
+                message: `✔ Imagen optimizada: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
+            })
+        } catch (error) {
+            setUploadStatus({
+                success: false,
+                message: error.message
+            })
+        } finally {
+            setIsUploading(false)
+        }
+    }
+
+    const handleSave = () => {
+        if (!editingItem) return
+
+        const updatedMenu = { ...menu }
+        const category = updatedMenu.categories.find(c => c.id === editingItem.categoryId)
+        if (category) {
+            const item = category.items.find(i => i.id === editingItem.itemId)
+            if (item) {
+                item.name = editForm.name
+                item.price = parseInt(editForm.price) || item.price
+                if (editForm.image) {
+                    item.image = editForm.image
+                }
+                saveMenu(updatedMenu)
+                setMenu(updatedMenu)
+            }
+        }
+        setEditingItem(null)
+        setUploadStatus(null)
+    }
+
+    const handleToggleAvailability = (categoryId, itemId) => {
+        const updatedMenu = { ...menu }
+        const category = updatedMenu.categories.find(c => c.id === categoryId)
+        if (category) {
+            const item = category.items.find(i => i.id === itemId)
+            if (item) {
+                item.available = !item.available
+                saveMenu(updatedMenu)
+                setMenu(updatedMenu)
+            }
+        }
+    }
+
+    const handleSetFeatured = (categoryId, itemId) => {
+        setFeaturedItem(categoryId, itemId)
+        setMenu(getMenu())
+    }
+
+    const handleToggleCategory = (categoryId) => {
+        toggleCategoryEnabled(categoryId)
+        setMenu(getMenu())
+    }
+
+    return (
+        <div className="page" style={{ paddingBottom: 'var(--space-4)' }}>
+            {/* Header */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 'var(--space-4)'
+            }}>
+                <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
+                    📋 Menú
+                </h1>
+                <button
+                    className="btn btn-secondary"
+                    onClick={handleLogout}
+                    style={{ padding: 'var(--space-2) var(--space-3)' }}
+                >
+                    Salir
+                </button>
+            </div>
+
+            {/* Owner Navigation */}
+            <div className="tabs" style={{ marginBottom: 'var(--space-4)' }}>
+                <Link to="/owner/menu" className="tab active">Menú</Link>
+                <Link to="/owner/rewards" className="tab">Recompensas</Link>
+                <Link to="/owner/settings" className="tab">Config</Link>
+                <Link to="/owner/analytics" className="tab">Stats</Link>
+            </div>
+
+            {/* Menu Categories */}
+            {menu.categories.map(category => {
+                const isEnabled = category.enabled !== false
+                return (
+                    <div key={category.id} className="admin-section" style={{ opacity: isEnabled ? 1 : 0.5 }}>
+                        {/* Category Header with Toggle */}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: 'var(--space-2)'
+                        }}>
+                            <h3 className="admin-section-title" style={{ marginBottom: 0 }}>
+                                {category.icon} {category.name}
+                                {!isEnabled && <span style={{ fontSize: 'var(--font-size-xs)', marginLeft: 'var(--space-2)', color: 'var(--color-error)' }}>(oculta)</span>}
+                            </h3>
+                            <label className="toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={isEnabled}
+                                    onChange={() => handleToggleCategory(category.id)}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div className="admin-card">
+                            {category.items.map(item => (
+                                <div key={item.id} className="admin-row">
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{item.name}</p>
+                                            {item.featured && <span style={{ fontSize: 'var(--font-size-sm)' }}>⭐</span>}
+                                        </div>
+                                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                                            {formatPrice(item.price)} · {item.available ? '✅' : '❌'}
+                                        </p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ padding: 'var(--space-1) var(--space-2)', fontSize: 'var(--font-size-sm)' }}
+                                            onClick={() => handleEdit(category.id, item)}
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ padding: 'var(--space-1) var(--space-2)', fontSize: 'var(--font-size-sm)' }}
+                                            onClick={() => handleToggleAvailability(category.id, item.id)}
+                                        >
+                                            {item.available ? '🔴' : '🟢'}
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ padding: 'var(--space-1) var(--space-2)', fontSize: 'var(--font-size-sm)' }}
+                                            onClick={() => handleSetFeatured(category.id, item.id)}
+                                        >
+                                            ⭐
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            })}
+
+            {/* Edit Modal */}
+            {editingItem && (
+                <div className="modal-overlay" onClick={() => setEditingItem(null)}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <h2 className="modal-title">Editar item</h2>
+
+                        <div className="form-group">
+                            <label className="form-label">Nombre</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={editForm.name}
+                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Precio (ARS)</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                value={editForm.price}
+                                onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Image Upload */}
+                        <div className="form-group">
+                            <label className="form-label">Imagen (JPG/PNG)</label>
+                            {editForm.image && (
+                                <div style={{ marginBottom: 8 }}>
+                                    <img
+                                        src={editForm.image}
+                                        alt="Preview"
+                                        style={{
+                                            width: '100%',
+                                            maxHeight: 120,
+                                            objectFit: 'cover',
+                                            borderRadius: 8
+                                        }}
+                                    />
+                                </div>
+                            )}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/jpg"
+                                onChange={handleImageUpload}
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                className="btn btn-secondary btn-block"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                            >
+                                {isUploading ? 'Optimizando...' : (editForm.image ? '📷 Cambiar imagen' : '📷 Subir imagen')}
+                            </button>
+                            {uploadStatus && (
+                                <p style={{
+                                    fontSize: 'var(--font-size-sm)',
+                                    color: uploadStatus.success ? 'var(--color-success)' : 'var(--color-error)',
+                                    marginTop: 6
+                                }}>
+                                    {uploadStatus.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <button
+                            className="btn btn-primary btn-block"
+                            onClick={handleSave}
+                        >
+                            Guardar
+                        </button>
+                        <button
+                            className="btn btn-secondary btn-block"
+                            style={{ marginTop: 'var(--space-2)' }}
+                            onClick={() => setEditingItem(null)}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+export default MenuManager
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getConfig } from '../../config/appConfig.js'
+import { formatPrice } from '../../config/menuData.js'
+import {
+    getCurrentOrder,
+    clearCurrentOrder,
+    updateItemQuantity,
+    removeFromCurrentOrder,
+    addOrder,
+    generateOrderNumber,
+    incrementOrderCount
+} from '../../utils/storage.js'
+import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { getDividerPreset } from '../../config/dividerPresets.js'
+import {
+    isDeliveryMode,
+    isCashPaymentAllowed,
+    validateDeliveryInfo,
+    clearDeliveryMode,
+    calculateDeliveryFee
+} from '../../utils/deliveryUtils.js'
+
+// Placeholder food images for items without images
+const placeholderImages = [
+    'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=100&h=100&fit=crop',
+    'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=100&h=100&fit=crop',
+    'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop',
+]
+
+function Order() {
+    const navigate = useNavigate()
+    const [config] = useState(() => getConfig())
+    const [order, setOrder] = useState(() => getCurrentOrder())
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitted, setSubmitted] = useState(false)
+
+    // Delivery mode (from session storage)
+    const [deliveryMode] = useState(() => isDeliveryMode())
+
+    // Customer info for delivery orders
+    const [customerInfo, setCustomerInfo] = useState({
+        name: '',
+        phone: '',
+        address: ''
+    })
+
+    // Payment method selection
+    const [paymentMethod, setPaymentMethod] = useState('mercadopago')
+
+    // Check if cash is currently available (10:00-18:00)
+    const [cashAvailable, setCashAvailable] = useState(() => isCashPaymentAllowed())
+
+    // Notice when cash becomes unavailable mid-session
+    const [cashFallbackNotice, setCashFallbackNotice] = useState(false)
+
+    // Validation errors
+    const [validationErrors, setValidationErrors] = useState([])
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setOrder(getCurrentOrder())
+
+            // Re-check cash availability (Argentina local time)
+            const nowCashAvailable = isCashPaymentAllowed()
+
+            // If cash WAS available but now is NOT, and cash was selected
+            if (cashAvailable && !nowCashAvailable && paymentMethod === 'efectivo') {
+                // Auto-fallback to Mercado Pago
+                setPaymentMethod('mercadopago')
+                // Show brief notice
+                setCashFallbackNotice(true)
+                // Auto-hide notice after 5 seconds
+                setTimeout(() => setCashFallbackNotice(false), 5000)
+            }
+
+            setCashAvailable(nowCashAvailable)
+        }, 500)
+        return () => clearInterval(interval)
+    }, [cashAvailable, paymentMethod])
+
+    const calculateItemTotal = (item) => {
+        let total = item.price * item.quantity
+        if (item.extras) {
+            item.extras.forEach(e => total += e.price * item.quantity)
+        }
+        return total
+    }
+
+    const calculateSubtotal = () => {
+        return order.items.reduce((sum, item) => sum + calculateItemTotal(item), 0)
+    }
+
+    const getDeliveryFeeAmount = () => {
+        if (!deliveryMode) return 0
+        return calculateDeliveryFee(calculateSubtotal())
+    }
+
+    const calculateTotal = () => {
+        return calculateSubtotal() + getDeliveryFeeAmount()
+    }
+
+    const handleQuantityChange = (index, delta) => {
+        const newQuantity = order.items[index].quantity + delta
+        if (newQuantity <= 0) {
+            removeFromCurrentOrder(index)
+        } else {
+            updateItemQuantity(index, newQuantity)
+        }
+        setOrder(getCurrentOrder())
+    }
+
+    const handleSubmit = () => {
+        if (isSubmitting || submitted || order.items.length === 0) return
+        if (config.pauseOrders) return
+
+        // Validate delivery info if in delivery mode
+        if (deliveryMode) {
+            const validation = validateDeliveryInfo(customerInfo)
+            if (!validation.valid) {
+                setValidationErrors(validation.errors)
+                return
+            }
+        }
+
+        setValidationErrors([])
+        setIsSubmitting(true)
+
+        const orderNumber = generateOrderNumber()
+        const newOrder = {
+            id: `order-${Date.now()}`,
+            orderNumber,
+            items: order.items,
+            subtotal: calculateSubtotal(),
+            deliveryFee: getDeliveryFeeAmount(),
+            total: calculateTotal(),
+            status: 'enviado',
+            paymentConfirmed: false,
+            paidAt: null,
+            createdAt: new Date().toISOString(),
+            // Delivery-specific fields
+            orderType: deliveryMode ? 'delivery' : 'pickup',
+            customerInfo: deliveryMode ? customerInfo : null,
+            paymentMethod: deliveryMode ? paymentMethod : null,
+            deliveryConfirmedAt: null
+        }
+
+        addOrder(newOrder)
+        incrementOrderCount()
+        clearCurrentOrder()
+
+        // Clear delivery mode session
+        if (deliveryMode) {
+            clearDeliveryMode()
+        }
+
+        setTimeout(() => {
+            setIsSubmitting(false)
+            setSubmitted(true)
+            setTimeout(() => {
+                navigate('/status')
+            }, 1500)
+        }, 500)
+    }
+
+    const getItemImage = (item, index) => {
+        if (item.image) return item.image
+        return placeholderImages[index % placeholderImages.length]
+    }
+
+    // Submitted state - Pedido Enviado Transition Screen
+    if (submitted) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 20,
+                paddingBottom: 80
+            }}>
+                {/* Centered Card */}
+                <div style={{
+                    background: '#FFFFFF',
+                    borderRadius: 20,
+                    padding: '32px 28px',
+                    boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+                    width: '100%',
+                    maxWidth: 320,
+                    textAlign: 'center'
+                }}>
+                    {/* Brand Header - Plain text only */}
+                    {config.businessName && (
+                        <p style={{
+                            fontSize: 11,
+                            fontWeight: 500,
+                            color: '#9CA3AF',
+                            letterSpacing: '0.08em',
+                            marginBottom: 24,
+                            textTransform: 'uppercase'
+                        }}>
+                            {config.businessName}
+                        </p>
+                    )}
+
+                    {/* Green Checkmark Icon */}
+                    <div style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: '50%',
+                        background: '#ECFDF5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 20px'
+                    }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+
+                    {/* Primary Text */}
+                    <h2 style={{
+                        fontSize: 20,
+                        fontWeight: 600,
+                        color: '#1F2937',
+                        marginBottom: 8
+                    }}>
+                        ¡Pedido enviado!
+                    </h2>
+
+                    {/* Secondary Text */}
+                    <p style={{
+                        fontSize: 14,
+                        fontWeight: 400,
+                        color: '#6B7280',
+                        marginBottom: 24
+                    }}>
+                        Estamos preparando tu pedido
+                    </p>
+
+                    {/* Loading Indicator - Three dots */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: 6,
+                        marginBottom: 24
+                    }}>
+                        <div style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: '#D1D5DB',
+                            animation: 'pulse 1.4s ease-in-out infinite',
+                            animationDelay: '0s'
+                        }} />
+                        <div style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: '#D1D5DB',
+                            animation: 'pulse 1.4s ease-in-out infinite',
+                            animationDelay: '0.2s'
+                        }} />
+                        <div style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: '#D1D5DB',
+                            animation: 'pulse 1.4s ease-in-out infinite',
+                            animationDelay: '0.4s'
+                        }} />
+                    </div>
+
+                    {/* Footer Helper Text */}
+                    <p style={{
+                        fontSize: 12,
+                        fontWeight: 400,
+                        color: '#9CA3AF'
+                    }}>
+                        Redirigiendo al estado del pedido…
+                    </p>
+                </div>
+
+                {/* Inline keyframes for dot animation */}
+                <style>{`
+                    @keyframes pulse {
+                        0%, 80%, 100% { opacity: 0.4; transform: scale(0.9); }
+                        40% { opacity: 1; transform: scale(1); }
+                    }
+                `}</style>
+            </div>
+        )
+    }
+
+    // Empty cart state
+    if (order.items.length === 0) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                background: '#FAF9F7',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 20
+            }}>
+                <div style={{ fontSize: 64, marginBottom: 16 }}>🛒</div>
+                <p style={{ color: '#6B7280', marginBottom: 20 }}>Tu pedido está vacío</p>
+                <button
+                    onClick={() => navigate('/menu')}
+                    style={{
+                        padding: '14px 32px',
+                        background: '#C4856A',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 12,
+                        fontSize: 16,
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                    }}
+                >
+                    Ver menú
+                </button>
+            </div>
+        )
+    }
+
+    return (
+        <div style={{
+            minHeight: '100vh',
+            paddingBottom: 120
+        }}>
+            {/* Clean Brand Header */}
+            <HeaderClamp />
+
+            {/* Slim Identity Strip - Uses selected divider preset */}
+            {(() => {
+                const dividerPreset = getDividerPreset(config.dividerPresetId)
+                return (
+                    <div style={{
+                        height: 64,
+                        margin: '0 14px 16px 14px',
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        position: 'relative'
+                    }}>
+                        {dividerPreset ? (
+                            <img
+                                src={dividerPreset.url}
+                                alt=""
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                }}
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE8E0 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <svg width="120" height="40" viewBox="0 0 120 40" fill="none" style={{ opacity: 0.3 }}>
+                                    <path d="M10 20 Q30 5, 60 20 T110 20" stroke="#8B7355" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                                    <circle cx="20" cy="15" r="3" fill="#8B7355" opacity="0.5" />
+                                    <circle cx="60" cy="10" r="2" fill="#8B7355" opacity="0.4" />
+                                    <circle cx="100" cy="15" r="2.5" fill="#8B7355" opacity="0.5" />
+                                </svg>
+                            </div>
+                        )}
+                    </div>
+                )
+            })()}
+
+            {/* Tu Pedido Card Container */}
+            <div style={{
+                margin: '0 14px',
+                position: 'relative'
+            }}>
+                <div style={{
+                    background: 'white',
+                    borderRadius: 20,
+                    padding: 20,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+                }}>
+                    {/* Card Header */}
+                    <div style={{ marginBottom: 20 }}>
+                        <h1 style={{
+                            fontSize: 24,
+                            fontWeight: 700,
+                            color: '#1F2937',
+                            marginBottom: 4
+                        }}>
+                            Tu Pedido
+                        </h1>
+                        <p style={{
+                            fontSize: 14,
+                            color: '#9CA3AF'
+                        }}>
+                            Revisá antes de confirmar
+                        </p>
+                    </div>
+
+                    {/* Pause Orders Warning */}
+                    {config.pauseOrders && (
+                        <div style={{
+                            background: '#FEF3C7',
+                            padding: 12,
+                            borderRadius: 12,
+                            marginBottom: 16,
+                            textAlign: 'center'
+                        }}>
+                            <p style={{ color: '#92400E', fontSize: 14 }}>
+                                ⏸️ {config.pauseOrdersMessage || 'Pedidos pausados temporalmente'}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Browser Continuity Warning - PRD Required */}
+                    {deliveryMode && (
+                        <div style={{
+                            background: '#EFF6FF',
+                            padding: 10,
+                            borderRadius: 10,
+                            marginBottom: 16,
+                            textAlign: 'center'
+                        }}>
+                            <p style={{ color: '#1E40AF', fontSize: 12, margin: 0 }}>
+                                For best service, please continue using the same browser.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Delivery Info Form - Only shown in delivery mode */}
+                    {deliveryMode && (
+                        <div style={{
+                            background: '#F9FAFB',
+                            padding: 16,
+                            borderRadius: 12,
+                            marginBottom: 16
+                        }}>
+                            <h3 style={{
+                                fontSize: 15,
+                                fontWeight: 600,
+                                color: '#374151',
+                                marginBottom: 12
+                            }}>
+                                Datos de envío
+                            </h3>
+
+                            {/* Validation Errors */}
+                            {validationErrors.length > 0 && (
+                                <div style={{
+                                    background: '#FEE2E2',
+                                    padding: 10,
+                                    borderRadius: 8,
+                                    marginBottom: 12
+                                }}>
+                                    {validationErrors.map((err, i) => (
+                                        <p key={i} style={{ color: '#DC2626', fontSize: 13, margin: '2px 0' }}>
+                                            {err}
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Name Field */}
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                    Nombre completo *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customerInfo.name}
+                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Tu nombre"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #E5E7EB',
+                                        borderRadius: 8,
+                                        fontSize: 15,
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            </div>
+
+                            {/* Phone Field */}
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                    Teléfono *
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={customerInfo.phone}
+                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                                    placeholder="+54 11 1234-5678"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #E5E7EB',
+                                        borderRadius: 8,
+                                        fontSize: 15,
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            </div>
+
+                            {/* Address Field */}
+                            <div>
+                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                                    Dirección de entrega *
+                                </label>
+                                <textarea
+                                    value={customerInfo.address}
+                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
+                                    placeholder="Calle, número, piso, depto..."
+                                    rows={2}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #E5E7EB',
+                                        borderRadius: 8,
+                                        fontSize: 15,
+                                        resize: 'none',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Payment Method Selection - Only in delivery mode */}
+                    {deliveryMode && (
+                        <div style={{
+                            background: '#F9FAFB',
+                            padding: 16,
+                            borderRadius: 12,
+                            marginBottom: 16
+                        }}>
+                            <h3 style={{
+                                fontSize: 15,
+                                fontWeight: 600,
+                                color: '#374151',
+                                marginBottom: 12
+                            }}>
+                                Método de pago
+                            </h3>
+
+                            {/* Cash Fallback Notice - Shows when cash became unavailable */}
+                            {cashFallbackNotice && (
+                                <div style={{
+                                    background: '#FEF3C7',
+                                    padding: 10,
+                                    borderRadius: 8,
+                                    marginBottom: 12,
+                                    fontSize: 13
+                                }}>
+                                    <p style={{ color: '#92400E', margin: 0 }}>
+                                        ⏰ El pago en efectivo ya no está disponible (fuera de horario 10:00-18:00). Se seleccionó Mercado Pago.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Mercado Pago Option - Always available */}
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                padding: '12px',
+                                background: paymentMethod === 'mercadopago' ? '#EFF6FF' : 'white',
+                                border: paymentMethod === 'mercadopago' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
+                                borderRadius: 10,
+                                cursor: 'pointer',
+                                marginBottom: 8
+                            }}>
+                                <input
+                                    type="radio"
+                                    name="paymentMethod"
+                                    value="mercadopago"
+                                    checked={paymentMethod === 'mercadopago'}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    style={{ accentColor: '#3B82F6' }}
+                                />
+                                <div>
+                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>
+                                        Mercado Pago
+                                    </span>
+                                    <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>
+                                        Transferencia o QR
+                                    </p>
+                                </div>
+                            </label>
+
+                            {/* Cash Option - Only 10:00-18:00 */}
+                            {cashAvailable ? (
+                                <label style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                    padding: '12px',
+                                    background: paymentMethod === 'efectivo' ? '#F0FDF4' : 'white',
+                                    border: paymentMethod === 'efectivo' ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                    borderRadius: 10,
+                                    cursor: 'pointer'
+                                }}>
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="efectivo"
+                                        checked={paymentMethod === 'efectivo'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                        style={{ accentColor: '#22C55E' }}
+                                    />
+                                    <div>
+                                        <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>
+                                            Efectivo
+                                        </span>
+                                        <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>
+                                            Pago en efectivo al recibir
+                                        </p>
+                                    </div>
+                                </label>
+                            ) : (
+                                <div style={{
+                                    padding: '12px',
+                                    background: '#F3F4F6',
+                                    borderRadius: 10,
+                                    opacity: 0.6
+                                }}>
+                                    <span style={{ fontSize: 14, color: '#6B7280' }}>
+                                        Efectivo
+                                    </span>
+                                    <p style={{ fontSize: 12, color: '#9CA3AF', margin: '2px 0 0' }}>
+                                        Solo disponible de 10:00 a 18:00
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Order Items */}
+                    <div style={{ marginBottom: 16 }}>
+                        {order.items.map((item, index) => (
+                            <div
+                                key={index}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 14,
+                                    padding: '14px 0',
+                                    borderBottom: index < order.items.length - 1 ? '1px solid #F3F4F6' : 'none'
+                                }}
+                            >
+                                {/* Thumbnail */}
+                                <div style={{
+                                    width: 56,
+                                    height: 56,
+                                    borderRadius: 12,
+                                    overflow: 'hidden',
+                                    flexShrink: 0,
+                                    background: '#F3F0EB'
+                                }}>
+                                    <img
+                                        src={getItemImage(item, index)}
+                                        alt={item.name}
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover'
+                                        }}
+                                        onError={(e) => {
+                                            e.target.style.display = 'none'
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Item Info */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{
+                                        fontSize: 15,
+                                        fontWeight: 600,
+                                        color: '#1F2937',
+                                        marginBottom: 2,
+                                        lineHeight: 1.3
+                                    }}>
+                                        {item.name}
+                                    </p>
+                                    <p style={{
+                                        fontSize: 14,
+                                        color: '#C4856A',
+                                        fontWeight: 500,
+                                        margin: 0
+                                    }}>
+                                        {formatPrice(item.price)}
+                                    </p>
+                                </div>
+
+                                {/* Quantity Controls */}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 12
+                                }}>
+                                    <button
+                                        onClick={() => handleQuantityChange(index, -1)}
+                                        style={{
+                                            width: 28,
+                                            height: 28,
+                                            borderRadius: '50%',
+                                            border: '1.5px solid #E5E7EB',
+                                            background: 'white',
+                                            color: '#6B7280',
+                                            fontSize: 16,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        −
+                                    </button>
+                                    <span style={{
+                                        fontSize: 16,
+                                        fontWeight: 600,
+                                        color: '#1F2937',
+                                        minWidth: 20,
+                                        textAlign: 'center'
+                                    }}>
+                                        {item.quantity}
+                                    </span>
+                                    <button
+                                        onClick={() => handleQuantityChange(index, 1)}
+                                        style={{
+                                            width: 28,
+                                            height: 28,
+                                            borderRadius: '50%',
+                                            border: '1.5px solid #C4856A',
+                                            background: '#C4856A',
+                                            color: 'white',
+                                            fontSize: 16,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Total */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingTop: 16,
+                        borderTop: '1px solid #F3F4F6'
+                    }}>
+                        {/* Subtotal - Only show breakdown in delivery mode with fee */}
+                        {deliveryMode && getDeliveryFeeAmount() >= 0 && (
+                            <>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    marginBottom: 8
+                                }}>
+                                    <span style={{ fontSize: 14, color: '#6B7280' }}>Subtotal</span>
+                                    <span style={{ fontSize: 14, color: '#6B7280' }}>{formatPrice(calculateSubtotal())}</span>
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    marginBottom: 12
+                                }}>
+                                    <span style={{ fontSize: 14, color: '#6B7280' }}>Envío</span>
+                                    <span style={{
+                                        fontSize: 14,
+                                        color: getDeliveryFeeAmount() === 0 ? '#059669' : '#6B7280',
+                                        fontWeight: getDeliveryFeeAmount() === 0 ? 600 : 400
+                                    }}>
+                                        {getDeliveryFeeAmount() === 0 ? '¡Gratis!' : formatPrice(getDeliveryFeeAmount())}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <span style={{
+                                fontSize: 16,
+                                fontWeight: 600,
+                                color: '#1F2937'
+                            }}>
+                                Total
+                            </span>
+                            <span style={{
+                                fontSize: 20,
+                                fontWeight: 700,
+                                color: '#1F2937'
+                            }}>
+                                {formatPrice(calculateTotal())}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Confirmar Pedido Button */}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || config.pauseOrders}
+                        style={{
+                            width: '100%',
+                            padding: '16px 24px',
+                            background: (isSubmitting || config.pauseOrders) ? '#D4B89E' : (config.colors?.confirmation || '#22C55E'),
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 14,
+                            fontSize: 17,
+                            fontWeight: 600,
+                            cursor: (isSubmitting || config.pauseOrders) ? 'not-allowed' : 'pointer',
+                            marginTop: 20,
+                            letterSpacing: '-0.01em'
+                        }}
+                    >
+                        {isSubmitting ? 'Enviando...' : 'Confirmar pedido'}
+                    </button>
+                </div>
+
+                {/* Secondary Action - Wrapped Button */}
+                <button
+                    onClick={() => navigate('/menu')}
+                    style={{
+                        width: '100%',
+                        padding: '14px 20px',
+                        background: 'white',
+                        border: '1.5px solid #E5E7EB',
+                        borderRadius: 12,
+                        color: '#6B7280',
+                        fontSize: 15,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        marginTop: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                    }}
+                >
+                    ← Volver al menú y seguir pidiendo
+                </button>
+            </div>
+        </div>
+    )
+}
+
+export default Order
