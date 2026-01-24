@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom' // NO useParams, useTenant handles it
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { MenuSkeleton } from '../../components/Shimmers.jsx'
@@ -271,20 +271,9 @@ export default function Menu({ config: configProp }) {
 
         if (catIndex !== -1) {
             const allItems = [...newMenu.categories[catIndex].items]
-            const availableItems = allItems.filter(i => i.available !== false) // Assuming availability check matches legacy filter (legacy used i.available)
-            // NOTE: Legacy code filtered by `useMemo` enabledCategories. 
-            // Here we need to be careful. The `items` in `dragState` are IDs of *rendered* items.
-            // If we are owner, we see ALL items.
 
-            // Rebuild items based on newOrderIds + any filtered out items?
-            // Simplest approach: Just reorder the items we moved.
-            // Reconstruct:
+            // Reconstruct based on ID order
             const reorderedItems = newOrderIds.map(id => allItems.find(i => i.id === id)).filter(Boolean)
-
-            // If there were any items NOT in the drag list (unlikely for owner who sees all), append them?
-            // Legacy code: "Combine: reordered available + unavailable at end"
-            // But owner sees everything.
-            // Let's assume owner sees all items, so `items` contains all IDs.
 
             newMenu.categories[catIndex].items = reorderedItems
 
@@ -298,7 +287,7 @@ export default function Menu({ config: configProp }) {
             setIsDropping(false)
         }, 2000)
 
-    }, [dragState, menu, businessId]) // added dependecies
+    }, [dragState, menu, businessId])
 
     // Global listeners
     useEffect(() => {
@@ -437,7 +426,7 @@ export default function Menu({ config: configProp }) {
                             gap: 12
                         }}>
                             {/* If category empty, show ghosts */}
-                            {category.items.length === 0 ? (
+                            {category.items?.length === 0 ? (
                                 <>
                                     <div style={{ height: 100, background: '#F3F4F6', borderRadius: 12 }}></div>
                                     <div style={{ height: 100, background: '#F3F4F6', borderRadius: 12 }}></div>
@@ -466,49 +455,52 @@ export default function Menu({ config: configProp }) {
                                             onMouseDown={isEditMode ? (e) => handleDragStart(e, category.id, item, index, category.items) : undefined}
                                             style={{
                                                 opacity: isHidden ? 0 : 1,
-                                                background: 'white',
-                                                borderRadius: 12,
-                                                padding: 12,
-                                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                                position: 'relative',
-                                                cursor: isEditMode ? 'grab' : 'default',
-                                                display: 'flex',
-                                                flexDirection: 'column', // Card style for grid?
-                                                // If 3 columns, small cards.
+                                                cursor: isEditMode ? 'grab' : 'pointer',
                                                 ...shakeStyle
                                             }}
                                         >
-                                            {/* Photo */}
+                                            {/* 1. Full-Width Image (Legacy Style) */}
                                             <div style={{
-                                                width: 60, height: 60,
-                                                borderRadius: 10,
-                                                background: '#F3F4F6',
-                                                marginBottom: 8,
+                                                width: '100%',
+                                                aspectRatio: '1',
+                                                borderRadius: 12,
                                                 overflow: 'hidden',
-                                                alignSelf: 'center'
+                                                background: '#F3F4F6',
+                                                marginBottom: 6,
+                                                position: 'relative' // For overlay
                                             }}>
                                                 {item.image ? (
-                                                    <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <img
+                                                        src={item.image}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        loading="lazy"
+                                                    />
                                                 ) : (
-                                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🍽️</div>
+                                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, opacity: 0.5 }}>🍽️</div>
+                                                )}
+
+                                                {/* Unavailable Overlay (Inside Image) */}
+                                                {!item.available && isOwnerMode && (
+                                                    <div style={{
+                                                        position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        fontSize: 11, fontWeight: 700, color: '#EF4444',
+                                                        border: '2px solid #EF4444'
+                                                    }}>
+                                                        AGOTADO
+                                                    </div>
                                                 )}
                                             </div>
-                                            {/* Info */}
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, lineHeight: 1.2 }}>{item.name}</div>
-                                                <div style={{ fontSize: 12, color: '#22C55E', fontWeight: 700 }}>${item.price?.toLocaleString()}</div>
-                                            </div>
 
-                                            {/* Unavailable Overlay */}
-                                            {!item.available && isOwnerMode && (
-                                                <div style={{
-                                                    position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    fontSize: 12, fontWeight: 700, color: '#EF4444'
-                                                }}>
-                                                    AGOTADO
+                                            {/* 2. Left-Aligned Details */}
+                                            <div style={{ lineHeight: 1.2 }}>
+                                                <div style={{ fontWeight: 500, fontSize: 13, color: '#111827', marginBottom: 2 }}>
+                                                    {item.name}
                                                 </div>
-                                            )}
+                                                <div style={{ fontSize: 12, color: '#6B7280' }}>
+                                                    ${item.price?.toLocaleString()}
+                                                </div>
+                                            </div>
                                         </div>
                                     )
                                 })
@@ -565,18 +557,13 @@ export default function Menu({ config: configProp }) {
                 }}>
                     {/* Visual Clone of Card */}
                     <div style={{
-                        width: 60, height: 60,
+                        width: '100%', aspectRatio: '1', // Clone size 
                         borderRadius: 10,
                         background: '#F3F4F6',
                         marginBottom: 8,
                         overflow: 'hidden'
                     }}>
-                        {/* We don't have item data easily here unless we pass it to state. 
-                             But we can cheat and minimal render or look up?
-                             Legacy code used `dragItemRef` to copy styles? No, it just rendered a box.
-                             Let's render a simple "Dragging..." if complex.
-                             Or assume grid layout style.
-                          */}
+                        {/* Simplified clone */}
                         <div style={{ width: '100%', height: '100%', background: '#eee' }}></div>
                     </div>
                     <div style={{ textAlign: 'center', width: '100%' }}>
