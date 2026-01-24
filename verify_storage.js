@@ -25,6 +25,16 @@ async function checkBucket() {
         if (listError) console.error('❌ Error listing files (RLS?):', listError.message)
         else console.log('✅ Can list files. Count:', listData.length)
 
+        // TEST UPLOAD
+        console.log('⚡ Testing Write Access...')
+        const testBlob = new Blob(['Cloud Solder Test'], { type: 'text/plain' })
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('menu-images')
+            .upload('solder_test.txt', testBlob, { upsert: true })
+
+        if (uploadError) console.error('❌ Upload Failed:', uploadError.message)
+        else console.log('✅ WRITE ACCESS CONFIRMED! File uploaded:', uploadData.path)
+
     } catch (err) {
         console.error('Unexpected error:', err)
     }
