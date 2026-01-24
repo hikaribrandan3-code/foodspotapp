@@ -138,104 +138,81 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0]
         if (!file) {
-            // Cancelled: reset intent
             activeFeaturedSlotRef.current = null
             return
         }
 
-        // 1. INSTANT PREVIEW (The "Color Editor" Feel)
-        // We create a fake URL from the local file so the user sees it IMMEDIATELY.
+        // 1. INSTANT PREVIEW (0ms Latency)
         const previewUrl = URL.createObjectURL(file)
-
-        // Update the UI immediately with the local preview
         const targetSlot = activeFeaturedSlotRef.current
 
+        // Render Blob Immediately
         if (targetSlot !== null) {
-            // OPTIMISTIC UPDATE FOR FEATURED SLOTS
             setLocalConfig(prev => {
                 const newFeatured = [...(prev.featuredPhotos || [])]
                 while (newFeatured.length <= targetSlot) newFeatured.push(null)
                 newFeatured[targetSlot] = {
                     ...(newFeatured[targetSlot] || { name: 'Cargando...', price: 0 }),
-                    image: previewUrl // Show local blob
+                    image: previewUrl
                 }
                 return { ...prev, featuredPhotos: newFeatured }
             })
         } else {
-            // OPTIMISTIC UPDATE FOR EDIT FORM
             setEditForm(prev => ({ ...prev, image: previewUrl }))
         }
 
-        setIsUploading(true) // Show subtle spinner/status if needed
+        setIsUploading(true)
 
         try {
-            // 2. THE BACKGROUND SOLDER (Upload to Cloud)
-            console.log('☁️ Uploading in background...')
+            // 2. BACKGROUND UPLOAD (Async)
+            // No compression = Fast upload
             const result = await processAndStoreImage(file)
 
-            // 3. FLICKER FIX: Preload the remote URL before swapping
-            // This ensures the browser has the image in cache so there's no "white flash"
-            await new Promise((resolve) => {
-                const img = new Image()
-                img.src = result.publicUrl
-                img.onload = resolve
-                img.onerror = resolve // Proceed even if load fails to avoid hanging
-            })
+            // 3. THE SILENT SWAP
+            // We removed the 'await new Promise' preload block.
+            // We trust the browser to handle the image swap seamlessly.
 
-            // 4. THE SWAP (Replace Blob with Real URL)
             if (targetSlot !== null) {
                 setLocalConfig(prevConfig => {
                     const currentFeatured = [...(prevConfig.featuredPhotos || [])]
-                    // Create the final object with the REAL Cloud URL
                     currentFeatured[targetSlot] = {
                         name: 'Destacado',
                         price: 0,
-                        image: result.publicUrl // <--- The Permanent Link
+                        image: result.publicUrl // Permanent Link
                     }
-
                     const newConfig = { ...prevConfig, featuredPhotos: currentFeatured }
 
-                    // NOW we save to the database
+                    // Sync to DB
                     updateConfig(newConfig)
                     window.dispatchEvent(new CustomEvent('frontendSync'))
                     syncConfigToCloud(newConfig)
                     return newConfig
                 })
-                setUploadStatus({ success: true, message: '✔ Guardado en la nube' })
+                setUploadStatus({ success: true, message: '✔ Guardado' })
             } else {
-                // For normal menu items, update the form with the real URL
-                // so when they click "Guardar", it saves the valid link.
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
-                setUploadStatus({ success: true, message: '✔ Listo para guardar' })
+                setUploadStatus({ success: true, message: '✔ Listo' })
             }
 
         } catch (error) {
             console.error('Upload failed:', error)
+            setUploadStatus({ success: false, message: 'Error de subida' })
 
             // REVERT OPTIMISTIC UPDATE
-            const targetSlot = activeFeaturedSlotRef.current
             if (targetSlot !== null) {
                 setLocalConfig(prev => {
                     const newFeatured = [...(prev.featuredPhotos || [])]
-                    // If we added a slot just for this, we could pop it, but simpler to just null it or restore old logic
-                    // Here we mark it as error or revert to null if it was new
                     if (newFeatured[targetSlot]?.name === 'Cargando...') {
-                        newFeatured[targetSlot] = null // Remove the failed optimistic item
+                        newFeatured[targetSlot] = null
                     }
                     return { ...prev, featuredPhotos: newFeatured }
                 })
             } else {
-                // Revert Normal Edit Form
                 setEditForm(prev => ({ ...prev, image: null }))
             }
-
-            setUploadStatus({
-                success: false,
-                message: error.message || 'Error de subida (Intenta de nuevo)'
-            })
         } finally {
             setIsUploading(false)
-            setInputKey(prev => prev + 1) // Reset input
+            setInputKey(prev => prev + 1)
             activeFeaturedSlotRef.current = null
         }
     }
