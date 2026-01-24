@@ -1,0 +1,15 @@
+/* Visual Sauce for Empty Menu Boxes */
+.empty-box {
+    cursor: pointer !important;
+    transition: transform 0.1s ease;
+}
+
+.empty-box:active {
+    transform: scale(0.95);
+}
+
+/* Ensure the text inside doesn't block pointer events */
+.empty-box span {
+    pointer-events: none;
+    user-select: none;
+}
