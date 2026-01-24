@@ -56,9 +56,12 @@ export async function processAndStoreImage(file) {
     try {
         if (!file) throw new Error('No file provided');
 
-        // 1. COMPRESSION STAGE (Speed Boost)
-        // Skip compression for GIFs or SVGs to preserve animation/vectors
-        const needsCompression = file.type.startsWith('image/') && !file.type.includes('gif') && !file.type.includes('svg');
+        // 1. COMPRESSION STAGE (Adaptive Speed)
+        // Skip for GIFs/SVGs. ONLY compress if > 1.5MB to save CPU time on mobile.
+        const needsCompression = file.size > 1.5 * 1024 * 1024 && // 1.5MB Threshold
+            file.type.startsWith('image/') &&
+            !file.type.includes('gif') &&
+            !file.type.includes('svg');
 
         let blobToUpload = file;
         let fileExt = file.name.split('.').pop();

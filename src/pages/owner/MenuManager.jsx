@@ -173,7 +173,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
             console.log('☁️ Uploading in background...')
             const result = await processAndStoreImage(file)
 
-            // 3. THE SWAP (Replace Blob with Real URL)
+            // 3. FLICKER FIX: Preload the remote URL before swapping
+            // This ensures the browser has the image in cache so there's no "white flash"
+            await new Promise((resolve) => {
+                const img = new Image()
+                img.src = result.publicUrl
+                img.onload = resolve
+                img.onerror = resolve // Proceed even if load fails to avoid hanging
+            })
+
+            // 4. THE SWAP (Replace Blob with Real URL)
             if (targetSlot !== null) {
                 setLocalConfig(prevConfig => {
                     const currentFeatured = [...(prevConfig.featuredPhotos || [])]
