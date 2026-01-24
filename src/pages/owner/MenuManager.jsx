@@ -7,6 +7,7 @@ import { updateConfig } from '../../config/appConfig.v2.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import './MenuStyles.css'
@@ -23,8 +24,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
 
-    const currentUser = getAuth()
-    const targetBusinessId = isSimulated ? impersonatingBusinessId : currentUser?.businessId
+    // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
+    const { businessId: tenantBusinessId } = useTenant()
+    const targetBusinessId = isSimulated ? impersonatingBusinessId : tenantBusinessId
 
     const [menu, setMenu] = useState(() => getMenu(targetBusinessId))
     // REMOVED: const [config, setConfig] = useState(() => getConfig())
@@ -72,8 +74,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // --- CLOUD SOLDER: Sync Logic ---
     const syncMenuToCloud = async (updatedMenu) => {
-        const auth = getAuth()
-        const businessId = isSimulated ? impersonatingBusinessId : auth?.businessId
+        // Use the resolved targetBusinessId (from TenantContext or AdminIntent)
+        const businessId = targetBusinessId
 
         if (!businessId) {
             console.error('CRITICAL: Cannot sync to cloud - No Business ID')
@@ -100,8 +102,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // --------------------------------
 
     const syncConfigToCloud = async (updatedConfig) => {
-        const auth = getAuth()
-        const businessId = isSimulated ? impersonatingBusinessId : auth?.businessId
+        const businessId = targetBusinessId
 
         if (!businessId) return
 
