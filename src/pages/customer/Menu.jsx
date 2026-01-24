@@ -12,6 +12,7 @@ import { useBusinessId } from '../../contexts/TenantContext.jsx'
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 // Set to false to disable auto-scroll and revert to 2A behavior
 const ENABLE_AUTO_SCROLL = true
+import { MenuSkeleton } from '../../components/Shimmers.jsx'
 
 // Auto-scroll config
 const AUTO_SCROLL_ZONE_PERCENT = 0.10 // Top/bottom 10% of viewport
@@ -582,19 +583,11 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
         return placeholderImages[stableIndex % placeholderImages.length]
     }
 
-    // 3. CRASH PROTECTION: This gate prevents the white screen
+
+
+    // 3. CRASH PROTECTION: Load Skeleton instead of White Screen
     if (!businessId || isLoading) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-[#000000]">
-                <div className="text-center">
-                    {/* Professional Loader: Replaces the White Screen */}
-                    <div className="w-10 h-10 border-4 border-[#DB0007] border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
-                    <p className="text-white uppercase tracking-tighter font-bold animate-pulse">
-                        Configuring Store Silo...
-                    </p>
-                </div>
-            </div>
-        );
+        return <MenuSkeleton />
     }
 
     return (
@@ -629,6 +622,36 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                     <span style={{ fontSize: 14 }}>🛵</span>
                     <span>Envíos</span>
                 </div>
+            )}
+
+            {/* OWNER PILL (FLOATING ACTION BUTTON) */}
+            {isOwnerMode && !isEditMode && (
+                <button
+                    onClick={() => setIsEditMode(true)}
+                    style={{
+                        position: 'fixed',
+                        bottom: 100, // Above bottom nav
+                        right: 20,
+                        zIndex: 900,
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        background: '#3B82F6', // Blue for owner
+                        color: 'white',
+                        border: 'none',
+                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                    }}
+                    onTouchStart={e => e.currentTarget.style.transform = 'scale(0.9)'}
+                    onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    ✏️
+                </button>
             )}
 
             {/* Edit Mode Done Button (Owner only) */}
@@ -839,10 +862,11 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                                                 <div style={{
                                                     width: '100%',
                                                     aspectRatio: '1',
-                                                    borderRadius: 12,
+                                                    borderRadius: 10, // SYNC: 10px Rounded Corners
                                                     overflow: 'hidden',
                                                     background: '#E8E4DD',
-                                                    marginBottom: 8
+                                                    marginBottom: 8,
+                                                    position: 'relative' // For drag handle
                                                 }}>
                                                     <img
                                                         src={getItemImage(item)}
@@ -857,6 +881,20 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                                                             e.target.style.display = 'none'
                                                         }}
                                                     />
+
+                                                    {/* DRAG HANDLE OVERLAY (Owner Mode) */}
+                                                    {isEditMode && (
+                                                        <div style={{
+                                                            position: 'absolute',
+                                                            inset: 0,
+                                                            background: 'rgba(0,0,0,0.1)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}>
+                                                            <span style={{ fontSize: 24 }}>✋</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 {/* Item Name */}
                                                 <p style={{
@@ -899,6 +937,7 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                     zIndex: 100,
                     boxShadow: '0 -2px 12px rgba(0,0,0,0.06)'
                 }}>
+                    {/* ... existing cart content ... */}
                     {/* Receipt Header */}
                     <div style={{
                         fontSize: 11,
@@ -942,7 +981,7 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                                             borderRadius: 6,
                                             border: '1px solid #E0DDD7',
                                             background: '#FDFCFA',
-                                            color: '#8B8680',
+                                            color: 'white',
                                             fontSize: 14,
                                             cursor: 'pointer',
                                             display: 'flex',
@@ -998,6 +1037,7 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                     </button>
                 </div>
             )}
+
 
             {/* Floating Drag Card */}
             {dragState && (() => {
