@@ -38,6 +38,40 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setLocalConfig(config)
     }, [config])
 
+    // =========================================================
+    // 🚀 AUTO-MIGRATION: LOCAL -> CLOUD (THE "BRIDGE")
+    // If we have local data but Cloud is empty, PUSH IT UP.
+    // =========================================================
+    const { tenantData, isLoaded: tenantLoaded } = useTenant() // Get Cloud Data
+    useEffect(() => {
+        if (!tenantBusinessId || !tenantLoaded) return
+
+        const migrateIfNeeded = async () => {
+            // 1. MENU MIGRATION
+            // If Cloud Menu is empty AND Local Menu has items
+            const cloudMenuEmpty = !tenantData?.menu_data?.categories?.length
+            const localHasItems = menu?.categories?.length > 0
+
+            if (cloudMenuEmpty && localHasItems) {
+                console.log('🚀 MIGRATION: Auto-Uploading Local Menu to Cloud...')
+                await syncMenuToCloud(menu)
+            }
+
+            // 2. CONFIG MIGRATION (Cover Image, etc)
+            // If Cloud Config is emptyish AND Local Config works
+            const cloudConfigEmpty = !tenantData?.app_config?.headerCover?.image
+            const localHasConfig = !!localConfig?.headerCover?.image
+
+            if (cloudConfigEmpty && localHasConfig) {
+                console.log('🚀 MIGRATION: Auto-Uploading Local Config to Cloud...')
+                await syncConfigToCloud(localConfig)
+            }
+        }
+
+        migrateIfNeeded()
+    }, [tenantBusinessId, tenantLoaded, tenantData])
+    // =========================================================
+
     const [editingItem, setEditingItem] = useState(null)
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
     const [uploadStatus, setUploadStatus] = useState(null)

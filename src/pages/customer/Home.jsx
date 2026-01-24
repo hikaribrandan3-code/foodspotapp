@@ -862,7 +862,7 @@ function Home({ config: configProp }) {
                                         handleLongPressEnd(e)
                                     }
                                 }}
-                                onClick={(e) => handleTileClick(e, '/menu')}
+                                onClick={(e) => handleTileClick(e, 'menu')}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...cardStyle,
@@ -879,7 +879,7 @@ function Home({ config: configProp }) {
                     return (
                         <Link
                             key={item.id}
-                            to="/menu"
+                            to={`/${tenantSlug}/menu`}
                             style={cardStyle}
                         >
                             {cardContent}
