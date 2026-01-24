@@ -202,8 +202,28 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
         } catch (error) {
             console.error('Upload failed:', error)
-            setUploadStatus({ success: false, message: 'Error de subida' })
-            // Optional: Revert preview if needed, or let user try again
+
+            // REVERT OPTIMISTIC UPDATE
+            const targetSlot = activeFeaturedSlotRef.current
+            if (targetSlot !== null) {
+                setLocalConfig(prev => {
+                    const newFeatured = [...(prev.featuredPhotos || [])]
+                    // If we added a slot just for this, we could pop it, but simpler to just null it or restore old logic
+                    // Here we mark it as error or revert to null if it was new
+                    if (newFeatured[targetSlot]?.name === 'Cargando...') {
+                        newFeatured[targetSlot] = null // Remove the failed optimistic item
+                    }
+                    return { ...prev, featuredPhotos: newFeatured }
+                })
+            } else {
+                // Revert Normal Edit Form
+                setEditForm(prev => ({ ...prev, image: null }))
+            }
+
+            setUploadStatus({
+                success: false,
+                message: error.message || 'Error de subida (Intenta de nuevo)'
+            })
         } finally {
             setIsUploading(false)
             setInputKey(prev => prev + 1) // Reset input
