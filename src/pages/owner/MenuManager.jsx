@@ -30,6 +30,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // REMOVED: const [config, setConfig] = useState(() => getConfig())
     // Config now comes from props
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
+
+    // SYNC: Ensure localConfig updates when parent config changes (e.g. initial load)
+    useEffect(() => {
+        setLocalConfig(config)
+    }, [config])
+
     const [editingItem, setEditingItem] = useState(null)
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
     const [uploadStatus, setUploadStatus] = useState(null)
@@ -150,24 +156,29 @@ function MenuManager({ config: configProp, demoMode = false }) {
             const targetSlot = activeFeaturedSlotRef.current
 
             if (targetSlot !== null) {
-                const currentFeatured = [...(localConfig.featuredPhotos || [])]
-                // Ensure array has size up to the target index if sparse
-                while (currentFeatured.length <= targetSlot) {
-                    currentFeatured.push(null)
-                }
+                // FUNCTIONAL UPDATE: Avoid stale closure issues with localConfig
+                setLocalConfig(prevConfig => {
+                    const currentFeatured = [...(prevConfig.featuredPhotos || [])]
+                    // Ensure array has size up to the target index if sparse
+                    while (currentFeatured.length <= targetSlot) {
+                        currentFeatured.push(null)
+                    }
 
-                // Create new generic featured item
-                currentFeatured[targetSlot] = {
-                    name: 'Destacado',
-                    price: 0,
-                    image: result.dataURI
-                }
+                    // Create new generic featured item
+                    currentFeatured[targetSlot] = {
+                        name: 'Destacado',
+                        price: 0,
+                        image: result.dataURI
+                    }
 
-                const newConfig = { ...localConfig, featuredPhotos: currentFeatured }
-                updateConfig(newConfig)
-                setLocalConfig(newConfig)
-                window.dispatchEvent(new CustomEvent('frontendSync'))
-                syncConfigToCloud(newConfig) // ☁️ Cloud Sync
+                    const newConfig = { ...prevConfig, featuredPhotos: currentFeatured }
+
+                    // Side Effects (Fire and Forget)
+                    updateConfig(newConfig)
+                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                    syncConfigToCloud(newConfig)
+                    return newConfig
+                })
 
                 setUploadStatus({
                     success: true,
