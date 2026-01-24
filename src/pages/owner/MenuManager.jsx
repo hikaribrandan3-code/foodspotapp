@@ -138,75 +138,76 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0]
         if (!file) {
-            console.log('No file selected')
-            // If we canceled, reset the slot intent
+            // Cancelled: reset intent
             activeFeaturedSlotRef.current = null
             return
         }
 
-        console.log('Starting image upload:', file.name, file.type, file.size)
-        setIsUploading(true)
-        setUploadStatus(null)
+        // 1. INSTANT PREVIEW (The "Color Editor" Feel)
+        // We create a fake URL from the local file so the user sees it IMMEDIATELY.
+        const previewUrl = URL.createObjectURL(file)
+
+        // Update the UI immediately with the local preview
+        const targetSlot = activeFeaturedSlotRef.current
+
+        if (targetSlot !== null) {
+            // OPTIMISTIC UPDATE FOR FEATURED SLOTS
+            setLocalConfig(prev => {
+                const newFeatured = [...(prev.featuredPhotos || [])]
+                while (newFeatured.length <= targetSlot) newFeatured.push(null)
+                newFeatured[targetSlot] = {
+                    ...(newFeatured[targetSlot] || { name: 'Cargando...', price: 0 }),
+                    image: previewUrl // Show local blob
+                }
+                return { ...prev, featuredPhotos: newFeatured }
+            })
+        } else {
+            // OPTIMISTIC UPDATE FOR EDIT FORM
+            setEditForm(prev => ({ ...prev, image: previewUrl }))
+        }
+
+        setIsUploading(true) // Show subtle spinner/status if needed
 
         try {
+            // 2. THE BACKGROUND SOLDER (Upload to Cloud)
+            console.log('☁️ Uploading in background...')
             const result = await processAndStoreImage(file)
-            console.log('Image uploaded successfully:', result.publicUrl)
 
-            // BRANCH: Featured Slot Direct Upload
-            const targetSlot = activeFeaturedSlotRef.current
-
+            // 3. THE SWAP (Replace Blob with Real URL)
             if (targetSlot !== null) {
-                // FUNCTIONAL UPDATE: Avoid stale closure issues with localConfig
                 setLocalConfig(prevConfig => {
                     const currentFeatured = [...(prevConfig.featuredPhotos || [])]
-                    // Ensure array has size up to the target index if sparse
-                    while (currentFeatured.length <= targetSlot) {
-                        currentFeatured.push(null)
-                    }
-
-                    // Create new generic featured item
+                    // Create the final object with the REAL Cloud URL
                     currentFeatured[targetSlot] = {
                         name: 'Destacado',
                         price: 0,
-                        image: result.publicUrl
+                        image: result.publicUrl // <--- The Permanent Link
                     }
 
                     const newConfig = { ...prevConfig, featuredPhotos: currentFeatured }
 
-                    // Side Effects (Fire and Forget)
+                    // NOW we save to the database
                     updateConfig(newConfig)
                     window.dispatchEvent(new CustomEvent('frontendSync'))
                     syncConfigToCloud(newConfig)
                     return newConfig
                 })
-
-                setUploadStatus({
-                    success: true,
-                    message: '✔ Foto destacada actualizada'
-                })
-                activeFeaturedSlotRef.current = null // Reset intent
+                setUploadStatus({ success: true, message: '✔ Guardado en la nube' })
             } else {
-                // BRANCH: Normal Menu Item Edit
+                // For normal menu items, update the form with the real URL
+                // so when they click "Guardar", it saves the valid link.
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
-                setUploadStatus({
-                    success: true,
-                    message: `✔ Imagen subida correctamente`
-                })
+                setUploadStatus({ success: true, message: '✔ Listo para guardar' })
             }
+
         } catch (error) {
-            console.error('Image upload error:', error)
-            setUploadStatus({
-                success: false,
-                message: error.message || 'Error al procesar imagen'
-            })
-            activeFeaturedSlotRef.current = null
+            console.error('Upload failed:', error)
+            setUploadStatus({ success: false, message: 'Error de subida' })
+            // Optional: Revert preview if needed, or let user try again
         } finally {
             setIsUploading(false)
-
-            // PHOENIX PATTERN: Force React to unmount/remount the input
-            // This clears Safari/Chrome internal file caches that .value='' doesn't reach
-            setInputKey(prev => prev + 1)
-            console.log('File input phoenix reset (key incremented)')
+            setInputKey(prev => prev + 1) // Reset input
+            activeFeaturedSlotRef.current = null
         }
     }
 
