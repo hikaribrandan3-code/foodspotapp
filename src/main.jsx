@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 
+// Core Imports (Static to prevent ChunkLoadError on mobile)
+import { TenantProvider } from './contexts/TenantContext.jsx'
+import App from './App.jsx'
+
 // =============================================================================
 // DEV CLEANUP: Force unregister stale PWA Service Workers
 // =============================================================================
@@ -18,17 +22,17 @@ if ('serviceWorker' in navigator) {
         } else {
             console.log('✅ [Dev] No stale Service Workers found.')
         }
-    })
+    }).catch(err => console.warn('SW Cleanup failed:', err))
 }
 
 // =============================================================================
-// 🛡️ STRICT BIFURCATION: Physically separate Admin and Tenant runtimes
+// 🛡️ STRICT BIFURCATION: Admin vs Tenant
 // =============================================================================
 const path = window.location.pathname
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
-// 🚨 SYSTEM ERROR UI: Fallback if dynamic imports fail
-const renderSystemError = (message) => {
+// 🚨 SYSTEM ERROR UI: Global Error Boundary
+const renderSystemError = (message, details = null) => {
     root.render(
         <div style={{
             display: 'flex',
@@ -46,6 +50,20 @@ const renderSystemError = (message) => {
             <div style={{ fontSize: '48px' }}>⚠️</div>
             <div style={{ fontSize: '18px', fontWeight: 600 }}>System Error</div>
             <div style={{ opacity: 0.7, maxWidth: '400px' }}>{message}</div>
+            {details && (
+                <div style={{
+                    fontSize: '11px',
+                    opacity: 0.5,
+                    background: 'rgba(0,0,0,0.2)',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    maxWidth: '100%',
+                    wordBreak: 'break-all'
+                }}>
+                    {details}
+                </div>
+            )}
             <button
                 onClick={() => window.location.reload()}
                 style={{
@@ -65,6 +83,15 @@ const renderSystemError = (message) => {
     )
 }
 
+// 🛡️ GLOBAL ERROR TRAP (Catches top-level crashes)
+window.addEventListener('error', (event) => {
+    console.error('🔥 CRITICAL: Top-level error caught:', event.error);
+    // Only hijack if the root is empty (app hasn't started)
+    if (!document.getElementById('root')?.hasChildNodes()) {
+        renderSystemError('Critical Application Failure', event.error?.message || 'Unknown Error');
+    }
+});
+
 if (path.startsWith('/admin')) {
     // =====================================================================
     // 🛡️ ADMIN MODE: Render ONLY the Admin System
@@ -72,7 +99,7 @@ if (path.startsWith('/admin')) {
     // =====================================================================
     console.log('🛡️ [main.jsx] ADMIN MODE - Bypassing TenantProvider')
 
-    // Dynamically import AdminApp to avoid any tenant code loading
+    // Dynamically import AdminApp to avoid loading tenant logic
     import('./AdminApp.jsx').then(({ default: AdminApp }) => {
         root.render(
             <React.StrictMode>
@@ -83,19 +110,15 @@ if (path.startsWith('/admin')) {
         )
     }).catch(err => {
         console.error('❌ Failed to load AdminApp:', err)
-        renderSystemError('Failed to load Admin Panel. Please check your connection and try again.')
+        renderSystemError('Failed to load Admin Panel. Please check your connection.', err.message)
     })
 } else {
     // =====================================================================
     // 🍔 TENANT MODE: Render the standard SaaS App with TenantProvider
     // =====================================================================
-    console.log('🍔 [main.jsx] TENANT MODE - Loading Full App with TenantProvider')
+    console.log('🍔 [main.jsx] TENANT MODE - Standard Load')
 
-    // 🛡️ FIX 1: Wrapped in .catch() to prevent white screen on import failure
-    Promise.all([
-        import('./contexts/TenantContext.jsx'),
-        import('./App.jsx')
-    ]).then(([{ TenantProvider }, { default: App }]) => {
+    try {
         root.render(
             <React.StrictMode>
                 <BrowserRouter>
@@ -105,8 +128,8 @@ if (path.startsWith('/admin')) {
                 </BrowserRouter>
             </React.StrictMode>
         )
-    }).catch(err => {
-        console.error('❌ Failed to load Application Core:', err)
-        renderSystemError('Failed to load application core. Please check your connection and try again.')
-    })
+    } catch (err) {
+        console.error('❌ Failed to mount Application:', err)
+        renderSystemError('Failed to initialize application.', err.message)
+    }
 }
