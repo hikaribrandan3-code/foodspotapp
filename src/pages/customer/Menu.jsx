@@ -125,11 +125,18 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
     }, [deliveryModeProp])
 
     // PERF: Memoized to prevent filter-on-every-render leak (v5 Audit)
+    // OWNER-AWARE: Owners see ALL items (even hidden ones) to allow editing
     const enabledCategories = useMemo(() => {
-        return menu.categories.filter(cat =>
-            cat.enabled !== false && cat.items.some(item => item.available)
-        )
-    }, [menu.categories])
+        return menu.categories.filter(cat => {
+            if (isOwnerMode) return true // Show all categories to owner
+            return cat.enabled !== false && cat.items.some(item => item.available)
+        })
+    }, [menu.categories, isOwnerMode])
+
+    const activeCategories = useMemo(() => {
+        if (isOwnerMode) return menu.categories
+        return enabledCategories
+    }, [menu.categories, enabledCategories, isOwnerMode])
 
     const [activeCategory, setActiveCategory] = useState(enabledCategories[0]?.id || '')
 
@@ -574,11 +581,13 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
     }
 
     const getItemImage = (item) => {
-        // 1. If real image exists, use it (This is why Flat White worked)
+        // 1. If real image exists, use it
         if (item.image) return item.image
 
-        // 2. If no image, generate STABLE placeholder based on ID
-        // DO NOT use 'index' here - that caused the identity crisis
+        // 2. BRANDED FALLBACK: Use store logo if available
+        if (config?.logo) return config.logo
+
+        // 3. If no logo, generate STABLE generic placeholder
         const stableIndex = getStableIndex(item.id)
         return placeholderImages[stableIndex % placeholderImages.length]
     }
@@ -779,6 +788,25 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                 </div>
             )}
 
+            {/* Empty State */}
+            {!isLoading && enabledCategories.length === 0 && (
+                <div style={{
+                    padding: '60px 24px',
+                    textAlign: 'center',
+                    color: '#9CA3AF'
+                }}>
+                    <div style={{ fontSize: 40, marginBottom: 16 }}>🍽️</div>
+                    <h3 style={{ fontSize: 18, fontWeight: 600, color: '#374151', marginBottom: 8 }}>
+                        {isOwnerMode ? 'El menú está vacío' : 'Menú en preparación'}
+                    </h3>
+                    <p style={{ fontSize: 14 }}>
+                        {isOwnerMode
+                            ? 'Usa el panel de administrador para agregar categorías y productos.'
+                            : 'Estamos preparando platos deliciosos. ¡Vuelve pronto!'}
+                    </p>
+                </div>
+            )}
+
             {/* Menu Content - All Categories */}
             <div style={{ padding: '0 16px' }}>
                 {enabledCategories.map(category => (
@@ -800,7 +828,12 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
 
                         {/* 3-Column Grid */}
                         {(() => {
-                            const availableItems = category.items.filter(item => item.available)
+                            // OWNER-AWARE: Show hidden items to owner
+                            const availableItems = category.items.filter(item => {
+                                if (isOwnerMode) return true
+                                return item.available
+                            })
+
                             const isDraggingInCategory = dragState?.categoryId === category.id
 
                             return (
