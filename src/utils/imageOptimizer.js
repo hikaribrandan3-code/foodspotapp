@@ -100,15 +100,41 @@ function loadImage(file) {
     })
 }
 
+// --- SUPABASE STORAGE ---
+import { supabase } from '../lib/supabaseClient.js'
+import { getAuth } from '../utils/storage.js'
+
 /**
- * Convert blob to base64 data URI for storage
+ * Upload optimized blob to Supabase Storage
  */
-export async function blobToDataURI(blob) {
-    return new Promise((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result)
-        reader.readAsDataURL(blob)
-    })
+async function uploadToSupabase(blob) {
+    const auth = getAuth()
+    const businessId = auth?.businessId || 'anon'
+    const timestamp = Date.now()
+    const random = Math.round(Math.random() * 10000)
+    const filename = `${businessId}/${timestamp}-${random}.webp`
+
+    console.log('Uploading to Supabase:', filename)
+
+    const { data, error } = await supabase.storage
+        .from('menu-images')
+        .upload(filename, blob, {
+            cacheControl: '31536000',
+            upsert: false,
+            contentType: 'image/webp'
+        })
+
+    if (error) {
+        console.error('Supabase upload error:', error)
+        throw error
+    }
+
+    // Get Public URL
+    const { data: { publicUrl } } = supabase.storage
+        .from('menu-images')
+        .getPublicUrl(filename)
+
+    return publicUrl
 }
 
 /**
@@ -122,14 +148,17 @@ export function formatFileSize(bytes) {
 
 /**
  * Process and store an optimized image
- * Returns a data URI ready for storage
+ * Returns a Public URL from Supabase
  */
 export async function processAndStoreImage(file) {
     const result = await optimizeImage(file)
-    const dataURI = await blobToDataURI(result.blob)
+
+    // OLD: const dataURI = await blobToDataURI(result.blob)
+    // NEW: Upload to Supabase
+    const publicUrl = await uploadToSupabase(result.blob)
 
     return {
-        dataURI,
+        dataURI: publicUrl, // Keep property name 'dataURI' for compatibility, but value is URL
         originalSize: result.originalSize,
         optimizedSize: result.optimizedSize,
         width: result.width,

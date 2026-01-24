@@ -34,6 +34,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
+    const [activeFeaturedSlot, setActiveFeaturedSlot] = useState(null) // New: Track which top slot is tapped
     const fileInputRef = useRef(null)
 
     // PHOENIX PATTERN: Key-based input reset for mobile browsers
@@ -61,6 +62,55 @@ function MenuManager({ config: configProp, demoMode = false }) {
         window.location.href = demoMode ? '/' : `/${tenantSlug}`
     }
 
+    // --- CLOUD SOLDER: Sync Logic ---
+    const syncMenuToCloud = async (updatedMenu) => {
+        const auth = getAuth()
+        const businessId = isSimulated ? impersonatingBusinessId : auth?.businessId
+
+        if (!businessId) {
+            console.error('CRITICAL: Cannot sync to cloud - No Business ID')
+            return
+        }
+
+        console.log('☁️ Syncing Menu to Supabase...')
+        const { error } = await supabase
+            .from('branding')
+            .upsert({
+                tenant_id: businessId,
+                menu_data: updatedMenu,
+                updated_at: new Date()
+            }, {
+                onConflict: 'tenant_id'
+            })
+
+        if (error) {
+            console.error('❌ Cloud Sync Failed:', error)
+        } else {
+            console.log('✅ Cloud Sync Validated')
+        }
+    }
+    // --------------------------------
+
+    const syncConfigToCloud = async (updatedConfig) => {
+        const auth = getAuth()
+        const businessId = isSimulated ? impersonatingBusinessId : auth?.businessId
+
+        if (!businessId) return
+
+        console.log('☁️ Syncing Config to Supabase...')
+        const { error } = await supabase
+            .from('branding')
+            .upsert({
+                tenant_id: businessId,
+                app_config: updatedConfig,
+                updated_at: new Date()
+            }, {
+                onConflict: 'tenant_id'
+            })
+
+        if (error) console.error('❌ Cloud Config Sync Failed:', error)
+    }
+
     const handleEdit = (categoryId, item) => {
         setEditingItem({ categoryId, itemId: item.id })
         setEditForm({ name: item.name, price: item.price.toString(), image: item.image || null })
@@ -82,6 +132,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const file = e.target.files?.[0]
         if (!file) {
             console.log('No file selected')
+            // If we canceled, reset the slot intent
+            if (activeFeaturedSlot !== null) setActiveFeaturedSlot(null)
             return
         }
 
@@ -92,17 +144,48 @@ function MenuManager({ config: configProp, demoMode = false }) {
         try {
             const result = await processAndStoreImage(file)
             console.log('Image processed successfully:', result.optimizedSize)
-            setEditForm(prev => ({ ...prev, image: result.dataURI }))
-            setUploadStatus({
-                success: true,
-                message: `✔ Imagen optimizada: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
-            })
+
+            // BRANCH: Featured Slot Direct Upload
+            if (activeFeaturedSlot !== null) {
+                const currentFeatured = [...(localConfig.featuredPhotos || [])]
+                // Ensure array has size up to the target index if sparse
+                while (currentFeatured.length <= activeFeaturedSlot) {
+                    currentFeatured.push(null)
+                }
+
+                // Create new generic featured item
+                currentFeatured[activeFeaturedSlot] = {
+                    name: 'Destacado',
+                    price: 0,
+                    image: result.dataURI
+                }
+
+                const newConfig = { ...localConfig, featuredPhotos: currentFeatured }
+                updateConfig(newConfig)
+                setLocalConfig(newConfig)
+                window.dispatchEvent(new CustomEvent('frontendSync'))
+                syncConfigToCloud(newConfig) // ☁️ Cloud Sync
+
+                setUploadStatus({
+                    success: true,
+                    message: '✔ Foto destacada actualizada'
+                })
+                setActiveFeaturedSlot(null) // Reset intent
+            } else {
+                // BRANCH: Normal Menu Item Edit
+                setEditForm(prev => ({ ...prev, image: result.dataURI }))
+                setUploadStatus({
+                    success: true,
+                    message: `✔ Imagen optimizada: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.optimizedSize)}`
+                })
+            }
         } catch (error) {
             console.error('Image upload error:', error)
             setUploadStatus({
                 success: false,
                 message: error.message || 'Error al procesar imagen'
             })
+            if (activeFeaturedSlot !== null) setActiveFeaturedSlot(null)
         } finally {
             setIsUploading(false)
 
@@ -128,6 +211,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 }
                 saveMenu(updatedMenu)
                 setMenu(updatedMenu)
+                syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
             }
         }
         setEditingItem(null)
@@ -143,24 +227,31 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 item.available = !item.available
                 saveMenu(updatedMenu)
                 setMenu(updatedMenu)
+                syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
             }
         }
     }
 
     const handleSetFeatured = (categoryId, itemId) => {
         setFeaturedItem(categoryId, itemId)
-        setMenu(getMenu(targetBusinessId))
+        const updatedMenu = getMenu(targetBusinessId) // Re-fetch updated state
+        setMenu(updatedMenu)
+        syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
     }
 
     const handleToggleCategory = (categoryId) => {
         toggleCategoryEnabled(categoryId)
-        setMenu(getMenu(targetBusinessId))
+        const updatedMenu = getMenu(targetBusinessId) // Re-fetch updated state
+        setMenu(updatedMenu)
+        syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
     }
 
     const handleRenameCategory = (categoryId) => {
         if (editingCategory && editingCategory.name.trim()) {
             updateCategory(categoryId, { name: editingCategory.name.trim() })
-            setMenu(getMenu(targetBusinessId))
+            const updatedMenu = getMenu(targetBusinessId) // Re-fetch updated state
+            setMenu(updatedMenu)
+            syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
         }
         setEditingCategory(null)
     }
@@ -169,7 +260,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const handleRemoveItem = (categoryId, item) => {
         if (confirm(`¿Eliminar ítem "${item.name}"?`)) {
             removeMenuItem(categoryId, item.id)
-            setMenu(getMenu(targetBusinessId))
+            const updatedMenu = getMenu(targetBusinessId) // Re-fetch updated state
+            setMenu(updatedMenu)
+            syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
         }
     }
 
@@ -180,7 +273,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
             image: null
         }
         addMenuItem(categoryId, newItem)
-        setMenu(getMenu(targetBusinessId))
+        const updatedMenu = getMenu(targetBusinessId) // Re-fetch updated state
+        setMenu(updatedMenu)
+        syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
         // Optionally auto-open edit modal for the new item.
         // For now, we leave it as created. 
         // To do auto-open we need to know the ID, but addMenuItem returns it.
@@ -216,7 +311,20 @@ function MenuManager({ config: configProp, demoMode = false }) {
         updateConfig(newConfig)
         setLocalConfig(newConfig)
         window.dispatchEvent(new CustomEvent('frontendSync'))
+        syncConfigToCloud(newConfig) // ☁️ Cloud Sync
     }
+
+    // --- DIRECT FEATURED UPLOAD LOGIC ---
+    const handleFeaturedTap = (index) => {
+        const slot = activeFeaturedItems[index]
+        // If empty, trigger upload
+        if (!slot) {
+            setActiveFeaturedSlot(index)
+            // SYNC EXECUTION: Mobile-UX Protocol
+            fileInputRef.current?.click()
+        }
+    }
+    // ------------------------------------
     // -----------------------------------------------------
 
     return (
@@ -406,17 +514,21 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     {[0, 1, 2, 3].map(i => {
                         const slot = activeFeaturedItems[i]
                         return (
-                            <div key={i} style={{
-                                aspectRatio: '1/1',
-                                background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
-                                borderRadius: 10,
-                                border: '1px dashed #CBD5E1',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                position: 'relative',
-                                overflow: 'hidden'
-                            }}>
+                            <div
+                                key={i}
+                                onClick={() => handleFeaturedTap(i)}
+                                className={!slot ? "empty-box" : ""}
+                                style={{
+                                    aspectRatio: '1/1',
+                                    background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
+                                    borderRadius: 10,
+                                    border: '1px dashed #CBD5E1',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}>
                                 {slot ? (
                                     <>
                                         <div style={{
@@ -434,7 +546,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             {slot.name}
                                         </div>
                                         <button
-                                            onClick={() => handleToggleFeatured(slot)}
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleToggleFeatured(slot)
+                                            }}
                                             style={{
                                                 position: 'absolute',
                                                 top: 2, right: 2,
@@ -452,7 +567,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         </button>
                                     </>
                                 ) : (
-                                    <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center' }}>Vacío</span>
+                                    <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center', pointerEvents: 'none' }}>Vacío</span>
                                 )}
                             </div>
                         )
@@ -533,7 +648,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 onClick={() => {
                                     if (newCategoryName.trim()) {
                                         addCategory(newCategoryName.trim(), newCategoryIcon || '📦')
-                                        setMenu(getMenu(targetBusinessId))
+                                        const updatedMenu = getMenu(targetBusinessId) // Re-fetch updated state
+                                        setMenu(updatedMenu)
+                                        syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
                                         setNewCategoryName('')
                                         setNewCategoryIcon('📦')
                                         setShowAddCategory(false)
