@@ -788,24 +788,6 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                 </div>
             )}
 
-            {/* Empty State */}
-            {!isLoading && enabledCategories.length === 0 && (
-                <div style={{
-                    padding: '60px 24px',
-                    textAlign: 'center',
-                    color: '#9CA3AF'
-                }}>
-                    <div style={{ fontSize: 40, marginBottom: 16 }}>🍽️</div>
-                    <h3 style={{ fontSize: 18, fontWeight: 600, color: '#374151', marginBottom: 8 }}>
-                        {isOwnerMode ? 'El menú está vacío' : 'Menú en preparación'}
-                    </h3>
-                    <p style={{ fontSize: 14 }}>
-                        {isOwnerMode
-                            ? 'Usa el panel de administrador para agregar categorías y productos.'
-                            : 'Estamos preparando platos deliciosos. ¡Vuelve pronto!'}
-                    </p>
-                </div>
-            )}
 
             {/* Menu Content - All Categories */}
             <div style={{ padding: '0 16px' }}>
@@ -846,20 +828,40 @@ function Menu({ config: configProp, deliveryMode: deliveryModeProp = false }) {
                                         position: 'relative'
                                     }}
                                 >
+                                    {/* EMPTY STATE PLACEHOLDERS (Structural Persistence) */}
                                     {availableItems.length === 0 && (
-                                        <div style={{
-                                            gridColumn: '1 / -1',
-                                            textAlign: 'center',
-                                            padding: '24px 0',
-                                            color: '#9CA3AF',
-                                            fontSize: 13,
-                                            background: '#F9FAFB',
-                                            borderRadius: 12,
-                                            border: '1px dashed #E5E7EB'
-                                        }}>
-                                            No hay productos disponibles en esta categoría.
-                                        </div>
+                                        <>
+                                            {[1, 2, 3].map(i => (
+                                                <div key={`empty-${i}`} style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: 8,
+                                                    opacity: 0.6
+                                                }}>
+                                                    <div style={{
+                                                        width: '100%',
+                                                        aspectRatio: '1/1',
+                                                        borderRadius: 10,
+                                                        background: '#F3F4F6',
+                                                        border: '2px dashed #E5E7EB',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}>
+                                                        <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase' }}>Vacío</span>
+                                                    </div>
+                                                    <div style={{
+                                                        width: '60%',
+                                                        height: 10,
+                                                        background: '#F3F4F6',
+                                                        borderRadius: 4
+                                                    }} />
+                                                </div>
+                                            ))}
+                                        </>
                                     )}
+
                                     {availableItems.map((item, index) => {
                                         const isDragging = dragState?.itemId === item.id
                                         const isPlaceholder = isDraggingInCategory && dragState.targetIndex === index && !isDragging
