@@ -77,10 +77,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
             // 2. If Vacío (Empty), Trigger Upload Immediately
             if (!item.image) {
-                // Slight delay to ensure state settles (though Ref is stable)
-                setTimeout(() => {
-                    fileInputRef.current?.click()
-                }, 50)
+                // SYNC EXECUTION: Must happen in the same event loop for mobile
+                fileInputRef.current?.click()
             }
         }
 
@@ -861,7 +859,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     key={inputKey}
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/jpg"
+                    accept="image/*"
                     onChange={handleImageUpload}
                     style={{ display: 'none' }}
                 />
