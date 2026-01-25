@@ -82,7 +82,7 @@ function Home({ config: configProp }) {
 
             // 1. DATA MAPPING
             title: contextTenant?.business_name || contextBranding?.business_name || 'FoodSpot',
-            image: contextTenant?.hero_url || contextBranding?.hero_url || baseConfig?.headerCover?.image,
+            image: contextTenant?.hero_url || contextBranding?.hero_url || contextTenant?.app_config?.headerCover?.image || baseConfig?.headerCover?.image,
 
             // 2. MODE SWITCHING (Strict Text Mode Priority)
             useImage: (contextTenant?.hero_mode === 'text') ? false : !!(contextTenant?.hero_url || contextBranding?.hero_url || baseConfig?.headerCover?.image),

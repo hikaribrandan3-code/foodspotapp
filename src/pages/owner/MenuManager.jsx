@@ -146,6 +146,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
             .upsert({
                 tenant_id: businessId,
                 app_config: updatedConfig,
+                // 🚀 FORCE TOP-LEVEL SYNC (For Home.jsx compatibility)
+                hero_url: updatedConfig.headerCover?.image || null,
+                business_name: updatedConfig.businessName || null,
                 updated_at: new Date()
             }, {
                 onConflict: 'tenant_id'
