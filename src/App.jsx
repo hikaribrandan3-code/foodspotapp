@@ -102,6 +102,15 @@ function App() {
                 infoPills: tenant.tenantData.info_pills || config.infoPills,
                 businessInfo: tenant.tenantData.business_info || config.businessInfo,
                 // 🎨 RE-HYDRATION FIX: Map flat DB fields to App structure
+                businessName: tenant.tenantData.business_name || config.businessName,
+                headerCover: {
+                    ...config.headerCover,
+                    image: tenant.tenantData.hero_url || config.headerCover?.image
+                },
+                headerBranding: {
+                    ...config.headerBranding,
+                    mode: tenant.tenantData.hero_mode === 'text' ? 'text' : 'cover'
+                },
                 colors: {
                     primary: tenant.tenantData.primary_color || config.colors?.primary,
                     secondary: tenant.tenantData.secondary_color || config.colors?.secondary,
