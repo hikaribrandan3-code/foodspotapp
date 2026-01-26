@@ -21,21 +21,63 @@ export default function Menu({ config: configProp }) {
     const [menu, setMenu] = useState({ categories: [] })
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
-    // Hydrate from TenantContext
+    // Hydrate from Relational Tables (Phase 4: Data Hook)
     useEffect(() => {
-        if (tenantLoaded && tenantData?.menu_data) {
-            // DEFENSIVE: Ensure categories exists even if DB data is malformed
-            const safeMenu = {
-                ...tenantData.menu_data,
-                categories: tenantData.menu_data.categories || []
+        if (!tenantLoaded || !businessId) return
+
+        const fetchMenuData = async () => {
+            try {
+                // 1. Fetch Categories
+                const { data: categoriesData, error: catError } = await supabase
+                    .from('categories')
+                    .select('*')
+                    .eq('business_id', businessId)
+                    .eq('is_enabled', true) // Assuming active flag
+                    .order('sort_order', { ascending: true })
+
+                if (catError) throw catError
+
+                // 2. Fetch Menu Items
+                const { data: itemsData, error: itemError } = await supabase
+                    .from('menu_items')
+                    .select('*')
+                    .eq('business_id', businessId)
+                    .eq('is_available', true)
+
+                if (itemError) throw itemError
+
+                // 3. Map & Nest
+                const nestedCategories = (categoriesData || []).map(cat => ({
+                    id: cat.id,
+                    name: cat.name,
+                    icon: cat.icon,
+                    items: (itemsData || [])
+                        .filter(item => item.category_id === cat.id)
+                        .map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            price: item.price,
+                            description: item.description,
+                            image: item.image_url, // 📸 RELATIONAL IMAGE HOOK
+                            available: item.is_available,
+                            featured: item.is_featured
+                        }))
+                }))
+
+                // 4. Update State
+                setMenu({ categories: nestedCategories })
+                setIsDataLoaded(true)
+
+            } catch (err) {
+                console.error('❌ Menu Hydration Failed:', err)
+                // Fallback to empty or legacy if needed, but for now strict relational
+                setMenu({ categories: [] })
+                setIsDataLoaded(true)
             }
-            setMenu(safeMenu)
-            setIsDataLoaded(true)
-        } else if (tenantLoaded) {
-            setMenu({ categories: [] })
-            setIsDataLoaded(true)
         }
-    }, [tenantLoaded, tenantData])
+
+        fetchMenuData()
+    }, [tenantLoaded, businessId])
 
     // 2. AUTH & OWNER MODE
     const [isOwnerMode, setIsOwnerMode] = useState(false)
