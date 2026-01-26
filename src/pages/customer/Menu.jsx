@@ -26,17 +26,15 @@ export default function Menu({ config: configProp }) {
         const fetchMenuData = async () => {
             try {
                 // 1. Attempt Relational Fetch (Categories)
+                // 🛡️ PUBLIC OVERRIDE: Removed is_enabled filter to see ALL data
                 let { data: categoriesData, error: catError } = await supabase
                     .from('categories')
                     .select('*')
                     .eq('business_id', businessId)
-                    .eq('is_enabled', true)
                     .order('sort_order', { ascending: true })
 
-                // Retry without enable filter if needed
-                if (catError || !categoriesData) {
-                    const { data: retryCat } = await supabase.from('categories').select('*').eq('business_id', businessId)
-                    if (retryCat) categoriesData = retryCat
+                if (catError) {
+                    console.warn('⚠️ Cat fetch error:', catError)
                 }
 
                 // 2. CHECK FOR EMPTY RELATIONAL DATA (TRIGGER HYBRID FEED)
@@ -59,13 +57,17 @@ export default function Menu({ config: configProp }) {
                 }
 
                 // 3. Fetch Menu Items (Relational Success Path)
+                // 🛡️ PUBLIC OVERRIDE: Removed is_available filter
                 const { data: itemsData, error: itemError } = await supabase
                     .from('menu_items')
                     .select('*')
                     .eq('business_id', businessId)
-                    .eq('is_available', true)
 
                 if (itemError) throw itemError
+
+                // 🛡️ DEBUG LOGGING
+                console.log('[Menu] SQL Raw Items:', itemsData)
+                console.log('[Menu] SQL Raw Categories:', categoriesData)
 
                 // 4. Map & Nest
                 const nestedCategories = (categoriesData || []).map(cat => ({
@@ -80,7 +82,8 @@ export default function Menu({ config: configProp }) {
                             name: item.name,
                             price: item.price,
                             description: item.description,
-                            image: item.image_url, // 📸 RELATIONAL IMAGE HOOK
+                            // 📸 RELATIONAL IMAGE HOOK + FALLBACK
+                            image: item.image_url || 'https://via.placeholder.com/150?text=No+Image',
                             available: item.is_available,
                             featured: item.is_featured
                         }))
@@ -104,7 +107,7 @@ export default function Menu({ config: configProp }) {
         }
 
         fetchMenuData()
-    }, [businessId, tenantData]) // Added tenantData dependence for fallback
+    }, [businessId, tenantData])
 
     // 2. AUTH & OWNER MODE (SYNC-LOCK STABILIZED)
     const [isOwnerMode, setIsOwnerMode] = useState(false)
@@ -240,7 +243,8 @@ export default function Menu({ config: configProp }) {
                                     </div>
                                 ) : (
                                     (category.items || []).map((item, index) => {
-                                        if (!isOwnerMode && !item.available) return null
+                                        // 🛡️ PUBLIC OVERRIDE: Show Everything (or restore owner check later)
+                                        // if (!isOwnerMode && !item.available) return null
                                         return (
                                             <div key={item.id}>
                                                 <div style={{
