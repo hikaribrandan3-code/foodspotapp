@@ -88,30 +88,29 @@ export default function Menu({ config: configProp }) {
 
     useEffect(() => {
         const checkOwnerStatus = async () => {
-            // 🛡️ GUARD 1: No Business ID? Stop.
-            if (!businessId) return
+            // 🛡️ GUARD 1: If we don't even have a businessId yet, stop.
+            if (!businessId) return;
 
-            const { data: { user } } = await supabase.auth.getUser()
+            // Fetch the current session
+            const { data: { user } } = await supabase.auth.getUser();
 
-            // 🛡️ GUARD 2: No User Session? Stop immediately. 
-            // Do NOT attempt the profile query.
-            if (!user) return
+            // 🛡️ GUARD 2: If no one is logged in, stop immediately.
+            // This prevents the 404 for regular customers.
+            if (!user || !user.id) return;
 
-            // 🛡️ SECURITY CHECK: Query profiles to verify ownership of THIS business
-            // FIX: Query by user.id (PK), not business_id --> THIS FIXES THE 404
+            // 🛡️ GUARD 3: Only query profiles using the authenticated user.id
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('business_id')
                 .eq('id', user.id)
-                .single()
+                .single();
 
             if (profile && profile.business_id === businessId) {
-                setIsOwnerMode(true)
+                setIsOwnerMode(true);
             }
-        }
-
-        checkOwnerStatus()
-    }, [businessId])
+        };
+        checkOwnerStatus();
+    }, [businessId]);
 
     // 3. LEGACY PHYSICS STATE (Preserved)
     const [dragState, setDragState] = useState(null)
