@@ -732,6 +732,13 @@ function Home({ config: configProp }) {
                                 }}>
                                     {item.name}
                                 </div>
+                                <div style={{
+                                    fontSize: 12,
+                                    color: '#22C55E',
+                                    fontWeight: 600
+                                }}>
+                                    ${item.price?.toLocaleString('es-AR')}
+                                </div>
                             </div>
                         </>
                     )

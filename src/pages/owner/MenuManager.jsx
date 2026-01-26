@@ -376,6 +376,28 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
     }
 
+    // --- DIRECT NAME EDIT (The Unlock) ---
+    const handleNameUpdate = (categoryId, itemId, newName) => {
+        if (!newName.trim()) return
+
+        const updatedMenu = { ...menu }
+        const category = updatedMenu.categories.find(c => c.id === categoryId)
+        if (category) {
+            const item = category.items.find(i => i.id === itemId)
+            if (item) {
+                item.name = newName
+                // Optimistic UI update
+                setMenu(updatedMenu)
+                // Persist
+                saveMenu(updatedMenu)
+                // Cloud Sync
+                syncMenuToCloud(updatedMenu)
+                setSaveStatus({ message: 'Nombre actualizado' })
+                setTimeout(() => setSaveStatus(null), 2000)
+            }
+        }
+    }
+
 
 
     // --- CRUD HANDLERS ---
@@ -922,12 +944,24 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                                        <p style={{
-                                                            fontWeight: 500,
-                                                            fontSize: 14,
-                                                            color: '#1E293B',
-                                                            margin: 0
-                                                        }}>{item.name}</p>
+                                                        <input
+                                                            type="text"
+                                                            defaultValue={item.name}
+                                                            onBlur={(e) => handleNameUpdate(category.id, item.id, e.target.value)}
+                                                            onClick={(e) => e.stopPropagation()} // Prevent card tap
+                                                            style={{
+                                                                fontWeight: 500,
+                                                                fontSize: 14,
+                                                                color: '#1E293B',
+                                                                margin: 0,
+                                                                border: 'none',
+                                                                background: 'transparent',
+                                                                width: '100%',
+                                                                outline: 'none',
+                                                                pointerEvents: 'auto',
+                                                                zIndex: 10
+                                                            }}
+                                                        />
                                                         <div
                                                             style={{
                                                                 fontSize: 16,
