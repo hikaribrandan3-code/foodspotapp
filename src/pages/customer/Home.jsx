@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { normalizeTenantConfig } from '../../utils/configNormalizer'
 import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
 import { getMenu } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
@@ -50,96 +51,11 @@ function Home({ config: configProp }) {
         )
     }
 
-    // 🌉 BRIDGE: Merge TenantContext data with config prop for backward compatibility
-    // WRAPPED IN MEMO to prevent thrashing, but updated via SYNC
-    const buildConfig = (baseConfig, contextBranding, contextTenant) => ({
-        ...defaultConfig,
-        ...baseConfig,
-        ...contextBranding,
-        ...contextTenant,
-        // Ensure heroIcons is properly mapped (snake_case → camelCase)
-        heroIcons: contextBranding?.heroIcons || contextTenant?.hero_icons || baseConfig?.heroIcons || defaultConfig.heroIcons,
-        // Ensure featuredPhotos is properly mapped
-        featuredPhotos: contextBranding?.featuredPhotos || contextTenant?.featured_photos || baseConfig?.featuredPhotos || defaultConfig.featuredPhotos,
-        // Ensure homeConfig is properly mapped
-        homeConfig: contextBranding?.homeConfig || contextTenant?.home_config || baseConfig?.homeConfig || defaultConfig.homeConfig,
-        // Ensure canvasMode is set
-        canvasMode: contextBranding?.canvasMode || contextTenant?.canvas_mode || baseConfig?.canvasMode || 'light',
-
-        // 🩹 IDENTITY PATCH: Map snake_case DB fields to camelCase (Fixes HeaderClamp)
-        businessName: contextTenant?.business_name || contextBranding?.business_name || baseConfig?.businessName || 'FoodSpot',
-        // Map logos (Fallback to same URL for both light/dark if only one exists)
-        logo: contextTenant?.logo_url || contextBranding?.logo_url || baseConfig?.logo,
-        logoLight: contextTenant?.logo_url || contextBranding?.logo_url || baseConfig?.logoLight,
-        logoDark: contextTenant?.logo_url || contextBranding?.logo_url || baseConfig?.logoDark,
-        // 🩹 HEADER MODE PATCH: Connect Tenant Mode
-        headerBranding: {
-            mode: (contextTenant?.hero_mode === 'text' || (!contextTenant?.hero_url && !contextBranding?.hero_url && !baseConfig?.headerCover?.image)) ? 'text' : 'cover'
-        },
-        // Map header cover
-        headerCover: {
-            ...(baseConfig?.headerCover || defaultConfig.headerCover || {}),
-
-            // 1. DATA MAPPING
-            title: contextTenant?.business_name || contextBranding?.business_name || 'FoodSpot',
-            image: contextTenant?.hero_url || contextBranding?.hero_url || contextTenant?.app_config?.headerCover?.image || baseConfig?.headerCover?.image,
-
-            // 2. MODE SWITCHING (Strict Text Mode Priority)
-            useImage: (contextTenant?.hero_mode === 'text') ? false : !!(contextTenant?.hero_url || contextBranding?.hero_url || baseConfig?.headerCover?.image),
-            showTitle: true,
-
-            // 3. TYPOGRAPHY INJECTION (The "Gucci" Look)
-            fontFamily: contextTenant?.font_family || contextBranding?.font_family,
-            fontWeight: contextTenant?.font_weight || '800', // Default to ExtraBold if missing
-
-            // 4. "FULLER" VISUAL OVERRIDES
-            // These props need to be passed to HeaderClamp to override defaults
-            titleStyle: {
-                fontSize: (contextTenant?.hero_mode === 'text' || (!contextTenant?.hero_url && !contextBranding?.hero_url && !baseConfig?.headerCover?.image)) ? 'clamp(32px, 8vw, 48px)' : '24px',
-                textTransform: 'uppercase',
-                letterSpacing: '-0.03em',
-                textAlign: 'center',
-                lineHeight: '0.95',
-                width: '100%',
-                color: '#000000',
-                textShadow: 'none'
-            },
-
-            containerStyle: {
-                minHeight: (contextTenant?.hero_mode === 'text' || (!contextTenant?.hero_url && !contextBranding?.hero_url && !baseConfig?.headerCover?.image)) ? '260px' : '180px', // Taller box for text mode
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '40px 24px',
-                backgroundColor: 'var(--canvas-bg)'
-            },
-
-            useLogo: !!(contextTenant?.logo_url || contextBranding?.logo_url)
-        }
-    });
-
-    // ⚡ REAL-TIME SYNC STATE
-    const [config, setConfig] = useState(() => buildConfig(configProp, branding, tenantData));
-
-    // Sync when props/context change
-    useEffect(() => {
-        setConfig(buildConfig(configProp, branding, tenantData));
-    }, [configProp, branding, tenantData]);
-
-    // ⚡ LISTEN FOR 'frontendSync' EVENT (The "Starter Fluid")
-    useEffect(() => {
-        const handleSync = (e) => {
-            console.log('⚡ Home caught sync:', e.detail);
-            setConfig(prev => {
-                // Merge the update into a pseudo-context to rebuild config
-                // This is a bit hacky but ensures the buildConfig logic runs
-                return buildConfig(configProp, { ...prev, ...e.detail }, { ...prev, ...e.detail });
-            });
-        };
-
-        window.addEventListener('frontendSync', handleSync);
-        return () => window.removeEventListener('frontendSync', handleSync);
-    }, [configProp]); // Re-bind if configProp changes (rare)
+    // 🌉 BRIDGE: Use centralized config normalizer (Phase 2 Alignment)
+    // 🛡️ MOAT PROTECTION: useMemo guards against re-renders for drag physics
+    const config = useMemo(() =>
+        normalizeTenantConfig(configProp, tenantData),
+        [configProp, tenantData])
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()

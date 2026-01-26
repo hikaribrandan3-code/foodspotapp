@@ -16,6 +16,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx'
 // Customer Pages
 import Home from './pages/customer/Home.jsx'
 import Menu from './pages/customer/Menu.jsx'
+import Envio from './pages/customer/Envio.jsx'
 import Order from './pages/customer/Order.jsx'
 import OrderStatus from './pages/customer/OrderStatus.jsx'
 import Rewards from './pages/customer/Rewards.jsx'
@@ -486,7 +487,7 @@ function App() {
                     <Routes>
                         <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
                         <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
-                        <Route path="/:tenantSlug/envios" element={<Menu config={safeConfig} deliveryMode={true} />} />
+                        <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
                         <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
                         <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
                         <Route path="/:tenantSlug/rewards" element={<Rewards config={safeConfig} />} />

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { normalizeTenantConfig } from '../../utils/configNormalizer'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
@@ -337,6 +338,13 @@ export default function Menu({ config: configProp }) {
         categoryRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
+
+    // 🛡️ MOAT PROTECTION: Normalize config with useMemo to prevent re-renders
+    // This fixes the "Ghost Hero" and "Missing Logo" by hydrating from tenantData
+    const config = useMemo(() =>
+        normalizeTenantConfig(configProp, tenantData),
+        [configProp, tenantData])
+
     // ===================================
     // RENDER
     // ===================================
@@ -355,8 +363,8 @@ export default function Menu({ config: configProp }) {
             paddingBottom: 100,
             background: 'var(--color-bg, #F9FAFB)'
         }}>
-            {/* 1. Header */}
-            <HeaderClamp config={tenantData?.app_config || {}} />
+            {/* 1. Header (Hydrated via Normalizer) */}
+            <HeaderClamp config={config} />
 
             {/* 2. Sticky Pills */}
             {visibleCategories.length > 1 && (
