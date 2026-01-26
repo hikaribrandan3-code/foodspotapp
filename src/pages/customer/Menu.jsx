@@ -20,6 +20,9 @@ export default function Menu({ config: configProp }) {
     const [menu, setMenu] = useState({ categories: [] })
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
+    // 🔍 INTERACTIVITY STATE
+    const [selectedItem, setSelectedItem] = useState(null)
+
     // Hydrate from Relational Tables (Phase 4: Data Hook) + Hybrid Fallback + Universal Adapter
     useEffect(() => {
         if (!businessId) return
@@ -171,7 +174,18 @@ export default function Menu({ config: configProp }) {
         categoryRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
-    const config = useMemo(() => normalizeTenantConfig(configProp, tenantData), [configProp, tenantData])
+    // 🏗️ ROBUST CONFIG NORMALIZER
+    const config = useMemo(() => {
+        const base = normalizeTenantConfig(configProp, tenantData)
+        // 🛡️ FORCE HEADER COVER IF MISSING (To ensure "Pill" Header renders)
+        if (!base.headerCover?.image) {
+            base.headerCover = {
+                ...base.headerCover,
+                image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1000' // Generic Restaurant BG
+            }
+        }
+        return base
+    }, [configProp, tenantData])
 
     // RENDER
     if (tenantLoading || !isDataLoaded) {
@@ -247,7 +261,12 @@ export default function Menu({ config: configProp }) {
                                         // 🛡️ PUBLIC OVERRIDE: Show Everything (or restore owner check later)
                                         // if (!isOwnerMode && !item.available) return null
                                         return (
-                                            <div key={item.id}>
+                                            <div
+                                                key={item.id}
+                                                onClick={() => setSelectedItem(item)} // 👆 TAP INTERACTION
+                                                style={{ cursor: 'pointer', transition: 'transform 0.1s' }}
+                                                className="menu-item-card" // Optional hook for CSS
+                                            >
                                                 <div style={{
                                                     width: '100%', aspectRatio: '1', borderRadius: 12, overflow: 'hidden',
                                                     background: '#F3F4F6', marginBottom: 6, position: 'relative'
@@ -272,10 +291,63 @@ export default function Menu({ config: configProp }) {
                 )}
             </div>
 
+            {/* 🛡️ INLINE PRODUCT MODAL */}
+            {selectedItem && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 9999,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: 20, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)'
+                }} onClick={() => setSelectedItem(null)}>
+                    <div
+                        style={{
+                            background: 'white', width: '100%', maxWidth: 400,
+                            borderRadius: 24, padding: 24, position: 'relative',
+                            boxShadow: '0 20px 50px rgba(0,0,0,0.2)'
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={() => setSelectedItem(null)}
+                            style={{
+                                position: 'absolute', top: 16, right: 16,
+                                background: '#F3F4F6', border: 'none',
+                                width: 32, height: 32, borderRadius: '50%', cursor: 'pointer'
+                            }}
+                        >✕</button>
+
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{
+                                width: 120, height: 120, margin: '0 auto 16px',
+                                borderRadius: '50%', overflow: 'hidden', background: '#F9FAFB'
+                            }}>
+                                {selectedItem.image ? (
+                                    <img src={selectedItem.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <span style={{ fontSize: 40, lineHeight: '120px' }}>🍽️</span>
+                                )}
+                            </div>
+                            <h2 style={{ margin: '0 0 8px', fontSize: 22 }}>{selectedItem.name}</h2>
+                            <p style={{ margin: '0 0 24px', fontSize: 18, color: '#22C55E', fontWeight: 600 }}>
+                                ${selectedItem.price?.toLocaleString()}
+                            </p>
+
+                            <button style={{
+                                width: '100%', padding: '16px',
+                                background: '#111827', color: 'white',
+                                border: 'none', borderRadius: 16,
+                                fontSize: 16, fontWeight: 600, cursor: 'pointer'
+                            }}>
+                                Agregar al Pedido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Owner Toggle */}
             {isOwnerMode && (
                 <button onClick={() => setIsEditMode(!isEditMode)} style={{
-                    position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+                    position: 'fixed', bottom: 24, right: 24, zIndex: 9990,
                     background: isEditMode ? '#000' : '#22C55E', color: 'white',
                     padding: '12px 20px', borderRadius: 50, border: 'none',
                     fontWeight: 700, fontSize: 14, boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
