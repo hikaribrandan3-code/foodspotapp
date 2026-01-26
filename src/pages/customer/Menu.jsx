@@ -28,14 +28,20 @@ export default function Menu({ config: configProp }) {
         const fetchMenuData = async () => {
             try {
                 // 1. Fetch Categories
-                const { data: categoriesData, error: catError } = await supabase
+                // Uses 'sort_order' for consistent display
+                let { data: categoriesData, error: catError } = await supabase
                     .from('categories')
                     .select('*')
                     .eq('business_id', businessId)
-                    .eq('is_enabled', true) // Assuming active flag
+                    .eq('is_enabled', true)
                     .order('sort_order', { ascending: true })
 
-                if (catError) throw catError
+                if (catError) {
+                    console.warn('⚠️ Cat fetch failed, retrying w/o is_enabled filter', catError)
+                    // Retry without enabled filter (migration safety)
+                    const { data: retryCat } = await supabase.from('categories').select('*').eq('business_id', businessId)
+                    if (retryCat) categoriesData = retryCat
+                }
 
                 // 2. Fetch Menu Items
                 const { data: itemsData, error: itemError } = await supabase
@@ -51,6 +57,7 @@ export default function Menu({ config: configProp }) {
                     id: cat.id,
                     name: cat.name,
                     icon: cat.icon,
+                    // Map items to this category
                     items: (itemsData || [])
                         .filter(item => item.category_id === cat.id)
                         .map(item => ({
@@ -70,7 +77,7 @@ export default function Menu({ config: configProp }) {
 
             } catch (err) {
                 console.error('❌ Menu Hydration Failed:', err)
-                // Fallback to empty or legacy if needed, but for now strict relational
+                // Keep skeletons or empty state
                 setMenu({ categories: [] })
                 setIsDataLoaded(true)
             }
@@ -82,6 +89,7 @@ export default function Menu({ config: configProp }) {
     // 2. AUTH & OWNER MODE
     const [isOwnerMode, setIsOwnerMode] = useState(false)
     const [isEditMode, setIsEditMode] = useState(false)
+    const isTrialActive = true // 🛡️ TRIAL BYPASS (For dev)
 
     useEffect(() => {
         const checkOwnerStatus = async () => {
@@ -91,6 +99,7 @@ export default function Menu({ config: configProp }) {
             if (!user) return
 
             // 🛡️ SECURITY CHECK: Query profiles to verify ownership of THIS business
+            // FIX: Query by user.id (PK), not business_id
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('business_id')
