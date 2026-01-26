@@ -1,394 +1,328 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { normalizeTenantConfig } from '../../utils/configNormalizer'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabaseClient'
-import { useTenant } from '../../contexts/TenantContext'
-import { defaultMenuData } from '../../config/menuData.js' // 🛡️ ULTIMATE SAFETY NET
-import { MenuSkeleton } from '../../components/Shimmers.jsx'
-import HeaderClamp from '../../components/HeaderClamp'
+import { useSpring, animated, config } from '@react-spring/web'
+import { useDrag } from '@use-gesture/react'
+import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { useTenant } from '../../contexts/TenantContext.jsx'
+import { normalizeTenantConfig } from '../../utils/configNormalizer.js'
 
-// ===== AUTO-SCROLL SAFETY TOGGLE =====
-const ENABLE_AUTO_SCROLL = true
-const AUTO_SCROLL_ZONE_PERCENT = 0.10
-const AUTO_SCROLL_SPEED = 4
+// 🛡️ PHYSICS CONSTANTS (Dec 19 Engine)
+const SEED_DATA = { categories: [] } // Fallback only
+const MOAT_HEIGHT = 160 // Height of the physics zone
 
-export default function Menu({ config: configProp }) {
-    const { businessId, tenantData, isLoaded: tenantLoaded, loading: tenantLoading } = useTenant()
+const Menu = ({ config: configProp }) => {
     const navigate = useNavigate()
 
-    // 1. DATA STATE
-    const [menu, setMenu] = useState({ categories: [] })
-    const [isDataLoaded, setIsDataLoaded] = useState(false)
-    const [selectedItem, setSelectedItem] = useState(null)
+    // 🌉 DATA BRIDGE: Use the same successful pipeline as Home.jsx
+    const { tenantData, loading, slug: tenantSlug } = useTenant()
 
-    // 🚀 PHASE 2: PHYSICS RESTORATION + DIRECT BLOB HOOK
+    // 🛡️ DATA HYDRATION (The Alignment Strike)
+    // We prioritize the Cloud Data (where your burgers are) over local seeds
+    const menuData = tenantData?.menu_data || SEED_DATA
+
+    // Normalize config for HeaderClamp
+    const appConfig = normalizeTenantConfig(configProp, tenantData)
+
+    // State
+    const [activeCategory, setActiveCategory] = useState(null)
+    const [selectedProduct, setSelectedProduct] = useState(null)
+    const [showProductSheet, setShowProductSheet] = useState(false)
+    const [cart, setCart] = useState({})
+
+    // 🌊 MOAT PHYSICS ENGINE
+    const [{ y }, api] = useSpring(() => ({ y: 0, config: { tension: 300, friction: 30 } }))
+    const scrollRef = useRef(0)
+    const contentHeightRef = useRef(0)
+    const containerRef = useRef(null)
+
+    // Calculate dynamic boundaries
     useEffect(() => {
-        if (!tenantLoaded || !tenantData) return
+        if (containerRef.current) {
+            contentHeightRef.current = containerRef.current.scrollHeight - window.innerHeight + MOAT_HEIGHT + 100
+        }
+    }, [menuData])
 
-        // 🎯 DIRECT HOOK: Point to the correct JSON drawer
-        // The previous step (Phase 1) proved app_config isn't where the MENU lives.
-        // The MENU lives in tenantData.menu_data directly.
-        const cloudMenu = tenantData?.menu_data
+    const bind = useDrag(({ movement: [, my], velocity: [, vy], down, cancel }) => {
+        if (!containerRef.current) return
 
-        if (cloudMenu?.categories?.length > 0) {
-            console.log('[Phase 2] 🚀 PHYSICS READY: Hydrating from tenantData.menu_data')
-            setMenu(cloudMenu)
-            setIsDataLoaded(true)
+        // Boundaries
+        const bottomLimit = -contentHeightRef.current
+        const topLimit = 0
+
+        if (down) {
+            // Drag logic
+            const newY = scrollRef.current + my
+            // Rubber banding
+            if (newY > topLimit) return api.start({ y: newY * 0.3, immediate: true })
+            if (newY < bottomLimit) return api.start({ y: bottomLimit + (newY - bottomLimit) * 0.3, immediate: true })
+            api.start({ y: newY, immediate: true })
         } else {
-            console.warn('[Phase 2] ⚠️ Cloud empty, using Default Seeds')
-            setMenu(defaultMenuData)
-            setIsDataLoaded(true)
+            // Momentum logic
+            scrollRef.current += my + vy * 200
+
+            // Boundary checks (Bounce back)
+            if (scrollRef.current > topLimit) scrollRef.current = topLimit
+            if (scrollRef.current < bottomLimit) scrollRef.current = bottomLimit
+
+            api.start({ y: scrollRef.current })
         }
-    }, [tenantLoaded, tenantData])
+    }, { filterTaps: true })
 
-    // 2. AUTH & OWNER MODE
-    const [isOwnerMode, setIsOwnerMode] = useState(false)
-    const [isEditMode, setIsEditMode] = useState(false)
-
-    useEffect(() => {
-        const checkOwnerStatus = async () => {
-            if (!businessId) return;
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user || !user.id) return;
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('business_id')
-                .eq('id', user.id)
-                .single();
-
-            if (profile && profile.business_id === businessId) {
-                setIsOwnerMode(true);
-            }
-        };
-        checkOwnerStatus();
-    }, [businessId]);
-
-    // 3. 🛡️ PHYSICS ENGINE RESTORATION (Dec 19 Logic)
-    // -----------------------------------------------------
-    const [dragState, setDragState] = useState(null)
-    const autoScrollRef = useRef(null)
-    const categoryRefs = useRef({})
-    const [activeCategory, setActiveCategory] = useState('')
-
-    // Auto-Scroll Loop (60fps Moat)
-    const processAutoScroll = useCallback(() => {
-        if (!autoScrollRef.current) return
-
-        const { direction, speed } = autoScrollRef.current
-        window.scrollBy(0, direction * speed)
-
-        requestAnimationFrame(processAutoScroll)
-    }, [])
-
-    const handleDragStart = useCallback((e, categoryId, item, index) => {
-        if (!isEditMode) return // 🔒 Lock physics unless in Edit Mode
-
-        // Prevent Pull-to-Refresh
-        document.body.style.overscrollBehavior = 'none'
-
-        const touch = e.touches?.[0] || e
-        const rect = e.currentTarget.getBoundingClientRect()
-
-        // Haptic Feedback check
-        if (navigator.vibrate) navigator.vibrate(50)
-
-        setDragState({
-            categoryId,
-            itemId: item.id,
-            originalIndex: index,
-            startX: touch.clientX,
-            startY: touch.clientY,
-            currentX: touch.clientX,
-            currentY: touch.clientY,
-            offsetX: touch.clientX - rect.left,
-            offsetY: touch.clientY - rect.top,
-            itemHeight: rect.height,
-            itemWidth: rect.width,
-            isDragging: true
+    // 🛍️ CART LOGIC
+    const addToCart = (product) => {
+        setCart(prev => {
+            const current = prev[product.id] || { ...product, quantity: 0 }
+            return { ...prev, [product.id]: { ...current, quantity: current.quantity + 1 } }
         })
-    }, [isEditMode])
-
-    const handleDragMove = useCallback((e) => {
-        if (!dragState || !isEditMode) return
-        e.preventDefault() // Stop scrolling
-
-        const touch = e.touches?.[0] || e
-
-        // Auto-Scroll Logic
-        if (ENABLE_AUTO_SCROLL) {
-            const y = touch.clientY
-            const vh = window.innerHeight
-            const zone = vh * AUTO_SCROLL_ZONE_PERCENT
-
-            if (y < zone) {
-                autoScrollRef.current = { direction: -1, speed: AUTO_SCROLL_SPEED }
-                processAutoScroll()
-            } else if (y > vh - zone) {
-                autoScrollRef.current = { direction: 1, speed: AUTO_SCROLL_SPEED }
-                processAutoScroll()
-            } else {
-                autoScrollRef.current = null
-            }
-        }
-
-        setDragState(prev => ({
-            ...prev,
-            currentX: touch.clientX,
-            currentY: touch.clientY
-        }))
-    }, [dragState, isEditMode, processAutoScroll])
-
-    const handleDragEnd = useCallback(() => {
-        setDragState(null)
-        autoScrollRef.current = null
-        document.body.style.overscrollBehavior = 'auto' // Release Lock
-    }, [])
-
-    // Scroll Spy for Sticky Pills
-    useEffect(() => {
-        const handleScroll = () => {
-            if (!categoryRefs.current) return
-
-            // Find most visible category
-            let current = ''
-            let maxVisible = 0
-
-            Object.entries(categoryRefs.current).forEach(([id, el]) => {
-                if (!el) return
-                const rect = el.getBoundingClientRect()
-                // Simple heuristic logic
-                if (rect.top < window.innerHeight / 2 && rect.bottom > 100) {
-                    current = id
-                }
-            })
-
-            if (current && current !== activeCategory) {
-                setActiveCategory(current)
-            }
-        }
-
-        window.addEventListener('scroll', handleScroll, { passive: true })
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [activeCategory])
-
-    // Helpers
-    const scrollToCategory = (categoryId) => {
-        setActiveCategory(categoryId)
-        categoryRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        // Haptic feedback
+        if (navigator.vibrate) navigator.vibrate(50)
     }
 
-    // 🏗️ ROBUST CONFIG NORMALIZER
-    const config = useMemo(() => {
-        const base = normalizeTenantConfig(configProp, tenantData)
-        // 🛡️ FORCE HEADER COVER IF MISSING
-        if (!base.headerCover?.image) {
-            base.headerCover = {
-                ...base.headerCover,
-                image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1000'
+    const removeFromCart = (productId) => {
+        setCart(prev => {
+            const current = prev[productId]
+            if (!current) return prev
+            if (current.quantity <= 1) {
+                const { [productId]: _, ...rest } = prev
+                return rest
             }
-        }
-        return base
-    }, [configProp, tenantData])
-
-    // RENDER
-    if (tenantLoading || !isDataLoaded) {
-        return <MenuSkeleton />
+            return { ...prev, [productId]: { ...current, quantity: current.quantity - 1 } }
+        })
     }
 
-    const categories = menu?.categories || []
-    const visibleCategories = categories.filter(c => isOwnerMode || c.enabled !== false)
+    const cartTotal = Object.values(cart).reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
+    // 🛡️ LOADING STATE
+    if (loading) {
+        return (
+            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC' }}>
+                <div style={{ color: '#94A3B8' }}>Cargando Menú...</div>
+            </div>
+        )
+    }
+
+    // 🛡️ EMPTY STATE (Should not happen if Sync worked)
+    if (!menuData?.categories?.length) {
+        return (
+            <div style={{ height: '100vh', padding: 20, textAlign: 'center', paddingTop: 100 }}>
+                <h2>Menú en preparación</h2>
+                <p>El dueño está configurando los productos.</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    style={{ marginTop: 20, padding: '10px 20px', borderRadius: 20, border: 'none', background: '#22C55E', color: 'white' }}
+                >
+                    Recargar
+                </button>
+            </div>
+        )
+    }
 
     return (
-        <div
-            onTouchMove={handleDragMove}
-            onTouchEnd={handleDragEnd}
-            style={{
-                minHeight: '100vh',
-                paddingBottom: 100,
-                background: 'var(--color-bg, #F9FAFB)',
-                touchAction: dragState ? 'none' : 'auto' // 🛡️ CRITICAL SCROLL LOCK
-            }}
-        >
-            <HeaderClamp config={config} />
+        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: '#F8FAFC' }}>
+            <HeaderClamp config={appConfig} />
 
-            {/* Sticky Pills */}
-            {visibleCategories.length > 1 && (
+            {/* 🌊 PHYSICS CONTAINER */}
+            <animated.div
+                {...bind()}
+                ref={containerRef}
+                style={{
+                    y,
+                    position: 'absolute',
+                    top: 80, // Offset for header
+                    left: 0,
+                    right: 0,
+                    touchAction: 'none', // Critical for useDrag
+                    paddingBottom: 200
+                }}
+            >
+                {/* CATEGORIES LOOP */}
+                {menuData.categories.map((category) => (
+                    (category.enabled !== false && category.items?.length > 0) && (
+                        <div key={category.id} style={{ marginBottom: 32, padding: '0 16px' }}>
+                            <h2 style={{
+                                fontSize: 24,
+                                fontWeight: 800,
+                                color: '#1E293B',
+                                marginBottom: 16,
+                                textTransform: 'capitalize'
+                            }}>
+                                {category.name}
+                            </h2>
+
+                            <div style={{ display: 'grid', gap: 16 }}>
+                                {category.items.map((item) => (
+                                    (item.available !== false) && (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => {
+                                                setSelectedProduct(item)
+                                                setShowProductSheet(true)
+                                            }}
+                                            style={{
+                                                background: 'white',
+                                                borderRadius: 16,
+                                                padding: 12,
+                                                display: 'flex',
+                                                gap: 16,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                                border: '1px solid #F1F5F9'
+                                            }}
+                                        >
+                                            {/* IMAGE OR PLACEHOLDER */}
+                                            <div style={{
+                                                width: 80,
+                                                height: 80,
+                                                borderRadius: 12,
+                                                background: item.image ? `url(${item.image}) center/cover` : '#E2E8F0',
+                                                flexShrink: 0
+                                            }} />
+
+                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                                <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#0F172A' }}>
+                                                    {item.name}
+                                                </h3>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                    <span style={{ fontSize: 15, fontWeight: 700, color: '#22C55E' }}>
+                                                        ${item.price?.toLocaleString()}
+                                                    </span>
+
+                                                    {/* QUICK ADD BUTTON */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            addToCart(item)
+                                                        }}
+                                                        style={{
+                                                            width: 32,
+                                                            height: 32,
+                                                            borderRadius: 16,
+                                                            background: '#F1F5F9',
+                                                            border: 'none',
+                                                            color: '#22C55E',
+                                                            fontSize: 18,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                ))}
+                            </div>
+                        </div>
+                    )
+                ))}
+
+                {/* SPACE FOR CART FOOTER */}
+                <div style={{ height: 100 }} />
+            </animated.div>
+
+            {/* 🛍️ CART FLOATING FOOTER */}
+            {cartTotal > 0 && (
                 <div style={{
-                    position: 'sticky', top: 52, zIndex: 900,
-                    background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)',
-                    padding: '8px 0', margin: '0 0 16px 0', borderBottom: '1px solid rgba(0,0,0,0.05)'
+                    position: 'fixed',
+                    bottom: 24,
+                    left: 24,
+                    right: 24,
+                    background: '#0F172A',
+                    padding: '16px 24px',
+                    borderRadius: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                    zIndex: 100
                 }}>
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 16px', scrollbarWidth: 'none' }}>
-                        {visibleCategories.map(cat => (
-                            <button
-                                key={cat.id}
-                                onClick={() => scrollToCategory(cat.id)}
-                                style={{
-                                    padding: '8px 16px', borderRadius: 20,
-                                    border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
-                                    background: activeCategory === cat.id ? '#111827' : 'white',
-                                    color: activeCategory === cat.id ? 'white' : '#374151',
-                                    fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
-                                    transition: 'all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)'
-                                }}
-                            >
-                                {cat.name}
-                            </button>
-                        ))}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>
+                            ${cartTotal.toLocaleString()}
+                        </span>
+                        <span style={{ color: '#94A3B8', fontSize: 12 }}>
+                            Total estimado
+                        </span>
                     </div>
+                    <button
+                        onClick={() => alert('Checkout Logic Here')}
+                        style={{
+                            background: '#22C55E',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: 16,
+                            fontWeight: 600,
+                            fontSize: 14
+                        }}
+                    >
+                        Ver Pedido
+                    </button>
                 </div>
             )}
 
-            {/* The Grid */}
-            <div style={{ padding: '0 16px' }}>
-                {visibleCategories.length === 0 ? (
-                    <div style={{
-                        padding: 40,
-                        textAlign: 'center',
-                        color: '#6B7280',
-                        fontSize: 18,
-                        fontWeight: 500
-                    }}>
-                        No hay items en el menú.
-                        <br />
-                        <span style={{ fontSize: 14, opacity: 0.7 }}>Intenta contactar al negocio.</span>
-                    </div>
-                ) : (
-                    visibleCategories.map(category => (
-                        <div key={category.id} ref={el => categoryRefs.current[category.id] = el} style={{ marginBottom: 24 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                                <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon}</span>
-                                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                                {category.items?.length === 0 ? (
-                                    <div style={{ gridColumn: 'span 3', padding: 20, textAlign: 'center', background: '#f3f4f6', borderRadius: 12 }}>
-                                        No hay items
-                                    </div>
-                                ) : (
-                                    (category.items || []).map((item, index) => {
-                                        // 🛡️ PUBLIC OVERRIDE: Show Everything (or restore owner check later)
-                                        // if (!isOwnerMode && !item.available) return null
-
-                                        // 👻 DRAG GHOST VARS
-                                        const isDraggingThis = dragState && dragState.itemId === item.id
-
-                                        return (
-                                            <div
-                                                key={item.id}
-                                                onTouchStart={(e) => handleDragStart(e, category.id, item, index)}
-                                                onClick={() => !isEditMode && setSelectedItem(item)} // 👆 CLICK ONLY IF NOT EDITING
-                                                style={{
-                                                    cursor: 'pointer',
-                                                    transition: isDraggingThis ? 'none' : 'transform 0.1s',
-                                                    transform: isDraggingThis
-                                                        ? `translate(${dragState.currentX - dragState.startX}px, ${dragState.currentY - dragState.startY}px) scale(1.1)`
-                                                        : 'none',
-                                                    zIndex: isDraggingThis ? 999 : 1,
-                                                    opacity: isDraggingThis ? 0.9 : 1
-                                                }}
-                                                className="menu-item-card"
-                                            >
-                                                <div style={{
-                                                    width: '100%', aspectRatio: '1', borderRadius: 12, overflow: 'hidden',
-                                                    background: '#F3F4F6', marginBottom: 6, position: 'relative',
-                                                    boxShadow: isDraggingThis ? '0 20px 40px rgba(0,0,0,0.2)' : 'none'
-                                                }}>
-                                                    {item.image ? (
-                                                        <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-                                                    ) : (
-                                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
-                                                    )}
-                                                </div>
-                                                <div style={{ lineHeight: 1.2 }}>
-                                                    <div style={{ fontWeight: 500, fontSize: 13, color: '#111827', marginBottom: 2 }}>{item.name}</div>
-                                                    <div style={{ fontSize: 12, color: '#6B7280' }}>${item.price?.toLocaleString()}</div>
-                                                </div>
-                                            </div>
-                                        )
-                                    })
-                                )}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {/* 🛡️ BOTTOM SHEET (RESTORED FROM DEC 19 SPEC) */}
-            {selectedItem && (
-                <div style={{
-                    position: 'fixed', inset: 0, zIndex: 9999,
-                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-                    display: 'flex', alignItems: 'flex-end'
-                }} onClick={() => setSelectedItem(null)}>
+            {/* 📄 PRODUCT BOTTOM SHEET (Minimal) */}
+            {showProductSheet && selectedProduct && (
+                <div
+                    onClick={() => setShowProductSheet(false)}
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        zIndex: 200,
+                        display: 'flex',
+                        alignItems: 'flex-end'
+                    }}
+                >
                     <div
-                        style={{
-                            background: 'white', width: '100%',
-                            borderTopLeftRadius: 24, borderTopRightRadius: 24,
-                            padding: '24px 24px 40px',
-                            boxShadow: '0 -10px 40px rgba(0,0,0,0.1)',
-                            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-                        }}
                         onClick={e => e.stopPropagation()}
+                        style={{
+                            background: 'white',
+                            width: '100%',
+                            borderTopLeftRadius: 24,
+                            borderTopRightRadius: 24,
+                            padding: 24,
+                            animation: 'slideUp 0.3s ease-out'
+                        }}
                     >
-                        {/* Drag Handle */}
-                        <div style={{ width: 40, height: 4, background: '#E5E7EB', borderRadius: 2, margin: '0 auto 20px' }} />
+                        <div style={{ width: 40, height: 4, background: '#E2E8F0', borderRadius: 2, margin: '0 auto 24px' }} />
 
-                        <div style={{ display: 'flex', gap: 20 }}>
-                            <div style={{
-                                width: 100, height: 100, borderRadius: 16, overflow: 'hidden', background: '#F3F4F6',
-                                flexShrink: 0
-                            }}>
-                                {selectedItem.image ? (
-                                    <img src={selectedItem.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                    <span style={{ fontSize: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>🍽️</span>
-                                )}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                                <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>{selectedItem.name}</h2>
-                                <p style={{ margin: '0 0 12px', fontSize: 14, color: '#6B7280', lineHeight: 1.4 }}>
-                                    {selectedItem.description || "Delicioso y fresco."}
-                                </p>
-                                <div style={{ fontSize: 18, color: '#22C55E', fontWeight: 600 }}>
-                                    ${selectedItem.price?.toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
+                        <div style={{
+                            height: 200,
+                            borderRadius: 16,
+                            background: selectedProduct.image ? `url(${selectedProduct.image}) center/cover` : '#E2E8F0',
+                            marginBottom: 20
+                        }} />
 
-                        <button style={{
-                            width: '100%', padding: '16px',
-                            background: '#111827', color: 'white',
-                            border: 'none', borderRadius: 16,
-                            marginTop: 24,
-                            fontSize: 16, fontWeight: 600, cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-                        }}>
-                            <span>🛒</span> Agregar al Pedido
+                        <h2 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 8px' }}>{selectedProduct.name}</h2>
+                        <p style={{ fontSize: 20, color: '#22C55E', fontWeight: 600, margin: '0 0 24px' }}>
+                            ${selectedProduct.price?.toLocaleString()}
+                        </p>
+
+                        <button
+                            onClick={() => {
+                                addToCart(selectedProduct)
+                                setShowProductSheet(false)
+                            }}
+                            style={{
+                                width: '100%',
+                                padding: 16,
+                                background: '#0F172A',
+                                color: 'white',
+                                borderRadius: 16,
+                                border: 'none',
+                                fontWeight: 600,
+                                fontSize: 16
+                            }}
+                        >
+                            Agregar al pedido
                         </button>
                     </div>
                 </div>
             )}
-
-            {/* Owner Toggle */}
-            {isOwnerMode && (
-                <button onClick={() => setIsEditMode(!isEditMode)} style={{
-                    position: 'fixed', bottom: 24, right: 24, zIndex: 9990,
-                    background: isEditMode ? '#000' : '#22C55E', color: 'white',
-                    padding: '12px 20px', borderRadius: 50, border: 'none',
-                    fontWeight: 700, fontSize: 14, boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                }}>
-                    {isEditMode ? '✅ Listo' : '⚡ Dueño'}
-                </button>
-            )}
-
-            {/* CSS Animation for Bottom Sheet */}
-            <style>{`
-                @keyframes slideUp {
-                    from { transform: translateY(100%); }
-                    to { transform: translateY(0); }
-                }
-            `}</style>
         </div>
     )
 }
+
+export default Menu
