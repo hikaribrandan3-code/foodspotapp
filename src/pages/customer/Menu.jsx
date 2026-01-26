@@ -23,95 +23,28 @@ export default function Menu({ config: configProp }) {
     // 🔍 INTERACTIVITY STATE
     const [selectedItem, setSelectedItem] = useState(null)
 
-    // Hydrate from Relational Tables (Phase 4: Data Hook) + Hybrid Fallback + Universal Adapter
+    // 🚀 PHASE 1: THE DATA TRANSPLANT (HOME-STYLE HYDRATION)
+    // Direct feed from Tenant Context, bypassing SQL lag and Profile checks
     useEffect(() => {
-        if (!businessId) return
+        if (!tenantLoaded || !tenantData) return
 
-        const fetchMenuData = async () => {
-            try {
-                // STEP 1: Attempt Relational Fetch (SQL)
-                // 🛡️ PUBLIC OVERRIDE: Removed is_enabled filter to see ALL data
-                let { data: categoriesData, error: catError } = await supabase
-                    .from('categories')
-                    .select('*')
-                    .eq('business_id', businessId)
-                    .order('sort_order', { ascending: true })
+        // 🚀 THE HOME-PAGE MANEUVER
+        // We point directly to where the Home page gets its data (app_config or menu_data blob)
+        // MenuManager often syncs to tenantData.menu_data, but sometimes nests in app_config.
+        // We check ALL paths.
+        const cloudConfig = tenantData?.app_config || {}
+        const cloudMenu = cloudConfig.menu_data || tenantData?.menu_data
 
-                if (catError) {
-                    console.warn('⚠️ Cat fetch error:', catError)
-                }
-
-                // 2. CHECK FOR EMPTY RELATIONAL DATA (TRIGGER HYBRID FEED)
-                const isRelationalEmpty = !categoriesData || categoriesData.length === 0
-
-                if (isRelationalEmpty) {
-                    // 🚨 STEP 2: Check for Legacy JSON Blob (Burger Photos)
-                    if (tenantData?.menu_data?.categories?.length > 0) {
-                        console.log('[Hybrid] 🍔 Hydrating Burger Data from JSON Blob')
-                        setMenu(tenantData.menu_data)
-                        setIsDataLoaded(true)
-                        return
-                    }
-
-                    // 🚨 STEP 3: Default Seed Fallback (The Ultimate Safety Net)
-                    console.warn('[Hybrid] ⚠️ Relational AND JSON empty. Loading Default Seeds.')
-                    setMenu(defaultMenuData)
-                    setIsDataLoaded(true)
-                    return
-                }
-
-                // 3. Fetch Menu Items (Relational Success Path)
-                // 🛡️ PUBLIC OVERRIDE: Removed is_available filter
-                const { data: itemsData, error: itemError } = await supabase
-                    .from('menu_items')
-                    .select('*')
-                    .eq('business_id', businessId)
-
-                if (itemError) throw itemError
-
-                // 🛡️ DEBUG LOGGING
-                console.log('[Menu] SQL Raw Items:', itemsData)
-
-                // 4. Map & Nest
-                const nestedCategories = (categoriesData || []).map(cat => ({
-                    id: cat.id,
-                    name: cat.name,
-                    icon: cat.icon,
-                    // Map items to this category
-                    items: (itemsData || [])
-                        .filter(item => item.category_id === cat.id)
-                        .map(item => ({
-                            id: item.id,
-                            name: item.name,
-                            price: item.price,
-                            description: item.description,
-                            // 📸 RELATIONAL IMAGE HOOK + FALLBACK
-                            image: item.image_url || 'https://via.placeholder.com/150?text=No+Image',
-                            available: item.is_available,
-                            featured: item.is_featured
-                        }))
-                }))
-
-                // 5. Update State
-                setMenu({ categories: nestedCategories })
-                setIsDataLoaded(true)
-
-            } catch (err) {
-                console.error('❌ Menu Hydration Failed:', err)
-                // Final safety net: try legacy even on error
-                if (tenantData?.menu_data?.categories?.length > 0) {
-                    console.warn('[Hybrid] ⚠️ Error in SQL fetch. Recovering with Legacy JSON.')
-                    setMenu(tenantData.menu_data)
-                } else {
-                    console.warn('[Hybrid] ⚠️ Critical Failure. Using Defaults.')
-                    setMenu(defaultMenuData)
-                }
-                setIsDataLoaded(true)
-            }
+        if (cloudMenu?.categories?.length > 0) {
+            console.log('[Phase 1] 🍔 SUCCESS: Hydrating Burgers from Cloud Config')
+            setMenu(cloudMenu)
+            setIsDataLoaded(true)
+        } else {
+            console.warn('[Phase 1] ⚠️ Cloud empty, using Default Seeds')
+            setMenu(defaultMenuData)
+            setIsDataLoaded(true)
         }
-
-        fetchMenuData()
-    }, [businessId, tenantData])
+    }, [tenantLoaded, tenantData])
 
     // 2. AUTH & OWNER MODE (SYNC-LOCK STABILIZED)
     const [isOwnerMode, setIsOwnerMode] = useState(false)
