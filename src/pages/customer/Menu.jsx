@@ -19,14 +19,13 @@ export default function Menu({ config: configProp }) {
     const [menu, setMenu] = useState({ categories: [] })
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
-    // Hydrate from Relational Tables (Phase 4: Data Hook)
-    // 🛡️ RECOVERY: Direct Hydration
+    // Hydrate from Relational Tables (Phase 4: Data Hook) + Hybrid Fallback
     useEffect(() => {
         if (!businessId) return
 
         const fetchMenuData = async () => {
             try {
-                // 1. Fetch Categories
+                // 1. Attempt Relational Fetch (Categories)
                 let { data: categoriesData, error: catError } = await supabase
                     .from('categories')
                     .select('*')
@@ -40,7 +39,26 @@ export default function Menu({ config: configProp }) {
                     if (retryCat) categoriesData = retryCat
                 }
 
-                // 2. Fetch Menu Items
+                // 2. CHECK FOR EMPTY RELATIONAL DATA (TRIGGER HYBRID FEED)
+                const isRelationalEmpty = !categoriesData || categoriesData.length === 0
+
+                if (isRelationalEmpty) {
+                    // 🚨 FALLBACK: Check for Legacy JSON Blob
+                    if (tenantData?.menu_data?.categories?.length > 0) {
+                        console.warn('[Hybrid] ⚠️ Relational tables empty. Hydrating from Legacy JSON.')
+                        setMenu(tenantData.menu_data)
+                        setIsDataLoaded(true)
+                        return
+                    }
+
+                    // If no relational AND no legacy:
+                    console.warn('[Hybrid] ❌ No data found in SQL or JSON.')
+                    setMenu({ categories: [] })
+                    setIsDataLoaded(true)
+                    return
+                }
+
+                // 3. Fetch Menu Items (Relational Success Path)
                 const { data: itemsData, error: itemError } = await supabase
                     .from('menu_items')
                     .select('*')
@@ -49,7 +67,7 @@ export default function Menu({ config: configProp }) {
 
                 if (itemError) throw itemError
 
-                // 3. Map & Nest
+                // 4. Map & Nest
                 const nestedCategories = (categoriesData || []).map(cat => ({
                     id: cat.id,
                     name: cat.name,
@@ -62,27 +80,33 @@ export default function Menu({ config: configProp }) {
                             name: item.name,
                             price: item.price,
                             description: item.description,
-                            image: item.image_url, // 📸 RELATIONAL IMAGE HOOK MAPPED HERE
+                            image: item.image_url, // 📸 RELATIONAL IMAGE HOOK
                             available: item.is_available,
                             featured: item.is_featured
                         }))
                 }))
 
-                // 4. Update State
+                // 5. Update State
                 setMenu({ categories: nestedCategories })
                 setIsDataLoaded(true)
 
             } catch (err) {
                 console.error('❌ Menu Hydration Failed:', err)
-                setMenu({ categories: [] })
+                // Final safety net: try legacy even on error
+                if (tenantData?.menu_data?.categories?.length > 0) {
+                    console.warn('[Hybrid] ⚠️ Error in SQL fetch. Recovering with Legacy JSON.')
+                    setMenu(tenantData.menu_data)
+                } else {
+                    setMenu({ categories: [] })
+                }
                 setIsDataLoaded(true)
             }
         }
 
         fetchMenuData()
-    }, [businessId]) // Only depend on businessId
+    }, [businessId, tenantData]) // Added tenantData dependence for fallback
 
-    // 2. AUTH & OWNER MODE
+    // 2. AUTH & OWNER MODE (SYNC-LOCK STABILIZED)
     const [isOwnerMode, setIsOwnerMode] = useState(false)
     const [isEditMode, setIsEditMode] = useState(false)
 
@@ -129,12 +153,8 @@ export default function Menu({ config: configProp }) {
     }, [menu, activeCategory])
 
     const saveToCloud = async (newMenu) => {
-        // Placeholder for legacy save - optional in this relational mode
+        // Placeholder for legacy save
     }
-
-    // ... (Legacy Drag Handlers would go here, preserved for verifying layout but simplified for recovery)
-    // For brevity in recovery, we render the list. The drag logic is large but the grid is what matters for user.
-    // I will include the critical drag hooks to prevent errors if they are referenced.
 
     // (Re-implementing minimal drag stub to avoid crashes if referenced in render)
     const handleDragStart = useCallback(() => { }, [])
@@ -194,43 +214,57 @@ export default function Menu({ config: configProp }) {
 
             {/* The Grid */}
             <div style={{ padding: '0 16px' }}>
-                {visibleCategories.map(category => (
-                    <div key={category.id} ref={el => categoryRefs.current[category.id] = el} style={{ marginBottom: 24 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                            <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon}</span>
-                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                            {category.items?.length === 0 ? (
-                                <div style={{ gridColumn: 'span 3', padding: 20, textAlign: 'center', background: '#f3f4f6', borderRadius: 12 }}>
-                                    No hay items
-                                </div>
-                            ) : (
-                                (category.items || []).map((item, index) => {
-                                    if (!isOwnerMode && !item.available) return null
-                                    return (
-                                        <div key={item.id}>
-                                            <div style={{
-                                                width: '100%', aspectRatio: '1', borderRadius: 12, overflow: 'hidden',
-                                                background: '#F3F4F6', marginBottom: 6, position: 'relative'
-                                            }}>
-                                                {item.image ? (
-                                                    <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-                                                ) : (
-                                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
-                                                )}
-                                            </div>
-                                            <div style={{ lineHeight: 1.2 }}>
-                                                <div style={{ fontWeight: 500, fontSize: 13, color: '#111827', marginBottom: 2 }}>{item.name}</div>
-                                                <div style={{ fontSize: 12, color: '#6B7280' }}>${item.price?.toLocaleString()}</div>
-                                            </div>
-                                        </div>
-                                    )
-                                })
-                            )}
-                        </div>
+                {visibleCategories.length === 0 ? (
+                    <div style={{
+                        padding: 40,
+                        textAlign: 'center',
+                        color: '#6B7280',
+                        fontSize: 18,
+                        fontWeight: 500
+                    }}>
+                        No hay items en el menú.
+                        <br />
+                        <span style={{ fontSize: 14, opacity: 0.7 }}>Intenta contactar al negocio.</span>
                     </div>
-                ))}
+                ) : (
+                    visibleCategories.map(category => (
+                        <div key={category.id} ref={el => categoryRefs.current[category.id] = el} style={{ marginBottom: 24 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                                <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon}</span>
+                                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                                {category.items?.length === 0 ? (
+                                    <div style={{ gridColumn: 'span 3', padding: 20, textAlign: 'center', background: '#f3f4f6', borderRadius: 12 }}>
+                                        No hay items
+                                    </div>
+                                ) : (
+                                    (category.items || []).map((item, index) => {
+                                        if (!isOwnerMode && !item.available) return null
+                                        return (
+                                            <div key={item.id}>
+                                                <div style={{
+                                                    width: '100%', aspectRatio: '1', borderRadius: 12, overflow: 'hidden',
+                                                    background: '#F3F4F6', marginBottom: 6, position: 'relative'
+                                                }}>
+                                                    {item.image ? (
+                                                        <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                                                    ) : (
+                                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
+                                                    )}
+                                                </div>
+                                                <div style={{ lineHeight: 1.2 }}>
+                                                    <div style={{ fontWeight: 500, fontSize: 13, color: '#111827', marginBottom: 2 }}>{item.name}</div>
+                                                    <div style={{ fontSize: 12, color: '#6B7280' }}>${item.price?.toLocaleString()}</div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Owner Toggle */}
