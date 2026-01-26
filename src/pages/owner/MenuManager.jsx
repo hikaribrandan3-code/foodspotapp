@@ -294,6 +294,29 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const handleSave = () => {
         if (!editingItem) return
 
+        // PATH A: FEATURED SLOT EDIT (Top 4)
+        if (editingItem.isFeaturedSlot) {
+            const newFeatured = [...(localConfig.featuredPhotos || [])]
+            while (newFeatured.length <= editingItem.index) newFeatured.push(null)
+
+            newFeatured[editingItem.index] = {
+                name: editForm.name || 'Destacado',
+                price: parseInt(editForm.price) || 0,
+                image: editForm.image
+            }
+
+            const newConfig = { ...localConfig, featuredPhotos: newFeatured }
+            updateConfig(newConfig)
+            setLocalConfig(newConfig)
+            window.dispatchEvent(new CustomEvent('frontendSync'))
+            syncConfigToCloud(newConfig)
+
+            setEditingItem(null)
+            setSaveStatus({ message: 'Destacado actualizado' })
+            setTimeout(() => setSaveStatus(null), 2000)
+            return
+        }
+
         const updatedMenu = { ...menu }
         const category = updatedMenu.categories.find(c => c.id === editingItem.categoryId)
         if (category) {
@@ -460,13 +483,15 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // --- DIRECT FEATURED UPLOAD LOGIC ---
     const handleFeaturedTap = (index) => {
-        const slot = activeFeaturedItems[index]
-        // If empty, trigger upload
-        if (!slot) {
-            activeFeaturedSlotRef.current = index
-            // SYNC EXECUTION: Mobile-UX Protocol
-            fileInputRef.current?.click()
-        }
+        // Open Editor for Name/Price/Image
+        const slot = activeFeaturedItems[index] || { name: 'Destacado', price: 0, image: null }
+        setEditingItem({ isFeaturedSlot: true, index })
+        setEditForm({
+            name: slot.name,
+            price: slot.price?.toString() || '',
+            image: slot.image
+        })
+        setUploadStatus(null)
     }
     // ------------------------------------
     // -----------------------------------------------------

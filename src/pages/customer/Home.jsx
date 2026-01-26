@@ -108,7 +108,7 @@ function Home({ config: configProp }) {
             const slot = photos[slotIndex] || {}
             return {
                 id: `featured-slot-${slotIndex}`,
-                name: slot.name || '',
+                name: slot.name || 'Destacado',
                 image: slot.image || null,
                 price: slot.price || 0
             }
