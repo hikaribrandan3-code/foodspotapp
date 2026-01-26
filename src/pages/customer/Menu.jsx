@@ -88,9 +88,13 @@ export default function Menu({ config: configProp }) {
 
     useEffect(() => {
         const checkOwnerStatus = async () => {
+            // 🛡️ GUARD 1: No Business ID? Stop.
             if (!businessId) return
 
             const { data: { user } } = await supabase.auth.getUser()
+
+            // 🛡️ GUARD 2: No User Session? Stop immediately. 
+            // Do NOT attempt the profile query.
             if (!user) return
 
             // 🛡️ SECURITY CHECK: Query profiles to verify ownership of THIS business
