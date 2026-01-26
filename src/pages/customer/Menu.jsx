@@ -3,6 +3,7 @@ import { normalizeTenantConfig } from '../../utils/configNormalizer'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
+import { defaultMenuData } from '../../config/menuData.js' // 🛡️ ULTIMATE SAFETY NET
 import { MenuSkeleton } from '../../components/Shimmers.jsx'
 import HeaderClamp from '../../components/HeaderClamp'
 
@@ -19,13 +20,13 @@ export default function Menu({ config: configProp }) {
     const [menu, setMenu] = useState({ categories: [] })
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
-    // Hydrate from Relational Tables (Phase 4: Data Hook) + Hybrid Fallback
+    // Hydrate from Relational Tables (Phase 4: Data Hook) + Hybrid Fallback + Universal Adapter
     useEffect(() => {
         if (!businessId) return
 
         const fetchMenuData = async () => {
             try {
-                // 1. Attempt Relational Fetch (Categories)
+                // STEP 1: Attempt Relational Fetch (SQL)
                 // 🛡️ PUBLIC OVERRIDE: Removed is_enabled filter to see ALL data
                 let { data: categoriesData, error: catError } = await supabase
                     .from('categories')
@@ -41,17 +42,17 @@ export default function Menu({ config: configProp }) {
                 const isRelationalEmpty = !categoriesData || categoriesData.length === 0
 
                 if (isRelationalEmpty) {
-                    // 🚨 FALLBACK: Check for Legacy JSON Blob
+                    // 🚨 STEP 2: Check for Legacy JSON Blob (Burger Photos)
                     if (tenantData?.menu_data?.categories?.length > 0) {
-                        console.warn('[Hybrid] ⚠️ Relational tables empty. Hydrating from Legacy JSON.')
+                        console.log('[Hybrid] 🍔 Hydrating Burger Data from JSON Blob')
                         setMenu(tenantData.menu_data)
                         setIsDataLoaded(true)
                         return
                     }
 
-                    // If no relational AND no legacy:
-                    console.warn('[Hybrid] ❌ No data found in SQL or JSON.')
-                    setMenu({ categories: [] })
+                    // 🚨 STEP 3: Default Seed Fallback (The Ultimate Safety Net)
+                    console.warn('[Hybrid] ⚠️ Relational AND JSON empty. Loading Default Seeds.')
+                    setMenu(defaultMenuData)
                     setIsDataLoaded(true)
                     return
                 }
@@ -67,7 +68,6 @@ export default function Menu({ config: configProp }) {
 
                 // 🛡️ DEBUG LOGGING
                 console.log('[Menu] SQL Raw Items:', itemsData)
-                console.log('[Menu] SQL Raw Categories:', categoriesData)
 
                 // 4. Map & Nest
                 const nestedCategories = (categoriesData || []).map(cat => ({
@@ -100,7 +100,8 @@ export default function Menu({ config: configProp }) {
                     console.warn('[Hybrid] ⚠️ Error in SQL fetch. Recovering with Legacy JSON.')
                     setMenu(tenantData.menu_data)
                 } else {
-                    setMenu({ categories: [] })
+                    console.warn('[Hybrid] ⚠️ Critical Failure. Using Defaults.')
+                    setMenu(defaultMenuData)
                 }
                 setIsDataLoaded(true)
             }
