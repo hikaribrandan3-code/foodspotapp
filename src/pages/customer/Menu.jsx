@@ -19,50 +19,37 @@ export default function Menu({ config: configProp }) {
     // 1. DATA STATE
     const [menu, setMenu] = useState({ categories: [] })
     const [isDataLoaded, setIsDataLoaded] = useState(false)
-
-    // 🔍 INTERACTIVITY STATE
     const [selectedItem, setSelectedItem] = useState(null)
 
-    // 🚀 PHASE 1: THE DATA TRANSPLANT (HOME-STYLE HYDRATION)
-    // Direct feed from Tenant Context, bypassing SQL lag and Profile checks
+    // 🚀 PHASE 2: PHYSICS RESTORATION + DIRECT BLOB HOOK
     useEffect(() => {
         if (!tenantLoaded || !tenantData) return
 
-        // 🚀 THE HOME-PAGE MANEUVER
-        // We point directly to where the Home page gets its data (app_config or menu_data blob)
-        // MenuManager often syncs to tenantData.menu_data, but sometimes nests in app_config.
-        // We check ALL paths.
-        const cloudConfig = tenantData?.app_config || {}
-        const cloudMenu = cloudConfig.menu_data || tenantData?.menu_data
+        // 🎯 DIRECT HOOK: Point to the correct JSON drawer
+        // The previous step (Phase 1) proved app_config isn't where the MENU lives.
+        // The MENU lives in tenantData.menu_data directly.
+        const cloudMenu = tenantData?.menu_data
 
         if (cloudMenu?.categories?.length > 0) {
-            console.log('[Phase 1] 🍔 SUCCESS: Hydrating Burgers from Cloud Config')
+            console.log('[Phase 2] 🚀 PHYSICS READY: Hydrating from tenantData.menu_data')
             setMenu(cloudMenu)
             setIsDataLoaded(true)
         } else {
-            console.warn('[Phase 1] ⚠️ Cloud empty, using Default Seeds')
+            console.warn('[Phase 2] ⚠️ Cloud empty, using Default Seeds')
             setMenu(defaultMenuData)
             setIsDataLoaded(true)
         }
     }, [tenantLoaded, tenantData])
 
-    // 2. AUTH & OWNER MODE (SYNC-LOCK STABILIZED)
+    // 2. AUTH & OWNER MODE
     const [isOwnerMode, setIsOwnerMode] = useState(false)
     const [isEditMode, setIsEditMode] = useState(false)
 
     useEffect(() => {
         const checkOwnerStatus = async () => {
-            // 🛡️ GUARD 1: If we don't even have a businessId yet, stop.
             if (!businessId) return;
-
-            // Fetch the current session
             const { data: { user } } = await supabase.auth.getUser();
-
-            // 🛡️ GUARD 2: If no one is logged in, stop immediately.
-            // This prevents the 404 for regular customers.
             if (!user || !user.id) return;
-
-            // 🛡️ GUARD 3: Only query profiles using the authenticated user.id
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('business_id')
@@ -76,30 +63,113 @@ export default function Menu({ config: configProp }) {
         checkOwnerStatus();
     }, [businessId]);
 
-    // 3. LEGACY PHYSICS STATE (Preserved)
+    // 3. 🛡️ PHYSICS ENGINE RESTORATION (Dec 19 Logic)
+    // -----------------------------------------------------
     const [dragState, setDragState] = useState(null)
-    const dragItemRef = useRef(null)
     const autoScrollRef = useRef(null)
-    const blockRefreshRef = useRef(false)
-    const [isDropping, setIsDropping] = useState(false)
-    const [menuVersion, setMenuVersion] = useState(0)
     const categoryRefs = useRef({})
     const [activeCategory, setActiveCategory] = useState('')
 
-    useEffect(() => {
-        if (menu.categories?.length > 0 && !activeCategory) {
-            setActiveCategory(menu.categories[0].id)
+    // Auto-Scroll Loop (60fps Moat)
+    const processAutoScroll = useCallback(() => {
+        if (!autoScrollRef.current) return
+
+        const { direction, speed } = autoScrollRef.current
+        window.scrollBy(0, direction * speed)
+
+        requestAnimationFrame(processAutoScroll)
+    }, [])
+
+    const handleDragStart = useCallback((e, categoryId, item, index) => {
+        if (!isEditMode) return // 🔒 Lock physics unless in Edit Mode
+
+        // Prevent Pull-to-Refresh
+        document.body.style.overscrollBehavior = 'none'
+
+        const touch = e.touches?.[0] || e
+        const rect = e.currentTarget.getBoundingClientRect()
+
+        // Haptic Feedback check
+        if (navigator.vibrate) navigator.vibrate(50)
+
+        setDragState({
+            categoryId,
+            itemId: item.id,
+            originalIndex: index,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            currentX: touch.clientX,
+            currentY: touch.clientY,
+            offsetX: touch.clientX - rect.left,
+            offsetY: touch.clientY - rect.top,
+            itemHeight: rect.height,
+            itemWidth: rect.width,
+            isDragging: true
+        })
+    }, [isEditMode])
+
+    const handleDragMove = useCallback((e) => {
+        if (!dragState || !isEditMode) return
+        e.preventDefault() // Stop scrolling
+
+        const touch = e.touches?.[0] || e
+
+        // Auto-Scroll Logic
+        if (ENABLE_AUTO_SCROLL) {
+            const y = touch.clientY
+            const vh = window.innerHeight
+            const zone = vh * AUTO_SCROLL_ZONE_PERCENT
+
+            if (y < zone) {
+                autoScrollRef.current = { direction: -1, speed: AUTO_SCROLL_SPEED }
+                processAutoScroll()
+            } else if (y > vh - zone) {
+                autoScrollRef.current = { direction: 1, speed: AUTO_SCROLL_SPEED }
+                processAutoScroll()
+            } else {
+                autoScrollRef.current = null
+            }
         }
-    }, [menu, activeCategory])
 
-    const saveToCloud = async (newMenu) => {
-        // Placeholder for legacy save
-    }
+        setDragState(prev => ({
+            ...prev,
+            currentX: touch.clientX,
+            currentY: touch.clientY
+        }))
+    }, [dragState, isEditMode, processAutoScroll])
 
-    // (Re-implementing minimal drag stub to avoid crashes if referenced in render)
-    const handleDragStart = useCallback(() => { }, [])
-    const handleDragMove = useCallback(() => { }, [])
-    const handleDragEnd = useCallback(() => { }, [])
+    const handleDragEnd = useCallback(() => {
+        setDragState(null)
+        autoScrollRef.current = null
+        document.body.style.overscrollBehavior = 'auto' // Release Lock
+    }, [])
+
+    // Scroll Spy for Sticky Pills
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!categoryRefs.current) return
+
+            // Find most visible category
+            let current = ''
+            let maxVisible = 0
+
+            Object.entries(categoryRefs.current).forEach(([id, el]) => {
+                if (!el) return
+                const rect = el.getBoundingClientRect()
+                // Simple heuristic logic
+                if (rect.top < window.innerHeight / 2 && rect.bottom > 100) {
+                    current = id
+                }
+            })
+
+            if (current && current !== activeCategory) {
+                setActiveCategory(current)
+            }
+        }
+
+        window.addEventListener('scroll', handleScroll, { passive: true })
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [activeCategory])
 
     // Helpers
     const scrollToCategory = (categoryId) => {
@@ -110,11 +180,11 @@ export default function Menu({ config: configProp }) {
     // 🏗️ ROBUST CONFIG NORMALIZER
     const config = useMemo(() => {
         const base = normalizeTenantConfig(configProp, tenantData)
-        // 🛡️ FORCE HEADER COVER IF MISSING (To ensure "Pill" Header renders)
+        // 🛡️ FORCE HEADER COVER IF MISSING
         if (!base.headerCover?.image) {
             base.headerCover = {
                 ...base.headerCover,
-                image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1000' // Generic Restaurant BG
+                image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1000'
             }
         }
         return base
@@ -129,11 +199,16 @@ export default function Menu({ config: configProp }) {
     const visibleCategories = categories.filter(c => isOwnerMode || c.enabled !== false)
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            paddingBottom: 100,
-            background: 'var(--color-bg, #F9FAFB)'
-        }}>
+        <div
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+            style={{
+                minHeight: '100vh',
+                paddingBottom: 100,
+                background: 'var(--color-bg, #F9FAFB)',
+                touchAction: dragState ? 'none' : 'auto' // 🛡️ CRITICAL SCROLL LOCK
+            }}
+        >
             <HeaderClamp config={config} />
 
             {/* Sticky Pills */}
@@ -153,7 +228,8 @@ export default function Menu({ config: configProp }) {
                                     border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
                                     background: activeCategory === cat.id ? '#111827' : 'white',
                                     color: activeCategory === cat.id ? 'white' : '#374151',
-                                    fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0
+                                    fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                                    transition: 'all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)'
                                 }}
                             >
                                 {cat.name}
@@ -193,16 +269,30 @@ export default function Menu({ config: configProp }) {
                                     (category.items || []).map((item, index) => {
                                         // 🛡️ PUBLIC OVERRIDE: Show Everything (or restore owner check later)
                                         // if (!isOwnerMode && !item.available) return null
+
+                                        // 👻 DRAG GHOST VARS
+                                        const isDraggingThis = dragState && dragState.itemId === item.id
+
                                         return (
                                             <div
                                                 key={item.id}
-                                                onClick={() => setSelectedItem(item)} // 👆 TAP INTERACTION
-                                                style={{ cursor: 'pointer', transition: 'transform 0.1s' }}
-                                                className="menu-item-card" // Optional hook for CSS
+                                                onTouchStart={(e) => handleDragStart(e, category.id, item, index)}
+                                                onClick={() => !isEditMode && setSelectedItem(item)} // 👆 CLICK ONLY IF NOT EDITING
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    transition: isDraggingThis ? 'none' : 'transform 0.1s',
+                                                    transform: isDraggingThis
+                                                        ? `translate(${dragState.currentX - dragState.startX}px, ${dragState.currentY - dragState.startY}px) scale(1.1)`
+                                                        : 'none',
+                                                    zIndex: isDraggingThis ? 999 : 1,
+                                                    opacity: isDraggingThis ? 0.9 : 1
+                                                }}
+                                                className="menu-item-card"
                                             >
                                                 <div style={{
                                                     width: '100%', aspectRatio: '1', borderRadius: 12, overflow: 'hidden',
-                                                    background: '#F3F4F6', marginBottom: 6, position: 'relative'
+                                                    background: '#F3F4F6', marginBottom: 6, position: 'relative',
+                                                    boxShadow: isDraggingThis ? '0 20px 40px rgba(0,0,0,0.2)' : 'none'
                                                 }}>
                                                     {item.image ? (
                                                         <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
@@ -224,55 +314,58 @@ export default function Menu({ config: configProp }) {
                 )}
             </div>
 
-            {/* 🛡️ INLINE PRODUCT MODAL */}
+            {/* 🛡️ BOTTOM SHEET (RESTORED FROM DEC 19 SPEC) */}
             {selectedItem && (
                 <div style={{
                     position: 'fixed', inset: 0, zIndex: 9999,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: 20, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)'
+                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'flex-end'
                 }} onClick={() => setSelectedItem(null)}>
                     <div
                         style={{
-                            background: 'white', width: '100%', maxWidth: 400,
-                            borderRadius: 24, padding: 24, position: 'relative',
-                            boxShadow: '0 20px 50px rgba(0,0,0,0.2)'
+                            background: 'white', width: '100%',
+                            borderTopLeftRadius: 24, borderTopRightRadius: 24,
+                            padding: '24px 24px 40px',
+                            boxShadow: '0 -10px 40px rgba(0,0,0,0.1)',
+                            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <button
-                            onClick={() => setSelectedItem(null)}
-                            style={{
-                                position: 'absolute', top: 16, right: 16,
-                                background: '#F3F4F6', border: 'none',
-                                width: 32, height: 32, borderRadius: '50%', cursor: 'pointer'
-                            }}
-                        >✕</button>
+                        {/* Drag Handle */}
+                        <div style={{ width: 40, height: 4, background: '#E5E7EB', borderRadius: 2, margin: '0 auto 20px' }} />
 
-                        <div style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: 20 }}>
                             <div style={{
-                                width: 120, height: 120, margin: '0 auto 16px',
-                                borderRadius: '50%', overflow: 'hidden', background: '#F9FAFB'
+                                width: 100, height: 100, borderRadius: 16, overflow: 'hidden', background: '#F3F4F6',
+                                flexShrink: 0
                             }}>
                                 {selectedItem.image ? (
                                     <img src={selectedItem.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
-                                    <span style={{ fontSize: 40, lineHeight: '120px' }}>🍽️</span>
+                                    <span style={{ fontSize: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>🍽️</span>
                                 )}
                             </div>
-                            <h2 style={{ margin: '0 0 8px', fontSize: 22 }}>{selectedItem.name}</h2>
-                            <p style={{ margin: '0 0 24px', fontSize: 18, color: '#22C55E', fontWeight: 600 }}>
-                                ${selectedItem.price?.toLocaleString()}
-                            </p>
-
-                            <button style={{
-                                width: '100%', padding: '16px',
-                                background: '#111827', color: 'white',
-                                border: 'none', borderRadius: 16,
-                                fontSize: 16, fontWeight: 600, cursor: 'pointer'
-                            }}>
-                                Agregar al Pedido
-                            </button>
+                            <div style={{ flex: 1 }}>
+                                <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>{selectedItem.name}</h2>
+                                <p style={{ margin: '0 0 12px', fontSize: 14, color: '#6B7280', lineHeight: 1.4 }}>
+                                    {selectedItem.description || "Delicioso y fresco."}
+                                </p>
+                                <div style={{ fontSize: 18, color: '#22C55E', fontWeight: 600 }}>
+                                    ${selectedItem.price?.toLocaleString()}
+                                </div>
+                            </div>
                         </div>
+
+                        <button style={{
+                            width: '100%', padding: '16px',
+                            background: '#111827', color: 'white',
+                            border: 'none', borderRadius: 16,
+                            marginTop: 24,
+                            fontSize: 16, fontWeight: 600, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                        }}>
+                            <span>🛒</span> Agregar al Pedido
+                        </button>
                     </div>
                 </div>
             )}
@@ -288,6 +381,14 @@ export default function Menu({ config: configProp }) {
                     {isEditMode ? '✅ Listo' : '⚡ Dueño'}
                 </button>
             )}
+
+            {/* CSS Animation for Bottom Sheet */}
+            <style>{`
+                @keyframes slideUp {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+            `}</style>
         </div>
     )
 }
