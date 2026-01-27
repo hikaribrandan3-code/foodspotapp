@@ -25,11 +25,21 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
 
     // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
-    const { businessId: tenantBusinessId } = useTenant()
+    const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded } = useTenant()
     const targetBusinessId = isSimulated ? impersonatingBusinessId : tenantBusinessId
 
-    const [menu, setMenu] = useState(() => getMenu(targetBusinessId))
+    // 🛡️ CLOUD-FIRST INITIALIZATION (Anti-Gravity V3.0)
+    // Menu state is initialized from CLOUD DATA (tenantData.menu_data), NOT localStorage
+    const [menu, setMenu] = useState(() => tenantData?.menu_data || { categories: [] })
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
+
+    // SYNC: Update menu when tenantData loads from cloud
+    useEffect(() => {
+        if (tenantData?.menu_data) {
+            console.log('[MenuManager] ☁️ CLOUD-FIRST: Hydrating menu from tenantData.menu_data')
+            setMenu(tenantData.menu_data)
+        }
+    }, [tenantData?.menu_data])
 
     // SYNC: Ensure localConfig updates when parent config changes (e.g. initial load)
     useEffect(() => {
@@ -37,35 +47,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }, [config])
 
     // =========================================================
-    // 🚀 AUTO-MIGRATION: LOCAL -> CLOUD (THE "BRIDGE")
-    // =========================================================
-    const { tenantData, isLoaded: tenantLoaded } = useTenant() // Get Cloud Data
-    useEffect(() => {
-        if (!tenantBusinessId || !tenantLoaded) return
-
-        const migrateIfNeeded = async () => {
-            // 1. MENU MIGRATION
-            // If Cloud Menu is empty AND Local Menu has items
-            const cloudMenuEmpty = !tenantData?.menu_data?.categories?.length
-            const localHasItems = menu?.categories?.length > 0
-
-            if (cloudMenuEmpty && localHasItems) {
-                console.log('🚀 MIGRATION: Auto-Uploading Local Menu to Cloud...')
-                await syncMenuToCloud(menu)
-            }
-
-            // 2. CONFIG MIGRATION
-            const cloudConfigEmpty = !tenantData?.app_config?.headerCover?.image
-            const localHasConfig = !!localConfig?.headerCover?.image
-
-            if (cloudConfigEmpty && localHasConfig) {
-                console.log('🚀 MIGRATION: Auto-Uploading Local Config to Cloud...')
-                await syncConfigToCloud(localConfig)
-            }
-        }
-
-        migrateIfNeeded()
-    }, [tenantBusinessId, tenantLoaded, tenantData])
+    // 🚫 AUTO-MIGRATION REMOVED (Anti-Gravity V3.0)
+    // The "Bridge" was causing empty localStorage to overwrite Cloud Vault.
+    // All persistence now goes through syncMenuToCloud() only.
     // =========================================================
 
     const [editingItem, setEditingItem] = useState(null)
