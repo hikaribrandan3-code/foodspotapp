@@ -30,14 +30,22 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🛡️ CLOUD-FIRST INITIALIZATION (Anti-Gravity V3.0)
     // Menu state is initialized from CLOUD DATA (tenantData.menu_data), NOT localStorage
-    const [menu, setMenu] = useState(() => tenantData?.menu_data || { categories: [] })
+    const [menu, setMenu] = useState(() => {
+        const cloudData = tenantData?.menu_data
+        // Safety: Ensure we have a valid object with categories array
+        if (cloudData && Array.isArray(cloudData.categories)) {
+            return cloudData
+        }
+        return { categories: [] }
+    })
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
 
     // SYNC: Update menu when tenantData loads from cloud
     useEffect(() => {
-        if (tenantData?.menu_data) {
+        const cloudData = tenantData?.menu_data
+        if (cloudData && Array.isArray(cloudData.categories)) {
             console.log('[MenuManager] ☁️ CLOUD-FIRST: Hydrating menu from tenantData.menu_data')
-            setMenu(tenantData.menu_data)
+            setMenu(cloudData)
         }
     }, [tenantData?.menu_data])
 
@@ -753,7 +761,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     </div>
                 )}
 
-                {menu.categories.map(category => {
+                {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
+                {(menu?.categories || []).map(category => {
                     const isEnabled = category.enabled !== false
                     return (
                         <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>

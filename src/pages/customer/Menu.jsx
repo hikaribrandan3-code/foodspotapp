@@ -141,7 +141,8 @@ const Menu = ({ config: configProp }) => {
                 }}
             >
                 {/* CATEGORIES LOOP */}
-                {menuData.categories.map((category) => (
+                {/* CATEGORIES LOOP (Safe Guarded) */}
+                {(menuData?.categories || []).map((category) => (
                     (category.enabled !== false && category.items?.length > 0) && (
                         <div key={category.id} style={{ marginBottom: 32, padding: '0 16px' }}>
                             <h2 style={{
