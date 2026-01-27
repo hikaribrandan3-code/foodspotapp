@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { normalizeTenantConfig } from '../../utils/configNormalizer'
 import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
-import { getMenu } from '../../config/menuData.js'
+// 🛡️ CLOUD-ONLY: getMenu removed (Anti-Gravity V3.0)
 import { getSession } from '../../utils/auth.js'
 // import { isInDemoMode } from '../../utils/demoSession.js' // REMOVED: File deleted
 const isInDemoMode = () => false; // STUB: Demo mode disabled for now
@@ -27,7 +27,7 @@ const ACTION_DEFINITIONS = {
 function Home({ config: configProp }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const menu = getMenu()
+    // 🛡️ CLOUD-ONLY: Local menu removed. Using tenantData exclusively.
 
     // 🌉 THE DATA BRIDGE: Connect TenantContext to existing config-based logic
     const { branding, tenantData, loading, slug: tenantSlug } = useTenant()

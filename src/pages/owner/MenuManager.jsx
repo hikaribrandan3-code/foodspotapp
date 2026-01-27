@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
-import { getMenu, saveMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory, updateCategory, removeMenuItem, addMenuItem } from '../../config/menuData.js'
+import { getMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory, updateCategory, removeMenuItem, addMenuItem } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
@@ -226,7 +226,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         return newMenu
                     })
                 })
-                saveMenu(finalMenu)
+                // 🛡️ CLOUD-ONLY: saveMenu removed (Anti-Gravity V3.0)
                 syncMenuToCloud(finalMenu)
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
                 setUploadStatus({ success: true, message: '✔ Guardado' })
@@ -285,7 +285,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 if (editForm.image) {
                     item.image = editForm.image
                 }
-                saveMenu(updatedMenu)
+                // 🛡️ CLOUD-ONLY: saveMenu removed
                 setMenu(updatedMenu)
                 syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
                 setSaveStatus({ message: 'Guardado correctamente' })
@@ -303,7 +303,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             const item = category.items.find(i => i.id === itemId)
             if (item) {
                 item.available = !item.available
-                saveMenu(updatedMenu)
+                // 🛡️ CLOUD-ONLY: saveMenu removed
                 setMenu(updatedMenu)
                 syncMenuToCloud(updatedMenu)
             }
@@ -346,7 +346,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             if (item) {
                 item.price = price
                 setMenu(updatedMenu)
-                saveMenu(updatedMenu)
+                // 🛡️ CLOUD-ONLY: saveMenu removed
                 syncMenuToCloud(updatedMenu)
                 setSaveStatus({ message: 'Precio actualizado' })
                 setTimeout(() => setSaveStatus(null), 2000)
@@ -365,7 +365,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             if (item) {
                 item.name = newName
                 setMenu(updatedMenu)
-                saveMenu(updatedMenu)
+                // 🛡️ CLOUD-ONLY: saveMenu removed
                 syncMenuToCloud(updatedMenu)
                 setSaveStatus({ message: 'Nombre actualizado' })
                 setTimeout(() => setSaveStatus(null), 2000)
