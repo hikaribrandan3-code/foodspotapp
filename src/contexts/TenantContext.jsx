@@ -54,15 +54,9 @@ export function TenantProvider({ children }) {
                 // 2. FETCH TENANT
                 console.log('[TenantContext] 🔍 Looking for slug:', slug)
 
-                // 🛡️ RECOVERY: Attempt Session Storage First (Fast Paint)
-                const cacheKey = `fs_vault_${slug}`
-                const cached = sessionStorage.getItem(cacheKey)
-                if (cached) {
-                    const parsed = JSON.parse(cached)
-                    setBusinessId(parsed.business_id)
-                    setTenantData(parsed)
-                    setLoading(false)
-                }
+                // 🛡️ CLOUD-FIRST POLICY (Protocol v3.0)
+                // We deliberately SKIP local storage "Fast Paint" to ensure we NEVER show stale data.
+                // Mobile vs Desktop sync requires absolute truth from the Cloud Vault.
 
                 const { data: tenant, error: fetchError } = await supabase
                     .from('branding')
@@ -73,25 +67,24 @@ export function TenantProvider({ children }) {
                 if (fetchError) throw fetchError
 
                 if (tenant) {
-                    console.log('[TenantContext] ✅ VAULT LOADED:', tenant.business_name)
+                    console.log('[TenantContext] ✅ VAULT LOADED (Cloud-First):', tenant.business_name)
 
                     setBusinessId(tenant.business_id)
                     setTenantStoragePrefix(tenant.business_id)
                     setTenantData(tenant)
+
+                    // Update cache for other sessions, but we didn't use it for valid state
+                    const cacheKey = `fs_vault_${slug}`
                     sessionStorage.setItem(cacheKey, JSON.stringify(tenant))
 
                     // 🛡️ RECOVERY: BYPASS ALL TRIAL CHECKS
-                    // Force the trial to be considered ACTIVE
                     setTrialExpired(false)
                     console.log('[TenantContext] 🛡️ RECOVERY: Trial check BYPASSED (Active)')
 
-                    // 🛡️ RECOVERY: INSTANT HYDRATION
-                    // Do not wait for anything else. Unblock the UI immediately.
                     setLoading(false)
 
                 } else {
                     console.warn(`[TenantContext] Tenant "${slug}" not found`)
-                    // Try fallback logic or auto-seed if needed, but for now just error
                     setError('Tenant not found')
                     setLoading(false)
                 }
@@ -143,10 +136,11 @@ export function TenantProvider({ children }) {
         <TenantContext.Provider value={{
             businessId,
             tenantData,
-            trialExpired, // Always false in Recovery Mode
+            trialExpired,
             loading,
             isLoaded: !loading,
-            emergencyUnblock
+            emergencyUnblock,
+            forceRefresh: Date.now() // Signal downstream components
         }}>
             {children}
         </TenantContext.Provider>
@@ -155,7 +149,7 @@ export function TenantProvider({ children }) {
 
 export function useTenant() {
     const context = useContext(TenantContext);
-    if (!context) return { businessId: null, tenantData: {}, isLoaded: false, loading: false };
+    if (!context) return { businessId: null, tenantData: {}, isLoaded: false, loading: false, forceRefresh: 0 };
     return {
         ...context,
         branding: context.tenantData || {},

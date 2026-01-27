@@ -102,13 +102,18 @@ function Home({ config: configProp }) {
     }
 
     // Featured items with LOCAL STATE for optimistic updates
-    const featuredPhotos = config?.featuredPhotos || []
+    // 🛡️ CLOUD-FIRST ALIGNMENT: Source of truth is tenantData.featuredPhotos
+    // This removes the "ghost data" fallback to Latte/Seed.
+    const featuredPhotos = tenantData?.featured_photos || config?.featuredPhotos || []
+
     const buildFeaturedItems = useCallback((photos) => {
+        // Enforce exactly 4 slots, populated strictly from the DB or null
         return [0, 1, 2, 3].map(slotIndex => {
             const slot = photos[slotIndex] || {}
+            // 🛡️ STRICT SYNC: If it's not in the DB, it's empty. No defaults.
             return {
                 id: `featured-slot-${slotIndex}`,
-                name: slot.name || 'Destacado',
+                name: slot.name || 'Destacado', // Only default string if DB has empty string but slot exists
                 image: slot.image || null,
                 price: slot.price || 0
             }
@@ -119,7 +124,7 @@ function Home({ config: configProp }) {
         () => buildFeaturedItems(featuredPhotos)
     )
 
-    // Sync featured items from config prop when it changes (but NOT during drag)
+    // Sync featured items from config prop or tenantData when they change (but NOT during drag)
     useEffect(() => {
         if (!isDraggingRef.current && !isEditMode) {
             setLocalFeaturedItems(buildFeaturedItems(featuredPhotos))
