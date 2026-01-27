@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useSpring, animated, config } from '@react-spring/web'
+import { useSpring, animated, config as springConfig } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
@@ -92,7 +92,7 @@ const Menu = ({ config: configProp }) => {
 
     const cartTotal = Object.values(cart).reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
-    // 🛡️ LOADING STATE
+    // 🛡️ SAFE LOADING & ERROR CHECK
     if (loading) {
         return (
             <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC' }}>
@@ -102,19 +102,24 @@ const Menu = ({ config: configProp }) => {
     }
 
     // 🛡️ EMPTY STATE (Should not happen if Sync worked)
-    if (!menuData?.categories?.length) {
-        return (
-            <div style={{ height: '100vh', padding: 20, textAlign: 'center', paddingTop: 100 }}>
-                <h2>Menú en preparación</h2>
-                <p>El dueño está configurando los productos.</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    style={{ marginTop: 20, padding: '10px 20px', borderRadius: 20, border: 'none', background: '#22C55E', color: 'white' }}
-                >
-                    Recargar
-                </button>
-            </div>
-        )
+    try {
+        if (!menuData?.categories?.length) {
+            return (
+                <div style={{ height: '100vh', padding: 20, textAlign: 'center', paddingTop: 100 }}>
+                    <h2>Menú en preparación</h2>
+                    <p>El dueño está configurando los productos.</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        style={{ marginTop: 20, padding: '10px 20px', borderRadius: 20, border: 'none', background: '#22C55E', color: 'white' }}
+                    >
+                        Recargar
+                    </button>
+                </div>
+            )
+        }
+    } catch (err) {
+        console.error("Critical rendering error in Menu:", err)
+        return null
     }
 
     return (
