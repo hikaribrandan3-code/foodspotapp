@@ -274,7 +274,7 @@ function OwnerSummary({ config: configProp }) {
                 useRoutes={true}
             />
 
-            {/* 📊 Backend Auditor Modal */}
+            {/* 📊 Backend Auditor - Side Drawer */}
             {showAuditor && (
                 <div
                     onClick={() => setShowAuditor(false)}
@@ -284,25 +284,25 @@ function OwnerSummary({ config: configProp }) {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'rgba(0,0,0,0.7)',
+                        background: 'rgba(0,0,0,0.5)',
                         zIndex: 9999,
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: 16
+                        alignItems: 'stretch',
+                        justifyContent: 'flex-end',
+                        pointerEvents: 'auto'
                     }}
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
                         style={{
                             background: '#1F2937',
-                            borderRadius: 16,
-                            width: '100%',
-                            maxWidth: 500,
-                            maxHeight: '80vh',
+                            width: '85%',
+                            maxWidth: 400,
+                            height: '100%',
                             display: 'flex',
                             flexDirection: 'column',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            boxShadow: '-4px 0 24px rgba(0,0,0,0.3)'
                         }}
                     >
                         <div style={{
@@ -310,19 +310,27 @@ function OwnerSummary({ config: configProp }) {
                             borderBottom: '1px solid #374151',
                             display: 'flex',
                             justifyContent: 'space-between',
-                            alignItems: 'center'
+                            alignItems: 'center',
+                            position: 'relative',
+                            zIndex: 10001
                         }}>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>📊 Cloud Vault (tenantData)</span>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>📊 Cloud Vault</span>
                             <button
-                                onClick={() => setShowAuditor(false)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowAuditor(false);
+                                }}
                                 style={{
-                                    background: '#374151',
+                                    background: '#EF4444',
                                     border: 'none',
                                     borderRadius: 8,
-                                    padding: '6px 12px',
+                                    padding: '8px 16px',
                                     color: 'white',
                                     cursor: 'pointer',
-                                    fontSize: 13
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    zIndex: 10002,
+                                    position: 'relative'
                                 }}
                             >
                                 ✕ Close
@@ -342,7 +350,19 @@ function OwnerSummary({ config: configProp }) {
                                 whiteSpace: 'pre-wrap',
                                 wordBreak: 'break-word'
                             }}>
-                                {JSON.stringify(tenantData, null, 2)}
+                                {JSON.stringify(tenantData, (key, value) => {
+                                    // 🔒 TRUNCATE BASE64: Make Auditor usable
+                                    if (typeof value === 'string' && value.length > 100) {
+                                        if (value.startsWith('data:image')) {
+                                            return `[BASE64 IMAGE - ${value.length} chars]`;
+                                        }
+                                        if (value.startsWith('http')) {
+                                            return value.substring(0, 80) + '...';
+                                        }
+                                        return value.substring(0, 100) + '...';
+                                    }
+                                    return value;
+                                }, 2)}
                             </pre>
                         </div>
                     </div>
