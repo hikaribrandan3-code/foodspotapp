@@ -22,6 +22,19 @@ function OwnerSummary({ config: configProp }) {
     const { tenantData } = useTenant() // 🛡️ Cloud Data Auditor
     const [showAuditor, setShowAuditor] = useState(false)
 
+    // 🔓 GHOST WALL FIX: Manage body scroll when modal is open
+    useEffect(() => {
+        if (showAuditor) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        // Cleanup on unmount
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showAuditor]);
+
     // NOTE: Auth check removed - ProtectedRoute handles authentication
 
     // Poll for order updates

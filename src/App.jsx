@@ -90,46 +90,58 @@ function App() {
     const [config, setConfig] = useState(() => normalizeConfig({}));
     const [orders, setOrders] = useState(() => getOrders());
 
-    // 🔥 HYDRATION V4: Sync Config with Tenant Data
-    // This allows Settings.jsx updates to immediately reflect in App.jsx via window event
-    // AND allows database state to override local defaults on load
+    // 🔥 HYDRATION V5: MASTER MERGE - Full app_config restoration
+    // This merges the ENTIRE app_config blob from Cloud, not just specific fields
     useEffect(() => {
         if (tenant?.tenantData) {
-            // Merge tenantData (branding, limits, settings) into config structure
-            // This bridge is critical for the "Info" tab to see "info_pills"
+            // 📦 MASTER MERGE: app_config is the source of truth for ALL branding
+            const cloudAppConfig = tenant.tenantData.app_config || {};
+
             const merged = normalizeConfig({
                 ...config,
                 ...tenant.tenantData,
-                // Ensure deep objects like infoPills are preferred from tenantData if present
-                infoPills: tenant.tenantData.info_pills || config.infoPills,
-                businessInfo: tenant.tenantData.business_info || config.businessInfo,
-                // 🎨 RE-HYDRATION FIX: Map flat DB fields to App structure
-                businessName: tenant.tenantData.business_name || config.businessName,
+                // 🌟 FULL CONFIG INJECTION: Merge everything from app_config
+                ...cloudAppConfig,
+                // Ensure deep objects are preserved
+                infoPills: tenant.tenantData.info_pills || cloudAppConfig.infoPills || config.infoPills,
+                businessInfo: tenant.tenantData.business_info || cloudAppConfig.businessInfo || config.businessInfo,
+                // 📸 HIGHLIGHT RECOVERY: Pull featuredPhotos from app_config
+                featuredPhotos: cloudAppConfig.featuredPhotos || config.featuredPhotos,
+                // 🎨 DB FIELD MAPPINGS (flat fields from DB)
+                businessName: tenant.tenantData.business_name || cloudAppConfig.businessName || config.businessName,
                 headerCover: {
                     ...config.headerCover,
-                    image: tenant.tenantData.hero_url || config.headerCover?.image
+                    ...(cloudAppConfig.headerCover || {}),
+                    image: tenant.tenantData.hero_url || cloudAppConfig.headerCover?.image || config.headerCover?.image
                 },
                 headerBranding: {
                     ...config.headerBranding,
-                    mode: tenant.tenantData.hero_mode === 'text' ? 'text' : 'cover'
+                    ...(cloudAppConfig.headerBranding || {}),
+                    mode: tenant.tenantData.hero_mode || cloudAppConfig.headerBranding?.mode || 'cover'
                 },
                 colors: {
                     ...config.colors,
-                    primary: tenant.tenantData.primary_color || config.colors?.primary,
-                    secondary: tenant.tenantData.secondary_color || config.colors?.secondary,
-                    confirmation: tenant.tenantData.confirmation_color || config.colors?.confirmation,
-                    powered: tenant.tenantData.powered_by_color || config.colors?.powered // 🛡️ Fixes footer color
+                    ...(cloudAppConfig.colors || {}),
+                    primary: tenant.tenantData.primary_color || cloudAppConfig.colors?.primary || config.colors?.primary,
+                    secondary: tenant.tenantData.secondary_color || cloudAppConfig.colors?.secondary || config.colors?.secondary,
+                    confirmation: tenant.tenantData.confirmation_color || cloudAppConfig.colors?.confirmation || config.colors?.confirmation,
+                    powered: tenant.tenantData.powered_by_color || cloudAppConfig.colors?.powered || config.colors?.powered
                 },
-                // 🎨 BRANDING RECOVERY: Map snake_case DB fields to camelCase config
                 branding: {
                     ...config.branding,
-                    fontFamily: tenant.tenantData.font_family || config.branding?.fontFamily,
-                    fontWeight: tenant.tenantData.font_weight || config.branding?.fontWeight,
-                    primaryColor: tenant.tenantData.navbar_color || config.branding?.primaryColor,
-                    iconColorMode: tenant.tenantData.nav_icon_mode || config.branding?.iconColorMode
-                }
+                    ...(cloudAppConfig.branding || {}),
+                    fontFamily: tenant.tenantData.font_family || cloudAppConfig.branding?.fontFamily || config.branding?.fontFamily,
+                    fontWeight: tenant.tenantData.font_weight || cloudAppConfig.branding?.fontWeight || config.branding?.fontWeight,
+                    primaryColor: tenant.tenantData.navbar_color || cloudAppConfig.branding?.primaryColor || config.branding?.primaryColor,
+                    iconColorMode: tenant.tenantData.nav_icon_mode || cloudAppConfig.branding?.iconColorMode || config.branding?.iconColorMode
+                },
+                // 🏠 HOME CONFIG: Restore from app_config
+                homeConfig: cloudAppConfig.homeConfig || config.homeConfig,
+                // 🎮 HERO ICONS: Restore from app_config
+                heroIcons: cloudAppConfig.heroIcons || tenant.tenantData.hero_icons || config.heroIcons
             });
             setConfig(merged);
+            console.log('☁️ [App.jsx] MASTER MERGE COMPLETE:', { featuredPhotos: merged.featuredPhotos?.length, branding: merged.branding });
         }
     }, [tenant?.tenantData]);
 
