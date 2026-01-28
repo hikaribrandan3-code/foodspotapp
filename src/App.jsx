@@ -86,7 +86,8 @@ function App() {
     const navigate = useNavigate();
     const tenant = useTenant();
 
-    const [config, setConfig] = useState(() => getConfig());
+    // 🛡️ CLOUD-FIRST: Initialize with EMPTY defaults, Cloud Hydration will populate
+    const [config, setConfig] = useState(() => normalizeConfig({}));
     const [orders, setOrders] = useState(() => getOrders());
 
     // 🔥 HYDRATION V4: Sync Config with Tenant Data

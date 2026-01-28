@@ -8,7 +8,7 @@ import BackendNav from '../../components/BackendNav';
 import CoverImageEditor from '../../components/CoverImageEditor';
 import ColorPickerModal from '../../components/ColorPickerModal';
 import { clearAuth } from '../../utils/storage';
-import { getConfig, updateConfig } from '../../config/appConfig.v2.js';
+import { updateConfig } from '../../config/appConfig.v2.js'; // updateConfig kept for potential future use
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
 import './Settings.css';
 
@@ -199,7 +199,8 @@ const Settings = () => {
         } else {
             storageUpdates[field] = value;
         }
-        updateConfig(storageUpdates);
+        // 🛡️ CLOUD-FIRST: localStorage writes disabled.
+        // updateConfig(storageUpdates);
 
         try {
             // Cloud Sync always uses the original field name (snake_case for DB)
@@ -226,13 +227,13 @@ const Settings = () => {
         setHeroIconColors(prev => ({ ...prev, [iconId]: color }));
         syncContext({ hero_icons: updatedIcons });
 
-        // 💾 PERSIST TO STORAGE
-        updateConfig({
-            hero_icons: updatedIcons,
-            heroIcons: { // Attempt to map to camelCase structure for completeness
-                [iconId]: { color: color }
-            }
-        });
+        // 🛡️ CLOUD-FIRST: localStorage writes disabled.
+        // updateConfig({
+        //     hero_icons: updatedIcons,
+        //     heroIcons: { // Attempt to map to camelCase structure for completeness
+        //         [iconId]: { color: color }
+        //     }
+        // });
 
         try {
             await updateBranding({ hero_icons: updatedIcons }, businessId);
@@ -771,7 +772,7 @@ const Settings = () => {
                     setShowCoverEditor(false);
                 }}
                 initialData={{ image: tenant?.hero_url }}
-                config={getConfig()}
+                config={{}} // Cloud-First: No localStorage dependency
                 businessId={businessId}
                 heroMode={tenant?.hero_mode}
             />
