@@ -34,14 +34,15 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [menu, setMenu] = useState(null)
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
 
-    // SYNC: Update menu when tenantData loads from cloud
+    // SYNC: Update menu when tenantData loads from cloud (Gatekeeper Bypass)
     useEffect(() => {
-        const cloudData = tenantData?.menu_data
-        if (cloudData && Array.isArray(cloudData.categories)) {
-            console.log('[MenuManager] ☁️ CLOUD-FIRST: Hydrating menu from tenantData.menu_data')
+        if (tenantLoaded) {
+            // If cloud has data, use it. If not, use an empty structure.
+            const cloudData = tenantData?.menu_data || { categories: [] }
+            console.log('[MenuManager] ☁️ CLOUD-READY: Setting menu state')
             setMenu(cloudData)
         }
-    }, [tenantData?.menu_data])
+    }, [tenantLoaded, tenantData])
 
     // SYNC: Ensure localConfig updates when parent config changes (e.g. initial load)
     useEffect(() => {
@@ -429,8 +430,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setUploadStatus(null)
     }
 
-    // 🚧 THE GATEKEEPER (Amnesia Killer): Block ALL rendering until Cloud Vault is hydrated
-    if (!tenantLoaded || menu === null) {
+    // 🚧 THE GATEKEEPER (Bypass Mode): Only block if tenant context is NOT loaded.
+    // If loaded but empty, LET US IN to add initial data.
+    if (!tenantLoaded) {
         return (
             <div style={{
                 minHeight: '100vh',
