@@ -31,7 +31,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // 🛡️ STATE LOCK (Anti-Gravity V3.0 - Amnesia Killer)
     // Menu state is initialized as NULL to prevent premature sync.
     // It will be hydrated ONLY when tenantData arrives from cloud.
-    const [menu, setMenu] = useState(null)
+    // 🛡️ STATE LOCK (Anti-Gravity V3.0 - Amnesia Killer)
+    // Menu state is initialized as EMPTY STRUCTURE to prevent null-pointer crashes.
+    // It will be populated by cloud data when tenantData arrives.
+    const [menu, setMenu] = useState({ categories: [] })
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
 
     // SYNC: Update menu when tenantData loads from cloud (Gatekeeper Bypass)
@@ -770,7 +773,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             <button
                                 onClick={() => {
                                     if (newCategoryName.trim()) {
-                                        const updatedMenu = { ...menu }
+                                        // 🛡️ NULL-POINTER DEFENSE: Ensure object exists
+                                        const updatedMenu = menu ? { ...menu } : { categories: [] }
+                                        if (!updatedMenu.categories) updatedMenu.categories = []
+
                                         updatedMenu.categories.push({
                                             id: generateId('category'),
                                             name: newCategoryName.trim(),
