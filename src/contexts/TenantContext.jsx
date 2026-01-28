@@ -149,8 +149,13 @@ export function TenantProvider({ children }) {
 
 export function useTenant() {
     const context = useContext(TenantContext);
-    if (!context) return { businessId: null, tenantData: {}, isLoaded: false, loading: false, forceRefresh: 0 };
-    return context; // Return raw context to avoid property masking
+    if (!context) return { businessId: null, tenantData: {}, isLoaded: false, loading: false, forceRefresh: 0, branding: {}, settings: {}, slug: null };
+    return {
+        ...context,
+        branding: context.tenantData || {},
+        settings: context.tenantData?.settings || {},
+        slug: context.tenantData?.slug
+    };
 }
 
 export function useBusinessId() {
