@@ -122,18 +122,18 @@ function App() {
                 colors: {
                     ...config.colors,
                     ...(cloudAppConfig.colors || {}),
-                    primary: tenant.tenantData.primary_color || cloudAppConfig.colors?.primary || config.colors?.primary,
-                    secondary: tenant.tenantData.secondary_color || cloudAppConfig.colors?.secondary || config.colors?.secondary,
-                    confirmation: tenant.tenantData.confirmation_color || cloudAppConfig.colors?.confirmation || config.colors?.confirmation,
-                    powered: tenant.tenantData.powered_by_color || cloudAppConfig.colors?.powered || config.colors?.powered
+                    primary: cloudAppConfig.colors?.primary || tenant.tenantData.primary_color || config.colors?.primary,
+                    secondary: cloudAppConfig.colors?.secondary || tenant.tenantData.secondary_color || config.colors?.secondary,
+                    confirmation: cloudAppConfig.colors?.confirmation || tenant.tenantData.confirmation_color || config.colors?.confirmation,
+                    powered: cloudAppConfig.colors?.powered || tenant.tenantData.powered_by_color || config.colors?.powered
                 },
                 branding: {
                     ...config.branding,
                     ...(cloudAppConfig.branding || {}),
-                    fontFamily: tenant.tenantData.font_family || cloudAppConfig.branding?.fontFamily || config.branding?.fontFamily,
-                    fontWeight: tenant.tenantData.font_weight || cloudAppConfig.branding?.fontWeight || config.branding?.fontWeight,
-                    primaryColor: tenant.tenantData.navbar_color || cloudAppConfig.branding?.primaryColor || config.branding?.primaryColor,
-                    iconColorMode: tenant.tenantData.nav_icon_mode || cloudAppConfig.branding?.iconColorMode || config.branding?.iconColorMode
+                    fontFamily: cloudAppConfig.branding?.fontFamily || tenant.tenantData.font_family || config.branding?.fontFamily,
+                    fontWeight: cloudAppConfig.branding?.fontWeight || tenant.tenantData.font_weight || config.branding?.fontWeight,
+                    primaryColor: cloudAppConfig.branding?.primaryColor || tenant.tenantData.navbar_color || config.branding?.primaryColor,
+                    iconColorMode: cloudAppConfig.branding?.iconColorMode || tenant.tenantData.nav_icon_mode || config.branding?.iconColorMode
                 },
                 // 🏠 HOME CONFIG: Restore from app_config
                 homeConfig: cloudAppConfig.homeConfig || config.homeConfig,
@@ -141,7 +141,10 @@ function App() {
                 heroIcons: cloudAppConfig.heroIcons || tenant.tenantData.hero_icons || config.heroIcons
             });
             setConfig(merged);
-            console.log('☁️ [App.jsx] MASTER MERGE COMPLETE:', { featuredPhotos: merged.featuredPhotos?.length, branding: merged.branding });
+            console.log('☁️ [App.jsx] HYDRATION V6 PRIORITY FIX:', {
+                primaryColor: merged.colors?.primary,
+                fontFamily: merged.branding?.fontFamily
+            });
         }
     }, [tenant?.tenantData]);
 
