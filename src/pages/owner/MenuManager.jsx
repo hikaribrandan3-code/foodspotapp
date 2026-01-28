@@ -28,16 +28,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded } = useTenant()
     const targetBusinessId = isSimulated ? impersonatingBusinessId : tenantBusinessId
 
-    // 🛡️ CLOUD-FIRST INITIALIZATION (Anti-Gravity V3.0)
-    // Menu state is initialized from CLOUD DATA (tenantData.menu_data), NOT localStorage
-    const [menu, setMenu] = useState(() => {
-        const cloudData = tenantData?.menu_data
-        // Safety: Ensure we have a valid object with categories array
-        if (cloudData && Array.isArray(cloudData.categories)) {
-            return cloudData
-        }
-        return { categories: [] }
-    })
+    // 🛡️ STATE LOCK (Anti-Gravity V3.0 - Amnesia Killer)
+    // Menu state is initialized as NULL to prevent premature sync.
+    // It will be hydrated ONLY when tenantData arrives from cloud.
+    const [menu, setMenu] = useState(null)
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
 
     // SYNC: Update menu when tenantData loads from cloud
@@ -87,9 +81,15 @@ function MenuManager({ config: configProp, demoMode = false }) {
         window.location.href = demoMode ? '/' : `/${tenantSlug}`
     }
 
-    // --- 🛡️ STRICT CLOUD SOLDER: Sync Logic ---
+    // --- 🛡️ SAFE-SYNC: Sync Logic (Amnesia Killer) ---
     const syncMenuToCloud = async (updatedMenu) => {
         const businessId = targetBusinessId
+
+        // 🛡️ AMNESIA GUARD: NEVER sync null or empty data
+        if (!updatedMenu || !Array.isArray(updatedMenu.categories)) {
+            console.warn('⚠️ SYNC BLOCKED: Attempted to sync null/invalid menu. Aborting to protect Cloud Vault.')
+            return
+        }
 
         if (!businessId) {
             console.error('CRITICAL: Cannot sync to cloud - No Business ID')
@@ -427,6 +427,24 @@ function MenuManager({ config: configProp, demoMode = false }) {
             image: slot.image
         })
         setUploadStatus(null)
+    }
+
+    // 🚧 THE GATEKEEPER (Amnesia Killer): Block ALL rendering until Cloud Vault is hydrated
+    if (!tenantLoaded || menu === null) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#F8FAFC',
+                flexDirection: 'column',
+                gap: 12
+            }}>
+                <div style={{ fontSize: 32 }}>☁️</div>
+                <div style={{ color: '#64748B', fontWeight: 500 }}>Sincronizando con la Nube...</div>
+            </div>
+        )
     }
 
     return (
