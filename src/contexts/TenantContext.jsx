@@ -58,10 +58,13 @@ export function TenantProvider({ children }) {
                 // We deliberately SKIP local storage "Fast Paint" to ensure we NEVER show stale data.
                 // Mobile vs Desktop sync requires absolute truth from the Cloud Vault.
 
+                // Hard-coded ID for Universal Alignment to match MenuManager
+                const LOCKED_ID = '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd';
+
                 const { data: tenant, error: fetchError } = await supabase
                     .from('branding')
                     .select('*')
-                    .ilike('slug', slug)
+                    .or(`slug.ilike.${slug},tenant_id.eq.${LOCKED_ID}`) // 🛡️ Fetch by EITHER slug or ID (Case-insensitive slug)
                     .maybeSingle()
 
                 if (fetchError) throw fetchError
