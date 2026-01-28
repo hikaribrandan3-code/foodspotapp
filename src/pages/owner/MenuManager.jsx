@@ -29,13 +29,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const targetBusinessId = isSimulated ? impersonatingBusinessId : tenantBusinessId
 
     // 🛡️ STATE LOCK (Anti-Gravity V3.0 - Amnesia Killer)
-    // Menu state is initialized as NULL to prevent premature sync.
-    // It will be hydrated ONLY when tenantData arrives from cloud.
-    // 🛡️ STATE LOCK (Anti-Gravity V3.0 - Amnesia Killer)
     // Menu state is initialized as EMPTY STRUCTURE to prevent null-pointer crashes.
     // It will be populated by cloud data when tenantData arrives.
     const [menu, setMenu] = useState({ categories: [] })
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
+
+    // 🔒 HYDRATION LOCK: Prevents sync until cloud data is loaded
+    const isHydratedRef = useRef(false)
 
     // SYNC: Update menu when tenantData loads from cloud (Gatekeeper Bypass)
     useEffect(() => {
@@ -44,6 +44,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
             const cloudData = tenantData?.menu_data || { categories: [] }
             console.log('[MenuManager] ☁️ CLOUD-READY: Setting menu state')
             setMenu(cloudData)
+            // 🔓 UNLOCK: Cloud data received, syncing is now safe
+            isHydratedRef.current = true
+            console.log('[MenuManager] 🔓 HYDRATION COMPLETE: Sync now allowed')
         }
     }, [tenantLoaded, tenantData])
 
@@ -90,6 +93,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const LOCKED_TENANT_ID = '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
     const syncMenuToCloud = async (updatedMenu) => {
+        // 🔒 HYDRATION GUARD: Block sync until cloud data is loaded
+        if (!isHydratedRef.current) {
+            console.warn('⚠️ SYNC BLOCKED: Hydration not complete. Waiting for cloud data before allowing writes.')
+            return
+        }
+
         // 🛡️ AMNESIA GUARD: NEVER sync null or empty data
         if (!updatedMenu || !Array.isArray(updatedMenu.categories)) {
             console.warn('⚠️ SYNC BLOCKED: Attempted to sync null/invalid menu. Aborting to protect Cloud Vault.')
