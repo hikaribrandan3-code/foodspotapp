@@ -96,8 +96,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     // --- 🛡️ SAFE-SYNC: Sync Logic (Final Boss Fix) ---
-    // 🔒 HARD-LOCKED TENANT ID (Universal Alignment)
-    const LOCKED_TENANT_ID = '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
+    // 🔒 UUID PROTECTION: Use values from TenantContext
+    const LOCKED_TENANT_ID = tenantBusinessId || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
     const syncMenuToCloud = async (updatedMenu) => {
         // 🔒 HYDRATION GUARD: Block sync until cloud data is loaded
@@ -436,7 +436,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     // --- FEATURED ITEMS LOGIC ---
-    const activeFeaturedItems = localConfig?.featuredPhotos || []
+    // 🛡️ DEFAULT TO 4 SLOTS: Ensure UI is always clickable even if cloud array is empty/null
+    const activeFeaturedItems = (() => {
+        const photos = localConfig?.featuredPhotos || []
+        const slots = [...photos]
+        while (slots.length < 4) slots.push(null)
+        return slots.slice(0, 4)
+    })()
     const isFeatured = (item) => activeFeaturedItems.some(f => f && f.name === item.name)
 
     const handleToggleFeatured = (item) => {

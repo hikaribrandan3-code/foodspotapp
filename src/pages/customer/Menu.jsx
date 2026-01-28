@@ -124,7 +124,9 @@ const Menu = ({ config: configProp }) => {
 
     return (
         <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: '#F8FAFC' }}>
-            <HeaderClamp config={appConfig} />
+            <div style={{ maxWidth: '92%', margin: '0 auto', position: 'relative', zIndex: 10 }}>
+                <HeaderClamp config={appConfig} />
+            </div>
 
             {/* 🌊 PHYSICS CONTAINER */}
             <animated.div

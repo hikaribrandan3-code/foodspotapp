@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 
 const WhatsAppIcon = () => (
@@ -40,6 +41,17 @@ function Info({ config: configProp }) {
     const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
+    const { tenantData } = useTenant()
+
+    // 🛡️ HERO MODE ENFORCER: Force respecting the cloud setting
+    // This overrides any stale config prop logic
+    const enforceHeroMode = {
+        ...config,
+        headerBranding: {
+            ...config.headerBranding,
+            mode: tenantData?.hero_mode || config.headerBranding?.mode || 'cover'
+        }
+    }
 
     // INVARIANT: config prop is ALREADY normalized and includes demo branding
     // DO NOT merge demo branding here - it bypasses normalizeConfig()
@@ -80,7 +92,7 @@ function Info({ config: configProp }) {
             paddingBottom: 90,
             minHeight: '100vh'
         }}>
-            <HeaderClamp config={config} />
+            <HeaderClamp config={enforceHeroMode} />
 
             {/* 1. WHATSAPP */}
             {infoPills.whatsapp?.enabled && (
