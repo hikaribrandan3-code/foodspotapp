@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
-import { getMenu, formatPrice, setFeaturedItem, toggleCategoryEnabled, addCategory, updateCategory, removeMenuItem, addMenuItem } from '../../config/menuData.js'
+import { formatPrice } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
 import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer.js'
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
@@ -144,6 +144,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
             setLocalConfig(updatedConfig)
         }
     }
+
+    // --- 🛠️ PURE STATE HELPER: Generate IDs ---
+    const generateId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     const handleEdit = (categoryId, item) => {
         setEditingItem({ categoryId, itemId: item.id })
@@ -310,25 +313,40 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     const handleSetFeatured = (categoryId, itemId) => {
-        setFeaturedItem(categoryId, itemId)
-        const updatedMenu = getMenu(targetBusinessId) // Re-fetch updated state
+        const updatedMenu = { ...menu }
+        // Reset all featured
+        updatedMenu.categories.forEach(cat => {
+            cat.items.forEach(i => i.featured = false)
+        })
+        // Set new featured
+        const category = updatedMenu.categories.find(c => c.id === categoryId)
+        if (category) {
+            const item = category.items.find(i => i.id === itemId)
+            if (item) item.featured = true
+        }
         setMenu(updatedMenu)
         syncMenuToCloud(updatedMenu)
     }
 
     const handleToggleCategory = (categoryId) => {
-        toggleCategoryEnabled(categoryId)
-        const updatedMenu = getMenu(targetBusinessId)
-        setMenu(updatedMenu)
-        syncMenuToCloud(updatedMenu)
+        const updatedMenu = { ...menu }
+        const category = updatedMenu.categories.find(c => c.id === categoryId)
+        if (category) {
+            category.enabled = category.enabled === undefined ? true : !category.enabled
+            setMenu(updatedMenu)
+            syncMenuToCloud(updatedMenu)
+        }
     }
 
     const handleRenameCategory = (categoryId) => {
         if (editingCategory && editingCategory.name.trim()) {
-            updateCategory(categoryId, { name: editingCategory.name.trim() })
-            const updatedMenu = getMenu(targetBusinessId)
-            setMenu(updatedMenu)
-            syncMenuToCloud(updatedMenu)
+            const updatedMenu = { ...menu }
+            const category = updatedMenu.categories.find(c => c.id === categoryId)
+            if (category) {
+                category.name = editingCategory.name.trim()
+                setMenu(updatedMenu)
+                syncMenuToCloud(updatedMenu)
+            }
         }
         setEditingCategory(null)
     }
@@ -374,23 +392,32 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     const handleRemoveItem = (categoryId, item) => {
         if (confirm(`¿Eliminar ítem "${item.name}"?`)) {
-            removeMenuItem(categoryId, item.id)
-            const updatedMenu = getMenu(targetBusinessId)
-            setMenu(updatedMenu)
-            syncMenuToCloud(updatedMenu)
+            const updatedMenu = { ...menu }
+            const category = updatedMenu.categories.find(c => c.id === categoryId)
+            if (category) {
+                category.items = category.items.filter(i => i.id !== item.id)
+                setMenu(updatedMenu)
+                syncMenuToCloud(updatedMenu)
+            }
         }
     }
 
     const handleAddItem = (categoryId) => {
-        const newItem = {
-            name: 'Nuevo ítem',
-            price: 0,
-            image: null
+        const updatedMenu = { ...menu }
+        const category = updatedMenu.categories.find(c => c.id === categoryId)
+        if (category) {
+            const newItem = {
+                id: generateId('item'),
+                name: 'Nuevo ítem',
+                price: 0,
+                available: true,
+                featured: false,
+                image: null
+            }
+            category.items.push(newItem)
+            setMenu(updatedMenu)
+            syncMenuToCloud(updatedMenu)
         }
-        addMenuItem(categoryId, newItem)
-        const updatedMenu = getMenu(targetBusinessId)
-        setMenu(updatedMenu)
-        syncMenuToCloud(updatedMenu)
     }
 
     // --- FEATURED ITEMS LOGIC ---
@@ -743,10 +770,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             <button
                                 onClick={() => {
                                     if (newCategoryName.trim()) {
-                                        addCategory(newCategoryName.trim(), newCategoryIcon || '📦')
-                                        const updatedMenu = getMenu(targetBusinessId) // Re-fetch updated state
+                                        const updatedMenu = { ...menu }
+                                        updatedMenu.categories.push({
+                                            id: generateId('category'),
+                                            name: newCategoryName.trim(),
+                                            icon: newCategoryIcon || '📦',
+                                            enabled: true,
+                                            items: []
+                                        })
                                         setMenu(updatedMenu)
-                                        syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
+                                        syncMenuToCloud(updatedMenu)
                                         setNewCategoryName('')
                                         setNewCategoryIcon('📦')
                                         setShowAddCategory(false)

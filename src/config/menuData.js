@@ -72,34 +72,21 @@ export const defaultMenuData = {
     ],
 };
 
-// Storage key
+// Storage key (DEPRECATED)
 export const MENU_STORAGE_KEY = "grub_menu";
 
-// Get menu from storage or return default
+// Get menu
+// 🛡️ REFACTOR: This used to read from localStorage.
+// Now it returns safe defaults to prevent crashes, but should NOT be used for state.
 export function getMenu() {
-    try {
-        const stored = localStorage.getItem(MENU_STORAGE_KEY);
-        if (stored) {
-            return JSON.parse(stored);
-        }
-        // First load - save default menu
-        saveMenu(defaultMenuData);
-        return defaultMenuData;
-    } catch (e) {
-        console.error("Error loading menu:", e);
-        return defaultMenuData;
-    }
+    return defaultMenuData;
 }
 
 // Save menu to storage
+// 🛡️ REFACTOR: No-op. We sync to Cloud (Supabase) now.
 export function saveMenu(menu) {
-    try {
-        localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(menu));
-        return true;
-    } catch (e) {
-        console.error("Error saving menu:", e);
-        return false;
-    }
+    // console.log('⚠️ Legacy saveMenu called - ignoring local persistence');
+    return true;
 }
 
 // Update a single menu item
