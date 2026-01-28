@@ -138,8 +138,8 @@ function App() {
                 },
                 // 🏠 HOME CONFIG: Restore from app_config
                 homeConfig: cloudAppConfig.homeConfig || config.homeConfig,
-                // 🎮 HERO ICONS: Restore from app_config
-                heroIcons: cloudAppConfig.heroIcons || tenant.tenantData.hero_icons || config.heroIcons
+                // 🎮 HERO ICONS: ROOT > app_config > defaults
+                heroIcons: tenant.tenantData.hero_icons || cloudAppConfig.heroIcons || config.heroIcons
             });
             setConfig(merged);
             console.log('☁️ [App.jsx] HYDRATION V6 PRIORITY FIX:', {
@@ -228,39 +228,31 @@ function App() {
         }
     }, []);
 
+    // 🔥 DEEP REPAINT: UNIFIED CSS INJECTION
+    // Listens to config changes AND manually forces values to root
     useEffect(() => {
         if (!config) return;
         const root = document.documentElement;
+
+        // 1. TYPOGRAPHY
         const fontFamily = config.branding?.fontFamily || 'Inter';
         const fontWeight = config.branding?.fontWeight || '400';
         root.style.setProperty('--font-family-brand', `"${fontFamily}", system-ui, -apple-system, sans-serif`);
         root.style.setProperty('--font-weight-brand', fontWeight);
         document.body.style.fontFamily = `"${fontFamily}", system-ui, -apple-system, sans-serif`;
-    }, [config.branding?.fontFamily, config.branding?.fontWeight]);
 
-    useEffect(() => {
-        if (!config) return;
-        const root = document.documentElement;
-
-        // 🎨 VAULT SEAL: The Big 4 Theme Colors
-        // Maps config.colors (synced via Settings.jsx) to global CSS vars
+        // 2. THE BIG 4 COLORS
         const c = config.colors || {};
         root.style.setProperty('--color-primary', c.primary || '#8B7355');
         root.style.setProperty('--color-secondary', c.secondary || '#A89070');
         root.style.setProperty('--color-confirm', c.confirmation || '#22C55E');
         root.style.setProperty('--color-powered', c.powered || '#C4856A');
 
-        // Legacy Nav Support
+        // 3. LEGACY NAV SUPPORT
         root.style.setProperty('--nav-primary-color', config.branding?.primaryColor || '#8B7355');
         root.style.setProperty('--nav-icon-color', config.branding?.iconColorMode === 'black' ? '#000000' : '#FFFFFF');
 
-        const nav = document.querySelector('.bottom-nav');
-        if (nav) { nav.style.opacity = '0.99'; requestAnimationFrame(() => { nav.style.opacity = '1'; }); }
-    }, [config.branding?.primaryColor, config.branding?.iconColorMode, config.colors]);
-
-    useEffect(() => {
-        if (!config) return;
-        const root = document.documentElement;
+        // 4. HERO ICONS (Manual Mapping)
         const heroIcons = config.heroIcons || {};
         const getHeroBg = (c) => (!c?.color || c.color === 'auto') ? 'var(--canvas-surface)' : c.color;
         const getHeroIcon = (c) => (!c?.iconColorMode || c.iconColorMode === 'auto') ? 'var(--canvas-surface-text)' : (c.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK);
@@ -268,18 +260,37 @@ function App() {
         const menuC = heroIcons.menu || HERO_DEFAULT;
         root.style.setProperty('--hero-menu-bg', getHeroBg(menuC));
         root.style.setProperty('--hero-menu-icon', getHeroIcon(menuC));
+
         const delC = heroIcons.delivery || HERO_DEFAULT;
         root.style.setProperty('--hero-delivery-bg', getHeroBg(delC));
         root.style.setProperty('--hero-delivery-icon', getHeroIcon(delC));
+
         const promoC = { ...HERO_DEFAULT, ...(heroIcons.rewards || {}), ...(heroIcons.promos || {}) };
         root.style.setProperty('--hero-promos-bg', getHeroBg(promoC));
         root.style.setProperty('--hero-promos-icon', getHeroIcon(promoC));
         root.style.setProperty('--hero-rewards-bg', getHeroBg(promoC));
         root.style.setProperty('--hero-rewards-icon', getHeroIcon(promoC));
+
         const gameC = heroIcons.game || HERO_DEFAULT;
         root.style.setProperty('--hero-game-bg', getHeroBg(gameC));
         root.style.setProperty('--hero-game-icon', getHeroIcon(gameC));
-    }, [config.heroIcons, config.canvasMode]);
+
+        // 5. FORCE REPAINT
+        const nav = document.querySelector('.bottom-nav');
+        if (nav) {
+            nav.style.display = 'none';
+            nav.offsetHeight; // trigger reflow
+            nav.style.display = 'flex';
+        }
+
+    }, [
+        config.branding?.fontFamily,
+        config.branding?.fontWeight,
+        config.colors?.primary,
+        config.colors?.secondary,
+        config.heroIcons,
+        config.branding?.primaryColor
+    ]);
 
     useEffect(() => {
         if (!config) return;

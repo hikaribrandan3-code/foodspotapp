@@ -119,7 +119,7 @@ export async function getBranding(businessId) {
 /**
  * Update branding configuration in Supabase (Multi-Tenant)
  * @param {object} updates - Fields to update
- * @param {string} businessId - REQUIRED: Tenant UUID for isolation
+ * @param {string} businessId - REQUIRED: Tenant UUID for isolation (!immutable ID!)
  * @returns {Promise<{data: object, error: Error|null}>}
  */
 export async function updateBranding(updates, businessId) {
@@ -128,10 +128,12 @@ export async function updateBranding(updates, businessId) {
         throw new Error('[SILO VIOLATION] updateBranding requires businessId for tenant isolation')
     }
 
+    // 🔒 PERMANENT ID FIX: Ensure we are updating the row where tenant_id matches
+    // businessId passed here is the immutable tenant_id from TenantContext
     const { data, error } = await supabase
         .from('branding')
         .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('business_id', businessId) // 🔐 TENANT FILTER
+        .eq('tenant_id', businessId) // 🔐 IMMUTABLE ID FILTER (Fixes 406)
         .select()
         .single()
 
