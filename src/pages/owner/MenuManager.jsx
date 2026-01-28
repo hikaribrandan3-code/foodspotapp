@@ -82,53 +82,52 @@ function MenuManager({ config: configProp, demoMode = false }) {
         window.location.href = demoMode ? '/' : `/${tenantSlug}`
     }
 
-    // --- 🛡️ SAFE-SYNC: Sync Logic (Amnesia Killer) ---
-    const syncMenuToCloud = async (updatedMenu) => {
-        const businessId = targetBusinessId
+    // --- 🛡️ SAFE-SYNC: Sync Logic (Final Boss Fix) ---
+    // 🔒 HARD-LOCKED TENANT ID (Universal Alignment)
+    const LOCKED_TENANT_ID = '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
+    const syncMenuToCloud = async (updatedMenu) => {
         // 🛡️ AMNESIA GUARD: NEVER sync null or empty data
         if (!updatedMenu || !Array.isArray(updatedMenu.categories)) {
             console.warn('⚠️ SYNC BLOCKED: Attempted to sync null/invalid menu. Aborting to protect Cloud Vault.')
             return
         }
 
-        if (!businessId) {
-            console.error('CRITICAL: Cannot sync to cloud - No Business ID')
-            return
-        }
+        console.log('☁️ Syncing Menu to Supabase (JSONB Strict)... Target:', LOCKED_TENANT_ID)
 
-        console.log('☁️ Syncing Menu to Supabase (JSONB Strict)...')
-
-        // ⚡ STRICT UPSERT: Ensure we hit the specific tenant_id row
+        // ⚡ STRICT UPSERT: Hard-locked to specific tenant_id
         const { error } = await supabase
             .from('branding')
             .upsert({
-                tenant_id: businessId,
-                menu_data: updatedMenu, // 🎯 THE PAYLOAD
+                tenant_id: LOCKED_TENANT_ID, // 🔒 THE ID LOCK
+                menu_data: updatedMenu,
                 updated_at: new Date()
             }, {
-                onConflict: 'tenant_id' // 🛡️ KEY CONSTRAINT
+                onConflict: 'tenant_id'
             })
 
         if (error) {
             console.error('❌ Cloud Sync Failed:', error)
+            window.alert(`❌ SYNC ERROR: ${error.message}\nCode: ${error.code || 'N/A'}\nDetails: ${error.details || 'None'}`)
             setSaveStatus({ message: 'Error al guardar en nube', error: true })
         } else {
             console.log('✅ Cloud Sync Validated')
+            // 💧 FORCE STATE HYDRATION: Immediately update local state to match saved data
+            setMenu(updatedMenu)
+            setSaveStatus({ message: '☁️ Sincronizado' })
+            setTimeout(() => setSaveStatus(null), 2000)
         }
     }
     // --------------------------------
 
     const syncConfigToCloud = async (updatedConfig) => {
-        const businessId = targetBusinessId
-        if (!businessId) return
+        console.log('☁️ Syncing Config to Supabase... Target:', LOCKED_TENANT_ID)
 
-        console.log('☁️ Syncing Config to Supabase...')
         const { error } = await supabase
             .from('branding')
             .upsert({
-                tenant_id: businessId,
-                app_config: updatedConfig,
+                tenant_id: LOCKED_TENANT_ID, // 🔒 THE ID LOCK
+                app_config: updatedConfig, // featuredPhotos lives here
                 hero_url: updatedConfig.headerCover?.image || null,
                 business_name: updatedConfig.businessName || null,
                 updated_at: new Date()
@@ -136,7 +135,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 onConflict: 'tenant_id'
             })
 
-        if (error) console.error('❌ Cloud Config Sync Failed:', error)
+        if (error) {
+            console.error('❌ Cloud Config Sync Failed:', error)
+            window.alert(`❌ CONFIG SYNC ERROR: ${error.message}\nCode: ${error.code || 'N/A'}\nDetails: ${error.details || 'None'}`)
+        } else {
+            console.log('✅ Config Sync Validated')
+            // 💧 FORCE STATE HYDRATION
+            setLocalConfig(updatedConfig)
+        }
     }
 
     const handleEdit = (categoryId, item) => {
