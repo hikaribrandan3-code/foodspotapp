@@ -350,9 +350,16 @@ function App() {
         initCloudSync();
         const handleVisibility = () => { if (document.visibilityState === 'visible') refreshConfig(); };
         const handleStorage = (e) => { if (e.key === 'grub_config' || e.key === null) refreshConfig(); };
-        // 🚀 INSTANT REACTIVITY: Read localStorage directly (already updated by updateSettingsCloud)
-        // Cloud write is async in Settings.jsx, but UI update is instant here
-        const handleFrontend = () => setConfig(getConfig());
+        // 🚀 CLOUD-AWARE REACTIVITY: Prefer Cloud data, fallback to localStorage
+        const handleFrontend = () => {
+            if (tenant?.tenantData) {
+                // Cloud-First: Merge tenantData into existing config
+                setConfig(prev => normalizeConfig({ ...prev, ...tenant.tenantData }));
+            } else {
+                // Fallback: localStorage (for demo mode or offline scenarios)
+                setConfig(getConfig());
+            }
+        };
         document.addEventListener('visibilitychange', handleVisibility);
         window.addEventListener('storage', handleStorage);
         window.addEventListener('frontendSync', handleFrontend);
