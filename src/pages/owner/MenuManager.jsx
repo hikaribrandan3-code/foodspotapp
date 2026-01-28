@@ -832,6 +832,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 )}
 
                 {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
+                {console.log('[MenuManager] 🎨 RENDER CHECK - Menu State:', menu)}
                 {(menu?.categories || []).map(category => {
                     const isEnabled = category.enabled !== false
                     return (
