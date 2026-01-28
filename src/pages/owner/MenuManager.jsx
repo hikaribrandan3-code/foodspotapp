@@ -160,24 +160,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
     }
 
-    // 🕵️ VAULT INSPECTOR (Temporary Tool)
-    const checkVaultDirectly = async () => {
-        console.log('🕵️ INVESTIGATING SUPABASE VAULT...');
-        const { data, error } = await supabase
-            .from('branding')
-            .select('menu_data, app_config') // Fetch the specific columns
-            .eq('tenant_id', LOCKED_TENANT_ID); // Hard-locked ID
-
-        if (error) {
-            console.error('❌ DB READ ERROR:', error);
-            alert('DB ERROR: ' + error.message);
-        } else {
-            console.log('✅ RAW DB DATA:', data);
-            console.log('🍔 MENU COLUMN:', data[0]?.menu_data);
-            alert('Check Console for Raw Data!');
-        }
-    };
-
     // --- 🛠️ PURE STATE HELPER: Generate IDs ---
     const generateId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -525,16 +507,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
             <div style={{ padding: 16, paddingBottom: 100 }}>
                 {/* ==================== OPERATIONAL COMMAND CENTER ==================== */}
                 <div style={{ marginBottom: 24 }}>
-                    <button
-                        onClick={checkVaultDirectly}
-                        style={{
-                            background: '#000', color: '#fff', padding: '10px',
-                            borderRadius: '8px', marginBottom: '20px', width: '100%',
-                            fontWeight: 'bold', border: '2px solid red'
-                        }}
-                    >
-                        🕵️ INSPECT REAL DATABASE
-                    </button>
                     {/* Pause Orders Toggle */}
                     <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

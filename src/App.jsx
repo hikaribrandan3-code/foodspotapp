@@ -114,10 +114,19 @@ function App() {
                     mode: tenant.tenantData.hero_mode === 'text' ? 'text' : 'cover'
                 },
                 colors: {
+                    ...config.colors,
                     primary: tenant.tenantData.primary_color || config.colors?.primary,
                     secondary: tenant.tenantData.secondary_color || config.colors?.secondary,
                     confirmation: tenant.tenantData.confirmation_color || config.colors?.confirmation,
                     powered: tenant.tenantData.powered_by_color || config.colors?.powered // 🛡️ Fixes footer color
+                },
+                // 🎨 BRANDING RECOVERY: Map snake_case DB fields to camelCase config
+                branding: {
+                    ...config.branding,
+                    fontFamily: tenant.tenantData.font_family || config.branding?.fontFamily,
+                    fontWeight: tenant.tenantData.font_weight || config.branding?.fontWeight,
+                    primaryColor: tenant.tenantData.navbar_color || config.branding?.primaryColor,
+                    iconColorMode: tenant.tenantData.nav_icon_mode || config.branding?.iconColorMode
                 }
             });
             setConfig(merged);

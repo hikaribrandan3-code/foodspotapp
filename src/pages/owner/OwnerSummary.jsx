@@ -6,6 +6,7 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getSession } from '../../utils/auth.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 
 /**
  * OwnerSummary - Summary dashboard for Owner (matches SuperAdmin Summary layout)
@@ -18,6 +19,8 @@ function OwnerSummary({ config: configProp }) {
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const [orders, setOrders] = useState(() => getOrders())
+    const { tenantData } = useTenant() // 🛡️ Cloud Data Auditor
+    const [showAuditor, setShowAuditor] = useState(false)
 
     // NOTE: Auth check removed - ProtectedRoute handles authentication
 
@@ -88,7 +91,7 @@ function OwnerSummary({ config: configProp }) {
             />
 
             {/* Sync Button */}
-            <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB' }}>
+            <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', display: 'flex', gap: 8 }}>
                 <button
                     onClick={() => {
                         window.dispatchEvent(new CustomEvent('frontendSync'))
@@ -96,7 +99,7 @@ function OwnerSummary({ config: configProp }) {
                         alert('✅ Frontend synced!')
                     }}
                     style={{
-                        width: '100%',
+                        flex: 1,
                         padding: '10px 16px',
                         fontSize: 13,
                         fontWeight: 600,
@@ -111,7 +114,26 @@ function OwnerSummary({ config: configProp }) {
                         gap: 8
                     }}
                 >
-                    🔄 Actualizar Frontend
+                    🔄 Actualizar
+                </button>
+                <button
+                    onClick={() => setShowAuditor(true)}
+                    style={{
+                        padding: '10px 16px',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        border: '2px solid #1F2937',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        background: '#1F2937',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8
+                    }}
+                >
+                    📊 Backend Auditor
                 </button>
             </div>
 
@@ -238,6 +260,81 @@ function OwnerSummary({ config: configProp }) {
                 role="owner"
                 useRoutes={true}
             />
+
+            {/* 📊 Backend Auditor Modal */}
+            {showAuditor && (
+                <div
+                    onClick={() => setShowAuditor(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.7)',
+                        zIndex: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 16
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: '#1F2937',
+                            borderRadius: 16,
+                            width: '100%',
+                            maxWidth: 500,
+                            maxHeight: '80vh',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflow: 'hidden'
+                        }}
+                    >
+                        <div style={{
+                            padding: 16,
+                            borderBottom: '1px solid #374151',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>📊 Cloud Vault (tenantData)</span>
+                            <button
+                                onClick={() => setShowAuditor(false)}
+                                style={{
+                                    background: '#374151',
+                                    border: 'none',
+                                    borderRadius: 8,
+                                    padding: '6px 12px',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    fontSize: 13
+                                }}
+                            >
+                                ✕ Close
+                            </button>
+                        </div>
+                        <div style={{
+                            flex: 1,
+                            overflow: 'auto',
+                            padding: 16,
+                            WebkitOverflowScrolling: 'touch'
+                        }}>
+                            <pre style={{
+                                color: '#10B981',
+                                fontSize: 11,
+                                fontFamily: 'monospace',
+                                margin: 0,
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                            }}>
+                                {JSON.stringify(tenantData, null, 2)}
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
