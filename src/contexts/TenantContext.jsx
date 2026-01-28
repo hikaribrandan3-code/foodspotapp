@@ -68,14 +68,11 @@ export function TenantProvider({ children }) {
 
                 if (tenant) {
                     console.log('[TenantContext] ✅ VAULT LOADED (Cloud-First):', tenant.business_name)
+                    // console.log('[TenantContext] 🍔 Menu Data Payload:', tenant.menu_data ? 'Present' : 'MISSING')
 
                     setBusinessId(tenant.business_id)
                     setTenantStoragePrefix(tenant.business_id)
                     setTenantData(tenant)
-
-                    // Update cache for other sessions, but we didn't use it for valid state
-                    const cacheKey = `fs_vault_${slug}`
-                    sessionStorage.setItem(cacheKey, JSON.stringify(tenant))
 
                     // 🛡️ RECOVERY: BYPASS ALL TRIAL CHECKS
                     setTrialExpired(false)
@@ -150,12 +147,7 @@ export function TenantProvider({ children }) {
 export function useTenant() {
     const context = useContext(TenantContext);
     if (!context) return { businessId: null, tenantData: {}, isLoaded: false, loading: false, forceRefresh: 0 };
-    return {
-        ...context,
-        branding: context.tenantData || {},
-        settings: context.tenantData?.settings || {},
-        slug: context.tenantData?.slug
-    };
+    return context; // Return raw context to avoid property masking
 }
 
 export function useBusinessId() {
