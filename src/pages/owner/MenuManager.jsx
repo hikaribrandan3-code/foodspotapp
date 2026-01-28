@@ -107,16 +107,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
         console.log('☁️ Syncing Menu to Supabase (JSONB Strict)... Target:', LOCKED_TENANT_ID)
 
-        // ⚡ STRICT UPSERT: Hard-locked to specific tenant_id
+        // ⚡ STRICT UPDATE: Partial update to avoid wiping other fields
         const { error } = await supabase
             .from('branding')
-            .upsert({
-                tenant_id: LOCKED_TENANT_ID, // 🔒 THE ID LOCK
+            .update({
                 menu_data: updatedMenu,
                 updated_at: new Date()
-            }, {
-                onConflict: 'tenant_id'
             })
+            .eq('tenant_id', LOCKED_TENANT_ID)
 
         if (error) {
             console.error('❌ Cloud Sync Failed:', error)
@@ -137,15 +135,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
         const { error } = await supabase
             .from('branding')
-            .upsert({
-                tenant_id: LOCKED_TENANT_ID, // 🔒 THE ID LOCK
+            .update({
                 app_config: updatedConfig, // featuredPhotos lives here
                 hero_url: updatedConfig.headerCover?.image || null,
                 business_name: updatedConfig.businessName || null,
                 updated_at: new Date()
-            }, {
-                onConflict: 'tenant_id'
             })
+            .eq('tenant_id', LOCKED_TENANT_ID)
 
         if (error) {
             console.error('❌ Cloud Config Sync Failed:', error)
