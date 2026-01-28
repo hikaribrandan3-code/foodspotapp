@@ -329,8 +329,10 @@ function OwnerSummary({ config: configProp }) {
                                     cursor: 'pointer',
                                     fontSize: 14,
                                     fontWeight: 600,
-                                    zIndex: 10002,
-                                    position: 'relative'
+                                    zIndex: 999999,
+                                    position: 'absolute',
+                                    top: 12,
+                                    right: 12
                                 }}
                             >
                                 ✕ Close

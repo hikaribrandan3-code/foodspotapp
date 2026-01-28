@@ -73,9 +73,11 @@ export function TenantProvider({ children }) {
                     console.log('[TenantContext] ✅ VAULT LOADED (Cloud-First):', tenant.business_name)
                     // console.log('[TenantContext] 🍔 Menu Data Payload:', tenant.menu_data ? 'Present' : 'MISSING')
 
-                    setBusinessId(tenant.business_id)
-                    setTenantStoragePrefix(tenant.business_id)
-                    setTenantData(tenant)
+                    // 🔑 PERMANENT CLOUD LINK: Use tenant_id as fallback (immutable UUID)
+                    const permanentId = tenant.business_id || tenant.tenant_id;
+                    setBusinessId(permanentId);
+                    setTenantStoragePrefix(permanentId);
+                    setTenantData(tenant);
 
                     // 🛡️ RECOVERY: BYPASS ALL TRIAL CHECKS
                     setTrialExpired(false)

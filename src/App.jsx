@@ -105,8 +105,8 @@ function App() {
                 // Ensure deep objects are preserved
                 infoPills: tenant.tenantData.info_pills || cloudAppConfig.infoPills || config.infoPills,
                 businessInfo: tenant.tenantData.business_info || cloudAppConfig.businessInfo || config.businessInfo,
-                // 📸 HIGHLIGHT RECOVERY: Pull featuredPhotos from app_config
-                featuredPhotos: cloudAppConfig.featuredPhotos || config.featuredPhotos,
+                // 📸 HIGHLIGHT RECOVERY: ROOT > app_config > defaults
+                featuredPhotos: tenant.tenantData.featuredPhotos || cloudAppConfig.featuredPhotos || config.featuredPhotos,
                 // 🎨 DB FIELD MAPPINGS (flat fields from DB)
                 businessName: tenant.tenantData.business_name || cloudAppConfig.businessName || config.businessName,
                 headerCover: {
@@ -119,13 +119,14 @@ function App() {
                     ...(cloudAppConfig.headerBranding || {}),
                     mode: tenant.tenantData.hero_mode || cloudAppConfig.headerBranding?.mode || 'cover'
                 },
+                // 🎨 COLORS: ROOT > app_config > flat fields > defaults
                 colors: {
                     ...config.colors,
                     ...(cloudAppConfig.colors || {}),
-                    primary: cloudAppConfig.colors?.primary || tenant.tenantData.primary_color || config.colors?.primary,
-                    secondary: cloudAppConfig.colors?.secondary || tenant.tenantData.secondary_color || config.colors?.secondary,
-                    confirmation: cloudAppConfig.colors?.confirmation || tenant.tenantData.confirmation_color || config.colors?.confirmation,
-                    powered: cloudAppConfig.colors?.powered || tenant.tenantData.powered_by_color || config.colors?.powered
+                    primary: tenant.tenantData.colors?.primary || cloudAppConfig.colors?.primary || tenant.tenantData.primary_color || config.colors?.primary,
+                    secondary: tenant.tenantData.colors?.secondary || cloudAppConfig.colors?.secondary || tenant.tenantData.secondary_color || config.colors?.secondary,
+                    confirmation: tenant.tenantData.colors?.confirmation || cloudAppConfig.colors?.confirmation || tenant.tenantData.confirmation_color || config.colors?.confirmation,
+                    powered: tenant.tenantData.colors?.powered || cloudAppConfig.colors?.powered || tenant.tenantData.powered_by_color || config.colors?.powered
                 },
                 branding: {
                     ...config.branding,
