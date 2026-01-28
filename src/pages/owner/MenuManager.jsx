@@ -40,10 +40,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // SYNC: Update menu when tenantData loads from cloud (Gatekeeper Bypass)
     useEffect(() => {
         if (tenantLoaded) {
-            // If cloud has data, use it. If not, use an empty structure.
-            const cloudData = tenantData?.menu_data || { categories: [] }
-            console.log('[MenuManager] ☁️ CLOUD-READY: Setting menu state')
-            setMenu(cloudData)
+            // 🛡️ DATA INTEGRITY: Hard-Check for menu_data
+            if (tenantData?.menu_data) {
+                console.log('[MenuManager] 🎯 HYDRATING FROM CLOUD:', tenantData.menu_data)
+                setMenu(tenantData.menu_data)
+            } else {
+                console.log('[MenuManager] ⚠️ NO CLOUD DATA: Defaulting to empty')
+                // Only default to empty if truly missing, but don't overwrite if we already have data?
+                // Actually, if tenantLoaded is true and no data, we MUST start empty.
+                setMenu({ categories: [] })
+            }
+
             // 🔓 UNLOCK: Cloud data received, syncing is now safe
             isHydratedRef.current = true
             console.log('[MenuManager] 🔓 HYDRATION COMPLETE: Sync now allowed')
