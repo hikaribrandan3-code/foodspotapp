@@ -153,11 +153,11 @@ export async function updateBranding(updates, businessId) {
         if (updates.free_delivery_threshold !== undefined) dbUpdates.free_delivery_threshold = updates.free_delivery_threshold
         if (updates.freeDeliveryThreshold !== undefined) dbUpdates.free_delivery_threshold = updates.freeDeliveryThreshold
 
-        // 🔒 PERMANENT ID FIX: Ensure we are updating the row where tenant_id matches
+        // 🔒 PERMANENT ID FIX: Ensure we are updating the row where business_id matches
         const { data, error } = await supabase
             .from('branding')
             .update(dbUpdates)
-            .eq('tenant_id', businessId) // 🔐 IMMUTABLE ID FILTER
+            .eq('business_id', businessId) // 🔐 FIXED: Was 'tenant_id'
             .select()
             .single()
 

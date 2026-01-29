@@ -64,7 +64,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const incomingId = config?.businessId || config?.tenant_id
         const localId = localConfig?.businessId || localConfig?.tenant_id
 
-        if (incomingId && incomingId !== localId) {
+        // 🔒 STRICTER GUARD: Both IDs must be present strings to trigger a reset
+        if (incomingId && localId && String(incomingId) !== String(localId)) {
             console.log('[MenuManager] 🛡️ Identity Change Detected: Re-hydrating local state')
             setLocalConfig(config)
         }
@@ -671,10 +672,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     type="number"
                                     min="0"
                                     step="50"
-                                    value={localConfig.delivery?.flatFee || 0}
+                                    value={localConfig.delivery?.flatFee ?? ''}
                                     onChange={(e) => {
-                                        const newValue = parseInt(e.target.value) || 0
-                                        setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: newValue } }))
+                                        // 🛡️ STICKY ZERO FIX: Handle empty string and 0 correctly
+                                        const val = e.target.value
+                                        const newValue = val === '' ? 0 : parseInt(val)
+
+                                        // Update local config with the raw value (or 0) to allow clearing input
+                                        setLocalConfig(prev => ({
+                                            ...prev,
+                                            delivery: { ...prev.delivery, flatFee: val === '' ? '' : newValue }
+                                        }))
+
                                         updateConfig({ delivery: { ...localConfig.delivery, flatFee: newValue } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
@@ -694,10 +703,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     type="number"
                                     min="0"
                                     step="100"
-                                    value={localConfig.delivery?.freeDeliveryThreshold || 0}
+                                    value={localConfig.delivery?.freeDeliveryThreshold ?? ''}
                                     onChange={(e) => {
-                                        const newValue = parseInt(e.target.value) || 0
-                                        setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, freeDeliveryThreshold: newValue } }))
+                                        // 🛡️ STICKY ZERO FIX
+                                        const val = e.target.value
+                                        const newValue = val === '' ? 0 : parseInt(val)
+
+                                        setLocalConfig(prev => ({
+                                            ...prev,
+                                            delivery: { ...prev.delivery, freeDeliveryThreshold: val === '' ? '' : newValue }
+                                        }))
+
                                         updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
@@ -749,7 +765,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     justifyContent: 'center',
                                     position: 'relative',
                                     overflow: 'hidden',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    pointerEvents: 'auto' // 🛡️ FORCE INTERACTION (Fixes dead clicks)
                                 }}>
                                 {slot ? (
                                     <>
