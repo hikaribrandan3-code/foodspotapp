@@ -25,7 +25,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
 
     // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
-    const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded } = useTenant()
+    const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded, refreshTenantData } = useTenant()
     // 🛡️ RESOLVED ID: Handles Simulation + Fallback for Dev
     const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
@@ -47,8 +47,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 setMenu(tenantData.menu_data)
             } else {
                 console.log('[MenuManager] ⚠️ NO CLOUD DATA: Defaulting to empty')
-                // Only default to empty if truly missing, but don't overwrite if we already have data?
-                // Actually, if tenantLoaded is true and no data, we MUST start empty.
                 setMenu({ categories: [] })
             }
 
@@ -57,6 +55,22 @@ function MenuManager({ config: configProp, demoMode = false }) {
             console.log('[MenuManager] 🔓 HYDRATION COMPLETE: Sync now allowed')
         }
     }, [tenantLoaded, tenantData])
+
+    // 🛡️ THE AMNESIA KILLER: Only hydrate local state if Cloud data is richer than local state
+    useEffect(() => {
+        if (tenantLoaded && tenantData?.app_config) {
+            setLocalConfig(prev => {
+                const cloudPhotos = tenantData.app_config.featuredPhotos || []
+                // Preserve local if cloud is empty but we have data locally
+                if (cloudPhotos.length === 0 && prev.featuredPhotos?.length > 0) return prev
+
+                return {
+                    ...prev,
+                    ...tenantData.app_config
+                }
+            })
+        }
+    }, [tenantLoaded, tenantData?.app_config])
 
     // 🛡️ ANTI-RECURSION GUARD: Only sync prop to state on actual identity change
     // Prevents "Hurricane" re-renders caused by object reference changes
@@ -84,8 +98,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const activeFeaturedSlotRef = useRef(null)
     const activeCategoryItemRef = useRef(null)
     const [saveStatus, setSaveStatus] = useState(null)
-    const [hasChanges, setHasChanges] = useState(false)
+    // 🛡️ SESSION-PERSISTENT DIRTY STATE: Survives tab switches
+    const [hasChanges, setHasChanges] = useState(
+        () => sessionStorage.getItem(`dirty_${targetBusinessId}`) === 'true'
+    )
     const [isSaving, setIsSaving] = useState(false)
+
+    // 💾 Persist dirty state to sessionStorage
+    useEffect(() => {
+        sessionStorage.setItem(`dirty_${targetBusinessId}`, hasChanges)
+    }, [hasChanges, targetBusinessId])
     const fileInputRef = useRef(null)
 
     const [inputKey, setInputKey] = useState(0)
@@ -184,8 +206,11 @@ function MenuManager({ config: configProp, demoMode = false }) {
             alert('❌ Error: ' + error.message)
         } else {
             setHasChanges(false)
+            sessionStorage.removeItem(`dirty_${targetBusinessId}`)
             setSaveStatus({ message: '✓ Sistema Sincronizado' })
             setTimeout(() => setSaveStatus(null), 3000)
+            // 🔄 GLOBAL REFRESH: Update TenantContext to sync all components
+            await refreshTenantData()
         }
         setIsSaving(false)
     }

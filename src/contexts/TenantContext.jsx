@@ -108,6 +108,21 @@ export function TenantProvider({ children }) {
         )
     }
 
+    // 🔄 GLOBAL REFRESH: Force re-fetch from Cloud after saves
+    const refreshTenantData = async () => {
+        if (!businessId) return
+        console.log('🔄 FORCING GLOBAL REFRESH...')
+        const { data, error } = await supabase
+            .from('branding')
+            .select('*')
+            .eq('business_id', businessId)
+            .single()
+        if (!error && data) {
+            setTenantData(data)
+            console.log('✅ GLOBAL REFRESH COMPLETE')
+        }
+    }
+
     return (
         <TenantContext.Provider value={{
             businessId,
@@ -116,7 +131,8 @@ export function TenantProvider({ children }) {
             loading,
             isLoaded: !loading,
             emergencyUnblock,
-            forceRefresh: Date.now() // Signal downstream components
+            forceRefresh: Date.now(),
+            refreshTenantData
         }}>
             {children}
         </TenantContext.Provider>
@@ -125,7 +141,7 @@ export function TenantProvider({ children }) {
 
 export function useTenant() {
     const context = useContext(TenantContext);
-    if (!context) return { businessId: null, tenantData: {}, isLoaded: false, loading: false, forceRefresh: 0, branding: {}, settings: {}, slug: null };
+    if (!context) return { businessId: null, tenantData: {}, isLoaded: false, loading: false, forceRefresh: 0, branding: {}, settings: {}, slug: null, refreshTenantData: async () => { } };
     return {
         ...context,
         branding: context.tenantData || {},
