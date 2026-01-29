@@ -57,10 +57,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
     }, [tenantLoaded, tenantData])
 
-    // SYNC: Ensure localConfig updates when parent config changes (e.g. initial load)
+    // 🛡️ ANTI-RECURSION GUARD: Only sync prop to state on actual identity change
+    // Prevents "Hurricane" re-renders caused by object reference changes
     useEffect(() => {
-        setLocalConfig(config)
-    }, [config])
+        // Safe access for ID comparison
+        const incomingId = config?.businessId || config?.tenant_id
+        const localId = localConfig?.businessId || localConfig?.tenant_id
+
+        if (incomingId && incomingId !== localId) {
+            console.log('[MenuManager] 🛡️ Identity Change Detected: Re-hydrating local state')
+            setLocalConfig(config)
+        }
+    }, [config?.businessId, config?.tenant_id])
 
     // =========================================================
     // 🚫 AUTO-MIGRATION REMOVED (Anti-Gravity V3.0)
@@ -437,12 +445,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // --- FEATURED ITEMS LOGIC ---
     // 🛡️ DEFAULT TO 4 SLOTS: Ensure UI is always clickable even if cloud array is empty/null
-    const activeFeaturedItems = (() => {
+    // MEMOIZED: Prevent heavy array ops on every render
+    const activeFeaturedItems = React.useMemo(() => {
         const photos = localConfig?.featuredPhotos || []
         const slots = [...photos]
         while (slots.length < 4) slots.push(null)
         return slots.slice(0, 4)
-    })()
+    }, [localConfig?.featuredPhotos])
     const isFeatured = (item) => activeFeaturedItems.some(f => f && f.name === item.name)
 
     const handleToggleFeatured = (item) => {
@@ -524,12 +533,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 <input
                                     type="checkbox"
                                     checked={config.pauseOrders}
-                                    onChange={async () => {
-                                        const newPauseState = !config.pauseOrders
-                                        // Optimistic UI
+                                    onChange={async (e) => {
+                                        const newPauseState = e.target.checked // !config.pauseOrders is risky if props are stale
+                                        console.log('[Pause Toggle] User toggled to:', newPauseState)
+
+                                        // 1. Instant Local Feedback
+                                        setLocalConfig(prev => ({ ...prev, pauseOrders: newPauseState }))
+
+                                        // 2. Optimistic Global Sync
                                         updateConfig({ pauseOrders: newPauseState })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        // ☁️ CLOUD SYNC (Ghost Data Fix)
+
+                                        // 3. ☁️ CLOUD SYNC (Ghost Data Fix)
                                         if (LOCKED_TENANT_ID) {
                                             const { error } = await updateBranding({ pauseOrders: newPauseState }, LOCKED_TENANT_ID)
                                             if (error) console.error('[Pause Toggle] Cloud sync failed:', error)
