@@ -60,16 +60,15 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // 🛡️ ANTI-RECURSION GUARD: Only sync prop to state on actual identity change
     // Prevents "Hurricane" re-renders caused by object reference changes
     useEffect(() => {
-        // Safe access for ID comparison
-        const incomingId = config?.businessId || config?.tenant_id
-        const localId = localConfig?.businessId || localConfig?.tenant_id
+        // 🛡️ STRICT PRIMITIVE COMPARISON: Only reset if the ID string actually changes
+        const incomingId = config?.businessId || tenantBusinessId
+        const localId = localConfig?.businessId
 
-        // 🔒 STRICTER GUARD: Both IDs must be present strings to trigger a reset
         if (incomingId && localId && String(incomingId) !== String(localId)) {
-            console.log('[MenuManager] 🛡️ Identity Change Detected: Re-hydrating local state')
+            console.log('[MenuManager] 🛡️ Cross-Tenant Move: Re-hydrating')
             setLocalConfig(config)
         }
-    }, [config?.businessId, config?.tenant_id])
+    }, [config?.businessId])
 
     // =========================================================
     // 🚫 AUTO-MIGRATION REMOVED (Anti-Gravity V3.0)
@@ -483,13 +482,15 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // --- DIRECT FEATURED UPLOAD LOGIC ---
     const handleFeaturedTap = (index) => {
-        // Open Editor for Name/Price/Image
-        const slot = activeFeaturedItems[index] || { name: 'Destacado', price: 0, image: null }
+        // Safely retrieve slot or default
+        const slot = activeFeaturedItems[index] || { name: '', price: 0, image: null }
+
+        // 🛡️ AGGRESSIVE MODAL TRIGGER
         setEditingItem({ isFeaturedSlot: true, index })
         setEditForm({
-            name: slot.name,
-            price: slot.price?.toString() || '',
-            image: slot.image
+            name: slot.name || 'Nuevo Destacado',
+            price: slot.price?.toString() || '0',
+            image: slot.image || null
         })
         setUploadStatus(null)
     }
@@ -672,19 +673,11 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     type="number"
                                     min="0"
                                     step="50"
-                                    value={localConfig.delivery?.flatFee ?? ''}
+                                    value={localConfig.delivery?.flatFee === 0 ? '' : localConfig.delivery?.flatFee} // 🛡️ KILL STICKY ZERO
                                     onChange={(e) => {
-                                        // 🛡️ STICKY ZERO FIX: Handle empty string and 0 correctly
-                                        const val = e.target.value
-                                        const newValue = val === '' ? 0 : parseInt(val)
-
-                                        // Update local config with the raw value (or 0) to allow clearing input
-                                        setLocalConfig(prev => ({
-                                            ...prev,
-                                            delivery: { ...prev.delivery, flatFee: val === '' ? '' : newValue }
-                                        }))
-
-                                        updateConfig({ delivery: { ...localConfig.delivery, flatFee: newValue } })
+                                        const val = e.target.value === '' ? 0 : parseInt(e.target.value)
+                                        setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
+                                        updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     onBlur={async (e) => {
