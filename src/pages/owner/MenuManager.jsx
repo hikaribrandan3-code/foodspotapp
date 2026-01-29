@@ -26,7 +26,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
     const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded } = useTenant()
-    const targetBusinessId = isSimulated ? impersonatingBusinessId : tenantBusinessId
+    // 🛡️ RESOLVED ID: Handles Simulation + Fallback for Dev
+    const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
     // 🛡️ STATE LOCK (Anti-Gravity V3.0 - Amnesia Killer)
     // Menu state is initialized as EMPTY STRUCTURE to prevent null-pointer crashes.
@@ -104,8 +105,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     // --- 🛡️ SAFE-SYNC: Sync Logic (Final Boss Fix) ---
-    // 🔒 UUID PROTECTION: Use values from TenantContext
-    const LOCKED_TENANT_ID = tenantBusinessId || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
+
 
     const syncMenuToCloud = async (updatedMenu) => {
         // 🔒 HYDRATION GUARD: Block sync until cloud data is loaded
@@ -120,7 +120,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             return
         }
 
-        console.log('☁️ Syncing Menu to Supabase (JSONB Strict)... Target:', LOCKED_TENANT_ID)
+        console.log('☁️ Syncing Menu to Supabase (JSONB Strict)... Target:', targetBusinessId)
 
         // ⚡ STRICT UPDATE: Partial update to avoid wiping other fields
         const { error } = await supabase
@@ -129,7 +129,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 menu_data: updatedMenu,
                 updated_at: new Date()
             })
-            .eq('tenant_id', LOCKED_TENANT_ID)
+            .eq('business_id', targetBusinessId) // 🛡️ GLOBAL PLATFORM STANDARD
 
         if (error) {
             console.error('❌ Cloud Sync Failed:', error)
@@ -146,7 +146,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // --------------------------------
 
     const syncConfigToCloud = async (updatedConfig) => {
-        console.log('☁️ Syncing Config to Supabase... Target:', LOCKED_TENANT_ID)
+        console.log('☁️ Syncing Config to Supabase... Target:', targetBusinessId)
 
         const { error } = await supabase
             .from('branding')
@@ -156,7 +156,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 business_name: updatedConfig.businessName || null,
                 updated_at: new Date()
             })
-            .eq('tenant_id', LOCKED_TENANT_ID)
+            .eq('business_id', targetBusinessId) // 🛡️ GLOBAL PLATFORM STANDARD
 
         if (error) {
             console.error('❌ Cloud Config Sync Failed:', error)
@@ -547,8 +547,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
 
                                         // 3. ☁️ CLOUD SYNC (Ghost Data Fix)
-                                        if (LOCKED_TENANT_ID) {
-                                            const { error } = await updateBranding({ pauseOrders: newPauseState }, LOCKED_TENANT_ID)
+                                        if (targetBusinessId) {
+                                            const { error } = await updateBranding({ pauseOrders: newPauseState }, targetBusinessId)
                                             if (error) console.error('[Pause Toggle] Cloud sync failed:', error)
                                         }
                                     }}
@@ -568,8 +568,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         updateConfig({ pauseOrdersMessage: pauseMessage })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                         // ☁️ CLOUD SYNC
-                                        if (LOCKED_TENANT_ID) {
-                                            await updateBranding({ pauseOrdersMessage: pauseMessage }, LOCKED_TENANT_ID)
+                                        if (targetBusinessId) {
+                                            await updateBranding({ pauseOrdersMessage: pauseMessage }, targetBusinessId)
                                         }
                                     }}
                                     placeholder="Ej: Estamos con muchos pedidos"
@@ -653,14 +653,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 }}
                                 onMouseUp={async (e) => {
                                     // ☁️ CLOUD SYNC on release (prevents network flooding)
-                                    if (LOCKED_TENANT_ID) {
-                                        await updateBranding({ radiusKm: parseInt(e.target.value) }, LOCKED_TENANT_ID)
+                                    if (targetBusinessId) {
+                                        await updateBranding({ radiusKm: parseInt(e.target.value) }, targetBusinessId)
                                     }
                                 }}
                                 onTouchEnd={async (e) => {
                                     // ☁️ CLOUD SYNC on touch release
-                                    if (LOCKED_TENANT_ID) {
-                                        await updateBranding({ radiusKm: localConfig.delivery?.radiusKm || 5 }, LOCKED_TENANT_ID)
+                                    if (targetBusinessId) {
+                                        await updateBranding({ radiusKm: localConfig.delivery?.radiusKm || 5 }, targetBusinessId)
                                     }
                                 }}
                                 style={{ width: '100%' }}
@@ -682,8 +682,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     }}
                                     onBlur={async (e) => {
                                         // ☁️ CLOUD SYNC on blur
-                                        if (LOCKED_TENANT_ID) {
-                                            await updateBranding({ flatFee: parseInt(e.target.value) || 0 }, LOCKED_TENANT_ID)
+                                        if (targetBusinessId) {
+                                            await updateBranding({ flatFee: parseInt(e.target.value) || 0 }, targetBusinessId)
                                         }
                                     }}
                                     placeholder="0"
@@ -712,8 +712,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     }}
                                     onBlur={async (e) => {
                                         // ☁️ CLOUD SYNC on blur
-                                        if (LOCKED_TENANT_ID) {
-                                            await updateBranding({ freeDeliveryThreshold: parseInt(e.target.value) || 0 }, LOCKED_TENANT_ID)
+                                        if (targetBusinessId) {
+                                            await updateBranding({ freeDeliveryThreshold: parseInt(e.target.value) || 0 }, targetBusinessId)
                                         }
                                     }}
                                     placeholder="0"
