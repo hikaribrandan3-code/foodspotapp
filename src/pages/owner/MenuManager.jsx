@@ -84,6 +84,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const activeFeaturedSlotRef = useRef(null)
     const activeCategoryItemRef = useRef(null)
     const [saveStatus, setSaveStatus] = useState(null)
+    const [hasChanges, setHasChanges] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
     const fileInputRef = useRef(null)
 
     const [inputKey, setInputKey] = useState(0)
@@ -160,6 +162,34 @@ function MenuManager({ config: configProp, demoMode = false }) {
         else console.log('✅ Platform Sync Success')
     }
 
+    // 💾 THE ATOMIC SAVE ("Microsoft Word" Button)
+    const handlePlatformSave = async () => {
+        setIsSaving(true)
+        console.log('💾 SAVING VAULT:', targetBusinessId)
+
+        const { error } = await supabase
+            .from('branding')
+            .update({
+                is_paused: localConfig.pauseOrders,
+                delivery_radius: localConfig.delivery?.radiusKm,
+                delivery_fee: localConfig.delivery?.flatFee,
+                free_delivery_threshold: localConfig.delivery?.freeDeliveryThreshold,
+                app_config: localConfig, // 🛡️ LOCKS HIGHLIGHTS
+                menu_data: menu,         // 🛡️ LOCKS FOOD
+                updated_at: new Date()
+            })
+            .eq('business_id', targetBusinessId)
+
+        if (error) {
+            alert('❌ Error: ' + error.message)
+        } else {
+            setHasChanges(false)
+            setSaveStatus({ message: '✓ Sistema Sincronizado' })
+            setTimeout(() => setSaveStatus(null), 3000)
+        }
+        setIsSaving(false)
+    }
+
     // --- 🛠️ PURE STATE HELPER: Generate IDs ---
     const generateId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -228,7 +258,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     const newConfig = { ...prevConfig, featuredPhotos: currentFeatured }
                     updateConfig(newConfig)
                     window.dispatchEvent(new CustomEvent('frontendSync'))
-                    syncConfigToCloud(newConfig)
+                    setHasChanges(true)
                     return newConfig
                 })
                 setUploadStatus({ success: true, message: '✔ Guardado' })
@@ -244,7 +274,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     })
                 })
                 // 🛡️ CLOUD-ONLY: saveMenu removed (Anti-Gravity V3.0)
-                syncMenuToCloud(finalMenu)
+                setHasChanges(true)
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
                 setUploadStatus({ success: true, message: '✔ Guardado' })
             } else {
@@ -282,7 +312,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             updateConfig(newConfig)
             setLocalConfig(newConfig)
             window.dispatchEvent(new CustomEvent('frontendSync'))
-            syncConfigToCloud(newConfig)
+            setHasChanges(true)
 
             setEditingItem(null)
             setSaveStatus({ message: 'Destacado actualizado' })
@@ -304,7 +334,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 }
                 // 🛡️ CLOUD-ONLY: saveMenu removed
                 setMenu(updatedMenu)
-                syncMenuToCloud(updatedMenu) // ☁️ Cloud Sync
+                setHasChanges(true)
                 setSaveStatus({ message: 'Guardado correctamente' })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
@@ -322,7 +352,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 item.available = !item.available
                 // 🛡️ CLOUD-ONLY: saveMenu removed
                 setMenu(updatedMenu)
-                syncMenuToCloud(updatedMenu)
+                setHasChanges(true)
             }
         }
     }
@@ -340,7 +370,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             if (item) item.featured = true
         }
         setMenu(updatedMenu)
-        syncMenuToCloud(updatedMenu)
+        setHasChanges(true)
     }
 
     const handleToggleCategory = (categoryId) => {
@@ -349,7 +379,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
         if (category) {
             category.enabled = category.enabled === undefined ? true : !category.enabled
             setMenu(updatedMenu)
-            syncMenuToCloud(updatedMenu)
+            setHasChanges(true)
         }
     }
 
@@ -360,7 +390,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             if (category) {
                 category.name = editingCategory.name.trim()
                 setMenu(updatedMenu)
-                syncMenuToCloud(updatedMenu)
+                setHasChanges(true)
             }
         }
         setEditingCategory(null)
@@ -379,7 +409,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 item.price = price
                 setMenu(updatedMenu)
                 // 🛡️ CLOUD-ONLY: saveMenu removed
-                syncMenuToCloud(updatedMenu)
+                setHasChanges(true)
                 setSaveStatus({ message: 'Precio actualizado' })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
@@ -398,7 +428,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 item.name = newName
                 setMenu(updatedMenu)
                 // 🛡️ CLOUD-ONLY: saveMenu removed
-                syncMenuToCloud(updatedMenu)
+                setHasChanges(true)
                 setSaveStatus({ message: 'Nombre actualizado' })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
@@ -412,7 +442,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             if (category) {
                 category.items = category.items.filter(i => i.id !== item.id)
                 setMenu(updatedMenu)
-                syncMenuToCloud(updatedMenu)
+                setHasChanges(true)
             }
         }
     }
@@ -431,7 +461,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             }
             category.items.push(newItem)
             setMenu(updatedMenu)
-            syncMenuToCloud(updatedMenu)
+            setHasChanges(true)
         }
     }
 
@@ -469,16 +499,15 @@ function MenuManager({ config: configProp, demoMode = false }) {
         updateConfig(newConfig)
         setLocalConfig(newConfig)
         window.dispatchEvent(new CustomEvent('frontendSync'))
-        syncConfigToCloud(newConfig)
+        setHasChanges(true)
     }
 
     // --- DIRECT FEATURED UPLOAD LOGIC ---
     const handleFeaturedTap = (index) => {
-        // 🛡️ DYNAMIC DATA RETRIEVAL
         const slot = activeFeaturedItems[index] || { name: '', price: 0, image: null }
+        console.log('🎯 EXPLICIT TRIGGER: Opening Highlight Slot', index)
 
-        console.log(`[Platform] Opening Highlight Slot: ${index} for Business: ${targetBusinessId}`)
-
+        // 🛡️ FORCE UI LAYER
         setEditingItem({ isFeaturedSlot: true, index })
         setEditForm({
             name: slot.name || 'Nuevo Destacado',
@@ -527,18 +556,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 <input
                                     type="checkbox"
                                     checked={localConfig.pauseOrders}
-                                    onChange={async (e) => {
+                                    onChange={(e) => {
                                         const newPauseState = e.target.checked
                                         setLocalConfig(prev => ({ ...prev, pauseOrders: newPauseState }))
-
-                                        // DIRECT INJECTION
-                                        const { error } = await supabase
-                                            .from('branding')
-                                            .update({ is_paused: newPauseState })
-                                            .eq('business_id', targetBusinessId)
-
-                                        if (error) console.error('❌ Pause Sync Failed:', error)
-                                        else console.log('✅ Pause Sync Success')
+                                        setHasChanges(true)
                                     }}
                                 />
                                 <span className="toggle-slider"></span>
@@ -551,14 +572,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 <input
                                     type="text"
                                     value={pauseMessage}
-                                    onChange={(e) => setPauseMessage(e.target.value)}
-                                    onBlur={async () => {
-                                        updateConfig({ pauseOrdersMessage: pauseMessage })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        // ☁️ CLOUD SYNC
-                                        if (targetBusinessId) {
-                                            await updateBranding({ pauseOrdersMessage: pauseMessage }, targetBusinessId)
-                                        }
+                                    onChange={(e) => {
+                                        setPauseMessage(e.target.value)
+                                        setHasChanges(true)
+                                    }}
+                                    onBlur={() => {
+                                        setLocalConfig(prev => ({ ...prev, pauseOrdersMessage: pauseMessage }))
                                     }}
                                     placeholder="Ej: Estamos con muchos pedidos"
                                     style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
@@ -638,26 +657,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     }))
                                     updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
                                     window.dispatchEvent(new CustomEvent('frontendSync'))
-                                }}
-                                onMouseUp={async (e) => {
-                                    const newVal = parseInt(e.target.value)
-                                    const { error } = await supabase
-                                        .from('branding')
-                                        .update({ delivery_radius: newVal })
-                                        .eq('business_id', targetBusinessId)
-
-                                    if (error) console.error('❌ Radius Sync Failed:', error)
-                                    else console.log('✅ Radius Sync Success')
-                                }}
-                                onTouchEnd={async (e) => {
-                                    const newVal = localConfig.delivery?.radiusKm || 5
-                                    const { error } = await supabase
-                                        .from('branding')
-                                        .update({ delivery_radius: newVal })
-                                        .eq('business_id', targetBusinessId)
-
-                                    if (error) console.error('❌ Radius Sync Failed:', error)
-                                    else console.log('✅ Radius Sync Success')
+                                    setHasChanges(true)
                                 }}
                                 style={{ width: '100%' }}
                             />
@@ -675,13 +675,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
                                         updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
-                                    }}
-                                    onBlur={async (e) => {
-                                        const val = parseInt(e.target.value) || 0
-                                        await supabase
-                                            .from('branding')
-                                            .update({ delivery_fee: val })
-                                            .eq('business_id', targetBusinessId)
+                                        setHasChanges(true)
                                     }}
                                     placeholder="0"
                                     style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
@@ -706,13 +700,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                                         updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
-                                    }}
-                                    onBlur={async (e) => {
-                                        const val = parseInt(e.target.value) || 0
-                                        await supabase
-                                            .from('branding')
-                                            .update({ free_delivery_threshold: val })
-                                            .eq('business_id', targetBusinessId)
+                                        setHasChanges(true)
                                     }}
                                     placeholder="0"
                                     style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
@@ -1247,6 +1235,31 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     animation: 'fadeIn 0.2s ease-out'
                 }}>
                     <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
+                </div>
+            )}
+
+            {/* 💾 FLOATING SAVE BAR (Strike 1) */}
+            {hasChanges && (
+                <div style={{
+                    position: 'fixed', bottom: 95, left: 12, right: 12,
+                    background: '#1E293B', color: 'white', padding: '14px 20px',
+                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
+                    <button
+                        onClick={handlePlatformSave}
+                        disabled={isSaving}
+                        style={{
+                            background: '#3B82F6', color: 'white', border: 'none',
+                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
+                            fontSize: 14, cursor: 'pointer'
+                        }}
+                    >
+                        {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
+                    </button>
                 </div>
             )}
         </div >
