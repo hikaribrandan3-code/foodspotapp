@@ -33,67 +33,41 @@ export function TenantProvider({ children }) {
 
     useEffect(() => {
         const resolveTenant = async () => {
-            const pathname = window.location.pathname
-            if (pathname === '/' || pathname === '/start-trial') {
-                setLoading(false)
-                return
-            }
-
             try {
-                // 1. EXTRACT SLUG
-                const pathSegments = pathname.split('/').filter(Boolean)
-                const RESERVED_ROUTES = ['start-trial', 'login', 'signup', 'register', 'admin', 'owner', 'staff', 'camera']
+                const pathSegments = window.location.pathname.split('/').filter(Boolean)
+                const slug = pathSegments[0]
 
-                if (pathSegments.length === 0 || RESERVED_ROUTES.includes(pathSegments[0])) {
+                // 🛡️ PROTECTED ROUTES: Skip vault resolution for static paths
+                const RESERVED = ['admin', 'owner', 'start-trial', 'login', 'signup', 'camera']
+                if (!slug || RESERVED.includes(slug)) {
                     setLoading(false)
                     return
                 }
 
-                const slug = pathSegments[0].toLowerCase()
+                console.log('[TenantContext] 🔍 Resolving Vault for slug:', slug)
 
-                // 2. FETCH TENANT
-                console.log('[TenantContext] 🔍 Looking for slug:', slug)
-
-                // 🛡️ CLOUD-FIRST POLICY (Protocol v3.0)
-                // We deliberately SKIP local storage "Fast Paint" to ensure we NEVER show stale data.
-                // Mobile vs Desktop sync requires absolute truth from the Cloud Vault.
-
-                // Hard-coded ID for Universal Alignment to match MenuManager
-                const LOCKED_ID = '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd';
-
-                const { data: tenant, error: fetchError } = await supabase
+                // 🛡️ THE FIX: Use 'slug' column instead of 'tenant_id'
+                const { data, error } = await supabase
                     .from('branding')
                     .select('*')
-                    .or(`slug.ilike.${slug},tenant_id.eq.${LOCKED_ID}`) // 🛡️ Fetch by EITHER slug or ID (Case-insensitive slug)
-                    .maybeSingle()
+                    .eq('slug', slug)
+                    .single()
 
-                if (fetchError) throw fetchError
+                if (error) throw error
 
-                if (tenant) {
-                    console.log('[TenantContext] ✅ VAULT LOADED (Cloud-First):', tenant.business_name)
-                    // console.log('[TenantContext] 🍔 Menu Data Payload:', tenant.menu_data ? 'Present' : 'MISSING')
+                if (data) {
+                    console.log('[TenantContext] ✅ VAULT LOADED:', data.business_name)
 
-                    // 🔑 PERMANENT CLOUD LINK: Use tenant_id as fallback (immutable UUID)
-                    const permanentId = tenant.business_id || tenant.tenant_id;
-                    setBusinessId(permanentId);
-                    setTenantStoragePrefix(permanentId);
-                    setTenantData(tenant);
-
-                    // 🛡️ RECOVERY: BYPASS ALL TRIAL CHECKS
-                    setTrialExpired(false)
-                    console.log('[TenantContext] 🛡️ RECOVERY: Trial check BYPASSED (Active)')
-
-                    setLoading(false)
-
-                } else {
-                    console.warn(`[TenantContext] Tenant "${slug}" not found`)
-                    setError('Tenant not found')
-                    setLoading(false)
+                    // 🛡️ ALIGNED: Using business_id column (Fixed 2026-01-29)
+                    setBusinessId(data.business_id)
+                    setTenantData(data)
+                    setTenantStoragePrefix(data.business_id)
+                    setTrialExpired(false) // 🛡️ RECOVERY MODE
                 }
-
             } catch (err) {
-                console.error('[TenantContext] Error:', err)
+                console.error('[TenantContext] ❌ Resolution Failed:', err.message)
                 setError(err.message)
+            } finally {
                 setLoading(false)
             }
         }
