@@ -118,26 +118,55 @@ export async function getBranding(businessId) {
 
 /**
  * Update branding configuration in Supabase (Multi-Tenant)
- * @param {object} updates - Fields to update
+ * @param {object} updates - Fields to update (supports frontend OR backend keys)
  * @param {string} businessId - REQUIRED: Tenant UUID for isolation (!immutable ID!)
  * @returns {Promise<{data: object, error: Error|null}>}
  */
 export async function updateBranding(updates, businessId) {
     // 🛡️ STRICT GUARDRAIL: Prevent off-silo branding updates
     if (!businessId) {
-        throw new Error('[SILO VIOLATION] updateBranding requires businessId for tenant isolation')
+        console.error('[SILO VIOLATION] updateBranding requires businessId')
+        return { data: null, error: new Error('Missing business ID') }
     }
 
-    // 🔒 PERMANENT ID FIX: Ensure we are updating the row where tenant_id matches
-    // businessId passed here is the immutable tenant_id from TenantContext
-    const { data, error } = await supabase
-        .from('branding')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('tenant_id', businessId) // 🔐 IMMUTABLE ID FILTER (Fixes 406)
-        .select()
-        .single()
+    try {
+        // 🗺️ GHOST DATA FIX: Map Frontend keys to Backend Columns
+        const dbUpdates = { updated_at: new Date().toISOString() }
 
-    return { data, error }
+        // Pass-through any existing backend-named fields
+        Object.keys(updates).forEach(key => {
+            // Skip frontend-only keys that need mapping
+            if (!['pauseOrders', 'pauseOrdersMessage', 'radiusKm', 'flatFee', 'freeDeliveryThreshold'].includes(key)) {
+                dbUpdates[key] = updates[key]
+            }
+        })
+
+        // Explicit Frontend → Backend Mapping (The "Ghost Data" Bridge)
+        if (updates.is_paused !== undefined) dbUpdates.is_paused = updates.is_paused
+        if (updates.pauseOrders !== undefined) dbUpdates.is_paused = updates.pauseOrders
+        if (updates.pause_message !== undefined) dbUpdates.pause_message = updates.pause_message
+        if (updates.pauseOrdersMessage !== undefined) dbUpdates.pause_message = updates.pauseOrdersMessage
+        if (updates.delivery_radius !== undefined) dbUpdates.delivery_radius = updates.delivery_radius
+        if (updates.radiusKm !== undefined) dbUpdates.delivery_radius = updates.radiusKm
+        if (updates.delivery_fee !== undefined) dbUpdates.delivery_fee = updates.delivery_fee
+        if (updates.flatFee !== undefined) dbUpdates.delivery_fee = updates.flatFee
+        if (updates.free_delivery_threshold !== undefined) dbUpdates.free_delivery_threshold = updates.free_delivery_threshold
+        if (updates.freeDeliveryThreshold !== undefined) dbUpdates.free_delivery_threshold = updates.freeDeliveryThreshold
+
+        // 🔒 PERMANENT ID FIX: Ensure we are updating the row where tenant_id matches
+        const { data, error } = await supabase
+            .from('branding')
+            .update(dbUpdates)
+            .eq('tenant_id', businessId) // 🔐 IMMUTABLE ID FILTER
+            .select()
+            .single()
+
+        if (error) console.error('[updateBranding] DB Error:', error)
+        return { data, error }
+    } catch (error) {
+        console.error('[updateBranding] Exception:', error)
+        return { data: null, error }
+    }
 }
 
 /**

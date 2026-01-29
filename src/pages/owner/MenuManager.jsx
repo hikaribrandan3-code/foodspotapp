@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
-import { supabase } from '../../lib/supabaseClient.js'
+import { supabase, updateBranding } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
@@ -524,10 +524,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 <input
                                     type="checkbox"
                                     checked={config.pauseOrders}
-                                    onChange={() => {
-                                        updateConfig({ pauseOrders: !config.pauseOrders })
+                                    onChange={async () => {
+                                        const newPauseState = !config.pauseOrders
+                                        // Optimistic UI
+                                        updateConfig({ pauseOrders: newPauseState })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        // TODO: Add cloud sync here too
+                                        // ☁️ CLOUD SYNC (Ghost Data Fix)
+                                        if (LOCKED_TENANT_ID) {
+                                            const { error } = await updateBranding({ pauseOrders: newPauseState }, LOCKED_TENANT_ID)
+                                            if (error) console.error('[Pause Toggle] Cloud sync failed:', error)
+                                        }
                                     }}
                                 />
                                 <span className="toggle-slider"></span>
@@ -541,9 +547,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     type="text"
                                     value={pauseMessage}
                                     onChange={(e) => setPauseMessage(e.target.value)}
-                                    onBlur={() => {
+                                    onBlur={async () => {
                                         updateConfig({ pauseOrdersMessage: pauseMessage })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        // ☁️ CLOUD SYNC
+                                        if (LOCKED_TENANT_ID) {
+                                            await updateBranding({ pauseOrdersMessage: pauseMessage }, LOCKED_TENANT_ID)
+                                        }
                                     }}
                                     placeholder="Ej: Estamos con muchos pedidos"
                                     style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
@@ -619,6 +629,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     updateConfig({ delivery: { ...config.delivery, radiusKm: newValue } })
                                     window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
+                                onMouseUp={async (e) => {
+                                    // ☁️ CLOUD SYNC on release (prevents network flooding)
+                                    if (LOCKED_TENANT_ID) {
+                                        await updateBranding({ radiusKm: parseInt(e.target.value) }, LOCKED_TENANT_ID)
+                                    }
+                                }}
+                                onTouchEnd={async (e) => {
+                                    // ☁️ CLOUD SYNC on touch release
+                                    if (LOCKED_TENANT_ID) {
+                                        await updateBranding({ radiusKm: config.delivery?.radiusKm || 5 }, LOCKED_TENANT_ID)
+                                    }
+                                }}
                                 style={{ width: '100%' }}
                             />
                         </div>
@@ -634,6 +656,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         updateConfig({ delivery: { ...config.delivery, flatFee: parseInt(e.target.value) || 0 } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
+                                    onBlur={async (e) => {
+                                        // ☁️ CLOUD SYNC on blur
+                                        if (LOCKED_TENANT_ID) {
+                                            await updateBranding({ flatFee: parseInt(e.target.value) || 0 }, LOCKED_TENANT_ID)
+                                        }
+                                    }}
                                     placeholder="0"
                                     style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
                                 />
@@ -648,6 +676,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     onChange={(e) => {
                                         updateConfig({ delivery: { ...config.delivery, freeDeliveryThreshold: parseInt(e.target.value) || 0 } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    }}
+                                    onBlur={async (e) => {
+                                        // ☁️ CLOUD SYNC on blur
+                                        if (LOCKED_TENANT_ID) {
+                                            await updateBranding({ freeDeliveryThreshold: parseInt(e.target.value) || 0 }, LOCKED_TENANT_ID)
+                                        }
                                     }}
                                     placeholder="0"
                                     style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
