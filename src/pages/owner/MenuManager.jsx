@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
 import { supabase, updateBranding } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
@@ -532,9 +532,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             <label className="toggle">
                                 <input
                                     type="checkbox"
-                                    checked={config.pauseOrders}
+                                    checked={localConfig.pauseOrders}
                                     onChange={async (e) => {
-                                        const newPauseState = e.target.checked // !config.pauseOrders is risky if props are stale
+                                        const newPauseState = e.target.checked
                                         console.log('[Pause Toggle] User toggled to:', newPauseState)
 
                                         // 1. Instant Local Feedback
@@ -555,7 +555,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             </label>
                         </div>
                         {/* Pause Message */}
-                        {config.pauseOrders && (
+                        {localConfig.pauseOrders && (
                             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
                                 <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Mensaje para clientes</label>
                                 <input
@@ -621,7 +621,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     borderRadius: '50%',
                                     border: '2px solid #22C55E',
                                     background: 'rgba(34, 197, 94, 0.15)',
-                                    transform: `scale(${config.delivery?.radiusKm || 5})`,
+                                    transform: `scale(${localConfig.delivery?.radiusKm || 5})`,
                                     willChange: 'transform',
                                     transition: 'transform 0.1s linear',
                                     pointerEvents: 'none',
@@ -629,19 +629,24 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 }} />
                             </div>
 
-                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {config.delivery?.radiusKm || 5} km</label>
+                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
                             <input
                                 type="range"
                                 min="1"
                                 max="50"
-                                value={config.delivery?.radiusKm || 5}
+                                value={localConfig.delivery?.radiusKm || 5}
                                 onChange={(e) => {
                                     const newValue = parseInt(e.target.value)
-                                    const oldValue = config.delivery?.radiusKm || 5
+                                    const oldValue = localConfig.delivery?.radiusKm || 5
                                     if (newValue !== oldValue) {
                                         recordDeliveryConfigChange('radiusKm', oldValue, newValue)
                                     }
-                                    updateConfig({ delivery: { ...config.delivery, radiusKm: newValue } })
+                                    // Instant Local Update
+                                    setLocalConfig(prev => ({
+                                        ...prev,
+                                        delivery: { ...prev.delivery, radiusKm: newValue }
+                                    }))
+                                    updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
                                     window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 onMouseUp={async (e) => {
@@ -653,7 +658,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 onTouchEnd={async (e) => {
                                     // ☁️ CLOUD SYNC on touch release
                                     if (LOCKED_TENANT_ID) {
-                                        await updateBranding({ radiusKm: config.delivery?.radiusKm || 5 }, LOCKED_TENANT_ID)
+                                        await updateBranding({ radiusKm: localConfig.delivery?.radiusKm || 5 }, LOCKED_TENANT_ID)
                                     }
                                 }}
                                 style={{ width: '100%' }}
@@ -666,9 +671,11 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     type="number"
                                     min="0"
                                     step="50"
-                                    value={config.delivery?.flatFee || 0}
+                                    value={localConfig.delivery?.flatFee || 0}
                                     onChange={(e) => {
-                                        updateConfig({ delivery: { ...config.delivery, flatFee: parseInt(e.target.value) || 0 } })
+                                        const newValue = parseInt(e.target.value) || 0
+                                        setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: newValue } }))
+                                        updateConfig({ delivery: { ...localConfig.delivery, flatFee: newValue } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     onBlur={async (e) => {
@@ -687,9 +694,11 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     type="number"
                                     min="0"
                                     step="100"
-                                    value={config.delivery?.freeDeliveryThreshold || 0}
+                                    value={localConfig.delivery?.freeDeliveryThreshold || 0}
                                     onChange={(e) => {
-                                        updateConfig({ delivery: { ...config.delivery, freeDeliveryThreshold: parseInt(e.target.value) || 0 } })
+                                        const newValue = parseInt(e.target.value) || 0
+                                        setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, freeDeliveryThreshold: newValue } }))
+                                        updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     onBlur={async (e) => {
