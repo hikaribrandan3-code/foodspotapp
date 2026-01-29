@@ -537,20 +537,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     checked={localConfig.pauseOrders}
                                     onChange={async (e) => {
                                         const newPauseState = e.target.checked
-                                        console.log('[Pause Toggle] User toggled to:', newPauseState)
-
-                                        // 1. Instant Local Feedback
                                         setLocalConfig(prev => ({ ...prev, pauseOrders: newPauseState }))
 
-                                        // 2. Optimistic Global Sync
-                                        updateConfig({ pauseOrders: newPauseState })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        // DIRECT INJECTION
+                                        const { error } = await supabase
+                                            .from('branding')
+                                            .update({ is_paused: newPauseState })
+                                            .eq('business_id', targetBusinessId)
 
-                                        // 3. ☁️ CLOUD SYNC (Ghost Data Fix)
-                                        if (targetBusinessId) {
-                                            const { error } = await updateBranding({ pauseOrders: newPauseState }, targetBusinessId)
-                                            if (error) console.error('[Pause Toggle] Cloud sync failed:', error)
-                                        }
+                                        if (error) console.error('❌ Pause Sync Failed:', error)
+                                        else console.log('✅ Pause Sync Success')
                                     }}
                                 />
                                 <span className="toggle-slider"></span>
@@ -652,16 +648,24 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     window.dispatchEvent(new CustomEvent('frontendSync'))
                                 }}
                                 onMouseUp={async (e) => {
-                                    // ☁️ CLOUD SYNC on release (prevents network flooding)
-                                    if (targetBusinessId) {
-                                        await updateBranding({ radiusKm: parseInt(e.target.value) }, targetBusinessId)
-                                    }
+                                    const newVal = parseInt(e.target.value)
+                                    const { error } = await supabase
+                                        .from('branding')
+                                        .update({ delivery_radius: newVal })
+                                        .eq('business_id', targetBusinessId)
+
+                                    if (error) console.error('❌ Radius Sync Failed:', error)
+                                    else console.log('✅ Radius Sync Success')
                                 }}
                                 onTouchEnd={async (e) => {
-                                    // ☁️ CLOUD SYNC on touch release
-                                    if (targetBusinessId) {
-                                        await updateBranding({ radiusKm: localConfig.delivery?.radiusKm || 5 }, targetBusinessId)
-                                    }
+                                    const newVal = localConfig.delivery?.radiusKm || 5
+                                    const { error } = await supabase
+                                        .from('branding')
+                                        .update({ delivery_radius: newVal })
+                                        .eq('business_id', targetBusinessId)
+
+                                    if (error) console.error('❌ Radius Sync Failed:', error)
+                                    else console.log('✅ Radius Sync Success')
                                 }}
                                 style={{ width: '100%' }}
                             />
@@ -681,10 +685,11 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     onBlur={async (e) => {
-                                        // ☁️ CLOUD SYNC on blur
-                                        if (targetBusinessId) {
-                                            await updateBranding({ flatFee: parseInt(e.target.value) || 0 }, targetBusinessId)
-                                        }
+                                        const val = parseInt(e.target.value) || 0
+                                        await supabase
+                                            .from('branding')
+                                            .update({ delivery_fee: val })
+                                            .eq('business_id', targetBusinessId)
                                     }}
                                     placeholder="0"
                                     style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
@@ -711,10 +716,11 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         window.dispatchEvent(new CustomEvent('frontendSync'))
                                     }}
                                     onBlur={async (e) => {
-                                        // ☁️ CLOUD SYNC on blur
-                                        if (targetBusinessId) {
-                                            await updateBranding({ freeDeliveryThreshold: parseInt(e.target.value) || 0 }, targetBusinessId)
-                                        }
+                                        const val = parseInt(e.target.value) || 0
+                                        await supabase
+                                            .from('branding')
+                                            .update({ free_delivery_threshold: val })
+                                            .eq('business_id', targetBusinessId)
                                     }}
                                     placeholder="0"
                                     style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
