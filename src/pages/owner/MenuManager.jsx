@@ -146,26 +146,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // --------------------------------
 
     const syncConfigToCloud = async (updatedConfig) => {
-        console.log('☁️ Syncing Config to Supabase... Target:', targetBusinessId)
-
+        // 🛡️ NO BANDAIDS: Dynamic ID mapping
         const { error } = await supabase
             .from('branding')
             .update({
-                app_config: updatedConfig, // featuredPhotos lives here
+                app_config: updatedConfig,
                 hero_url: updatedConfig.headerCover?.image || null,
-                business_name: updatedConfig.businessName || null,
-                updated_at: new Date()
+                business_name: updatedConfig.businessName || null
             })
-            .eq('business_id', targetBusinessId) // 🛡️ GLOBAL PLATFORM STANDARD
+            .eq('business_id', targetBusinessId)
 
-        if (error) {
-            console.error('❌ Cloud Config Sync Failed:', error)
-            window.alert(`❌ CONFIG SYNC ERROR: ${error.message}\nCode: ${error.code || 'N/A'}\nDetails: ${error.details || 'None'}`)
-        } else {
-            console.log('✅ Config Sync Validated')
-            // 💧 FORCE STATE HYDRATION
-            setLocalConfig(updatedConfig)
-        }
+        if (error) console.error('❌ Platform Sync Error:', error.message)
+        else console.log('✅ Platform Sync Success')
     }
 
     // --- 🛠️ PURE STATE HELPER: Generate IDs ---
@@ -482,17 +474,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // --- DIRECT FEATURED UPLOAD LOGIC ---
     const handleFeaturedTap = (index) => {
-        // Safely retrieve slot or default
+        // 🛡️ DYNAMIC DATA RETRIEVAL
         const slot = activeFeaturedItems[index] || { name: '', price: 0, image: null }
 
-        // 🛡️ AGGRESSIVE MODAL TRIGGER
+        console.log(`[Platform] Opening Highlight Slot: ${index} for Business: ${targetBusinessId}`)
+
         setEditingItem({ isFeaturedSlot: true, index })
         setEditForm({
             name: slot.name || 'Nuevo Destacado',
             price: slot.price?.toString() || '0',
             image: slot.image || null
         })
-        setUploadStatus(null)
     }
 
     // 🚧 THE GATEKEEPER (Bypass Mode): Only block if tenant context is NOT loaded.
