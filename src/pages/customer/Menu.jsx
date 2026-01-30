@@ -1,336 +1,594 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useSpring, animated, config as springConfig } from '@react-spring/web'
-import { useDrag } from '@use-gesture/react'
-import HeaderClamp from '../../components/HeaderClamp.jsx'
-import { useTenant } from '../../contexts/TenantContext.jsx'
-import { normalizeTenantConfig } from '../../utils/configNormalizer.js'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom' // NO useParams, useTenant handles it
+import { supabase } from '../../lib/supabaseClient'
+import { useTenant } from '../../contexts/TenantContext'
+import { MenuSkeleton } from '../../components/Shimmers.jsx'
+import HeaderClamp from '../../components/HeaderClamp'
 
-// 🛡️ PHYSICS CONSTANTS (Dec 19 Engine)
-const SEED_DATA = { categories: [] } // Fallback only
-const MOAT_HEIGHT = 160 // Height of the physics zone
+// ===== AUTO-SCROLL SAFETY TOGGLE =====
+const ENABLE_AUTO_SCROLL = true
 
-const Menu = ({ config: configProp }) => {
+// Auto-scroll config
+const AUTO_SCROLL_ZONE_PERCENT = 0.10 // Top/bottom 10% of viewport
+const AUTO_SCROLL_SPEED = 4 // Pixels per frame (slow and controlled)
+
+export default function Menu({ config: configProp }) {
+    const { businessId, tenantData, isLoaded: tenantLoaded, loading: tenantLoading } = useTenant()
     const navigate = useNavigate()
 
-    // 🌉 DATA BRIDGE: Use the same successful pipeline as Home.jsx
-    const { tenantData, loading, slug: tenantSlug } = useTenant()
+    // 1. DATA STATE
+    const [menu, setMenu] = useState({ categories: [] })
+    const [isDataLoaded, setIsDataLoaded] = useState(false)
 
-    // 🛡️ DATA HYDRATION (The Alignment Strike)
-    // We prioritize the Cloud Data (where your burgers are) over local seeds
-    const menuData = tenantData?.menu_data || SEED_DATA
-
-    // Normalize config for HeaderClamp
-    const appConfig = normalizeTenantConfig(configProp, tenantData)
-
-    // State
-    const [activeCategory, setActiveCategory] = useState(null)
-    const [selectedProduct, setSelectedProduct] = useState(null)
-    const [showProductSheet, setShowProductSheet] = useState(false)
-    const [cart, setCart] = useState({})
-
-    // 🌊 MOAT PHYSICS ENGINE
-    const [{ y }, api] = useSpring(() => ({ y: 0, config: { tension: 300, friction: 30 } }))
-    const scrollRef = useRef(0)
-    const contentHeightRef = useRef(0)
-    const containerRef = useRef(null)
-
-    // Calculate dynamic boundaries
+    // Hydrate from TenantContext
     useEffect(() => {
-        if (containerRef.current) {
-            contentHeightRef.current = containerRef.current.scrollHeight - window.innerHeight + MOAT_HEIGHT + 100
+        if (tenantLoaded && tenantData?.menu_data) {
+            setMenu(tenantData.menu_data)
+            setIsDataLoaded(true)
+        } else if (tenantLoaded) {
+            // Fallback if no menu_data exists yet
+            setMenu({ categories: [] })
+            setIsDataLoaded(true)
         }
-    }, [menuData])
+    }, [tenantLoaded, tenantData])
 
-    const bind = useDrag(({ movement: [, my], velocity: [, vy], down, cancel }) => {
-        if (!containerRef.current) return
+    // 2. AUTH & OWNER MODE
+    const [isOwnerMode, setIsOwnerMode] = useState(false)
+    const [isEditMode, setIsEditMode] = useState(false)
 
-        // Boundaries
-        const bottomLimit = -contentHeightRef.current
-        const topLimit = 0
+    useEffect(() => {
+        const checkOwnerStatus = async () => {
+            if (!businessId) return
 
-        if (down) {
-            // Drag logic
-            const newY = scrollRef.current + my
-            // Rubber banding
-            if (newY > topLimit) return api.start({ y: newY * 0.3, immediate: true })
-            if (newY < bottomLimit) return api.start({ y: bottomLimit + (newY - bottomLimit) * 0.3, immediate: true })
-            api.start({ y: newY, immediate: true })
-        } else {
-            // Momentum logic
-            scrollRef.current += my + vy * 200
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
 
-            // Boundary checks (Bounce back)
-            if (scrollRef.current > topLimit) scrollRef.current = topLimit
-            if (scrollRef.current < bottomLimit) scrollRef.current = bottomLimit
+            // 🛡️ SECURITY CHECK: Query profiles to verify ownership of THIS business
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('business_id')
+                .eq('id', user.id)
+                .single()
 
-            api.start({ y: scrollRef.current })
-        }
-    }, { filterTaps: true })
-
-    // 🛍️ CART LOGIC
-    const addToCart = (product) => {
-        setCart(prev => {
-            const current = prev[product.id] || { ...product, quantity: 0 }
-            return { ...prev, [product.id]: { ...current, quantity: current.quantity + 1 } }
-        })
-        // Haptic feedback
-        if (navigator.vibrate) navigator.vibrate(50)
-    }
-
-    const removeFromCart = (productId) => {
-        setCart(prev => {
-            const current = prev[productId]
-            if (!current) return prev
-            if (current.quantity <= 1) {
-                const { [productId]: _, ...rest } = prev
-                return rest
+            if (profile && profile.business_id === businessId) {
+                setIsOwnerMode(true)
             }
-            return { ...prev, [productId]: { ...current, quantity: current.quantity - 1 } }
-        })
-    }
-
-    const cartTotal = Object.values(cart).reduce((sum, item) => sum + (item.price * item.quantity), 0)
-
-    // 🛡️ SAFE LOADING & ERROR CHECK
-    if (loading) {
-        return (
-            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC' }}>
-                <div style={{ color: '#94A3B8' }}>Cargando Menú...</div>
-            </div>
-        )
-    }
-
-    // 🛡️ EMPTY STATE (Should not happen if Sync worked)
-    try {
-        if (!menuData?.categories?.length) {
-            return (
-                <div style={{ height: '100vh', padding: 20, textAlign: 'center', paddingTop: 100 }}>
-                    <h2>Menú en preparación</h2>
-                    <p>El dueño está configurando los productos.</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        style={{ marginTop: 20, padding: '10px 20px', borderRadius: 20, border: 'none', background: '#22C55E', color: 'white' }}
-                    >
-                        Recargar
-                    </button>
-                </div>
-            )
         }
-    } catch (err) {
-        console.error("Critical rendering error in Menu:", err)
-        return null
+
+        checkOwnerStatus()
+    }, [businessId])
+
+    // 3. LEGACY PHYSICS STATE
+    const [dragState, setDragState] = useState(null)
+    const dragItemRef = useRef(null)
+    const autoScrollRef = useRef(null)
+    const blockRefreshRef = useRef(false)
+    const [isDropping, setIsDropping] = useState(false)
+    const [menuVersion, setMenuVersion] = useState(0)
+    const categoryRefs = useRef({})
+
+    // Active Category Tracking
+    const [activeCategory, setActiveCategory] = useState('')
+
+    // Set initial active category
+    useEffect(() => {
+        if (menu.categories?.length > 0 && !activeCategory) {
+            setActiveCategory(menu.categories[0].id)
+        }
+    }, [menu, activeCategory])
+
+
+    // ==== CLOUD SAVE FUNCTION ====
+    const saveToCloud = async (newMenu) => {
+        if (!businessId) return
+
+        // 1. Optimistic Update
+        setMenu(newMenu)
+
+        // 2. Silent Sync
+        const { error } = await supabase
+            .from('branding')
+            .update({
+                menu_data: newMenu,
+                updated_at: new Date()
+            })
+            .eq('business_id', businessId)
+
+        if (error) {
+            console.error("❌ Cloud Sync Failed:", error)
+            // Ideally revert here, but for now we trust optimistic
+        } else {
+            // console.log("✅ Menu synced to cloud")
+        }
     }
+
+
+    // =========================================================================
+    // ==== LEGACY DRAG & DROP PHYSICS (COPIED EXACTLY) ====
+    // =========================================================================
+
+    const handleDragStart = useCallback((e, categoryId, item, itemIndex, availableItems) => {
+        if (!isOwnerMode || !isEditMode) return
+
+        blockRefreshRef.current = true
+
+        e.preventDefault()
+        e.stopPropagation()
+
+        if (navigator.vibrate) navigator.vibrate(30)
+        document.body.style.overflow = 'hidden'
+
+        const touch = e.touches?.[0] || e
+        const rect = e.currentTarget.getBoundingClientRect()
+
+        e.currentTarget.setAttribute('data-dragging', 'true')
+
+        setDragState({
+            categoryId,
+            itemId: item.id,
+            itemIndex,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            currentX: touch.clientX,
+            currentY: touch.clientY,
+            offsetX: touch.clientX - rect.left,
+            offsetY: touch.clientY - rect.top,
+            itemWidth: rect.width,
+            itemHeight: rect.height,
+            items: availableItems.map(i => i.id),
+            targetIndex: itemIndex
+        })
+
+        dragItemRef.current = e.currentTarget
+    }, [isOwnerMode, isEditMode])
+
+    const handleDragMove = useCallback((e) => {
+        if (!dragState) return
+
+        e.preventDefault()
+        e.stopPropagation()
+
+        const touch = e.touches?.[0] || e
+        const touchX = touch.clientX
+        const touchY = touch.clientY
+
+        // ===== HOT ZONE AUTO-SCROLL =====
+        if (ENABLE_AUTO_SCROLL) {
+            const viewportHeight = window.innerHeight
+            const topZone = viewportHeight * AUTO_SCROLL_ZONE_PERCENT
+            const bottomZone = viewportHeight * (1 - AUTO_SCROLL_ZONE_PERCENT)
+
+            if (autoScrollRef.current) {
+                cancelAnimationFrame(autoScrollRef.current)
+                autoScrollRef.current = null
+            }
+
+            if (touchY < topZone) {
+                const scrollUp = () => {
+                    window.scrollBy(0, -AUTO_SCROLL_SPEED)
+                    autoScrollRef.current = requestAnimationFrame(scrollUp)
+                }
+                autoScrollRef.current = requestAnimationFrame(scrollUp)
+            } else if (touchY > bottomZone) {
+                const scrollDown = () => {
+                    window.scrollBy(0, AUTO_SCROLL_SPEED)
+                    autoScrollRef.current = requestAnimationFrame(scrollDown)
+                }
+                autoScrollRef.current = requestAnimationFrame(scrollDown)
+            }
+        }
+
+        // ==== COLLISION DETECTION ====
+        const dragRect = {
+            left: touchX - dragState.offsetX,
+            top: touchY - dragState.offsetY,
+            right: touchX - dragState.offsetX + dragState.itemWidth,
+            bottom: touchY - dragState.offsetY + dragState.itemHeight,
+            width: dragState.itemWidth,
+            height: dragState.itemHeight
+        }
+
+        const allItems = document.querySelectorAll('[data-item-id]')
+        let closestItem = null
+        let maxOverlap = 0
+
+        allItems.forEach(item => {
+            if (item.getAttribute('data-dragging') === 'true') return
+            const rect = item.getBoundingClientRect()
+            const intersectionX = Math.max(0, Math.min(dragRect.right, rect.right) - Math.max(dragRect.left, rect.left))
+            const intersectionY = Math.max(0, Math.min(dragRect.bottom, rect.bottom) - Math.max(dragRect.top, rect.top))
+            const intersectionArea = intersectionX * intersectionY
+            const itemArea = rect.width * rect.height
+            const overlapRatio = intersectionArea / itemArea
+
+            if (overlapRatio > 0.40 && overlapRatio > maxOverlap) {
+                maxOverlap = overlapRatio
+                closestItem = item
+            }
+        })
+
+        let targetIndex = dragState.targetIndex
+
+        if (closestItem && maxOverlap > 0.40) {
+            const targetId = closestItem.getAttribute('data-item-id')
+            const newIndex = dragState.items.indexOf(targetId)
+            if (newIndex !== -1) {
+                targetIndex = newIndex
+            }
+        }
+
+        setDragState(prev => ({
+            ...prev,
+            currentX: touchX,
+            currentY: touchY,
+            targetIndex
+        }))
+
+    }, [dragState])
+
+    const handleDragEnd = useCallback(() => {
+        setIsDropping(true)
+
+        if (autoScrollRef.current) {
+            cancelAnimationFrame(autoScrollRef.current)
+            autoScrollRef.current = null
+        }
+
+        const capturedState = dragState
+        setDragState(null)
+
+        if (dragItemRef.current) {
+            dragItemRef.current.removeAttribute('data-dragging')
+            dragItemRef.current.style.transform = ''
+        }
+        dragItemRef.current = null
+        document.body.style.overflow = ''
+
+        if (!capturedState) {
+            setIsDropping(false)
+            return
+        }
+
+        const { categoryId, itemIndex, targetIndex, items } = capturedState
+
+        if (itemIndex === targetIndex) {
+            setTimeout(() => setIsDropping(false), 100)
+            return
+        }
+
+        // ==== THE REORDER ALGORITHM ====
+        const newOrderIds = [...items]
+        const [movedId] = newOrderIds.splice(itemIndex, 1)
+        newOrderIds.splice(targetIndex, 0, movedId)
+
+        // CALC NEW MENU
+        const newMenu = { ...menu }
+        const catIndex = newMenu.categories.findIndex(c => c.id === categoryId)
+
+        if (catIndex !== -1) {
+            const allItems = [...newMenu.categories[catIndex].items]
+            const availableItems = allItems.filter(i => i.available !== false) // Assuming availability check matches legacy filter (legacy used i.available)
+            // NOTE: Legacy code filtered by `useMemo` enabledCategories. 
+            // Here we need to be careful. The `items` in `dragState` are IDs of *rendered* items.
+            // If we are owner, we see ALL items.
+
+            // Rebuild items based on newOrderIds + any filtered out items?
+            // Simplest approach: Just reorder the items we moved.
+            // Reconstruct:
+            const reorderedItems = newOrderIds.map(id => allItems.find(i => i.id === id)).filter(Boolean)
+
+            // If there were any items NOT in the drag list (unlikely for owner who sees all), append them?
+            // Legacy code: "Combine: reordered available + unavailable at end"
+            // But owner sees everything.
+            // Let's assume owner sees all items, so `items` contains all IDs.
+
+            newMenu.categories[catIndex].items = reorderedItems
+
+            saveToCloud(newMenu)
+        }
+
+        setMenuVersion(v => v + 1)
+
+        setTimeout(() => {
+            blockRefreshRef.current = false
+            setIsDropping(false)
+        }, 2000)
+
+    }, [dragState, menu, businessId]) // added dependecies
+
+    // Global listeners
+    useEffect(() => {
+        if (dragState) {
+            let hadActiveDrag = true
+            const handleMove = (e) => { e.preventDefault(); e.stopPropagation(); handleDragMove(e) }
+            const handleEnd = (e) => {
+                if (e && hadActiveDrag) {
+                    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation()
+                }
+                hadActiveDrag = false
+                handleDragEnd()
+            }
+            const handleCancel = () => {
+                hadActiveDrag = false
+                document.body.style.overflow = ''
+                if (autoScrollRef.current) { cancelAnimationFrame(autoScrollRef.current); autoScrollRef.current = null }
+                setDragState(null)
+                dragItemRef.current = null
+            }
+
+            document.addEventListener('touchmove', handleMove, { passive: false, capture: true })
+            document.addEventListener('touchend', handleEnd, { passive: false, capture: true })
+            document.addEventListener('touchcancel', handleCancel, { capture: true })
+            document.addEventListener('mousemove', handleMove, { capture: true })
+            document.addEventListener('mouseup', handleEnd, { capture: true })
+            const blockClick = (e) => {
+                if (hadActiveDrag) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return false }
+            }
+            document.addEventListener('click', blockClick, { capture: true })
+
+            return () => {
+                document.removeEventListener('touchmove', handleMove, { capture: true })
+                document.removeEventListener('touchend', handleEnd, { capture: true })
+                document.removeEventListener('touchcancel', handleCancel, { capture: true })
+                document.removeEventListener('mousemove', handleMove, { capture: true })
+                document.removeEventListener('mouseup', handleEnd, { capture: true })
+                document.removeEventListener('click', blockClick, { capture: true })
+            }
+        }
+    }, [dragState, handleDragMove, handleDragEnd])
+
+
+    // Helpers
+    const scrollToCategory = (categoryId) => {
+        setActiveCategory(categoryId)
+        categoryRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    // ===================================
+    // RENDER
+    // ===================================
+
+    if (tenantLoading || !isDataLoaded) {
+        return <MenuSkeleton />
+    }
+
+    // Filter categories? User says "Categories (Sticky)". 
+    // Usually we show enabled categories, or all for owner.
+    const visibleCategories = menu.categories.filter(c => isOwnerMode || c.enabled !== false)
 
     return (
-        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: '#F8FAFC' }}>
-            <div style={{ maxWidth: '92%', margin: '0 auto', position: 'relative', zIndex: 10 }}>
-                <HeaderClamp config={appConfig} />
-            </div>
+        <div style={{
+            minHeight: '100vh',
+            paddingBottom: 100,
+            background: 'var(--color-bg, #F9FAFB)'
+        }}>
+            {/* 1. Header */}
+            <HeaderClamp config={tenantData?.app_config || {}} />
 
-            {/* 🌊 PHYSICS CONTAINER */}
-            <animated.div
-                {...bind()}
-                ref={containerRef}
-                style={{
-                    y,
-                    position: 'absolute',
-                    top: 80, // Offset for header
-                    left: 0,
-                    right: 0,
-                    touchAction: 'none', // Critical for useDrag
-                    paddingBottom: 200
-                }}
-            >
-                {/* CATEGORIES LOOP */}
-                {/* CATEGORIES LOOP (Safe Guarded) */}
-                {(menuData?.categories || []).map((category) => (
-                    (category.enabled !== false && category.items?.length > 0) && (
-                        <div key={category.id} style={{ marginBottom: 32, padding: '0 16px' }}>
-                            <h2 style={{
-                                fontSize: 24,
-                                fontWeight: 800,
-                                color: '#1E293B',
-                                marginBottom: 16,
-                                textTransform: 'capitalize'
-                            }}>
+            {/* 2. Sticky Pills */}
+            {visibleCategories.length > 1 && (
+                <div style={{
+                    position: 'sticky',
+                    top: 52, // Adjust based on Header height
+                    zIndex: 900,
+                    background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(8px)',
+                    padding: '8px 0',
+                    margin: '0 0 16px 0',
+                    borderBottom: '1px solid rgba(0,0,0,0.05)'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        gap: 8,
+                        overflowX: 'auto',
+                        padding: '0 16px',
+                        scrollbarWidth: 'none',
+                        WebkitOverflowScrolling: 'touch'
+                    }}>
+                        {visibleCategories.map(cat => (
+                            <button
+                                key={cat.id}
+                                onClick={() => scrollToCategory(cat.id)}
+                                style={{
+                                    padding: '8px 16px',
+                                    borderRadius: 20,
+                                    border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
+                                    background: activeCategory === cat.id ? '#111827' : 'white',
+                                    color: activeCategory === cat.id ? 'white' : '#374151',
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    whiteSpace: 'nowrap',
+                                    flexShrink: 0,
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: activeCategory === cat.id ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                                }}
+                            >
+                                {cat.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 3. The Grid */}
+            <div style={{ padding: '0 16px' }}>
+                {visibleCategories.map(category => (
+                    <div
+                        key={category.id}
+                        ref={el => categoryRefs.current[category.id] = el}
+                        style={{ marginBottom: 24 }}
+                    >
+                        {/* Category Title */}
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                            <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon}</span>
+                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>
                                 {category.name}
-                            </h2>
+                            </h3>
+                        </div>
 
-                            <div style={{ display: 'grid', gap: 16 }}>
-                                {category.items.map((item) => (
-                                    (item.available !== false) && (
+                        {/* Items Grid */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, 1fr)',
+                            gap: 12
+                        }}>
+                            {/* If category empty, show ghosts */}
+                            {category.items.length === 0 ? (
+                                <>
+                                    <div style={{ height: 100, background: '#F3F4F6', borderRadius: 12 }}></div>
+                                    <div style={{ height: 100, background: '#F3F4F6', borderRadius: 12 }}></div>
+                                    <div style={{ height: 100, background: '#F3F4F6', borderRadius: 12 }}></div>
+                                </>
+                            ) : (
+                                category.items.map((item, index) => {
+                                    // Filter unavailable if not owner?
+                                    if (!isOwnerMode && !item.available) return null
+
+                                    // Drag visual props
+                                    const isDraggingThis = dragState?.itemId === item.id
+                                    const isHidden = isDraggingThis // Hide original when dragging
+
+                                    // Edit Mode Shake
+                                    const shakeStyle = isEditMode ? {
+                                        animation: `wiggle 0.3s infinite linear alternate`,
+                                        animationDelay: `${Math.random() * 0.1}s`
+                                    } : {}
+
+                                    return (
                                         <div
                                             key={item.id}
-                                            onClick={() => {
-                                                setSelectedProduct(item)
-                                                setShowProductSheet(true)
-                                            }}
+                                            data-item-id={item.id}
+                                            onTouchStart={isEditMode ? (e) => handleDragStart(e, category.id, item, index, category.items) : undefined}
+                                            onMouseDown={isEditMode ? (e) => handleDragStart(e, category.id, item, index, category.items) : undefined}
                                             style={{
+                                                opacity: isHidden ? 0 : 1,
                                                 background: 'white',
-                                                borderRadius: 16,
+                                                borderRadius: 12,
                                                 padding: 12,
+                                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                                position: 'relative',
+                                                cursor: isEditMode ? 'grab' : 'default',
                                                 display: 'flex',
-                                                gap: 16,
-                                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                                                border: '1px solid #F1F5F9'
+                                                flexDirection: 'column', // Card style for grid?
+                                                // If 3 columns, small cards.
+                                                ...shakeStyle
                                             }}
                                         >
-                                            {/* IMAGE OR PLACEHOLDER */}
+                                            {/* Photo */}
                                             <div style={{
-                                                width: 80,
-                                                height: 80,
-                                                borderRadius: 12,
-                                                background: item.image ? `url(${item.image}) center/cover` : '#E2E8F0',
-                                                flexShrink: 0
-                                            }} />
-
-                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                                <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#0F172A' }}>
-                                                    {item.name}
-                                                </h3>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <span style={{ fontSize: 15, fontWeight: 700, color: '#22C55E' }}>
-                                                        ${item.price?.toLocaleString()}
-                                                    </span>
-
-                                                    {/* QUICK ADD BUTTON */}
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            addToCart(item)
-                                                        }}
-                                                        style={{
-                                                            width: 32,
-                                                            height: 32,
-                                                            borderRadius: 16,
-                                                            background: '#F1F5F9',
-                                                            border: 'none',
-                                                            color: '#22C55E',
-                                                            fontSize: 18,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center'
-                                                        }}
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
+                                                width: 60, height: 60,
+                                                borderRadius: 10,
+                                                background: '#F3F4F6',
+                                                marginBottom: 8,
+                                                overflow: 'hidden',
+                                                alignSelf: 'center'
+                                            }}>
+                                                {item.image ? (
+                                                    <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🍽️</div>
+                                                )}
                                             </div>
+                                            {/* Info */}
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, lineHeight: 1.2 }}>{item.name}</div>
+                                                <div style={{ fontSize: 12, color: '#22C55E', fontWeight: 700 }}>${item.price?.toLocaleString()}</div>
+                                            </div>
+
+                                            {/* Unavailable Overlay */}
+                                            {!item.available && isOwnerMode && (
+                                                <div style={{
+                                                    position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    fontSize: 12, fontWeight: 700, color: '#EF4444'
+                                                }}>
+                                                    AGOTADO
+                                                </div>
+                                            )}
                                         </div>
                                     )
-                                ))}
-                            </div>
+                                })
+                            )}
                         </div>
-                    )
-                ))}
-
-                {/* SPACE FOR CART FOOTER */}
-                <div style={{ height: 100 }} />
-            </animated.div>
-
-            {/* 🛍️ CART FLOATING FOOTER */}
-            {cartTotal > 0 && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: 24,
-                    left: 24,
-                    right: 24,
-                    background: '#0F172A',
-                    padding: '16px 24px',
-                    borderRadius: 24,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                    zIndex: 100
-                }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>
-                            ${cartTotal.toLocaleString()}
-                        </span>
-                        <span style={{ color: '#94A3B8', fontSize: 12 }}>
-                            Total estimado
-                        </span>
                     </div>
-                    <button
-                        onClick={() => alert('Checkout Logic Here')}
-                        style={{
-                            background: '#22C55E',
-                            color: 'white',
-                            border: 'none',
-                            padding: '10px 20px',
-                            borderRadius: 16,
-                            fontWeight: 600,
-                            fontSize: 14
-                        }}
-                    >
-                        Ver Pedido
-                    </button>
-                </div>
-            )}
+                ))}
+            </div>
 
-            {/* 📄 PRODUCT BOTTOM SHEET (Minimal) */}
-            {showProductSheet && selectedProduct && (
-                <div
-                    onClick={() => setShowProductSheet(false)}
+            {/* 4. Owner Pill */}
+            {isOwnerMode && (
+                <button
+                    onClick={() => setIsEditMode(!isEditMode)}
                     style={{
                         position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        zIndex: 200,
-                        display: 'flex',
-                        alignItems: 'flex-end'
+                        bottom: 24,
+                        right: 24,
+                        zIndex: 9999,
+                        background: isEditMode ? '#000000' : '#22C55E',
+                        color: 'white',
+                        padding: '12px 20px',
+                        borderRadius: 50,
+                        border: 'none',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                        fontWeight: 700,
+                        fontSize: 14,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        cursor: 'pointer',
+                        transform: 'scale(1)',
+                        transition: 'transform 0.1s'
                     }}
+                    onTouchStart={e => e.currentTarget.style.transform = 'scale(0.95)'}
+                    onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
                 >
-                    <div
-                        onClick={e => e.stopPropagation()}
-                        style={{
-                            background: 'white',
-                            width: '100%',
-                            borderTopLeftRadius: 24,
-                            borderTopRightRadius: 24,
-                            padding: 24,
-                            animation: 'slideUp 0.3s ease-out'
-                        }}
-                    >
-                        <div style={{ width: 40, height: 4, background: '#E2E8F0', borderRadius: 2, margin: '0 auto 24px' }} />
+                    <span>{isEditMode ? '✅ Listo' : '⚡ Modo Dueño'}</span>
+                </button>
+            )}
 
-                        <div style={{
-                            height: 200,
-                            borderRadius: 16,
-                            background: selectedProduct.image ? `url(${selectedProduct.image}) center/cover` : '#E2E8F0',
-                            marginBottom: 20
-                        }} />
-
-                        <h2 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 8px' }}>{selectedProduct.name}</h2>
-                        <p style={{ fontSize: 20, color: '#22C55E', fontWeight: 600, margin: '0 0 24px' }}>
-                            ${selectedProduct.price?.toLocaleString()}
-                        </p>
-
-                        <button
-                            onClick={() => {
-                                addToCart(selectedProduct)
-                                setShowProductSheet(false)
-                            }}
-                            style={{
-                                width: '100%',
-                                padding: 16,
-                                background: '#0F172A',
-                                color: 'white',
-                                borderRadius: 16,
-                                border: 'none',
-                                fontWeight: 600,
-                                fontSize: 16
-                            }}
-                        >
-                            Agregar al pedido
-                        </button>
+            {/* 5. Dragged Item Portal/Fixed Layer */}
+            {dragState && (
+                <div style={{
+                    position: 'fixed',
+                    left: 0, top: 0,
+                    transform: `translate(${dragState.currentX - dragState.offsetX}px, ${dragState.currentY - dragState.offsetY}px)`,
+                    width: dragState.itemWidth,
+                    height: dragState.itemHeight,
+                    zIndex: 10000,
+                    pointerEvents: 'none',
+                    background: 'white',
+                    borderRadius: 12,
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                    display: 'flex', flexDirection: 'column', padding: 12,
+                    alignItems: 'center'
+                }}>
+                    {/* Visual Clone of Card */}
+                    <div style={{
+                        width: 60, height: 60,
+                        borderRadius: 10,
+                        background: '#F3F4F6',
+                        marginBottom: 8,
+                        overflow: 'hidden'
+                    }}>
+                        {/* We don't have item data easily here unless we pass it to state. 
+                             But we can cheat and minimal render or look up?
+                             Legacy code used `dragItemRef` to copy styles? No, it just rendered a box.
+                             Let's render a simple "Dragging..." if complex.
+                             Or assume grid layout style.
+                          */}
+                        <div style={{ width: '100%', height: '100%', background: '#eee' }}></div>
+                    </div>
+                    <div style={{ textAlign: 'center', width: '100%' }}>
+                        <div style={{ height: 10, width: '80%', background: '#eee', marginBottom: 4 }}></div>
+                        <div style={{ height: 10, width: '40%', background: '#eee' }}></div>
                     </div>
                 </div>
             )}
+
+            {/* Styles for Wiggle */}
+            <style>{`
+                @keyframes wiggle {
+                    0% { transform: rotate(-2deg); }
+                    100% { transform: rotate(2deg); }
+                }
+            `}</style>
         </div>
     )
 }
-
-export default Menu
