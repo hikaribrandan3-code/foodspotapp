@@ -33,11 +33,24 @@ export function normalizeTenantConfig(baseConfig, tenantData) {
     const heroUrl = tenantData.hero_url || tenantData.app_config?.headerCover?.image || baseConfig?.headerCover?.image
     const dbHeroMode = tenantData.hero_mode // 'text', 'cover', etc.
 
-    // Typography
-    const fontFamily = tenantData.font_family || baseConfig?.branding?.fontFamily
     const fontWeight = tenantData.font_weight || '800' // Default to ExtraBold for brands
 
-    // 2. CALCULATE DERIVED MODES
+    // 2. CALCULATE DERIVED MODES & PARSE URL PARAMS
+    let heroScale = 1
+    let heroOffsetX = 0
+    let heroOffsetY = 0
+
+    if (heroUrl) {
+        try {
+            const urlObj = new URL(heroUrl)
+            const params = new URLSearchParams(urlObj.search)
+            if (params.has('s')) heroScale = parseFloat(params.get('s'))
+            if (params.has('x')) heroOffsetX = parseFloat(params.get('x'))
+            if (params.has('y')) heroOffsetY = parseFloat(params.get('y'))
+        } catch (e) {
+            // Invalid URL, ignore params
+        }
+    }
 
     // "Ghost Hero" Fix: If no image exists, FORCE 'text' mode.
     // This collapses the 220px/280px cover into a smaller text header.
@@ -70,9 +83,9 @@ export function normalizeTenantConfig(baseConfig, tenantData) {
             // Content
             title: businessName,
             image: heroUrl,
-            scale: tenantData.app_config?.headerCover?.scale || baseConfig?.headerCover?.scale || 1,
-            offsetX: tenantData.app_config?.headerCover?.offsetX || baseConfig?.headerCover?.offsetX || 0,
-            offsetY: tenantData.app_config?.headerCover?.offsetY || baseConfig?.headerCover?.offsetY || 0,
+            scale: heroScale,
+            offsetX: heroOffsetX,
+            offsetY: heroOffsetY,
 
             // Logic
             useImage: !isTextMode,

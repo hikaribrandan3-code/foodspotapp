@@ -565,31 +565,34 @@ const Settings = () => {
                         isOpen={showCoverEditor}
                         onClose={() => setShowCoverEditor(false)}
                         businessId={businessId}
-                        initialData={{
-                            image: tenant?.hero_url,
-                            // 🔮 HYDRATION: Read from app_config OR fallback to defaults
-                            scale: tenant?.app_config?.headerCover?.scale || 1,
-                            offsetX: tenant?.app_config?.headerCover?.offsetX || 0,
-                            offsetY: tenant?.app_config?.headerCover?.offsetY || 0,
+                        initialData={() => {
+                            // 🔮 HYDRATION: Read from URL params if available
+                            if (!tenant?.hero_url) return {};
+                            try {
+                                const url = new URL(tenant.hero_url);
+                                const params = new URLSearchParams(url.search);
+                                return {
+                                    image: tenant.hero_url,
+                                    scale: parseFloat(params.get('s')) || 1,
+                                    offsetX: parseFloat(params.get('x')) || 0,
+                                    offsetY: parseFloat(params.get('y')) || 0,
+                                }
+                            } catch (e) {
+                                return { image: tenant.hero_url, scale: 1, offsetX: 0, offsetY: 0 };
+                            }
                         }}
                         onSave={(data) => {
-                            // 💾 SAVE CROP SETTINGS TO DB
-                            // We store this in the unlimited 'app_config' JSON column
-                            const newAppConfig = {
-                                ...(tenant?.app_config || {}),
-                                headerCover: {
-                                    ...(tenant?.app_config?.headerCover || {}),
-                                    image: data.image,
-                                    scale: data.scale,
-                                    offsetX: data.offsetX,
-                                    offsetY: data.offsetY,
-                                    updatedAt: data.updatedAt
-                                }
-                            }
-                            handleFieldUpdate('app_config', newAppConfig)
+                            // 💾 ENCODE CROP SETTINGS IN URL
+                            // Robust fix: Avoid DB schema dependency by using query params
+                            const cleanUrl = data.image.split('?')[0];
+                            const timestamp = Date.now();
+                            // Use s/x/y shorter keys
+                            const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&x=${data.offsetX}&y=${data.offsetY}`;
 
-                            // Also update the top-level hero_url for backward compatibility
-                            handleFieldUpdate('hero_url', data.image)
+                            console.log('💾 Saving Hero URL with Params:', finalUrl);
+
+                            // Update hero_url directly
+                            handleFieldUpdate('hero_url', finalUrl)
                         }}
                     />
                 </section>
