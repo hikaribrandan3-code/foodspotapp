@@ -591,12 +591,13 @@ const Settings = () => {
                         onSave={(data) => {
                             // 💾 ENCODE CROP SETTINGS IN URL
                             // Robust fix: Avoid DB schema dependency by using query params
+                            console.log('[HeroDebug] Settings. onSave received:', data);
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
                             // Use s/x/y shorter keys
                             const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&x=${data.offsetX}&y=${data.offsetY}`;
 
-                            console.log('💾 Saving Hero URL with Params:', finalUrl);
+                            console.log('[HeroDebug] Saving Hero URL with Params:', finalUrl);
 
                             // Update hero_url directly
                             handleFieldUpdate('hero_url', finalUrl)

@@ -385,21 +385,28 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             setIsSaving(true)
 
             let finalImage = image
+            console.log('[HeroDebug] Editor handleSave triggered. Image:', finalImage, 'Pos:', posRef.current);
+
             if (originalFile && !demoMode) {
+                console.log('[HeroDebug] Uploading new asset...');
                 const { url, error } = await uploadAsset(originalFile, businessId, 'branding')
                 if (!error) {
-                    finalImage = url // Pass the clean, fresh URL to parent
-                    // ⛔️ DO NOT SAVE TO DB HERE. Parent (Settings.jsx) handles persistence.
+                    finalImage = url
+                    console.log('[HeroDebug] Upload success. New URL:', finalImage);
+                } else {
+                    console.error('[HeroDebug] Upload error:', error);
                 }
             }
 
-            onSave?.({
+            const saveData = {
                 image: finalImage,
                 scale: posRef.current.scale,
                 offsetX: posRef.current.offsetX,
                 offsetY: posRef.current.offsetY,
                 updatedAt: Date.now()
-            })
+            };
+            console.log('[HeroDebug] Calling onSave with:', saveData);
+            onSave?.(saveData)
             onClose()
         } catch (err) {
             console.error("Save failed:", err)
