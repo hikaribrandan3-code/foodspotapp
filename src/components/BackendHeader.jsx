@@ -16,9 +16,12 @@ import { useTenant } from '../contexts/TenantContext.jsx'
 import { supabase } from '../lib/supabaseClient.js'
 
 function BackendHeader({ title, onLogout }) {
-    const { tenantSlug } = useParams()
+    const params = useParams()
     const navigate = useNavigate()
-    const { tenantData, branding } = useTenant()
+    const { tenantData, branding, slug: contextSlug } = useTenant()
+
+    // 🛡️ HARD-WIRE: Prioritize context slug over URL params to prevent "undefined" links
+    const tenantSlug = contextSlug || params.tenantSlug
     const [showRoleDropdown, setShowRoleDropdown] = useState(false)
     const [userRole, setUserRole] = useState(null)
     const dropdownRef = useRef(null)

@@ -530,6 +530,7 @@ function App() {
                 <RouteAreaWrapper>
                     <Routes>
                         <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
+                        <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
                         <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
                         <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
                         <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
