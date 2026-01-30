@@ -128,12 +128,14 @@ function BottomNav({ config: configProp }) {
         return luminance > 0.5
     }
 
-    // 🏢 SILO-AWARE: Generate tenant-scoped routes
+    // 🏢 SILO-AWARE: Generate tenant-scoped routes (with search param persistence)
+    const searchParams = location.search // e.g., "?editMode=true"
+
     const routes = {
-        home: `/${tenantSlug}`,
-        menu: `/${tenantSlug}/menu`,
-        status: `/${tenantSlug}/status`,
-        info: `/${tenantSlug}/info`,
+        home: `/${tenantSlug}${searchParams}`,
+        menu: `/${tenantSlug}/menu${searchParams}`,
+        status: `/${tenantSlug}/status${searchParams}`,
+        info: `/${tenantSlug}/info${searchParams}`,
         camera: '/camera' // Camera is global, not tenant-scoped
     }
 
