@@ -91,14 +91,20 @@ export default function Menu({ config: configProp }) {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
-        const modeParam = params.get('editMode') || params.get('editmode')
+        // 🛡️ PARAMS: 'ownerStart' detects owner but stays calm. 'editMode' forces jiggle.
+        const ownerStart = params.get('ownerStart') === 'true'
+        const forceEdit = params.get('editMode') === 'true' || params.get('editmode') === 'true'
 
-        // 🔓 HARDWIRE: If ?editmode=true is present, force verify OWNER + EDIT
-        if (modeParam === 'true') {
-            console.log("🚀 FORCE OWNER MODE ACTIVATED via URL")
+        // 🔓 BYPASS LOGIC
+        if (ownerStart || forceEdit) {
+            console.log("🚀 OWNER MODE ACTIVATED via URL")
             setIsOwnerMode(true)
-            setIsEditMode(true) // Start in edit mode immediately
-            if (navigator.vibrate) navigator.vibrate([30, 50, 30])
+
+            // Only auto-jiggle if explicitly requested via legacy param
+            if (forceEdit) {
+                setIsEditMode(true)
+                if (navigator.vibrate) navigator.vibrate([30, 50, 30])
+            }
         } else {
             // Normal Check
             const checkOwnerStatus = async () => {

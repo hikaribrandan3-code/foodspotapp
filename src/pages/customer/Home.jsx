@@ -60,7 +60,7 @@ function Home({ config: configProp }) {
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()
-    const isOwnerMode = session?.role === 'superadmin' || session?.role === 'owner' || isInDemoMode()
+    const [isOwnerMode, setIsOwnerMode] = useState(session?.role === 'superadmin' || session?.role === 'owner' || isInDemoMode())
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false)
@@ -69,14 +69,25 @@ function Home({ config: configProp }) {
 
     // Detect 'Ver Tienda' edit intent from URL
     // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
+    // Detect 'Ver Tienda' edit intent from URL
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
-        const mode = params.get('editMode') || params.get('editmode')
+        // 🛡️ PARAMS: 'ownerStart' detects owner but stays calm. 'editMode' forces jiggle.
+        const ownerStart = params.get('ownerStart') === 'true'
+        const forceEdit = params.get('editMode') === 'true' || params.get('editmode') === 'true'
 
-        if (mode === 'true' && isOwnerMode) {
-            console.log("🚀 ANTIGRAVITY ACTIVATED")
-            if (navigator.vibrate) navigator.vibrate([30, 50])
-            setIsEditMode(true)
+        if (ownerStart || forceEdit) {
+            console.log("🚀 OWNER MODE ACTIVE (Home via URL)")
+            setIsOwnerMode(true)
+            // Note: isOwnerMode is derived from session, but we also trust the URL for the visual 'Start' signal if needed
+            // Actually, isOwnerMode logic in Home is strictly session-based.
+            // But if we came from Backend, we ARE owner.
+
+            if (forceEdit) {
+                console.log("🚀 ANTIGRAVITY ACTIVATED")
+                if (navigator.vibrate) navigator.vibrate([30, 50])
+                setIsEditMode(true)
+            }
         }
     }, [isOwnerMode])
 
@@ -934,6 +945,26 @@ function Home({ config: configProp }) {
                     <p style={{ fontSize: 12, color: '#DC2626', margin: 0, fontWeight: 500 }}>
                         {config.pauseOrdersMessage}
                     </p>
+                </div>
+            )}
+            {/* Owner Pill (Home) */}
+            {isOwnerMode && !isEditMode && config?.homeConfig?.allowEditing !== false && (
+                <button onClick={() => setIsEditMode(true)} style={{
+                    position: 'fixed', bottom: 100, right: 24, zIndex: 9999, background: '#22C55E', color: 'white', padding: '12px 20px',
+                    borderRadius: 50, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontWeight: 700, fontSize: 14, display: 'flex',
+                    alignItems: 'center', gap: 8, cursor: 'pointer'
+                }}><span>⚡ Modo Dueño</span></button>
+            )}
+
+            {/* Edit Mode HUD */}
+            {isOwnerMode && isEditMode && (
+                <div style={{
+                    position: 'fixed', top: 16, left: 16, right: 16, zIndex: 9998,
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    background: 'white', padding: '8px 16px', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}>
+                    <span style={{ color: '#F59E0B', fontWeight: 600 }}>✏️ Home Editor</span>
+                    <button onClick={() => setIsEditMode(false)} style={{ background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600 }}>Done</button>
                 </div>
             )}
         </div>
