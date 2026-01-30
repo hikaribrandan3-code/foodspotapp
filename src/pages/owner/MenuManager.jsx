@@ -43,12 +43,44 @@ function MenuManager({ config: configProp, demoMode = false }) {
     useEffect(() => {
         if (tenantLoaded) {
             // 🛡️ DATA INTEGRITY: Hard-Check for menu_data
-            if (tenantData?.menu_data) {
+            if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
                 console.log('[MenuManager] 🎯 HYDRATING FROM CLOUD:', tenantData.menu_data)
                 setMenu(tenantData.menu_data)
             } else {
-                console.log('[MenuManager] ⚠️ NO CLOUD DATA: Defaulting to empty')
-                setMenu({ categories: [] })
+                console.log('[MenuManager] 🌱 NO CLOUD DATA: Seeding Default Menu')
+                setMenu({
+                    categories: [
+                        {
+                            id: 'cat-burgers', name: 'Hamburguesas', icon: '🍔', enabled: true,
+                            items: [
+                                { id: 'item-b1', name: 'Smash Doble', price: 6500, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80', available: true },
+                                { id: 'item-b2', name: 'Cheese Bacon', price: 7200, image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=500&q=80', available: true },
+                                { id: 'item-b3', name: 'Veggie King', price: 6100, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&q=80', available: true }
+                            ]
+                        },
+                        {
+                            id: 'cat-pizza', name: 'Pizzas', icon: '🍕', enabled: true,
+                            items: [
+                                { id: 'item-p1', name: 'Muzzarella', price: 8500, image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=500&q=80', available: true },
+                                { id: 'item-p2', name: 'Pepperoni', price: 9200, image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500&q=80', available: true }
+                            ]
+                        },
+                        {
+                            id: 'cat-drinks', name: 'Bebidas', icon: '🥤', enabled: true,
+                            items: [
+                                { id: 'item-d1', name: 'Coca Cola', price: 1500, image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&q=80', available: true },
+                                { id: 'item-d2', name: 'Cerveza IPA', price: 2800, image: 'https://images.unsplash.com/photo-1608270586620-2485246391d8?w=500&q=80', available: true }
+                            ]
+                        },
+                        {
+                            id: 'cat-sweet', name: 'Postres', icon: '🍰', enabled: true,
+                            items: [
+                                { id: 'item-s1', name: 'Cheesecake', price: 4500, image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&q=80', available: true },
+                                { id: 'item-s2', name: 'Tiramisu', price: 4800, image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=500&q=80', available: true }
+                            ]
+                        }
+                    ]
+                })
             }
 
             // 🔓 UNLOCK: Cloud data received, syncing is now safe
