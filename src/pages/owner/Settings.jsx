@@ -565,22 +565,21 @@ const Settings = () => {
                         isOpen={showCoverEditor}
                         onClose={() => setShowCoverEditor(false)}
                         businessId={businessId}
-                        initialData={() => {
-                            // 🔮 HYDRATION: Read from URL params if available
+                        initialData={(() => {
                             if (!tenant?.hero_url) return {};
                             try {
-                                const url = new URL(tenant.hero_url);
+                                const url = new URL(tenant.hero_url, 'http://dummy.com'); // Base needed for relative URLs
                                 const params = new URLSearchParams(url.search);
                                 return {
-                                    image: tenant.hero_url,
+                                    image: tenant.hero_url, // Keep full URL for preview
                                     scale: parseFloat(params.get('s')) || 1,
                                     offsetX: parseFloat(params.get('x')) || 0,
                                     offsetY: parseFloat(params.get('y')) || 0,
-                                }
+                                };
                             } catch (e) {
                                 return { image: tenant.hero_url, scale: 1, offsetX: 0, offsetY: 0 };
                             }
-                        }}
+                        })()}
                         onSave={(data) => {
                             // 💾 ENCODE CROP SETTINGS IN URL
                             // Robust fix: Avoid DB schema dependency by using query params
