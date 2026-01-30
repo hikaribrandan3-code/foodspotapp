@@ -566,38 +566,27 @@ const Settings = () => {
                         onClose={() => setShowCoverEditor(false)}
                         businessId={businessId}
                         initialData={(() => {
-                            // 🔍 DEBUG: Trace Hero URL and Params
-                            if (!tenant?.hero_url) {
-                                console.log('🔍 [Settings] No hero_url found.');
-                                return {};
-                            }
+                            if (!tenant?.hero_url) return {};
                             try {
-                                console.log('🔍 [Settings] Parsing Hero URL:', tenant.hero_url);
                                 const url = new URL(tenant.hero_url, 'http://dummy.com');
                                 const params = new URLSearchParams(url.search);
-                                const data = {
+                                return {
                                     image: tenant.hero_url,
                                     scale: parseFloat(params.get('s')) || 1,
                                     offsetX: parseFloat(params.get('x')) || 0,
                                     offsetY: parseFloat(params.get('y')) || 0,
                                 };
-                                console.log('🔍 [Settings] Parsed Data:', data);
-                                return data;
                             } catch (e) {
-                                console.error('🔍 [Settings] Parse Error:', e);
                                 return { image: tenant.hero_url, scale: 1, offsetX: 0, offsetY: 0 };
                             }
                         })()}
                         onSave={(data) => {
                             // 💾 ENCODE CROP SETTINGS IN URL
                             // Robust fix: Avoid DB schema dependency by using query params
-                            console.log('[HeroDebug] Settings. onSave received:', data);
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
                             // Use s/x/y shorter keys
                             const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&x=${data.offsetX}&y=${data.offsetY}`;
-
-                            console.log('[HeroDebug] Saving Hero URL with Params:', finalUrl);
 
                             // Update hero_url directly
                             handleFieldUpdate('hero_url', finalUrl)
