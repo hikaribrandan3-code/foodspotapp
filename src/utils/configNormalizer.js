@@ -70,6 +70,9 @@ export function normalizeTenantConfig(baseConfig, tenantData) {
             // Content
             title: businessName,
             image: heroUrl,
+            scale: tenantData.app_config?.headerCover?.scale || baseConfig?.headerCover?.scale || 1,
+            offsetX: tenantData.app_config?.headerCover?.offsetX || baseConfig?.headerCover?.offsetX || 0,
+            offsetY: tenantData.app_config?.headerCover?.offsetY || baseConfig?.headerCover?.offsetY || 0,
 
             // Logic
             useImage: !isTextMode,

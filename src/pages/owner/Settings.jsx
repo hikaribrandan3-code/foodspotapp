@@ -367,6 +367,7 @@ const Settings = () => {
                 hero_url: tenant.hero_url,
                 hero_icons: tenant.hero_icons,
                 info_pills: tenant.info_pills,
+                app_config: tenant.app_config, // 🛡️ JSON STORAGE for extended settings
                 updated_at: new Date()
             };
 
@@ -535,22 +536,21 @@ const Settings = () => {
                     </div>
 
                     {tenant?.hero_mode === 'image' ? (
-                        <div className="hero-stage">
-                            <div className="hero-studio-trigger" onClick={() => setShowCoverEditor(true)}>
-                                {tenant?.hero_url ? (
-                                    <>
-                                        <div className="editor-crosshair">+</div>
-                                        <img src={tenant.hero_url} className="preview-img" alt="Hero" />
-                                        <div className="edit-overlay"><span>✎ Editar Imagen</span></div>
-                                    </>
-                                ) : (
-                                    <div className="empty-state">
-                                        <span className="plus-icon">+</span>
-                                        <span>Subir Logo/Cover</span>
-                                    </div>
-                                )}
-                            </div>
+                        <div className="hero-studio-trigger" onClick={() => setShowCoverEditor(true)}>
+                            {tenant?.hero_url ? (
+                                <>
+                                    <div className="editor-crosshair">+</div>
+                                    <img src={tenant.hero_url} className="preview-img" alt="Hero" />
+                                    <div className="edit-overlay"><span>✎ Editar Imagen</span></div>
+                                </>
+                            ) : (
+                                <div className="empty-state">
+                                    <span className="plus-icon">+</span>
+                                    <span>Subir Logo/Cover</span>
+                                </div>
+                            )}
                         </div>
+
                     ) : (
                         <div
                             className="hero-preview-text"
@@ -559,6 +559,39 @@ const Settings = () => {
                             {tenant?.business_name || 'Business Name'}
                         </div>
                     )}
+
+                    {/* COVER IMAGE EDITOR MODAL */}
+                    <CoverImageEditor
+                        isOpen={showCoverEditor}
+                        onClose={() => setShowCoverEditor(false)}
+                        businessId={businessId}
+                        initialData={{
+                            image: tenant?.hero_url,
+                            // 🔮 HYDRATION: Read from app_config OR fallback to defaults
+                            scale: tenant?.app_config?.headerCover?.scale || 1,
+                            offsetX: tenant?.app_config?.headerCover?.offsetX || 0,
+                            offsetY: tenant?.app_config?.headerCover?.offsetY || 0,
+                        }}
+                        onSave={(data) => {
+                            // 💾 SAVE CROP SETTINGS TO DB
+                            // We store this in the unlimited 'app_config' JSON column
+                            const newAppConfig = {
+                                ...(tenant?.app_config || {}),
+                                headerCover: {
+                                    ...(tenant?.app_config?.headerCover || {}),
+                                    image: data.image,
+                                    scale: data.scale,
+                                    offsetX: data.offsetX,
+                                    offsetY: data.offsetY,
+                                    updatedAt: data.updatedAt
+                                }
+                            }
+                            handleFieldUpdate('app_config', newAppConfig)
+
+                            // Also update the top-level hero_url for backward compatibility
+                            handleFieldUpdate('hero_url', data.image)
+                        }}
+                    />
                 </section>
 
                 {/* ========== 3. HERO ICONS (NEW - WYSIWYG) ========== */}
@@ -805,7 +838,7 @@ const Settings = () => {
                         })}
                     </div>
                 </section>
-            </div>
+            </div >
 
             <BackendNav role="owner" useRoutes={true} />
 
@@ -824,60 +857,66 @@ const Settings = () => {
             />
 
             {/* Color Picker Modal */}
-            {colorPickerState.isOpen && (
-                <ColorPickerModal
-                    title={colorPickerState.title}
-                    initialColor={colorPickerState.initialColor}
-                    onLiveChange={handleColorPickerLiveChange}
-                    onApply={handleColorPickerApply}
-                    onClose={handleColorPickerClose}
-                />
-            )}
+            {
+                colorPickerState.isOpen && (
+                    <ColorPickerModal
+                        title={colorPickerState.title}
+                        initialColor={colorPickerState.initialColor}
+                        onLiveChange={handleColorPickerLiveChange}
+                        onApply={handleColorPickerApply}
+                        onClose={handleColorPickerClose}
+                    />
+                )
+            }
 
             {/* SAVE SUCCESS TOAST */}
-            {saveStatus && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: 24,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
-                    padding: '10px 24px', borderRadius: 50,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                    fontWeight: 600, fontSize: 14, zIndex: 9999,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    animation: 'fadeIn 0.2s ease-out'
-                }}>
-                    <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
-                </div>
-            )}
+            {
+                saveStatus && (
+                    <div style={{
+                        position: 'fixed',
+                        bottom: 24,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
+                        padding: '10px 24px', borderRadius: 50,
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                        fontWeight: 600, fontSize: 14, zIndex: 9999,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}>
+                        <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
+                    </div>
+                )
+            }
 
             {/* 💾 FLOATING SAVE BAR (Atomic) */}
-            {hasChanges && (
-                <div style={{
-                    position: 'fixed', bottom: 95, left: 12, right: 12,
-                    background: '#1E293B', color: 'white', padding: '14px 20px',
-                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
-                    <button
-                        onClick={handlePlatformSave}
-                        disabled={isSaving}
-                        style={{
-                            background: '#3B82F6', color: 'white', border: 'none',
-                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
-                            fontSize: 14, cursor: 'pointer',
-                            opacity: isSaving ? 0.7 : 1
-                        }}
-                    >
-                        {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
-                    </button>
-                </div>
-            )}
-        </div>
+            {
+                hasChanges && (
+                    <div style={{
+                        position: 'fixed', bottom: 95, left: 12, right: 12,
+                        background: '#1E293B', color: 'white', padding: '14px 20px',
+                        borderRadius: 16, display: 'flex', justifyContent: 'space-between',
+                        alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                        zIndex: 10000, animation: 'slideUp 0.3s ease-out',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
+                        <button
+                            onClick={handlePlatformSave}
+                            disabled={isSaving}
+                            style={{
+                                background: '#3B82F6', color: 'white', border: 'none',
+                                padding: '10px 24px', borderRadius: 12, fontWeight: 800,
+                                fontSize: 14, cursor: 'pointer',
+                                opacity: isSaving ? 0.7 : 1
+                            }}
+                        >
+                            {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
+                        </button>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
