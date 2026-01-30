@@ -384,22 +384,13 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         try {
             setIsSaving(true)
 
-            let finalImage = image
-            console.log('[HeroDebug] Editor handleSave triggered. Image:', finalImage, 'Pos:', posRef.current);
+            console.log('[HeroDebug] Editor handleSave triggered. Image:', image, 'Pos:', posRef.current);
 
-            if (originalFile && !demoMode) {
-                console.log('[HeroDebug] Uploading new asset...');
-                const { url, error } = await uploadAsset(originalFile, businessId, 'branding')
-                if (!error) {
-                    finalImage = url
-                    console.log('[HeroDebug] Upload success. New URL:', finalImage);
-                } else {
-                    console.error('[HeroDebug] Upload error:', error);
-                }
-            }
+            // ⚡️ PURE COMPONENT MODE: No DB writes, No Uploads.
+            // We trust that 'image' is already a valid URL (from triggerFileInput or initialData).
 
             const saveData = {
-                image: finalImage,
+                image: image,
                 scale: posRef.current.scale,
                 offsetX: posRef.current.offsetX,
                 offsetY: posRef.current.offsetY,
@@ -407,6 +398,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             };
             console.log('[HeroDebug] Calling onSave with:', saveData);
             onSave?.(saveData)
+
             onClose()
         } catch (err) {
             console.error("Save failed:", err)
