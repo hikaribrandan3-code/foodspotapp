@@ -330,8 +330,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             if (file) {
                 try {
                     setOriginalFile(file)
-                    const { dataURI } = await processAndStoreImage(file)
-                    setImage(dataURI)
+                    const { publicUrl } = await processAndStoreImage(file)
+                    setImage(publicUrl)
                     setScale(1)
                     setOffsetX(0)
                     setOffsetY(0)
