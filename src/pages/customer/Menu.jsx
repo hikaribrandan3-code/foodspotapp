@@ -54,10 +54,14 @@ export default function Menu({ config: configProp }) {
         checkOwnerStatus()
     }, [businessId])
 
-    // Detect 'Ver Tienda' edit intent from URL
+    // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
-        if (params.get('editMode') === 'true' && isOwnerMode) {
+        const mode = params.get('editMode') || params.get('editmode')
+
+        if (mode === 'true' && isOwnerMode) {
+            console.log("🚀 ANTIGRAVITY MENU ACTIVATED")
+            if (navigator.vibrate) navigator.vibrate([30, 50])
             setIsEditMode(true)
         }
     }, [isOwnerMode])
@@ -78,7 +82,7 @@ export default function Menu({ config: configProp }) {
         }
     }, [menu, activeCategory])
 
-    // Config derived values - WIRE hero_url to headerCover.image
+    // Config derived values - WIRE hero_url to headerCover.image & Pill Bridge
     const config = useMemo(() => ({
         ...(tenantData?.app_config || configProp || {}),
         headerCover: {
@@ -86,7 +90,9 @@ export default function Menu({ config: configProp }) {
             image: tenantData?.hero_url || tenantData?.app_config?.headerCover?.image
         }
     }), [tenantData, configProp])
-    const effectiveDividerPresetId = config.dividerPresetId || 'coffee-1'
+
+    // Level 2 Pill Bridge: Check app_config first, fall back to 'coffee-1'
+    const effectiveDividerPresetId = tenantData?.app_config?.dividerPresetId || config.dividerPresetId || 'coffee-1'
 
     // =========================================================================
     // ==== 🛡️ VAULT-SEAL CLOUD SAVE (BATCH UPSERT RE-ROUTE) ====
@@ -134,14 +140,18 @@ export default function Menu({ config: configProp }) {
     // =========================================================================
 
     // 2.8s Long Press Initiator
+    // 2.8s Long Press Initiator - THE "JIGGLE" PHYSICS
     const handleTouchStart = (e, categoryId, item, itemIndex, availableItems) => {
         if (!isOwnerMode || !isEditMode) return
 
         // Start the 2.8s timer
         longPressTimerRef.current = setTimeout(() => {
             // Trigger Drag Mode after 2.8s
+            console.log("⚡ JIGGLE TRIGGERED")
             if (navigator.vibrate) navigator.vibrate(50) // Haptic feedback
             initiateDrag(e, categoryId, item, itemIndex, availableItems)
+
+            // Add visual wiggle class to body for global feedback?
         }, 2800)
     }
 
@@ -406,7 +416,7 @@ export default function Menu({ config: configProp }) {
                 {enabledCategories.map(category => (
                     <div key={category.id} ref={el => categoryRefs.current[category.id] = el} data-category-id={category.id} style={{ marginBottom: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                            <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon}</span>
+                            <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon || '🍽️'}</span>
                             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
                         </div>
 

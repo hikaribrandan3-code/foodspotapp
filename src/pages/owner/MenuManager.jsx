@@ -10,6 +10,7 @@ import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import './MenuStyles.css'
 
 /**
@@ -788,6 +789,56 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
                                 />
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ==================== BRIDGED BRANDING SECTION ==================== */}
+                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Estilo de Menú (Píldora)
+                </h3>
+                <div style={{ background: 'white', padding: 16, borderRadius: 12, border: '1px solid #E2E8F0', marginBottom: 24 }}>
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                        {/* Image Preview */}
+                        <div style={{
+                            width: 80, height: 40, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
+                            background: '#F1F5F9', border: '1px solid #E2E8F0'
+                        }}>
+                            {(() => {
+                                const activeId = localConfig.dividerPresetId || 'coffee-1'
+                                const preset = DIVIDER_PRESETS.find(p => p.id === activeId)
+                                return preset ? (
+                                    <img src={preset.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : null
+                            })()}
+                        </div>
+
+                        {/* Selector */}
+                        <div style={{ flex: 1 }}>
+                            <select
+                                value={localConfig.dividerPresetId || 'coffee-1'}
+                                onChange={(e) => {
+                                    const val = e.target.value
+                                    const newConfig = { ...localConfig, dividerPresetId: val }
+                                    updateConfig(newConfig)
+                                    setLocalConfig(newConfig)
+                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                    setHasChanges(true)
+                                }}
+                                style={{
+                                    width: '100%', padding: '10px', borderRadius: 8,
+                                    border: '1px solid #E2E8F0', fontSize: 14, background: 'white'
+                                }}
+                            >
+                                {[...new Set(DIVIDER_PRESETS.map(p => p.category))].map(cat => (
+                                    <optgroup key={cat} label={cat.charAt(0).toUpperCase() + cat.slice(1)}>
+                                        {DIVIDER_PRESETS.filter(p => p.category === cat).map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </optgroup>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 </div>

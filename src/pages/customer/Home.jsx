@@ -68,9 +68,14 @@ function Home({ config: configProp }) {
     const longPressStartRef = useRef(null)
 
     // Detect 'Ver Tienda' edit intent from URL
+    // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
-        if (params.get('editMode') === 'true' && isOwnerMode) {
+        const mode = params.get('editMode') || params.get('editmode')
+
+        if (mode === 'true' && isOwnerMode) {
+            console.log("🚀 ANTIGRAVITY ACTIVATED")
+            if (navigator.vibrate) navigator.vibrate([30, 50])
             setIsEditMode(true)
         }
     }, [isOwnerMode])
