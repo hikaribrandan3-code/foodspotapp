@@ -510,6 +510,49 @@ function Home({ config: configProp }) {
         navigate(`/${tenantSlug}/${path}`)
     }, [navigate, isEditMode, tenantSlug])
 
+    // ====== THE MISSING ATOMIC SEAL (HOME) ======
+    const handlePlatformSave = async () => {
+        if (!businessId) return
+        setIsSaving(true)
+
+        try {
+            const currentAppConfig = tenantData?.app_config || {}
+
+            // Construct the full configuration snapshot
+            const updatePayload = {
+                app_config: {
+                    ...currentAppConfig,
+                    homeConfig: {
+                        ...(currentAppConfig.homeConfig || {}),
+                        primaryActions: localPrimaryActions // Your reordered icons
+                    },
+                    featuredPhotos: localFeaturedItems // Your reordered featured grid
+                }
+            }
+
+            console.log('[PLATFORM SAVE] Sealing Home Vault:', updatePayload)
+
+            const { error } = await supabase
+                .from('branding')
+                .update(updatePayload)
+                .eq('business_id', businessId)
+
+            if (error) throw error
+
+            // Success: Clear dirty state and notify OS
+            setHasChanges(false)
+            if (navigator.vibrate) navigator.vibrate([50, 50])
+            window.dispatchEvent(new Event('frontendSync'))
+            console.log('[PLATFORM SAVE] Success: Home Order Persisted')
+
+        } catch (err) {
+            console.error('[PLATFORM SAVE] Critical Failure:', err)
+            alert('Error al guardar cambios: ' + err.message)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     return (
         <div
             className={`page ${isEditMode ? 'home-edit-mode' : ''}`}
