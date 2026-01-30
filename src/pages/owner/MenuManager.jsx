@@ -824,7 +824,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             textOverflow: 'ellipsis',
                                             textAlign: 'center'
                                         }}>
-                                            {slot.name}
+                                            <div style={{ fontWeight: 600, fontSize: 10, marginBottom: 2 }}>
+                                                {slot.name || 'Destacado'}
+                                            </div>
+                                            <div style={{ color: '#4ADE80', fontWeight: 700, fontSize: 11 }}>
+                                                ${slot.price || 0}
+                                            </div>
                                         </div>
                                     </>
                                 ) : (
