@@ -55,8 +55,20 @@ const HERO_ICON_DEFS = [
 ];
 
 const Settings = () => {
-    const { tenantData: tenant, businessId } = useTenant();
+    const { tenantData: tenant, businessId, refreshTenantData } = useTenant();
     const [isSaving, setIsSaving] = useState(false);
+    // 🛡️ ATOMIC SAVE STATE (Manual Persistence v5.0)
+    const [hasChanges, setHasChanges] = useState(
+        () => sessionStorage.getItem(`dirty_branding_${businessId}`) === 'true'
+    );
+    const [saveStatus, setSaveStatus] = useState(null);
+
+    // Persistence Hook
+    useEffect(() => {
+        if (businessId) {
+            sessionStorage.setItem(`dirty_branding_${businessId}`, hasChanges);
+        }
+    }, [hasChanges, businessId]);
     const navigate = useNavigate();
 
     // LOCAL STATE for 60fps typing
@@ -202,12 +214,8 @@ const Settings = () => {
         // 🛡️ CLOUD-FIRST: localStorage writes disabled.
         // updateConfig(storageUpdates);
 
-        try {
-            // Cloud Sync always uses the original field name (snake_case for DB)
-            await updateBranding({ [field]: value }, businessId);
-        } catch (error) {
-            console.error("Sync failed:", error);
-        }
+        // 🛡️ ATOMIC PROTOCOL: Mark as dirty, do NOT sync yet.
+        setHasChanges(true);
     };
 
     // Hero Icon Color Update
@@ -235,11 +243,8 @@ const Settings = () => {
         //     }
         // });
 
-        try {
-            await updateBranding({ hero_icons: updatedIcons }, businessId);
-        } catch (error) {
-            console.error("Hero icon color update failed:", error);
-        }
+        // 🛡️ ATOMIC PROTOCOL: Mark as dirty
+        setHasChanges(true);
     };
 
     // Typography handlers
@@ -250,11 +255,8 @@ const Settings = () => {
     const handleNameBlur = async () => {
         if (!businessId) return;
         syncContext({ business_name: localIdentity.business_name });
-        try {
-            await updateBranding({ business_name: localIdentity.business_name }, businessId);
-        } catch (err) {
-            console.error("Name save failed:", err);
-        }
+        // 🛡️ ATOMIC PROTOCOL: Mark as dirty
+        setHasChanges(true);
     };
 
     const handleFontSelect = (family) => {
@@ -342,6 +344,50 @@ const Settings = () => {
         await supabase.auth.signOut();
         clearAuth();
         window.location.href = `/${tenant?.slug || ''}`;
+    };
+
+    // 💾 THE ATOMIC SAVE (Manual Persistence Protocol v5.0)
+    const handlePlatformSave = async () => {
+        setIsSaving(true);
+        console.log('💾 SAVING BRANDING VAULT:', businessId);
+
+        try {
+            // 1. Construct Full Payload from Optimistic Tenant State
+            const payload = {
+                business_name: tenant.business_name,
+                font_family: tenant.font_family,
+                font_weight: tenant.font_weight,
+                navbar_color: tenant.navbar_color,
+                nav_icon_mode: tenant.nav_icon_mode,
+                primary_color: tenant.primary_color,
+                secondary_color: tenant.secondary_color,
+                confirmation_color: tenant.confirmation_color,
+                powered_by_color: tenant.powered_by_color,
+                hero_mode: tenant.hero_mode,
+                hero_url: tenant.hero_url,
+                hero_icons: tenant.hero_icons,
+                info_pills: tenant.info_pills,
+                updated_at: new Date()
+            };
+
+            // 2. Cloud Sync
+            await updateBranding(payload, businessId);
+
+            // 3. Global Refresh
+            await refreshTenantData();
+
+            // 4. Success State
+            setHasChanges(false);
+            sessionStorage.removeItem(`dirty_branding_${businessId}`);
+            setSaveStatus({ message: '✓ Marca Guardada' });
+            setTimeout(() => setSaveStatus(null), 3000);
+
+        } catch (error) {
+            console.error("Save failed:", error);
+            setSaveStatus({ error: true, message: 'Error al guardar' });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // Helper: Hex to RGB
@@ -786,6 +832,50 @@ const Settings = () => {
                     onApply={handleColorPickerApply}
                     onClose={handleColorPickerClose}
                 />
+            )}
+
+            {/* SAVE SUCCESS TOAST */}
+            {saveStatus && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: 24,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
+                    padding: '10px 24px', borderRadius: 50,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                    fontWeight: 600, fontSize: 14, zIndex: 9999,
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
+                </div>
+            )}
+
+            {/* 💾 FLOATING SAVE BAR (Atomic) */}
+            {hasChanges && (
+                <div style={{
+                    position: 'fixed', bottom: 95, left: 12, right: 12,
+                    background: '#1E293B', color: 'white', padding: '14px 20px',
+                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
+                    <button
+                        onClick={handlePlatformSave}
+                        disabled={isSaving}
+                        style={{
+                            background: '#3B82F6', color: 'white', border: 'none',
+                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
+                            fontSize: 14, cursor: 'pointer',
+                            opacity: isSaving ? 0.7 : 1
+                        }}
+                    >
+                        {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
+                    </button>
+                </div>
             )}
         </div>
     );
