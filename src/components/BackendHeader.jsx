@@ -90,8 +90,8 @@ function BackendHeader({ title, onLogout }) {
     // Navigate to customer store with edit mode enabled
     const handleViewStore = () => {
         if (tenantSlug) {
-            // 🚀 DIRECT LINK TO MENU: User wants to see the "jiggle" immediately
-            window.open(`/${tenantSlug}/menu?editMode=true`, '_blank')
+            // 🚀 OWNER START: Go to Home, show Pill, NO Jiggle yet.
+            window.open(`/${tenantSlug}/home?ownerStart=true`, '_blank')
         }
     }
 
