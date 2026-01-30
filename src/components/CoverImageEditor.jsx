@@ -384,15 +384,17 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         try {
             setIsSaving(true)
 
+            let finalImage = image
             if (originalFile && !demoMode) {
                 const { url, error } = await uploadAsset(originalFile, businessId, 'branding')
                 if (!error) {
-                    await updateBranding({ hero_url: url, hero_mode: 'image' }, businessId)
+                    finalImage = url // Pass the clean, fresh URL to parent
+                    // ⛔️ DO NOT SAVE TO DB HERE. Parent (Settings.jsx) handles persistence.
                 }
             }
 
             onSave?.({
-                image: image,
+                image: finalImage,
                 scale: posRef.current.scale,
                 offsetX: posRef.current.offsetX,
                 offsetY: posRef.current.offsetY,
