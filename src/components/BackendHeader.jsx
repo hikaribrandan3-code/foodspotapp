@@ -91,7 +91,8 @@ function BackendHeader({ title, onLogout }) {
     const handleViewStore = () => {
         if (tenantSlug) {
             // 🚀 OWNER START: Go to Home, show Pill, NO Jiggle yet.
-            window.open(`/${tenantSlug}/home?ownerStart=true`, '_blank')
+            // Added timestamp to bust PWA cache
+            window.open(`/${tenantSlug}/home?ownerStart=true&t=${Date.now()}`, '_blank')
         }
     }
 
@@ -171,7 +172,7 @@ function BackendHeader({ title, onLogout }) {
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        Ver Tienda
+                        Ver Tienda ⚡
                     </button>
                 )}
 
