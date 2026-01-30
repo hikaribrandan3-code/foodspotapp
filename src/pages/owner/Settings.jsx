@@ -566,17 +566,25 @@ const Settings = () => {
                         onClose={() => setShowCoverEditor(false)}
                         businessId={businessId}
                         initialData={(() => {
-                            if (!tenant?.hero_url) return {};
+                            // 🔍 DEBUG: Trace Hero URL and Params
+                            if (!tenant?.hero_url) {
+                                console.log('🔍 [Settings] No hero_url found.');
+                                return {};
+                            }
                             try {
-                                const url = new URL(tenant.hero_url, 'http://dummy.com'); // Base needed for relative URLs
+                                console.log('🔍 [Settings] Parsing Hero URL:', tenant.hero_url);
+                                const url = new URL(tenant.hero_url, 'http://dummy.com');
                                 const params = new URLSearchParams(url.search);
-                                return {
-                                    image: tenant.hero_url, // Keep full URL for preview
+                                const data = {
+                                    image: tenant.hero_url,
                                     scale: parseFloat(params.get('s')) || 1,
                                     offsetX: parseFloat(params.get('x')) || 0,
                                     offsetY: parseFloat(params.get('y')) || 0,
                                 };
+                                console.log('🔍 [Settings] Parsed Data:', data);
+                                return data;
                             } catch (e) {
+                                console.error('🔍 [Settings] Parse Error:', e);
                                 return { image: tenant.hero_url, scale: 1, offsetX: 0, offsetY: 0 };
                             }
                         })()}
