@@ -178,111 +178,142 @@ function Home({ config: configProp }) {
         return true
     }, [navigate, isEditMode])
 
-    // Long-press handlers for edit mode (owner only)
-    const handleLongPressStart = useCallback((e) => {
-        if (!isOwnerMode || isEditMode) return
+    // PHYSICS ENGINE REFS
+    const dragItemRef = useRef(null)
+    const autoScrollRef = useRef(null)
+    const blockRefreshRef = useRef(false)
 
-        longPressStartRef.current = {
-            x: e.touches?.[0]?.clientX || e.clientX,
-            y: e.touches?.[0]?.clientY || e.clientY
+    // =========================================================================
+    // PHYSICS ENGINE (ADAPTED FOR HOME GRIDS)
+    // =========================================================================
+
+    // 1. TOUCH START (Detect 1.8s Hold or Instant Edit Drag)
+    const handleTouchStart = (e, gridType, itemId, index, availableItems) => {
+        // If not owner, do nothing
+        if (!isOwnerMode) return
+
+        // If ALREADY in edit mode, drag immediately (no wait)
+        if (isEditMode) {
+            initiateDrag(e, gridType, itemId, index, availableItems)
+            return
         }
 
+        // Otherwise, wait 1.8s to enter edit mode
+        longPressStartRef.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
         longPressTimerRef.current = setTimeout(() => {
-            console.log('HOME EDIT MODE ACTIVATED — VIBRATE FIRED')
-            if (navigator.vibrate) {
-                navigator.vibrate(50)
-            }
+            console.log("⚡ JIGGLE TRIGGERED (Home 1.8s)")
+            if (navigator.vibrate) navigator.vibrate(50)
             setIsEditMode(true)
-            navigationBlockedRef.current = true
-        }, LONG_PRESS_DURATION)
-    }, [isOwnerMode, isEditMode])
+            initiateDrag(e, gridType, itemId, index, availableItems)
+        }, 1800)
+    }
 
-    const handleLongPressEnd = useCallback((e) => {
+    const handleTouchEndOrMove = () => {
         if (longPressTimerRef.current) {
             clearTimeout(longPressTimerRef.current)
             longPressTimerRef.current = null
         }
-        if (!isEditMode) {
-            navigationBlockedRef.current = false
-        }
-    }, [isEditMode])
+    }
 
-    const handleLongPressMove = useCallback((e) => {
-        if (longPressStartRef.current && longPressTimerRef.current) {
-            const currentX = e.touches?.[0]?.clientX || e.clientX
-            const currentY = e.touches?.[0]?.clientY || e.clientY
-            const deltaX = Math.abs(currentX - longPressStartRef.current.x)
-            const deltaY = Math.abs(currentY - longPressStartRef.current.y)
-
-            if (deltaX > 10 || deltaY > 10) {
-                clearTimeout(longPressTimerRef.current)
-                longPressTimerRef.current = null
-                navigationBlockedRef.current = false
-            }
-        }
-    }, [])
-
-    // Drag handlers with proper event blocking
-    const handleDragStart = useCallback((e, gridType, itemId, itemIndex, items) => {
-        if (!isOwnerMode || !isEditMode) return
-
+    const initiateDrag = useCallback((e, gridType, itemId, index, availableItems) => {
+        blockRefreshRef.current = true
         isDraggingRef.current = true
-        navigationBlockedRef.current = true
-
-        e.preventDefault()
-        e.stopPropagation()
-
         document.body.style.overflow = 'hidden'
 
         const touch = e.touches?.[0] || e
-        const rect = e.currentTarget.getBoundingClientRect()
+        const target = e.currentTarget
+        const rect = target.getBoundingClientRect()
+
+        target.setAttribute('data-dragging', 'true')
 
         setDragState({
             gridType,
             itemId,
-            itemIndex,
+            itemIndex: index,
             startX: touch.clientX,
             startY: touch.clientY,
             currentX: touch.clientX,
             currentY: touch.clientY,
             offsetX: touch.clientX - rect.left,
             offsetY: touch.clientY - rect.top,
-            itemWidth: rect.width,
-            itemHeight: rect.height,
-            items: items.map(i => typeof i === 'string' ? i : i.id),
-            targetIndex: itemIndex
+            items: availableItems,
+            targetIndex: index
         })
-    }, [isOwnerMode, isEditMode])
+        dragItemRef.current = target
+    }, [])
 
     const handleDragMove = useCallback((e) => {
-        if (!dragState || !isDraggingRef.current) return
-
+        if (!dragState) return
         e.preventDefault()
         e.stopPropagation()
 
         const touch = e.touches?.[0] || e
-        const grid = dragState.gridType === 'actions' ? actionsGridRef.current : featuredGridRef.current
-        if (!grid) return
+        const touchX = touch.clientX
+        const touchY = touch.clientY
 
-        const gridItems = grid.children
-        let targetIndex = dragState.itemIndex
+        // Auto-Scroll
+        const viewportHeight = window.innerHeight
+        const topZone = viewportHeight * 0.10
+        const bottomZone = viewportHeight * 0.90
 
-        for (let i = 0; i < gridItems.length; i++) {
-            const itemRect = gridItems[i].getBoundingClientRect()
-            if (touch.clientX > itemRect.left && touch.clientX < itemRect.right &&
-                touch.clientY > itemRect.top && touch.clientY < itemRect.bottom) {
-                targetIndex = i
-                break
+        if (autoScrollRef.current) {
+            cancelAnimationFrame(autoScrollRef.current)
+            autoScrollRef.current = null
+        }
+        if (touchY < topZone) {
+            const scrollUp = () => { window.scrollBy(0, -5); autoScrollRef.current = requestAnimationFrame(scrollUp) }
+            autoScrollRef.current = requestAnimationFrame(scrollUp)
+        } else if (touchY > bottomZone) {
+            const scrollDown = () => { window.scrollBy(0, 5); autoScrollRef.current = requestAnimationFrame(scrollDown) }
+            autoScrollRef.current = requestAnimationFrame(scrollDown)
+        }
+
+        // Magnet Collision (Grid-Specific)
+        const gridSelector = dragState.gridType === 'actions' ? '[data-grid-type="actions"] [data-item-id]' : '[data-grid-type="featured"] [data-item-id]'
+        const potentialTargets = document.querySelectorAll(gridSelector)
+
+        let closestItem = null
+        let closestDistance = Infinity
+
+        potentialTargets.forEach(item => {
+            if (item.getAttribute('data-dragging') === 'true') return
+            const rect = item.getBoundingClientRect()
+            const centerX = rect.left + rect.width / 2
+            const centerY = rect.top + rect.height / 2
+            const distance = Math.hypot(touchX - centerX, touchY - centerY)
+
+            if (distance < closestDistance) {
+                closestDistance = distance
+                closestItem = item
+            }
+        })
+
+        let targetIndex = dragState.targetIndex
+        const MAGNET_THRESHOLD = 60
+
+        if (closestItem && closestDistance < MAGNET_THRESHOLD) {
+            const targetId = closestItem.getAttribute('data-item-id')
+            // Find index in the items array
+            // Note: items is array of IDs for actions, or objects for featured
+            // We need to normalize or just use the DOM order?
+            // safest is to use the original array passed in dragState.items
+            const newIndex = dragState.items.indexOf(targetId) // This works for actions (strings)
+            // For featured, items are objects... wait. 
+            // Correction: buildFeaturedItems returns objects with IDs.
+            // I'll make sure to pass IDs array or handle objects.
+
+            // Dynamic check:
+            const foundIndex = dragState.items.findIndex(i => (typeof i === 'string' ? i : i.id) === targetId)
+
+            if (foundIndex !== -1 && foundIndex !== dragState.itemIndex) {
+                targetIndex = foundIndex
             }
         }
 
-        setDragState(prev => ({
-            ...prev,
-            currentX: touch.clientX,
-            currentY: touch.clientY,
-            targetIndex
-        }))
+        setDragState(prev => ({ ...prev, currentX: touchX, currentY: touchY, targetIndex }))
     }, [dragState])
+
+
 
     // ====== OPTIMISTIC DRAG END: STATE FIRST, STORAGE LATER ======
     const handleDragEnd = useCallback((e) => {
@@ -577,6 +608,7 @@ function Home({ config: configProp }) {
             <div
                 ref={actionsGridRef}
                 className="actions-grid"
+                data-grid-type="actions"
                 style={{
                     position: 'relative',
                     display: 'grid',
@@ -608,39 +640,12 @@ function Home({ config: configProp }) {
                                     e.preventDefault()
                                     e.stopPropagation()
                                 }}
-                                onTouchStart={(e) => {
-                                    if (isEditMode) {
-                                        handleDragStart(e, 'actions', actionId, index, localPrimaryActions)
-                                    } else {
-                                        handleLongPressStart(e)
-                                    }
-                                }}
-                                onTouchEnd={(e) => {
-                                    if (!isEditMode) {
-                                        handleLongPressEnd(e)
-                                    }
-                                }}
-                                onTouchMove={(e) => {
-                                    if (!isEditMode) {
-                                        handleLongPressMove(e)
-                                    }
-                                }}
+                                data-item-id={actionId}
+                                onTouchStart={(e) => handleTouchStart(e, 'actions', actionId, index, localPrimaryActions)}
+                                onTouchEnd={handleTouchEndOrMove}
+                                onTouchMove={handleTouchEndOrMove}
                                 onMouseDown={(e) => {
-                                    if (isEditMode) {
-                                        handleDragStart(e, 'actions', actionId, index, localPrimaryActions)
-                                    } else {
-                                        handleLongPressStart(e)
-                                    }
-                                }}
-                                onMouseUp={(e) => {
-                                    if (!isEditMode) {
-                                        handleLongPressEnd(e)
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!isEditMode) {
-                                        handleLongPressEnd(e)
-                                    }
+                                    if (isEditMode) initiateDrag(e, 'actions', actionId, index, localPrimaryActions)
                                 }}
                                 onClick={(e) => handleTileClick(e, action.path)}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
@@ -745,6 +750,7 @@ function Home({ config: configProp }) {
             <div
                 ref={featuredGridRef}
                 className="featured-grid"
+                data-grid-type="featured"
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}
             >
                 {localFeaturedItems.slice(0, 4).map((item, index) => {
@@ -805,39 +811,12 @@ function Home({ config: configProp }) {
                                     e.preventDefault()
                                     e.stopPropagation()
                                 }}
-                                onTouchStart={(e) => {
-                                    if (isEditMode) {
-                                        handleDragStart(e, 'featured', item.id, index, localFeaturedItems)
-                                    } else {
-                                        handleLongPressStart(e)
-                                    }
-                                }}
-                                onTouchEnd={(e) => {
-                                    if (!isEditMode) {
-                                        handleLongPressEnd(e)
-                                    }
-                                }}
-                                onTouchMove={(e) => {
-                                    if (!isEditMode) {
-                                        handleLongPressMove(e)
-                                    }
-                                }}
+                                data-item-id={item.id}
+                                onTouchStart={(e) => handleTouchStart(e, 'featured', item.id, index, localFeaturedItems)}
+                                onTouchEnd={handleTouchEndOrMove}
+                                onTouchMove={handleTouchEndOrMove}
                                 onMouseDown={(e) => {
-                                    if (isEditMode) {
-                                        handleDragStart(e, 'featured', item.id, index, localFeaturedItems)
-                                    } else {
-                                        handleLongPressStart(e)
-                                    }
-                                }}
-                                onMouseUp={(e) => {
-                                    if (!isEditMode) {
-                                        handleLongPressEnd(e)
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!isEditMode) {
-                                        handleLongPressEnd(e)
-                                    }
+                                    if (isEditMode) initiateDrag(e, 'featured', item.id, index, localFeaturedItems)
                                 }}
                                 onClick={(e) => handleTileClick(e, 'menu')}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
