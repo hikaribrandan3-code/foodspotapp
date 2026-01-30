@@ -362,10 +362,33 @@ export default function Menu({ config: configProp }) {
             paddingBottom: 100,
             background: 'var(--color-bg, #F9FAFB)'
         }}>
-            {/* 1. Header */}
+            {/* 1. Header (Logo + Business Name) */}
             <HeaderClamp config={tenantData?.app_config || {}} />
 
-            {/* 2. Sticky Pills */}
+            {/* 2. Hero Cover Image */}
+            <div style={{
+                width: '100%',
+                maxWidth: '92%',
+                margin: '16px auto',
+                height: 120,
+                borderRadius: 16,
+                background: tenantData?.hero_url
+                    ? `url(${tenantData.hero_url}) center/cover no-repeat`
+                    : '#E5E7EB',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}>
+                {!tenantData?.hero_url && (
+                    <span style={{ color: '#9CA3AF', fontSize: 14, fontWeight: 500 }}>
+                        No cover image
+                    </span>
+                )}
+            </div>
+
+            {/* 3. Sticky Pills */}
             {visibleCategories.length > 1 && (
                 <div style={{
                     position: 'sticky',
