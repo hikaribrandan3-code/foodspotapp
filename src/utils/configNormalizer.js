@@ -33,6 +33,8 @@ export function normalizeTenantConfig(baseConfig, tenantData) {
     const heroUrl = tenantData.hero_url || tenantData.app_config?.headerCover?.image || baseConfig?.headerCover?.image
     const dbHeroMode = tenantData.hero_mode // 'text', 'cover', etc.
 
+    // Typography
+    const fontFamily = tenantData.font_family || baseConfig?.branding?.fontFamily
     const fontWeight = tenantData.font_weight || '800' // Default to ExtraBold for brands
 
     // 2. CALCULATE DERIVED MODES & PARSE URL PARAMS
