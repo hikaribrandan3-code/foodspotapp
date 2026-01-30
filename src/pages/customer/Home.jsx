@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { normalizeTenantConfig } from '../../utils/configNormalizer'
-import { reorderPrimaryActions, reorderFeaturedItems, defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
+import { defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
+import { supabase } from '../../lib/supabaseClient'
 // 🛡️ CLOUD-ONLY: getMenu removed (Anti-Gravity V3.0)
 import { getSession } from '../../utils/auth.js'
 // import { isInDemoMode } from '../../utils/demoSession.js' // REMOVED: File deleted
@@ -30,7 +31,7 @@ function Home({ config: configProp }) {
     // 🛡️ CLOUD-ONLY: Local menu removed. Using tenantData exclusively.
 
     // 🌉 THE DATA BRIDGE: Connect TenantContext to existing config-based logic
-    const { branding, tenantData, loading, slug: tenantSlug } = useTenant()
+    const { branding, tenantData, loading, slug: tenantSlug, businessId } = useTenant()
 
     // 🛡️ SAFETY GUARD: Prevent white screen during tenant resolution
     if (loading || !tenantData) {
@@ -65,6 +66,14 @@ function Home({ config: configProp }) {
     const [isEditMode, setIsEditMode] = useState(false)
     const longPressTimerRef = useRef(null)
     const longPressStartRef = useRef(null)
+
+    // Detect 'Ver Tienda' edit intent from URL
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('editMode') === 'true' && isOwnerMode) {
+            setIsEditMode(true)
+        }
+    }, [isOwnerMode])
 
     // CRITICAL: Global drag lock to prevent navigation corruption
     const isDraggingRef = useRef(false)
@@ -297,33 +306,56 @@ function Home({ config: configProp }) {
                 })
             }
 
-            // ====== STEP 2: SAVE IN BACKGROUND (NON-BLOCKING) ======
-            // Use requestIdleCallback to defer storage write until after render
-            const saveToStorage = () => {
+            // ====== STEP 2: SAVE TO SUPABASE (CLOUD-FIRST) ======
+            const saveToCloud = async () => {
+                if (!businessId) {
+                    console.error('[DRAG] No businessId, cannot save to cloud')
+                    return
+                }
+
                 try {
                     if (gridType === 'actions') {
-                        reorderPrimaryActions(newOrder)
-                        console.log('[DRAG] BACKGROUND SAVE: Primary actions persisted')
+                        // Update app_config.homeConfig.primaryActions
+                        const { error } = await supabase
+                            .from('branding')
+                            .update({
+                                app_config: {
+                                    ...tenantData?.app_config,
+                                    homeConfig: {
+                                        ...(tenantData?.app_config?.homeConfig || {}),
+                                        primaryActions: newOrder
+                                    }
+                                }
+                            })
+                            .eq('business_id', businessId)
+
+                        if (error) throw error
+                        console.log('[DRAG] CLOUD SAVE: Hero Icons order persisted')
                     } else {
-                        reorderFeaturedItems(newOrder)
-                        console.log('[DRAG] BACKGROUND SAVE: Featured items persisted')
+                        // Update featured_photos order
+                        const reorderedPhotos = newOrder.map((id, index) => {
+                            const item = localFeaturedItems.find(i => i.id === id)
+                            return item ? { name: item.name, image: item.image, price: item.price } : null
+                        }).filter(Boolean)
+
+                        const { error } = await supabase
+                            .from('branding')
+                            .update({ featured_photos: reorderedPhotos })
+                            .eq('business_id', businessId)
+
+                        if (error) throw error
+                        console.log('[DRAG] CLOUD SAVE: Featured items order persisted')
                     }
 
-                    // Dispatch sync event AFTER storage write completes
+                    // Dispatch sync event AFTER cloud write completes
                     window.dispatchEvent(new Event('frontendSync'))
-                    console.log('[DRAG] BACKGROUND SAVE: frontendSync dispatched')
                 } catch (err) {
-                    console.error('[DRAG] BACKGROUND SAVE FAILURE:', err)
+                    console.error('[DRAG] CLOUD SAVE FAILURE:', err)
                 }
             }
 
-            // Defer storage write to allow React to render first
-            if (typeof requestIdleCallback === 'function') {
-                requestIdleCallback(saveToStorage, { timeout: 500 })
-            } else {
-                // Fallback for Safari (no requestIdleCallback)
-                setTimeout(saveToStorage, 50)
-            }
+            // Fire and forget - don't block UI
+            saveToCloud()
         } else {
             console.log('[DRAG] No movement detected, skipping save')
         }

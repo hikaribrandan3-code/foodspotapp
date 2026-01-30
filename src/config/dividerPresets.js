@@ -251,6 +251,162 @@ export const DIVIDER_PRESETS = [
         name: 'Arquitectura industrial',
         url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=200&fit=crop&q=80',
         category: 'building'
+    },
+
+    // --- FINE DINING (8) - NEW CATEGORY ---
+    {
+        id: 'finedining-1',
+        name: 'Plato de autor',
+        url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-2',
+        name: 'Mesa elegante',
+        url: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-3',
+        name: 'Steak premium',
+        url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-4',
+        name: 'Postre gourmet',
+        url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-5',
+        name: 'Wine pairing',
+        url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-6',
+        name: 'Seafood tower',
+        url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-7',
+        name: 'Tasting menu',
+        url: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-8',
+        name: 'Chef presentation',
+        url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+
+    // --- ADDITIONAL BURGERS (2) ---
+    {
+        id: 'burger-8',
+        name: 'Bacon Explosion',
+        url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+    {
+        id: 'burger-9',
+        name: 'Cheese Stack',
+        url: 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+
+    // --- ADDITIONAL PIZZA (3) ---
+    {
+        id: 'pizza-6',
+        name: 'Masa fresca',
+        url: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-7',
+        name: 'Quattro Formaggi',
+        url: 'https://images.unsplash.com/photo-1588315029754-2dd089d39a1a?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-8',
+        name: 'Pizza party',
+        url: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+
+    // --- ADDITIONAL ICE CREAM (4) ---
+    {
+        id: 'icecream-6',
+        name: 'Gelato italiano',
+        url: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
+    },
+    {
+        id: 'icecream-7',
+        name: 'Paletas mexicanas',
+        url: 'https://images.unsplash.com/photo-1505394033641-40c6ad1178d7?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
+    },
+    {
+        id: 'icecream-8',
+        name: 'Soft serve',
+        url: 'https://images.unsplash.com/photo-1629385701021-fcd568a743e8?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
+    },
+    {
+        id: 'icecream-9',
+        name: 'Milkshake',
+        url: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
+    },
+
+    // --- ADDITIONAL CANDY (3) ---
+    {
+        id: 'candy-4',
+        name: 'Macarons',
+        url: 'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=800&h=200&fit=crop&q=80',
+        category: 'candy'
+    },
+    {
+        id: 'candy-5',
+        name: 'Donuts',
+        url: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800&h=200&fit=crop&q=80',
+        category: 'candy'
+    },
+    {
+        id: 'candy-6',
+        name: 'Churros',
+        url: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=200&fit=crop&q=80',
+        category: 'candy'
+    },
+
+    // --- ADDITIONAL ASIAN (4) ---
+    {
+        id: 'asian-5',
+        name: 'Ramen bowl',
+        url: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+    {
+        id: 'asian-6',
+        name: 'Bao buns',
+        url: 'https://images.unsplash.com/photo-1544511916-0148ccdeb877?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+    {
+        id: 'asian-7',
+        name: 'Pho vietnamita',
+        url: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+    {
+        id: 'asian-8',
+        name: 'Dim sum',
+        url: 'https://images.unsplash.com/photo-1576577445504-6af96477db52?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
     }
 ]
 

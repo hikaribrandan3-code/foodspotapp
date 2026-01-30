@@ -84,10 +84,10 @@ function BackendHeader({ title, onLogout }) {
         }
     }
 
-    // Navigate to customer store
+    // Navigate to customer store with edit mode enabled
     const handleViewStore = () => {
         if (tenantSlug) {
-            window.open(`/${tenantSlug}`, '_blank')
+            window.open(`/${tenantSlug}/home?editMode=true`, '_blank')
         }
     }
 

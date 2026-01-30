@@ -78,9 +78,15 @@ export default function Menu({ config: configProp }) {
         }
     }, [menu, activeCategory])
 
-    // Config derived values
-    const config = tenantData?.app_config || configProp || {}
-    const effectiveDividerPresetId = config.dividerPresetId || 'coffee-beans'
+    // Config derived values - WIRE hero_url to headerCover.image
+    const config = useMemo(() => ({
+        ...(tenantData?.app_config || configProp || {}),
+        headerCover: {
+            ...(tenantData?.app_config?.headerCover || {}),
+            image: tenantData?.hero_url || tenantData?.app_config?.headerCover?.image
+        }
+    }), [tenantData, configProp])
+    const effectiveDividerPresetId = config.dividerPresetId || 'coffee-1'
 
     // =========================================================================
     // ==== 🛡️ VAULT-SEAL CLOUD SAVE (BATCH UPSERT RE-ROUTE) ====
