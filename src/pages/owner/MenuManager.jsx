@@ -532,13 +532,21 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const slot = activeFeaturedItems[index] || { name: '', price: 0, image: null }
         console.log('🎯 EXPLICIT TRIGGER: Opening Highlight Slot', index)
 
-        // 🛡️ FORCE UI LAYER
+        // 1. Open the Modal first
         setEditingItem({ isFeaturedSlot: true, index })
         setEditForm({
             name: slot.name || 'Nuevo Destacado',
             price: slot.price?.toString() || '0',
             image: slot.image || null
         })
+
+        // 2. 🚨 THE MISSING LINK: Trigger the Hardware File Picker
+        activeFeaturedSlotRef.current = index; // Tell the app we are working on a highlight
+        activeCategoryItemRef.current = null;  // Make sure we aren't confusing it with a menu item
+
+        setTimeout(() => {
+            fileInputRef.current?.click(); // 📸 This makes the photo picker pop up!
+        }, 100);
     }
 
     // 🚧 THE GATEKEEPER (Bypass Mode): Only block if tenant context is NOT loaded.
