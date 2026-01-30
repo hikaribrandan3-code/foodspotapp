@@ -189,7 +189,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setIsSaving(true)
         console.log('💾 SAVING VAULT:', targetBusinessId)
 
-        const { error } = await supabase
+        // 1. SYNC BRANDING (Existing)
+        const { error: brandingError } = await supabase
             .from('branding')
             .update({
                 is_paused: localConfig.pauseOrders,
@@ -202,16 +203,46 @@ function MenuManager({ config: configProp, demoMode = false }) {
             })
             .eq('business_id', targetBusinessId)
 
-        if (error) {
-            alert('❌ Error: ' + error.message)
-        } else {
-            setHasChanges(false)
-            sessionStorage.removeItem(`dirty_${targetBusinessId}`)
-            setSaveStatus({ message: '✓ Sistema Sincronizado' })
-            setTimeout(() => setSaveStatus(null), 3000)
-            // 🔄 GLOBAL REFRESH: Update TenantContext to sync all components
-            await refreshTenantData()
+        if (brandingError) {
+            alert('❌ Error Branding: ' + brandingError.message)
+            setIsSaving(false)
+            return
         }
+
+        // 2. 🛡️ DUAL-SYNC: UPSERT HERO ITEMS to menu_items table
+        // This ensures the "Hero" section has real DB rows to display prices/names correctly.
+        const heroItems = (localConfig.featuredPhotos || []).slice(0, 4).map((slot, index) => ({
+            id: `hero-${index + 1}`, // Fixed IDs: hero-1, hero-2, hero-3, hero-4
+            business_id: targetBusinessId,
+            name: slot?.name || 'Destacado',
+            price: parseInt(slot?.price) || 0,
+            image: slot?.image || null,
+            available: true,
+            description: 'Hero Item'
+        }))
+
+        // Filter out empty slots if we don't want to pollute DB (optional, but safer to sync all 4 placeholders)
+        // We sync all 4 to ensure the DB matches the 4 visible slots in UI.
+        const { error: menuError } = await supabase
+            .from('menu_items')
+            .upsert(heroItems, { onConflict: 'id, business_id' })
+
+        if (menuError) {
+            console.error('❌ Error Syncing Hero Items:', menuError)
+            // We don't block the success message for this, but log it.
+        } else {
+            console.log('✅ Hero Items Synced to DB')
+        }
+
+        // 3. FINALIZE
+        setHasChanges(false)
+        sessionStorage.removeItem(`dirty_${targetBusinessId}`)
+        setSaveStatus({ message: '✓ Sistema Sincronizado' })
+        setTimeout(() => setSaveStatus(null), 3000)
+
+        // 🔄 GLOBAL REFRESH: Update TenantContext to sync all components
+        await refreshTenantData()
+
         setIsSaving(false)
     }
 
@@ -539,18 +570,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
         // 1. Open the Modal first
         setEditingItem({ isFeaturedSlot: true, index })
         setEditForm({
-            name: slot.name || 'Nuevo Destacado',
-            price: slot.price?.toString() || '0',
+            name: slot.name || 'Destacado',
+            price: slot.price ? slot.price.toString() : '', // 🛡️ NO STICKY ZERO
             image: slot.image || null
         })
 
-        // 2. 🚨 THE MISSING LINK: Trigger the Hardware File Picker
-        activeFeaturedSlotRef.current = index; // Tell the app we are working on a highlight
-        activeCategoryItemRef.current = null;  // Make sure we aren't confusing it with a menu item
-
-        setTimeout(() => {
-            fileInputRef.current?.click(); // 📸 This makes the photo picker pop up!
-        }, 100);
+        // 2. 🛡️ NO AUTO-TRIGGER: We now wait for user to interact with the modal
+        // The "Subir Imagen" button in the modal will handle the file picker routing.
     }
 
     // 🚧 THE GATEKEEPER (Bypass Mode): Only block if tenant context is NOT loaded.
@@ -1207,7 +1233,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 {/* File Input moved to root */}
                                 <button
                                     className="btn btn-secondary btn-block"
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={() => {
+                                        if (editingItem.isFeaturedSlot) {
+                                            activeFeaturedSlotRef.current = editingItem.index
+                                        } else if (editingItem.categoryId) {
+                                            activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
+                                        }
+                                        fileInputRef.current?.click()
+                                    }}
                                     disabled={isUploading}
                                 >
                                     {isUploading ? 'Optimizando...' : (editForm.image ? 'Cambiar imagen' : 'Subir imagen')}
