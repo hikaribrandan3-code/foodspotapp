@@ -562,6 +562,25 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setHasChanges(true)
     }
 
+    // --- DIRECT INLINE FEATURED UPDATE ---
+    const handleFeaturedUpdate = (index, field, value) => {
+        const newFeatured = [...(localConfig.featuredPhotos || [])]
+        // Ensure array is padded if we are editing a slot that doesn't exist yet in the config
+        while (newFeatured.length <= index) newFeatured.push(null)
+
+        newFeatured[index] = {
+            ...(newFeatured[index] || { name: 'Destacado', price: 0, image: null }),
+            [field]: value
+        }
+
+        const newConfig = { ...localConfig, featuredPhotos: newFeatured }
+        // ⚡ INSTANT UPDATE
+        updateConfig(newConfig)
+        setLocalConfig(newConfig)
+        window.dispatchEvent(new CustomEvent('frontendSync'))
+        setHasChanges(true)
+    }
+
     // --- DIRECT FEATURED UPLOAD LOGIC ---
     const handleFeaturedTap = (index) => {
         const slot = activeFeaturedItems[index] || { name: '', price: 0, image: null }
@@ -818,19 +837,46 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 {/* Meta Data (Below Image) */}
                                 {slot && (
                                     <div style={{ textAlign: 'center' }}>
-                                        <div style={{
-                                            fontWeight: 600,
-                                            fontSize: 11,
-                                            color: '#1E293B',
-                                            marginBottom: 2,
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
-                                        }}>
-                                            {slot.name || 'Destacado'}
-                                        </div>
-                                        <div style={{ color: '#22C55E', fontWeight: 700, fontSize: 12 }}>
-                                            ${slot.price || 0}
+                                        {/* INLINE NAME INPUT */}
+                                        <input
+                                            type="text"
+                                            defaultValue={slot.name || 'Destacado'}
+                                            onBlur={(e) => handleFeaturedUpdate(i, 'name', e.target.value)}
+                                            onClick={(e) => e.stopPropagation()} // 🛡️ Prevent Modal Open
+                                            style={{
+                                                fontWeight: 600,
+                                                fontSize: 11,
+                                                color: '#1E293B',
+                                                marginBottom: 2,
+                                                width: '100%',
+                                                textAlign: 'center',
+                                                border: 'none',
+                                                background: 'transparent',
+                                                outline: 'none',
+                                                padding: 0
+                                            }}
+                                        />
+                                        {/* INLINE PRICE INPUT */}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                            <span style={{ fontSize: 11, color: '#22C55E', fontWeight: 700 }}>$</span>
+                                            <input
+                                                type="number"
+                                                defaultValue={slot.price || ''}
+                                                onBlur={(e) => handleFeaturedUpdate(i, 'price', parseInt(e.target.value) || 0)}
+                                                onClick={(e) => e.stopPropagation()} // 🛡️ Prevent Modal Open
+                                                placeholder="0"
+                                                style={{
+                                                    color: '#22C55E',
+                                                    fontWeight: 700,
+                                                    fontSize: 12,
+                                                    width: 40,
+                                                    textAlign: 'center',
+                                                    border: 'none',
+                                                    background: 'transparent',
+                                                    outline: 'none',
+                                                    padding: 0
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                 )}
@@ -1225,12 +1271,23 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         <img
                                             src={editForm.image}
                                             alt="Preview"
+                                            onClick={() => {
+                                                // 🛡️ CLICK-TO-OVERWRITE
+                                                if (editingItem.isFeaturedSlot) {
+                                                    activeFeaturedSlotRef.current = editingItem.index
+                                                } else if (editingItem.categoryId) {
+                                                    activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
+                                                }
+                                                fileInputRef.current?.click()
+                                            }}
                                             style={{
                                                 width: '100%',
                                                 maxHeight: 120,
                                                 objectFit: 'cover',
-                                                borderRadius: 10
+                                                borderRadius: 10,
+                                                cursor: 'pointer' // Hand cursor for interactivity
                                             }}
+                                            title="Clic para cambiar imagen"
                                         />
                                     </div>
                                 )}
