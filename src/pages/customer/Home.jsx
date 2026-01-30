@@ -361,43 +361,53 @@ function Home({ config: configProp }) {
                 }
 
                 try {
-                    if (gridType === 'actions') {
-                        // Update app_config.homeConfig.primaryActions
-                        const { error } = await supabase
-                            .from('branding')
-                            .update({
-                                app_config: {
-                                    ...tenantData?.app_config,
-                                    homeConfig: {
-                                        ...(tenantData?.app_config?.homeConfig || {}),
-                                        primaryActions: newOrder
-                                    }
-                                }
-                            })
-                            .eq('business_id', businessId)
+                    // Normalize current config to avoid undefined errors
+                    const currentAppConfig = tenantData?.app_config || {}
+                    let updatePayload = {}
 
-                        if (error) throw error
-                        console.log('[DRAG] CLOUD SAVE: Hero Icons order persisted')
+                    if (gridType === 'actions') {
+                        // HERO ICONS: Save order of IDs (strings) to app_config.homeConfig.primaryActions
+                        updatePayload = {
+                            app_config: {
+                                ...currentAppConfig,
+                                homeConfig: {
+                                    ...(currentAppConfig.homeConfig || {}),
+                                    primaryActions: newOrder
+                                }
+                            }
+                        }
                     } else {
-                        // Update featured_photos order
-                        const reorderedPhotos = newOrder.map((id, index) => {
-                            const item = localFeaturedItems.find(i => i.id === id)
-                            return item ? { name: item.name, image: item.image, price: item.price } : null
+                        // FEATURED: Save full objects to app_config.featuredPhotos
+                        // 1. Map newOrder (IDs) back to full objects
+                        const reorderedObjects = newOrder.map(id => {
+                            const original = localFeaturedItems.find(i => i.id === id)
+                            return original
                         }).filter(Boolean)
 
-                        const { error } = await supabase
-                            .from('branding')
-                            .update({ featured_photos: reorderedPhotos })
-                            .eq('business_id', businessId)
-
-                        if (error) throw error
-                        console.log('[DRAG] CLOUD SAVE: Featured items order persisted')
+                        updatePayload = {
+                            app_config: {
+                                ...currentAppConfig,
+                                featuredPhotos: reorderedObjects
+                            }
+                        }
                     }
 
-                    // Dispatch sync event AFTER cloud write completes
-                    window.dispatchEvent(new Event('frontendSync'))
+                    console.log('[DRAG] SAVING TO CLOUD (Unified):', updatePayload)
+
+                    const { error } = await supabase
+                        .from('branding')
+                        .update(updatePayload)
+                        .eq('business_id', businessId)
+
+                    if (error) {
+                        console.error('[DRAG] CLOUD SAVE FAILURE:', error)
+                    } else {
+                        console.log('[DRAG] CLOUD SAVE SUCCESS')
+                        // Dispatch sync event to trigger App.jsx reload
+                        window.dispatchEvent(new Event('frontendSync'))
+                    }
                 } catch (err) {
-                    console.error('[DRAG] CLOUD SAVE FAILURE:', err)
+                    console.error('[DRAG] CLOUD SAVE EXCEPTION:', err)
                 }
             }
 
