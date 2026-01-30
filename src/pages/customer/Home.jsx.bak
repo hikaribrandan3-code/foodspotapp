@@ -66,8 +66,6 @@ function Home({ config: configProp }) {
     const [isEditMode, setIsEditMode] = useState(false)
     const longPressTimerRef = useRef(null)
     const longPressStartRef = useRef(null)
-    const [hasChanges, setHasChanges] = useState(false)
-    const [isSaving, setIsSaving] = useState(false)
 
     // Detect 'Ver Tienda' edit intent from URL
     // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
@@ -355,19 +353,66 @@ function Home({ config: configProp }) {
                 })
             }
 
-            // ====== ATOMIC UPDATE: LOCAL STATE ONLY ======
-            // Logic: We trust the local state (Optimistic). 
-            // We DO NOT save to cloud here. We just flag 'hasChanges'.
+            // ====== STEP 2: SAVE TO SUPABASE (CLOUD-FIRST) ======
+            const saveToCloud = async () => {
+                if (!businessId) {
+                    console.error('[DRAG] No businessId, cannot save to cloud')
+                    return
+                }
 
-            // 1. Flag as dirty
-            setHasChanges(true)
+                try {
+                    // Normalize current config to avoid undefined errors
+                    const currentAppConfig = tenantData?.app_config || {}
+                    let updatePayload = {}
 
-            // 2. Dispatch haptic feedback for success
-            if (navigator.vibrate) navigator.vibrate(10)
+                    if (gridType === 'actions') {
+                        // HERO ICONS: Save order of IDs (strings) to app_config.homeConfig.primaryActions
+                        updatePayload = {
+                            app_config: {
+                                ...currentAppConfig,
+                                homeConfig: {
+                                    ...(currentAppConfig.homeConfig || {}),
+                                    primaryActions: newOrder
+                                }
+                            }
+                        }
+                    } else {
+                        // FEATURED: Save full objects to app_config.featuredPhotos
+                        // 1. Map newOrder (IDs) back to full objects
+                        const reorderedObjects = newOrder.map(id => {
+                            const original = localFeaturedItems.find(i => i.id === id)
+                            return original
+                        }).filter(Boolean)
 
-            // 3. Log
-            console.log('[DRAG] Local Drop Successful. Waiting for User Save.')
+                        updatePayload = {
+                            app_config: {
+                                ...currentAppConfig,
+                                featuredPhotos: reorderedObjects
+                            }
+                        }
+                    }
 
+                    console.log('[DRAG] SAVING TO CLOUD (Unified):', updatePayload)
+
+                    const { error } = await supabase
+                        .from('branding')
+                        .update(updatePayload)
+                        .eq('business_id', businessId)
+
+                    if (error) {
+                        console.error('[DRAG] CLOUD SAVE FAILURE:', error)
+                    } else {
+                        console.log('[DRAG] CLOUD SAVE SUCCESS')
+                        // Dispatch sync event to trigger App.jsx reload
+                        window.dispatchEvent(new Event('frontendSync'))
+                    }
+                } catch (err) {
+                    console.error('[DRAG] CLOUD SAVE EXCEPTION:', err)
+                }
+            }
+
+            // Fire and forget - don't block UI
+            saveToCloud()
         } else {
             console.log('[DRAG] No movement detected, skipping save')
         }
@@ -909,62 +954,6 @@ function Home({ config: configProp }) {
                 }}>
                     <span style={{ color: '#F59E0B', fontWeight: 600 }}>✏️ Home Editor</span>
                     <button onClick={() => setIsEditMode(false)} style={{ background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600 }}>Done</button>
-                </div>
-            )}
-
-            {/* FLOATING SAVE BAR (Atomic Seal) */}
-            {hasChanges && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: 95,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    zIndex: 10000,
-                    display: 'flex',
-                    gap: 12,
-                    background: '#1F2937',
-                    padding: '8px 16px',
-                    borderRadius: 100,
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-                    alignItems: 'center',
-                    animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-                }}>
-                    <span style={{
-                        color: '#F3F4F6',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        paddingRight: 8,
-                        borderRight: '1px solid #374151',
-                        whiteSpace: 'nowrap'
-                    }}>
-                        Cambios sin guardar
-                    </span>
-
-                    <button
-                        onClick={handlePlatformSave}
-                        disabled={isSaving}
-                        style={{
-                            background: isSaving ? '#9CA3AF' : '#22C55E',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 20,
-                            padding: '6px 16px',
-                            fontWeight: 700,
-                            fontSize: 13,
-                            cursor: isSaving ? 'wait' : 'pointer',
-                            transition: 'all 0.2s ease',
-                            boxShadow: '0 2px 10px rgba(34, 197, 94, 0.3)',
-                            whiteSpace: 'nowrap'
-                        }}
-                    >
-                        {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
-                    </button>
-                    <style>{`
-                        @keyframes slideUp {
-                            from { transform: translate(-50%, 20px); opacity: 0; }
-                            to { transform: translate(-50%, 0); opacity: 1; }
-                        }
-                    `}</style>
                 </div>
             )}
         </div>
