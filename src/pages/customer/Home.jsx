@@ -471,7 +471,8 @@ function Home({ config: configProp }) {
             className={`page ${isEditMode ? 'home-edit-mode' : ''}`}
             onContextMenu={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation() } }}
             style={{
-                padding: '0 24px',
+                maxWidth: '92%',
+                margin: '0 auto',
                 paddingBottom: 90,
                 minHeight: '100vh'
             }}

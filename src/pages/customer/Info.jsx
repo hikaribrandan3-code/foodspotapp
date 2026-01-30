@@ -87,7 +87,8 @@ function Info({ config: configProp }) {
 
     return (
         <div className="page info-root" style={{
-            padding: '0 24px',
+            maxWidth: '92%',
+            margin: '0 auto',
             paddingTop: 24,
             paddingBottom: 90,
             minHeight: '100vh'

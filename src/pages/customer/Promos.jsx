@@ -143,7 +143,9 @@ function Promos({ config: configProp }) {
     return (
         <div className="min-h-screen bg-white pb-24">
             {/* === STANDARD HERO COVER (Matches Home/Menu) === */}
-            <HeaderClamp config={config} />
+            <div style={{ maxWidth: '92%', margin: '0 auto' }}>
+                <HeaderClamp config={config} />
+            </div>
 
             {/* === WHITE BODY === */}
             <main className="px-4 pt-6">
