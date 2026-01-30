@@ -255,6 +255,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 }
                 return { ...prev, featuredPhotos: newFeatured }
             })
+            // 🛡️ FIX: Sync Modal with Optimistic Image
+            setEditForm(prev => ({ ...prev, image: previewUrl }))
         } else if (targetItem) {
             setMenu(prevMenu => {
                 const newMenu = { ...prevMenu }
@@ -286,6 +288,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     setHasChanges(true)
                     return newConfig
                 })
+                // 🛡️ FIX: Sync Modal with Final URL
+                setEditForm(prev => ({ ...prev, image: result.publicUrl }))
                 setUploadStatus({ success: true, message: '✔ Guardado' })
             } else if (targetItem) {
                 const finalMenu = await new Promise(resolve => {
