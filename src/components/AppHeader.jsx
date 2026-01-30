@@ -39,7 +39,8 @@ function AppHeader({ config: configProp }) {
     // ============================================
     // COVER MODE (V1 Default)
     // ============================================
-    if (headerMode === 'cover') {
+    // Fix: Treat 'image' as 'cover' to handle legacy/raw DB values
+    if (headerMode === 'cover' || headerMode === 'image') {
         const cover = config?.headerCover || {}
         const scale = cover.scale || 1.0
         const offsetX = cover.offsetX || 0
