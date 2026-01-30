@@ -793,47 +793,46 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     {[0, 1, 2, 3].map(i => {
                         const slot = activeFeaturedItems[i]
                         return (
-                            <div
-                                key={i}
-                                onClick={() => handleFeaturedTap(i)}
-                                className={!slot ? "empty-box" : ""}
-                                style={{
-                                    aspectRatio: '1/1',
-                                    background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
-                                    borderRadius: 10,
-                                    border: '1px dashed #CBD5E1',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    position: 'relative',
-                                    overflow: 'hidden',
-                                    cursor: 'pointer',
-                                    pointerEvents: 'auto' // 🛡️ FORCE INTERACTION (Fixes dead clicks)
-                                }}>
-                                {slot ? (
-                                    <>
+                            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                {/* Image Box */}
+                                <div
+                                    onClick={() => handleFeaturedTap(i)}
+                                    className={!slot ? "empty-box" : ""}
+                                    style={{
+                                        aspectRatio: '1/1',
+                                        background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
+                                        borderRadius: 10,
+                                        border: '1px dashed #CBD5E1',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                    }}>
+                                    {!slot && (
+                                        <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center', pointerEvents: 'none' }}>Editar</span>
+                                    )}
+                                </div>
+                                {/* Meta Data (Below Image) */}
+                                {slot && (
+                                    <div style={{ textAlign: 'center' }}>
                                         <div style={{
-                                            position: 'absolute',
-                                            bottom: 0, left: 0, right: 0,
-                                            background: 'rgba(0,0,0,0.6)',
-                                            color: 'white',
-                                            fontSize: 9,
-                                            padding: '2px 4px',
+                                            fontWeight: 600,
+                                            fontSize: 11,
+                                            color: '#1E293B',
+                                            marginBottom: 2,
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            textAlign: 'center'
+                                            textOverflow: 'ellipsis'
                                         }}>
-                                            <div style={{ fontWeight: 600, fontSize: 10, marginBottom: 2 }}>
-                                                {slot.name || 'Destacado'}
-                                            </div>
-                                            <div style={{ color: '#4ADE80', fontWeight: 700, fontSize: 11 }}>
-                                                ${slot.price || 0}
-                                            </div>
+                                            {slot.name || 'Destacado'}
                                         </div>
-                                    </>
-                                ) : (
-                                    <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center', pointerEvents: 'none' }}>Editar</span>
+                                        <div style={{ color: '#22C55E', fontWeight: 700, fontSize: 12 }}>
+                                            ${slot.price || 0}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )
