@@ -830,49 +830,109 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Estilo de Menú (Píldora)
                 </h3>
-                <div style={{ background: 'white', padding: 16, borderRadius: 12, border: '1px solid #E2E8F0', marginBottom: 24 }}>
-                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                        {/* Image Preview */}
-                        <div style={{
-                            width: 80, height: 40, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
-                            background: '#F1F5F9', border: '1px solid #E2E8F0'
-                        }}>
-                            {(() => {
-                                const activeId = localConfig.dividerPresetId || 'coffee-1'
-                                const preset = DIVIDER_PRESETS.find(p => p.id === activeId)
-                                return preset ? (
-                                    <img src={preset.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : null
-                            })()}
-                        </div>
+                <div style={{ background: 'white', padding: '20px', borderRadius: 16, border: '1px solid #E2E8F0', marginBottom: 24 }}>
+                    {/* Visual Preset Picker - iPhone Wallpaper Style */}
+                    {(() => {
+                        // Group presets by category
+                        const grouped = DIVIDER_PRESETS.reduce((acc, preset) => {
+                            const cat = preset.category || 'Varios'
+                            if (!acc[cat]) acc[cat] = []
+                            acc[cat].push(preset)
+                            return acc
+                        }, {})
 
-                        {/* Selector */}
-                        <div style={{ flex: 1 }}>
-                            <select
-                                value={localConfig.dividerPresetId || 'coffee-1'}
-                                onChange={(e) => {
-                                    const val = e.target.value
-                                    const newConfig = { ...localConfig, dividerPresetId: val }
-                                    updateConfig(newConfig)
-                                    setLocalConfig(newConfig)
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                    setHasChanges(true)
-                                }}
-                                style={{
-                                    width: '100%', padding: '10px', borderRadius: 8,
-                                    border: '1px solid #E2E8F0', fontSize: 14, background: 'white'
-                                }}
-                            >
-                                {[...new Set(DIVIDER_PRESETS.map(p => p.category))].map(cat => (
-                                    <optgroup key={cat} label={cat.charAt(0).toUpperCase() + cat.slice(1)}>
-                                        {DIVIDER_PRESETS.filter(p => p.category === cat).map(p => (
-                                            <option key={p.id} value={p.id}>{p.name}</option>
-                                        ))}
-                                    </optgroup>
+                        const categories = Object.keys(grouped)
+
+                        return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                                {categories.map(cat => (
+                                    <div key={cat}>
+                                        <h4 style={{
+                                            fontSize: 12, fontWeight: 800, color: '#9CA3AF',
+                                            textTransform: 'uppercase', marginBottom: 12,
+                                            letterSpacing: '0.05em'
+                                        }}>
+                                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                        </h4>
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                                            gap: 12
+                                        }}>
+                                            {grouped[cat].map(preset => {
+                                                const isActive = (localConfig.dividerPresetId || 'coffee-1') === preset.id
+
+                                                return (
+                                                    <div
+                                                        key={preset.id}
+                                                        onClick={() => {
+                                                            const newConfig = { ...localConfig, dividerPresetId: preset.id }
+                                                            updateConfig(newConfig)
+                                                            setLocalConfig(newConfig)
+                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                            setHasChanges(true)
+                                                        }}
+                                                        style={{
+                                                            position: 'relative',
+                                                            aspectRatio: '3/1',
+                                                            borderRadius: 8,
+                                                            overflow: 'hidden',
+                                                            cursor: 'pointer',
+                                                            border: isActive ? '3px solid #22C55E' : '1px solid #E5E7EB',
+                                                            transition: 'all 0.2s ease',
+                                                            transform: isActive ? 'scale(1.02)' : 'scale(1)',
+                                                            boxShadow: isActive ? '0 4px 12px rgba(34, 197, 94, 0.2)' : 'none'
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src={preset.url}
+                                                            alt={preset.name}
+                                                            loading="lazy"
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        />
+
+                                                        {/* Checkmark Overlay */}
+                                                        {isActive && (
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                top: 0, left: 0, right: 0, bottom: 0,
+                                                                background: 'rgba(34, 197, 94, 0.2)',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                            }}>
+                                                                <div style={{
+                                                                    background: '#22C55E', color: 'white',
+                                                                    borderRadius: '50%', width: 24, height: 24,
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                    fontSize: 14, boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                                                }}>
+                                                                    ✓
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Hover Label */}
+                                                        {!isActive && (
+                                                            <div className="hover-label" style={{
+                                                                position: 'absolute', bottom: 0, left: 0, right: 0,
+                                                                background: 'rgba(0,0,0,0.6)', color: 'white',
+                                                                fontSize: 10, padding: '4px', textAlign: 'center',
+                                                                opacity: 0, transition: 'opacity 0.2s'
+                                                            }}>
+                                                                {preset.name}
+                                                            </div>
+                                                        )}
+                                                        <style>{`
+                                                            div:hover > .hover-label { opacity: 1; }
+                                                        `}</style>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
                                 ))}
-                            </select>
-                        </div>
-                    </div>
+                            </div>
+                        )
+                    })()}
                 </div>
 
                 {/* ==================== VISUAL DIVIDER ==================== */}
