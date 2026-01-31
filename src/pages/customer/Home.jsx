@@ -541,6 +541,16 @@ function Home({ config: configProp }) {
 
             // Success: Clear dirty state and notify OS
             setHasChanges(false)
+
+            // 🛡️ PHYSICS RESET: Force clear locks to prevent 'One-Shot' glitch
+            isDraggingRef.current = false
+            navigationBlockedRef.current = false
+            if (longPressTimerRef.current) {
+                clearTimeout(longPressTimerRef.current)
+                longPressTimerRef.current = null
+            }
+            setDragState(null) // Ensure ghost is gone
+
             if (navigator.vibrate) navigator.vibrate([50, 50])
             window.dispatchEvent(new Event('frontendSync'))
             console.log('[PLATFORM SAVE] Success: Home Order Persisted')
