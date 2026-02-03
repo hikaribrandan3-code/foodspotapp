@@ -326,6 +326,11 @@ function Home({ config: configProp }) {
 
     // ====== OPTIMISTIC DRAG END: STATE FIRST, STORAGE LATER ======
     const handleDragEnd = useCallback((e) => {
+        // 🛡️ HITBOX RELEASE: Remove data-dragging so element can be targeted again
+        if (dragItemRef.current) {
+            dragItemRef.current.removeAttribute('data-dragging')
+        }
+
         if (!dragState) {
             isDraggingRef.current = false
             navigationBlockedRef.current = false
@@ -387,11 +392,11 @@ function Home({ config: configProp }) {
         // Clear drag state immediately (ghost disappears)
         setDragState(null)
 
-        // Delay unblocking to prevent ghost clicks
+        // Delay unblocking to prevent ghost clicks (reduced from 150ms for faster readiness)
         setTimeout(() => {
             isDraggingRef.current = false
             navigationBlockedRef.current = false
-        }, 150)
+        }, 50)
     }, [dragState])
 
     // Cancel handler for edge cases

@@ -321,6 +321,12 @@ export default function Menu({ config: configProp }) {
 
     const handleDragEnd = useCallback(() => {
         if (autoScrollRef.current) { cancelAnimationFrame(autoScrollRef.current); autoScrollRef.current = null }
+
+        // 🛡️ HITBOX RELEASE: Remove data-dragging so element can be targeted again
+        if (dragItemRef.current) {
+            dragItemRef.current.removeAttribute('data-dragging')
+        }
+
         const capturedState = dragState
         setDragState(null)
         dragItemRef.current = null
