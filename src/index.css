@@ -31,15 +31,6 @@
 
   /* 🛡️ VAULT-SEAL: Header Image Fallback */
   --header-image: linear-gradient(to right, #333, #555);
-}
-
-/* 🛡️ VAULT-SEAL: Class for AppHeader to consume variable */
-.menu-header-bg {
-  background-image: var(--header-image) !important;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
 
   /* Hero Icons - Fully isolated from nav (injected from config) */
   --hero-menu-bg: #FFFFFF;
@@ -68,9 +59,7 @@
   /* Typography */
   --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-family-brand: 'Inter', system-ui, -apple-system, sans-serif;
-  /* Set dynamically from config */
   --font-weight-brand: 400;
-  /* Set dynamically from config */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -120,6 +109,16 @@
   /* 💎 HARDWARE TIER: Visual Rhyme Standard */
   --radius-brand: 10px;
   --radius-card: 12px;
+}
+
+/* 🛡️ VAULT-SEAL: Class for AppHeader to consume variable */
+.menu-header-bg {
+  background-image: var(--header-image) !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  /* 🛡️ FORENSIC FIX: Prevent header from stealing clicks */
 }
 
 /* ⚡ GLOBAL POLISH ENFORCEMENT */

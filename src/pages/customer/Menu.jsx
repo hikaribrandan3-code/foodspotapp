@@ -330,29 +330,29 @@ export default function Menu({ config: configProp }) {
         const { categoryId, itemIndex, targetIndex, items } = capturedState
         if (itemIndex === targetIndex) return
 
-        // Swap Logic
-        const newOrderIds = [...items]
-        const [movedId] = newOrderIds.splice(itemIndex, 1)
-        newOrderIds.splice(targetIndex, 0, movedId)
+        // 🛡️ FORENSIC FIX: Use functional update with deep clone for infinite swaps
+        setMenu(prevMenu => {
+            const newOrderIds = [...items]
+            const [movedId] = newOrderIds.splice(itemIndex, 1)
+            newOrderIds.splice(targetIndex, 0, movedId)
 
-        const newMenu = { ...menu }
-        const catIndex = newMenu.categories.findIndex(c => c.id === categoryId)
+            // Deep clone to trigger React re-render
+            const newCategories = prevMenu.categories.map(cat => {
+                if (cat.id !== categoryId) return { ...cat }
+                const reorderedItems = newOrderIds
+                    .map(id => cat.items.find(i => i.id === id))
+                    .filter(Boolean)
+                return { ...cat, items: [...reorderedItems] }
+            })
 
-        // Local Update & ATOMIC FLAG
-        if (catIndex !== -1) {
-            const allItems = [...newMenu.categories[catIndex].items]
-            const reorderedItems = newOrderIds.map(id => allItems.find(i => i.id === id)).filter(Boolean)
+            return { ...prevMenu, categories: newCategories }
+        })
 
-            // Update Local State
-            newMenu.categories[catIndex].items = reorderedItems
-            setMenu(newMenu)
-
-            // FLAG AS DIRTY (Do not save to cloud yet)
-            setHasChanges(true)
-            if (navigator.vibrate) navigator.vibrate(10)
-        }
+        // FLAG AS DIRTY (Do not save to cloud yet)
+        setHasChanges(true)
+        if (navigator.vibrate) navigator.vibrate(10)
         setTimeout(() => { blockRefreshRef.current = false }, 500)
-    }, [dragState, menu, businessId])
+    }, [dragState])
 
     // Global Listeners
     useEffect(() => {
@@ -563,14 +563,17 @@ export default function Menu({ config: configProp }) {
                 ))}
             </div>
 
-            {/* Owner Pill */}
-            {isOwnerMode && !isEditMode && (
-                <button onClick={() => setIsEditMode(true)} style={{
-                    position: 'fixed', bottom: 100, right: 24, zIndex: 9999, background: '#22C55E', color: 'white', padding: '12px 20px',
-                    borderRadius: 50, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontWeight: 700, fontSize: 14, display: 'flex',
-                    alignItems: 'center', gap: 8, cursor: 'pointer'
-                }}><span>⚡ Modo Dueño</span></button>
-            )}
+            {/* Owner Pill - 🛡️ IMMORTAL: Uses localStorage safety check */}
+            {(() => {
+                const activeOwner = isOwnerMode || localStorage.getItem('foodspot_owner_mode') === 'true';
+                return activeOwner && !isEditMode ? (
+                    <button onClick={() => setIsEditMode(true)} style={{
+                        position: 'fixed', bottom: 100, right: 24, zIndex: 9999, background: '#22C55E', color: 'white', padding: '12px 20px',
+                        borderRadius: 50, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontWeight: 700, fontSize: 14, display: 'flex',
+                        alignItems: 'center', gap: 8, cursor: 'pointer'
+                    }}><span>⚡ Modo Dueño</span></button>
+                ) : null;
+            })()}
 
             {/* Drag Ghost */}
             {dragState && (() => {
