@@ -544,7 +544,10 @@ export default function Menu({ config: configProp }) {
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                             {category.items.filter(i => isOwnerMode || i.available !== false).map((item, index) => {
-                                const isHidden = dragState?.itemId === item.id
+                                // 🛡️ PHYSICS VISUALS: Green Frame & Ghost Opacity
+                                const isDragging = dragState?.itemId === item.id
+                                const isPlaceholder = dragState?.categoryId === category.id && dragState?.targetIndex === index && !isDragging
+
                                 const shakeStyle = (isEditMode && !dragState) ? { animation: 'wiggle 0.3s infinite linear alternate', animationDelay: `${Math.random() * 0.1}s` } : {}
 
                                 return (
@@ -553,15 +556,20 @@ export default function Menu({ config: configProp }) {
                                         onTouchEnd={handleTouchEndOrMove} onTouchMove={handleTouchEndOrMove}
                                         onMouseDown={isEditMode ? (e) => initiateDrag(e, category.id, item, index, category.items) : undefined}
                                         style={{
-                                            opacity: isHidden ? 0 : 1, background: 'white', borderRadius: 12, overflow: 'hidden',
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)', position: 'relative', cursor: isEditMode ? 'grab' : 'pointer',
+                                            // 🛡️ VISUAL LOGIC
+                                            opacity: isDragging ? 0.3 : 1, // Ghost Effect
+                                            background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : 'white', // Landing Zone Green Tint
+                                            border: isPlaceholder ? '2px dashed #22C55E' : 'none', // Landing Zone Green Border
+                                            borderRadius: 12, overflow: 'hidden',
+                                            boxShadow: isPlaceholder ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
+                                            position: 'relative', cursor: isEditMode ? 'grab' : 'pointer',
                                             touchAction: 'none', ...shakeStyle
                                         }}
                                     >
-                                        <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none' }}>
+                                        <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none', opacity: isPlaceholder ? 0 : 1 }}>
                                             <img src={getItemImage(item)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
                                         </div>
-                                        <div style={{ padding: '8px 4px' }}>
+                                        <div style={{ padding: '8px 4px', opacity: isPlaceholder ? 0 : 1 }}>
                                             <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', marginBottom: 2, lineHeight: 1.3 }}>{item.name}</p>
                                             <p style={{ fontSize: 12, color: '#6B7280' }}>{formatPrice(item.price)}</p>
                                         </div>
