@@ -119,13 +119,15 @@ function Home({ config: configProp }) {
         () => homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
     )
 
-    // Sync from config prop when it changes (but NOT during drag)
+    // Sync from config prop when it changes (but NOT during drag or edit)
+    // 🛡️ SNAPBACK FIX: Do NOT re-run when isEditMode changes
     useEffect(() => {
         if (!isDraggingRef.current && !isEditMode) {
             const newActions = homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
             setLocalPrimaryActions(newActions)
         }
-    }, [homeConfig?.primaryActions, isEditMode])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [homeConfig?.primaryActions]) // Removed isEditMode to prevent snapback
 
     // Fallback images
     const placeholderImages = {
@@ -158,12 +160,14 @@ function Home({ config: configProp }) {
         () => buildFeaturedItems(featuredPhotos)
     )
 
-    // Sync featured items from config prop or tenantData when they change (but NOT during drag)
+    // Sync featured items from config prop or tenantData when they change (but NOT during drag or edit)
+    // 🛡️ SNAPBACK FIX: Do NOT re-run when isEditMode changes
     useEffect(() => {
         if (!isDraggingRef.current && !isEditMode) {
             setLocalFeaturedItems(buildFeaturedItems(featuredPhotos))
         }
-    }, [featuredPhotos, buildFeaturedItems, isEditMode])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [featuredPhotos, buildFeaturedItems]) // Removed isEditMode to prevent snapback
 
     // CRITICAL: Reset drag state on route change
     useEffect(() => {

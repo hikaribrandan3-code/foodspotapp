@@ -209,8 +209,15 @@ export default function Menu({ config: configProp }) {
     // 2.8S PHYSICS ENGINE
     // =========================================================================
     const handleTouchStart = (e, categoryId, item, itemIndex, availableItems) => {
-        if (!isOwnerMode || !isEditMode) return
+        if (!isOwnerMode) return
 
+        // 🛡️ INSTANT DRAG PROTOCOL: If already in Edit Mode, drag immediately (no timer wait)
+        if (isEditMode) {
+            initiateDrag(e, categoryId, item, itemIndex, availableItems)
+            return
+        }
+
+        // Only use timer when NOT in Edit Mode (to activate Edit Mode via long press)
         longPressTimerRef.current = setTimeout(() => {
             console.log("⚡ JIGGLE TRIGGERED (0.5s)")
             if (navigator.vibrate) navigator.vibrate(50)
