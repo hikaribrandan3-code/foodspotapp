@@ -212,10 +212,10 @@ export default function Menu({ config: configProp }) {
         if (!isOwnerMode || !isEditMode) return
 
         longPressTimerRef.current = setTimeout(() => {
-            console.log("⚡ JIGGLE TRIGGERED (2.8s)")
+            console.log("⚡ JIGGLE TRIGGERED (0.5s)")
             if (navigator.vibrate) navigator.vibrate(50)
             initiateDrag(e, categoryId, item, itemIndex, availableItems)
-        }, 2800)
+        }, 500)
     }
 
     const handleTouchEndOrMove = () => {
@@ -545,7 +545,7 @@ export default function Menu({ config: configProp }) {
                                             touchAction: 'none', ...shakeStyle
                                         }}
                                     >
-                                        <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD' }}>
+                                        <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none' }}>
                                             <img src={getItemImage(item)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
                                         </div>
                                         <div style={{ padding: '8px 4px' }}>

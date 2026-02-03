@@ -31,7 +31,7 @@ function Home({ config: configProp }) {
     // 🛡️ CLOUD-ONLY: Local menu removed. Using tenantData exclusively.
 
     // 🌉 THE DATA BRIDGE: Connect TenantContext to existing config-based logic
-    const { branding, tenantData, loading, slug: tenantSlug, businessId } = useTenant()
+    const { branding, tenantData, loading, slug: tenantSlug, businessId, refreshTenant } = useTenant()
 
     // 🛡️ SAFETY GUARD: Prevent white screen during tenant resolution
     if (loading || !tenantData) {
@@ -351,14 +351,19 @@ function Home({ config: configProp }) {
 
             // ====== STEP 1: UPDATE STATE INSTANTLY (OPTIMISTIC) ======
             if (gridType === 'actions') {
-                setLocalPrimaryActions(newOrder)
+                // 🛡️ FORENSIC FIX: Functional update for infinite swaps
+                setLocalPrimaryActions(prev => {
+                    const next = [...newOrder]
+                    return next
+                })
             } else {
                 // For featured items, reorder the local state
                 setLocalFeaturedItems(prevItems => {
                     const reordered = [...prevItems]
                     const [moved] = reordered.splice(itemIndex, 1)
                     reordered.splice(targetIndex, 0, moved)
-                    return reordered
+                    // Deep clone to ensure React diffing catches it
+                    return reordered.map(item => ({ ...item }))
                 })
             }
 
@@ -548,6 +553,9 @@ function Home({ config: configProp }) {
 
             // Success: Clear dirty state and notify OS
             setHasChanges(false)
+
+            // 🛡️ FORENSIC FIX: Prevent Snapback by refreshing context immediately
+            if (refreshTenant) await refreshTenant()
 
             // 🛡️ PHYSICS RESET: Force clear locks to prevent 'One-Shot' glitch
             isDraggingRef.current = false
