@@ -260,6 +260,9 @@ function App() {
         const menuC = heroIcons.menu || HERO_DEFAULT;
         root.style.setProperty('--hero-menu-bg', getHeroBg(menuC));
         root.style.setProperty('--hero-menu-icon', getHeroIcon(menuC));
+        // 🛡️ VAULT-SEAL FIX: Sync Header Image for Menu Ghosting Prevention
+        // Uses branding.hero_url from tenantData (via config normalization)
+        root.style.setProperty('--header-image', `url(${config.headerCover?.image || ''})`);
 
         const delC = heroIcons.delivery || HERO_DEFAULT;
         root.style.setProperty('--hero-delivery-bg', getHeroBg(delC));

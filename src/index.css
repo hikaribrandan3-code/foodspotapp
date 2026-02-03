@@ -29,6 +29,9 @@
   --nav-primary-color: #8B7355;
   --nav-icon-color: #FFFFFF;
 
+  /* 🛡️ VAULT-SEAL: Header Image Fallback */
+  --header-image: linear-gradient(to right, #333, #555);
+
   /* Hero Icons - Fully isolated from nav (injected from config) */
   --hero-menu-bg: #FFFFFF;
   --hero-menu-icon: #4A4036;

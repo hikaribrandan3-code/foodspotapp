@@ -60,7 +60,14 @@ function Home({ config: configProp }) {
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()
-    const [isOwnerMode, setIsOwnerMode] = useState(session?.role === 'superadmin' || session?.role === 'owner' || isInDemoMode())
+    // 🛡️ VAULT-SEAL FIX: Owner Mode Persistence
+    // Survives polls by checking localStorage 'foodspot_owner_mode'
+    const [isOwnerMode, setIsOwnerMode] = useState(
+        session?.role === 'superadmin' ||
+        session?.role === 'owner' ||
+        isInDemoMode() ||
+        localStorage.getItem('foodspot_owner_mode') === 'true'
+    )
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false)
