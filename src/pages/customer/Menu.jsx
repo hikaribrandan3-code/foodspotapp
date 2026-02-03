@@ -419,7 +419,7 @@ export default function Menu({ config: configProp }) {
     const enabledCategories = visibleCategories.filter(c => c.items?.length > 0)
 
     return (
-        <div style={{ minHeight: '100vh', paddingBottom: 100, background: 'var(--color-bg, #F9FAFB)' }}>
+        <div style={{ minHeight: '100vh', paddingBottom: 100, background: 'var(--color-bg, #F9FAFB)', maxWidth: '92%', margin: '0 auto' }}>
             {/* Header */}
             <HeaderClamp config={tenantData?.app_config || {}} />
 
