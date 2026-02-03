@@ -148,7 +148,7 @@ function Home({ config: configProp }) {
             return {
                 id: `featured-slot-${slotIndex}`,
                 name: slot.name || 'Destacado', // Only default string if DB has empty string but slot exists
-                image: slot.image || null,
+                image: (slot.image && !slot.image.startsWith('blob:')) ? slot.image : null,
                 price: slot.price || 0
             }
         })

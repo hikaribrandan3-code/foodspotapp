@@ -196,7 +196,7 @@ export default function Menu({ config: configProp }) {
     }
 
     const getItemImage = (item) => {
-        if (item.image) return item.image
+        if (item.image && !item.image.startsWith('blob:')) return item.image
         return `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80`
     }
 

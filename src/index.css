@@ -1265,6 +1265,7 @@ h3 {
 }
 
 .menu-item-wiggle {
+  will-change: transform;
   animation: wiggle 0.3s ease-in-out infinite;
 }
 

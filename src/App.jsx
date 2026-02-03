@@ -262,7 +262,7 @@ function App() {
         root.style.setProperty('--hero-menu-icon', getHeroIcon(menuC));
         // 🛡️ VAULT-SEAL FIX: Sync Header Image for Menu Ghosting Prevention
         // Uses branding.hero_url from tenantData (via config normalization)
-        if (config.headerCover?.image) {
+        if (config.headerCover?.image && !config.headerCover.image.startsWith('blob:')) {
             root.style.setProperty('--header-image', `url(${config.headerCover.image})`);
         } else {
             root.style.removeProperty('--header-image'); // Let CSS fallback take over
