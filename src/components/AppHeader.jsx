@@ -88,7 +88,7 @@ function AppHeader({ config: configProp }) {
                         overflow: 'hidden'
                     }}
                 >
-                    {cover.image ? coverContent : placeholder}
+                    {coverContent}
                 </div>
             </header>
         )
