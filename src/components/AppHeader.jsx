@@ -47,13 +47,13 @@ function AppHeader({ config: configProp }) {
         const offsetY = cover.offsetY || 0
 
         const coverContent = (
-            <div className="cover-content" style={{
+            <div className="cover-content menu-header-bg" style={{
                 position: 'absolute',
                 width: '200%',
                 height: '200%',
                 left: '-50%',
                 top: '-50%',
-                backgroundImage: cover.image ? `url(${cover.image})` : 'none',
+                // backgroundImage: handled by menu-header-bg class
                 backgroundSize: `${scale * 100}%`,
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
