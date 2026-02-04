@@ -58,6 +58,20 @@ export function TenantProvider({ children }) {
                 if (data) {
                     console.log('[TenantContext] ✅ VAULT LOADED:', data.business_name)
 
+                    // 🛡️ MIRROR-FIRST HYDRATION: Fetch from 'menu_view' (The Universal Truth)
+                    const { data: mirrorData } = await supabase
+                        .from('menu_view')
+                        .select('menu_data')
+                        .eq('business_id', data.business_id)
+                        .single()
+
+                    if (mirrorData?.menu_data) {
+                        console.log('[TenantContext] 🪞 MIRROR APPLIED: Using Universal Menu Data')
+                        data.menu_data = mirrorData.menu_data
+                    } else {
+                        console.log('[TenantContext] ⚠️ MIRROR MISSING: Falling back to Legacy-Stale Data')
+                    }
+
                     // 🛡️ ALIGNED: Using business_id column (Fixed 2026-01-29)
                     setBusinessId(data.business_id)
                     setTenantData(data)
@@ -117,7 +131,20 @@ export function TenantProvider({ children }) {
             .select('*')
             .eq('business_id', businessId)
             .single()
+
         if (!error && data) {
+            // 🛡️ MIRROR-FIRST REFRESH
+            const { data: mirrorData } = await supabase
+                .from('menu_view')
+                .select('menu_data')
+                .eq('business_id', businessId)
+                .single()
+
+            if (mirrorData?.menu_data) {
+                console.log('[TenantContext] 🪞 REFRESH MIRROR: Updated with Universal Data')
+                data.menu_data = mirrorData.menu_data
+            }
+
             setTenantData(data)
             console.log('✅ GLOBAL REFRESH COMPLETE')
         }
