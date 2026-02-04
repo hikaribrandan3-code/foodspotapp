@@ -34,6 +34,18 @@ export function CartProvider({ children }) {
         if (navigator.vibrate) navigator.vibrate([30, 50])
     }, [sheetItem, sheetQuantity, refreshCart, closeOrderSheet])
 
+    // DIRECT ADD (Instant Velocity)
+    const addToCart = useCallback((item, quantity = 1, extras = []) => {
+        addToCurrentOrder(item, quantity, extras)
+        refreshCart()
+    }, [refreshCart])
+
+    // DIRECT REMOVE
+    const removeFromCart = useCallback((index) => {
+        removeFromCurrentOrder(index)
+        refreshCart()
+    }, [refreshCart])
+
     // Update quantity in cart
     const updateQuantity = useCallback((index, quantity) => {
         updateItemQuantity(index, quantity)
@@ -57,7 +69,9 @@ export function CartProvider({ children }) {
             openOrderSheet,
             closeOrderSheet,
             updateQuantity,
-            removeItem
+            removeItem,
+            addToCart,
+            removeFromCart
         }}>
             {children}
 

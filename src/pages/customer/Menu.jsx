@@ -62,8 +62,11 @@ const SEED_MENU = {
 
 export default function Menu({ config: configProp }) {
     const { businessId, tenantData, isLoaded: tenantLoaded, loading: tenantLoading } = useTenant()
-    const { openOrderSheet, cart, cartTotal } = useCart()
+    const { addToCart, removeFromCart, cart, cartTotal } = useCart()
     const navigate = useNavigate()
+
+    // VISUAL FEEDBACK STATE
+    const [addedItem, setAddedItem] = useState(null)
 
     // =========================================================================
     // 1. DATA STATE (With Seed Fallback)
@@ -456,12 +459,20 @@ export default function Menu({ config: configProp }) {
     const enabledCategories = visibleCategories.filter(c => c.items?.length > 0)
     const hasCartItems = cart?.items?.length > 0
 
-    // 🛒 CUSTOMER INTERACTION: Open Bottom Sheet
-    const handleItemClick = (item) => {
-        if (isEditMode) return; // Owners rearrange; Customers order.
-        if (!item.available) return;
-        if (navigator.vibrate) navigator.vibrate(5);
-        openOrderSheet(item);
+    // ⚡ INSTANT ADD (Legacy Dec 19 Logic)
+    const handleTapToAdd = (item) => {
+        if (isEditMode) return
+        if (!item.available) return
+
+        // 1. Add to cart instantly
+        addToCart(item, 1, [])
+
+        // 2. Visual Feedback (Tactile Scale)
+        setAddedItem(item.id)
+        setTimeout(() => setAddedItem(null), 150)
+
+        // 3. Haptic Feedback
+        if (navigator.vibrate) navigator.vibrate(5)
     }
 
     return (
@@ -585,13 +596,15 @@ export default function Menu({ config: configProp }) {
 
                                 return (
                                     <div key={item.id} data-item-id={item.id}
-                                        onClick={() => !isEditMode && !dragState && handleItemClick(item)}
+                                        onClick={() => !isEditMode && !dragState && handleTapToAdd(item)}
                                         onTouchStart={isEditMode ? (e) => handleTouchStart(e, category.id, item, index, category.items) : undefined}
                                         onTouchEnd={handleTouchEndOrMove} onTouchMove={handleTouchEndOrMove}
                                         onMouseDown={isEditMode ? (e) => initiateDrag(e, category.id, item, index, category.items) : undefined}
                                         style={{
                                             // 🛡️ VISUAL LOGIC
-                                            opacity: isDragging ? 0.3 : 1, // Ghost Effect
+                                            opacity: isDragging ? 0.3 : (addedItem === item.id ? 0.7 : 1), // Ghost Effect + Tactile Dip
+                                            transform: addedItem === item.id ? 'scale(0.95)' : 'scale(1)', // Tactile Scale
+                                            transition: isEditMode ? 'none' : 'transform 0.15s ease',
                                             background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : 'white', // Landing Zone Green Tint
                                             border: isPlaceholder ? '2px dashed #22C55E' : 'none', // Landing Zone Green Border
                                             borderRadius: 12, overflow: 'hidden',
@@ -618,57 +631,57 @@ export default function Menu({ config: configProp }) {
                 ))}
             </div>
 
-            {/* 🛒 RECEIPT BAR: Shows when cart has items */}
+            {/* 🛒 INTERACTIVE MINI-CART (Legacy Receipt Style) */}
             {hasCartItems && !isEditMode && (
                 <div style={{
                     position: 'fixed',
-                    bottom: 'calc(var(--nav-height, 60px) + 8px)',
-                    left: 16,
-                    right: 16,
-                    background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
-                    borderRadius: 16,
-                    padding: '14px 20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    boxShadow: '0 8px 30px rgba(34, 197, 94, 0.4)',
-                    zIndex: 9997,
-                    animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                    bottom: 'calc(var(--nav-height, 60px) + 0px)',
+                    left: 0,
+                    right: 0,
+                    background: '#FDFCFA',
+                    borderTop: '1px dashed #E0DDD7',
+                    padding: '14px 16px',
+                    paddingBottom: 'calc(14px + env(safe-area-inset-bottom, 0px))',
+                    zIndex: 100,
+                    boxShadow: '0 -2px 12px rgba(0,0,0,0.06)'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{
-                            background: 'rgba(255,255,255,0.25)',
-                            borderRadius: 10,
-                            width: 36,
-                            height: 36,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 700,
-                            fontSize: 16,
-                            color: 'white'
-                        }}>
-                            {cart.items.reduce((sum, i) => sum + i.quantity, 0)}
-                        </div>
-                        <span style={{ fontSize: 17, fontWeight: 700, color: 'white' }}>
-                            ${cartTotal.toLocaleString('es-AR')}
-                        </span>
+                    {/* Header */}
+                    <div style={{ fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10, textAlign: 'center' }}>
+                        Tu pedido
                     </div>
+
+                    {/* Order Items List */}
+                    <div style={{ maxHeight: 90, overflowY: 'auto', marginBottom: 10 }}>
+                        {cart.items.map((item, index) => (
+                            <div key={`${item.id}-${index}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, paddingBottom: 6, borderBottom: '1px dotted #EBE8E3' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    {/* Decrement/Remove Button */}
+                                    <button onClick={(e) => { e.stopPropagation(); removeFromCart(index) }} style={{
+                                        width: 22, height: 22, borderRadius: 6, border: '1px solid #E0DDD7', background: '#FDFCFA',
+                                        color: '#8B8680', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}>−</button>
+                                    <span style={{ fontSize: 14, color: '#374151', fontWeight: 450 }}>{item.name}</span>
+                                    <span style={{ fontSize: 12, color: '#9CA3AF' }}>×{item.quantity}</span>
+                                </div>
+                                <span style={{ fontSize: 14, color: '#374151', fontFamily: 'system-ui' }}>{formatPrice(item.price * item.quantity)}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Total & Action */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, paddingTop: 10, borderTop: '1px solid #E0DDD7' }}>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>Total</span>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>{formatPrice(cartTotal)}</span>
+                    </div>
+
                     <button
                         onClick={() => navigate(`/${tenantData?.slug || 'demo'}/order`)}
                         style={{
-                            background: 'white',
-                            color: '#16A34A',
-                            border: 'none',
-                            borderRadius: 12,
-                            padding: '10px 20px',
-                            fontWeight: 700,
-                            fontSize: 15,
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            width: '100%', padding: '14px 24px', background: config.colors?.confirmation || '#22C55E',
+                            color: 'white', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', letterSpacing: '-0.01em'
                         }}
                     >
-                        VER PEDIDO
+                        Confirmar Pedido
                     </button>
                 </div>
             )}
