@@ -55,33 +55,100 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 console.log('[MenuManager] 🌱 NO CLOUD DATA: Seeding Default Menu')
                 setMenu({
                     categories: [
+                        // 1. BAKERY (6 Items)
                         {
-                            id: 'cat-burgers', name: 'Hamburguesas', icon: '🍔', enabled: true,
+                            id: 'cat-bakery', name: 'Bakery & Patisserie', icon: '🥐', enabled: true,
                             items: [
-                                { id: 'item-b1', name: 'Smash Doble', price: 6500, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80', available: true },
-                                { id: 'item-b2', name: 'Cheese Bacon', price: 7200, image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=500&q=80', available: true },
-                                { id: 'item-b3', name: 'Veggie King', price: 6100, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&q=80', available: true }
+                                { id: 'item-bak-1', name: 'Panes Rústicos', price: 4500, image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&q=80', available: true },
+                                { id: 'item-bak-2', name: 'Croissants', price: 3200, image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&q=80', available: true },
+                                { id: 'item-bak-3', name: 'Masa Madre', price: 5600, image: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=500&q=80', available: true },
+                                { id: 'item-bak-4', name: 'Pastelería Fina', price: 7800, image: 'https://images.unsplash.com/photo-1579306194872-64d3b7bac4c2?w=500&q=80', available: true },
+                                { id: 'item-bak-5', name: 'Sourdough Loaf', price: 4200, image: 'https://images.unsplash.com/photo-1585478402481-4552700bc50e?w=500&q=80', available: true },
+                                { id: 'item-bak-6', name: 'Almond Croissant', price: 3800, image: 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?w=500&q=80', available: true }
                             ]
                         },
+                        // 2. CAFE (6 Items)
                         {
-                            id: 'cat-pizza', name: 'Pizzas', icon: '🍕', enabled: true,
+                            id: 'cat-cafe', name: 'Specialty Coffee', icon: '☕', enabled: true,
                             items: [
-                                { id: 'item-p1', name: 'Muzzarella', price: 8500, image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=500&q=80', available: true },
-                                { id: 'item-p2', name: 'Pepperoni', price: 9200, image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500&q=80', available: true }
+                                { id: 'item-cafe-1', name: 'Granos Tostados', price: 12000, image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=500&q=80', available: true },
+                                { id: 'item-cafe-2', name: 'Latte Art', price: 4200, image: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&q=80', available: true },
+                                { id: 'item-cafe-3', name: 'Espresso Bar', price: 2800, image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80', available: true },
+                                { id: 'item-cafe-4', name: 'Pour Over', price: 3500, image: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=500&q=80', available: true },
+                                { id: 'item-cafe-5', name: 'Flat White', price: 3900, image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=500&q=80', available: true },
+                                { id: 'item-cafe-6', name: 'Caramel Macchiato', price: 4500, image: 'https://images.unsplash.com/photo-1485808191679-5f8c7c860695?w=500&q=80', available: true }
                             ]
                         },
+                        // 3. CANDY (6 Items)
                         {
-                            id: 'cat-drinks', name: 'Bebidas', icon: '🥤', enabled: true,
+                            id: 'cat-candy', name: 'Candy & Sweets', icon: '🍬', enabled: true,
                             items: [
-                                { id: 'item-d1', name: 'Coca Cola', price: 1500, image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&q=80', available: true },
-                                { id: 'item-d2', name: 'Cerveza IPA', price: 2800, image: 'https://images.unsplash.com/photo-1608270586620-2485246391d8?w=500&q=80', available: true }
+                                { id: 'item-candy-1', name: 'Golosinas Coloridas', price: 1500, image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=500&q=80', available: true },
+                                { id: 'item-candy-2', name: 'Chocolates Finos', price: 6500, image: 'https://images.unsplash.com/photo-1548907040-4baa42d10919?w=500&q=80', available: true },
+                                { id: 'item-candy-3', name: 'Macarons Box', price: 8200, image: 'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=500&q=80', available: true },
+                                { id: 'item-candy-4', name: 'Donuts Glaseadas', price: 2100, image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500&q=80', available: true },
+                                { id: 'item-candy-5', name: 'Artisanal Truffles', price: 5400, image: 'https://images.unsplash.com/photo-1621939514649-28b12e81658b?w=500&q=80', available: true },
+                                { id: 'item-candy-6', name: 'Sea Salt Caramels', price: 4200, image: 'https://images.unsplash.com/photo-1533221946892-5ebcdfd0495f?w=500&q=80', available: true }
                             ]
                         },
+                        // 4. BUILDING (6 Items)
                         {
-                            id: 'cat-sweet', name: 'Postres', icon: '🍰', enabled: true,
+                            id: 'cat-building', name: 'Architecture & Spaces', icon: '🏛️', enabled: true,
                             items: [
-                                { id: 'item-s1', name: 'Cheesecake', price: 4500, image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&q=80', available: true },
-                                { id: 'item-s2', name: 'Tiramisu', price: 4800, image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=500&q=80', available: true }
+                                { id: 'item-bldg-1', name: 'Fachada Clásica', price: 0, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80', available: true },
+                                { id: 'item-bldg-2', name: 'Moderno Iluminado', price: 0, image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500&q=80', available: true },
+                                { id: 'item-bldg-3', name: 'Interior Acogedor', price: 0, image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=500&q=80', available: true },
+                                { id: 'item-bldg-4', name: 'Patio Urbano', price: 0, image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=500&q=80', available: true },
+                                { id: 'item-bldg-5', name: 'Industrial Vibes', price: 0, image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=500&q=80', available: true },
+                                { id: 'item-bldg-6', name: 'Modern Pavilion', price: 0, image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&q=80', available: true },
+                            ]
+                        },
+                        // 5. NIGHTLIFE (6 Items)
+                        {
+                            id: 'cat-nightlife', name: 'The Vault (Nightlife)', icon: '🍾', enabled: true,
+                            items: [
+                                { id: 'item-night-1', name: 'Dom Pérignon Luminous', price: 350000, image: 'https://images.unsplash.com/photo-1598155523122-38423bb4d6c1?w=500&q=80', available: true },
+                                { id: 'item-night-2', name: 'Grey Goose Magnum', price: 180000, image: 'https://images.unsplash.com/photo-1606836521683-16781be599ab?w=500&q=80', available: true },
+                                { id: 'item-night-3', name: 'Macallan 18 Years', price: 420000, image: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=500&q=80', available: true },
+                                { id: 'item-night-4', name: 'Signature Cocktail', price: 12000, image: 'https://images.unsplash.com/photo-1514362545857-3bc16549766b?w=500&q=80', available: true },
+                                { id: 'item-night-5', name: 'VIP Table Service', price: 500000, image: 'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=500&q=80', available: true },
+                                { id: 'item-night-6', name: 'Champagne Parade', price: 850000, image: 'https://images.unsplash.com/photo-1594968155453-cae85b9b4781?w=500&q=80', available: true }
+                            ]
+                        },
+                        // 6. EVENT PLANNING (6 Items)
+                        {
+                            id: 'cat-events', name: 'Catering & Packs', icon: '🎉', enabled: true,
+                            items: [
+                                { id: 'item-evt-1', name: 'Party Slider Box (24)', price: 45000, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=80', available: true },
+                                { id: 'item-evt-2', name: '50-Wing Platter', price: 38000, image: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=500&q=80', available: true },
+                                { id: 'item-evt-3', name: 'Office Lunch Bundle', price: 58000, image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=500&q=80', available: true },
+                                { id: 'item-evt-4', name: 'Wedding Station', price: 150000, image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=500&q=80', available: true },
+                                { id: 'item-evt-5', name: 'Continental Breakfast', price: 42000, image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80', available: true },
+                                { id: 'item-evt-6', name: 'Birthday Cake XL', price: 32000, image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80', available: true }
+                            ]
+                        },
+                        // 7. STREET FOOD (6 Items)
+                        {
+                            id: 'cat-street', name: 'Truck Exclusives', icon: '🚚', enabled: true,
+                            items: [
+                                { id: 'item-str-1', name: 'Choripán Premium', price: 6500, image: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=500&q=80', available: true },
+                                { id: 'item-str-2', name: 'Loaded Kimchi Fries', price: 8200, image: 'https://images.unsplash.com/photo-1573080496982-b73a83e91b9f?w=500&q=80', available: true },
+                                { id: 'item-str-3', name: 'Birria Tacos (3)', price: 9500, image: 'https://images.unsplash.com/photo-1599321492590-9eb157c83f2e?w=500&q=80', available: true },
+                                { id: 'item-str-4', name: 'Gourmet Hot Dog', price: 7200, image: 'https://images.unsplash.com/photo-1627042633145-d766d08912e7?w=500&q=80', available: true },
+                                { id: 'item-str-5', name: 'Arepas Rellenas', price: 6800, image: 'https://images.unsplash.com/photo-1565060169194-192770280b0f?w=500&q=80', available: true },
+                                { id: 'item-str-6', name: 'Mexican Elote', price: 3500, image: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=500&q=80', available: true }
+                            ]
+                        },
+                        // 8. FINE DINING (6 Items)
+                        {
+                            id: 'cat-finedining', name: 'The Fancy Touch', icon: '🍽️', enabled: true,
+                            items: [
+                                { id: 'item-fine-1', name: 'Chef\'s 7-Course', price: 95000, image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80', available: true },
+                                { id: 'item-fine-2', name: 'Wine Pairing Flight', price: 42000, image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=500&q=80', available: true },
+                                { id: 'item-fine-3', name: 'Truffle Exploration', price: 78000, image: 'https://images.unsplash.com/photo-1481931098730-318b6f776db0?w=500&q=80', available: true },
+                                { id: 'item-fine-4', name: 'Wagyu A5 Steak', price: 120000, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', available: true },
+                                { id: 'item-fine-5', name: 'Lobster Thermidor', price: 88000, image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80', available: true },
+                                { id: 'item-fine-6', name: 'Royal Caviar', price: 150000, image: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=500&q=80', available: true }
                             ]
                         }
                     ]
