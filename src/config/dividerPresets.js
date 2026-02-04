@@ -27,12 +27,7 @@ export const DIVIDER_PRESETS = [
         url: 'https://images.unsplash.com/photo-1579306194872-64d3b7bac4c2?w=800&h=200&fit=crop&q=80',
         category: 'bakery'
     },
-    {
-        id: 'bakery-5',
-        name: 'Horno de leña',
-        url: 'https://images.unsplash.com/photo-1586765101683-176c7c253e77?w=800&h=200&fit=crop&q=80',
-        category: 'bakery'
-    },
+
 
     // --- BREAKFAST (5) ---
     {
@@ -59,12 +54,7 @@ export const DIVIDER_PRESETS = [
         url: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=800&h=200&fit=crop&q=80',
         category: 'breakfast'
     },
-    {
-        id: 'breakfast-5',
-        name: 'Huevos Benedict',
-        url: 'https://images.unsplash.com/photo-1608039829572-d74cdc1e7d06?w=800&h=200&fit=crop&q=80',
-        category: 'breakfast'
-    },
+
 
     // --- COFFEE SPOTS (5) ---
     {
@@ -111,12 +101,7 @@ export const DIVIDER_PRESETS = [
         url: 'https://images.unsplash.com/photo-1557142046-c704a3adf364?w=800&h=200&fit=crop&q=80',
         category: 'icecream'
     },
-    {
-        id: 'icecream-3',
-        name: 'Paletas frutales',
-        url: 'https://images.unsplash.com/photo-1517093247926-d648ea0c4b22?w=800&h=200&fit=crop&q=80',
-        category: 'icecream'
-    },
+
     {
         id: 'icecream-4',
         name: 'Sundae clásico',
@@ -155,12 +140,7 @@ export const DIVIDER_PRESETS = [
     },
 
     // --- CANDY SPOTS (6) ---
-    {
-        id: 'candy-1',
-        name: 'Golosinas coloridas',
-        url: 'https://images.unsplash.com/photo-1532153354457-5fbe1a3bb6fa?w=800&h=200&fit=crop&q=80',
-        category: 'candy'
-    },
+
     {
         id: 'candy-2',
         name: 'Chocolates finos',
@@ -199,12 +179,7 @@ export const DIVIDER_PRESETS = [
         url: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&h=200&fit=crop&q=80',
         category: 'asian'
     },
-    {
-        id: 'sushi-2',
-        name: 'Rolls variados',
-        url: 'https://images.unsplash.com/photo-1617196018665-ea58dc08af2d?w=800&h=200&fit=crop&q=80',
-        category: 'asian'
-    },
+
     {
         id: 'asian-3',
         name: 'Noodles bowl',
