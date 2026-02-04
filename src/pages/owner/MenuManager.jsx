@@ -19,6 +19,25 @@ import './MenuStyles.css'
  * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
  * This ensures Single Source of Truth from App.jsx.
  */
+
+// 🛡️ SANITIZER: Purges dead blob URLs that cause WebKit crashes
+const sanitizeMenu = (menuData) => {
+    if (!menuData || !menuData.categories) return menuData
+    const cleanMenu = JSON.parse(JSON.stringify(menuData))
+
+    cleanMenu.categories.forEach(cat => {
+        if (cat.items) {
+            cat.items.forEach(item => {
+                if (item.image && item.image.startsWith('blob:')) {
+                    console.warn(`⚠️ SANITIZER: Removed dead blob URL for item ${item.name}`)
+                    item.image = null
+                }
+            })
+        }
+    })
+    return cleanMenu
+}
+
 function MenuManager({ config: configProp, demoMode = false }) {
     const config = configProp || {};
     const navigate = useNavigate()
@@ -45,8 +64,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
             // 🛡️ DATA INTEGRITY: Hard-Check for menu_data
             if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
                 console.log('[MenuManager] 🎯 HYDRATING FROM CLOUD:', tenantData.menu_data)
+
+                // 🛡️ SANITIZE FIRST: Remove dead blobs
+                const cleanMenu = sanitizeMenu(tenantData.menu_data)
+
                 // 🛡️ BOUNCER GUARD: Sanitize items to ensure they are arrays
-                const sanitizedCategories = tenantData.menu_data.categories.map(cat => ({
+                const sanitizedCategories = cleanMenu.categories.map(cat => ({
                     ...cat,
                     items: Array.isArray(cat.items) ? cat.items : []
                 }))
