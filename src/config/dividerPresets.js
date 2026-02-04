@@ -2,213 +2,409 @@
 // FOOD-RELATED ONLY - v2 (60+ Presets)
 
 export const DIVIDER_PRESETS = [
-    // 1. BAKERY (6)
+    // --- BAKERIES (5) ---
     {
-        id: 'bakery-1', name: 'Panes rústicos', category: 'bakery',
-        url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&h=200&fit=crop&q=80'
+        id: 'bakery-1',
+        name: 'Panes rústicos',
+        url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&h=200&fit=crop&q=80',
+        category: 'bakery'
     },
     {
-        id: 'bakery-2', name: 'Croissants', category: 'bakery',
-        url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&h=200&fit=crop&q=80'
+        id: 'bakery-2',
+        name: 'Croissants',
+        url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&h=200&fit=crop&q=80',
+        category: 'bakery'
     },
     {
-        id: 'bakery-3', name: 'Masa madre', category: 'bakery',
-        url: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=800&h=200&fit=crop&q=80'
+        id: 'bakery-3',
+        name: 'Masa madre',
+        url: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=800&h=200&fit=crop&q=80',
+        category: 'bakery'
     },
     {
-        id: 'bakery-4', name: 'Pastelería fina', category: 'bakery',
-        url: 'https://images.unsplash.com/photo-1579306194872-64d3b7bac4c2?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'bakery-5', name: 'Sourdough Loaf', category: 'bakery',
-        url: 'https://images.unsplash.com/photo-1585478402481-4552700bc50e?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'bakery-6', name: 'Almond Croissant', category: 'bakery',
-        url: 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?w=800&h=200&fit=crop&q=80'
-    },
-
-    // 2. CAFE (6)
-    {
-        id: 'coffee-1', name: 'Granos tostados', category: 'cafe',
-        url: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'coffee-2', name: 'Latte Art', category: 'cafe',
-        url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'coffee-3', name: 'Espresso Bar', category: 'cafe',
-        url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'coffee-4', name: 'Pour Over', category: 'cafe',
-        url: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'coffee-5', name: 'Flat White', category: 'cafe',
-        url: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'coffee-6', name: 'Caramel Macchiato', category: 'cafe',
-        url: 'https://images.unsplash.com/photo-1485808191679-5f8c7c860695?w=800&h=200&fit=crop&q=80'
+        id: 'bakery-4',
+        name: 'Pastelería fina',
+        url: 'https://images.unsplash.com/photo-1579306194872-64d3b7bac4c2?w=800&h=200&fit=crop&q=80',
+        category: 'bakery'
     },
 
-    // 3. CANDY (6)
+
+    // --- BREAKFAST (5) ---
     {
-        id: 'candy-1', name: 'Golosinas coloridas', category: 'candy',
-        url: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=800&h=200&fit=crop&q=80'
+        id: 'breakfast-1',
+        name: 'Pancakes con miel',
+        url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&h=200&fit=crop&q=80',
+        category: 'breakfast'
     },
     {
-        id: 'candy-2', name: 'Chocolates finos', category: 'candy',
-        url: 'https://images.unsplash.com/photo-1548907040-4baa42d10919?w=800&h=200&fit=crop&q=80'
+        id: 'breakfast-2',
+        name: 'Yogurt con granola',
+        url: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&h=200&fit=crop&q=80',
+        category: 'breakfast'
     },
     {
-        id: 'candy-3', name: 'Macarons', category: 'candy',
-        url: 'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=800&h=200&fit=crop&q=80'
+        id: 'breakfast-3',
+        name: 'Waffles belgas',
+        url: 'https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=800&h=200&fit=crop&q=80',
+        category: 'breakfast'
     },
     {
-        id: 'candy-4', name: 'Donuts', category: 'candy',
-        url: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'candy-5', name: 'Trufas Artesanales', category: 'candy',
-        url: 'https://images.unsplash.com/photo-1621939514649-28b12e81658b?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'candy-6', name: 'Caramelos Salados', category: 'candy',
-        url: 'https://images.unsplash.com/photo-1533221946892-5ebcdfd0495f?w=800&h=200&fit=crop&q=80'
+        id: 'breakfast-4',
+        name: 'Desayuno completo',
+        url: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=800&h=200&fit=crop&q=80',
+        category: 'breakfast'
     },
 
-    // 4. BUILDING (Architecture) (6)
+
+    // --- COFFEE SPOTS (5) ---
     {
-        id: 'bldg-1', name: 'Fachada clásica', category: 'building',
-        url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=200&fit=crop&q=80'
+        id: 'coffee-1',
+        name: 'Granos tostados',
+        url: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800&h=200&fit=crop&q=80',
+        category: 'cafe'
     },
     {
-        id: 'bldg-2', name: 'Moderno iluminado', category: 'building',
-        url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&h=200&fit=crop&q=80'
+        id: 'coffee-2',
+        name: 'Latte Art',
+        url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=800&h=200&fit=crop&q=80',
+        category: 'cafe'
     },
     {
-        id: 'bldg-3', name: 'Interior acogedor', category: 'building',
-        url: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=800&h=200&fit=crop&q=80'
+        id: 'coffee-3',
+        name: 'Espresso Bar',
+        url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=200&fit=crop&q=80',
+        category: 'cafe'
     },
     {
-        id: 'bldg-4', name: 'Patio urbano', category: 'building',
-        url: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=800&h=200&fit=crop&q=80'
+        id: 'coffee-4',
+        name: 'Pour Over',
+        url: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=800&h=200&fit=crop&q=80',
+        category: 'cafe'
     },
     {
-        id: 'bldg-5', name: 'Arquitectura industrial', category: 'building',
-        url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'bldg-6', name: 'Pabellón Moderno', category: 'building',
-        url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=200&fit=crop&q=80'
+        id: 'coffee-5',
+        name: 'Interior minimalista',
+        url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&h=200&fit=crop&q=80',
+        category: 'cafe'
     },
 
-    // 5. NIGHTLIFE (The Vault) (6)
+    // --- ICE CREAM SPOTS (9) ---
     {
-        id: 'night-1', name: 'Champagne Glow', category: 'nightlife',
-        url: 'https://images.unsplash.com/photo-1598155523122-38423bb4d6c1?w=800&h=200&fit=crop&q=80'
+        id: 'icecream-1',
+        name: 'Helado artesanal',
+        url: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
     },
     {
-        id: 'night-2', name: 'Vodka Magnum', category: 'nightlife',
-        url: 'https://images.unsplash.com/photo-1606836521683-16781be599ab?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'night-3', name: 'Whisky Aged', category: 'nightlife',
-        url: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'night-4', name: 'Cocktail Signature', category: 'nightlife',
-        url: 'https://images.unsplash.com/photo-1514362545857-3bc16549766b?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'night-5', name: 'VIP Service', category: 'nightlife',
-        url: 'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'night-6', name: 'Botellas Sparklers', category: 'nightlife',
-        url: 'https://images.unsplash.com/photo-1594968155453-cae85b9b4781?w=800&h=200&fit=crop&q=80'
+        id: 'icecream-2',
+        name: 'Conos variados',
+        url: 'https://images.unsplash.com/photo-1557142046-c704a3adf364?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
     },
 
-    // 6. EVENTS (Catering) (6)
     {
-        id: 'event-1', name: 'Slider Box', category: 'events',
-        url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=200&fit=crop&q=80'
+        id: 'icecream-4',
+        name: 'Sundae clásico',
+        url: 'https://images.unsplash.com/photo-1560008581-09826d1de69e?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
     },
     {
-        id: 'event-2', name: 'Wings Platter', category: 'events',
-        url: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=800&h=200&fit=crop&q=80'
+        id: 'icecream-5',
+        name: 'Cucharas de sabores',
+        url: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
     },
     {
-        id: 'event-3', name: 'Office Lunch', category: 'events',
-        url: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=800&h=200&fit=crop&q=80'
+        id: 'icecream-6',
+        name: 'Gelato italiano',
+        url: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
     },
     {
-        id: 'event-4', name: 'Mesa de Bodas', category: 'events',
-        url: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=800&h=200&fit=crop&q=80'
+        id: 'icecream-7',
+        name: 'Paletas mexicanas',
+        url: 'https://images.unsplash.com/photo-1505394033641-40c6ad1178d7?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
     },
     {
-        id: 'event-5', name: 'Desayuno Corp', category: 'events',
-        url: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=800&h=200&fit=crop&q=80'
+        id: 'icecream-8',
+        name: 'Soft serve',
+        url: 'https://images.unsplash.com/photo-1629385701021-fcd568a743e8?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
     },
     {
-        id: 'event-6', name: 'Torta Cumpleaños', category: 'events',
-        url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=200&fit=crop&q=80'
-    },
-
-    // 7. STREET FOOD (Trucks) (6)
-    {
-        id: 'street-1', name: 'Choripán', category: 'street',
-        url: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'street-2', name: 'Papas Cargadas', category: 'street',
-        url: 'https://images.unsplash.com/photo-1573080496982-b73a83e91b9f?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'street-3', name: 'Tacos Birria', category: 'street',
-        url: 'https://images.unsplash.com/photo-1599321492590-9eb157c83f2e?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'street-4', name: 'Hot Dog Gourmet', category: 'street',
-        url: 'https://images.unsplash.com/photo-1627042633145-d766d08912e7?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'street-5', name: 'Arepas', category: 'street',
-        url: 'https://images.unsplash.com/photo-1565060169194-192770280b0f?w=800&h=200&fit=crop&q=80'
-    },
-    {
-        id: 'street-6', name: 'Elote Mexicano', category: 'street',
-        url: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=800&h=200&fit=crop&q=80'
+        id: 'icecream-9',
+        name: 'Milkshake',
+        url: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&h=200&fit=crop&q=80',
+        category: 'icecream'
     },
 
-    // 8. FINE DINING (6)
+    // --- CANDY SPOTS (6) ---
+
     {
-        id: 'finedining-1', name: 'Plato de autor', category: 'finedining',
-        url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=200&fit=crop&q=80'
+        id: 'candy-2',
+        name: 'Chocolates finos',
+        url: 'https://images.unsplash.com/photo-1548907040-4baa42d10919?w=800&h=200&fit=crop&q=80',
+        category: 'candy'
     },
     {
-        id: 'finedining-2', name: 'Mesa elegante', category: 'finedining',
-        url: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&h=200&fit=crop&q=80'
+        id: 'candy-3',
+        name: 'Tienda de dulces',
+        url: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=800&h=200&fit=crop&q=80',
+        category: 'candy'
     },
     {
-        id: 'finedining-3', name: 'Steak premium', category: 'finedining',
-        url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=200&fit=crop&q=80'
+        id: 'candy-4',
+        name: 'Macarons',
+        url: 'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=800&h=200&fit=crop&q=80',
+        category: 'candy'
     },
     {
-        id: 'finedining-4', name: 'Postre gourmet', category: 'finedining',
-        url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&h=200&fit=crop&q=80'
+        id: 'candy-5',
+        name: 'Donuts',
+        url: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800&h=200&fit=crop&q=80',
+        category: 'candy'
     },
     {
-        id: 'finedining-5', name: 'Wine pairing', category: 'finedining',
-        url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&h=200&fit=crop&q=80'
+        id: 'candy-6',
+        name: 'Churros',
+        url: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=200&fit=crop&q=80',
+        category: 'candy'
+    },
+
+    // --- SUSHI / ASIAN (9) ---
+    {
+        id: 'sushi-1',
+        name: 'Tabla de sushi',
+        url: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+
+    {
+        id: 'asian-3',
+        name: 'Noodles bowl',
+        url: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
     },
     {
-        id: 'finedining-6', name: 'Seafood tower', category: 'finedining',
-        url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&h=200&fit=crop&q=80'
+        id: 'asian-4',
+        name: 'Dumplings',
+        url: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
     },
+    {
+        id: 'sushi-5',
+        name: 'Nigiri fresco',
+        url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+    {
+        id: 'asian-5',
+        name: 'Ramen bowl',
+        url: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+    {
+        id: 'asian-6',
+        name: 'Bao buns',
+        url: 'https://images.unsplash.com/photo-1544511916-0148ccdeb877?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+    {
+        id: 'asian-7',
+        name: 'Pho vietnamita',
+        url: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+    {
+        id: 'asian-8',
+        name: 'Dim sum',
+        url: 'https://images.unsplash.com/photo-1576577445504-6af96477db52?w=800&h=200&fit=crop&q=80',
+        category: 'asian'
+    },
+
+    // --- HAMBURGER (9) ---
+    {
+        id: 'burger-1',
+        name: 'Burger Doble',
+        url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+    {
+        id: 'burger-2',
+        name: 'Con papas fritas',
+        url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+    {
+        id: 'burger-3',
+        name: 'Smash Burger',
+        url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+    {
+        id: 'burger-4',
+        name: 'Gourmet',
+        url: 'https://images.unsplash.com/photo-1596662951482-0c4ba74a6df6?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+    {
+        id: 'burger-5',
+        name: 'Parrilla',
+        url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+    {
+        id: 'burger-7',
+        name: 'Sliders',
+        url: 'https://images.unsplash.com/photo-1547584370-2cc98b8b8dc8?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+    {
+        id: 'burger-8',
+        name: 'Bacon Explosion',
+        url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+    {
+        id: 'burger-9',
+        name: 'Cheese Stack',
+        url: 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=800&h=200&fit=crop&q=80',
+        category: 'burger'
+    },
+
+    // --- PIZZA (8) ---
+    {
+        id: 'pizza-1',
+        name: 'Margarita',
+        url: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-2',
+        name: 'Pepperoni',
+        url: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-3',
+        name: 'Horno de barro',
+        url: 'https://images.unsplash.com/photo-1590947132387-155cc02f3212?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-4',
+        name: 'Slice New York',
+        url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-5',
+        name: 'Gourmet Veggie',
+        url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-6',
+        name: 'Masa fresca',
+        url: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-7',
+        name: 'Quattro Formaggi',
+        url: 'https://images.unsplash.com/photo-1588315029754-2dd089d39a1a?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+    {
+        id: 'pizza-8',
+        name: 'Pizza party',
+        url: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=800&h=200&fit=crop&q=80',
+        category: 'pizza'
+    },
+
+    // --- AESTHETIC BUILDINGS (5) ---
+    {
+        id: 'bldg-1',
+        name: 'Fachada clásica',
+        url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=200&fit=crop&q=80',
+        category: 'building'
+    },
+    {
+        id: 'bldg-2',
+        name: 'Moderno iluminado',
+        url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&h=200&fit=crop&q=80',
+        category: 'building'
+    },
+    {
+        id: 'bldg-3',
+        name: 'Interior acogedor',
+        url: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=800&h=200&fit=crop&q=80',
+        category: 'building'
+    },
+    {
+        id: 'bldg-4',
+        name: 'Patio urbano',
+        url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&h=200&fit=crop&q=80',
+        category: 'building'
+    },
+    {
+        id: 'bldg-5',
+        name: 'Arquitectura industrial',
+        url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=200&fit=crop&q=80',
+        category: 'building'
+    },
+
+
+    // --- FINE DINING (8) ---
+    {
+        id: 'finedining-1',
+        name: 'Plato de autor',
+        url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-2',
+        name: 'Mesa elegante',
+        url: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-3',
+        name: 'Steak premium',
+        url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-4',
+        name: 'Postre gourmet',
+        url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-5',
+        name: 'Wine pairing',
+        url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-6',
+        name: 'Seafood tower',
+        url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-7',
+        name: 'Tasting menu',
+        url: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    },
+    {
+        id: 'finedining-8',
+        name: 'Chef presentation',
+        url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=200&fit=crop&q=80',
+        category: 'finedining'
+    }
 ]
 
 // Get preset by ID
