@@ -289,12 +289,73 @@ function MenuManager({ config: configProp, demoMode = false }) {
         else console.log('✅ Platform Sync Success')
     }
 
-    // 💾 THE ATOMIC SAVE ("Microsoft Word" Button)
+    // ⚡ THE IMAGE PROCESSOR: Upload blob: URLs to Supabase Storage
+    const processMenuImages = async (currentMenu) => {
+        const updatedMenu = JSON.parse(JSON.stringify(currentMenu))
+        if (updatedMenu.categories) {
+            for (const cat of updatedMenu.categories) {
+                if (cat.items) {
+                    for (const item of cat.items) {
+                        if (item.image && item.image.startsWith('blob:')) {
+                            try {
+                                const response = await fetch(item.image)
+                                const blob = await response.blob()
+                                const filePath = `${targetBusinessId}/${item.id}-${Date.now()}.jpg`
+                                const { error: uploadError } = await supabase.storage
+                                    .from('menu-images')
+                                    .upload(filePath, blob, { upsert: true })
+                                if (uploadError) throw uploadError
+                                const { data } = supabase.storage
+                                    .from('menu-images')
+                                    .getPublicUrl(filePath)
+                                item.image = data.publicUrl
+                                console.log('✅ Uploaded image for:', item.name)
+                            } catch (err) {
+                                console.error('❌ Failed to upload image for:', item.name, err)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return updatedMenu
+    }
+
+    // 🛡️ THE ADDER (Category): Instant-add with unique ID
+    const addCategory = () => {
+        const newCat = {
+            id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            name: 'Nueva Categoría',
+            items: [],
+            icon: '🍽️',
+            enabled: true
+        }
+        setMenu(prev => ({ ...prev, categories: [...prev.categories, newCat] }))
+        setHasChanges(true)
+    }
+
+    // 🗑️ THE DELETER (Category Purge): Removes category from local state
+    const handleDeleteCategory = (catId) => {
+        if (!confirm('¿Eliminar categoría y todos sus ítems?')) return
+        setMenu(prev => ({ ...prev, categories: prev.categories.filter(c => c.id !== catId) }))
+        setHasChanges(true)
+    }
+
+    // 💾 THE ATOMIC SAVE ("Microsoft Word" Button) - Storage-First Edition
     const handlePlatformSave = async () => {
         setIsSaving(true)
         console.log('💾 SAVING VAULT:', targetBusinessId)
 
-        // 1. SYNC BRANDING (Existing)
+        // 0. 🖼️ STORAGE-FIRST: Process all blob: URLs before DB write
+        const processedMenu = await processMenuImages(menu)
+
+        // 0.5. 🛡️ BOUNCER GUARD: Filter invalid categories
+        const validCategories = processedMenu.categories.filter(cat =>
+            cat && cat.id && Array.isArray(cat.items)
+        )
+        const menuToSave = { ...processedMenu, categories: validCategories }
+
+        // 1. SYNC BRANDING (Including Processed Menu)
         const { error: brandingError } = await supabase
             .from('branding')
             .update({
@@ -302,8 +363,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 delivery_radius: localConfig.delivery?.radiusKm,
                 delivery_fee: localConfig.delivery?.flatFee,
                 free_delivery_threshold: localConfig.delivery?.freeDeliveryThreshold,
-                app_config: localConfig, // 🛡️ LOCKS HIGHLIGHTS
-                menu_data: menu,         // 🛡️ LOCKS FOOD
+                app_config: localConfig,
+                menu_data: menuToSave,         // 🛡️ LOCKS FOOD with processed images
                 updated_at: new Date()
             })
             .eq('business_id', targetBusinessId)
@@ -315,9 +376,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
 
         // 2. 🛡️ DUAL-SYNC: UPSERT HERO ITEMS to menu_items table
-        // This ensures the "Hero" section has real DB rows to display prices/names correctly.
         const heroItems = (localConfig.featuredPhotos || []).slice(0, 4).map((slot, index) => ({
-            id: `hero-${index + 1}`, // Fixed IDs: hero-1, hero-2, hero-3, hero-4
+            id: `hero-${index + 1}`,
             business_id: targetBusinessId,
             name: slot?.name || 'Destacado',
             price: parseInt(slot?.price) || 0,
@@ -326,26 +386,24 @@ function MenuManager({ config: configProp, demoMode = false }) {
             description: 'Hero Item'
         }))
 
-        // Filter out empty slots if we don't want to pollute DB (optional, but safer to sync all 4 placeholders)
-        // We sync all 4 to ensure the DB matches the 4 visible slots in UI.
         const { error: menuError } = await supabase
             .from('menu_items')
-            .upsert(heroItems, { onConflict: 'id, business_id' })
+            .upsert(heroItems, { onConflict: 'id' })
 
         if (menuError) {
             console.error('❌ Error Syncing Hero Items:', menuError)
-            // We don't block the success message for this, but log it.
         } else {
             console.log('✅ Hero Items Synced to DB')
         }
 
         // 3. FINALIZE
+        setMenu(menuToSave) // Update local state with processed URLs
         setHasChanges(false)
         sessionStorage.removeItem(`dirty_${targetBusinessId}`)
         setSaveStatus({ message: '✓ Sistema Sincronizado' })
         setTimeout(() => setSaveStatus(null), 3000)
 
-        // 🔄 GLOBAL REFRESH: Update TenantContext to sync all components
+        // 🔄 GLOBAL REFRESH
         await refreshTenantData()
 
         setIsSaving(false)
