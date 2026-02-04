@@ -393,59 +393,60 @@ export default function Menu({ config: configProp }) {
 
     // ====== ATOMIC SAVE HANDLER (MENU) ======
     const handlePlatformSave = async () => {
-        setIsSaving(true)
+        if (!businessId) return;
+        setIsSaving(true);
         try {
-            // 1. SAVE CATEGORIES FIRST (Build the Silos)
-            const categoriesPayload = menu.categories.map((cat, index) => ({
+            // 🛡️ THE BOUNCER GUARD: Filter out null/empty ghost categories
+            const validCategories = menu.categories.filter(cat =>
+                cat && cat.id && Array.isArray(cat.items)
+            );
+
+            console.log(`🚀 [UNIVERSAL SAVE] Found ${validCategories.length} valid categories.`);
+
+            // 1. PHASE 1: Build valid category silos
+            const categoryPayload = validCategories.map((cat, idx) => ({
                 id: cat.id,
                 business_id: businessId,
                 name: cat.name,
-                icon: cat.icon,
-                display_order: index
-            }))
-
-            console.log('[PLATFORM SAVE] 🏗️ Building Silos (Categories):', categoriesPayload.length)
+                icon: cat.icon || '🍽️',
+                display_order: idx
+            }));
 
             const { error: catError } = await supabase
                 .from('categories')
-                .upsert(categoriesPayload, { onConflict: 'id' })
+                .upsert(categoryPayload, { onConflict: 'id' });
 
-            if (catError) {
-                console.error('[PLATFORM SAVE] ❌ Category Silo Failed:', catError)
-                throw catError
-            }
+            if (catError) throw catError;
 
-            // 2. SAVE ITEMS (Fill the Silos)
-            // Upsert all items from all categories to ensure order is persisted
-            // Flatten items
-            const allItems = menu.categories.flatMap(cat => cat.items.map((item, idx) => ({
-                id: item.id,
-                business_id: businessId,
-                category_id: cat.id,
-                name: item.name,
-                price: item.price,
-                image: item.image,
-                available: item.available,
-                display_order: idx
-            })))
+            // 2. PHASE 2: Map and upsert valid menu items
+            const itemPayload = validCategories.flatMap(cat =>
+                cat.items.map((item, idx) => ({
+                    id: item.id,
+                    business_id: businessId,
+                    category_id: cat.id,
+                    name: item.name,
+                    price: item.price || 0,
+                    image: item.image || null,
+                    available: item.available ?? true,
+                    display_order: idx
+                }))
+            );
 
-            console.log('[PLATFORM SAVE] 📦 Storing Stock (Items):', allItems.length)
-
-            const { error } = await supabase
+            const { error: itemError } = await supabase
                 .from('menu_items')
-                .upsert(allItems, { onConflict: 'id' })
+                .upsert(itemPayload, { onConflict: 'id' });
 
-            if (error) throw error
+            if (itemError) throw itemError;
 
-            setHasChanges(false)
-            if (navigator.vibrate) navigator.vibrate([50, 50])
-            console.log('[PLATFORM SAVE] Success')
+            setHasChanges(false);
+            if (navigator.vibrate) navigator.vibrate([50, 50]);
+            console.log('🎯 [VAULT SEALED] Clean Save Successful.');
 
         } catch (e) {
-            console.error('[PLATFORM SAVE] Error:', e)
-            alert('Error al guardar menu')
+            console.error('❌ [SAVE FAILED]', e);
+            alert('Save Error: ' + e.message);
         } finally {
-            setIsSaving(false)
+            setIsSaving(false);
         }
     }
 
