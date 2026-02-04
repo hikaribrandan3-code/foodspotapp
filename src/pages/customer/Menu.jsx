@@ -395,6 +395,27 @@ export default function Menu({ config: configProp }) {
     const handlePlatformSave = async () => {
         setIsSaving(true)
         try {
+            // 1. SAVE CATEGORIES FIRST (Build the Silos)
+            const categoriesPayload = menu.categories.map((cat, index) => ({
+                id: cat.id,
+                business_id: businessId,
+                name: cat.name,
+                icon: cat.icon,
+                display_order: index
+            }))
+
+            console.log('[PLATFORM SAVE] 🏗️ Building Silos (Categories):', categoriesPayload.length)
+
+            const { error: catError } = await supabase
+                .from('categories')
+                .upsert(categoriesPayload, { onConflict: 'id' })
+
+            if (catError) {
+                console.error('[PLATFORM SAVE] ❌ Category Silo Failed:', catError)
+                throw catError
+            }
+
+            // 2. SAVE ITEMS (Fill the Silos)
             // Upsert all items from all categories to ensure order is persisted
             // Flatten items
             const allItems = menu.categories.flatMap(cat => cat.items.map((item, idx) => ({
@@ -408,7 +429,7 @@ export default function Menu({ config: configProp }) {
                 display_order: idx
             })))
 
-            console.log('[PLATFORM SAVE] Persisting Menu Items:', allItems.length)
+            console.log('[PLATFORM SAVE] 📦 Storing Stock (Items):', allItems.length)
 
             const { error } = await supabase
                 .from('menu_items')
