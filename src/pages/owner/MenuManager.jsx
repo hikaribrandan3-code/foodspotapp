@@ -317,26 +317,39 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // ⚡ THE IMAGE PROCESSOR: Upload from Pending Buffer (Raw File)
     const processMenuImages = async (currentMenu, fileBuffer) => {
         const updatedMenu = JSON.parse(JSON.stringify(currentMenu))
+
+        // 🛡️ REFACTOR: Use explicit indexing to guarantee mutation
         if (updatedMenu.categories) {
-            for (const cat of updatedMenu.categories) {
+            for (let c = 0; c < updatedMenu.categories.length; c++) {
+                const cat = updatedMenu.categories[c]
                 if (cat.items) {
-                    for (const item of cat.items) {
-                        // Check if we have a raw file in the buffer for this item
+                    for (let i = 0; i < cat.items.length; i++) {
+                        const item = cat.items[i]
                         const fileToUpload = fileBuffer[item.id]
+
+                        // 🔍 DEBUG: Check if we have a file for this item
+                        if (fileBuffer[item.id]) {
+                            console.log(`[ImageProcessor] 📸 Found pending file for: ${item.name} (${item.id})`)
+                        }
+
                         if (fileToUpload) {
                             try {
                                 const filePath = `${targetBusinessId}/${item.id}-${Date.now()}.jpg`
                                 const { error: uploadError } = await supabase.storage
                                     .from('menu-images')
                                     .upload(filePath, fileToUpload, { upsert: true })
+
                                 if (uploadError) throw uploadError
+
                                 const { data } = supabase.storage
                                     .from('menu-images')
                                     .getPublicUrl(filePath)
-                                item.image = data.publicUrl
-                                console.log('✅ Uploaded image for:', item.name)
+
+                                // ⚡ MUTATION: Explicitly update the object in the array
+                                cat.items[i].image = data.publicUrl
+                                console.log(`[ImageProcessor] ✅ REPLACED BLOB for ${item.name}: ${data.publicUrl}`)
                             } catch (err) {
-                                console.error('❌ Failed to upload image for:', item.name, err)
+                                console.error(`[ImageProcessor] ❌ Failed to upload image for: ${item.name}`, err)
                             }
                         }
                     }
@@ -379,6 +392,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
             cat && cat.id && Array.isArray(cat.items)
         )
         const menuToSave = { ...processedMenu, categories: validCategories }
+
+        // 🔍 INTERCEPTOR: Audit menuToSave for blob URLs
+        console.log('🔍 INTERCEPTOR: Auditing menu payload before save...')
+        menuToSave.categories.forEach(cat => {
+            cat.items.forEach(item => {
+                if (item.image && item.image.startsWith('blob:')) {
+                    console.error(`🚨 CRITICAL: Blob URL detected in payload for ${item.name}!`, item.image)
+                }
+            })
+        })
 
         // 1. SYNC BRANDING (Including Processed Menu)
         const { error: brandingError } = await supabase
