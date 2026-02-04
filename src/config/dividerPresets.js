@@ -348,37 +348,7 @@ export const DIVIDER_PRESETS = [
         category: 'pizza'
     },
 
-    // --- AESTHETIC BUILDINGS (5) ---
-    {
-        id: 'bldg-1',
-        name: 'Fachada clásica',
-        url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=200&fit=crop&q=80',
-        category: 'building'
-    },
-    {
-        id: 'bldg-2',
-        name: 'Moderno iluminado',
-        url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&h=200&fit=crop&q=80',
-        category: 'building'
-    },
-    {
-        id: 'bldg-3',
-        name: 'Interior acogedor',
-        url: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=800&h=200&fit=crop&q=80',
-        category: 'building'
-    },
-    {
-        id: 'bldg-4',
-        name: 'Patio urbano',
-        url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&h=200&fit=crop&q=80',
-        category: 'building'
-    },
-    {
-        id: 'bldg-5',
-        name: 'Arquitectura industrial',
-        url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=200&fit=crop&q=80',
-        category: 'building'
-    },
+
 
     // --- FINE DINING (8) ---
     {
