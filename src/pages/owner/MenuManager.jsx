@@ -208,6 +208,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         () => sessionStorage.getItem(`dirty_${targetBusinessId}`) === 'true'
     )
     const [isSaving, setIsSaving] = useState(false)
+    // 📦 PENDING FILE BUFFER: Holds raw File objects until save
+    const [pendingFiles, setPendingFiles] = useState({})
 
     // 💾 Persist dirty state to sessionStorage
     useEffect(() => {
@@ -289,21 +291,21 @@ function MenuManager({ config: configProp, demoMode = false }) {
         else console.log('✅ Platform Sync Success')
     }
 
-    // ⚡ THE IMAGE PROCESSOR: Upload blob: URLs to Supabase Storage
-    const processMenuImages = async (currentMenu) => {
+    // ⚡ THE IMAGE PROCESSOR: Upload from Pending Buffer (Raw File)
+    const processMenuImages = async (currentMenu, fileBuffer) => {
         const updatedMenu = JSON.parse(JSON.stringify(currentMenu))
         if (updatedMenu.categories) {
             for (const cat of updatedMenu.categories) {
                 if (cat.items) {
                     for (const item of cat.items) {
-                        if (item.image && item.image.startsWith('blob:')) {
+                        // Check if we have a raw file in the buffer for this item
+                        const fileToUpload = fileBuffer[item.id]
+                        if (fileToUpload) {
                             try {
-                                const response = await fetch(item.image)
-                                const blob = await response.blob()
                                 const filePath = `${targetBusinessId}/${item.id}-${Date.now()}.jpg`
                                 const { error: uploadError } = await supabase.storage
                                     .from('menu-images')
-                                    .upload(filePath, blob, { upsert: true })
+                                    .upload(filePath, fileToUpload, { upsert: true })
                                 if (uploadError) throw uploadError
                                 const { data } = supabase.storage
                                     .from('menu-images')
@@ -346,8 +348,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setIsSaving(true)
         console.log('💾 SAVING VAULT:', targetBusinessId)
 
-        // 0. 🖼️ STORAGE-FIRST: Process all blob: URLs before DB write
-        const processedMenu = await processMenuImages(menu)
+        // 0. 🖼️ STORAGE-FIRST: Process all pending files before DB write
+        const processedMenu = await processMenuImages(menu, pendingFiles)
 
         // 0.5. 🛡️ BOUNCER GUARD: Filter invalid categories
         const validCategories = processedMenu.categories.filter(cat =>
@@ -398,6 +400,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
         // 3. FINALIZE
         setMenu(menuToSave) // Update local state with processed URLs
+        setPendingFiles({}) // 🗑️ CLEANUP: Clear the file buffer
         setHasChanges(false)
         sessionStorage.removeItem(`dirty_${targetBusinessId}`)
         setSaveStatus({ message: '✓ Sistema Sincronizado' })
@@ -452,6 +455,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
             // 🛡️ FIX: Sync Modal with Optimistic Image
             setEditForm(prev => ({ ...prev, image: previewUrl }))
         } else if (targetItem) {
+            // 📦 BUFFER: Store raw file for later upload
+            setPendingFiles(prev => ({ ...prev, [targetItem.itemId]: file }))
             setMenu(prevMenu => {
                 const newMenu = { ...prevMenu }
                 const cat = newMenu.categories.find(c => c.id === targetItem.categoryId)
