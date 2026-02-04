@@ -45,7 +45,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
             // 🛡️ DATA INTEGRITY: Hard-Check for menu_data
             if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
                 console.log('[MenuManager] 🎯 HYDRATING FROM CLOUD:', tenantData.menu_data)
-                setMenu(tenantData.menu_data)
+                // 🛡️ BOUNCER GUARD: Sanitize items to ensure they are arrays
+                const sanitizedCategories = tenantData.menu_data.categories.map(cat => ({
+                    ...cat,
+                    items: Array.isArray(cat.items) ? cat.items : []
+                }))
+                setMenu({ categories: sanitizedCategories })
             } else {
                 console.log('[MenuManager] 🌱 NO CLOUD DATA: Seeding Default Menu')
                 setMenu({
@@ -1227,7 +1232,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 border: '1px solid #E2E8F0',
                                 boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                             }}>
-                                {category.items.map((item, idx) => (
+                                {(category.items || []).map((item, idx) => (
                                     <div key={item.id} style={{
                                         display: 'flex',
                                         alignItems: 'flex-start',
