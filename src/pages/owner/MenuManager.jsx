@@ -809,16 +809,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const slot = activeFeaturedItems[index] || { name: '', price: 0, image: null }
         console.log('🎯 EXPLICIT TRIGGER: Opening Highlight Slot', index)
 
-        // 1. Open the Modal first
+        // 1. Set context for the upload
         setEditingItem({ isFeaturedSlot: true, index })
-        setEditForm({
-            name: slot.name || 'Destacado',
-            price: slot.price ? slot.price.toString() : '', // 🛡️ NO STICKY ZERO
-            image: slot.image || null
-        })
 
-        // 2. 🛡️ NO AUTO-TRIGGER: We now wait for user to interact with the modal
-        // The "Subir Imagen" button in the modal will handle the file picker routing.
+        // 2. 🛡️ BYPASS MODAL: Trigger File Input directly (Click-to-Upload)
+        // This matches the behavior of regular menu items
+        activeFeaturedSlotRef.current = index
+        fileInputRef.current?.click()
     }
 
     // 🚧 THE GATEKEEPER (Bypass Mode): Only block if tenant context is NOT loaded.
