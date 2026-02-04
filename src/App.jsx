@@ -6,6 +6,7 @@ import { sanitizeForAdmin } from './utils/adminSanitize.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
 import { useTenant } from './contexts/TenantContext.jsx'
+import { CartProvider } from './contexts/CartContext.jsx'
 import { supabase, getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
 
 // Components
@@ -533,55 +534,57 @@ function App() {
     // 🏢 TENANT ROUTES: Full provider tree with all context
     return (
         <AdminIntentProvider>
-            <div className="app-container">
-                <RouteAreaWrapper>
-                    <Routes>
-                        <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
-                        <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
-                        <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
-                        <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
-                        <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
-                        <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
-                        <Route path="/:tenantSlug/rewards" element={<Rewards config={safeConfig} />} />
-                        <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
-                        <Route path="/:tenantSlug/game" element={<PerfectPour />} />
-                        <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
-                        <Route path="/:tenantSlug/promos" element={<Promos config={safeConfig} />} />
+            <CartProvider>
+                <div className="app-container">
+                    <RouteAreaWrapper>
+                        <Routes>
+                            <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
+                            <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
+                            <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
+                            <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
+                            <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
+                            <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
+                            <Route path="/:tenantSlug/rewards" element={<Rewards config={safeConfig} />} />
+                            <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
+                            <Route path="/:tenantSlug/game" element={<PerfectPour />} />
+                            <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
+                            <Route path="/:tenantSlug/promos" element={<Promos config={safeConfig} />} />
 
-                        <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
-                        <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
-                        <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
+                            <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
+                            <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
+                            <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
 
-                        <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
-                        <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
-                        <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
-                        <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
-                        <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager config={safeConfig} /></ProtectedRoute>} />
-                        <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
-                        <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
-                        <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
+                            <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager config={safeConfig} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
 
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </RouteAreaWrapper>
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </RouteAreaWrapper>
 
-                {(() => {
-                    const p = location.pathname;
-                    const isOwner = p.includes('/owner');
-                    const isStaff = p.includes('/staff');
+                    {(() => {
+                        const p = location.pathname;
+                        const isOwner = p.includes('/owner');
+                        const isStaff = p.includes('/staff');
 
-                    if (isOwner || isStaff) {
-                        return (
-                            <BackendNav
-                                role={isOwner ? "owner" : "staff"}
-                                useRoutes={true}
-                            />
-                        );
-                    }
+                        if (isOwner || isStaff) {
+                            return (
+                                <BackendNav
+                                    role={isOwner ? "owner" : "staff"}
+                                    useRoutes={true}
+                                />
+                            );
+                        }
 
-                    return <BottomNav config={safeConfig} />;
-                })()}
-            </div>
+                        return <BottomNav config={safeConfig} />;
+                    })()}
+                </div>
+            </CartProvider>
         </AdminIntentProvider>
     );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
+import { useCart } from '../../contexts/CartContext'
 import { MenuSkeleton } from '../../components/Shimmers.jsx'
 import HeaderClamp from '../../components/HeaderClamp'
 import { getDividerPreset } from '../../config/dividerPresets'
@@ -61,6 +62,7 @@ const SEED_MENU = {
 
 export default function Menu({ config: configProp }) {
     const { businessId, tenantData, isLoaded: tenantLoaded, loading: tenantLoading } = useTenant()
+    const { openOrderSheet, cart, cartTotal } = useCart()
     const navigate = useNavigate()
 
     // =========================================================================
@@ -452,6 +454,15 @@ export default function Menu({ config: configProp }) {
 
     const visibleCategories = menu.categories.filter(c => c.enabled !== false || isOwnerMode)
     const enabledCategories = visibleCategories.filter(c => c.items?.length > 0)
+    const hasCartItems = cart?.items?.length > 0
+
+    // 🛒 CUSTOMER INTERACTION: Open Bottom Sheet
+    const handleItemClick = (item) => {
+        if (isEditMode) return; // Owners rearrange; Customers order.
+        if (!item.available) return;
+        if (navigator.vibrate) navigator.vibrate(5);
+        openOrderSheet(item);
+    }
 
     return (
         <div style={{ minHeight: '100vh', paddingBottom: 100, background: 'var(--color-bg, #F9FAFB)', maxWidth: '92%', margin: '0 auto' }}>
@@ -574,6 +585,7 @@ export default function Menu({ config: configProp }) {
 
                                 return (
                                     <div key={item.id} data-item-id={item.id}
+                                        onClick={() => !isEditMode && !dragState && handleItemClick(item)}
                                         onTouchStart={isEditMode ? (e) => handleTouchStart(e, category.id, item, index, category.items) : undefined}
                                         onTouchEnd={handleTouchEndOrMove} onTouchMove={handleTouchEndOrMove}
                                         onMouseDown={isEditMode ? (e) => initiateDrag(e, category.id, item, index, category.items) : undefined}
@@ -605,6 +617,61 @@ export default function Menu({ config: configProp }) {
                     </div>
                 ))}
             </div>
+
+            {/* 🛒 RECEIPT BAR: Shows when cart has items */}
+            {hasCartItems && !isEditMode && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: 'calc(var(--nav-height, 60px) + 8px)',
+                    left: 16,
+                    right: 16,
+                    background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+                    borderRadius: 16,
+                    padding: '14px 20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 8px 30px rgba(34, 197, 94, 0.4)',
+                    zIndex: 9997,
+                    animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{
+                            background: 'rgba(255,255,255,0.25)',
+                            borderRadius: 10,
+                            width: 36,
+                            height: 36,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: 16,
+                            color: 'white'
+                        }}>
+                            {cart.items.reduce((sum, i) => sum + i.quantity, 0)}
+                        </div>
+                        <span style={{ fontSize: 17, fontWeight: 700, color: 'white' }}>
+                            ${cartTotal.toLocaleString('es-AR')}
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => navigate(`/${tenantData?.slug || 'demo'}/order`)}
+                        style={{
+                            background: 'white',
+                            color: '#16A34A',
+                            border: 'none',
+                            borderRadius: 12,
+                            padding: '10px 20px',
+                            fontWeight: 700,
+                            fontSize: 15,
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                    >
+                        VER PEDIDO
+                    </button>
+                </div>
+            )}
 
             {/* Owner Pill - 🛡️ IMMORTAL: Uses localStorage safety check */}
             {(() => {
