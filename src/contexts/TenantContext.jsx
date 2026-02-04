@@ -59,6 +59,8 @@ export function TenantProvider({ children }) {
                     console.log('[TenantContext] ✅ VAULT LOADED:', data.business_name)
 
                     // 🛡️ MIRROR-FIRST HYDRATION: Fetch from 'menu_view' (The Universal Truth)
+                    // ⚠️ BLOCKED: Mirror is returning stale/dead blobs. Bypass to 'branding' table.
+                    /*
                     const { data: mirrorData } = await supabase
                         .from('menu_view')
                         .select('menu_data')
@@ -71,6 +73,8 @@ export function TenantProvider({ children }) {
                     } else {
                         console.log('[TenantContext] ⚠️ MIRROR MISSING: Falling back to Legacy-Stale Data')
                     }
+                    */
+                    console.log('[TenantContext] 🛡️ MIRROR BYPASS: Reading direct from Branding Table')
 
                     // 🛡️ ALIGNED: Using business_id column (Fixed 2026-01-29)
                     setBusinessId(data.business_id)
@@ -134,6 +138,8 @@ export function TenantProvider({ children }) {
 
         if (!error && data) {
             // 🛡️ MIRROR-FIRST REFRESH
+            // ⚠️ BLOCKED: Mirror is stale. Bypass.
+            /*
             const { data: mirrorData } = await supabase
                 .from('menu_view')
                 .select('menu_data')
@@ -144,6 +150,8 @@ export function TenantProvider({ children }) {
                 console.log('[TenantContext] 🪞 REFRESH MIRROR: Updated with Universal Data')
                 data.menu_data = mirrorData.menu_data
             }
+            */
+            console.log('[TenantContext] 🛡️ REFRESH BYPASS: Reading direct from Branding Table')
 
             setTenantData(data)
             console.log('✅ GLOBAL REFRESH COMPLETE')
