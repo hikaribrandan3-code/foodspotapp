@@ -57,10 +57,19 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🔒 HYDRATION LOCK: Prevents sync until cloud data is loaded
     const isHydratedRef = useRef(false)
+    // 🛡️ ANTI-BOUNCE: Blocks hydration if we just saved (Replica Lag Guard)
+    const ignoreCloudUpdateRef = useRef(false)
 
     // SYNC: Update menu when tenantData loads from cloud (Gatekeeper Bypass)
     useEffect(() => {
         if (tenantLoaded) {
+            // 🛡️ ANTI-BOUNCE GUARD: If we just saved, TRUST LOCAL STATE
+            if (ignoreCloudUpdateRef.current) {
+                console.log('[MenuManager] 🛡️ IGNORING STALE CLOUD DATA (Anti-Bounce Active)')
+                ignoreCloudUpdateRef.current = false
+                return
+            }
+
             // 🛡️ DATA INTEGRITY: Hard-Check for menu_data
             if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
                 console.log('[MenuManager] 🎯 HYDRATING FROM CLOUD:', tenantData.menu_data)
@@ -453,6 +462,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setTimeout(() => setSaveStatus(null), 3000)
 
         // 🔄 GLOBAL REFRESH
+        ignoreCloudUpdateRef.current = true // 🛡️ ACTIVATE ANTI-BOUNCE
         await refreshTenantData()
 
         setIsSaving(false)
