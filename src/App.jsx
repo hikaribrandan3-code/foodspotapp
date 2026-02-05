@@ -25,6 +25,7 @@ import ShareFood from './pages/customer/ShareFood.jsx'
 import PerfectPour from './pages/customer/PerfectPour.jsx'
 import Info from './pages/customer/Info.jsx'
 import Promos from './pages/customer/Promos.jsx'
+import Arcade from './pages/customer/Arcade.jsx'
 
 // Staff Pages
 import StaffLogin from './pages/staff/StaffLogin.jsx'
@@ -581,6 +582,7 @@ function App() {
                             <Route path="/:tenantSlug/rewards" element={<Rewards config={safeConfig} />} />
                             <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
                             <Route path="/:tenantSlug/game" element={<PerfectPour />} />
+                            <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
                             <Route path="/:tenantSlug/promos" element={<Promos config={safeConfig} />} />
 
