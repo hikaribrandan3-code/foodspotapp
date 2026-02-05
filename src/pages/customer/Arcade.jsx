@@ -4,10 +4,13 @@ import { useTenant } from '../../contexts/TenantContext'
 
 /**
  * Arcade - TikTok-Style Vertical Swipe Game Discovery Feed
- * PERFECT 10 EDITION - Pointer Events Fixed for Scroll
+ * PERFECT 10 EDITION - VISUAL PURITY ACT
+ * - Clean Covers (No redundant text)
+ * - Bigger Header
+ * - Cinematic Layout
  */
 
-// 🎮 GAME REGISTRY: The Perfect 10 games with verified covers
+// 🎮 GAME REGISTRY: The Perfect 10 games
 const GAMES = [
     { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash.jpg' },
     { id: 'triple-snap-slots', title: 'Triple Snap', hook: 'Can you hit the jackpot?', cover: '/games/triplesnapslots.jpg' },
@@ -26,10 +29,11 @@ const Arcade = () => {
     const { tenantData, slug: tenantSlug } = useTenant()
     const containerRef = useRef(null)
 
+    // 🎮 STATE
     const [activeGameId, setActiveGameId] = useState(null)
     const [visibleIndex, setVisibleIndex] = useState(0)
 
-    // 🛡️ SCROLL UNLOCK
+    // 🛡️ SCROLL & INTERACTION UNLOCK
     useEffect(() => {
         document.body.style.overflow = 'hidden' // Lock body, scroll inside container
         document.body.style.touchAction = 'none'
@@ -87,7 +91,7 @@ const Arcade = () => {
             display: 'flex',
             flexDirection: 'column',
             height: '100dvh',
-            pointerEvents: 'auto' /* 🛡️ FORCE INTERACTION ON ROOT */
+            pointerEvents: 'auto'
         }}>
             {/* 🎨 HEADER */}
             <header style={{
@@ -98,11 +102,11 @@ const Arcade = () => {
                 zIndex: 100,
                 padding: '12px',
                 paddingTop: 'calc(env(safe-area-inset-top, 12px) + 12px)',
-                background: 'rgba(15, 23, 42, 0.6)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                pointerEvents: 'none' /* 🛡️ LET TOUCHES PASS THROUGH */
+                background: 'rgba(15, 23, 42, 0.4)', /* Lighter backdrop */
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                pointerEvents: 'none'
             }}>
                 <div style={{
                     display: 'flex',
@@ -112,7 +116,7 @@ const Arcade = () => {
                     <button
                         onClick={handleBack}
                         style={{
-                            background: 'rgba(255,255,255,0.1)',
+                            background: 'rgba(255,255,255,0.15)',
                             border: 'none',
                             padding: 8,
                             borderRadius: '50%',
@@ -120,7 +124,7 @@ const Arcade = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            pointerEvents: 'auto' /* 🛡️ BACK BUTTON IS CLICKABLE */
+                            pointerEvents: 'auto'
                         }}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -129,15 +133,35 @@ const Arcade = () => {
                     </button>
 
                     <div style={{ textAlign: 'center', pointerEvents: 'none' }}>
-                        <p style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{businessName}</p>
-                        <h1 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 18, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Discover Games</h1>
+                        {/* 💎 UPDATED VISUAL HIERARCHY */}
+                        <p style={{
+                            fontSize: 14, /* Bigger */
+                            fontWeight: 700, /* Bolder */
+                            color: '#FFFFFF', /* Brighter */
+                            margin: 0,
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                        }}>
+                            {businessName}
+                        </p>
+                        <h1 style={{
+                            display: 'none' /* Hidden for cleaner look, or verify if user wants title too? Keeping for now hidden to emphasize brand */
+                        }}>Discover Games</h1>
+                        {/* Option B: Keep title smaller? Let's assume user wants BRAND name big. */}
+                        <p style={{
+                            fontSize: 10,
+                            fontWeight: 500,
+                            color: 'rgba(255,255,255,0.7)',
+                            margin: 0
+                        }}>ARCADE</p>
                     </div>
 
                     <div style={{ width: 40 }} />
                 </div>
             </header>
 
-            {/* 🎮 SCROLL CONTAINER - THE ONE TRUE SCROLLABLE ELEMENT */}
+            {/* 🎮 SCROLL CONTAINER */}
             <div
                 ref={containerRef}
                 style={{
@@ -150,8 +174,8 @@ const Arcade = () => {
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
                     overscrollBehaviorY: 'contain',
-                    touchAction: 'pan-y', /* 🛡️ CRITICAL: ONLY VERTICAL SCROLL */
-                    pointerEvents: 'auto' /* 🛡️ FORCE INTERACTION ON SCROLL CONTAINER */
+                    touchAction: 'pan-y',
+                    pointerEvents: 'auto'
                 }}
             >
                 {GAMES.map((game, index) => (
@@ -175,7 +199,7 @@ const Arcade = () => {
                 right: 0,
                 display: 'flex',
                 zIndex: 100,
-                pointerEvents: 'none' /* 🛡️ LET TOUCHES PASS THROUGH */
+                pointerEvents: 'none'
             }}>
                 {GAMES.map((_, idx) => (
                     <div key={idx} style={{
@@ -196,7 +220,7 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
             data-game-id={game.id}
             data-index={index}
             style={{
-                height: '100dvh', /* 🛡️ FULL DYNAMIC VIEWPORT HEIGHT */
+                height: '100dvh',
                 width: '100%',
                 scrollSnapAlign: 'start',
                 position: 'relative',
@@ -225,61 +249,46 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                         allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
                     />
                 ) : (
-                    /* 📺 POSTER MODE */
+                    /* 📺 POSTER MODE - CLEAN */
                     <div style={{
                         position: 'absolute',
                         inset: 0,
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'flex-end',
+                        /* 📷 CENTERED COVER, NO CROPPING THE TOP LOGO */
                         backgroundImage: `url(${game.cover})`,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center',
+                        backgroundPosition: 'center 20%', /* Shift focus slightly up so logo is safe */
                         backgroundColor: '#1E293B',
-                        pointerEvents: 'none' /* 🛡️ LET SCROLL THROUGH */
+                        pointerEvents: 'none'
                     }}>
-                        {/* Gradient Overlay */}
+                        {/* 🔽 REDUCED GRADIENT - ONLY BOTTOM 25% */}
                         <div style={{
                             position: 'absolute',
                             bottom: 0,
                             left: 0,
                             right: 0,
-                            height: '50%',
-                            background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.9) 100%)',
+                            height: '25%',
+                            background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 100%)',
                             pointerEvents: 'none'
                         }} />
 
-                        {/* UI Layer */}
+                        {/* 🕹️ UI Layer - BUTTON ONLY */}
                         <div style={{
                             position: 'relative',
                             padding: 24,
                             paddingBottom: 40,
                             zIndex: 10,
-                            pointerEvents: 'none' /* 🛡️ TEXT IS TRANSPARENT TO TOUCH */
+                            pointerEvents: 'none',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            flexDirection: 'column'
                         }}>
-                            <h2 style={{
-                                fontFamily: 'Montserrat, sans-serif',
-                                fontSize: 28,
-                                fontWeight: 900,
-                                color: '#FFFFFF',
-                                margin: 0,
-                                marginBottom: 8,
-                                textShadow: '0 2px 8px rgba(0,0,0,0.5)'
-                            }}>
-                                {game.title}
-                            </h2>
-                            <p style={{
-                                fontSize: 16,
-                                fontWeight: 400,
-                                color: '#CBD5E1',
-                                margin: 0,
-                                marginBottom: 24,
-                                textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                            }}>
-                                {game.hook}
-                            </p>
+                            {/* 🧹 TITLE & HOOK DELETED as requested */}
 
-                            {/* PLAY BUTTON - ONLY CLICKABLE ELEMENT ON CARD */}
+                            {/* PLAY BUTTON - ONLY CLICKABLE ELEMENT */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -296,7 +305,7 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                                     color: '#FFFFFF',
                                     cursor: 'pointer',
                                     boxShadow: '0 8px 16px rgba(59, 130, 246, 0.4)',
-                                    pointerEvents: 'auto' /* 🛡️ ONLY THIS IS CLICKABLE */
+                                    pointerEvents: 'auto'
                                 }}
                             >
                                 PLAY NOW
