@@ -42,8 +42,8 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 justifyContent: 'center',
                 paddingTop: 64,
                 paddingBottom: 40,
-                paddingLeft: 24,
-                paddingRight: 24,
+                paddingLeft: 12, /* 12px Gutter Sync */
+                paddingRight: 12, /* 12px Gutter Sync */
                 textAlign: 'center'
             }}>
                 <div style={{
@@ -58,7 +58,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                     boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                     border: '1px solid rgba(241, 245, 249, 1)'
                 }}>
-                    <span style={{ fontSize: 30 }}>📋</span>
+                    <span style={{ fontSize: 22, opacity: 0.7 }}>📋</span>
                 </div>
                 <h2 style={{
                     color: '#94A3B8',
@@ -71,14 +71,24 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 }}>
                     Mis Pedidos
                 </h2>
-                <p style={{
-                    color: '#0F172A',
-                    fontSize: 18,
-                    fontWeight: 700,
-                    margin: '8px 0 0 0'
+                {/* Structural Anchor: Card Center of Gravity */}
+                <div style={{
+                    marginTop: 16,
+                    padding: '12px 16px',
+                    background: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 12,
+                    display: 'inline-block'
                 }}>
-                    No tenés pedidos activos
-                </p>
+                    <p style={{
+                        color: '#64748B',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        margin: 0
+                    }}>
+                        No tenés pedidos activos
+                    </p>
+                </div>
             </div>
 
             {/* 2. SaaS Action Pills — Linked to Functional Logic */}
@@ -86,7 +96,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: 12,
-                padding: '0 24px',
+                padding: '0 12px', /* 12px Gutter Sync */
                 marginBottom: 48
             }}>
                 <button
@@ -105,7 +115,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         transition: 'transform 0.1s ease'
                     }}
                 >
-                    <span style={{ fontSize: 20 }}>🚚</span>
+                    <span style={{ fontSize: 16, opacity: 0.7 }}>🚚</span>
                     <span style={{ fontWeight: 700, color: '#334155' }}>Delivery</span>
                 </button>
                 <button
@@ -124,13 +134,13 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         transition: 'transform 0.1s ease'
                     }}
                 >
-                    <span style={{ fontSize: 20 }}>🎁</span>
+                    <span style={{ fontSize: 16, opacity: 0.7 }}>🎁</span>
                     <span style={{ fontWeight: 700, color: '#334155' }}>Premios</span>
                 </button>
             </div>
 
             {/* 3. Featured Products Grid (Mapped from Config Props) */}
-            <div style={{ padding: '0 24px' }}>
+            <div style={{ padding: '0 12px' }}>
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -239,7 +249,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                     onClick={() => navigate(menuPath)}
                     style={{
                         width: '100%',
-                        padding: '16px 0',
+                        padding: '20px 0', /* CTA Dominance: The Boss */
                         background: primaryActionColor,
                         color: '#FFFFFF',
                         fontFamily: 'Montserrat, sans-serif',
