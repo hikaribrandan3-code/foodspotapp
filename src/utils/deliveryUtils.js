@@ -7,7 +7,7 @@
  */
 
 // ============================================
-// 🌍 HAVERSINE DISTANCE CALCULATION
+// 🌍 HAVERSINE DISTANCE CALCULATION (Pure JS)
 // ============================================
 
 /**
@@ -33,7 +33,7 @@ export const calculateHaversine = (lat1, lon1, lat2, lon2) => {
  * @param {Object} storeCoords - { lat, lon } of the store
  * @param {Object} customerCoords - { lat, lon } of the customer
  * @param {number} radiusKm - Delivery radius in kilometers
- * @returns {{ withinRadius: boolean, distanceKm: number }}
+ * @returns {{ withinRadius: boolean, distanceKm: number | null }}
  */
 export const isWithinDeliveryRadius = (storeCoords, customerCoords, radiusKm) => {
     if (!storeCoords?.lat || !storeCoords?.lon || !customerCoords?.lat || !customerCoords?.lon) {
@@ -49,31 +49,37 @@ export const isWithinDeliveryRadius = (storeCoords, customerCoords, radiusKm) =>
     };
 };
 
+// ============================================
+// 📱 WHATSAPP SUMMARY BUILDER
+// ============================================
+
 /**
- * Build a WhatsApp summary string for an order.
+ * Build a WhatsApp summary string for an order (Cash/Manual path).
  * @param {Object} order - The order object
  * @param {string} businessName - The business name
+ * @param {string} paymentMethod - Payment method ('efectivo' | 'tarjeta_envio')
  * @returns {string} WhatsApp-formatted summary
  */
 export const buildWhatsAppSummary = (order, businessName, paymentMethod = 'efectivo') => {
     const items = order.items.map(item =>
         `• ${item.quantity}x ${item.name} - $${item.price * item.quantity}`
-    ).join('\\n');
+    ).join('\n');
 
-    const paymentNote = paymentMethod === 'tarjeta_envio' ? '\\n\\n⚠️ *TRAER POS*' : '';
+    const paymentNote = paymentMethod === 'tarjeta_envio' ? '\n\n⚠️ *TRAER POS*' : '';
+    const paymentLabel = paymentMethod === 'efectivo' ? '💵 Efectivo' : '💳 Tarjeta';
 
-    return `🍔 *NUEVO PEDIDO - ${businessName}*\\n` +
-        `📋 Pedido #${order.orderNumber}\\n\\n` +
-        `*Items:*\\n${items}\\n\\n` +
-        `*Subtotal:* $${order.subtotal}\\n` +
-        `*Envío:* $${order.deliveryFee || 0}\\n` +
-        `*Total:* $${order.total}\\n\\n` +
-        `👤 *Cliente:* ${order.customerInfo?.name || 'N/A'}\\n` +
-        `📞 *Tel:* ${order.customerInfo?.phone || 'N/A'}\\n` +
+    return `🍔 *NUEVO PEDIDO - ${businessName}*\n` +
+        `📋 Pedido #${order.orderNumber}\n\n` +
+        `*Items:*\n${items}\n\n` +
+        `*Subtotal:* $${order.subtotal}\n` +
+        `*Envío:* $${order.deliveryFee || 0}\n` +
+        `*Total:* $${order.total}\n\n` +
+        `💳 *Pago:* ${paymentLabel}\n` +
+        `👤 *Cliente:* ${order.customerInfo?.name || 'N/A'}\n` +
+        `📞 *Tel:* ${order.customerInfo?.phone || 'N/A'}\n` +
         `📍 *Dirección:* ${order.customerInfo?.address || 'Retiro en local'}` +
         paymentNote;
 };
-
 
 // ============================================
 // TIME-BASED UTILITIES (No config needed)

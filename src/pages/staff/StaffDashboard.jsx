@@ -1,627 +1,475 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { getAuth, clearAuth, addStamp } from '../../utils/storage.js'
-import { getMenu, toggleItemAvailability, formatPrice } from '../../config/menuData.js'
-import { updateConfig } from '../../config/appConfig.v2.js'
-import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
-import { canAdvanceOrder, getOrderStatusInfo } from '../../utils/orderStateGuard.js'
-import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
-import BackendHeader from '../../components/BackendHeader.jsx'
+import { formatPrice } from '../../config/menuData.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 
-// High-pitched "Beep-Beep" equivalent (using a placeholder or standard sound)
-// For now, we will use a reliable high-pitched beep sound.
-const ALERT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3' // Placeholder Short Beep
-// ideally we would use a local asset or a generated data URI for "Rush-Proof" speed.
-// Using a short, sharp beep.
+// ============================================
+// 🎯 STAFF MISSION CONTROL - TABLET VIEW
+// ============================================
+// High-concurrency dashboard for kitchen/delivery staff
+// Real-Time Queue via Supabase Channels
+// One-tap status progression
+// ============================================
 
-function StaffDashboard({ config: configProp, orders = [], updateOrder, setOrders }) {
-    const config = configProp || {};
+// Status Pipeline (linear progression)
+const STATUS_PIPELINE = [
+    { id: 'pendiente_confirmacion', label: 'Pago Manual', color: '#F59E0B', bg: '#FEF3C7', icon: '💰' },
+    { id: 'confirmado', label: 'Recibido', color: '#3B82F6', bg: '#DBEAFE', icon: '📋' },
+    { id: 'en_cocina', label: 'En Cocina', color: '#8B5CF6', bg: '#EDE9FE', icon: '👨‍🍳' },
+    { id: 'en_camino', label: 'En Camino', color: '#6366F1', bg: '#E0E7FF', icon: '🚗' },
+    { id: 'entregado', label: 'Entregado', color: '#22C55E', bg: '#DCFCE7', icon: '✅' }
+]
+
+// Get next status in pipeline
+const getNextStatus = (currentStatus) => {
+    const currentIndex = STATUS_PIPELINE.findIndex(s => s.id === currentStatus)
+    if (currentIndex === -1 || currentIndex >= STATUS_PIPELINE.length - 1) return null
+    return STATUS_PIPELINE[currentIndex + 1].id
+}
+
+// Get status config
+const getStatusConfig = (status) => {
+    return STATUS_PIPELINE.find(s => s.id === status) || { label: 'Desconocido', color: '#9CA3AF', bg: '#F3F4F6', icon: '❓' }
+}
+
+function StaffDashboard() {
+    const { businessId, tenantData } = useTenant()
     const navigate = useNavigate()
-    const { tenantSlug, tab } = useParams() // 🏢 SILO-AWARE: Get tenant and tab from URL
-    const { isLoaded } = useTenant() // 🛡️ GUARD: Wait for tenant context to resolve
-    const [menu, setMenu] = useState(() => getMenu())
+    const primaryColor = tenantData?.primary_color || '#C4856A'
+    const businessName = tenantData?.business_name || 'Dashboard'
 
-    // 🧠 URL MEMORY: Tab state from URL, not volatile useState
-    const activeTab = tab || 'orders'
-    const setActiveTab = (newTab) => navigate(`/${tenantSlug}/staff/dashboard/${newTab}`, { replace: true })
+    const [orders, setOrders] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState('active') // 'active' | 'completed'
+    const [processingOrderId, setProcessingOrderId] = useState(null)
 
-    // INVARIANT: Use config prop from App.jsx (single source of truth)
-    const [paymentMethodSelect, setPaymentMethodSelect] = useState({}) // orderId -> 'cash' | 'mercado_pago'
-    const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({}) // orderId -> 4-digit code
-
-    // Audio System Refs
-    const audioRef = useRef(null)
-    const prevOrdersLengthRef = useRef(0)
-
-    // Pre-load Audio
-    useEffect(() => {
-        audioRef.current = new Audio(ALERT_SOUND_URL)
-        audioRef.current.volume = 1.0 // Maximum volume
-        audioRef.current.preload = 'auto'
-    }, [])
-
-    // NOTE: Auth check removed - ProtectedRoute handles authentication
-
-    // AUDIO ALERT LOGIC: React to orders prop changes
-    useEffect(() => {
-        // Sort orders by newest first for display
-        const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-
-        // New 'enviado' (pending) order detection
-        const currentPendingCount = sortedOrders.filter(o => o.status === 'enviado').length
-        const prevPendingCount = prevOrdersLengthRef.current
-
-        if (currentPendingCount > prevPendingCount) {
-            // New order arrived! Trigger "Beep-Beep"
-            if (audioRef.current) {
-                audioRef.current.currentTime = 0
-                audioRef.current.play().catch(e => console.log("Audio prevent:", e))
-                setTimeout(() => {
-                    if (audioRef.current) {
-                        audioRef.current.currentTime = 0
-                        audioRef.current.play().catch(e => console.log("Audio prevent:", e))
-                    }
-                }, 1000)
-            }
-        }
-        prevOrdersLengthRef.current = currentPendingCount
-    }, [orders])
-
-    // Menu sync
-    useEffect(() => {
-        const interval = setInterval(() => setMenu(getMenu()), 2000)
-        return () => clearInterval(interval)
-    }, [])
-
-    // Compute sorted orders for display
-    const sortedOrders = useMemo(() => {
-        return [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    }, [orders])
-
-    const handleLogout = () => {
-        clearAuth()
-        // 🏢 SILO-AWARE: Navigate to tenant-scoped login
-        navigate(tenantSlug ? `/${tenantSlug}` : '/')
-    }
-
-    const handleStatusChange = (orderId, newStatus) => {
-        const order = orders.find(o => o.id === orderId)
-        if (!order) return
-
-        // 1. LOGIC GATE VALIDATION
-        const validation = canAdvanceOrder(order, newStatus, config)
-        if (!validation.allowed) {
-            alert(validation.reason)
-            return
-        }
-
-        // 2. SAFARI CONFIRMATION FOR UNPAID PICKUP (Info only - Logic Gate handles strict blocks)
-        // If Logic Gate allowed it (e.g. A1 Pickup), we still ask for confirmation if unpaid
-        // to prevent accidental handouts.
-        if (newStatus === 'entregado' && !order.paymentConfirmed && order.orderType !== 'delivery') {
-            if (!window.confirm('⚠️ Este pedido NO tiene pago confirmado. ¿Entregar igual?')) {
-                return
-            }
-        }
-
-        updateOrder(orderId, { status: newStatus })
-
-        if (newStatus === 'entregado') {
-            addStamp()
-        }
-
-        window.dispatchEvent(new CustomEvent('frontendSync'))
-    }
-
-    const handlePaymentConfirm = (orderId) => {
-        const order = orders.find(o => o.id === orderId)
-        if (!order) return
-
-        if (order.paymentConfirmed) {
-            // OPTIONAL: Allow undoing payment? usually restricted but keeping for accidental clicks
-            updateOrder(orderId, {
-                paymentConfirmed: false,
-                paidAt: null,
-                paymentMethod: null
-            })
-        } else {
-            const method = paymentMethodSelect[orderId] || 'cash'
-            updateOrder(orderId, {
-                paymentConfirmed: true,
-                paidAt: new Date().toISOString(),
-                paymentMethod: method
-            })
-        }
-        window.dispatchEvent(new CustomEvent('frontendSync'))
-    }
-
-    const handleToggleAvailability = (categoryId, itemId) => {
-        toggleItemAvailability(categoryId, itemId)
-        setMenu(getMenu())
-    }
-
-    const handlePauseOrders = async () => {
-        // 1. Calculate the inverted state
-        const newStatus = !config.pauseOrders;
+    // ============================================
+    // 📡 FETCH ORDERS
+    // ============================================
+    const fetchOrders = async () => {
+        if (!businessId) return
 
         try {
-            // 2. PERSIST TO CLOUD: Update the 'branding' table where slug matches
-            const { error } = await supabase
-                .from('branding')
-                .update({ pause_orders: newStatus })
-                .eq('slug', tenantSlug);
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('business_id', businessId)
+                .neq('status', 'awaiting_payment') // 💎 INVISIBLE until payment
+                .order('created_at', { ascending: false })
+                .limit(50)
 
-            if (error) throw error;
-
-            // 3. PERSIST TO LOCAL: Keep the local config in sync for immediate UI feedback
-            updateConfig({ pauseOrders: newStatus });
-
-            // 4. BROADCAST: Trigger the global sync event
-            window.dispatchEvent(new CustomEvent('frontendSync'));
-
+            if (error) throw error
+            setOrders(data || [])
         } catch (err) {
-            console.error('❌ Cloud Sync Failed:', err);
-            alert('Error al sincronizar. Intenta de nuevo.');
+            console.error('Fetch Orders Error:', err)
+        } finally {
+            setLoading(false)
         }
     }
 
-    const handleAddStamp = () => {
-        addStamp()
-        alert('¡Sello agregado!')
+    useEffect(() => {
+        fetchOrders()
+    }, [businessId])
+
+    // ============================================
+    // ⚡ REAL-TIME SUBSCRIPTION
+    // ============================================
+    useEffect(() => {
+        if (!businessId) return
+
+        const channel = supabase
+            .channel(`staff-orders-${businessId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `business_id=eq.${businessId}`
+                },
+                (payload) => {
+                    console.log('🔔 Order Change:', payload.eventType, payload.new?.id)
+
+                    if (payload.eventType === 'INSERT') {
+                        // Only add if not awaiting_payment
+                        if (payload.new.status !== 'awaiting_payment') {
+                            setOrders(prev => [payload.new, ...prev])
+                        }
+                    } else if (payload.eventType === 'UPDATE') {
+                        setOrders(prev => prev.map(o =>
+                            o.id === payload.new.id ? payload.new : o
+                        ))
+                    } else if (payload.eventType === 'DELETE') {
+                        setOrders(prev => prev.filter(o => o.id !== payload.old.id))
+                    }
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [businessId])
+
+    // ============================================
+    // 🔄 STATUS PROGRESSION
+    // ============================================
+    const advanceStatus = async (order) => {
+        const nextStatus = getNextStatus(order.status)
+        if (!nextStatus) return
+
+        setProcessingOrderId(order.id)
+
+        try {
+            const updates = { status: nextStatus }
+
+            // If confirming manual payment, add paid_at
+            if (order.status === 'pendiente_confirmacion' && nextStatus === 'confirmado') {
+                updates.paid_at = new Date().toISOString()
+            }
+
+            const { error } = await supabase
+                .from('orders')
+                .update(updates)
+                .eq('id', order.id)
+
+            if (error) throw error
+        } catch (err) {
+            console.error('Status Update Error:', err)
+            alert('Error actualizando estado: ' + err.message)
+        } finally {
+            setProcessingOrderId(null)
+        }
     }
 
-    // PERF: Memoized for busy shifts - only re-filter when 'orders' array changes (v5 Audit)
-    const activeOrders = useMemo(() =>
-        orders.filter(o => o.status !== 'entregado'),
-        [orders]
-    )
+    // ============================================
+    // 🗂️ FILTER ORDERS
+    // ============================================
+    const filteredOrders = useMemo(() => {
+        if (activeTab === 'active') {
+            return orders.filter(o => o.status !== 'entregado' && o.status !== 'awaiting_payment')
+        } else {
+            return orders.filter(o => o.status === 'entregado')
+        }
+    }, [orders, activeTab])
 
-    const todayOrders = useMemo(() => {
-        const today = new Date().toDateString()
-        return orders.filter(o => new Date(o.createdAt).toDateString() === today)
-    }, [orders])
+    // Group by status for Kanban view
+    const ordersByStatus = useMemo(() => {
+        const groups = {}
+        STATUS_PIPELINE.slice(0, -1).forEach(s => { groups[s.id] = [] })
+        filteredOrders.forEach(order => {
+            if (groups[order.status]) {
+                groups[order.status].push(order)
+            }
+        })
+        return groups
+    }, [filteredOrders])
 
-    const pendingDeliveries = useMemo(() =>
-        orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado'),
-        [orders]
-    )
+    // Stats
+    const stats = useMemo(() => ({
+        pending: orders.filter(o => o.status === 'pendiente_confirmacion').length,
+        active: orders.filter(o => !['entregado', 'awaiting_payment'].includes(o.status)).length,
+        completed: orders.filter(o => o.status === 'entregado').length
+    }), [orders])
 
-    const navBadges = useMemo(() => ({
-        orders: activeOrders.length,
-        delivery: pendingDeliveries.length
-    }), [activeOrders.length, pendingDeliveries.length])
-
-    // 🛡️ SAFARI FORCE RENDER: Bypass isLoaded if we have tenantSlug
-    // This ensures the UI is interactive THE MOMENT it paints
-    if (!tenantSlug) {
+    // ============================================
+    // RENDER: LOADING
+    // ============================================
+    if (loading) {
         return (
             <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100vh',
-                background: '#F5F2EE',
-                fontSize: 14,
-                color: '#6B7280'
+                minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#1F2937'
             }}>
-                Cargando Staff...
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>🍳</div>
+                    <p style={{ color: '#9CA3AF' }}>Cargando pedidos...</p>
+                </div>
             </div>
         )
     }
 
+    // ============================================
+    // RENDER: MAIN DASHBOARD
+    // ============================================
     return (
-        <div
-            className="backend-surface staff-dashboard"
-            style={{
-                minHeight: '100vh',
-                background: '#F5F2EE',
-                fontFamily: 'system-ui, -apple-system, sans-serif',
-                position: 'relative'
-            }}
-        >
-            <BackendHeader
-                title="Staff"
-                onLogout={handleLogout}
-                showDateSelector={false}
-                extraActions={null}
-            />
-
-            {/* CONTROL TOWER (Panel de Control) */}
-            <div className="admin-card" style={{ marginBottom: 'var(--space-4)', background: '#EFF6FF', borderLeft: '4px solid #3B82F6' }}>
-                <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #DBEAFE' }}>
-                    <h3 style={{ margin: 0, fontSize: 13, textTransform: 'uppercase', color: '#1E40AF', letterSpacing: '0.05em' }}>
-                        Panel de Control
-                    </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#1E40AF' }}>
-                            Modo {config.orderMode || 'A1'}
-                        </span>
+        <div style={{
+            minHeight: '100vh',
+            background: '#111827',
+            color: 'white',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        }}>
+            {/* Header */}
+            <header style={{
+                background: '#1F2937',
+                padding: '16px 24px',
+                borderBottom: '1px solid #374151',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                position: 'sticky',
+                top: 0,
+                zIndex: 100
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <span style={{ fontSize: 32 }}>🎯</span>
+                    <div>
+                        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Mission Control</h1>
+                        <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>{businessName}</p>
                     </div>
                 </div>
 
-                <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    {/* Active Orders Count */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'white', borderRadius: 8, padding: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                        <span style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>Activos</span>
-                        <span style={{ fontSize: 20, fontWeight: 700, color: '#3B82F6' }}>{activeOrders.length}</span>
+                {/* Stats Pills */}
+                <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ background: '#FEF3C7', color: '#92400E', padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                        💰 {stats.pending} Pendientes
                     </div>
-
-                    {/* Pause Toggle */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'white', borderRadius: 8, padding: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                        <div style={{ display: 'flex', items: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
-                            <span style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
-                                {config.pauseOrders ? 'PAUSADO' : 'RECIBIENDO'}
-                            </span>
-                        </div>
-                        <label className="toggle" style={{ transform: 'scale(0.8)' }}>
-                            <input
-                                type="checkbox"
-                                checked={config.pauseOrders}
-                                onChange={handlePauseOrders}
-                            />
-                            <span className="toggle-slider"></span>
-                        </label>
+                    <div style={{ background: '#DBEAFE', color: '#1E40AF', padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                        🔥 {stats.active} Activos
+                    </div>
+                    <div style={{ background: '#DCFCE7', color: '#166534', padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                        ✅ {stats.completed} Hoy
                     </div>
                 </div>
 
+                {/* Real-time indicator */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                        width: 10, height: 10, borderRadius: '50%', background: '#22C55E',
+                        animation: 'pulse 2s infinite'
+                    }} />
+                    <span style={{ fontSize: 12, color: '#9CA3AF' }}>En vivo</span>
+                </div>
+            </header>
+
+            {/* Tabs */}
+            <div style={{ padding: '16px 24px 0', display: 'flex', gap: 8 }}>
+                <button
+                    onClick={() => setActiveTab('active')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeTab === 'active' ? primaryColor : '#374151',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 10,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontSize: 14
+                    }}
+                >
+                    🔥 Activos ({stats.active})
+                </button>
+                <button
+                    onClick={() => setActiveTab('completed')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeTab === 'completed' ? primaryColor : '#374151',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 10,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontSize: 14
+                    }}
+                >
+                    ✅ Completados ({stats.completed})
+                </button>
             </div>
 
-            <div style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
-                {activeTab === 'orders' && (
-                    <div>
-                        {/* Delivery Rules Reminder */}
-                        {activeOrders.some(o => o.orderType === 'delivery') && (
+            {/* Kanban Columns */}
+            {activeTab === 'active' && (
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: 16,
+                    padding: 24,
+                    minHeight: 'calc(100vh - 160px)'
+                }}>
+                    {STATUS_PIPELINE.slice(0, 4).map(status => (
+                        <div key={status.id} style={{
+                            background: '#1F2937',
+                            borderRadius: 16,
+                            padding: 16,
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
+                            {/* Column Header */}
                             <div style={{
-                                background: '#FFF7ED',
-                                border: '1px solid #FDBA74',
-                                borderRadius: 8,
-                                padding: '12px 16px',
-                                marginBottom: 16
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                marginBottom: 16,
+                                paddingBottom: 12,
+                                borderBottom: `2px solid ${status.color}`
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                                    <span style={{ fontSize: 14 }}>⚠️</span>
-                                    <h4 style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#9A3412', textTransform: 'uppercase' }}>
-                                        Reglas de Despacho
-                                    </h4>
-                                </div>
-                                <ul style={{ margin: 0, paddingLeft: 14, fontSize: 11, color: '#9A3412', lineHeight: '1.6' }}>
-                                    <li><strong style={{ fontWeight: 700 }}>Confirmar pago antes de preparar.</strong></li>
-                                    <li>FoodSpot no es responsable de repartidores ni seguros.</li>
-                                </ul>
+                                <span style={{ fontSize: 20 }}>{status.icon}</span>
+                                <span style={{ fontWeight: 700, fontSize: 16, color: status.color }}>{status.label}</span>
+                                <span style={{
+                                    marginLeft: 'auto',
+                                    background: status.bg,
+                                    color: status.color,
+                                    padding: '4px 10px',
+                                    borderRadius: 12,
+                                    fontSize: 12,
+                                    fontWeight: 700
+                                }}>
+                                    {ordersByStatus[status.id]?.length || 0}
+                                </span>
                             </div>
-                        )}
 
-                        {activeOrders.length === 0 ? (
-                            <div className="empty-state">
-                                <div style={{ fontSize: 48, marginBottom: 16 }}>🚚</div>
-                                <p className="empty-state-text" style={{ fontSize: 16, fontWeight: 500 }}>No hay pedidos activos</p>
-                                <p style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>Todo tranquilo por ahora.</p>
-                            </div>
-                        ) : (
-                            activeOrders.map(order => {
-                                const statusInfo = getOrderStatusInfo(order.status, order.orderType)
-                                const isDeliveryOrder = order.orderType === 'delivery'
+                            {/* Order Cards */}
+                            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                {(ordersByStatus[status.id] || []).map(order => {
+                                    const nextStatus = getNextStatus(order.status)
+                                    const nextConfig = nextStatus ? getStatusConfig(nextStatus) : null
+                                    const isProcessing = processingOrderId === order.id
 
-                                // LOGIC GATE CHECK (Visual only - logic enforced in handler)
-                                // If not allowed to advance, we disable the main button
-                                const canAdvance = canAdvanceOrder(order, statusInfo.next, config).allowed
-
-                                return (
-                                    <div key={order.id} className={`order-card ${statusInfo.class}`} style={{ position: 'relative', borderLeftWidth: 4, overflow: 'hidden' }}>
-                                        {/* Header */}
-                                        <div className="order-card-header" style={{ alignItems: 'flex-start' }}>
-                                            <div>
-                                                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                                                    <span className="order-number" style={{ fontSize: 20 }}>#{order.orderNumber}</span>
-                                                    {isDeliveryOrder && (
-                                                        <span style={{ fontSize: 10, background: '#DBEAFE', color: '#1D4ED8', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>
-                                                            DELIVERY
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <span style={{ fontSize: 11, color: '#6B7280' }}>
-                                                    {new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                                    return (
+                                        <div key={order.id} style={{
+                                            background: '#374151',
+                                            borderRadius: 12,
+                                            padding: 16,
+                                            borderLeft: `4px solid ${status.color}`
+                                        }}>
+                                            {/* Order Header */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                                <span style={{ fontWeight: 700, fontSize: 16 }}>
+                                                    #{String(order.order_number).padStart(3, '0')}
+                                                </span>
+                                                <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                                                    {new Date(order.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
-                                            <span className={`status-badge ${statusInfo.class}`} style={{ fontSize: 11 }}>
-                                                {statusInfo.label}
-                                            </span>
-                                        </div>
 
-                                        {/* Delivery Info */}
-                                        {isDeliveryOrder && order.customerInfo && (
-                                            <div style={{ background: '#F0FDF4', padding: '10px 12px', borderRadius: 8, marginBottom: 12, border: '1px solid #DCFCE7' }}>
-                                                <div style={{ fontWeight: 600, fontSize: 13, color: '#166534', marginBottom: 2 }}>
-                                                    📍 {order.customerInfo.name}
-                                                </div>
-                                                <div style={{ color: '#15803D', fontSize: 12 }}>
-                                                    {order.customerInfo.address}
-                                                </div>
-                                                <div style={{ color: '#15803D', fontSize: 11, marginTop: 4 }}>
-                                                    Tel: ***{getPhoneLast4(order.customerInfo.phone)}
-                                                </div>
+                                            {/* Items Summary */}
+                                            <div style={{ fontSize: 13, color: '#D1D5DB', marginBottom: 12 }}>
+                                                {(order.items || []).slice(0, 3).map((item, i) => (
+                                                    <div key={i}>{item.quantity}x {item.name}</div>
+                                                ))}
+                                                {(order.items?.length || 0) > 3 && (
+                                                    <div style={{ color: '#9CA3AF', fontStyle: 'italic' }}>+{order.items.length - 3} más...</div>
+                                                )}
                                             </div>
-                                        )}
 
-                                        {/* Items */}
-                                        <div style={{ marginBottom: 16 }}>
-                                            {order.items.map((item, idx) => (
-                                                <div key={idx} style={{ fontSize: 13, padding: '2px 0', borderBottom: '1px dashed #F3F4F6' }}>
-                                                    <span style={{ fontWeight: 600 }}>{item.quantity}x</span> {item.name}
-                                                    {item.extras && item.extras.length > 0 && (
-                                                        <span style={{ color: '#6B7280', fontSize: 11 }}>
-                                                            {' '}(+{item.extras.map(e => e.name).join(', ')})
-                                                        </span>
-                                                    )}
+                                            {/* Customer Info */}
+                                            {order.customer_name && (
+                                                <div style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 8 }}>
+                                                    👤 {order.customer_name}
                                                 </div>
-                                            ))}
-                                            <div style={{ textAlign: 'right', marginTop: 12, fontSize: 16, fontWeight: 700, color: '#111827' }}>
-                                                {formatPrice(order.total)}
-                                            </div>
-                                        </div>
+                                            )}
 
-                                        {/* TRAFFIC LIGHT ACTIONS */}
-                                        <div style={{ display: 'grid', gap: 10 }}>
-                                            {/* 1. Payment Action (Traffic Light Base) */}
-                                            {order.paymentConfirmed ? (
-                                                <div style={{
-                                                    background: '#DCFCE7', color: '#166534', padding: '8px',
-                                                    borderRadius: 6, fontSize: 12, fontWeight: 700, textAlign: 'center',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                                    border: '1px solid #86EFAC'
+                                            {/* Order Type Badge */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                                                <span style={{
+                                                    background: order.order_type === 'delivery' ? '#3B82F6' : '#10B981',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    borderRadius: 6,
+                                                    fontSize: 11,
+                                                    fontWeight: 600
                                                 }}>
-                                                    <span>✅</span>
-                                                    <span>PAGO CONFIRMADO {order.paymentMethod === 'mercado_pago' ? '(MP)' : '(EFECTIVO)'}</span>
-                                                </div>
-                                            ) : (
-                                                <div style={{ display: 'flex', gap: 8 }}>
-                                                    <select
-                                                        className="form-input"
-                                                        value={paymentMethodSelect[order.id] || 'cash'}
-                                                        onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                        style={{ width: '40%', fontSize: 12, padding: '8px' }}
-                                                    >
-                                                        <option value="cash">💵 Efectivo</option>
-                                                        <option value="mercado_pago">📱 MP</option>
-                                                    </select>
-                                                    <button
-                                                        className="btn"
-                                                        onClick={() => handlePaymentConfirm(order.id)}
-                                                        style={{
-                                                            flex: 1,
-                                                            background: config.colors?.confirmation || '#22C55E',
-                                                            color: 'white',
-                                                            border: 'none',
-                                                            fontWeight: 600,
-                                                            animation: 'pulse-orange 1.5s infinite'
-                                                        }}
-                                                    >
-                                                        <span style={{ marginRight: 4 }}>💳</span> Confirmar Pago
-                                                    </button>
-                                                    {/* Inline style for pulse if not in CSS */}
-                                                    <style>{`
-                                                        @keyframes pulse-orange {
-                                                            0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
-                                                            70% { box-shadow: 0 0 0 6px rgba(249, 115, 22, 0); }
-                                                            100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
-                                                        }
-                                                    `}</style>
-                                                </div>
-                                            )}
-
-                                            {/* 2. Advance Order Action */}
-                                            {statusInfo.next && (
-                                                <>
-                                                    {/* Delivery Confirmation Input (En Camino -> Entregado) */}
-                                                    {isDeliveryOrder && order.status === 'en_camino' && (
-                                                        <div style={{ marginBottom: 4 }}>
-                                                            <input
-                                                                type="text"
-                                                                maxLength={4}
-                                                                placeholder="Código (últimos 4 dígitos)"
-                                                                value={deliveryConfirmCode[order.id] || ''}
-                                                                onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
-                                                                style={{
-                                                                    width: '100%', padding: '10px', fontSize: 15,
-                                                                    border: '2px solid #E5E7EB', borderRadius: 8,
-                                                                    textAlign: 'center', letterSpacing: 2
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    )}
-
-                                                    <button
-                                                        className={`btn btn-primary ${!canAdvance ? 'btn-disabled' : ''}`}
-                                                        disabled={!canAdvance}
-                                                        onClick={() => {
-                                                            if (isDeliveryOrder && statusInfo.next === 'entregado' && order.customerInfo) {
-                                                                const code = deliveryConfirmCode[order.id] || ''
-                                                                if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
-                                                                    alert('❌ Código incorrecto.')
-                                                                    return
-                                                                }
-                                                                updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
-                                                            }
-                                                            handleStatusChange(order.id, statusInfo.next)
-                                                        }}
-                                                        style={{
-                                                            width: '100%',
-                                                            opacity: canAdvance ? 1 : 0.5,
-                                                            cursor: canAdvance ? 'pointer' : 'not-allowed',
-                                                            background: canAdvance ? '#3B82F6' : '#9CA3AF'
-                                                        }}
-                                                    >
-                                                        {statusInfo.nextLabel}
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                )
-                            })
-                        )}
-
-                        <div className="card" style={{ marginTop: 24, padding: 16 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#6B7280', fontSize: 13 }}>Total pedidos hoy</span>
-                                <span style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>{todayOrders.length}</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Delivery Tab */}
-                {activeTab === 'delivery' && (
-                    <div>
-                        {(() => {
-                            const deliveryOrders = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
-                            if (deliveryOrders.length === 0) {
-                                return (
-                                    <div className="empty-state">
-                                        <div style={{ fontSize: 48, marginBottom: 16 }}>🚚</div>
-                                        <p className="empty-state-text">No hay envíos activos</p>
-                                    </div>
-                                )
-                            }
-                            return deliveryOrders.map(order => {
-                                const statusInfo = getOrderStatusInfo(order.status, order.orderType)
-                                const canAdvance = canAdvanceOrder(order, statusInfo.next, config).allowed
-                                return (
-                                    <div key={order.id} className={`order-card ${statusInfo.class}`} style={{ borderLeftWidth: 4 }}>
-                                        <div className="order-card-header">
-                                            <span className="order-number" style={{ fontSize: 20 }}>#{order.orderNumber}</span>
-                                            <span className={`status-badge ${statusInfo.class}`}>{statusInfo.label}</span>
-                                        </div>
-                                        {order.customerInfo && (
-                                            <div style={{ background: '#F0FDF4', padding: 8, borderRadius: 6, marginBottom: 10, fontSize: 12 }}>
-                                                📍 {order.customerInfo.address}
+                                                    {order.order_type === 'delivery' ? '🚗 Delivery' : '🏪 Pickup'}
+                                                </span>
+                                                <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>
+                                                    {formatPrice(order.total)}
+                                                </span>
                                             </div>
-                                        )}
 
-                                        {/* Simplified actions for delivery specific view */}
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            {statusInfo.next && (
+                                            {/* Advance Button */}
+                                            {nextStatus && (
                                                 <button
-                                                    className="btn btn-primary"
-                                                    disabled={!canAdvance}
-                                                    onClick={() => {
-                                                        if (statusInfo.next === 'entregado' && order.customerInfo) {
-                                                            const code = deliveryConfirmCode[order.id] || ''
-                                                            if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
-                                                                alert('❌ Código incorrecto.')
-                                                                return
-                                                            }
-                                                            updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
-                                                        }
-                                                        handleStatusChange(order.id, statusInfo.next)
+                                                    onClick={() => advanceStatus(order)}
+                                                    disabled={isProcessing}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '10px 14px',
+                                                        background: nextConfig?.color || '#22C55E',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: 8,
+                                                        fontWeight: 600,
+                                                        cursor: isProcessing ? 'wait' : 'pointer',
+                                                        opacity: isProcessing ? 0.6 : 1,
+                                                        fontSize: 13,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: 8
                                                     }}
-                                                    style={{ flex: 1, opacity: canAdvance ? 1 : 0.5 }}
                                                 >
-                                                    {statusInfo.nextLabel}
+                                                    {isProcessing ? '...' : (
+                                                        <>
+                                                            {status.id === 'pendiente_confirmacion' ? '💰 Confirmar Pago' : `${nextConfig?.icon} → ${nextConfig?.label}`}
+                                                        </>
+                                                    )}
                                                 </button>
                                             )}
                                         </div>
+                                    )
+                                })}
+
+                                {/* Empty State */}
+                                {(!ordersByStatus[status.id] || ordersByStatus[status.id].length === 0) && (
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: 32,
+                                        color: '#6B7280',
+                                        fontSize: 14
+                                    }}>
+                                        <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>{status.icon}</div>
+                                        Sin pedidos
                                     </div>
-                                )
-                            })
-                        })()}
-                        <div className="card" style={{ marginTop: 24, padding: 16 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#6B7280', fontSize: 13 }}>Envíos hoy</span>
-                                <span style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>
-                                    {todayOrders.filter(o => o.orderType === 'delivery').length}
-                                </span>
+                                )}
                             </div>
                         </div>
-                    </div>
-                )}
+                    ))}
+                </div>
+            )}
 
-                {/* Pagos Tab */}
-                {activeTab === 'pagos' && (() => {
-                    const confirmedOrders = todayOrders.filter(o => o.paymentConfirmed)
-                    const totalCash = confirmedOrders
-                        .filter(o => o.paymentMethod === 'cash')
-                        .reduce((sum, o) => sum + (o.total || 0), 0)
-                    const totalMP = confirmedOrders
-                        .filter(o => o.paymentMethod === 'mercado_pago')
-                        .reduce((sum, o) => sum + (o.total || 0), 0)
-
-                    return (
-                        <div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-                                <div className="card" style={{ textAlign: 'center', padding: 16 }}>
-                                    <p style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>Efectivo</p>
-                                    <p style={{ fontSize: 20, fontWeight: 700, color: '#10B981' }}>{formatPrice(totalCash)}</p>
-                                </div>
-                                <div className="card" style={{ textAlign: 'center', padding: 16 }}>
-                                    <p style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>MercadoPago</p>
-                                    <p style={{ fontSize: 20, fontWeight: 700, color: '#3B82F6' }}>{formatPrice(totalMP)}</p>
-                                </div>
-                            </div>
-
-                            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Registros de solo lectura</h3>
-                            <div className="admin-card">
-                                {todayOrders.length === 0 && <p style={{ padding: 16, color: '#9CA3AF', fontSize: 13, textAlign: 'center' }}>No hay registros.</p>}
-                                {todayOrders.map(order => (
-                                    <div key={order.id} className="admin-row">
-                                        <div>
-                                            <span style={{ fontWeight: 700, fontSize: 14 }}>#{order.orderNumber}</span>
-                                            <span style={{ fontSize: 12, color: '#6B7280', marginLeft: 8 }}>{formatPrice(order.total)}</span>
-                                        </div>
-                                        <div style={{ fontSize: 12 }}>
-                                            {order.paymentConfirmed ? (
-                                                <span style={{ color: '#10B981', fontWeight: 600 }}>
-                                                    {order.paymentMethod === 'mercado_pago' ? 'MP' : 'EFECTIVO'}
-                                                </span>
-                                            ) : (
-                                                <span style={{ color: '#F59E0B' }}>Pdte.</span>
-                                            )}
-                                        </div>
+            {/* Completed List */}
+            {activeTab === 'completed' && (
+                <div style={{ padding: 24 }}>
+                    <div style={{ display: 'grid', gap: 12 }}>
+                        {filteredOrders.map(order => (
+                            <div key={order.id} style={{
+                                background: '#1F2937',
+                                borderRadius: 12,
+                                padding: 16,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 16
+                            }}>
+                                <span style={{ fontSize: 24 }}>✅</span>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: 600 }}>#{String(order.order_number).padStart(3, '0')}</div>
+                                    <div style={{ fontSize: 12, color: '#9CA3AF' }}>
+                                        {new Date(order.created_at).toLocaleString('es-AR')}
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    )
-                })()}
-
-                {/* Items Tab (Simplified) */}
-                {activeTab === 'items' && (
-                    <div>
-                        {menu.categories.map(category => (
-                            <div key={category.id} className="admin-section">
-                                <h3 className="admin-section-title">{category.icon} {category.name}</h3>
-                                <div className="admin-card">
-                                    {category.items.map(item => (
-                                        <div key={item.id} className="admin-row">
-                                            <span style={{ fontWeight: 500 }}>{item.name}</span>
-                                            <label className="toggle">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={item.available}
-                                                    onChange={() => handleToggleAvailability(category.id, item.id)}
-                                                />
-                                                <span className="toggle-slider"></span>
-                                            </label>
-                                        </div>
-                                    ))}
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontWeight: 700, color: '#22C55E' }}>{formatPrice(order.total)}</div>
+                                    <div style={{ fontSize: 11, color: '#9CA3AF' }}>{order.items?.length} items</div>
                                 </div>
                             </div>
                         ))}
-                    </div>
-                )}
 
-                {/* Rewards Tab */}
-                {activeTab === 'rewards' && (
-                    <div style={{ textAlign: 'center', padding: 24 }}>
-                        <button className="btn btn-primary" onClick={handleAddStamp} style={{ width: '100%', padding: 16, fontSize: 16 }}>
-                            ⭐ Agregar Sello Manual
-                        </button>
+                        {filteredOrders.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: 48, color: '#6B7280' }}>
+                                <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>
+                                <p>No hay pedidos completados hoy</p>
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
-            {/* Nav is handled by App.jsx with dynamic role assignment */}
+            <style>{`
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.5; transform: scale(0.9); }
+                }
+            `}</style>
         </div>
     )
 }
