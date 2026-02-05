@@ -374,7 +374,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
             name: 'Nueva Categoría',
             items: [],
-            icon: '🍽️',
+            icon: '',
             enabled: true
         }
         setMenu(prev => ({ ...prev, categories: [...prev.categories, newCat] }))
@@ -1268,21 +1268,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     fontSize: 14
                                 }}
                             />
-                            <input
-                                type="text"
-                                placeholder="📦"
-                                value={newCategoryIcon}
-                                onChange={(e) => setNewCategoryIcon(e.target.value)}
-                                style={{
-                                    width: 50,
-                                    padding: '10px',
-                                    border: '1px solid #E2E8F0',
-                                    borderRadius: 8,
-                                    fontSize: 14,
-                                    textAlign: 'center'
-                                }}
-                                maxLength={2}
-                            />
                         </div>
                         <div style={{ display: 'flex', gap: 10 }}>
                             <button
@@ -1295,7 +1280,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         updatedMenu.categories.push({
                                             id: generateId('category'),
                                             name: newCategoryName.trim(),
-                                            icon: newCategoryIcon || '📦',
+                                            icon: '',
                                             enabled: true,
                                             items: []
                                         })

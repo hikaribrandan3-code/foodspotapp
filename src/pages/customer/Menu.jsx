@@ -638,7 +638,7 @@ export default function Menu({ config: configProp }) {
                 {enabledCategories.map(category => (
                     <div key={category.id} ref={el => categoryRefs.current[category.id] = el} data-category-id={category.id} style={{ marginBottom: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                            <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon || '🍽️'}</span>
+                            {/* <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon || '🍽️'}</span> */}
                             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
