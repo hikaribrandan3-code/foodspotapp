@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTenant } from '../contexts/TenantContext'
 
 /**
  * OrderStatusEmpty - Pre-Estado Empty State Component
@@ -11,6 +12,10 @@ import { useNavigate } from 'react-router-dom'
 const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
     const config = configProp || {};
     const navigate = useNavigate()
+    const { tenantData } = useTenant()
+
+    // 🛡️ DYNAMIC ROUTING: Ensure we stay within the tenant silo
+    const menuPath = tenantData?.slug ? `/${tenantData.slug}/menu` : '/menu'
 
     // INVARIANT: config MUST come from props (Battle 2: Single Source of Truth)
     if (!config) {
@@ -142,7 +147,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         Productos Destacados
                     </h3>
                     <button
-                        onClick={() => navigate('/menu')}
+                        onClick={() => navigate(menuPath)}
                         style={{
                             background: 'none',
                             border: 'none',
@@ -165,7 +170,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                     {featuredItems.slice(0, 4).map((item, index) => (
                         <div
                             key={item.id || index}
-                            onClick={() => navigate('/menu')}
+                            onClick={() => navigate(menuPath)}
                             style={{
                                 background: '#FFFFFF',
                                 borderRadius: 24,
@@ -231,7 +236,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 zIndex: 10
             }}>
                 <button
-                    onClick={() => navigate('/menu')}
+                    onClick={() => navigate(menuPath)}
                     style={{
                         width: '100%',
                         padding: '16px 0',
