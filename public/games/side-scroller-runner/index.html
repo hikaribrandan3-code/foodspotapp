@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Side-Scroller Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        #gameCanvas {
+            display: block;
+            background: #87CEEB;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+    (function() {
+        'use strict';
+
+        // ========================================
+        // TUNING VALUES - Exposed for easy reskin
+        // ========================================
+        const CONFIG = {
+            // Canvas
+            CANVAS_WIDTH: 360,
+            CANVAS_HEIGHT: 640,
+
+            // Player
+            PLAYER_X: 80,
+            PLAYER_SIZE: 40,
+            PLAYER_COLOR: '#FFFFFF',
+            PLAYER_SHADOW_COLOR: 'rgba(0,0,0,0.2)',
+
+            // Ground
+            GROUND_HEIGHT: 120,
+            GROUND_COLOR: '#8B6914',
+            GROUND_LINE_COLOR: '#A0522D',
+            GROUND_LINE_HEIGHT: 20,
+
+            // Sky
+            SKY_COLOR: '#87CEEB',
+            CLOUD_COLOR: 'rgba(255,255,255,0.6)',
+
+            // Obstacles
+            OBSTACLE_COLOR: '#E74C3C',
+            OBSTACLE_MIN_WIDTH: 30,
+            OBSTACLE_MAX_WIDTH: 50,
+            OBSTACLE_MIN_HEIGHT: 40,
+            OBSTACLE_MAX_HEIGHT: 70,
+
+            // Physics
+            GRAVITY: 0.8,
+            JUMP_FORCE: -15,
+            INITIAL_SPEED: 5,
+            MAX_SPEED: 15,
+            SPEED_INCREMENT: 0.002,
+
+            // Spawning
+            INITIAL_SPAWN_INTERVAL: 1500,
+            MIN_SPAWN_INTERVAL: 600,
+            SPAWN_INTERVAL_DECREMENT: 0.5,
+            MIN_GAP_DISTANCE: 200,
+
+            // UI
+            UI_BUTTON_SIZE: 44,
+            UI_PADDING: 16,
+            UI_FONT: 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif',
+            UI_SMALL_FONT: 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif',
+            
+            // Colors
+            TEXT_COLOR: '#FFFFFF',
+            TEXT_SHADOW_COLOR: 'rgba(0,0,0,0.3)',
+            OVERLAY_COLOR: 'rgba(0,0,0,0.7)',
+            BUTTON_COLOR: '#4ECDC4',
+            BUTTON_HOVER_COLOR: '#45B7AA',
+        };
+
+        // ========================================
+        // GAME STATE
+        // ========================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+
+        // Set canvas size
+        canvas.width = CONFIG.CANVAS_WIDTH * dpr;
+        canvas.height = CONFIG.CANVAS_HEIGHT * dpr;
+        canvas.style.width = CONFIG.CANVAS_WIDTH + 'px';
+        canvas.style.height = CONFIG.CANVAS_HEIGHT + 'px';
+        ctx.scale(dpr, dpr);
+
+        // Game states
+        const STATE = {
+            START: 'start',
+            COUNTDOWN: 'countdown',
+            PLAYING: 'playing',
+            PAUSED: 'paused',
+            GAME_OVER: 'gameOver'
+        };
+
+        let gameState = STATE.START;
+        let isMuted = false;
+
+        // Player
+        let player = {
+            x: CONFIG.PLAYER_X,
+            y: 0,
+            width: CONFIG.PLAYER_SIZE,
+            height: CONFIG.PLAYER_SIZE,
+            velocityY: 0,
+            isGrounded: true,
+            rotation: 0
+        };
+
+        // Game variables
+        let obstacles = [];
+        let clouds = [];
+        let distance = 0;
+        let speed = CONFIG.INITIAL_SPEED;
+        let spawnTimer = 0;
+        let spawnInterval = CONFIG.INITIAL_SPAWN_INTERVAL;
+        let lastTime = 0;
+        let countdownValue = 3;
+        let countdownTimer = 0;
+        let groundOffset = 0;
+        let animationId = null;
+
+        // Ground Y position
+        const groundY = CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT;
+
+        // ========================================
+        // AUDIO (Simple beeps using Web Audio API)
+        // ========================================
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(freq, duration, type = 'square') {
+            if (isMuted || !audioCtx) return;
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.type = type;
+                oscillator.frequency.value = freq;
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function playJumpSound() {
+            playSound(400, 0.1, 'sine');
+        }
+
+        function playCountdownSound() {
+            playSound(600, 0.15, 'sine');
+        }
+
+        function playGameOverSound() {
+            playSound(200, 0.3, 'sawtooth');
+        }
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+        function resetGame() {
+            player.y = groundY - player.height;
+            player.velocityY = 0;
+            player.isGrounded = true;
+            player.rotation = 0;
+
+            obstacles = [];
+            clouds = [];
+            distance = 0;
+            speed = CONFIG.INITIAL_SPEED;
+            spawnTimer = 0;
+            spawnInterval = CONFIG.INITIAL_SPAWN_INTERVAL;
+            groundOffset = 0;
+
+            // Initialize clouds
+            for (let i = 0; i < 5; i++) {
+                clouds.push({
+                    x: Math.random() * CONFIG.CANVAS_WIDTH,
+                    y: 80 + Math.random() * 150,
+                    width: 60 + Math.random() * 80,
+                    height: 25 + Math.random() * 20,
+                    speed: 0.3 + Math.random() * 0.3
+                });
+            }
+        }
+
+        function startCountdown() {
+            countdownValue = 3;
+            countdownTimer = 0;
+            gameState = STATE.COUNTDOWN;
+        }
+
+        // ========================================
+        // INPUT HANDLING
+        // ========================================
+        function handleJump() {
+            initAudio();
+            if (gameState === STATE.START) {
+                startCountdown();
+                return;
+            }
+            if (gameState === STATE.GAME_OVER) {
+                resetGame();
+                startCountdown();
+                return;
+            }
+            if (gameState === STATE.PLAYING && player.isGrounded) {
+                player.velocityY = CONFIG.JUMP_FORCE;
+                player.isGrounded = false;
+                playJumpSound();
+            }
+        }
+
+        function handlePause() {
+            if (gameState === STATE.PLAYING) {
+                gameState = STATE.PAUSED;
+            } else if (gameState === STATE.PAUSED) {
+                gameState = STATE.PLAYING;
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+        }
+
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault();
+                handleJump();
+            }
+            if (e.code === 'Escape' || e.code === 'KeyP') {
+                handlePause();
+            }
+            if (e.code === 'KeyM') {
+                toggleMute();
+            }
+        });
+
+        // Touch/Click
+        canvas.addEventListener('touchstart', handleTouch, { passive: false });
+        canvas.addEventListener('click', handleClick);
+
+        function getCanvasCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (clientX - rect.left) * (CONFIG.CANVAS_WIDTH / rect.width),
+                y: (clientY - rect.top) * (CONFIG.CANVAS_HEIGHT / rect.height)
+            };
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const coords = getCanvasCoords(touch.clientX, touch.clientY);
+            handleInput(coords.x, coords.y);
+        }
+
+        function handleClick(e) {
+            const coords = getCanvasCoords(e.clientX, e.clientY);
+            handleInput(coords.x, coords.y);
+        }
+
+        function handleInput(x, y) {
+            // Check mute button
+            if (y < CONFIG.UI_BUTTON_SIZE + CONFIG.UI_PADDING * 2 && x < CONFIG.UI_BUTTON_SIZE + CONFIG.UI_PADDING * 2) {
+                toggleMute();
+                return;
+            }
+
+            // Check pause button
+            if (y < CONFIG.UI_BUTTON_SIZE + CONFIG.UI_PADDING * 2 && x > CONFIG.CANVAS_WIDTH - CONFIG.UI_BUTTON_SIZE - CONFIG.UI_PADDING * 2) {
+                handlePause();
+                return;
+            }
+
+            // Game over restart button
+            if (gameState === STATE.GAME_OVER) {
+                const btnWidth = 160;
+                const btnHeight = 50;
+                const btnX = (CONFIG.CANVAS_WIDTH - btnWidth) / 2;
+                const btnY = CONFIG.CANVAS_HEIGHT / 2 + 40;
+                if (x >= btnX && x <= btnX + btnWidth && y >= btnY && y <= btnY + btnHeight) {
+                    resetGame();
+                    startCountdown();
+                    return;
+                }
+            }
+
+            // Start screen
+            if (gameState === STATE.START) {
+                const btnWidth = 180;
+                const btnHeight = 55;
+                const btnX = (CONFIG.CANVAS_WIDTH - btnWidth) / 2;
+                const btnY = CONFIG.CANVAS_HEIGHT / 2 + 20;
+                if (x >= btnX && x <= btnX + btnWidth && y >= btnY && y <= btnY + btnHeight) {
+                    startCountdown();
+                    return;
+                }
+            }
+
+            // Paused screen
+            if (gameState === STATE.PAUSED) {
+                const btnWidth = 160;
+                const btnHeight = 50;
+                const btnX = (CONFIG.CANVAS_WIDTH - btnWidth) / 2;
+                const btnY = CONFIG.CANVAS_HEIGHT / 2;
+                if (x >= btnX && x <= btnX + btnWidth && y >= btnY && y <= btnY + btnHeight) {
+                    gameState = STATE.PLAYING;
+                    return;
+                }
+            }
+
+            // Otherwise jump
+            handleJump();
+        }
+
+        // ========================================
+        // GAME LOGIC
+        // ========================================
+        function spawnObstacle() {
+            // Check minimum gap
+            if (obstacles.length > 0) {
+                const lastObstacle = obstacles[obstacles.length - 1];
+                if (lastObstacle.x > CONFIG.CANVAS_WIDTH - CONFIG.MIN_GAP_DISTANCE) {
+                    return;
+                }
+            }
+
+            const width = CONFIG.OBSTACLE_MIN_WIDTH + Math.random() * (CONFIG.OBSTACLE_MAX_WIDTH - CONFIG.OBSTACLE_MIN_WIDTH);
+            const height = CONFIG.OBSTACLE_MIN_HEIGHT + Math.random() * (CONFIG.OBSTACLE_MAX_HEIGHT - CONFIG.OBSTACLE_MIN_HEIGHT);
+
+            obstacles.push({
+                x: CONFIG.CANVAS_WIDTH + 50,
+                y: groundY - height,
+                width: width,
+                height: height
+            });
+        }
+
+        function updatePlayer(deltaTime) {
+            // Apply gravity
+            if (!player.isGrounded) {
+                player.velocityY += CONFIG.GRAVITY;
+                player.y += player.velocityY;
+
+                // Rotation while jumping
+                player.rotation = Math.min(player.velocityY * 2, 45);
+            }
+
+            // Ground collision
+            if (player.y >= groundY - player.height) {
+                player.y = groundY - player.height;
+                player.velocityY = 0;
+                player.isGrounded = true;
+                player.rotation = 0;
+            }
+        }
+
+        function updateObstacles(deltaTime) {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].x -= speed;
+
+                // Remove off-screen obstacles
+                if (obstacles[i].x + obstacles[i].width < 0) {
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+
+        function updateClouds(deltaTime) {
+            for (const cloud of clouds) {
+                cloud.x -= cloud.speed;
+                if (cloud.x + cloud.width < 0) {
+                    cloud.x = CONFIG.CANVAS_WIDTH + cloud.width;
+                    cloud.y = 80 + Math.random() * 150;
+                }
+            }
+        }
+
+        function checkCollisions() {
+            const px = player.x;
+            const py = player.y;
+            const pw = player.width * 0.8; // Slightly forgiving hitbox
+            const ph = player.height * 0.8;
+            const pxOffset = player.width * 0.1;
+            const pyOffset = player.height * 0.1;
+
+            for (const obs of obstacles) {
+                if (px + pxOffset < obs.x + obs.width &&
+                    px + pxOffset + pw > obs.x &&
+                    py + pyOffset < obs.y + obs.height &&
+                    py + pyOffset + ph > obs.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function update(currentTime) {
+            if (!lastTime) lastTime = currentTime;
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+
+            if (gameState === STATE.COUNTDOWN) {
+                countdownTimer += deltaTime;
+                if (countdownTimer >= 1) {
+                    countdownTimer = 0;
+                    countdownValue--;
+                    if (countdownValue > 0) {
+                        playCountdownSound();
+                    }
+                    if (countdownValue <= 0) {
+                        gameState = STATE.PLAYING;
+                        playCountdownSound();
+                    }
+                }
+            }
+
+            if (gameState === STATE.PLAYING) {
+                // Update distance and speed
+                distance += speed * deltaTime * 10;
+                speed = Math.min(speed + CONFIG.SPEED_INCREMENT, CONFIG.MAX_SPEED);
+                spawnInterval = Math.max(spawnInterval - CONFIG.SPAWN_INTERVAL_DECREMENT * deltaTime, CONFIG.MIN_SPAWN_INTERVAL);
+
+                // Ground scroll
+                groundOffset = (groundOffset + speed) % 40;
+
+                // Spawn obstacles
+                spawnTimer += deltaTime * 1000;
+                if (spawnTimer >= spawnInterval) {
+                    spawnTimer = 0;
+                    spawnObstacle();
+                }
+
+                // Update entities
+                updatePlayer(deltaTime);
+                updateObstacles(deltaTime);
+                updateClouds(deltaTime);
+
+                // Check collisions
+                if (checkCollisions()) {
+                    gameState = STATE.GAME_OVER;
+                    playGameOverSound();
+                }
+            }
+
+            render();
+            animationId = requestAnimationFrame(update);
+        }
+
+        // ========================================
+        // RENDERING
+        // ========================================
+        function render() {
+            // Clear
+            ctx.fillStyle = CONFIG.SKY_COLOR;
+            ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+            // Clouds
+            ctx.fillStyle = CONFIG.CLOUD_COLOR;
+            for (const cloud of clouds) {
+                drawCloud(cloud.x, cloud.y, cloud.width, cloud.height);
+            }
+
+            // Ground line (grass/top layer)
+            ctx.fillStyle = CONFIG.GROUND_LINE_COLOR;
+            ctx.fillRect(0, groundY, CONFIG.CANVAS_WIDTH, CONFIG.GROUND_LINE_HEIGHT);
+
+            // Ground
+            ctx.fillStyle = CONFIG.GROUND_COLOR;
+            ctx.fillRect(0, groundY + CONFIG.GROUND_LINE_HEIGHT, CONFIG.CANVAS_WIDTH, CONFIG.GROUND_HEIGHT - CONFIG.GROUND_LINE_HEIGHT);
+
+            // Ground pattern (subtle lines)
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            ctx.lineWidth = 2;
+            for (let i = -40; i < CONFIG.CANVAS_WIDTH + 40; i += 40) {
+                const x = i - groundOffset;
+                ctx.beginPath();
+                ctx.moveTo(x, groundY + CONFIG.GROUND_LINE_HEIGHT);
+                ctx.lineTo(x + 20, groundY + CONFIG.GROUND_HEIGHT);
+                ctx.stroke();
+            }
+
+            // Obstacles
+            for (const obs of obstacles) {
+                drawObstacle(obs);
+            }
+
+            // Player
+            drawPlayer();
+
+            // UI
+            renderUI();
+
+            // State overlays
+            if (gameState === STATE.START) {
+                renderStartScreen();
+            } else if (gameState === STATE.COUNTDOWN) {
+                renderCountdown();
+            } else if (gameState === STATE.PAUSED) {
+                renderPauseScreen();
+            } else if (gameState === STATE.GAME_OVER) {
+                renderGameOverScreen();
+            }
+        }
+
+        function drawCloud(x, y, w, h) {
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.3, y + h * 0.5, w * 0.3, h * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.6, y + h * 0.4, w * 0.35, h * 0.55, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.8, y + h * 0.55, w * 0.25, h * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            ctx.rotate(player.rotation * Math.PI / 180);
+
+            // Shadow
+            ctx.fillStyle = CONFIG.PLAYER_SHADOW_COLOR;
+            ctx.fillRect(-player.width / 2 + 3, -player.height / 2 + 3, player.width, player.height);
+
+            // Player body
+            ctx.fillStyle = CONFIG.PLAYER_COLOR;
+            ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+
+            // Outline
+            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-player.width / 2, -player.height / 2, player.width, player.height);
+
+            // Jump trail effect
+            if (!player.isGrounded && player.velocityY < 0) {
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.beginPath();
+                ctx.moveTo(-player.width / 2, player.height / 2);
+                ctx.quadraticCurveTo(-player.width, player.height, -player.width / 2 - 10, player.height / 2 + 20);
+                ctx.lineTo(player.width / 2, player.height / 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function drawObstacle(obs) {
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(obs.x + 3, obs.y + 3, obs.width, obs.height);
+
+            // Body
+            ctx.fillStyle = CONFIG.OBSTACLE_COLOR;
+            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+            // Highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillRect(obs.x, obs.y, obs.width, 6);
+
+            // Top triangle detail
+            ctx.fillStyle = CONFIG.OBSTACLE_COLOR;
+            ctx.beginPath();
+            ctx.moveTo(obs.x, obs.y);
+            ctx.lineTo(obs.x + obs.width / 2, obs.y - 10);
+            ctx.lineTo(obs.x + obs.width, obs.y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function renderUI() {
+            // Distance
+            ctx.fillStyle = CONFIG.TEXT_COLOR;
+            ctx.font = CONFIG.UI_FONT;
+            ctx.textAlign = 'center';
+            ctx.shadowColor = CONFIG.TEXT_SHADOW_COLOR;
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillText(`DISTANCE: ${Math.floor(distance)}m`, CONFIG.CANVAS_WIDTH / 2, 45);
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Mute button
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(isMuted ? '🔇' : '🔊', CONFIG.UI_PADDING, CONFIG.UI_PADDING + 24);
+
+            // Pause button
+            ctx.textAlign = 'right';
+            ctx.fillText(gameState === STATE.PAUSED ? '▶️' : '⏸️', CONFIG.CANVAS_WIDTH - CONFIG.UI_PADDING, CONFIG.UI_PADDING + 24);
+        }
+
+        function renderStartScreen() {
+            // Overlay
+            ctx.fillStyle = CONFIG.OVERLAY_COLOR;
+            ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+            // Title
+            ctx.fillStyle = CONFIG.TEXT_COLOR;
+            ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('RUNNER', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 60);
+
+            // Subtitle
+            ctx.font = '18px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.fillText('Jump to avoid obstacles!', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 20);
+
+            // Start button
+            const btnWidth = 180;
+            const btnHeight = 55;
+            const btnX = (CONFIG.CANVAS_WIDTH - btnWidth) / 2;
+            const btnY = CONFIG.CANVAS_HEIGHT / 2 + 20;
+            drawButton(btnX, btnY, btnWidth, btnHeight, 'TAP TO START');
+
+            // Controls hint
+            ctx.font = '14px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fillText('Space / Tap to jump', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 110);
+        }
+
+        function renderCountdown() {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+            ctx.fillStyle = CONFIG.TEXT_COLOR;
+            ctx.font = 'bold 100px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = CONFIG.TEXT_SHADOW_COLOR;
+            ctx.shadowBlur = 10;
+            ctx.fillText(countdownValue.toString(), CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 30);
+            ctx.shadowBlur = 0;
+        }
+
+        function renderPauseScreen() {
+            ctx.fillStyle = CONFIG.OVERLAY_COLOR;
+            ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+            ctx.fillStyle = CONFIG.TEXT_COLOR;
+            ctx.font = 'bold 40px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('PAUSED', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 50);
+
+            const btnWidth = 160;
+            const btnHeight = 50;
+            const btnX = (CONFIG.CANVAS_WIDTH - btnWidth) / 2;
+            const btnY = CONFIG.CANVAS_HEIGHT / 2;
+            drawButton(btnX, btnY, btnWidth, btnHeight, 'RESUME');
+        }
+
+        function renderGameOverScreen() {
+            ctx.fillStyle = CONFIG.OVERLAY_COLOR;
+            ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+            ctx.fillStyle = CONFIG.TEXT_COLOR;
+            ctx.font = 'bold 40px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 80);
+
+            ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText(`DISTANCE: ${Math.floor(distance)}m`, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 20);
+
+            const btnWidth = 160;
+            const btnHeight = 50;
+            const btnX = (CONFIG.CANVAS_WIDTH - btnWidth) / 2;
+            const btnY = CONFIG.CANVAS_HEIGHT / 2 + 40;
+            drawButton(btnX, btnY, btnWidth, btnHeight, 'RESTART');
+        }
+
+        function drawButton(x, y, width, height, text) {
+            // Button shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            roundRect(ctx, x + 3, y + 3, width, height, 10);
+            ctx.fill();
+
+            // Button body
+            ctx.fillStyle = CONFIG.BUTTON_COLOR;
+            roundRect(ctx, x, y, width, height, 10);
+            ctx.fill();
+
+            // Button highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            roundRect(ctx, x, y, width, height / 2, 10);
+            ctx.fill();
+
+            // Button text
+            ctx.fillStyle = CONFIG.TEXT_COLOR;
+            ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, x + width / 2, y + height / 2 + 6);
+        }
+
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        // ========================================
+        // WINDOW RESIZE HANDLING
+        // ========================================
+        function resizeCanvas() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const gameRatio = CONFIG.CANVAS_WIDTH / CONFIG.CANVAS_HEIGHT;
+            const windowRatio = windowWidth / windowHeight;
+
+            let newWidth, newHeight;
+
+            if (windowRatio > gameRatio) {
+                newHeight = windowHeight;
+                newWidth = windowHeight * gameRatio;
+            } else {
+                newWidth = windowWidth;
+                newHeight = windowWidth / gameRatio;
+            }
+
+            canvas.style.width = newWidth + 'px';
+            canvas.style.height = newHeight + 'px';
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // ========================================
+        // INITIALIZATION & START
+        // ========================================
+        resetGame();
+        animationId = requestAnimationFrame(update);
+
+    })();
+    </script>
+</body>
+</html>

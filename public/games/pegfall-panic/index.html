@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pegfall Panic</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0f;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  touch-action: none;
+  user-select: none;
+}
+canvas {
+  display: block;
+  background: #12121a;
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// TUNING VALUES
+// ═══════════════════════════════════════════════════════════════
+const CONFIG = {
+  // Display
+  WIDTH: 360,
+  HEIGHT: 640,
+  
+  // Colors
+  BG_COLOR: '#12121a',
+  TOKEN_COLOR: '#f5c542',
+  PEG_COLOR: '#5a5a7a',
+  PEG_HIT_COLOR: '#8888aa',
+  SLOT_COLOR: '#2a2a3a',
+  WIN_SLOT_COLOR: '#42f587',
+  FAIL_SLOT_COLOR: '#f54242',
+  SCORE_COLOR: '#ffffff',
+  
+  // Token
+  TOKEN_RADIUS: 12,
+  TOKEN_START_Y: 60,
+  GRAVITY: 0.35,
+  BOUNCE_DAMPING: 0.7,
+  FRICTION: 0.98,
+  MAX_VELOCITY: 15,
+  
+  // Pegs
+  BASE_PEG_ROWS: 10,
+  BASE_PEG_COLS: 7,
+  PEG_RADIUS: 8,
+  PEG_PADDING_TOP: 100,
+  PEG_PADDING_BOTTOM: 120,
+  PEG_PADDING_X: 30,
+  PEG_HIT_DURATION: 150,
+  
+  // Slots
+  BASE_SLOT_COUNT: 5,
+  SLOT_HEIGHT: 50,
+  SLOT_DIVIDER_WIDTH: 4,
+  BASE_WIN_SLOT_WIDTH_RATIO: 0.22,
+  
+  // Difficulty scaling per success
+  WIN_SLOT_SHRINK_RATE: 0.92,
+  MIN_WIN_SLOT_WIDTH_RATIO: 0.08,
+  PEG_DENSITY_INCREASE: 0.5,
+  MAX_PEG_ROWS: 16,
+  BOUNCE_VARIANCE_INCREASE: 0.03,
+  BASE_BOUNCE_VARIANCE: 0.1,
+  MAX_BOUNCE_VARIANCE: 0.4,
+  
+  // Physics
+  COLLISION_PUSH: 1.2,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════════════
+let canvas, ctx, dpr;
+let gameState = 'waiting'; // waiting, dropping, resolved
+let score = 0;
+let difficulty = 0;
+
+let token = null;
+let pegs = [];
+let slots = [];
+let winSlotIndex = 0;
+
+let pegHits = new Map(); // pegIndex -> hitTime
+
+// ═══════════════════════════════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════════════════════════════
+function init() {
+  canvas = document.getElementById('game');
+  ctx = canvas.getContext('2d');
+  
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = CONFIG.WIDTH * dpr;
+  canvas.height = CONFIG.HEIGHT * dpr;
+  canvas.style.width = CONFIG.WIDTH + 'px';
+  canvas.style.height = CONFIG.HEIGHT + 'px';
+  ctx.scale(dpr, dpr);
+  
+  resetRound();
+  setupInput();
+  requestAnimationFrame(gameLoop);
+}
+
+function resetRound() {
+  gameState = 'waiting';
+  
+  // Reset token
+  token = {
+    x: CONFIG.WIDTH / 2,
+    y: CONFIG.TOKEN_START_Y,
+    vx: 0,
+    vy: 0,
+    radius: CONFIG.TOKEN_RADIUS
+  };
+  
+  // Generate pegs
+  generatePegs();
+  
+  // Generate slots
+  generateSlots();
+  
+  pegHits.clear();
+}
+
+function fullReset() {
+  score = 0;
+  difficulty = 0;
+  resetRound();
+}
+
+function generatePegs() {
+  pegs = [];
+  
+  const rows = Math.min(CONFIG.BASE_PEG_ROWS + Math.floor(difficulty * CONFIG.PEG_DENSITY_INCREASE), CONFIG.MAX_PEG_ROWS);
+  const cols = CONFIG.BASE_PEG_COLS;
+  
+  const availableHeight = CONFIG.HEIGHT - CONFIG.PEG_PADDING_TOP - CONFIG.PEG_PADDING_BOTTOM;
+  const availableWidth = CONFIG.WIDTH - CONFIG.PEG_PADDING_X * 2;
+  
+  const rowSpacing = availableHeight / (rows + 1);
+  const colSpacing = availableWidth / cols;
+  
+  for (let row = 0; row < rows; row++) {
+    const isOffset = row % 2 === 1;
+    const colCount = isOffset ? cols - 1 : cols;
+    const offsetX = isOffset ? colSpacing / 2 : 0;
+    
+    for (let col = 0; col < colCount; col++) {
+      const x = CONFIG.PEG_PADDING_X + colSpacing / 2 + col * colSpacing + offsetX;
+      const y = CONFIG.PEG_PADDING_TOP + rowSpacing * (row + 1);
+      
+      pegs.push({
+        x: x,
+        y: y,
+        radius: CONFIG.PEG_RADIUS
+      });
+    }
+  }
+}
+
+function generateSlots() {
+  slots = [];
+  
+  const slotCount = CONFIG.BASE_SLOT_COUNT;
+  const slotWidth = CONFIG.WIDTH / slotCount;
+  const slotY = CONFIG.HEIGHT - CONFIG.SLOT_HEIGHT;
+  
+  // Calculate win slot width based on difficulty
+  const winSlotWidthRatio = Math.max(
+    CONFIG.BASE_WIN_SLOT_WIDTH_RATIO * Math.pow(CONFIG.WIN_SLOT_SHRINK_RATE, difficulty),
+    CONFIG.MIN_WIN_SLOT_WIDTH_RATIO
+  );
+  
+  // Deterministic win slot position based on score
+  winSlotIndex = score % slotCount;
+  
+  for (let i = 0; i < slotCount; i++) {
+    const x = i * slotWidth;
+    const isWin = i === winSlotIndex;
+    
+    slots.push({
+      x: x,
+      y: slotY,
+      width: slotWidth,
+      height: CONFIG.SLOT_HEIGHT,
+      isWin: isWin,
+      winZoneStart: isWin ? x + (slotWidth * (1 - winSlotWidthRatio)) / 2 : x,
+      winZoneEnd: isWin ? x + (slotWidth * (1 + winSlotWidthRatio)) / 2 : x + slotWidth
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INPUT
+// ═══════════════════════════════════════════════════════════════
+function setupInput() {
+  const handleTap = (e) => {
+    e.preventDefault();
+    
+    if (gameState === 'waiting') {
+      dropToken();
+    } else if (gameState === 'resolved') {
+      resetRound();
+    }
+  };
+  
+  canvas.addEventListener('touchstart', handleTap, { passive: false });
+  canvas.addEventListener('mousedown', handleTap);
+}
+
+function dropToken() {
+  gameState = 'dropping';
+  
+  // Small random initial velocity for variety (deterministic based on score)
+  const seed = (score * 7919) % 1000 / 1000;
+  token.vx = (seed - 0.5) * 2;
+  token.vy = 1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PHYSICS
+// ═══════════════════════════════════════════════════════════════
+function updatePhysics() {
+  if (gameState !== 'dropping') return;
+  
+  // Apply gravity
+  token.vy += CONFIG.GRAVITY;
+  
+  // Apply friction
+  token.vx *= CONFIG.FRICTION;
+  
+  // Clamp velocity
+  token.vx = Math.max(-CONFIG.MAX_VELOCITY, Math.min(CONFIG.MAX_VELOCITY, token.vx));
+  token.vy = Math.max(-CONFIG.MAX_VELOCITY, Math.min(CONFIG.MAX_VELOCITY, token.vy));
+  
+  // Update position
+  token.x += token.vx;
+  token.y += token.vy;
+  
+  // Wall collisions
+  if (token.x - token.radius < 0) {
+    token.x = token.radius;
+    token.vx = -token.vx * CONFIG.BOUNCE_DAMPING;
+  }
+  if (token.x + token.radius > CONFIG.WIDTH) {
+    token.x = CONFIG.WIDTH - token.radius;
+    token.vx = -token.vx * CONFIG.BOUNCE_DAMPING;
+  }
+  
+  // Peg collisions
+  const bounceVariance = Math.min(
+    CONFIG.BASE_BOUNCE_VARIANCE + difficulty * CONFIG.BOUNCE_VARIANCE_INCREASE,
+    CONFIG.MAX_BOUNCE_VARIANCE
+  );
+  
+  for (let i = 0; i < pegs.length; i++) {
+    const peg = pegs[i];
+    const dx = token.x - peg.x;
+    const dy = token.y - peg.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const minDist = token.radius + peg.radius;
+    
+    if (dist < minDist && dist > 0) {
+      // Collision detected
+      const nx = dx / dist;
+      const ny = dy / dist;
+      
+      // Push token out
+      const overlap = minDist - dist;
+      token.x += nx * overlap * CONFIG.COLLISION_PUSH;
+      token.y += ny * overlap * CONFIG.COLLISION_PUSH;
+      
+      // Reflect velocity
+      const dot = token.vx * nx + token.vy * ny;
+      token.vx = (token.vx - 2 * dot * nx) * CONFIG.BOUNCE_DAMPING;
+      token.vy = (token.vy - 2 * dot * ny) * CONFIG.BOUNCE_DAMPING;
+      
+      // Add deterministic variance based on position and score
+      const varianceSeed = ((peg.x * 31 + peg.y * 17 + score * 13) % 1000) / 500 - 1;
+      token.vx += varianceSeed * bounceVariance * 3;
+      
+      // Record hit for visual feedback
+      pegHits.set(i, performance.now());
+    }
+  }
+  
+  // Check slot collision
+  const slotY = CONFIG.HEIGHT - CONFIG.SLOT_HEIGHT;
+  if (token.y + token.radius >= slotY) {
+    resolveRound();
+  }
+}
+
+function resolveRound() {
+  gameState = 'resolved';
+  
+  // Determine which slot the token landed in
+  const winSlot = slots[winSlotIndex];
+  const tokenCenter = token.x;
+  
+  // Check if token center is within the win zone
+  if (tokenCenter >= winSlot.winZoneStart && tokenCenter <= winSlot.winZoneEnd) {
+    // Success!
+    score++;
+    difficulty++;
+  }
+  // Failure - no score change, player can tap to try again
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════════
+function render() {
+  const now = performance.now();
+  
+  // Clear
+  ctx.fillStyle = CONFIG.BG_COLOR;
+  ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+  
+  // Draw slots
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots[i];
+    
+    // Slot background
+    ctx.fillStyle = CONFIG.SLOT_COLOR;
+    ctx.fillRect(slot.x, slot.y, slot.width, slot.height);
+    
+    // Win zone indicator (only visible after resolution or subtle hint)
+    if (slot.isWin) {
+      if (gameState === 'resolved') {
+        ctx.fillStyle = score > 0 && slots[winSlotIndex].isWin ? CONFIG.WIN_SLOT_COLOR : CONFIG.WIN_SLOT_COLOR;
+        const zoneWidth = slot.winZoneEnd - slot.winZoneStart;
+        ctx.fillRect(slot.winZoneStart, slot.y, zoneWidth, slot.height);
+      } else {
+        // Subtle indicator
+        ctx.fillStyle = 'rgba(66, 245, 135, 0.15)';
+        const zoneWidth = slot.winZoneEnd - slot.winZoneStart;
+        ctx.fillRect(slot.winZoneStart, slot.y, zoneWidth, slot.height);
+      }
+    }
+    
+    // Slot dividers
+    if (i > 0) {
+      ctx.fillStyle = CONFIG.BG_COLOR;
+      ctx.fillRect(slot.x - CONFIG.SLOT_DIVIDER_WIDTH / 2, slot.y, CONFIG.SLOT_DIVIDER_WIDTH, slot.height);
+    }
+  }
+  
+  // Draw pegs
+  for (let i = 0; i < pegs.length; i++) {
+    const peg = pegs[i];
+    const hitTime = pegHits.get(i);
+    let color = CONFIG.PEG_COLOR;
+    
+    if (hitTime && now - hitTime < CONFIG.PEG_HIT_DURATION) {
+      const t = (now - hitTime) / CONFIG.PEG_HIT_DURATION;
+      color = lerpColor(CONFIG.PEG_HIT_COLOR, CONFIG.PEG_COLOR, t);
+    }
+    
+    ctx.beginPath();
+    ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  
+  // Draw token
+  ctx.beginPath();
+  ctx.arc(token.x, token.y, token.radius, 0, Math.PI * 2);
+  ctx.fillStyle = CONFIG.TOKEN_COLOR;
+  ctx.fill();
+  
+  // Token inner detail
+  ctx.beginPath();
+  ctx.arc(token.x, token.y, token.radius * 0.6, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fill();
+  
+  // Draw score
+  ctx.fillStyle = CONFIG.SCORE_COLOR;
+  ctx.font = 'bold 32px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(score.toString(), CONFIG.WIDTH / 2, 16);
+  
+  // Result indicator
+  if (gameState === 'resolved') {
+    const winSlot = slots[winSlotIndex];
+    const tokenCenter = token.x;
+    const isWin = tokenCenter >= winSlot.winZoneStart && tokenCenter <= winSlot.winZoneEnd;
+    
+    ctx.fillStyle = isWin ? CONFIG.WIN_SLOT_COLOR : CONFIG.FAIL_SLOT_COLOR;
+    ctx.beginPath();
+    ctx.arc(token.x, token.y - token.radius - 20, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function lerpColor(a, b, t) {
+  const ah = parseInt(a.slice(1), 16);
+  const bh = parseInt(b.slice(1), 16);
+  
+  const ar = (ah >> 16) & 0xff;
+  const ag = (ah >> 8) & 0xff;
+  const ab = ah & 0xff;
+  
+  const br = (bh >> 16) & 0xff;
+  const bg = (bh >> 8) & 0xff;
+  const bb = bh & 0xff;
+  
+  const rr = Math.round(ar + (br - ar) * t);
+  const rg = Math.round(ag + (bg - ag) * t);
+  const rb = Math.round(ab + (bb - ab) * t);
+  
+  return '#' + ((rr << 16) | (rg << 8) | rb).toString(16).padStart(6, '0');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════════════════════════════
+function gameLoop() {
+  updatePhysics();
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BURGER STACKER!!!!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 360px;
+            height: 640px;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        // ============================================================
+        // TUNING VALUES - All configurable parameters at the top
+        // ============================================================
+        const CONFIG = {
+            // Canvas
+            GAME_WIDTH: 360,
+            GAME_HEIGHT: 640,
+
+            // ═══ BURGER THEME COLORS ═══
+            COLORS: {
+                // Kitchen backgrounds by level
+                level1BgTop: '#fff4e0',
+                level1BgBottom: '#ffd8a8',
+                level2BgTop: '#ffe0cc',
+                level2BgBottom: '#ffb088',
+                level3BgTop: '#ffcce6',
+                level3BgBottom: '#ff99cc',
+
+                // UI
+                textPrimary: '#ffffff',
+                textSecondary: '#fff5e0',
+                overlay: 'rgba(0, 0, 0, 0.75)',
+                perfectFlash: '#ffff00',
+                centerLine: 'rgba(139, 90, 43, 0.2)'
+            },
+
+            // Burger ingredients (cycled for blocks)
+            INGREDIENTS: [
+                { name: 'bun_bottom', color: '#e8b060', highlight: '#f5d090', shadow: '#c89040' },
+                { name: 'patty', color: '#8b4513', highlight: '#a65828', shadow: '#5c2d0e' },
+                { name: 'cheese', color: '#ffd700', highlight: '#ffec80', shadow: '#daa520' },
+                { name: 'lettuce', color: '#90ee90', highlight: '#b0ffb0', shadow: '#50c050' },
+                { name: 'tomato', color: '#ff6347', highlight: '#ff8070', shadow: '#cc4030' },
+                { name: 'onion', color: '#dda0dd', highlight: '#eec0ee', shadow: '#bb80bb' },
+                { name: 'patty2', color: '#7a3b10', highlight: '#9a5020', shadow: '#502508' },
+                { name: 'bun_top', color: '#e8b060', highlight: '#f5d090', shadow: '#c89040' }
+            ],
+
+            // Block settings
+            BLOCK_HEIGHT: 32,
+            INITIAL_BLOCK_WIDTH: 180,
+            MIN_BLOCK_WIDTH: 5,
+            PERFECT_THRESHOLD: 4,
+
+            // Movement
+            INITIAL_SPEED: 2.2,
+            SPEED_INCREMENT: 0.07,
+            MAX_SPEED: 7,
+            DROP_SPEED: 18,
+
+            // Camera
+            CAMERA_OFFSET: 420,
+            CAMERA_SMOOTH: 0.1,
+
+            // Sliced piece animation
+            SLICE_FALL_SPEED: 3,
+            SLICE_FALL_ACCEL: 0.5,
+            SLICE_ROTATE_SPEED: 0.1,
+            SLICE_FADE_SPEED: 0.025,
+
+            // UI
+            BUTTON_SIZE: 40,
+            BUTTON_MARGIN: 15,
+
+            // Countdown
+            COUNTDOWN_DURATION: 3,
+            COUNTDOWN_INTERVAL: 1000,
+
+            // ═══ COMBO SYSTEM ═══
+            COMBO_COLORS: ['#ffffff', '#ffff00', '#ffa500', '#ff4500', '#ff00ff', '#00ffff'],
+            COMBO_MILESTONE_5: 5,
+            COMBO_MILESTONE_10: 10,
+            COMBO_MILESTONE_20: 20,
+
+            // ═══ LEVEL SYSTEM ═══
+            LEVEL_1_MAX: 20,
+            LEVEL_2_MAX: 50,
+            LEVEL_SPEED_BOOST: 0.3,
+
+            // ═══ FAIL ANIMATION ═══
+            FAIL_SHAKE_DURATION: 300,
+            FAIL_RESULT_DELAY: 1200,
+
+            // Audio
+            AUDIO_ENABLED: true
+        };
+
+        // ============================================================
+        // GAME STATE
+        // ============================================================
+        let canvas, ctx, dpr;
+        let gameState = 'start'; // start, countdown, playing, paused, gameover
+        let score = 0;
+        let stackHeight = 0;
+        let muted = false;
+        let countdownValue = 3;
+        let countdownTimer = null;
+        let perfectStreak = 0;
+
+        // Stack of placed blocks
+        let stack = [];
+
+        // Currently moving block
+        let currentBlock = null;
+        let droppingBlock = null;
+
+        // Sliced pieces for visual effect
+        let slicedPieces = [];
+
+        // Camera position
+        let cameraY = 0;
+        let targetCameraY = 0;
+
+        // Current game speed
+        let currentSpeed = CONFIG.INITIAL_SPEED;
+
+        // Perfect flash effect
+        let perfectFlashAlpha = 0;
+
+        // ═══ BURGER STACKER NEW STATE ═══
+        // Combo system
+        let combo = 0;
+        let maxCombo = 0;
+        let comboCallout = '';
+        let comboCalloutTimer = 0;
+
+        // Level system
+        let level = 1;
+        let levelUpBanner = '';
+        let levelUpTimer = 0;
+
+        // Cover image for start screen
+        const coverImage = new Image();
+        coverImage.src = 'https://files.catbox.moe/ijjeqk.png';
+        let coverLoaded = false;
+        coverImage.onload = () => { coverLoaded = true; };
+
+        // Fail animation
+        let failPhase = 0; // 0=none, 1=shaking, 2=falling, 3=results
+        let failTimer = 0;
+        let fallingBlocks = [];
+        let shakeOffset = 0;
+
+        // Audio context
+        let audioCtx = null;
+
+        // ============================================================
+        // AUDIO SYSTEM
+        // ============================================================
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (muted || !CONFIG.AUDIO_ENABLED || !audioCtx) return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            switch (type) {
+                case 'drop':
+                    oscillator.frequency.value = 220;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'perfect':
+                    oscillator.frequency.value = 523.25;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.frequency.value = 659.25;
+                    osc2.type = 'sine';
+                    gain2.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.1);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    oscillator.start(audioCtx.currentTime);
+                    osc2.start(audioCtx.currentTime + 0.1);
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                    osc2.stop(audioCtx.currentTime + 0.3);
+                    break;
+                case 'slice':
+                    oscillator.frequency.value = 150;
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.15);
+                    break;
+                case 'gameover':
+                    oscillator.frequency.value = 200;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.5);
+                    break;
+                case 'countdown':
+                    oscillator.frequency.value = 440;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.15);
+                    break;
+                case 'start':
+                    oscillator.frequency.value = 440;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    break;
+            }
+        }
+
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+        function init() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+
+            // DPR-aware canvas scaling
+            dpr = window.devicePixelRatio || 1;
+            canvas.width = CONFIG.GAME_WIDTH * dpr;
+            canvas.height = CONFIG.GAME_HEIGHT * dpr;
+            ctx.scale(dpr, dpr);
+
+            // Event listeners
+            canvas.addEventListener('touchstart', handleInput, { passive: false });
+            canvas.addEventListener('mousedown', handleMouseInput);
+            document.addEventListener('keydown', handleKeyInput);
+
+            // Start game loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resetGame() {
+            score = 0;
+            stackHeight = 0;
+            perfectStreak = 0;
+            currentSpeed = CONFIG.INITIAL_SPEED;
+            cameraY = 0;
+            targetCameraY = 0;
+            stack = [];
+            slicedPieces = [];
+            currentBlock = null;
+            droppingBlock = null;
+            perfectFlashAlpha = 0;
+
+            // Reset new state
+            combo = 0;
+            maxCombo = 0;
+            comboCallout = '';
+            comboCalloutTimer = 0;
+            level = 1;
+            levelUpBanner = '';
+            levelUpTimer = 0;
+            failPhase = 0;
+            failTimer = 0;
+            fallingBlocks = [];
+            shakeOffset = 0;
+
+            // Create base block (bun bottom)
+            const ingredient = CONFIG.INGREDIENTS[0];
+            const baseBlock = {
+                x: (CONFIG.GAME_WIDTH - CONFIG.INITIAL_BLOCK_WIDTH) / 2,
+                y: CONFIG.GAME_HEIGHT - CONFIG.BLOCK_HEIGHT - 50,
+                width: CONFIG.INITIAL_BLOCK_WIDTH,
+                height: CONFIG.BLOCK_HEIGHT,
+                color: ingredient.color,
+                highlight: ingredient.highlight,
+                shadow: ingredient.shadow,
+                ingredientIndex: 0
+            };
+            stack.push(baseBlock);
+
+            // Create first moving block
+            spawnNewBlock();
+        }
+
+        function spawnNewBlock() {
+            const topBlock = stack[stack.length - 1];
+            // Cycle through ingredients
+            const ingredientIndex = stack.length % CONFIG.INGREDIENTS.length;
+            const ingredient = CONFIG.INGREDIENTS[ingredientIndex];
+
+            // Apply level speed boost
+            const levelBoost = (level - 1) * CONFIG.LEVEL_SPEED_BOOST;
+            const speed = Math.min(CONFIG.MAX_SPEED, currentSpeed + levelBoost);
+
+            currentBlock = {
+                x: 0,
+                y: topBlock.y - CONFIG.BLOCK_HEIGHT - 80,
+                width: topBlock.width,
+                height: CONFIG.BLOCK_HEIGHT,
+                color: ingredient.color,
+                highlight: ingredient.highlight,
+                shadow: ingredient.shadow,
+                ingredientIndex: ingredientIndex,
+                direction: 1,
+                speed: speed
+            };
+
+            // Update camera target (more aggressive scrolling)
+            targetCameraY = Math.max(0, (stack.length * CONFIG.BLOCK_HEIGHT) - CONFIG.CAMERA_OFFSET + 250);
+        }
+
+        // ============================================================
+        // INPUT HANDLING
+        // ============================================================
+        function handleInput(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = (touch.clientX - rect.left) * (CONFIG.GAME_WIDTH / rect.width);
+            const y = (touch.clientY - rect.top) * (CONFIG.GAME_HEIGHT / rect.height);
+
+            processInput(x, y);
+        }
+
+        function handleMouseInput(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (CONFIG.GAME_WIDTH / rect.width);
+            const y = (e.clientY - rect.top) * (CONFIG.GAME_HEIGHT / rect.height);
+
+            processInput(x, y);
+        }
+
+        function handleKeyInput(e) {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault();
+                processInput(-1, -1, true);
+            } else if (e.code === 'Escape') {
+                if (gameState === 'playing') {
+                    gameState = 'paused';
+                } else if (gameState === 'paused') {
+                    gameState = 'playing';
+                }
+            }
+        }
+
+        function processInput(x, y, isKeyboard = false) {
+            initAudio();
+
+            // Check UI buttons
+            if (!isKeyboard) {
+                // Mute button (top left)
+                if (x < CONFIG.BUTTON_SIZE + CONFIG.BUTTON_MARGIN * 2 &&
+                    y < CONFIG.BUTTON_SIZE + CONFIG.BUTTON_MARGIN * 2) {
+                    muted = !muted;
+                    return;
+                }
+
+                // Pause button (top right)
+                if (x > CONFIG.GAME_WIDTH - CONFIG.BUTTON_SIZE - CONFIG.BUTTON_MARGIN * 2 &&
+                    y < CONFIG.BUTTON_SIZE + CONFIG.BUTTON_MARGIN * 2) {
+                    if (gameState === 'playing') {
+                        gameState = 'paused';
+                    } else if (gameState === 'paused') {
+                        gameState = 'playing';
+                    }
+                    return;
+                }
+            }
+
+            // Handle game states
+            switch (gameState) {
+                case 'start':
+                    startCountdown();
+                    break;
+                case 'countdown':
+                    // Ignore input during countdown
+                    break;
+                case 'playing':
+                    dropBlock();
+                    break;
+                case 'paused':
+                    gameState = 'playing';
+                    break;
+                case 'gameover':
+                    gameState = 'start';
+                    break;
+            }
+        }
+
+        function startCountdown() {
+            gameState = 'countdown';
+            countdownValue = CONFIG.COUNTDOWN_DURATION;
+            resetGame();
+            playSound('countdown');
+
+            countdownTimer = setInterval(() => {
+                countdownValue--;
+                if (countdownValue > 0) {
+                    playSound('countdown');
+                } else {
+                    clearInterval(countdownTimer);
+                    playSound('start');
+                    gameState = 'playing';
+                }
+            }, CONFIG.COUNTDOWN_INTERVAL);
+        }
+
+        function dropBlock() {
+            if (!currentBlock || droppingBlock) return;
+
+            droppingBlock = { ...currentBlock };
+            currentBlock = null;
+            playSound('drop');
+        }
+
+        // ============================================================
+        // GAME LOGIC
+        // ============================================================
+        function update() {
+            // Handle fail animation
+            if (failPhase > 0) {
+                const elapsed = Date.now() - failTimer;
+
+                if (failPhase === 1) {
+                    // Shake phase
+                    shakeOffset = Math.sin(elapsed * 0.05) * 8 * (1 - elapsed / CONFIG.FAIL_SHAKE_DURATION);
+                    if (elapsed > CONFIG.FAIL_SHAKE_DURATION) {
+                        failPhase = 2;
+                        shakeOffset = 0;
+                    }
+                } else if (failPhase === 2) {
+                    // Fall phase - update falling blocks
+                    fallingBlocks.forEach(block => {
+                        block.velocityY += 0.5;
+                        block.x += block.velocityX;
+                        block.y += block.velocityY;
+                        block.rotation += block.rotationSpeed;
+                    });
+                    if (elapsed > CONFIG.FAIL_SHAKE_DURATION + 500) {
+                        failPhase = 3;
+                    }
+                } else if (failPhase === 3) {
+                    // Results phase - auto restart after delay
+                    if (elapsed > CONFIG.FAIL_RESULT_DELAY) {
+                        gameState = 'start';
+                        failPhase = 0;
+                        fallingBlocks = [];
+                    }
+                }
+                return;
+            }
+
+            // Decrement combo/level callout timers
+            if (comboCalloutTimer > 0) comboCalloutTimer--;
+            if (levelUpTimer > 0) levelUpTimer--;
+
+            if (gameState !== 'playing' && gameState !== 'countdown') return;
+
+            // Smooth camera movement
+            cameraY += (targetCameraY - cameraY) * CONFIG.CAMERA_SMOOTH;
+
+            // Update sliced pieces
+            updateSlicedPieces();
+
+            // Fade perfect flash
+            if (perfectFlashAlpha > 0) {
+                perfectFlashAlpha -= 0.05;
+            }
+
+            if (gameState !== 'playing') return;
+
+            // Update current moving block
+            if (currentBlock) {
+                currentBlock.x += currentBlock.direction * currentBlock.speed;
+
+                // Bounce off walls
+                if (currentBlock.x <= 0) {
+                    currentBlock.x = 0;
+                    currentBlock.direction = 1;
+                } else if (currentBlock.x + currentBlock.width >= CONFIG.GAME_WIDTH) {
+                    currentBlock.x = CONFIG.GAME_WIDTH - currentBlock.width;
+                    currentBlock.direction = -1;
+                }
+            }
+
+            // Update dropping block
+            if (droppingBlock) {
+                const topBlock = stack[stack.length - 1];
+                const targetY = topBlock.y - CONFIG.BLOCK_HEIGHT;
+
+                droppingBlock.y += CONFIG.DROP_SPEED;
+
+                if (droppingBlock.y >= targetY) {
+                    droppingBlock.y = targetY;
+                    placeBlock();
+                }
+            }
+        }
+
+        function placeBlock() {
+            const topBlock = stack[stack.length - 1];
+            const dropped = droppingBlock;
+
+            // Calculate overlap
+            const dropLeft = dropped.x;
+            const dropRight = dropped.x + dropped.width;
+            const stackLeft = topBlock.x;
+            const stackRight = topBlock.x + topBlock.width;
+
+            const overlapLeft = Math.max(dropLeft, stackLeft);
+            const overlapRight = Math.min(dropRight, stackRight);
+            const overlapWidth = overlapRight - overlapLeft;
+
+            // Check for game over - trigger fail animation
+            if (overlapWidth <= 0) {
+                triggerFailAnimation();
+                return;
+            }
+
+            // Check for perfect alignment
+            const isPerfect = Math.abs(dropLeft - stackLeft) <= CONFIG.PERFECT_THRESHOLD &&
+                Math.abs(dropped.width - topBlock.width) <= CONFIG.PERFECT_THRESHOLD;
+
+            if (isPerfect) {
+                // Perfect placement - keep full width
+                perfectStreak++;
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+                perfectFlashAlpha = 1;
+                playSound('perfect');
+
+                // Combo callouts at milestones
+                if (combo === CONFIG.COMBO_MILESTONE_5) {
+                    comboCallout = '¡RACHA x5!';
+                    comboCalloutTimer = 60;
+                } else if (combo === CONFIG.COMBO_MILESTONE_10) {
+                    comboCallout = '¡RACHA x10!';
+                    comboCalloutTimer = 60;
+                } else if (combo === CONFIG.COMBO_MILESTONE_20) {
+                    comboCallout = '¡INCREÍBLE x20!';
+                    comboCalloutTimer = 90;
+                }
+
+                const newBlock = {
+                    x: topBlock.x,
+                    y: dropped.y,
+                    width: topBlock.width,
+                    height: CONFIG.BLOCK_HEIGHT,
+                    color: dropped.color,
+                    highlight: dropped.highlight,
+                    shadow: dropped.shadow,
+                    ingredientIndex: dropped.ingredientIndex
+                };
+                stack.push(newBlock);
+            } else {
+                // Imperfect placement - slice the block, reset combo
+                perfectStreak = 0;
+                combo = 0;
+                playSound('slice');
+
+                const newBlock = {
+                    x: overlapLeft,
+                    y: dropped.y,
+                    width: overlapWidth,
+                    height: CONFIG.BLOCK_HEIGHT,
+                    color: dropped.color,
+                    highlight: dropped.highlight,
+                    shadow: dropped.shadow,
+                    ingredientIndex: dropped.ingredientIndex
+                };
+                stack.push(newBlock);
+
+                // Create sliced piece(s)
+                if (dropLeft < stackLeft) {
+                    createSlicedPiece(dropLeft, dropped.y, stackLeft - dropLeft, dropped.color, -1);
+                }
+                if (dropRight > stackRight) {
+                    createSlicedPiece(stackRight, dropped.y, dropRight - stackRight, dropped.color, 1);
+                }
+            }
+
+            // Update score
+            score++;
+            stackHeight = stack.length - 1;
+
+            // Check for level advancement
+            const oldLevel = level;
+            if (score > CONFIG.LEVEL_2_MAX) {
+                level = 3;
+            } else if (score > CONFIG.LEVEL_1_MAX) {
+                level = 2;
+            }
+            if (level !== oldLevel) {
+                levelUpBanner = `¡NIVEL ${level}!`;
+                levelUpTimer = 90;
+            }
+
+            // Increase difficulty
+            currentSpeed = Math.min(CONFIG.MAX_SPEED, CONFIG.INITIAL_SPEED + (score * CONFIG.SPEED_INCREMENT));
+
+            // Check if stack is too thin - trigger fail
+            const newTopBlock = stack[stack.length - 1];
+            if (newTopBlock.width < CONFIG.MIN_BLOCK_WIDTH) {
+                triggerFailAnimation();
+                return;
+            }
+
+            droppingBlock = null;
+            spawnNewBlock();
+        }
+
+        function triggerFailAnimation() {
+            playSound('gameover');
+            failPhase = 1; // Start shake
+            failTimer = Date.now();
+
+            // Create falling blocks from top of stack
+            const topBlocks = stack.slice(-3);
+            topBlocks.forEach((block, i) => {
+                fallingBlocks.push({
+                    ...block,
+                    velocityX: (Math.random() - 0.5) * 4,
+                    velocityY: -2 - i,
+                    rotation: 0,
+                    rotationSpeed: (Math.random() - 0.5) * 0.2
+                });
+            });
+
+            droppingBlock = null;
+            currentBlock = null;
+        }
+
+        function createSlicedPiece(x, y, width, color, direction) {
+            slicedPieces.push({
+                x: x,
+                y: y,
+                width: width,
+                height: CONFIG.BLOCK_HEIGHT,
+                color: color,
+                velocityX: direction * 2,
+                velocityY: 0,
+                rotation: 0,
+                rotationSpeed: direction * CONFIG.SLICE_ROTATE_SPEED,
+                alpha: 1
+            });
+        }
+
+        function updateSlicedPieces() {
+            for (let i = slicedPieces.length - 1; i >= 0; i--) {
+                const piece = slicedPieces[i];
+
+                piece.velocityY += CONFIG.SLICE_FALL_ACCEL;
+                piece.x += piece.velocityX;
+                piece.y += piece.velocityY;
+                piece.rotation += piece.rotationSpeed;
+                piece.alpha -= CONFIG.SLICE_FADE_SPEED;
+
+                if (piece.alpha <= 0 || piece.y > CONFIG.GAME_HEIGHT + cameraY + 100) {
+                    slicedPieces.splice(i, 1);
+                }
+            }
+        }
+
+        // ============================================================
+        // RENDERING
+        // ============================================================
+        function render() {
+            // Level-based background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.GAME_HEIGHT);
+            if (level === 1) {
+                gradient.addColorStop(0, CONFIG.COLORS.level1BgTop);
+                gradient.addColorStop(1, CONFIG.COLORS.level1BgBottom);
+            } else if (level === 2) {
+                gradient.addColorStop(0, CONFIG.COLORS.level2BgTop);
+                gradient.addColorStop(1, CONFIG.COLORS.level2BgBottom);
+            } else {
+                gradient.addColorStop(0, CONFIG.COLORS.level3BgTop);
+                gradient.addColorStop(1, CONFIG.COLORS.level3BgBottom);
+            }
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CONFIG.GAME_WIDTH, CONFIG.GAME_HEIGHT);
+
+            // Draw center alignment line
+            ctx.strokeStyle = CONFIG.COLORS.centerLine;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 8]);
+            ctx.beginPath();
+            ctx.moveTo(CONFIG.GAME_WIDTH / 2, 0);
+            ctx.lineTo(CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Apply camera transform (with shake offset for fail animation)
+            ctx.save();
+            ctx.translate(shakeOffset, cameraY);
+
+            // Draw stack
+            for (const block of stack) {
+                drawBlock(block);
+            }
+
+            // Draw dropping block
+            if (droppingBlock) {
+                drawBlock(droppingBlock);
+            }
+
+            // Draw current moving block
+            if (currentBlock && gameState === 'playing') {
+                drawBlock(currentBlock);
+
+                // Draw shadow/guide
+                const topBlock = stack[stack.length - 1];
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillRect(currentBlock.x, topBlock.y - CONFIG.BLOCK_HEIGHT,
+                    currentBlock.width, CONFIG.BLOCK_HEIGHT);
+            }
+
+            // Draw sliced pieces
+            for (const piece of slicedPieces) {
+                ctx.save();
+                ctx.globalAlpha = piece.alpha;
+                ctx.translate(piece.x + piece.width / 2, piece.y + piece.height / 2);
+                ctx.rotate(piece.rotation);
+                ctx.fillStyle = piece.color;
+                ctx.fillRect(-piece.width / 2, -piece.height / 2, piece.width, piece.height);
+                ctx.restore();
+            }
+
+            // Draw falling blocks (fail animation)
+            for (const block of fallingBlocks) {
+                ctx.save();
+                ctx.translate(block.x + block.width / 2, block.y + block.height / 2);
+                ctx.rotate(block.rotation);
+                ctx.fillStyle = block.color;
+                ctx.fillRect(-block.width / 2, -block.height / 2, block.width, block.height);
+                ctx.restore();
+            }
+
+            ctx.restore();
+
+            // Draw perfect flash effect (yellow burst)
+            if (perfectFlashAlpha > 0) {
+                ctx.fillStyle = `rgba(255, 255, 0, ${perfectFlashAlpha * 0.25})`;
+                ctx.fillRect(0, 0, CONFIG.GAME_WIDTH, CONFIG.GAME_HEIGHT);
+            }
+
+            // Draw fail results overlay
+            if (failPhase === 3) {
+                drawFailOverlay();
+            }
+
+            // Draw UI
+            drawUI();
+
+            // Draw overlays based on game state
+            switch (gameState) {
+                case 'start':
+                    drawStartScreen();
+                    break;
+                case 'countdown':
+                    drawCountdown();
+                    break;
+                case 'paused':
+                    drawPauseScreen();
+                    break;
+                case 'gameover':
+                    drawGameOverScreen();
+                    break;
+            }
+        }
+
+        function drawBlock(block) {
+            const x = block.x;
+            const y = block.y;
+            const w = block.width;
+            const h = block.height;
+            const idx = block.ingredientIndex !== undefined ? block.ingredientIndex : 0;
+
+            ctx.save();
+
+            // Draw based on ingredient type
+            switch (idx) {
+                case 0: // Bun bottom - rounded dome
+                    drawBunBottom(x, y, w, h, block);
+                    break;
+                case 1: // Patty - oval with irregular edges
+                case 6: // Patty 2
+                    drawPatty(x, y, w, h, block);
+                    break;
+                case 2: // Cheese - wavy rectangle
+                    drawCheese(x, y, w, h, block);
+                    break;
+                case 3: // Lettuce - ruffled edges
+                    drawLettuce(x, y, w, h, block);
+                    break;
+                case 4: // Tomato - rounded slice
+                    drawTomato(x, y, w, h, block);
+                    break;
+                case 5: // Onion - ring
+                    drawOnion(x, y, w, h, block);
+                    break;
+                case 7: // Bun top - dome with sesame
+                    drawBunTop(x, y, w, h, block);
+                    break;
+                default:
+                    drawBunBottom(x, y, w, h, block);
+            }
+
+            ctx.restore();
+        }
+
+        function drawBunBottom(x, y, w, h, block) {
+            // Rounded bottom bun shape
+            ctx.fillStyle = block.color;
+            ctx.beginPath();
+            ctx.moveTo(x + 4, y + h);
+            ctx.lineTo(x + w - 4, y + h);
+            ctx.quadraticCurveTo(x + w, y + h, x + w, y + h - 4);
+            ctx.lineTo(x + w, y + 8);
+            ctx.quadraticCurveTo(x + w, y, x + w - 8, y);
+            ctx.lineTo(x + 8, y);
+            ctx.quadraticCurveTo(x, y, x, y + 8);
+            ctx.lineTo(x, y + h - 4);
+            ctx.quadraticCurveTo(x, y + h, x + 4, y + h);
+            ctx.closePath();
+            ctx.fill();
+
+            // Highlight
+            ctx.fillStyle = block.highlight || '#f5d090';
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h * 0.3, w * 0.4, h * 0.25, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawBunTop(x, y, w, h, block) {
+            // Dome shaped top bun
+            ctx.fillStyle = block.color;
+            ctx.beginPath();
+            ctx.moveTo(x, y + h);
+            ctx.lineTo(x + w, y + h);
+            ctx.lineTo(x + w, y + h * 0.6);
+            ctx.quadraticCurveTo(x + w, y, x + w / 2, y);
+            ctx.quadraticCurveTo(x, y, x, y + h * 0.6);
+            ctx.closePath();
+            ctx.fill();
+
+            // Highlight
+            ctx.fillStyle = block.highlight || '#f5d090';
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h * 0.35, w * 0.35, h * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sesame seeds
+            ctx.fillStyle = '#fff8dc';
+            for (let i = 0; i < 5; i++) {
+                const sx = x + w * 0.2 + Math.random() * w * 0.6;
+                const sy = y + h * 0.2 + Math.random() * h * 0.4;
+                ctx.beginPath();
+                ctx.ellipse(sx, sy, 3, 2, Math.random() * Math.PI, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawPatty(x, y, w, h, block) {
+            // Oval patty with slight irregularity
+            ctx.fillStyle = block.color;
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h / 2, w / 2 - 2, h / 2 - 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Grill marks
+            ctx.strokeStyle = block.shadow || '#4a2008';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                const lx = x + w * 0.2 + i * w * 0.25;
+                ctx.beginPath();
+                ctx.moveTo(lx, y + h * 0.3);
+                ctx.lineTo(lx + w * 0.1, y + h * 0.7);
+                ctx.stroke();
+            }
+
+            // Highlight
+            ctx.fillStyle = block.highlight || '#a65828';
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.35, y + h * 0.35, w * 0.2, h * 0.15, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawCheese(x, y, w, h, block) {
+            // Wavy cheese slice with droopy corners
+            ctx.fillStyle = block.color;
+            ctx.beginPath();
+            ctx.moveTo(x - 4, y + h * 0.3);
+            ctx.quadraticCurveTo(x - 6, y + h + 4, x + 8, y + h);
+            ctx.lineTo(x + w - 8, y + h);
+            ctx.quadraticCurveTo(x + w + 6, y + h + 4, x + w + 4, y + h * 0.3);
+            ctx.lineTo(x + w, y);
+            ctx.lineTo(x, y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Shine
+            ctx.fillStyle = block.highlight || '#ffec80';
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h * 0.3, w * 0.3, h * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawLettuce(x, y, w, h, block) {
+            // Wavy lettuce with ruffled edges
+            ctx.fillStyle = block.color;
+            ctx.beginPath();
+            ctx.moveTo(x - 6, y + h / 2);
+
+            // Bottom wavy edge
+            const waves = 8;
+            for (let i = 0; i <= waves; i++) {
+                const wx = x + (w / waves) * i;
+                const wy = y + h + (i % 2 === 0 ? -2 : 4);
+                ctx.lineTo(wx, wy);
+            }
+
+            ctx.lineTo(x + w + 6, y + h / 2);
+            ctx.lineTo(x + w, y);
+            ctx.lineTo(x, y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Vein lines
+            ctx.strokeStyle = block.shadow || '#50c050';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x + w / 2, y);
+            ctx.lineTo(x + w / 2, y + h);
+            ctx.stroke();
+        }
+
+        function drawTomato(x, y, w, h, block) {
+            // Round tomato slice
+            ctx.fillStyle = block.color;
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2 - 1, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner pattern (seed sections)
+            ctx.strokeStyle = block.shadow || '#cc4030';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h / 2, w * 0.25, h * 0.25, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Highlight
+            ctx.fillStyle = block.highlight || '#ff8070';
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.35, y + h * 0.35, w * 0.15, h * 0.12, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawOnion(x, y, w, h, block) {
+            // Onion ring shape
+            ctx.fillStyle = block.color;
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h / 2, w / 2 - 2, h / 2 - 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner hole (darker)
+            ctx.fillStyle = 'rgba(100, 60, 100, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h / 2, w * 0.25, h * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ring lines
+            ctx.strokeStyle = block.shadow || '#bb80bb';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h / 2, w * 0.38, h * 0.35, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Highlight
+            ctx.fillStyle = block.highlight || '#eec0ee';
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.3, y + h * 0.35, w * 0.12, h * 0.1, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawUI() {
+            // Score display (top center) - Spanish
+            ctx.fillStyle = '#5c3d12';
+            ctx.font = 'bold 18px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`PUNTAJE: ${score}  |  ALTURA: ${stackHeight}`, CONFIG.GAME_WIDTH / 2, 35);
+
+            // Level indicator
+            ctx.fillStyle = '#8b4513';
+            ctx.font = 'bold 14px Segoe UI, sans-serif';
+            ctx.fillText(`Nivel ${level}`, CONFIG.GAME_WIDTH / 2, 55);
+
+            // Mute button (top left)
+            drawButton(CONFIG.BUTTON_MARGIN, CONFIG.BUTTON_MARGIN, muted ? '🔇' : '🔊');
+
+            // Pause button (top right) - only during gameplay
+            if (gameState === 'playing' || gameState === 'paused') {
+                drawButton(CONFIG.GAME_WIDTH - CONFIG.BUTTON_SIZE - CONFIG.BUTTON_MARGIN,
+                    CONFIG.BUTTON_MARGIN, gameState === 'paused' ? '▶' : '⏸');
+            }
+
+            // Combo display with color cycling
+            if (combo > 1 && gameState === 'playing') {
+                const colorIndex = Math.min(Math.floor(combo / 3), CONFIG.COMBO_COLORS.length - 1);
+                ctx.fillStyle = CONFIG.COMBO_COLORS[colorIndex];
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                ctx.font = 'bold 24px Segoe UI, sans-serif';
+                ctx.strokeText(`COMBO x${combo}`, CONFIG.GAME_WIDTH / 2, 85);
+                ctx.fillText(`COMBO x${combo}`, CONFIG.GAME_WIDTH / 2, 85);
+            }
+
+            // Combo callout banner
+            if (comboCalloutTimer > 0) {
+                ctx.fillStyle = '#ff6600';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 4;
+                ctx.font = 'bold 32px Segoe UI, sans-serif';
+                ctx.strokeText(comboCallout, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2);
+                ctx.fillText(comboCallout, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2);
+            }
+
+            // Level up banner
+            if (levelUpTimer > 0) {
+                ctx.fillStyle = '#00cc66';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 4;
+                ctx.font = 'bold 36px Segoe UI, sans-serif';
+                ctx.strokeText(levelUpBanner, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 - 50);
+                ctx.fillText(levelUpBanner, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 - 50);
+            }
+
+            // Perfect indicator (¡PERFECTO!) 
+            if (perfectStreak > 1 && gameState === 'playing') {
+                ctx.fillStyle = CONFIG.COLORS.perfectFlash;
+                ctx.font = 'bold 16px Segoe UI, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`¡PERFECTO! x${perfectStreak}`, CONFIG.GAME_WIDTH / 2, 110);
+            }
+        }
+
+        function drawButton(x, y, icon) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(x, y, CONFIG.BUTTON_SIZE, CONFIG.BUTTON_SIZE, 8);
+            ctx.fill();
+
+            ctx.fillStyle = CONFIG.COLORS.textPrimary;
+            ctx.font = '20px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(icon, x + CONFIG.BUTTON_SIZE / 2, y + CONFIG.BUTTON_SIZE / 2);
+            ctx.textBaseline = 'alphabetic';
+        }
+
+        function drawOverlay() {
+            ctx.fillStyle = CONFIG.COLORS.overlay;
+            ctx.fillRect(0, 0, CONFIG.GAME_WIDTH, CONFIG.GAME_HEIGHT);
+        }
+
+        function drawStartScreen() {
+            // Draw cover image or fallback
+            if (coverLoaded) {
+                // Scale image to fit
+                const imgAspect = coverImage.width / coverImage.height;
+                const canvasAspect = CONFIG.GAME_WIDTH / CONFIG.GAME_HEIGHT;
+
+                let drawW, drawH, drawX, drawY;
+                if (imgAspect > canvasAspect) {
+                    drawH = CONFIG.GAME_HEIGHT;
+                    drawW = drawH * imgAspect;
+                    drawX = (CONFIG.GAME_WIDTH - drawW) / 2;
+                    drawY = 0;
+                } else {
+                    drawW = CONFIG.GAME_WIDTH;
+                    drawH = drawW / imgAspect;
+                    drawX = 0;
+                    drawY = (CONFIG.GAME_HEIGHT - drawH) / 2;
+                }
+
+                ctx.drawImage(coverImage, drawX, drawY, drawW, drawH);
+            } else {
+                // Fallback gradient
+                drawOverlay();
+                ctx.fillStyle = '#ff9900';
+                ctx.font = 'bold 36px Segoe UI, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('BURGER STACKER!!!!', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2);
+            }
+
+            // "Toca para jugar" with pulse
+            const pulse = 0.6 + Math.sin(Date.now() / 300) * 0.3;
+            ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.font = 'bold 22px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.strokeText('Toca para jugar', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT - 60);
+            ctx.fillText('Toca para jugar', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT - 60);
+        }
+
+        function drawCountdown() {
+            drawOverlay();
+
+            ctx.fillStyle = CONFIG.COLORS.textPrimary;
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 120px Segoe UI, sans-serif';
+
+            // Pulsing animation
+            const scale = 1 + Math.sin(Date.now() / 100) * 0.1;
+            ctx.save();
+            ctx.translate(CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2);
+            ctx.scale(scale, scale);
+            const displayText = countdownValue > 0 ? countdownValue.toString() : '¡LISTO!';
+            if (countdownValue <= 0) ctx.font = 'bold 60px Segoe UI, sans-serif';
+            ctx.fillText(displayText, 0, 40);
+            ctx.restore();
+        }
+
+        function drawPauseScreen() {
+            drawOverlay();
+
+            ctx.fillStyle = CONFIG.COLORS.textPrimary;
+            ctx.textAlign = 'center';
+
+            ctx.font = 'bold 40px Segoe UI, sans-serif';
+            ctx.fillText('PAUSA', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 - 20);
+
+            ctx.fillStyle = CONFIG.COLORS.textSecondary;
+            ctx.font = '18px Segoe UI, sans-serif';
+            ctx.fillText('Toca para continuar', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 + 25);
+        }
+
+        function drawGameOverScreen() {
+            drawOverlay();
+
+            ctx.textAlign = 'center';
+
+            // Game Over text - Spanish
+            ctx.fillStyle = '#ff4444';
+            ctx.font = 'bold 44px Segoe UI, sans-serif';
+            ctx.fillText('¡SE CAYÓ!', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 - 70);
+
+            // Final score
+            ctx.fillStyle = CONFIG.COLORS.textPrimary;
+            ctx.font = 'bold 28px Segoe UI, sans-serif';
+            ctx.fillText(`PUNTAJE: ${score}`, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2);
+
+            ctx.font = '22px Segoe UI, sans-serif';
+            ctx.fillText(`ALTURA: ${stackHeight}`, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 + 35);
+
+            if (maxCombo > 1) {
+                ctx.fillText(`Mejor Combo: ${maxCombo}`, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 + 65);
+            }
+
+            // Restart prompt
+            ctx.fillStyle = CONFIG.COLORS.textSecondary;
+            ctx.font = 'bold 18px Segoe UI, sans-serif';
+            ctx.fillText('Toca para reiniciar', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 + 120);
+        }
+
+        function drawFailOverlay() {
+            drawOverlay();
+
+            ctx.textAlign = 'center';
+
+            // "¡Se cayó!" with shake effect
+            ctx.fillStyle = '#ff4444';
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 4;
+            ctx.font = 'bold 48px Segoe UI, sans-serif';
+            ctx.strokeText('¡SE CAYÓ!', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 - 80);
+            ctx.fillText('¡SE CAYÓ!', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 - 80);
+
+            // Stats
+            ctx.fillStyle = CONFIG.COLORS.textPrimary;
+            ctx.font = 'bold 24px Segoe UI, sans-serif';
+            ctx.fillText(`PUNTAJE: ${score}`, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 - 10);
+
+            ctx.font = '20px Segoe UI, sans-serif';
+            ctx.fillText(`ALTURA: ${stackHeight}`, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 + 25);
+
+            if (maxCombo > 1) {
+                ctx.fillStyle = '#ffcc00';
+                ctx.fillText(`Mejor Combo: ${maxCombo}`, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2 + 55);
+            }
+        }
+
+        // ============================================================
+        // GAME LOOP
+        // ============================================================
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game
+        init();
+    </script>
+</body>
+
+</html>

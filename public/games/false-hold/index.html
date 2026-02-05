@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>False Hold</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0f;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+canvas {
+  display: block;
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ============================================
+// TUNING VALUES
+// ============================================
+const CANVAS_WIDTH = 360;
+const CANVAS_HEIGHT = 640;
+
+// Press bar dimensions
+const BAR_WIDTH = 280;
+const BAR_HEIGHT = 48;
+const BAR_Y = 320;
+
+// Fill speed (pixels per second at level 1)
+const BASE_FILL_SPEED = 180;
+const FILL_SPEED_INCREMENT = 12;
+
+// Safe window
+const BASE_SAFE_WINDOW_WIDTH = 50;
+const SAFE_WINDOW_MIN_WIDTH = 18;
+const SAFE_WINDOW_SHRINK = 3;
+
+// Safe window position range (as fraction of bar length)
+const SAFE_WINDOW_MIN_POS = 0.25;
+const SAFE_WINDOW_MAX_POS = 0.75;
+
+// Overflow limit
+const BASE_OVERFLOW_LIMIT = 0.95;
+const OVERFLOW_LIMIT_DECREMENT = 0.008;
+const MIN_OVERFLOW_LIMIT = 0.7;
+
+// Colors
+const COLOR_BG = '#0d0d14';
+const COLOR_BAR_BG = '#1a1a24';
+const COLOR_BAR_OUTLINE = '#2a2a3a';
+const COLOR_FILL = '#4a9eff';
+const COLOR_FILL_DANGER = '#ff4a6a';
+const COLOR_SAFE_WINDOW = '#3dff7a';
+const COLOR_OVERFLOW_LIMIT = '#ff3355';
+const COLOR_SCORE = '#ffffff';
+const COLOR_SUCCESS = '#3dff7a';
+const COLOR_FAIL = '#ff3355';
+
+// Timing
+const RESULT_DISPLAY_MS = 800;
+const ROUND_DELAY_MS = 400;
+
+// ============================================
+// GAME STATE
+// ============================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let dpr = 1;
+let score = 0;
+let level = 1;
+let fillProgress = 0;
+let isHolding = false;
+let roundActive = false;
+let gameState = 'ready'; // ready, playing, result, gameover
+
+let safeWindowStart = 0;
+let safeWindowWidth = 0;
+let overflowLimit = 0;
+let fillSpeed = 0;
+
+let resultType = '';
+let resultTimer = 0;
+let lastTime = 0;
+
+// ============================================
+// INITIALIZATION
+// ============================================
+function initCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = CANVAS_WIDTH * dpr;
+  canvas.height = CANVAS_HEIGHT * dpr;
+  canvas.style.width = CANVAS_WIDTH + 'px';
+  canvas.style.height = CANVAS_HEIGHT + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function initRound() {
+  fillProgress = 0;
+  isHolding = false;
+  roundActive = true;
+  gameState = 'playing';
+  
+  // Calculate difficulty-adjusted values
+  fillSpeed = BASE_FILL_SPEED + (level - 1) * FILL_SPEED_INCREMENT;
+  
+  safeWindowWidth = Math.max(
+    SAFE_WINDOW_MIN_WIDTH,
+    BASE_SAFE_WINDOW_WIDTH - (level - 1) * SAFE_WINDOW_SHRINK
+  );
+  
+  overflowLimit = Math.max(
+    MIN_OVERFLOW_LIMIT,
+    BASE_OVERFLOW_LIMIT - (level - 1) * OVERFLOW_LIMIT_DECREMENT
+  );
+  
+  // Random safe window position
+  const availableRange = SAFE_WINDOW_MAX_POS - SAFE_WINDOW_MIN_POS;
+  const randomPos = SAFE_WINDOW_MIN_POS + Math.random() * availableRange;
+  safeWindowStart = randomPos * BAR_WIDTH - safeWindowWidth / 2;
+  
+  // Clamp safe window within valid range
+  const maxSafeStart = overflowLimit * BAR_WIDTH - safeWindowWidth - 10;
+  safeWindowStart = Math.min(safeWindowStart, maxSafeStart);
+  safeWindowStart = Math.max(safeWindowStart, 20);
+}
+
+function resetGame() {
+  score = 0;
+  level = 1;
+  gameState = 'ready';
+  fillProgress = 0;
+  isHolding = false;
+  roundActive = false;
+  resultType = '';
+}
+
+// ============================================
+// INPUT HANDLING
+// ============================================
+function handleStart(e) {
+  e.preventDefault();
+  
+  if (gameState === 'ready') {
+    initRound();
+    isHolding = true;
+  } else if (gameState === 'playing' && roundActive) {
+    isHolding = true;
+  } else if (gameState === 'gameover') {
+    resetGame();
+  }
+}
+
+function handleEnd(e) {
+  e.preventDefault();
+  
+  if (gameState === 'playing' && roundActive && isHolding) {
+    isHolding = false;
+    resolveRound();
+  }
+}
+
+function resolveRound() {
+  roundActive = false;
+  gameState = 'result';
+  
+  const fillPixels = fillProgress;
+  const safeStart = safeWindowStart;
+  const safeEnd = safeWindowStart + safeWindowWidth;
+  
+  // Check if fill is within safe window
+  if (fillPixels >= safeStart && fillPixels <= safeEnd) {
+    resultType = 'success';
+    score++;
+    level++;
+    resultTimer = RESULT_DISPLAY_MS;
+  } else {
+    resultType = 'fail';
+    resultTimer = RESULT_DISPLAY_MS;
+  }
+}
+
+function handleOverflow() {
+  roundActive = false;
+  gameState = 'result';
+  resultType = 'fail';
+  resultTimer = RESULT_DISPLAY_MS;
+}
+
+canvas.addEventListener('mousedown', handleStart, { passive: false });
+canvas.addEventListener('mouseup', handleEnd, { passive: false });
+canvas.addEventListener('mouseleave', handleEnd, { passive: false });
+canvas.addEventListener('touchstart', handleStart, { passive: false });
+canvas.addEventListener('touchend', handleEnd, { passive: false });
+canvas.addEventListener('touchcancel', handleEnd, { passive: false });
+
+// ============================================
+// UPDATE
+// ============================================
+function update(dt) {
+  if (gameState === 'playing' && roundActive && isHolding) {
+    fillProgress += fillSpeed * dt;
+    
+    // Check overflow
+    const overflowPixels = overflowLimit * BAR_WIDTH;
+    if (fillProgress >= overflowPixels) {
+      fillProgress = overflowPixels;
+      handleOverflow();
+    }
+  }
+  
+  if (gameState === 'result') {
+    resultTimer -= dt * 1000;
+    if (resultTimer <= 0) {
+      if (resultType === 'success') {
+        setTimeout(() => {
+          initRound();
+        }, ROUND_DELAY_MS);
+        gameState = 'waiting';
+      } else {
+        gameState = 'gameover';
+      }
+    }
+  }
+}
+
+// ============================================
+// RENDER
+// ============================================
+function render() {
+  // Clear
+  ctx.fillStyle = COLOR_BG;
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  
+  const barX = (CANVAS_WIDTH - BAR_WIDTH) / 2;
+  
+  // Draw bar background
+  ctx.fillStyle = COLOR_BAR_BG;
+  ctx.fillRect(barX, BAR_Y, BAR_WIDTH, BAR_HEIGHT);
+  
+  // Draw bar outline
+  ctx.strokeStyle = COLOR_BAR_OUTLINE;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(barX, BAR_Y, BAR_WIDTH, BAR_HEIGHT);
+  
+  if (gameState !== 'ready' && gameState !== 'gameover') {
+    // Draw safe window
+    ctx.fillStyle = COLOR_SAFE_WINDOW;
+    ctx.globalAlpha = 0.3;
+    ctx.fillRect(barX + safeWindowStart, BAR_Y, safeWindowWidth, BAR_HEIGHT);
+    ctx.globalAlpha = 1;
+    
+    // Safe window borders
+    ctx.strokeStyle = COLOR_SAFE_WINDOW;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(barX + safeWindowStart, BAR_Y);
+    ctx.lineTo(barX + safeWindowStart, BAR_Y + BAR_HEIGHT);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(barX + safeWindowStart + safeWindowWidth, BAR_Y);
+    ctx.lineTo(barX + safeWindowStart + safeWindowWidth, BAR_Y + BAR_HEIGHT);
+    ctx.stroke();
+    
+    // Draw overflow limit
+    const overflowX = barX + overflowLimit * BAR_WIDTH;
+    ctx.strokeStyle = COLOR_OVERFLOW_LIMIT;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(overflowX, BAR_Y - 8);
+    ctx.lineTo(overflowX, BAR_Y + BAR_HEIGHT + 8);
+    ctx.stroke();
+    
+    // Draw fill
+    const fillAmount = Math.min(fillProgress, BAR_WIDTH);
+    const dangerZone = overflowLimit * BAR_WIDTH * 0.85;
+    
+    if (fillAmount > 0) {
+      const gradient = ctx.createLinearGradient(barX, 0, barX + fillAmount, 0);
+      if (fillAmount > dangerZone) {
+        const ratio = (fillAmount - dangerZone) / (BAR_WIDTH - dangerZone);
+        gradient.addColorStop(0, COLOR_FILL);
+        gradient.addColorStop(Math.max(0, 1 - ratio), COLOR_FILL);
+        gradient.addColorStop(1, COLOR_FILL_DANGER);
+      } else {
+        gradient.addColorStop(0, COLOR_FILL);
+        gradient.addColorStop(1, COLOR_FILL);
+      }
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(barX + 2, BAR_Y + 2, fillAmount - 4, BAR_HEIGHT - 4);
+    }
+    
+    // Draw fill edge indicator
+    if (fillAmount > 4) {
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(barX + fillAmount - 3, BAR_Y + 4, 2, BAR_HEIGHT - 8);
+      ctx.globalAlpha = 1;
+    }
+  }
+  
+  // Draw score
+  ctx.fillStyle = COLOR_SCORE;
+  ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(score.toString(), CANVAS_WIDTH / 2, 60);
+  
+  // Draw result feedback
+  if (gameState === 'result' || gameState === 'gameover') {
+    const alpha = gameState === 'result' ? Math.min(1, resultTimer / 200) : 1;
+    ctx.globalAlpha = alpha;
+    
+    if (resultType === 'success') {
+      ctx.fillStyle = COLOR_SUCCESS;
+      ctx.beginPath();
+      ctx.arc(CANVAS_WIDTH / 2, BAR_Y + BAR_HEIGHT + 80, 24, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Checkmark
+      ctx.strokeStyle = COLOR_BG;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(CANVAS_WIDTH / 2 - 10, BAR_Y + BAR_HEIGHT + 80);
+      ctx.lineTo(CANVAS_WIDTH / 2 - 2, BAR_Y + BAR_HEIGHT + 88);
+      ctx.lineTo(CANVAS_WIDTH / 2 + 12, BAR_Y + BAR_HEIGHT + 72);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = COLOR_FAIL;
+      ctx.beginPath();
+      ctx.arc(CANVAS_WIDTH / 2, BAR_Y + BAR_HEIGHT + 80, 24, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // X mark
+      ctx.strokeStyle = COLOR_BG;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(CANVAS_WIDTH / 2 - 10, BAR_Y + BAR_HEIGHT + 70);
+      ctx.lineTo(CANVAS_WIDTH / 2 + 10, BAR_Y + BAR_HEIGHT + 90);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(CANVAS_WIDTH / 2 + 10, BAR_Y + BAR_HEIGHT + 70);
+      ctx.lineTo(CANVAS_WIDTH / 2 - 10, BAR_Y + BAR_HEIGHT + 90);
+      ctx.stroke();
+    }
+    
+    ctx.globalAlpha = 1;
+  }
+  
+  // Game over state
+  if (gameState === 'gameover') {
+    ctx.fillStyle = COLOR_SCORE;
+    ctx.globalAlpha = 0.6;
+    ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('TAP TO RESTART', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 100);
+    ctx.globalAlpha = 1;
+  }
+  
+  // Ready state hint
+  if (gameState === 'ready') {
+    ctx.fillStyle = COLOR_SCORE;
+    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(Date.now() / 300);
+    ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('HOLD TO START', CANVAS_WIDTH / 2, BAR_Y + BAR_HEIGHT + 60);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ============================================
+// GAME LOOP
+// ============================================
+function gameLoop(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+  lastTime = timestamp;
+  
+  update(dt);
+  render();
+  
+  requestAnimationFrame(gameLoop);
+}
+
+// ============================================
+// START
+// ============================================
+initCanvas();
+window.addEventListener('resize', initCanvas);
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Falling Choice Gate - A fast decision-based survival game">
+    <title>ESCAPA DEL TURNO: OVERTIME EDITION</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #16213e;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        (() => {
+            'use strict';
+
+            // ═══════════════════════════════════════════════════════════════
+            // TUNING VALUES - All gameplay parameters exposed here
+            // ═══════════════════════════════════════════════════════════════
+            const CONFIG = {
+                // Canvas
+                CANVAS_WIDTH: 360,
+                CANVAS_HEIGHT: 640,
+
+                // Gate settings
+                GATE_WIDTH: 80,
+                GATE_HEIGHT: 500,
+                GATE_GAP: 40,
+                GATE_START_SPEED: 3,
+                GATE_MAX_SPEED: 12,
+                GATE_SPEED_INCREMENT: 0.15,
+
+                // Player settings
+                PLAYER_RADIUS: 24,
+                PLAYER_Y_OFFSET: 80,
+
+                // Visual indicator settings
+                INDICATOR_START_OPACITY: 0.35,
+                INDICATOR_MIN_OPACITY: 0.12,
+                INDICATOR_FADE_RATE: 0.005,
+
+                // Colors (kitchen theme)
+                COLOR_BG: '#f5deb3', // Warm wheat
+                COLOR_BG_DARK: '#d4a574', // Darker warm
+                COLOR_FLOOR_LIGHT: '#f0f0f0', // White tile
+                COLOR_FLOOR_DARK: '#3a3a3a', // Dark tile
+                COLOR_WALL: '#ffecd2', // Cream wall
+                COLOR_SAFE_GATE: '#e8f5e9', // Light green door
+                COLOR_SAFE_DOOR_FRAME: '#4caf50', // Green frame
+                COLOR_DANGER_GATE: '#8b8b8b', // Gray metal door
+                COLOR_DANGER_FRAME: '#5a5a5a', // Dark frame
+                COLOR_PLAYER: '#ffffff',
+                COLOR_PLAYER_STROKE: '#d4a574',
+                COLOR_TEXT: '#ffffff',
+                COLOR_TEXT_DARK: '#5c3d12',
+                COLOR_OVERLAY: 'rgba(0, 0, 0, 0.75)',
+                COLOR_HUD_BG: '#ffffff',
+                COLOR_SAFE_INDICATOR: 'rgba(76, 175, 80, ',
+
+                // Countdown
+                COUNTDOWN_DURATION: 3,
+
+                // HUD
+                HUD_BUTTON_SIZE: 44,
+                HUD_MARGIN: 16,
+            };
+
+            // ═══════════════════════════════════════════════════════════════
+            // GAME STATE
+            // ═══════════════════════════════════════════════════════════════
+            const GameState = {
+                START: 'start',
+                COUNTDOWN: 'countdown',
+                PLAYING: 'playing',
+                PAUSED: 'paused',
+                GAME_OVER: 'gameOver'
+            };
+
+            // ═══════════════════════════════════════════════════════════════
+            // CANVAS SETUP
+            // ═══════════════════════════════════════════════════════════════
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+
+            canvas.width = CONFIG.CANVAS_WIDTH * dpr;
+            canvas.height = CONFIG.CANVAS_HEIGHT * dpr;
+            canvas.style.width = CONFIG.CANVAS_WIDTH + 'px';
+            canvas.style.height = CONFIG.CANVAS_HEIGHT + 'px';
+            ctx.scale(dpr, dpr);
+
+            // ═══════════════════════════════════════════════════════════════
+            // GAME VARIABLES
+            // ═══════════════════════════════════════════════════════════════
+            let state = GameState.START;
+            let score = 0;
+            let muted = false;
+            let countdownValue = CONFIG.COUNTDOWN_DURATION;
+            let countdownTimer = 0;
+            let lastTime = 0;
+
+            // Gate state (static positions)
+            let safeGateSide = 'left'; // 'left' or 'right'
+            let playerChoice = null; // null, 'left', or 'right'
+            let awaitingChoice = true;
+
+            // Static door positions
+            const doorWidth = 90;
+            const doorHeight = 160;
+            const doorY = 200;
+            const leftDoorX = CONFIG.CANVAS_WIDTH / 2 - doorWidth - 20;
+            const rightDoorX = CONFIG.CANVAS_WIDTH / 2 + 20;
+
+            // Decision timer
+            let decisionTimer = 3.0;
+            let totalTimerDuration = 3.0;
+            let timerActive = false;
+            let correctCount = 0;
+
+            // Streak for win condition (3 correct = win)
+            let streak = 0;
+            const STREAK_TO_WIN = 3;
+            let gameWon = false;
+
+            // Ticking SFX
+            let lastTickTime = 0;
+            let tickingActive = false;
+
+            // Door hints (unreliable)
+            let hintDoor = null; // 'left', 'right', or null
+            let hintIsTrue = false; // Sometimes lies
+
+            // Fail animation
+            let failAnimPhase = 0; // 0=none, 1=shake, 2=show result
+            let failAnimTimer = 0;
+            let shakeOffset = 0;
+
+            // Cover image for start screen
+            const coverImage = new Image();
+            coverImage.src = 'https://files.catbox.moe/z7xc2w.png';
+            let coverLoaded = false;
+            coverImage.onload = () => { coverLoaded = true; };
+
+            // Gameplay background image
+            const gameplayBgImage = new Image();
+            gameplayBgImage.src = 'https://files.catbox.moe/q5kznw.png';
+            let gameplayBgLoaded = false;
+            gameplayBgImage.onload = () => { gameplayBgLoaded = true; };
+
+            // In-game countdown (3→2→1→0 before decision timer)
+            let inGameCountdown = 3;
+            let inGameCountdownActive = false;
+            let inGameCountdownTimer = 0;
+
+            // Result feedback text
+            let resultText = '';
+            let resultTextTimer = 0;
+
+            // Player position (static, centered at bottom)
+            const playerX = CONFIG.CANVAS_WIDTH / 2;
+            const playerY = CONFIG.CANVAS_HEIGHT - 100;
+
+            // Audio context for sound effects
+            let audioCtx = null;
+
+            // ═══════════════════════════════════════════════════════════════
+            // AUDIO FUNCTIONS
+            // ═══════════════════════════════════════════════════════════════
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            function playTone(freq, duration, type = 'square', volume = 0.15) {
+                if (muted || !audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            }
+
+            function playSuccess() {
+                playTone(523, 0.1, 'sine', 0.2);
+                setTimeout(() => playTone(659, 0.1, 'sine', 0.2), 80);
+                setTimeout(() => playTone(784, 0.15, 'sine', 0.2), 160);
+            }
+
+            function playFail() {
+                playTone(200, 0.3, 'sawtooth', 0.2);
+                setTimeout(() => playTone(150, 0.4, 'sawtooth', 0.15), 100);
+            }
+
+            function playCountdown() {
+                playTone(440, 0.15, 'sine', 0.15);
+            }
+
+            function playStart() {
+                playTone(660, 0.2, 'sine', 0.2);
+            }
+
+            function playChoice() {
+                playTone(350, 0.08, 'square', 0.1);
+            }
+
+            function playTick() {
+                if (muted || !audioCtx) return;
+                playTone(800, 0.03, 'sine', 0.08);
+            }
+
+            function playTickFast() {
+                if (muted || !audioCtx) return;
+                playTone(1000, 0.02, 'sine', 0.12);
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // ROUND MANAGEMENT (Static scene - no movement)
+            // ═══════════════════════════════════════════════════════════════
+            function createRound() {
+                // Randomly pick safe door
+                safeGateSide = Math.random() < 0.5 ? 'left' : 'right';
+
+                playerChoice = null;
+                awaitingChoice = false; // Not yet - countdown first
+                resultText = '';
+
+                // Start in-game countdown (3→2→1→0)
+                inGameCountdown = 3;
+                inGameCountdownActive = true;
+                inGameCountdownTimer = performance.now();
+
+                // Timer NOT active yet - starts after countdown
+                decisionTimer = totalTimerDuration;
+                timerActive = false;
+                tickingActive = false;
+
+                // No hints - doors must be identical
+                hintDoor = null;
+            }
+
+            function startDecisionTimer() {
+                // Called when in-game countdown finishes
+                awaitingChoice = true;
+                timerActive = true;
+                tickingActive = true;
+                decisionTimer = totalTimerDuration; // Reset timer
+                lastTickTime = performance.now();
+                lastTime = performance.now(); // Reset to prevent huge deltaTime
+                console.log('Decision timer started:', decisionTimer);
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // GAME CONTROL
+            // ═══════════════════════════════════════════════════════════════
+            function chooseGate(side) {
+                if (state !== GameState.PLAYING || !awaitingChoice || playerChoice !== null) return;
+                if (inGameCountdownActive) return; // Can't choose during countdown
+
+                playerChoice = side;
+                awaitingChoice = false;
+                timerActive = false;  // FREEZE timer immediately
+                tickingActive = false; // Stop ticking immediately
+                playChoice();
+                resultTextTimer = performance.now();
+
+                // Check if correct
+                if (side === safeGateSide) {
+                    score++;
+                    streak++;
+
+                    // Check for WIN (3 streak)
+                    if (streak >= STREAK_TO_WIN) {
+                        resultText = '¡TE VAS A CASA!';
+                        gameWon = true;
+                        playSuccess();
+                        // Show win for longer, then reset
+                        setTimeout(() => {
+                            state = GameState.GAME_OVER;
+                        }, 1500);
+                    } else {
+                        resultText = '¡TE SALVASTE!';
+                        playSuccess();
+                        // Continue to next round after showing result
+                        setTimeout(() => {
+                            if (state === GameState.PLAYING && !gameWon) {
+                                createRound();
+                            }
+                        }, 1000); // Hold result for 1 second
+                    }
+                } else {
+                    resultText = 'PONTE A TRABAJAR';
+                    streak = 0; // Reset streak on loss
+                    triggerGameOver();
+                }
+            }
+
+            function triggerGameOver() {
+                timerActive = false;
+                tickingActive = false;
+                inGameCountdownActive = false;
+                failAnimPhase = 1; // Start shake
+                failAnimTimer = performance.now();
+                playFail();
+            }
+
+            function resetGame() {
+                score = 0;
+                correctCount = 0;
+                streak = 0;  // Reset streak
+                gameWon = false;  // Reset win state
+                totalTimerDuration = 3.0;
+                playerChoice = null;
+                awaitingChoice = false;
+
+                // Reset timer state
+                decisionTimer = totalTimerDuration;
+                timerActive = false;
+                tickingActive = false;
+                lastTickTime = 0;
+                hintDoor = null;
+
+                // Reset in-game countdown
+                inGameCountdown = 3;
+                inGameCountdownActive = false;
+                inGameCountdownTimer = 0;
+
+                // Reset result text
+                resultText = '';
+                resultTextTimer = 0;
+
+                // Reset fail animation
+                failAnimPhase = 0;
+                failAnimTimer = 0;
+                shakeOffset = 0;
+            }
+
+            function startCountdown() {
+                // Go directly to gameplay with in-game countdown
+                initAudio();
+                resetGame();
+                startGame();
+            }
+
+            function startGame() {
+                state = GameState.PLAYING;
+                createRound(); // This starts the in-game countdown
+                playStart();
+            }
+
+            function togglePause() {
+                if (state === GameState.PLAYING) {
+                    state = GameState.PAUSED;
+                } else if (state === GameState.PAUSED) {
+                    state = GameState.PLAYING;
+                }
+            }
+
+            function toggleMute() {
+                muted = !muted;
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // RENDERING
+            // ═══════════════════════════════════════════════════════════════
+            function drawBackground() {
+                // Draw gameplay reference image as background
+                if (gameplayBgLoaded) {
+                    // Cover the canvas with the image
+                    const imgAspect = gameplayBgImage.width / gameplayBgImage.height;
+                    const canvasAspect = CONFIG.CANVAS_WIDTH / CONFIG.CANVAS_HEIGHT;
+
+                    let drawW, drawH, drawX, drawY;
+                    if (imgAspect > canvasAspect) {
+                        drawH = CONFIG.CANVAS_HEIGHT;
+                        drawW = drawH * imgAspect;
+                        drawX = (CONFIG.CANVAS_WIDTH - drawW) / 2;
+                        drawY = 0;
+                    } else {
+                        drawW = CONFIG.CANVAS_WIDTH;
+                        drawH = drawW / imgAspect;
+                        drawX = 0;
+                        drawY = (CONFIG.CANVAS_HEIGHT - drawH) / 2;
+                    }
+                    ctx.drawImage(gameplayBgImage, drawX, drawY, drawW, drawH);
+                } else {
+                    // Fallback gradient
+                    const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
+                    gradient.addColorStop(0, '#ffecd2');
+                    gradient.addColorStop(0.5, '#fcb69f');
+                    gradient.addColorStop(1, '#d4a574');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+                }
+            }
+
+            function drawInGameCountdown() {
+                // Large countdown overlay (3→2→1→0)
+                if (!inGameCountdownActive) return;
+
+                // Semi-transparent overlay
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+                // Large number
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 6;
+                ctx.font = 'bold 140px Segoe UI, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const displayNum = inGameCountdown >= 0 ? inGameCountdown.toString() : '¡YA!';
+                ctx.strokeText(displayNum, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 50);
+                ctx.fillText(displayNum, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 50);
+
+                // Spanish label
+                ctx.font = 'bold 24px Segoe UI, sans-serif';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fillText('¡PREPÁRATE!', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 40);
+            }
+
+            function drawResultText() {
+                // Show result feedback text after choice
+                if (!resultText || !resultTextTimer) return;
+
+                const elapsed = performance.now() - resultTextTimer;
+                const displayTime = 2000; // Show for 2 seconds
+                if (elapsed > displayTime) return;
+
+                // Stay fully visible for first 1000ms, then fade
+                const fadeStart = 1500;
+                const alpha = elapsed < fadeStart ? 1 : 1 - ((elapsed - fadeStart) / (displayTime - fadeStart));
+
+                ctx.fillStyle = resultText.includes('SALVASTE') || resultText.includes('CASA') ?
+                    `rgba(76, 175, 80, ${alpha})` : `rgba(244, 67, 54, ${alpha})`;
+                ctx.strokeStyle = `rgba(0, 0, 0, ${alpha * 0.6})`;
+                ctx.lineWidth = 4;
+                ctx.font = 'bold 32px Segoe UI, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeText(resultText, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 100);
+                ctx.fillText(resultText, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 100);
+            }
+
+            function drawDoorHitZones() {
+                // Invisible hit zones aligned with background image doors
+                // Only draw subtle feedback, NOT the doors themselves
+
+                // Tap feedback flash (brief highlight on chosen door)
+                if (playerChoice && !awaitingChoice) {
+                    const chosenX = playerChoice === 'left' ? leftDoorX : rightDoorX;
+                    const isCorrect = (playerChoice === safeGateSide);
+
+                    const elapsed = performance.now() - resultTextTimer;
+                    if (elapsed < 300) {
+                        const alpha = 0.4 * (1 - elapsed / 300);
+                        ctx.fillStyle = isCorrect ?
+                            `rgba(76, 175, 80, ${alpha})` :
+                            `rgba(244, 67, 54, ${alpha})`;
+                        ctx.fillRect(chosenX - 10, doorY - 10, doorWidth + 20, doorHeight + 20);
+                    }
+                }
+
+                // Subtle pulsing border to indicate tappable areas (only when awaiting)
+                if (awaitingChoice && !inGameCountdownActive) {
+                    const pulse = 0.15 + Math.sin(performance.now() / 300) * 0.1;
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${pulse})`;
+                    ctx.lineWidth = 3;
+
+                    // Left door subtle outline
+                    ctx.strokeRect(leftDoorX, doorY, doorWidth, doorHeight);
+                    // Right door subtle outline  
+                    ctx.strokeRect(rightDoorX, doorY, doorWidth, doorHeight);
+                }
+            }
+
+            function drawAnalogClock() {
+                const clockX = CONFIG.CANVAS_WIDTH / 2;
+                const clockY = 280; // Center between doors - creates pressure
+                const clockRadius = 70; // Slightly larger
+
+                // Clock face (red/orange)
+                const faceGradient = ctx.createRadialGradient(clockX, clockY, 0, clockX, clockY, clockRadius);
+                faceGradient.addColorStop(0, '#ff6b6b');
+                faceGradient.addColorStop(1, '#c0392b');
+                ctx.fillStyle = faceGradient;
+                ctx.beginPath();
+                ctx.arc(clockX, clockY, clockRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Clock border
+                ctx.strokeStyle = '#8b0000';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+
+                // Inner circle
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(clockX, clockY, clockRadius - 8, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Tick marks (12 positions)
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+                    const innerR = clockRadius - 15;
+                    const outerR = clockRadius - 8;
+                    ctx.beginPath();
+                    ctx.moveTo(clockX + Math.cos(angle) * innerR, clockY + Math.sin(angle) * innerR);
+                    ctx.lineTo(clockX + Math.cos(angle) * outerR, clockY + Math.sin(angle) * outerR);
+                    ctx.lineWidth = i % 3 === 0 ? 3 : 1;
+                    ctx.strokeStyle = '#fff';
+                    ctx.stroke();
+                }
+
+                // Clock hand - sweeps based on timer
+                const progress = 1 - (decisionTimer / totalTimerDuration);
+                const handAngle = progress * Math.PI * 2 - Math.PI / 2;
+                const handLength = clockRadius - 18;
+
+                ctx.strokeStyle = '#1a1a1a';
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(clockX, clockY);
+                ctx.lineTo(clockX + Math.cos(handAngle) * handLength, clockY + Math.sin(handAngle) * handLength);
+                ctx.stroke();
+
+                // Center dot
+                ctx.fillStyle = '#1a1a1a';
+                ctx.beginPath();
+                ctx.arc(clockX, clockY, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Timer text below clock
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                ctx.font = 'bold 28px Segoe UI, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const timerText = decisionTimer.toFixed(1);
+                ctx.strokeText(timerText, clockX, clockY + clockRadius + 25);
+                ctx.fillText(timerText, clockX, clockY + clockRadius + 25);
+            }
+
+            function drawPlayer() {
+                // Player stands centered at bottom, facing the doors
+                const displayX = playerX;
+                const r = 28;
+
+                // Body (white uniform)
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(displayX, playerY + 10, r * 0.8, r * 1.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Head
+                ctx.fillStyle = '#f5deb3';
+                ctx.beginPath();
+                ctx.arc(displayX, playerY - r * 0.4, r * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Chef hat
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(displayX, playerY - r * 0.8, r * 0.5, r * 0.35, 0, Math.PI, 0);
+                ctx.fill();
+                ctx.fillRect(displayX - r * 0.4, playerY - r * 1.3, r * 0.8, r * 0.5);
+
+                // Eyes
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.arc(displayX - 7, playerY - r * 0.4, 3, 0, Math.PI * 2);
+                ctx.arc(displayX + 7, playerY - r * 0.4, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Apron
+                ctx.fillStyle = '#d4a574';
+                ctx.fillRect(displayX - 15, playerY + 5, 30, 25);
+            }
+
+            function drawHUD() {
+                // Score background (simple, top center)
+                const scoreText = `PUNTAJE: ${score}`;
+                ctx.font = 'bold 18px Segoe UI, system-ui, sans-serif';
+                const scoreWidth = ctx.measureText(scoreText).width + 32;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                roundRect(ctx, (CONFIG.CANVAS_WIDTH - scoreWidth) / 2, 12, scoreWidth, 36, 18);
+                ctx.fill();
+
+                // Score text
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(scoreText, CONFIG.CANVAS_WIDTH / 2, 30);
+
+                // Streak indicator (Racha: X/3)
+                if (!inGameCountdownActive) {
+                    const streakText = `RACHA: ${streak}/${STREAK_TO_WIN}`;
+                    ctx.font = 'bold 16px Segoe UI, sans-serif';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText(streakText, CONFIG.CANVAS_WIDTH / 2, 58);
+                    ctx.fillText(streakText, CONFIG.CANVAS_WIDTH / 2, 58);
+                }
+            }
+
+            function drawMuteButton() {
+                const x = CONFIG.HUD_MARGIN;
+                const y = CONFIG.HUD_MARGIN;
+                const size = CONFIG.HUD_BUTTON_SIZE;
+
+                ctx.strokeStyle = CONFIG.COLOR_TEXT;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+
+                // Speaker icon
+                ctx.beginPath();
+                ctx.moveTo(x + 12, y + 16);
+                ctx.lineTo(x + 18, y + 16);
+                ctx.lineTo(x + 24, y + 10);
+                ctx.lineTo(x + 24, y + 34);
+                ctx.lineTo(x + 18, y + 28);
+                ctx.lineTo(x + 12, y + 28);
+                ctx.closePath();
+                ctx.stroke();
+
+                if (muted) {
+                    // X over speaker
+                    ctx.beginPath();
+                    ctx.moveTo(x + 28, y + 14);
+                    ctx.lineTo(x + 38, y + 30);
+                    ctx.moveTo(x + 38, y + 14);
+                    ctx.lineTo(x + 28, y + 30);
+                    ctx.stroke();
+                } else {
+                    // Sound waves
+                    ctx.beginPath();
+                    ctx.arc(x + 26, y + 22, 6, -Math.PI / 3, Math.PI / 3);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(x + 26, y + 22, 12, -Math.PI / 3, Math.PI / 3);
+                    ctx.stroke();
+                }
+            }
+
+            function drawPauseButton() {
+                const x = CONFIG.CANVAS_WIDTH - CONFIG.HUD_MARGIN - CONFIG.HUD_BUTTON_SIZE;
+                const y = CONFIG.HUD_MARGIN;
+
+                ctx.fillStyle = CONFIG.COLOR_TEXT;
+
+                // Pause bars
+                ctx.fillRect(x + 14, y + 12, 6, 20);
+                ctx.fillRect(x + 24, y + 12, 6, 20);
+            }
+
+            function drawStartScreen() {
+                // Draw cover image with CONTAIN scaling (no clipping)
+                if (coverLoaded) {
+                    const imgAspect = coverImage.width / coverImage.height;
+                    const canvasAspect = CONFIG.CANVAS_WIDTH / CONFIG.CANVAS_HEIGHT;
+
+                    let drawW, drawH, drawX, drawY;
+
+                    // CONTAIN: fit entire image, letterbox if needed
+                    if (imgAspect > canvasAspect) {
+                        // Image is wider - fit to width, letterbox top/bottom
+                        drawW = CONFIG.CANVAS_WIDTH;
+                        drawH = drawW / imgAspect;
+                        drawX = 0;
+                        drawY = (CONFIG.CANVAS_HEIGHT - drawH) / 2;
+                    } else {
+                        // Image is taller - fit to height, letterbox left/right
+                        drawH = CONFIG.CANVAS_HEIGHT;
+                        drawW = drawH * imgAspect;
+                        drawX = (CONFIG.CANVAS_WIDTH - drawW) / 2;
+                        drawY = 0;
+                    }
+
+                    // Fill background for letterbox
+                    ctx.fillStyle = '#1a1a2e';
+                    ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+                    ctx.drawImage(coverImage, drawX, drawY, drawW, drawH);
+                } else {
+                    drawBackground();
+                    ctx.fillStyle = CONFIG.COLOR_TEXT;
+                    ctx.font = 'bold 28px Segoe UI, system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('ESCAPA DEL TURNO', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2);
+                }
+
+                // "Toca para jugar" with pulse
+                const pulse = 0.6 + Math.sin(performance.now() / 300) * 0.3;
+                ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.lineWidth = 3;
+                ctx.font = 'bold 22px Segoe UI, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeText('Toca para jugar', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT - 60);
+                ctx.fillText('Toca para jugar', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT - 60);
+
+                // Mute button
+                drawMuteButton();
+            }
+
+            function drawCountdownScreen() {
+                drawBackground();
+
+                ctx.fillStyle = CONFIG.COLOR_TEXT;
+                ctx.font = 'bold 120px Segoe UI, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(countdownValue.toString(), CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2);
+
+                ctx.font = '20px Segoe UI, system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.fillText('¡PREPÁRATE!', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 80);
+            }
+
+            function drawPauseScreen() {
+                // Darken background
+                ctx.fillStyle = CONFIG.COLOR_OVERLAY;
+                ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+                ctx.fillStyle = CONFIG.COLOR_TEXT;
+                ctx.font = 'bold 48px Segoe UI, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('PAUSA', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 30);
+
+                ctx.font = '18px Segoe UI, system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillText('Toca pausa para continuar', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 20);
+            }
+
+            function drawGameOverScreen() {
+                drawBackground();
+
+                // Show the result text (same as during gameplay, but held)
+                const isWin = gameWon;
+                const displayText = isWin ? '¡TE VAS A CASA!' : 'PONTE A TRABAJAR';
+
+                // Large result text
+                ctx.fillStyle = isWin ? '#4CAF50' : '#e74c3c';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.lineWidth = 5;
+                ctx.font = 'bold 36px Segoe UI, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeText(displayText, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 40);
+                ctx.fillText(displayText, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 40);
+
+                // Final score (smaller, below)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.font = 'bold 24px Segoe UI, sans-serif';
+                ctx.fillText(`PUNTAJE: ${score}`, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 20);
+            }
+
+            function roundRect(ctx, x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // GAME LOOP
+            // ═══════════════════════════════════════════════════════════════
+            function update(currentTime) {
+                const deltaTime = (currentTime - lastTime) / 1000;
+                lastTime = currentTime;
+
+                // Handle fail animation
+                if (failAnimPhase > 0) {
+                    const elapsed = currentTime - failAnimTimer;
+
+                    if (failAnimPhase === 1) {
+                        // Shake phase: ~200ms
+                        shakeOffset = Math.sin(elapsed * 0.05) * 8 * (1 - elapsed / 200);
+                        if (elapsed > 200) {
+                            failAnimPhase = 2;
+                            shakeOffset = 0;
+                            state = GameState.GAME_OVER;
+                        }
+                    } else if (failAnimPhase === 2) {
+                        // Show result phase: ~800ms then auto-restart
+                        if (elapsed > 1000) {
+                            failAnimPhase = 0;
+                            startCountdown();
+                        }
+                    }
+                    return;
+                }
+
+                if (state === GameState.COUNTDOWN) {
+                    const elapsed = (currentTime - countdownTimer) / 1000;
+                    const newValue = CONFIG.COUNTDOWN_DURATION - Math.floor(elapsed);
+
+                    if (newValue !== countdownValue && newValue > 0) {
+                        countdownValue = newValue;
+                        playCountdown();
+                    }
+
+                    if (elapsed >= CONFIG.COUNTDOWN_DURATION) {
+                        startGame();
+                    }
+                }
+
+                if (state === GameState.PLAYING) {
+                    // Handle in-game countdown (3→2→1→0)
+                    if (inGameCountdownActive) {
+                        const elapsed = (currentTime - inGameCountdownTimer) / 1000;
+
+                        // Show 3, 2, 1 over 3 seconds
+                        if (elapsed < 1) {
+                            inGameCountdown = 3;
+                        } else if (elapsed < 2) {
+                            if (inGameCountdown !== 2) {
+                                inGameCountdown = 2;
+                                playCountdown();
+                            }
+                        } else if (elapsed < 3) {
+                            if (inGameCountdown !== 1) {
+                                inGameCountdown = 1;
+                                playCountdown();
+                            }
+                        } else {
+                            // Countdown finished - start decision timer
+                            inGameCountdownActive = false;
+                            inGameCountdown = 0;
+                            startDecisionTimer();
+                        }
+                        return;
+                    }
+
+                    // Update decision timer
+                    if (timerActive && awaitingChoice) {
+                        decisionTimer -= deltaTime;
+
+                        // Tick SFX logic
+                        if (tickingActive) {
+                            const now = performance.now();
+                            const tickInterval = decisionTimer < 0.75 ? 150 : 500;
+
+                            if (now - lastTickTime > tickInterval) {
+                                if (decisionTimer < 0.75) {
+                                    playTickFast();
+                                } else {
+                                    playTick();
+                                }
+                                lastTickTime = now;
+                            }
+                        }
+
+                        if (decisionTimer <= 0) {
+                            decisionTimer = 0;
+                            resultText = 'TIENES QUE TRABAJAR';
+                            resultTextTimer = performance.now();
+                            triggerGameOver();
+                            return;
+                        }
+                    }
+                }
+            }
+
+            function render() {
+                // Apply shake during fail animation
+                ctx.save();
+                if (failAnimPhase === 1) {
+                    ctx.translate(shakeOffset, 0);
+                }
+
+                switch (state) {
+                    case GameState.START:
+                        drawStartScreen();
+                        break;
+                    case GameState.COUNTDOWN:
+                        drawCountdownScreen();
+                        break;
+                    case GameState.PLAYING:
+                        drawBackground();
+                        drawDoorHitZones(); // Just hit zones, doors are in background image
+                        if (!inGameCountdownActive) {
+                            drawAnalogClock(); // Only show clock after countdown
+                        }
+                        drawHUD();
+                        drawInGameCountdown(); // Overlay if active
+                        drawResultText(); // Show feedback if any
+                        break;
+                    case GameState.PAUSED:
+                        drawBackground();
+                        drawDoorHitZones();
+                        drawAnalogClock();
+                        drawHUD();
+                        drawPauseScreen();
+                        break;
+                    case GameState.GAME_OVER:
+                        drawGameOverScreen();
+                        break;
+                }
+
+                ctx.restore();
+            }
+
+            function gameLoop(currentTime) {
+                update(currentTime);
+                render();
+                requestAnimationFrame(gameLoop);
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // INPUT HANDLING
+            // ═══════════════════════════════════════════════════════════════
+            function handleInput(x, y, isTouch = false) {
+                const rect = canvas.getBoundingClientRect();
+                const canvasX = (x - rect.left) * (CONFIG.CANVAS_WIDTH / rect.width);
+                const canvasY = (y - rect.top) * (CONFIG.CANVAS_HEIGHT / rect.height);
+
+                // Check mute button (all states except countdown)
+                if (state !== GameState.COUNTDOWN) {
+                    if (canvasX >= CONFIG.HUD_MARGIN &&
+                        canvasX <= CONFIG.HUD_MARGIN + CONFIG.HUD_BUTTON_SIZE &&
+                        canvasY >= CONFIG.HUD_MARGIN &&
+                        canvasY <= CONFIG.HUD_MARGIN + CONFIG.HUD_BUTTON_SIZE) {
+                        toggleMute();
+                        return;
+                    }
+                }
+
+                // Check pause button (playing or paused)
+                if (state === GameState.PLAYING || state === GameState.PAUSED) {
+                    const pauseX = CONFIG.CANVAS_WIDTH - CONFIG.HUD_MARGIN - CONFIG.HUD_BUTTON_SIZE;
+                    if (canvasX >= pauseX &&
+                        canvasX <= pauseX + CONFIG.HUD_BUTTON_SIZE &&
+                        canvasY >= CONFIG.HUD_MARGIN &&
+                        canvasY <= CONFIG.HUD_MARGIN + CONFIG.HUD_BUTTON_SIZE) {
+                        togglePause();
+                        return;
+                    }
+                }
+
+                // Handle game state specific inputs
+                switch (state) {
+                    case GameState.START:
+                        startCountdown();
+                        break;
+                    case GameState.PLAYING:
+                        // Door-specific tap detection
+                        const leftDoorHit = canvasX >= leftDoorX && canvasX <= leftDoorX + doorWidth &&
+                            canvasY >= doorY && canvasY <= doorY + doorHeight;
+                        const rightDoorHit = canvasX >= rightDoorX && canvasX <= rightDoorX + doorWidth &&
+                            canvasY >= doorY && canvasY <= doorY + doorHeight;
+
+                        if (leftDoorHit) {
+                            chooseGate('left');
+                        } else if (rightDoorHit) {
+                            chooseGate('right');
+                        } else {
+                            // Allow tapping anywhere left/right as fallback
+                            if (canvasX < CONFIG.CANVAS_WIDTH / 2) {
+                                chooseGate('left');
+                            } else {
+                                chooseGate('right');
+                            }
+                        }
+                        break;
+                    case GameState.GAME_OVER:
+                        startCountdown();
+                        break;
+                }
+            }
+
+            // Touch events
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                handleInput(touch.clientX, touch.clientY, true);
+            }, { passive: false });
+
+            // Mouse events
+            canvas.addEventListener('click', (e) => {
+                handleInput(e.clientX, e.clientY);
+            });
+
+            // Keyboard events
+            document.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case 'ArrowLeft':
+                    case 'a':
+                    case 'A':
+                        if (state === GameState.PLAYING) {
+                            chooseGate('left');
+                        } else if (state === GameState.START || state === GameState.GAME_OVER) {
+                            startCountdown();
+                        }
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                    case 'D':
+                        if (state === GameState.PLAYING) {
+                            chooseGate('right');
+                        } else if (state === GameState.START || state === GameState.GAME_OVER) {
+                            startCountdown();
+                        }
+                        break;
+                    case ' ':
+                    case 'Enter':
+                        if (state === GameState.START || state === GameState.GAME_OVER) {
+                            startCountdown();
+                        } else if (state === GameState.PLAYING || state === GameState.PAUSED) {
+                            togglePause();
+                        }
+                        break;
+                    case 'Escape':
+                        if (state === GameState.PLAYING || state === GameState.PAUSED) {
+                            togglePause();
+                        }
+                        break;
+                    case 'm':
+                    case 'M':
+                        toggleMute();
+                        break;
+                }
+            });
+
+            // Prevent context menu on long press
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            // Handle visibility change (auto-pause)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && state === GameState.PLAYING) {
+                    state = GameState.PAUSED;
+                }
+            });
+
+            // ═══════════════════════════════════════════════════════════════
+            // INITIALIZATION
+            // ═══════════════════════════════════════════════════════════════
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        })();
+    </script>
+</body>
+
+</html>

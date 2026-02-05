@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gravity Flip Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        #gameCanvas {
+            background: #16213e;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TUNING VALUES - All configurable parameters exposed here
+    // ═══════════════════════════════════════════════════════════════════════════
+    const CONFIG = {
+        // Canvas
+        CANVAS_WIDTH: 360,
+        CANVAS_HEIGHT: 640,
+
+        // Player
+        PLAYER_SIZE: 40,
+        PLAYER_X: 80,
+        PLAYER_COLOR: '#ff6b35',
+        PLAYER_SHADOW_COLOR: 'rgba(255, 107, 53, 0.3)',
+
+        // Lanes
+        LANE_MARGIN: 100,
+        LANE_LINE_HEIGHT: 6,
+        LANE_COLOR: '#e8e8e8',
+
+        // Obstacles
+        OBSTACLE_WIDTH: 30,
+        OBSTACLE_MIN_HEIGHT: 50,
+        OBSTACLE_MAX_HEIGHT: 100,
+        OBSTACLE_COLOR: '#4a69bd',
+        OBSTACLE_SHADOW_COLOR: 'rgba(74, 105, 189, 0.3)',
+        INITIAL_OBSTACLE_SPEED: 4,
+        MAX_OBSTACLE_SPEED: 10,
+        SPEED_INCREMENT: 0.0005,
+        INITIAL_SPAWN_INTERVAL: 1500,
+        MIN_SPAWN_INTERVAL: 600,
+        SPAWN_INTERVAL_DECREASE: 0.5,
+        MIN_GAP_BETWEEN_OBSTACLES: 150,
+        DUAL_OBSTACLE_START_SCORE: 500,
+        DUAL_OBSTACLE_CHANCE: 0.3,
+
+        // Gameplay
+        COUNTDOWN_DURATION: 3,
+        SCORE_INCREMENT: 1,
+
+        // Colors
+        BG_COLOR: '#16213e',
+        BG_GRADIENT_TOP: '#1a1a2e',
+        BG_GRADIENT_BOTTOM: '#0f3460',
+        TEXT_COLOR: '#ffffff',
+        ACCENT_COLOR: '#ff6b35',
+        OVERLAY_COLOR: 'rgba(0, 0, 0, 0.7)',
+
+        // UI
+        BUTTON_SIZE: 40,
+        BUTTON_MARGIN: 15,
+        FONT_FAMILY: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GAME STATE
+    // ═══════════════════════════════════════════════════════════════════════════
+    const GameState = {
+        START: 'start',
+        COUNTDOWN: 'countdown',
+        PLAYING: 'playing',
+        PAUSED: 'paused',
+        GAME_OVER: 'gameOver'
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CANVAS SETUP
+    // ═══════════════════════════════════════════════════════════════════════════
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    function setupCanvas() {
+        canvas.width = CONFIG.CANVAS_WIDTH * dpr;
+        canvas.height = CONFIG.CANVAS_HEIGHT * dpr;
+        canvas.style.width = CONFIG.CANVAS_WIDTH + 'px';
+        canvas.style.height = CONFIG.CANVAS_HEIGHT + 'px';
+        ctx.scale(dpr, dpr);
+    }
+
+    function scaleToFit() {
+        const windowW = window.innerWidth;
+        const windowH = window.innerHeight;
+        const scaleX = windowW / CONFIG.CANVAS_WIDTH;
+        const scaleY = windowH / CONFIG.CANVAS_HEIGHT;
+        const scale = Math.min(scaleX, scaleY);
+        canvas.style.width = (CONFIG.CANVAS_WIDTH * scale) + 'px';
+        canvas.style.height = (CONFIG.CANVAS_HEIGHT * scale) + 'px';
+    }
+
+    setupCanvas();
+    scaleToFit();
+    window.addEventListener('resize', scaleToFit);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GAME VARIABLES
+    // ═══════════════════════════════════════════════════════════════════════════
+    let state = GameState.START;
+    let score = 0;
+    let highScore = 0;
+    let gravityDown = true; // true = floor, false = ceiling
+    let obstacles = [];
+    let obstacleSpeed = CONFIG.INITIAL_OBSTACLE_SPEED;
+    let spawnInterval = CONFIG.INITIAL_SPAWN_INTERVAL;
+    let lastSpawnTime = 0;
+    let countdownValue = CONFIG.COUNTDOWN_DURATION;
+    let countdownTimer = null;
+    let muted = false;
+    let lastTime = 0;
+    let animationId = null;
+
+    // Lane Y positions
+    const floorY = CONFIG.CANVAS_HEIGHT - CONFIG.LANE_MARGIN;
+    const ceilingY = CONFIG.LANE_MARGIN;
+
+    // Player position
+    let playerY = floorY - CONFIG.PLAYER_SIZE;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // AUDIO (Simple beep sounds using Web Audio API)
+    // ═══════════════════════════════════════════════════════════════════════════
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playTone(frequency, duration, type = 'square') {
+        if (muted || !audioCtx) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = type;
+        oscillator.frequency.value = frequency;
+        gainNode.gain.value = 0.1;
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + duration);
+    }
+
+    function playFlipSound() {
+        playTone(440, 0.1, 'sine');
+    }
+
+    function playCountdownSound() {
+        playTone(660, 0.15, 'sine');
+    }
+
+    function playStartSound() {
+        playTone(880, 0.2, 'sine');
+    }
+
+    function playGameOverSound() {
+        playTone(220, 0.3, 'sawtooth');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GAME RESET
+    // ═══════════════════════════════════════════════════════════════════════════
+    function resetGame() {
+        score = 0;
+        gravityDown = true;
+        playerY = floorY - CONFIG.PLAYER_SIZE;
+        obstacles = [];
+        obstacleSpeed = CONFIG.INITIAL_OBSTACLE_SPEED;
+        spawnInterval = CONFIG.INITIAL_SPAWN_INTERVAL;
+        lastSpawnTime = 0;
+        countdownValue = CONFIG.COUNTDOWN_DURATION;
+        if (countdownTimer) {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // OBSTACLE MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════════════════
+    function spawnObstacle() {
+        const height = CONFIG.OBSTACLE_MIN_HEIGHT + 
+            Math.random() * (CONFIG.OBSTACLE_MAX_HEIGHT - CONFIG.OBSTACLE_MIN_HEIGHT);
+
+        // Determine obstacle placement
+        let spawnFloor = Math.random() > 0.5;
+        let spawnCeiling = false;
+
+        // After certain score, can spawn dual obstacles
+        if (score >= CONFIG.DUAL_OBSTACLE_START_SCORE && Math.random() < CONFIG.DUAL_OBSTACLE_CHANCE) {
+            spawnFloor = true;
+            spawnCeiling = true;
+        }
+
+        // Ensure at least one safe lane
+        if (spawnFloor && spawnCeiling) {
+            // Make sure there's a gap - reduce height for both
+            const safeHeight = Math.min(height, CONFIG.OBSTACLE_MIN_HEIGHT + 10);
+            obstacles.push({
+                x: CONFIG.CANVAS_WIDTH,
+                y: floorY - safeHeight,
+                width: CONFIG.OBSTACLE_WIDTH,
+                height: safeHeight,
+                lane: 'floor'
+            });
+            obstacles.push({
+                x: CONFIG.CANVAS_WIDTH,
+                y: ceilingY,
+                width: CONFIG.OBSTACLE_WIDTH,
+                height: safeHeight,
+                lane: 'ceiling'
+            });
+        } else if (spawnFloor) {
+            obstacles.push({
+                x: CONFIG.CANVAS_WIDTH,
+                y: floorY - height,
+                width: CONFIG.OBSTACLE_WIDTH,
+                height: height,
+                lane: 'floor'
+            });
+        } else {
+            obstacles.push({
+                x: CONFIG.CANVAS_WIDTH,
+                y: ceilingY,
+                width: CONFIG.OBSTACLE_WIDTH,
+                height: height,
+                lane: 'ceiling'
+            });
+        }
+    }
+
+    function updateObstacles(deltaTime) {
+        const now = performance.now();
+
+        // Spawn new obstacles
+        if (now - lastSpawnTime > spawnInterval) {
+            // Check if there's enough gap from last obstacle
+            const lastObs = obstacles[obstacles.length - 1];
+            if (!lastObs || lastObs.x < CONFIG.CANVAS_WIDTH - CONFIG.MIN_GAP_BETWEEN_OBSTACLES) {
+                spawnObstacle();
+                lastSpawnTime = now;
+            }
+        }
+
+        // Update obstacle positions
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].x -= obstacleSpeed;
+
+            // Remove off-screen obstacles
+            if (obstacles[i].x + obstacles[i].width < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+
+        // Increase difficulty
+        obstacleSpeed = Math.min(CONFIG.MAX_OBSTACLE_SPEED, 
+            obstacleSpeed + CONFIG.SPEED_INCREMENT);
+        spawnInterval = Math.max(CONFIG.MIN_SPAWN_INTERVAL, 
+            spawnInterval - CONFIG.SPAWN_INTERVAL_DECREASE);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // COLLISION DETECTION
+    // ═══════════════════════════════════════════════════════════════════════════
+    function checkCollision() {
+        const playerRect = {
+            x: CONFIG.PLAYER_X,
+            y: playerY,
+            width: CONFIG.PLAYER_SIZE,
+            height: CONFIG.PLAYER_SIZE
+        };
+
+        for (const obs of obstacles) {
+            if (playerRect.x < obs.x + obs.width &&
+                playerRect.x + playerRect.width > obs.x &&
+                playerRect.y < obs.y + obs.height &&
+                playerRect.y + playerRect.height > obs.y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GRAVITY FLIP
+    // ═══════════════════════════════════════════════════════════════════════════
+    function flipGravity() {
+        if (state !== GameState.PLAYING) return;
+        
+        gravityDown = !gravityDown;
+        
+        // Instant snap to new lane
+        if (gravityDown) {
+            playerY = floorY - CONFIG.PLAYER_SIZE;
+        } else {
+            playerY = ceilingY;
+        }
+
+        playFlipSound();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GAME STATE TRANSITIONS
+    // ═══════════════════════════════════════════════════════════════════════════
+    function startCountdown() {
+        state = GameState.COUNTDOWN;
+        countdownValue = CONFIG.COUNTDOWN_DURATION;
+        playCountdownSound();
+
+        countdownTimer = setInterval(() => {
+            countdownValue--;
+            if (countdownValue > 0) {
+                playCountdownSound();
+            } else {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+                startGame();
+            }
+        }, 1000);
+    }
+
+    function startGame() {
+        state = GameState.PLAYING;
+        lastSpawnTime = performance.now();
+        playStartSound();
+    }
+
+    function pauseGame() {
+        if (state === GameState.PLAYING) {
+            state = GameState.PAUSED;
+        } else if (state === GameState.PAUSED) {
+            state = GameState.PLAYING;
+        }
+    }
+
+    function gameOver() {
+        state = GameState.GAME_OVER;
+        if (score > highScore) {
+            highScore = score;
+        }
+        playGameOverSound();
+    }
+
+    function restartGame() {
+        resetGame();
+        startCountdown();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INPUT HANDLING
+    // ═══════════════════════════════════════════════════════════════════════════
+    function getCanvasCoords(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = CONFIG.CANVAS_WIDTH / rect.width;
+        const scaleY = CONFIG.CANVAS_HEIGHT / rect.height;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
+    }
+
+    function handleInput(x, y) {
+        initAudio();
+
+        // Check mute button
+        if (x >= CONFIG.BUTTON_MARGIN && 
+            x <= CONFIG.BUTTON_MARGIN + CONFIG.BUTTON_SIZE &&
+            y >= CONFIG.BUTTON_MARGIN && 
+            y <= CONFIG.BUTTON_MARGIN + CONFIG.BUTTON_SIZE) {
+            muted = !muted;
+            return;
+        }
+
+        // Check pause button (during gameplay)
+        if ((state === GameState.PLAYING || state === GameState.PAUSED) &&
+            x >= CONFIG.CANVAS_WIDTH - CONFIG.BUTTON_MARGIN - CONFIG.BUTTON_SIZE &&
+            x <= CONFIG.CANVAS_WIDTH - CONFIG.BUTTON_MARGIN &&
+            y >= CONFIG.BUTTON_MARGIN && 
+            y <= CONFIG.BUTTON_MARGIN + CONFIG.BUTTON_SIZE) {
+            pauseGame();
+            return;
+        }
+
+        // State-specific input handling
+        switch (state) {
+            case GameState.START:
+                startCountdown();
+                break;
+            case GameState.PLAYING:
+                flipGravity();
+                break;
+            case GameState.PAUSED:
+                // Tap anywhere (except buttons) to resume
+                pauseGame();
+                break;
+            case GameState.GAME_OVER:
+                restartGame();
+                break;
+        }
+    }
+
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const coords = getCanvasCoords(touch.clientX, touch.clientY);
+        handleInput(coords.x, coords.y);
+    }, { passive: false });
+
+    // Mouse events
+    canvas.addEventListener('click', (e) => {
+        const coords = getCanvasCoords(e.clientX, e.clientY);
+        handleInput(coords.x, coords.y);
+    });
+
+    // Keyboard events
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            e.preventDefault();
+            initAudio();
+
+            switch (state) {
+                case GameState.START:
+                    startCountdown();
+                    break;
+                case GameState.PLAYING:
+                    flipGravity();
+                    break;
+                case GameState.GAME_OVER:
+                    restartGame();
+                    break;
+            }
+        } else if (e.code === 'Escape' || e.code === 'KeyP') {
+            if (state === GameState.PLAYING || state === GameState.PAUSED) {
+                pauseGame();
+            }
+        } else if (e.code === 'KeyM') {
+            muted = !muted;
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RENDERING
+    // ═══════════════════════════════════════════════════════════════════════════
+    function drawBackground() {
+        const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
+        gradient.addColorStop(0, CONFIG.BG_GRADIENT_TOP);
+        gradient.addColorStop(1, CONFIG.BG_GRADIENT_BOTTOM);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    }
+
+    function drawLanes() {
+        ctx.fillStyle = CONFIG.LANE_COLOR;
+        
+        // Floor lane
+        ctx.fillRect(0, floorY, CONFIG.CANVAS_WIDTH, CONFIG.LANE_LINE_HEIGHT);
+        
+        // Ceiling lane
+        ctx.fillRect(0, ceilingY - CONFIG.LANE_LINE_HEIGHT, CONFIG.CANVAS_WIDTH, CONFIG.LANE_LINE_HEIGHT);
+
+        // Lane backgrounds (subtle)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.fillRect(0, ceilingY, CONFIG.CANVAS_WIDTH, floorY - ceilingY);
+    }
+
+    function drawPlayer() {
+        // Shadow
+        ctx.fillStyle = CONFIG.PLAYER_SHADOW_COLOR;
+        ctx.fillRect(
+            CONFIG.PLAYER_X + 3, 
+            playerY + 3, 
+            CONFIG.PLAYER_SIZE, 
+            CONFIG.PLAYER_SIZE
+        );
+
+        // Player
+        ctx.fillStyle = CONFIG.PLAYER_COLOR;
+        ctx.fillRect(CONFIG.PLAYER_X, playerY, CONFIG.PLAYER_SIZE, CONFIG.PLAYER_SIZE);
+
+        // Highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(CONFIG.PLAYER_X, playerY, CONFIG.PLAYER_SIZE, 8);
+    }
+
+    function drawObstacles() {
+        for (const obs of obstacles) {
+            // Shadow
+            ctx.fillStyle = CONFIG.OBSTACLE_SHADOW_COLOR;
+            ctx.fillRect(obs.x + 3, obs.y + 3, obs.width, obs.height);
+
+            // Obstacle
+            ctx.fillStyle = CONFIG.OBSTACLE_COLOR;
+            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+            // Highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(obs.x, obs.y, obs.width, 5);
+        }
+    }
+
+    function drawHUD() {
+        // Score
+        ctx.fillStyle = CONFIG.TEXT_COLOR;
+        ctx.font = `bold 24px ${CONFIG.FONT_FAMILY}`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`SCORE: ${Math.floor(score)}`, CONFIG.CANVAS_WIDTH / 2, 40);
+
+        // Mute button
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fillRect(CONFIG.BUTTON_MARGIN, CONFIG.BUTTON_MARGIN, 
+            CONFIG.BUTTON_SIZE, CONFIG.BUTTON_SIZE);
+        
+        ctx.fillStyle = CONFIG.TEXT_COLOR;
+        ctx.font = `20px ${CONFIG.FONT_FAMILY}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(muted ? '🔇' : '🔊', 
+            CONFIG.BUTTON_MARGIN + CONFIG.BUTTON_SIZE / 2, 
+            CONFIG.BUTTON_MARGIN + CONFIG.BUTTON_SIZE / 2);
+
+        // Pause button (only during gameplay/paused)
+        if (state === GameState.PLAYING || state === GameState.PAUSED) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(
+                CONFIG.CANVAS_WIDTH - CONFIG.BUTTON_MARGIN - CONFIG.BUTTON_SIZE, 
+                CONFIG.BUTTON_MARGIN, 
+                CONFIG.BUTTON_SIZE, 
+                CONFIG.BUTTON_SIZE
+            );
+            
+            ctx.fillStyle = CONFIG.TEXT_COLOR;
+            ctx.fillText('⏸', 
+                CONFIG.CANVAS_WIDTH - CONFIG.BUTTON_MARGIN - CONFIG.BUTTON_SIZE / 2, 
+                CONFIG.BUTTON_MARGIN + CONFIG.BUTTON_SIZE / 2);
+        }
+
+        ctx.textBaseline = 'alphabetic';
+    }
+
+    function drawOverlay(alpha = 0.7) {
+        ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+        ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    }
+
+    function drawStartScreen() {
+        drawOverlay(0.8);
+
+        ctx.fillStyle = CONFIG.TEXT_COLOR;
+        ctx.textAlign = 'center';
+
+        // Title
+        ctx.font = `bold 36px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText('GRAVITY', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 60);
+        ctx.fillStyle = CONFIG.ACCENT_COLOR;
+        ctx.fillText('FLIP', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 20);
+
+        // Instructions
+        ctx.fillStyle = CONFIG.TEXT_COLOR;
+        ctx.font = `18px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText('Tap or Press Space to Flip', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 40);
+
+        // Start prompt
+        ctx.fillStyle = CONFIG.ACCENT_COLOR;
+        ctx.font = `bold 20px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText('TAP TO START', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 100);
+
+        // High score
+        if (highScore > 0) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.font = `16px ${CONFIG.FONT_FAMILY}`;
+            ctx.fillText(`HIGH SCORE: ${highScore}`, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 150);
+        }
+    }
+
+    function drawCountdown() {
+        drawOverlay(0.6);
+
+        ctx.fillStyle = CONFIG.ACCENT_COLOR;
+        ctx.textAlign = 'center';
+        ctx.font = `bold 120px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText(countdownValue.toString(), CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 40);
+    }
+
+    function drawPauseScreen() {
+        drawOverlay(0.7);
+
+        ctx.fillStyle = CONFIG.TEXT_COLOR;
+        ctx.textAlign = 'center';
+
+        ctx.font = `bold 36px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText('PAUSED', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 20);
+
+        ctx.font = `18px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText('Tap to Resume', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 30);
+    }
+
+    function drawGameOverScreen() {
+        drawOverlay(0.8);
+
+        ctx.textAlign = 'center';
+
+        // Game Over text
+        ctx.fillStyle = '#ff4444';
+        ctx.font = `bold 36px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText('GAME OVER', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 60);
+
+        // Score
+        ctx.fillStyle = CONFIG.TEXT_COLOR;
+        ctx.font = `24px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText(`Score: ${Math.floor(score)}`, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2);
+
+        // High score
+        if (score >= highScore && highScore > 0) {
+            ctx.fillStyle = CONFIG.ACCENT_COLOR;
+            ctx.font = `bold 20px ${CONFIG.FONT_FAMILY}`;
+            ctx.fillText('NEW HIGH SCORE!', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 40);
+        } else if (highScore > 0) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.font = `18px ${CONFIG.FONT_FAMILY}`;
+            ctx.fillText(`High Score: ${highScore}`, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 40);
+        }
+
+        // Restart prompt
+        ctx.fillStyle = CONFIG.ACCENT_COLOR;
+        ctx.font = `bold 20px ${CONFIG.FONT_FAMILY}`;
+        ctx.fillText('TAP TO RESTART', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 100);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GAME LOOP
+    // ═══════════════════════════════════════════════════════════════════════════
+    function update(deltaTime) {
+        if (state !== GameState.PLAYING) return;
+
+        // Update score
+        score += CONFIG.SCORE_INCREMENT * (deltaTime / 16.67);
+
+        // Update obstacles
+        updateObstacles(deltaTime);
+
+        // Check collision
+        if (checkCollision()) {
+            gameOver();
+        }
+    }
+
+    function render() {
+        // Clear canvas
+        ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+        // Draw background
+        drawBackground();
+
+        // Draw lanes
+        drawLanes();
+
+        // Draw game elements (always visible for context)
+        if (state !== GameState.START) {
+            drawObstacles();
+            drawPlayer();
+        }
+
+        // Draw HUD
+        drawHUD();
+
+        // Draw state-specific overlays
+        switch (state) {
+            case GameState.START:
+                drawStartScreen();
+                break;
+            case GameState.COUNTDOWN:
+                drawCountdown();
+                break;
+            case GameState.PAUSED:
+                drawPauseScreen();
+                break;
+            case GameState.GAME_OVER:
+                drawGameOverScreen();
+                break;
+        }
+    }
+
+    function gameLoop(timestamp) {
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+
+        update(deltaTime);
+        render();
+
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INITIALIZATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    function init() {
+        resetGame();
+        lastTime = performance.now();
+        gameLoop(lastTime);
+    }
+
+    init();
+    </script>
+</body>
+</html>

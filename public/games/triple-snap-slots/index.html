@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Triple Snap Slots</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0f;touch-action:none;user-select:none}
+canvas{display:block;margin:0 auto;background:#0a0a0f}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ========== TUNING VALUES ==========
+const BASE_WIDTH = 360;
+const BASE_HEIGHT = 640;
+
+// Reel configuration
+const REEL_COUNT = 3;
+const SYMBOL_COUNT = 5; // Number of different symbols
+const VISIBLE_SYMBOLS = 5; // Symbols visible per reel
+const SYMBOL_HEIGHT = 80;
+const REEL_WIDTH = 80;
+const REEL_GAP = 20;
+const REEL_TOP = 180;
+
+// Spin configuration
+const BASE_SPIN_DURATION = 2000; // ms
+const SPIN_DURATION_INCREMENT = 100; // ms added per success
+const BASE_STOP_DELAY = 400; // ms between reel stops
+const STOP_DELAY_INCREMENT = 50; // ms added per success
+const SPIN_SPEED = 25; // pixels per frame
+
+// Difficulty scaling
+const BASE_WIN_WEIGHT = 20; // Initial weight of win symbol
+const WIN_WEIGHT_DECAY = 0.75; // Multiplier per success
+const MIN_WIN_WEIGHT = 2; // Minimum weight
+const NEAR_MISS_BASE_CHANCE = 0.2;
+const NEAR_MISS_INCREMENT = 0.05;
+const MAX_NEAR_MISS_CHANCE = 0.6;
+
+// Symbol colors (flat, geometric)
+const SYMBOL_COLORS = [
+    '#ff3860', // Red - WIN SYMBOL (index 0)
+    '#23d160', // Green
+    '#3273dc', // Blue
+    '#ffdd57', // Yellow
+    '#b86bff'  // Purple
+];
+
+const BG_COLOR = '#0a0a0f';
+const REEL_BG = '#1a1a2e';
+const REEL_BORDER = '#2d2d44';
+const SCORE_COLOR = '#ffffff';
+
+// ========== STATE ==========
+let canvas, ctx, dpr;
+let score = 0;
+let gameState = 'IDLE'; // IDLE, SPINNING, STOPPED
+let reels = [];
+let spinStartTime = 0;
+let currentSpinDuration;
+let currentStopDelay;
+let currentWinWeight;
+let currentNearMissChance;
+let stoppedCount = 0;
+let winSymbol = 0; // Always index 0
+
+// ========== INITIALIZATION ==========
+function init() {
+    canvas = document.getElementById('c');
+    ctx = canvas.getContext('2d');
+    
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = BASE_WIDTH * dpr;
+    canvas.height = BASE_HEIGHT * dpr;
+    canvas.style.width = BASE_WIDTH + 'px';
+    canvas.style.height = BASE_HEIGHT + 'px';
+    ctx.scale(dpr, dpr);
+    
+    resetGame();
+    
+    canvas.addEventListener('touchstart', handleTap, {passive: false});
+    canvas.addEventListener('mousedown', handleTap);
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function resetGame() {
+    score = 0;
+    gameState = 'IDLE';
+    resetDifficulty();
+    initReels();
+}
+
+function resetDifficulty() {
+    currentSpinDuration = BASE_SPIN_DURATION;
+    currentStopDelay = BASE_STOP_DELAY;
+    currentWinWeight = BASE_WIN_WEIGHT;
+    currentNearMissChance = NEAR_MISS_BASE_CHANCE;
+}
+
+function initReels() {
+    reels = [];
+    const totalReelWidth = REEL_COUNT * REEL_WIDTH + (REEL_COUNT - 1) * REEL_GAP;
+    const startX = (BASE_WIDTH - totalReelWidth) / 2;
+    
+    for (let i = 0; i < REEL_COUNT; i++) {
+        reels.push({
+            x: startX + i * (REEL_WIDTH + REEL_GAP),
+            symbols: generateSymbolStrip(),
+            offset: 0,
+            spinning: false,
+            stopped: false,
+            targetSymbol: 0,
+            stopTime: 0
+        });
+    }
+}
+
+function generateSymbolStrip() {
+    const strip = [];
+    const length = 20;
+    for (let i = 0; i < length; i++) {
+        strip.push(Math.floor(Math.random() * SYMBOL_COUNT));
+    }
+    return strip;
+}
+
+function generateWeightedSymbol(forceWin) {
+    if (forceWin) return winSymbol;
+    
+    const weights = [];
+    let totalWeight = 0;
+    
+    for (let i = 0; i < SYMBOL_COUNT; i++) {
+        const weight = i === winSymbol ? currentWinWeight : 10;
+        weights.push(weight);
+        totalWeight += weight;
+    }
+    
+    let rand = Math.random() * totalWeight;
+    for (let i = 0; i < SYMBOL_COUNT; i++) {
+        rand -= weights[i];
+        if (rand <= 0) return i;
+    }
+    return SYMBOL_COUNT - 1;
+}
+
+// ========== INPUT ==========
+function handleTap(e) {
+    e.preventDefault();
+    
+    if (gameState === 'IDLE') {
+        startSpin();
+    } else if (gameState === 'STOPPED') {
+        gameState = 'IDLE';
+        initReels();
+    }
+}
+
+// ========== SPIN LOGIC ==========
+function startSpin() {
+    gameState = 'SPINNING';
+    spinStartTime = performance.now();
+    stoppedCount = 0;
+    
+    // Determine outcomes with near-miss logic
+    const outcomes = determineOutcomes();
+    
+    for (let i = 0; i < REEL_COUNT; i++) {
+        reels[i].spinning = true;
+        reels[i].stopped = false;
+        reels[i].targetSymbol = outcomes[i];
+        reels[i].stopTime = spinStartTime + currentSpinDuration + i * currentStopDelay;
+        reels[i].offset = 0;
+    }
+}
+
+function determineOutcomes() {
+    const outcomes = [];
+    
+    // Check for near-miss scenario
+    const isNearMiss = Math.random() < currentNearMissChance;
+    
+    if (isNearMiss) {
+        // Two reels match win symbol, third doesn't
+        const mismatchReel = Math.floor(Math.random() * REEL_COUNT);
+        for (let i = 0; i < REEL_COUNT; i++) {
+            if (i === mismatchReel) {
+                // Force non-win symbol
+                let sym;
+                do {
+                    sym = Math.floor(Math.random() * SYMBOL_COUNT);
+                } while (sym === winSymbol);
+                outcomes.push(sym);
+            } else {
+                outcomes.push(winSymbol);
+            }
+        }
+    } else {
+        // Normal weighted generation
+        for (let i = 0; i < REEL_COUNT; i++) {
+            outcomes.push(generateWeightedSymbol(false));
+        }
+    }
+    
+    return outcomes;
+}
+
+function updateReels(now) {
+    if (gameState !== 'SPINNING') return;
+    
+    let allStopped = true;
+    
+    for (let i = 0; i < REEL_COUNT; i++) {
+        const reel = reels[i];
+        
+        if (reel.spinning && !reel.stopped) {
+            if (now >= reel.stopTime) {
+                // Stop this reel
+                reel.stopped = true;
+                reel.spinning = false;
+                stoppedCount++;
+                
+                // Snap to target symbol
+                const centerIndex = Math.floor(VISIBLE_SYMBOLS / 2);
+                reel.symbols[centerIndex] = reel.targetSymbol;
+                reel.offset = 0;
+            } else {
+                // Keep spinning
+                reel.offset = (reel.offset + SPIN_SPEED) % SYMBOL_HEIGHT;
+                allStopped = false;
+                
+                // Randomize visible symbols while spinning
+                if (Math.random() < 0.3) {
+                    const randIdx = Math.floor(Math.random() * reel.symbols.length);
+                    reel.symbols[randIdx] = Math.floor(Math.random() * SYMBOL_COUNT);
+                }
+            }
+        }
+        
+        if (!reel.stopped) allStopped = false;
+    }
+    
+    if (allStopped && stoppedCount === REEL_COUNT) {
+        resolveRound();
+    }
+}
+
+function resolveRound() {
+    gameState = 'STOPPED';
+    
+    // Check for win
+    const centerIndex = Math.floor(VISIBLE_SYMBOLS / 2);
+    const results = reels.map(r => r.symbols[centerIndex]);
+    
+    const isWin = results.every(s => s === winSymbol);
+    
+    if (isWin) {
+        score++;
+        increaseDifficulty();
+    }
+}
+
+function increaseDifficulty() {
+    currentSpinDuration += SPIN_DURATION_INCREMENT;
+    currentStopDelay += STOP_DELAY_INCREMENT;
+    currentWinWeight = Math.max(MIN_WIN_WEIGHT, currentWinWeight * WIN_WEIGHT_DECAY);
+    currentNearMissChance = Math.min(MAX_NEAR_MISS_CHANCE, currentNearMissChance + NEAR_MISS_INCREMENT);
+}
+
+// ========== RENDERING ==========
+function render() {
+    ctx.fillStyle = BG_COLOR;
+    ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+    
+    drawReels();
+    drawScore();
+}
+
+function drawReels() {
+    const reelHeight = VISIBLE_SYMBOLS * SYMBOL_HEIGHT;
+    
+    for (let i = 0; i < REEL_COUNT; i++) {
+        const reel = reels[i];
+        
+        // Reel background
+        ctx.fillStyle = REEL_BG;
+        ctx.fillRect(reel.x - 4, REEL_TOP - 4, REEL_WIDTH + 8, reelHeight + 8);
+        
+        // Reel border
+        ctx.strokeStyle = REEL_BORDER;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(reel.x - 4, REEL_TOP - 4, REEL_WIDTH + 8, reelHeight + 8);
+        
+        // Clip region for symbols
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(reel.x, REEL_TOP, REEL_WIDTH, reelHeight);
+        ctx.clip();
+        
+        // Draw symbols
+        for (let j = 0; j < VISIBLE_SYMBOLS + 1; j++) {
+            const symbolIndex = j % reel.symbols.length;
+            const symbol = reel.symbols[symbolIndex];
+            const y = REEL_TOP + j * SYMBOL_HEIGHT - reel.offset;
+            
+            drawSymbol(reel.x + REEL_WIDTH / 2, y + SYMBOL_HEIGHT / 2, symbol, REEL_WIDTH * 0.7);
+        }
+        
+        ctx.restore();
+        
+        // Win line indicator (center row highlight)
+        const centerY = REEL_TOP + Math.floor(VISIBLE_SYMBOLS / 2) * SYMBOL_HEIGHT;
+        ctx.strokeStyle = reel.stopped ? '#ffffff44' : '#ffffff22';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(reel.x - 2, centerY, REEL_WIDTH + 4, SYMBOL_HEIGHT);
+    }
+    
+    // Draw center win line across all reels
+    const totalReelWidth = REEL_COUNT * REEL_WIDTH + (REEL_COUNT - 1) * REEL_GAP;
+    const startX = (BASE_WIDTH - totalReelWidth) / 2;
+    const centerY = REEL_TOP + Math.floor(VISIBLE_SYMBOLS / 2) * SYMBOL_HEIGHT + SYMBOL_HEIGHT / 2;
+    
+    ctx.strokeStyle = '#ffffff33';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(startX - 20, centerY);
+    ctx.lineTo(startX + totalReelWidth + 20, centerY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+function drawSymbol(x, y, symbolIndex, size) {
+    ctx.fillStyle = SYMBOL_COLORS[symbolIndex];
+    
+    const halfSize = size / 2;
+    
+    switch (symbolIndex) {
+        case 0: // Diamond (win symbol)
+            ctx.beginPath();
+            ctx.moveTo(x, y - halfSize);
+            ctx.lineTo(x + halfSize, y);
+            ctx.lineTo(x, y + halfSize);
+            ctx.lineTo(x - halfSize, y);
+            ctx.closePath();
+            ctx.fill();
+            break;
+            
+        case 1: // Circle
+            ctx.beginPath();
+            ctx.arc(x, y, halfSize * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+            
+        case 2: // Square
+            ctx.fillRect(x - halfSize * 0.7, y - halfSize * 0.7, size * 0.7, size * 0.7);
+            break;
+            
+        case 3: // Triangle
+            ctx.beginPath();
+            ctx.moveTo(x, y - halfSize);
+            ctx.lineTo(x + halfSize * 0.9, y + halfSize * 0.7);
+            ctx.lineTo(x - halfSize * 0.9, y + halfSize * 0.7);
+            ctx.closePath();
+            ctx.fill();
+            break;
+            
+        case 4: // Hexagon
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const px = x + Math.cos(angle) * halfSize * 0.8;
+                const py = y + Math.sin(angle) * halfSize * 0.8;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            break;
+    }
+}
+
+function drawScore() {
+    ctx.fillStyle = SCORE_COLOR;
+    ctx.font = 'bold 48px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(score, BASE_WIDTH / 2, 80);
+}
+
+// ========== GAME LOOP ==========
+function gameLoop(timestamp) {
+    updateReels(timestamp);
+    render();
+    requestAnimationFrame(gameLoop);
+}
+
+// ========== START ==========
+init();
+</script>
+</body>
+</html>

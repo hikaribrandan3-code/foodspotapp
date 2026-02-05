@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Avoid-the-Zone Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #2980b9;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        (function () {
+            'use strict';
+
+            // ═══════════════════════════════════════════════════════════════════
+            // TUNING PARAMETERS - Modify these for reskins
+            // ═══════════════════════════════════════════════════════════════════
+            const CONFIG = {
+                // Canvas
+                GAME_WIDTH: 360,
+                GAME_HEIGHT: 640,
+
+                // Grid
+                GRID_COLS: 6,
+                GRID_ROWS: 7,
+                GRID_MARGIN_TOP: 130,
+                GRID_MARGIN_SIDE: 30,
+                GRID_GAP: 4,
+
+                // Player
+                PLAYER_WIDTH: 32,
+                PLAYER_HEIGHT: 40,
+                PLAYER_SPEED: 180, // pixels per second
+
+                // Health
+                MAX_HEALTH: 100,
+                DAMAGE_PER_SECOND: 25,
+                HEALTH_BAR_COLOR: '#2ecc71',
+                HEALTH_BAR_BG: '#555555',
+
+                // Timing (in seconds)
+                INITIAL_CYCLE_TIME: 2.5,
+                MIN_CYCLE_TIME: 1.0,
+                INITIAL_DANGER_DURATION: 1.5,
+                MAX_DANGER_DURATION: 2.5,
+                WARNING_DURATION: 0.8,
+
+                // Difficulty scaling
+                CYCLE_DECREASE_RATE: 0.02, // per second of survival
+                DURATION_INCREASE_RATE: 0.01,
+                MIN_SAFE_ZONES: 8, // Always guarantee this many safe zones
+                INITIAL_DANGER_COUNT: 6,
+                MAX_DANGER_COUNT: 20,
+                DANGER_COUNT_INCREASE_INTERVAL: 15, // seconds
+
+                // ═══ DINER THEME COLORS ═══
+                // Checkerboard floor
+                TILE_TEAL: '#40c4aa',
+                TILE_CREAM: '#f5f0dc',
+
+                // Grease/danger colors (organic blobs)
+                GREASE_COLORS: ['#e8d4a0', '#d4a574', '#c49a6c'],
+                SAUCE_RED: '#c82333',
+                CHEESE_YELLOW: '#f4c430',
+
+                // Chef character
+                CHEF_HAT: '#ffffff',
+                CHEF_SKIN: '#f5d0b0',
+                CHEF_OUTFIT: '#ffffff',
+                CHEF_APRON: '#4a90d9',
+
+                // UI Colors
+                BG_COLOR: '#40c4aa',
+                ARENA_BG: '#40c4aa',
+                TEXT_COLOR: '#ffffff',
+                TITLE_ORANGE: '#ff8c42',
+                TITLE_OUTLINE: '#d35400',
+                OVERLAY_BG: 'rgba(0, 0, 0, 0.7)',
+                BUTTON_COLOR: '#3498db',
+                BUTTON_HOVER: '#2980b9',
+
+                // Countdown
+                COUNTDOWN_DURATION: 3,
+
+                // Joystick
+                JOYSTICK_SIZE: 100,
+                JOYSTICK_KNOB_SIZE: 50,
+                JOYSTICK_OPACITY: 0.4,
+
+                // Animation
+                WOBBLE_SPEED: 8,
+                WOBBLE_AMOUNT: 2,
+                PANIC_WOBBLE_SPEED: 20,
+                BUBBLE_SPEED: 40,
+                SHIMMER_SPEED: 3,
+
+                // Audio (placeholder - no actual audio in base engine)
+                MUTED: false
+            };
+
+            // ═══════════════════════════════════════════════════════════════════
+            // GAME STATE
+            // ═══════════════════════════════════════════════════════════════════
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            let dpr = 1;
+            let scale = 1;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            const GameState = {
+                START: 'start',
+                COUNTDOWN: 'countdown',
+                PLAYING: 'playing',
+                PAUSED: 'paused',
+                GAMEOVER: 'gameover'
+            };
+
+            let state = {
+                current: GameState.START,
+                score: 0,
+                health: CONFIG.MAX_HEALTH,
+                survivalTime: 0,
+                countdownValue: CONFIG.COUNTDOWN_DURATION,
+                muted: CONFIG.MUTED,
+                perfectRun: true
+            };
+
+            let player = {
+                x: 0,
+                y: 0,
+                vx: 0,
+                vy: 0
+            };
+
+            let zones = [];
+            let dangerSchedule = [];
+            let lastTime = 0;
+            let deltaTime = 0;
+            let animationId = null;
+
+            // Animation state
+            let animTime = 0;
+            let bubbles = [];
+            let playerState = {
+                inDanger: false,
+                wasInDanger: false,
+                escapeTimer: 0,  // For relief sparkle
+                panicIntensity: 0
+            };
+
+            // Cover image for start screen
+            const coverImage = new Image();
+            coverImage.src = 'https://files.catbox.moe/ofopz5.png';
+            let coverLoaded = false;
+            coverImage.onload = () => { coverLoaded = true; };
+
+            // Input state
+            let input = {
+                left: false,
+                right: false,
+                up: false,
+                down: false
+            };
+
+            let joystick = {
+                active: false,
+                startX: 0,
+                startY: 0,
+                currentX: 0,
+                currentY: 0,
+                touchId: null
+            };
+
+            // UI Bounds (calculated on resize)
+            let bounds = {
+                arena: { x: 0, y: 0, w: 0, h: 0 },
+                muteBtn: { x: 0, y: 0, w: 40, h: 40 },
+                pauseBtn: { x: 0, y: 0, w: 40, h: 40 },
+                playBtn: { x: 0, y: 0, w: 160, h: 50 },
+                resumeBtn: { x: 0, y: 0, w: 160, h: 50 },
+                restartBtn: { x: 0, y: 0, w: 160, h: 50 },
+                joystickArea: { x: 0, y: 0, w: 0, h: 0 }
+            };
+
+            // ═══════════════════════════════════════════════════════════════════
+            // CANVAS SETUP
+            // ═══════════════════════════════════════════════════════════════════
+            function setupCanvas() {
+                dpr = window.devicePixelRatio || 1;
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+
+                const gameAspect = CONFIG.GAME_WIDTH / CONFIG.GAME_HEIGHT;
+                const windowAspect = windowWidth / windowHeight;
+
+                if (windowAspect > gameAspect) {
+                    scale = windowHeight / CONFIG.GAME_HEIGHT;
+                } else {
+                    scale = windowWidth / CONFIG.GAME_WIDTH;
+                }
+
+                const displayWidth = CONFIG.GAME_WIDTH * scale;
+                const displayHeight = CONFIG.GAME_HEIGHT * scale;
+
+                canvas.style.width = displayWidth + 'px';
+                canvas.style.height = displayHeight + 'px';
+                canvas.width = CONFIG.GAME_WIDTH * dpr;
+                canvas.height = CONFIG.GAME_HEIGHT * dpr;
+
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                offsetX = (windowWidth - displayWidth) / 2;
+                offsetY = (windowHeight - displayHeight) / 2;
+
+                calculateBounds();
+            }
+
+            function calculateBounds() {
+                const cellWidth = (CONFIG.GAME_WIDTH - CONFIG.GRID_MARGIN_SIDE * 2 - CONFIG.GRID_GAP * (CONFIG.GRID_COLS - 1)) / CONFIG.GRID_COLS;
+                const cellHeight = (CONFIG.GAME_HEIGHT - CONFIG.GRID_MARGIN_TOP - 180 - CONFIG.GRID_GAP * (CONFIG.GRID_ROWS - 1)) / CONFIG.GRID_ROWS;
+
+                bounds.arena = {
+                    x: CONFIG.GRID_MARGIN_SIDE - 8,
+                    y: CONFIG.GRID_MARGIN_TOP - 8,
+                    w: CONFIG.GAME_WIDTH - CONFIG.GRID_MARGIN_SIDE * 2 + 16,
+                    h: cellHeight * CONFIG.GRID_ROWS + CONFIG.GRID_GAP * (CONFIG.GRID_ROWS - 1) + 16
+                };
+
+                bounds.muteBtn = { x: 15, y: 15, w: 40, h: 40 };
+                bounds.pauseBtn = { x: CONFIG.GAME_WIDTH - 55, y: 15, w: 40, h: 40 };
+                bounds.playBtn = { x: (CONFIG.GAME_WIDTH - 160) / 2, y: CONFIG.GAME_HEIGHT / 2, w: 160, h: 50 };
+                bounds.resumeBtn = { x: (CONFIG.GAME_WIDTH - 160) / 2, y: CONFIG.GAME_HEIGHT / 2 - 35, w: 160, h: 50 };
+                bounds.restartBtn = { x: (CONFIG.GAME_WIDTH - 160) / 2, y: CONFIG.GAME_HEIGHT / 2 + 25, w: 160, h: 50 };
+
+                bounds.joystickArea = {
+                    x: 20,
+                    y: CONFIG.GAME_HEIGHT - 160,
+                    w: 140,
+                    h: 140
+                };
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // HELPER DRAWING FUNCTIONS (Diner Theme)
+            // ═══════════════════════════════════════════════════════════════════
+
+            function drawCheckerboard(x, y, w, h, tileSize = 40) {
+                const cols = Math.ceil(w / tileSize);
+                const rows = Math.ceil(h / tileSize);
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        const isTeal = (row + col) % 2 === 0;
+                        ctx.fillStyle = isTeal ? CONFIG.TILE_TEAL : CONFIG.TILE_CREAM;
+                        const tx = x + col * tileSize;
+                        const ty = y + row * tileSize;
+                        const tw = Math.min(tileSize, x + w - tx);
+                        const th = Math.min(tileSize, y + h - ty);
+                        ctx.fillRect(tx, ty, tw, th);
+                    }
+                }
+            }
+
+            function drawGreaseBlob(x, y, w, h, color, wobble = 0) {
+                ctx.save();
+                ctx.translate(x + w / 2, y + h / 2);
+                ctx.rotate(wobble * 0.02);
+
+                // Organic blob shape using bezier curves
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                const hw = w * 0.5;
+                const hh = h * 0.5;
+                ctx.moveTo(-hw * 0.8, -hh * 0.3);
+                ctx.bezierCurveTo(-hw * 0.9, -hh * 0.8, -hw * 0.3, -hh * 0.95, hw * 0.2, -hh * 0.7);
+                ctx.bezierCurveTo(hw * 0.7, -hh * 0.5, hw * 0.95, -hh * 0.2, hw * 0.85, hh * 0.3);
+                ctx.bezierCurveTo(hw * 0.75, hh * 0.8, hw * 0.2, hh * 0.95, -hw * 0.3, hh * 0.75);
+                ctx.bezierCurveTo(-hw * 0.8, hh * 0.55, -hw * 0.95, hh * 0.1, -hw * 0.8, -hh * 0.3);
+                ctx.closePath();
+                ctx.fill();
+
+                // Glossy shine
+                const gradient = ctx.createRadialGradient(-hw * 0.3, -hh * 0.3, 0, -hw * 0.3, -hh * 0.3, hw * 0.6);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.ellipse(-hw * 0.2, -hh * 0.25, hw * 0.35, hh * 0.25, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            function drawChef(x, y, w, h, wobbleOffset = 0, isPanicking = false) {
+                ctx.save();
+                const centerX = x + w / 2;
+                const centerY = y + h / 2;
+
+                // Apply wobble
+                const wobbleAmount = isPanicking ? CONFIG.WOBBLE_AMOUNT * 2 : CONFIG.WOBBLE_AMOUNT;
+                const wobbleSpeed = isPanicking ? CONFIG.PANIC_WOBBLE_SPEED : CONFIG.WOBBLE_SPEED;
+                const wobble = Math.sin(wobbleOffset * wobbleSpeed) * wobbleAmount;
+                ctx.translate(centerX + wobble, centerY);
+
+                // Body (white circle - top-down view)
+                ctx.fillStyle = CONFIG.CHEF_OUTFIT;
+                ctx.beginPath();
+                ctx.ellipse(0, 2, w * 0.4, h * 0.35, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Apron (blue arc at bottom)
+                ctx.fillStyle = CONFIG.CHEF_APRON;
+                ctx.beginPath();
+                ctx.ellipse(0, 6, w * 0.25, h * 0.2, 0, 0, Math.PI);
+                ctx.fill();
+
+                // Head (skin tone circle)
+                ctx.fillStyle = CONFIG.CHEF_SKIN;
+                ctx.beginPath();
+                ctx.arc(0, -4, w * 0.28, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Chef hat (tall white)
+                ctx.fillStyle = CONFIG.CHEF_HAT;
+                ctx.beginPath();
+                // Hat base
+                ctx.ellipse(0, -12, w * 0.35, h * 0.12, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Hat top (puffy)
+                ctx.beginPath();
+                ctx.ellipse(0, -18, w * 0.28, h * 0.15, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Eyes (simple dots)
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.arc(-4, -4, 2, 0, Math.PI * 2);
+                ctx.arc(4, -4, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Smile (or panic mouth)
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                if (isPanicking) {
+                    // O-shaped panic mouth
+                    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                } else {
+                    // Smile
+                    ctx.arc(0, -2, 4, 0.2, Math.PI - 0.2);
+                }
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            function spawnBubbles(zone) {
+                const count = 2 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < count; i++) {
+                    bubbles.push({
+                        x: zone.x + Math.random() * zone.w,
+                        y: zone.y + zone.h,
+                        size: 2 + Math.random() * 4,
+                        speed: CONFIG.BUBBLE_SPEED * (0.5 + Math.random() * 0.5),
+                        life: 1.0
+                    });
+                }
+            }
+
+            function updateBubbles(dt) {
+                for (let i = bubbles.length - 1; i >= 0; i--) {
+                    bubbles[i].y -= bubbles[i].speed * dt;
+                    bubbles[i].x += Math.sin(animTime * 10 + i) * 0.5;
+                    bubbles[i].life -= dt * 2;
+                    if (bubbles[i].life <= 0) {
+                        bubbles.splice(i, 1);
+                    }
+                }
+            }
+
+            function drawBubbles() {
+                bubbles.forEach(b => {
+                    ctx.fillStyle = `rgba(255, 200, 100, ${b.life * 0.6})`;
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            function drawEscapeSparkle(x, y, intensity) {
+                const sparkleCount = 6;
+                for (let i = 0; i < sparkleCount; i++) {
+                    const angle = (i / sparkleCount) * Math.PI * 2 + animTime * 5;
+                    const dist = 15 + Math.sin(animTime * 10) * 5;
+                    const sx = x + Math.cos(angle) * dist;
+                    const sy = y + Math.sin(angle) * dist;
+                    ctx.fillStyle = `rgba(100, 255, 150, ${intensity})`;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 3 * intensity, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // ZONE MANAGEMENT
+            // ═══════════════════════════════════════════════════════════════════
+            function initZones() {
+                zones = [];
+                const cellWidth = (CONFIG.GAME_WIDTH - CONFIG.GRID_MARGIN_SIDE * 2 - CONFIG.GRID_GAP * (CONFIG.GRID_COLS - 1)) / CONFIG.GRID_COLS;
+                const cellHeight = (bounds.arena.h - 16 - CONFIG.GRID_GAP * (CONFIG.GRID_ROWS - 1)) / CONFIG.GRID_ROWS;
+
+                for (let row = 0; row < CONFIG.GRID_ROWS; row++) {
+                    for (let col = 0; col < CONFIG.GRID_COLS; col++) {
+                        zones.push({
+                            col: col,
+                            row: row,
+                            x: CONFIG.GRID_MARGIN_SIDE + col * (cellWidth + CONFIG.GRID_GAP),
+                            y: CONFIG.GRID_MARGIN_TOP + row * (cellHeight + CONFIG.GRID_GAP),
+                            w: cellWidth,
+                            h: cellHeight,
+                            danger: false,
+                            warning: false,
+                            dangerTimer: 0,
+                            warningTimer: 0
+                        });
+                    }
+                }
+            }
+
+            function scheduleDangerZones() {
+                const totalZones = CONFIG.GRID_COLS * CONFIG.GRID_ROWS;
+                const difficultyFactor = Math.min(state.survivalTime / 120, 1);
+
+                const dangerCount = Math.min(
+                    CONFIG.INITIAL_DANGER_COUNT + Math.floor(state.survivalTime / CONFIG.DANGER_COUNT_INCREASE_INTERVAL),
+                    Math.min(CONFIG.MAX_DANGER_COUNT, totalZones - CONFIG.MIN_SAFE_ZONES)
+                );
+
+                // Use deterministic pseudo-random based on survival time
+                const seed = Math.floor(state.survivalTime * 1000) % 10000;
+                const indices = [];
+                for (let i = 0; i < totalZones; i++) indices.push(i);
+
+                // Fisher-Yates shuffle with seeded random
+                let rng = seed;
+                for (let i = indices.length - 1; i > 0; i--) {
+                    rng = (rng * 1103515245 + 12345) & 0x7fffffff;
+                    const j = rng % (i + 1);
+                    [indices[i], indices[j]] = [indices[j], indices[i]];
+                }
+
+                // Clear all warnings and schedule new ones
+                zones.forEach(z => {
+                    z.warning = false;
+                    z.warningTimer = 0;
+                });
+
+                const selectedIndices = indices.slice(0, dangerCount);
+                selectedIndices.forEach(idx => {
+                    zones[idx].warning = true;
+                    zones[idx].warningTimer = CONFIG.WARNING_DURATION;
+                });
+            }
+
+            function activateDangerZones() {
+                const dangerDuration = Math.min(
+                    CONFIG.INITIAL_DANGER_DURATION + state.survivalTime * CONFIG.DURATION_INCREASE_RATE,
+                    CONFIG.MAX_DANGER_DURATION
+                );
+
+                zones.forEach(z => {
+                    if (z.warning) {
+                        z.danger = true;
+                        z.dangerTimer = dangerDuration;
+                        z.warning = false;
+                        z.warningTimer = 0;
+                    }
+                });
+            }
+
+            function updateZones(dt) {
+                let needsNewSchedule = true;
+                let needsActivation = false;
+
+                zones.forEach(z => {
+                    if (z.warning) {
+                        z.warningTimer -= dt;
+                        if (z.warningTimer <= 0) {
+                            needsActivation = true;
+                        }
+                        needsNewSchedule = false;
+                    }
+
+                    if (z.danger) {
+                        z.dangerTimer -= dt;
+                        if (z.dangerTimer <= 0) {
+                            z.danger = false;
+                            z.dangerTimer = 0;
+                        }
+                        needsNewSchedule = false;
+                    }
+                });
+
+                if (needsActivation) {
+                    activateDangerZones();
+                    needsNewSchedule = false;
+                }
+
+                if (needsNewSchedule) {
+                    const cycleTime = Math.max(
+                        CONFIG.INITIAL_CYCLE_TIME - state.survivalTime * CONFIG.CYCLE_DECREASE_RATE,
+                        CONFIG.MIN_CYCLE_TIME
+                    );
+
+                    // Check if it's time for a new cycle
+                    const lastCycle = Math.floor((state.survivalTime - dt) / cycleTime);
+                    const currentCycle = Math.floor(state.survivalTime / cycleTime);
+
+                    if (currentCycle > lastCycle || state.survivalTime < dt * 2) {
+                        scheduleDangerZones();
+                    }
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // PLAYER
+            // ═══════════════════════════════════════════════════════════════════
+            function initPlayer() {
+                const centerZone = zones[Math.floor(zones.length / 2)];
+                player.x = centerZone.x + centerZone.w / 2 - CONFIG.PLAYER_WIDTH / 2;
+                player.y = centerZone.y + centerZone.h / 2 - CONFIG.PLAYER_HEIGHT / 2;
+                player.vx = 0;
+                player.vy = 0;
+            }
+
+            function updatePlayer(dt) {
+                let dx = 0;
+                let dy = 0;
+
+                // Keyboard input
+                if (input.left) dx -= 1;
+                if (input.right) dx += 1;
+                if (input.up) dy -= 1;
+                if (input.down) dy += 1;
+
+                // Joystick input
+                if (joystick.active) {
+                    const jdx = joystick.currentX - joystick.startX;
+                    const jdy = joystick.currentY - joystick.startY;
+                    const dist = Math.sqrt(jdx * jdx + jdy * jdy);
+                    const maxDist = CONFIG.JOYSTICK_SIZE / 2;
+
+                    if (dist > 10) {
+                        dx = jdx / maxDist;
+                        dy = jdy / maxDist;
+                        dx = Math.max(-1, Math.min(1, dx));
+                        dy = Math.max(-1, Math.min(1, dy));
+                    }
+                }
+
+                // Normalize diagonal movement
+                const mag = Math.sqrt(dx * dx + dy * dy);
+                if (mag > 1) {
+                    dx /= mag;
+                    dy /= mag;
+                }
+
+                // Apply movement
+                player.x += dx * CONFIG.PLAYER_SPEED * dt;
+                player.y += dy * CONFIG.PLAYER_SPEED * dt;
+
+                // Clamp to arena bounds
+                const minX = bounds.arena.x + 8;
+                const maxX = bounds.arena.x + bounds.arena.w - 8 - CONFIG.PLAYER_WIDTH;
+                const minY = bounds.arena.y + 8;
+                const maxY = bounds.arena.y + bounds.arena.h - 8 - CONFIG.PLAYER_HEIGHT;
+
+                player.x = Math.max(minX, Math.min(maxX, player.x));
+                player.y = Math.max(minY, Math.min(maxY, player.y));
+            }
+
+            function checkPlayerDanger() {
+                const px = player.x + CONFIG.PLAYER_WIDTH / 2;
+                const py = player.y + CONFIG.PLAYER_HEIGHT / 2;
+
+                for (const zone of zones) {
+                    if (zone.danger) {
+                        if (px >= zone.x && px <= zone.x + zone.w &&
+                            py >= zone.y && py <= zone.y + zone.h) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // INPUT HANDLING
+            // ═══════════════════════════════════════════════════════════════════
+            function screenToGame(clientX, clientY) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: (clientX - rect.left) / scale,
+                    y: (clientY - rect.top) / scale
+                };
+            }
+
+            function isInBounds(x, y, bounds) {
+                return x >= bounds.x && x <= bounds.x + bounds.w &&
+                    y >= bounds.y && y <= bounds.y + bounds.h;
+            }
+
+            function handleKeyDown(e) {
+                const key = e.key.toLowerCase();
+                if (key === 'arrowleft' || key === 'a') input.left = true;
+                if (key === 'arrowright' || key === 'd') input.right = true;
+                if (key === 'arrowup' || key === 'w') input.up = true;
+                if (key === 'arrowdown' || key === 's') input.down = true;
+                if (key === 'escape' && state.current === GameState.PLAYING) {
+                    state.current = GameState.PAUSED;
+                }
+                if (key === ' ' || key === 'enter') {
+                    if (state.current === GameState.START) startCountdown();
+                    else if (state.current === GameState.PAUSED) state.current = GameState.PLAYING;
+                    else if (state.current === GameState.GAMEOVER) resetGame();
+                }
+            }
+
+            function handleKeyUp(e) {
+                const key = e.key.toLowerCase();
+                if (key === 'arrowleft' || key === 'a') input.left = false;
+                if (key === 'arrowright' || key === 'd') input.right = false;
+                if (key === 'arrowup' || key === 'w') input.up = false;
+                if (key === 'arrowdown' || key === 's') input.down = false;
+            }
+
+            function handleTouchStart(e) {
+                e.preventDefault();
+                for (const touch of e.changedTouches) {
+                    const pos = screenToGame(touch.clientX, touch.clientY);
+                    handlePointerDown(pos.x, pos.y, touch.identifier);
+                }
+            }
+
+            function handleTouchMove(e) {
+                e.preventDefault();
+                for (const touch of e.changedTouches) {
+                    const pos = screenToGame(touch.clientX, touch.clientY);
+                    handlePointerMove(pos.x, pos.y, touch.identifier);
+                }
+            }
+
+            function handleTouchEnd(e) {
+                e.preventDefault();
+                for (const touch of e.changedTouches) {
+                    handlePointerUp(touch.identifier);
+                }
+            }
+
+            function handleMouseDown(e) {
+                const pos = screenToGame(e.clientX, e.clientY);
+                handlePointerDown(pos.x, pos.y, -1);
+            }
+
+            function handleMouseMove(e) {
+                const pos = screenToGame(e.clientX, e.clientY);
+                handlePointerMove(pos.x, pos.y, -1);
+            }
+
+            function handleMouseUp(e) {
+                handlePointerUp(-1);
+            }
+
+            function handlePointerDown(x, y, id) {
+                // Check UI buttons first
+                if (isInBounds(x, y, bounds.muteBtn)) {
+                    state.muted = !state.muted;
+                    return;
+                }
+
+                if (state.current === GameState.PLAYING && isInBounds(x, y, bounds.pauseBtn)) {
+                    state.current = GameState.PAUSED;
+                    return;
+                }
+
+                // Tap-anywhere to start (no button needed)
+                if (state.current === GameState.START) {
+                    startCountdown();
+                    return;
+                }
+
+                if (state.current === GameState.PAUSED) {
+                    if (isInBounds(x, y, bounds.resumeBtn)) {
+                        state.current = GameState.PLAYING;
+                        return;
+                    }
+                    if (isInBounds(x, y, bounds.restartBtn)) {
+                        resetGame();
+                        return;
+                    }
+                }
+
+                if (state.current === GameState.GAMEOVER && isInBounds(x, y, bounds.restartBtn)) {
+                    resetGame();
+                    return;
+                }
+
+                // Joystick activation (left side of screen during gameplay)
+                if (state.current === GameState.PLAYING && x < CONFIG.GAME_WIDTH / 2) {
+                    joystick.active = true;
+                    joystick.touchId = id;
+                    joystick.startX = x;
+                    joystick.startY = y;
+                    joystick.currentX = x;
+                    joystick.currentY = y;
+                }
+            }
+
+            function handlePointerMove(x, y, id) {
+                if (joystick.active && joystick.touchId === id) {
+                    joystick.currentX = x;
+                    joystick.currentY = y;
+                }
+            }
+
+            function handlePointerUp(id) {
+                if (joystick.touchId === id) {
+                    joystick.active = false;
+                    joystick.touchId = null;
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // GAME FLOW
+            // ═══════════════════════════════════════════════════════════════════
+            function startCountdown() {
+                state.current = GameState.COUNTDOWN;
+                state.countdownValue = CONFIG.COUNTDOWN_DURATION;
+            }
+
+            function startGame() {
+                state.current = GameState.PLAYING;
+                state.survivalTime = 0;
+                state.score = 0;
+                state.health = CONFIG.MAX_HEALTH;
+                state.perfectRun = true;
+                initZones();
+                initPlayer();
+                scheduleDangerZones();
+            }
+
+            function resetGame() {
+                // Full state reset
+                state.current = GameState.START;
+                state.score = 0;
+                state.health = CONFIG.MAX_HEALTH;
+                state.survivalTime = 0;
+                state.countdownValue = CONFIG.COUNTDOWN_DURATION;
+                state.perfectRun = true;
+
+                // Reset input
+                input.left = false;
+                input.right = false;
+                input.up = false;
+                input.down = false;
+                joystick.active = false;
+                joystick.touchId = null;
+
+                // Reset zones
+                zones = [];
+                dangerSchedule = [];
+            }
+
+            function gameOver() {
+                state.current = GameState.GAMEOVER;
+                state.score = state.survivalTime;
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // UPDATE
+            // ═══════════════════════════════════════════════════════════════════
+            function update(dt) {
+                // Update animation time for all states
+                animTime += dt;
+
+                if (state.current === GameState.COUNTDOWN) {
+                    state.countdownValue -= dt;
+                    if (state.countdownValue <= 0) {
+                        startGame();
+                    }
+                }
+
+                if (state.current === GameState.PLAYING) {
+                    state.survivalTime += dt;
+                    state.score = state.survivalTime;
+
+                    updateZones(dt);
+                    updatePlayer(dt);
+                    updateBubbles(dt);
+
+                    // Check damage and track player danger state
+                    const inDanger = checkPlayerDanger();
+                    playerState.wasInDanger = playerState.inDanger;
+                    playerState.inDanger = inDanger;
+
+                    // Trigger escape sparkle when leaving danger
+                    if (playerState.wasInDanger && !playerState.inDanger) {
+                        playerState.escapeTimer = 1.0;
+                    }
+
+                    // Decay escape timer
+                    if (playerState.escapeTimer > 0) {
+                        playerState.escapeTimer -= dt * 2;
+                        if (playerState.escapeTimer < 0) playerState.escapeTimer = 0;
+                    }
+
+                    if (inDanger) {
+                        state.health -= CONFIG.DAMAGE_PER_SECOND * dt;
+                        state.perfectRun = false;
+                        if (state.health <= 0) {
+                            state.health = 0;
+                            gameOver();
+                        }
+                    }
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // RENDER
+            // ═══════════════════════════════════════════════════════════════════
+            function render() {
+                // Clear
+                ctx.fillStyle = CONFIG.BG_COLOR;
+                ctx.fillRect(0, 0, CONFIG.GAME_WIDTH, CONFIG.GAME_HEIGHT);
+
+                if (state.current === GameState.START) {
+                    renderStartScreen();
+                } else if (state.current === GameState.COUNTDOWN) {
+                    renderArena();
+                    renderPlayer();
+                    renderHUD();
+                    renderCountdown();
+                } else if (state.current === GameState.PLAYING) {
+                    renderArena();
+                    renderPlayer();
+                    renderHUD();
+                    renderJoystick();
+                } else if (state.current === GameState.PAUSED) {
+                    renderArena();
+                    renderPlayer();
+                    renderHUD();
+                    renderPauseOverlay();
+                } else if (state.current === GameState.GAMEOVER) {
+                    renderArena();
+                    renderPlayer();
+                    renderHUD();
+                    renderGameOver();
+                }
+
+                // Always render mute button
+                renderMuteButton();
+            }
+
+            function renderArena() {
+                // Checkerboard floor as background
+                drawCheckerboard(bounds.arena.x, bounds.arena.y, bounds.arena.w, bounds.arena.h, 40);
+
+                // Zones with themed visuals
+                zones.forEach((zone, idx) => {
+                    if (zone.danger) {
+                        // Active danger - grease blob with wobble
+                        const colorIdx = idx % CONFIG.GREASE_COLORS.length;
+                        const color = CONFIG.GREASE_COLORS[colorIdx];
+                        drawGreaseBlob(zone.x, zone.y, zone.w, zone.h, color, Math.sin(animTime * 5 + idx));
+                    } else if (zone.warning) {
+                        // Warning - sizzling effect with bubbles
+                        const flash = Math.sin(zone.warningTimer * 15) * 0.5 + 0.5;
+
+                        // Orange warning glow
+                        ctx.fillStyle = `rgba(243, 156, 18, ${flash * 0.6})`;
+                        ctx.fillRect(zone.x, zone.y, zone.w, zone.h);
+
+                        // Cream base showing through
+                        ctx.fillStyle = `rgba(245, 240, 220, ${1 - flash * 0.5})`;
+                        ctx.fillRect(zone.x + 2, zone.y + 2, zone.w - 4, zone.h - 4);
+
+                        // Spawn bubbles occasionally
+                        if (Math.random() < 0.1) {
+                            spawnBubbles(zone);
+                        }
+                    } else {
+                        // Safe zone - cream tile with subtle shine
+                        ctx.fillStyle = CONFIG.TILE_CREAM;
+                        ctx.fillRect(zone.x, zone.y, zone.w, zone.h);
+
+                        // Subtle shine
+                        const shineGradient = ctx.createLinearGradient(zone.x, zone.y, zone.x + zone.w, zone.y + zone.h);
+                        shineGradient.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+                        shineGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+                        shineGradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+                        ctx.fillStyle = shineGradient;
+                        ctx.fillRect(zone.x, zone.y, zone.w, zone.h);
+                    }
+                });
+
+                // Draw bubbles on top
+                drawBubbles();
+            }
+
+            function renderPlayer() {
+                // Draw escape sparkle if just escaped danger
+                if (playerState.escapeTimer > 0) {
+                    const centerX = player.x + CONFIG.PLAYER_WIDTH / 2;
+                    const centerY = player.y + CONFIG.PLAYER_HEIGHT / 2;
+                    drawEscapeSparkle(centerX, centerY, playerState.escapeTimer);
+                }
+
+                // Draw chef character with panic state
+                drawChef(
+                    player.x,
+                    player.y,
+                    CONFIG.PLAYER_WIDTH,
+                    CONFIG.PLAYER_HEIGHT,
+                    animTime,
+                    playerState.inDanger
+                );
+            }
+
+            function renderHUD() {
+                // Timer
+                const minutes = Math.floor(state.survivalTime / 60);
+                const seconds = Math.floor(state.survivalTime % 60);
+                const centiseconds = Math.floor((state.survivalTime % 1) * 100);
+                const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(centiseconds).padStart(2, '0')}`;
+
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(timeStr, CONFIG.GAME_WIDTH / 2, 20);
+
+                // Health bar
+                const hbWidth = 140;
+                const hbHeight = 16;
+                const hbX = (CONFIG.GAME_WIDTH - hbWidth) / 2;
+                const hbY = 60;
+
+                // Heart icon
+                ctx.fillStyle = '#2ecc71';
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText('❤', hbX - 5, hbY);
+
+                // Background
+                ctx.fillStyle = CONFIG.HEALTH_BAR_BG;
+                ctx.fillRect(hbX, hbY, hbWidth, hbHeight);
+
+                // Health
+                const healthWidth = (state.health / CONFIG.MAX_HEALTH) * hbWidth;
+                ctx.fillStyle = CONFIG.HEALTH_BAR_COLOR;
+                ctx.fillRect(hbX, hbY, healthWidth, hbHeight);
+
+                // Pause button
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(bounds.pauseBtn.x, bounds.pauseBtn.y, bounds.pauseBtn.w, bounds.pauseBtn.h);
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.font = 'bold 20px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('❚❚', bounds.pauseBtn.x + bounds.pauseBtn.w / 2, bounds.pauseBtn.y + bounds.pauseBtn.h / 2);
+            }
+
+            function renderMuteButton() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(bounds.muteBtn.x, bounds.muteBtn.y, bounds.muteBtn.w, bounds.muteBtn.h);
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.font = '20px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(state.muted ? '🔇' : '🔊', bounds.muteBtn.x + bounds.muteBtn.w / 2, bounds.muteBtn.y + bounds.muteBtn.h / 2);
+            }
+
+            function renderJoystick() {
+                if (!joystick.active) {
+                    // Static joystick indicator
+                    const jx = 80;
+                    const jy = CONFIG.GAME_HEIGHT - 90;
+
+                    ctx.fillStyle = `rgba(255, 255, 255, ${CONFIG.JOYSTICK_OPACITY * 0.5})`;
+                    ctx.beginPath();
+                    ctx.arc(jx, jy, CONFIG.JOYSTICK_SIZE / 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = `rgba(255, 255, 255, ${CONFIG.JOYSTICK_OPACITY})`;
+                    ctx.beginPath();
+                    ctx.arc(jx, jy, CONFIG.JOYSTICK_KNOB_SIZE / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Active joystick
+                    ctx.fillStyle = `rgba(255, 255, 255, ${CONFIG.JOYSTICK_OPACITY * 0.5})`;
+                    ctx.beginPath();
+                    ctx.arc(joystick.startX, joystick.startY, CONFIG.JOYSTICK_SIZE / 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Clamp knob position
+                    let dx = joystick.currentX - joystick.startX;
+                    let dy = joystick.currentY - joystick.startY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const maxDist = CONFIG.JOYSTICK_SIZE / 2 - CONFIG.JOYSTICK_KNOB_SIZE / 2;
+
+                    if (dist > maxDist) {
+                        dx = (dx / dist) * maxDist;
+                        dy = (dy / dist) * maxDist;
+                    }
+
+                    ctx.fillStyle = `rgba(255, 255, 255, ${CONFIG.JOYSTICK_OPACITY})`;
+                    ctx.beginPath();
+                    ctx.arc(joystick.startX + dx, joystick.startY + dy, CONFIG.JOYSTICK_KNOB_SIZE / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Right side action button (decorative for now)
+                const ax = CONFIG.GAME_WIDTH - 80;
+                const ay = CONFIG.GAME_HEIGHT - 90;
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${CONFIG.JOYSTICK_OPACITY * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(ax, ay, 45, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${CONFIG.JOYSTICK_OPACITY})`;
+                ctx.beginPath();
+                ctx.arc(ax, ay, 25, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function renderStartScreen() {
+                // Draw the exact cover image
+                if (coverLoaded) {
+                    // Scale image to fit while maintaining aspect ratio
+                    const imgAspect = coverImage.width / coverImage.height;
+                    const canvasAspect = CONFIG.GAME_WIDTH / CONFIG.GAME_HEIGHT;
+
+                    let drawW, drawH, drawX, drawY;
+                    if (imgAspect > canvasAspect) {
+                        // Image is wider, fit by height
+                        drawH = CONFIG.GAME_HEIGHT;
+                        drawW = drawH * imgAspect;
+                        drawX = (CONFIG.GAME_WIDTH - drawW) / 2;
+                        drawY = 0;
+                    } else {
+                        // Image is taller, fit by width
+                        drawW = CONFIG.GAME_WIDTH;
+                        drawH = drawW / imgAspect;
+                        drawX = 0;
+                        drawY = (CONFIG.GAME_HEIGHT - drawH) / 2;
+                    }
+
+                    ctx.drawImage(coverImage, drawX, drawY, drawW, drawH);
+                } else {
+                    // Fallback: checkerboard while image loads
+                    drawCheckerboard(0, 0, CONFIG.GAME_WIDTH, CONFIG.GAME_HEIGHT, 50);
+                }
+
+                // "Toca para jugar" instruction with pulse animation
+                const centerX = CONFIG.GAME_WIDTH / 2;
+                const pulse = 0.6 + Math.sin(animTime * 3) * 0.2;
+                ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+                ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Toca para jugar', centerX, CONFIG.GAME_HEIGHT - 60);
+            }
+
+            function renderCountdown() {
+                ctx.fillStyle = CONFIG.OVERLAY_BG;
+                ctx.fillRect(0, 0, CONFIG.GAME_WIDTH, CONFIG.GAME_HEIGHT);
+
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const num = Math.ceil(state.countdownValue);
+                ctx.fillText(num > 0 ? num.toString() : '¡LISTO!', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 2);
+            }
+
+            function renderPauseOverlay() {
+                ctx.fillStyle = CONFIG.OVERLAY_BG;
+                ctx.fillRect(0, 0, CONFIG.GAME_WIDTH, CONFIG.GAME_HEIGHT);
+
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('PAUSA', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 3);
+
+                // Resume button
+                ctx.fillStyle = CONFIG.BUTTON_COLOR;
+                ctx.fillRect(bounds.resumeBtn.x, bounds.resumeBtn.y, bounds.resumeBtn.w, bounds.resumeBtn.h);
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText('CONTINUAR', bounds.resumeBtn.x + bounds.resumeBtn.w / 2, bounds.resumeBtn.y + bounds.resumeBtn.h / 2);
+
+                // Restart button
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(bounds.restartBtn.x, bounds.restartBtn.y, bounds.restartBtn.w, bounds.restartBtn.h);
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.fillText('REINICIAR', bounds.restartBtn.x + bounds.restartBtn.w / 2, bounds.restartBtn.y + bounds.restartBtn.h / 2);
+            }
+
+            function renderGameOver() {
+                ctx.fillStyle = CONFIG.OVERLAY_BG;
+                ctx.fillRect(0, 0, CONFIG.GAME_WIDTH, CONFIG.GAME_HEIGHT);
+
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('¡RESBALASTE!', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 3);
+
+                // Final time
+                const minutes = Math.floor(state.score / 60);
+                const seconds = Math.floor(state.score % 60);
+                const centiseconds = Math.floor((state.score % 1) * 100);
+                const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(centiseconds).padStart(2, '0')}`;
+
+                ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText(`Tiempo: ${timeStr}`, CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 3 + 50);
+
+                if (state.perfectRun && state.score > 0) {
+                    ctx.fillStyle = '#f1c40f';
+                    ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.fillText('★ ¡CARRERA PERFECTA! ★', CONFIG.GAME_WIDTH / 2, CONFIG.GAME_HEIGHT / 3 + 85);
+                }
+
+                // Restart button
+                ctx.fillStyle = CONFIG.BUTTON_COLOR;
+                ctx.fillRect(bounds.restartBtn.x, bounds.restartBtn.y, bounds.restartBtn.w, bounds.restartBtn.h);
+                ctx.fillStyle = CONFIG.TEXT_COLOR;
+                ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText('JUGAR DE NUEVO', bounds.restartBtn.x + bounds.restartBtn.w / 2, bounds.restartBtn.y + bounds.restartBtn.h / 2);
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // GAME LOOP
+            // ═══════════════════════════════════════════════════════════════════
+            function gameLoop(timestamp) {
+                if (!lastTime) lastTime = timestamp;
+                deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1); // Cap at 100ms
+                lastTime = timestamp;
+
+                update(deltaTime);
+                render();
+
+                animationId = requestAnimationFrame(gameLoop);
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // INITIALIZATION
+            // ═══════════════════════════════════════════════════════════════════
+            function init() {
+                setupCanvas();
+
+                // Event listeners
+                window.addEventListener('resize', setupCanvas);
+                window.addEventListener('keydown', handleKeyDown);
+                window.addEventListener('keyup', handleKeyUp);
+
+                canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+                canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+                canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+                canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+                canvas.addEventListener('mousedown', handleMouseDown);
+                canvas.addEventListener('mousemove', handleMouseMove);
+                canvas.addEventListener('mouseup', handleMouseUp);
+                canvas.addEventListener('mouseleave', handleMouseUp);
+
+                // Prevent context menu
+                canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+                // Start loop
+                requestAnimationFrame(gameLoop);
+            }
+
+            init();
+        })();
+    </script>
+</body>
+
+</html>

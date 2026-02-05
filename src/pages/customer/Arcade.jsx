@@ -11,7 +11,6 @@ import { useTenant } from '../../contexts/TenantContext'
  * - Memory cleanup on swipe (unmount inactive iframes)
  */
 
-// 🎮 GAME REGISTRY: The 12 games with metadata
 // 🎮 GAME REGISTRY: The 12 games with metadata (Folder Structure)
 const GAMES = [
     { id: 'avoid-zone-engine', title: 'Avoid Zone', hook: 'Dodging is the only option.', cover: '/games/avoid-zone-engine/cover.jpg' },
@@ -36,6 +35,19 @@ const Arcade = () => {
     // 🎮 STATE: Track which game is currently playing (only one at a time)
     const [activeGameId, setActiveGameId] = useState(null)
     const [visibleIndex, setVisibleIndex] = useState(0)
+
+    // 🛡️ SCROLL & INTERACTION UNLOCK: Force body to be scrollable
+    useEffect(() => {
+        // Unlock body scroll (fix for Home.jsx lock)
+        document.body.style.overflow = 'auto'
+        document.body.style.touchAction = 'auto'
+
+        return () => {
+            // Cleanup not strictly necessary as next page handles it, but good practice
+            document.body.style.overflow = ''
+            document.body.style.touchAction = ''
+        }
+    }, [])
 
     // 🛡️ MEMORY CLEANUP: Intersection Observer to detect visible card
     useEffect(() => {
@@ -230,25 +242,33 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                 ) : (
                     /* 📺 POSTER MODE: Show cover + Play button */
                     <>
-                        {/* Cover Image */}
+                        {/* Cover Image or Fallback Gradient */}
                         <div style={{
                             position: 'absolute',
                             top: 0,
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            backgroundImage: `url(${game.cover})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center'
+                            background: '#CBD5E1', /* Fallback Grey */
                         }}>
-                            {/* Fallback gradient if no cover */}
+                            {/* Try to load image, if missing, this div remains */}
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                backgroundImage: `url(${game.cover})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                opacity: 1
+                            }} />
+
+                            {/* Gradient Overlay for Text Readability */}
                             <div style={{
                                 position: 'absolute',
                                 top: 0,
                                 left: 0,
                                 right: 0,
                                 bottom: 0,
-                                background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%)'
+                                background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%)'
                             }} />
                         </div>
 
@@ -259,15 +279,14 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                             left: 0,
                             right: 0,
                             padding: 20,
-                            background: 'rgba(255,255,255,0.95)',
-                            backdropFilter: 'blur(8px)',
-                            WebkitBackdropFilter: 'blur(8px)'
+                            zIndex: 10, /* Ensure text/button is above bg */
+                            pointerEvents: 'auto' /* Force Clickable */
                         }}>
                             <h2 style={{
                                 fontFamily: 'Montserrat, sans-serif',
                                 fontSize: 22,
                                 fontWeight: 800,
-                                color: '#0F172A',
+                                color: '#FFFFFF', /* White text for contrast on dark gradient */
                                 margin: 0,
                                 marginBottom: 4
                             }}>
@@ -276,7 +295,7 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                             <p style={{
                                 fontSize: 14,
                                 fontWeight: 400,
-                                color: '#64748B',
+                                color: '#E2E8F0', /* Light grey for contrast */
                                 margin: 0,
                                 marginBottom: 16
                             }}>
@@ -290,14 +309,14 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                                     width: '100%',
                                     padding: '14px 0',
                                     background: '#FFFFFF',
-                                    border: '1px solid #E2E8F0',
+                                    border: 'none',
                                     borderRadius: 12,
                                     fontFamily: 'Montserrat, sans-serif',
                                     fontSize: 16,
                                     fontWeight: 700,
                                     color: '#0F172A',
                                     cursor: 'pointer',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                                     transition: 'transform 0.1s ease, box-shadow 0.1s ease'
                                 }}
                             >
