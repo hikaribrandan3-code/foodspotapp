@@ -531,7 +531,7 @@ export default function Menu({ config: configProp }) {
     }
 
     return (
-        <div style={{ minHeight: '100vh', paddingBottom: 100, background: 'var(--color-bg, #F9FAFB)', maxWidth: '92%', margin: '0 auto' }}>
+        <div style={{ minHeight: '100vh', paddingBottom: 100, background: 'var(--color-bg, #F9FAFB)', maxWidth: '100%', margin: '0 auto' }}>
             {/* Header */}
             <HeaderClamp config={tenantData?.app_config || {}} />
 
@@ -607,7 +607,7 @@ export default function Menu({ config: configProp }) {
             {(() => {
                 const dividerPreset = getDividerPreset(effectiveDividerPresetId)
                 return (
-                    <div style={{ height: 64, margin: '0 16px 12px 16px', borderRadius: 12, overflow: 'hidden' }}>
+                    <div style={{ height: 64, margin: '0 8px 12px 8px', borderRadius: 12, overflow: 'hidden' }}>
                         {dividerPreset ? (
                             <img src={dividerPreset.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : <div style={{ width: '100%', height: '100%', background: '#eee' }} />}
@@ -621,7 +621,7 @@ export default function Menu({ config: configProp }) {
                     position: 'sticky', top: 52, zIndex: 900, background: 'rgba(255,255,255,0.95)',
                     backdropFilter: 'blur(8px)', padding: '8px 0', margin: '0 0 16px 0', borderBottom: '1px solid rgba(0,0,0,0.05)'
                 }}>
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 16px', scrollbarWidth: 'none' }}>
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 8px', scrollbarWidth: 'none' }}>
                         {enabledCategories.map(cat => (
                             <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                                 padding: '8px 16px', borderRadius: 20, border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
@@ -634,7 +634,7 @@ export default function Menu({ config: configProp }) {
             )}
 
             {/* Grid */}
-            <div style={{ padding: '0 16px' }}>
+            <div style={{ padding: '0 8px' }}>
                 {enabledCategories.map(category => (
                     <div key={category.id} ref={el => categoryRefs.current[category.id] = el} data-category-id={category.id} style={{ marginBottom: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
