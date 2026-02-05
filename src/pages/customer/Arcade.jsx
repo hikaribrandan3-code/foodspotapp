@@ -12,19 +12,20 @@ import { useTenant } from '../../contexts/TenantContext'
  */
 
 // 🎮 GAME REGISTRY: The 12 games with metadata
+// 🎮 GAME REGISTRY: The 12 games with metadata (Flat-Silo Structure)
 const GAMES = [
-    { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash/cover.jpg' },
-    { id: 'sushi-slice', title: 'Sushi Slice V2', hook: 'Slice & dice like a master chef.', cover: '/games/sushi-slice/cover.jpg' },
-    { id: 'pizza-stack', title: 'Pizza Stack', hook: 'Stack the perfect tower of toppings.', cover: '/games/pizza-stack/cover.jpg' },
-    { id: 'burger-builder', title: 'Burger Builder', hook: 'Build burgers at lightning speed.', cover: '/games/burger-builder/cover.jpg' },
-    { id: 'taco-run', title: 'Taco Run', hook: 'Run for your life... and tacos!', cover: '/games/taco-run/cover.jpg' },
-    { id: 'donut-drop', title: 'Donut Drop', hook: 'Catch donuts, avoid the burns.', cover: '/games/donut-drop/cover.jpg' },
-    { id: 'coffee-rush', title: 'Coffee Rush', hook: 'Serve orders before they rage quit.', cover: '/games/coffee-rush/cover.jpg' },
-    { id: 'ice-cream-catch', title: 'Ice Cream Catch', hook: 'Stack scoops to the sky.', cover: '/games/ice-cream-catch/cover.jpg' },
-    { id: 'waffle-wars', title: 'Waffle Wars', hook: 'Flip, stack, serve. Repeat.', cover: '/games/waffle-wars/cover.jpg' },
-    { id: 'noodle-ninja', title: 'Noodle Ninja', hook: 'Slice noodles with precision.', cover: '/games/noodle-ninja/cover.jpg' },
-    { id: 'smoothie-blast', title: 'Smoothie Blast', hook: 'Blend ingredients before time runs out.', cover: '/games/smoothie-blast/cover.jpg' },
-    { id: 'pancake-flip', title: 'Pancake Flip', hook: 'Master the perfect flip.', cover: '/games/pancake-flip/cover.jpg' }
+    { id: 'avoid-zone-engine', title: 'Avoid Zone', hook: 'Dodging is the only option.', cover: '/games/avoid-zone-engine.jpg' },
+    { id: 'collapse-stack', title: 'Collapse Stack', hook: 'Keep the tower stable!', cover: '/games/collapse-stack.jpg' },
+    { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash.jpg' },
+    { id: 'falling-choice-gate', title: 'Falling Gates', hook: 'Choose wisely or fall forever.', cover: '/games/falling-choice-gate.jpg' },
+    { id: 'false-hold', title: 'False Hold', hook: 'Trust nothing. Keep moving.', cover: '/games/false-hold.jpg' },
+    { id: 'gravity-flip-runner', title: 'Gravity Flip', hook: 'Up is down. Down is up.', cover: '/games/gravity-flip-runner.jpg' },
+    { id: 'last-known-good', title: 'Last Known Good', hook: 'Restore order before the crash.', cover: '/games/last-known-good.jpg' },
+    { id: 'lock-in-drift', title: 'Lock-In Drift', hook: 'Drift tight, hold the line.', cover: '/games/lock-in-drift.jpg' },
+    { id: 'pegfall-panic', title: 'Pegfall Panic', hook: 'Don\'t let the pegs win.', cover: '/games/pegfall-panic.jpg' },
+    { id: 'side-scroller-runner', title: 'Side Scroller', hook: 'Classic running action.', cover: '/games/side-scroller-runner.jpg' },
+    { id: 'sushi-slicev2', title: 'Sushi Slice V2', hook: 'Slice precision required.', cover: '/games/sushi-slicev2.jpg' },
+    { id: 'triple-snap-slots', title: 'Triple Snap', hook: 'Can you hit the jackpot?', cover: '/games/triple-snap-slots.jpg' }
 ]
 
 const Arcade = () => {
@@ -217,7 +218,7 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                 {isPlaying ? (
                     /* 🎮 IFRAME MODE: Game is active */
                     <iframe
-                        src={`/games/${game.id}/index.html`}
+                        src={`/games/${game.id}.html`}
                         title={game.title}
                         style={{
                             width: '100%',
