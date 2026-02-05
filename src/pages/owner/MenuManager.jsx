@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
-import { supabase, updateBranding } from '../../lib/supabaseClient.js'
+import { supabase, updateBranding, getMenuCloud } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
@@ -192,6 +192,21 @@ function MenuManager({ config: configProp, demoMode = false }) {
             console.log('[MenuManager] 🔓 HYDRATION COMPLETE: Sync now allowed')
         }
     }, [tenantLoaded, tenantData])
+
+    // 🛡️ UNIVERSAL SYNC: Fetch Row-Based Order from SQL (Source of Truth)
+    useEffect(() => {
+        const fetchSQLMenu = async () => {
+            if (targetBusinessId) {
+                console.log('[MenuManager] 🦅 FEEDING THE EAGLE: Fetching SQL Menu Order...')
+                const { data, error } = await getMenuCloud(targetBusinessId)
+                if (data && !error) {
+                    console.log('[MenuManager] 🦅 EAGLE LANDED: SQL Menu Loaded', data)
+                    setMenu(data)
+                }
+            }
+        }
+        if (tenantLoaded) fetchSQLMenu()
+    }, [tenantLoaded, targetBusinessId])
 
     // 🛡️ THE AMNESIA KILLER: Only hydrate local state if Cloud data is richer than local state
     useEffect(() => {
@@ -451,21 +466,68 @@ function MenuManager({ config: configProp, demoMode = false }) {
             console.error('❌ Error Syncing Hero Items:', menuError)
         } else {
             console.log('✅ Hero Items Synced to DB')
+
+            // 4. 🛡️ UNIVERSAL MENU SYNC (The "Law of the Land")
+            // We must sync the JSON structure to the SQL Rows with explicit Sort Order
+            const categoriesPayload = menuToSave.categories.map((cat, index) => ({
+                id: cat.id,
+                business_id: targetBusinessId,
+                name: cat.name,
+                icon: cat.icon || '',
+                sort_order: index, // ⚡ THE MAGIC SDU
+                display_order: index, // Legacy Fallback
+                enabled: cat.enabled
+            }))
+
+            const itemsPayload = []
+            menuToSave.categories.forEach((cat, catIndex) => {
+                if (cat.items) {
+                    cat.items.forEach((item, itemIndex) => {
+                        itemsPayload.push({
+                            id: item.id,
+                            business_id: targetBusinessId,
+                            category_id: cat.id,
+                            name: item.name,
+                            price: item.price,
+                            image_url: item.image,
+                            available: item.available,
+                            featured: item.featured,
+                            sort_order: itemIndex, // ⚡ THE MAGIC SDU
+                            display_order: itemIndex // Legacy Fallback
+                        })
+                    })
+                }
+            })
+
+            // BATCH UPSERT CATEGORIES
+            const { error: catError } = await supabase
+                .from('categories')
+                .upsert(categoriesPayload, { onConflict: 'id' })
+
+            if (catError) console.error('❌ SQL Category Sync Error:', catError)
+
+            // BATCH UPSERT ITEMS
+            const { error: itemsError } = await supabase
+                .from('menu_items')
+                .upsert(itemsPayload, { onConflict: 'id' })
+
+            if (itemsError) console.error('❌ SQL Items Sync Error:', itemsError)
+            else console.log('✅ UNIVERSAL SYNC COMPLETE: SQL Tables Updated')
+
+            // 3. FINALIZE
+            setMenu(menuToSave) // Update local state with processed URLs
+            setPendingFiles({}) // 🗑️ CLEANUP: Clear the file buffer
+            setHasChanges(false)
+            sessionStorage.removeItem(`dirty_${targetBusinessId}`)
+            setSaveStatus({ message: '✓ Sistema Sincronizado' })
+            setTimeout(() => setSaveStatus(null), 3000)
+
+            // 🔄 GLOBAL REFRESH
+            ignoreCloudUpdateRef.current = true // 🛡️ ACTIVATE ANTI-BOUNCE
+            await refreshTenantData()
+
+            setIsSaving(false)
         }
-
-        // 3. FINALIZE
-        setMenu(menuToSave) // Update local state with processed URLs
-        setPendingFiles({}) // 🗑️ CLEANUP: Clear the file buffer
-        setHasChanges(false)
-        sessionStorage.removeItem(`dirty_${targetBusinessId}`)
-        setSaveStatus({ message: '✓ Sistema Sincronizado' })
-        setTimeout(() => setSaveStatus(null), 3000)
-
-        // 🔄 GLOBAL REFRESH
-        ignoreCloudUpdateRef.current = true // 🛡️ ACTIVATE ANTI-BOUNCE
-        await refreshTenantData()
-
-        setIsSaving(false)
     }
 
     // --- 🛠️ PURE STATE HELPER: Generate IDs ---

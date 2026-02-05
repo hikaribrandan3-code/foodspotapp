@@ -214,7 +214,7 @@ export async function getMenuCloud(businessId) {
             .from('categories')
             .select('*')
             .eq('business_id', businessId)
-            .order('display_order', { ascending: true })
+            .order('sort_order', { ascending: true })
 
         if (catError) throw catError
 
@@ -223,7 +223,7 @@ export async function getMenuCloud(businessId) {
             .from('menu_items')
             .select('*')
             .eq('business_id', businessId)
-            .order('display_order', { ascending: true })
+            .order('sort_order', { ascending: true })
 
         if (itemError) throw itemError
 
@@ -334,7 +334,8 @@ export async function addMenuItemCloud(item, businessId) {
             available: item.available ?? true,
             featured: item.featured ?? false,
             image_url: item.image || null,
-            display_order: item.displayOrder || 0
+            display_order: item.displayOrder || 0,
+            sort_order: item.sortOrder || item.displayOrder || 0
         })
         .select()
         .single()

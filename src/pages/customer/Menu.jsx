@@ -470,7 +470,8 @@ export default function Menu({ config: configProp }) {
                 business_id: businessId,
                 name: cat.name,
                 icon: cat.icon || '🍽️',
-                display_order: idx
+                display_order: idx,
+                sort_order: idx
             }));
 
             const { error: catError } = await supabase
@@ -489,7 +490,8 @@ export default function Menu({ config: configProp }) {
                     price: item.price || 0,
                     image: item.image || null,
                     available: item.available ?? true,
-                    display_order: idx
+                    display_order: idx,
+                    sort_order: idx
                 }))
             );
 
