@@ -97,7 +97,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 gridTemplateColumns: '1fr 1fr',
                 gap: 12,
                 padding: '0 12px', /* 12px Gutter Sync */
-                marginBottom: 48
+                marginBottom: 36 /* Vertical Squeeze: 48 -> 36 */
             }}>
                 <button
                     onClick={() => navigate('/envios')}
@@ -115,7 +115,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         transition: 'transform 0.1s ease'
                     }}
                 >
-                    <span style={{ fontSize: 16, opacity: 0.7 }}>🚚</span>
+                    <span style={{ fontSize: 13.5, opacity: 0.7 }}>🚚</span>
                     <span style={{ fontWeight: 700, color: '#334155' }}>Delivery</span>
                 </button>
                 <button
@@ -134,7 +134,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         transition: 'transform 0.1s ease'
                     }}
                 >
-                    <span style={{ fontSize: 16, opacity: 0.7 }}>🎁</span>
+                    <span style={{ fontSize: 13.5, opacity: 0.7 }}>🎁</span>
                     <span style={{ fontWeight: 700, color: '#334155' }}>Premios</span>
                 </button>
             </div>
@@ -142,40 +142,25 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
             {/* 3. Featured Products Grid (Mapped from Config Props) */}
             <div style={{ padding: '0 12px' }}>
                 <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-end',
-                    marginBottom: 24
+                    marginBottom: 16,
+                    textAlign: 'center'
                 }}>
-                    <h3 style={{
-                        fontSize: 20,
-                        fontWeight: 900,
-                        color: '#0F172A',
-                        lineHeight: 1,
-                        margin: 0
+                    <h2 style={{
+                        fontSize: 18,
+                        fontWeight: 600, /* Semi-Bold */
+                        color: '#333333', /* Deep Charcoal */
+                        letterSpacing: '0.02em',
+                        margin: 0,
+                        textWrap: 'balance'
                     }}>
                         Productos Destacados
-                    </h3>
-                    <button
-                        onClick={() => navigate(menuPath)}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#2563EB',
-                            fontWeight: 700,
-                            fontSize: 14,
-                            cursor: 'pointer',
-                            padding: 0
-                        }}
-                    >
-                        Ver todo →
-                    </button>
+                    </h2>
                 </div>
 
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
-                    gap: 16
+                    gap: 12 /* Grid Lock: 12px */
                 }}>
                     {featuredItems.slice(0, 4).map((item, index) => (
                         <div
