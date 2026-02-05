@@ -492,16 +492,34 @@ function Home({ config: configProp }) {
         return mode === 'white' ? '#FFFFFF' : HERO_ICON_DARK
     }, [config?.heroIcons, config?.canvasMode, config?.hero_icon_mode])
 
+    // 🎨 TILE COLOR HIERARCHY (Brand Authority Restoration)
+    const getTileBackground = useCallback((actionId) => {
+        const primaryColor = config?.colors?.primary || '#22C55E'
+        const secondaryColor = config?.colors?.secondary || '#3B82F6'
+        const accentColor = config?.colors?.confirmation || '#F59E0B'
+
+        switch (actionId) {
+            case 'menu': return primaryColor // Strongest CTA
+            case 'envios': return secondaryColor // Secondary
+            case 'promos': return accentColor // Accent
+            case 'minigame':
+            case 'rewards':
+            default:
+                // Muted: Use grayscale tint or 0.7 opacity feel
+                return config?.canvasMode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.04)'
+        }
+    }, [config?.colors, config?.canvasMode])
+
     const tileStyle = {
         borderRadius: 28,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        aspectRatio: '1 / 0.85',
+        aspectRatio: '1 / 0.9', // V1 Hero Dominance
         gap: 12,
         textDecoration: 'none',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
         padding: 16
     }
 
@@ -693,10 +711,10 @@ function Home({ config: configProp }) {
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...tileStyle,
-                                    backgroundColor: getHeroBg(actionId),
+                                    backgroundColor: getTileBackground(actionId),
                                     cursor: isEditMode ? 'grab' : 'pointer',
                                     opacity: isDragging ? 0.3 : 1,
-                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getHeroBg(actionId),
+                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getTileBackground(actionId),
                                     border: isPlaceholder ? '2px dashed #22C55E' : 'none',
                                     touchAction: isEditMode ? 'none' : 'auto',
                                     userSelect: 'none',
@@ -713,7 +731,7 @@ function Home({ config: configProp }) {
                         <Link
                             key={actionId}
                             to={`/${tenantSlug}/${action.path}`}
-                            style={{ ...tileStyle, backgroundColor: getHeroBg(actionId) }}
+                            style={{ ...tileStyle, backgroundColor: getTileBackground(actionId) }}
                         >
                             {tileContent}
                         </Link>
@@ -788,10 +806,21 @@ function Home({ config: configProp }) {
                 )}
             </div>
 
-            {/* Featured Feed Section - Uses LOCAL STATE */}
-            <div style={{ padding: '0 4px', marginBottom: 12 }}>
-                <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1F2937', margin: 0 }}>
-                    Productos Destacados
+            {/* Featured Feed Section - Editorial "Productos Destacados" */}
+            <div style={{
+                padding: '0 4px',
+                marginTop: 32, /* Curated Gap: Above title */
+                marginBottom: 8, /* Curated Gap: Below title (closer to cards) */
+                textAlign: 'center'
+            }}>
+                <h2 style={{
+                    fontSize: 18,
+                    fontWeight: 600, /* Semi-Bold */
+                    color: '#374151', /* Dark Charcoal */
+                    margin: 0,
+                    textWrap: 'balance'
+                }}>
+                    ⭐ Productos Destacados ⭐
                 </h2>
             </div>
 
