@@ -12,20 +12,20 @@ import { useTenant } from '../../contexts/TenantContext'
  */
 
 // 🎮 GAME REGISTRY: The 12 games with metadata
-// 🎮 GAME REGISTRY: The 12 games with metadata (Flat-Silo Structure)
+// 🎮 GAME REGISTRY: The 12 games with metadata (Folder Structure)
 const GAMES = [
-    { id: 'avoid-zone-engine', title: 'Avoid Zone', hook: 'Dodging is the only option.', cover: '/games/avoid-zone-engine.jpg' },
-    { id: 'collapse-stack', title: 'Collapse Stack', hook: 'Keep the tower stable!', cover: '/games/collapse-stack.jpg' },
-    { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash.jpg' },
-    { id: 'falling-choice-gate', title: 'Falling Gates', hook: 'Choose wisely or fall forever.', cover: '/games/falling-choice-gate.jpg' },
-    { id: 'false-hold', title: 'False Hold', hook: 'Trust nothing. Keep moving.', cover: '/games/false-hold.jpg' },
-    { id: 'gravity-flip-runner', title: 'Gravity Flip', hook: 'Up is down. Down is up.', cover: '/games/gravity-flip-runner.jpg' },
-    { id: 'last-known-good', title: 'Last Known Good', hook: 'Restore order before the crash.', cover: '/games/last-known-good.jpg' },
-    { id: 'lock-in-drift', title: 'Lock-In Drift', hook: 'Drift tight, hold the line.', cover: '/games/lock-in-drift.jpg' },
-    { id: 'pegfall-panic', title: 'Pegfall Panic', hook: 'Don\'t let the pegs win.', cover: '/games/pegfall-panic.jpg' },
-    { id: 'side-scroller-runner', title: 'Side Scroller', hook: 'Classic running action.', cover: '/games/side-scroller-runner.jpg' },
-    { id: 'sushi-slicev2', title: 'Sushi Slice V2', hook: 'Slice precision required.', cover: '/games/sushi-slicev2.jpg' },
-    { id: 'triple-snap-slots', title: 'Triple Snap', hook: 'Can you hit the jackpot?', cover: '/games/triple-snap-slots.jpg' }
+    { id: 'avoid-zone-engine', title: 'Avoid Zone', hook: 'Dodging is the only option.', cover: '/games/avoid-zone-engine/cover.jpg' },
+    { id: 'collapse-stack', title: 'Collapse Stack', hook: 'Keep the tower stable!', cover: '/games/collapse-stack/cover.jpg' },
+    { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash/cover.jpg' },
+    { id: 'falling-choice-gate', title: 'Falling Gates', hook: 'Choose wisely or fall forever.', cover: '/games/falling-choice-gate/cover.jpg' },
+    { id: 'false-hold', title: 'False Hold', hook: 'Trust nothing. Keep moving.', cover: '/games/false-hold/cover.jpg' },
+    { id: 'gravity-flip-runner', title: 'Gravity Flip', hook: 'Up is down. Down is up.', cover: '/games/gravity-flip-runner/cover.jpg' },
+    { id: 'last-known-good', title: 'Last Known Good', hook: 'Restore order before the crash.', cover: '/games/last-known-good/cover.jpg' },
+    { id: 'lock-in-drift', title: 'Lock-In Drift', hook: 'Drift tight, hold the line.', cover: '/games/lock-in-drift/cover.jpg' },
+    { id: 'pegfall-panic', title: 'Pegfall Panic', hook: 'Don\'t let the pegs win.', cover: '/games/pegfall-panic/cover.jpg' },
+    { id: 'side-scroller-runner', title: 'Side Scroller', hook: 'Classic running action.', cover: '/games/side-scroller-runner/cover.jpg' },
+    { id: 'sushi-slicev2', title: 'Sushi Slice V2', hook: 'Slice precision required.', cover: '/games/sushi-slicev2/cover.jpg' },
+    { id: 'triple-snap-slots', title: 'Triple Snap', hook: 'Can you hit the jackpot?', cover: '/games/triple-snap-slots/cover.jpg' }
 ]
 
 const Arcade = () => {
@@ -218,7 +218,7 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                 {isPlaying ? (
                     /* 🎮 IFRAME MODE: Game is active */
                     <iframe
-                        src={`/games/${game.id}.html`}
+                        src={`/games/${game.id}/index.html`}
                         title={game.title}
                         style={{
                             width: '100%',
