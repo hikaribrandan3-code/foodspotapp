@@ -657,9 +657,9 @@ function Home({ config: configProp }) {
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: 12,
-                    marginBottom: 10, /* Dead Space Kill: Reduced by 50% */
-                    width: '99%', /* Hero Authority: 3% Scale-Up */
-                    margin: '12px auto 10px auto' /* Gap from Hero, Centered */
+                    marginBottom: 0, /* Let the wrapper handle the gap */
+                    width: '99%', /* Hero Authority: V1 Scale */
+                    margin: '40px auto 0 auto' /* Rhythm: 40px from Top (5x8) */
                 }}
             >
                 {localPrimaryActions.map((actionId, index) => {
@@ -794,8 +794,8 @@ function Home({ config: configProp }) {
             {/* Featured Feed Section - Apple Path "Productos Destacados" */}
             <div style={{
                 padding: '0 4px',
-                marginTop: 24, /* Dead Space Kill: Reduced to group with Hero */
-                marginBottom: 16, /* Vertical Rhythm: 16px to cards */
+                marginTop: 48, /* Rhythm: 48px from Icons (6x8) - The Reset */
+                marginBottom: 16, /* Rhythm: 16px to cards (2x8) - Tight Grouping */
                 textAlign: 'center'
             }}>
                 <h2 style={{
@@ -808,12 +808,12 @@ function Home({ config: configProp }) {
                 }}>
                     Productos Destacados
                 </h2>
-                {/* Section Anchor: The Line */}
+                {/* Section Anchor: Structural Hairline */}
                 <div style={{
-                    width: '40%',
-                    height: 1,
-                    backgroundColor: 'rgba(0,0,0,0.25)', /* The Anchor: 25% Opacity Upgrade */
-                    margin: '12px auto 0 auto'
+                    width: '30%', /* The Whisper: 30% width */
+                    height: 0.5, /* Hairline: 0.5px */
+                    backgroundColor: 'rgba(0,0,0,0.1)', /* Border Subtle */
+                    margin: '8px auto 0 auto' /* Rhythm: 8px from Title */
                 }} />
             </div>
 
