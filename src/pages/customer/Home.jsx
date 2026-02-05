@@ -789,6 +789,12 @@ function Home({ config: configProp }) {
             </div>
 
             {/* Featured Feed Section - Uses LOCAL STATE */}
+            <div style={{ padding: '0 4px', marginBottom: 12 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1F2937', margin: 0 }}>
+                    Productos Destacados
+                </h2>
+            </div>
+
             <div
                 ref={featuredGridRef}
                 className="featured-grid"
@@ -806,7 +812,7 @@ function Home({ config: configProp }) {
                         backgroundColor: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : '#FFFFFF',
                         borderRadius: 16,
                         overflow: 'hidden',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)', // 3. Global Depth
                         opacity: isDragging ? 0.3 : 1,
                         border: isPlaceholder ? '2px dashed #22C55E' : 'none',
                         touchAction: isEditMode ? 'none' : 'auto',
@@ -830,7 +836,7 @@ function Home({ config: configProp }) {
                                     fontWeight: 'var(--font-weight-brand)',
                                     color: '#4A4238',
                                     marginBottom: 4,
-                                    lineHeight: 1.2
+                                    lineHeight: 1.1
                                 }}>
                                     {item.name}
                                 </div>

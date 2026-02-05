@@ -6,6 +6,7 @@ import { useCart } from '../../contexts/CartContext'
 import { MenuSkeleton } from '../../components/Shimmers.jsx'
 import HeaderClamp from '../../components/HeaderClamp'
 import { getDividerPreset } from '../../config/dividerPresets'
+import ItemCard from '../../components/ItemCard'
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 const ENABLE_AUTO_SCROLL = true
@@ -650,38 +651,22 @@ export default function Menu({ config: configProp }) {
                                 const isDragging = dragState?.itemId === item.id
                                 const isPlaceholder = dragState?.categoryId === category.id && dragState?.targetIndex === index && !isDragging
 
-                                const shakeStyle = (isEditMode && !dragState) ? { animation: 'wiggle 0.3s infinite linear alternate', animationDelay: `${Math.random() * 0.1}s` } : {}
-
                                 return (
-                                    <div key={item.id} data-item-id={item.id}
-                                        onClick={() => !isEditMode && !dragState && handleTapToAdd(item)}
-                                        onTouchStart={isEditMode ? (e) => handleTouchStart(e, category.id, item, index, category.items) : undefined}
-                                        onTouchEnd={handleTouchEndOrMove} onTouchMove={handleTouchEndOrMove}
-                                        onMouseDown={isEditMode ? (e) => initiateDrag(e, category.id, item, index, category.items) : undefined}
-                                        style={{
-                                            // 🛡️ VISUAL LOGIC
-                                            opacity: isDragging ? 0.3 : (addedItem === item.id ? 0.7 : 1), // Ghost Effect + Tactile Dip
-                                            transform: addedItem === item.id ? 'scale(0.95)' : 'scale(1)', // Tactile Scale
-                                            transition: isEditMode ? 'none' : 'transform 0.15s ease',
-                                            background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : 'white', // Landing Zone Green Tint
-                                            border: isPlaceholder ? '2px dashed #22C55E' : 'none', // Landing Zone Green Border
-                                            borderRadius: 12, overflow: 'hidden',
-                                            boxShadow: isPlaceholder ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
-                                            position: 'relative', cursor: isEditMode ? 'grab' : 'pointer',
-                                            touchAction: 'none', ...shakeStyle
-                                        }}
-                                    >
-                                        <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none', opacity: isPlaceholder ? 0 : 1 }}>
-                                            <img src={getItemImage(item)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
-                                        </div>
-                                        <div style={{ padding: '8px 4px', opacity: isPlaceholder ? 0 : 1 }}>
-                                            <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', marginBottom: 2, lineHeight: 1.3 }}>{item.name}</p>
-                                            <p style={{ fontSize: 12, color: '#6B7280' }}>{formatPrice(item.price)}</p>
-                                        </div>
-                                        {!item.available && isOwnerMode && (
-                                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', fontWeight: 700, fontSize: 12 }}>AGOTADO</div>
-                                        )}
-                                    </div>
+                                    <ItemCard
+                                        key={item.id}
+                                        item={item}
+                                        category={category}
+                                        index={index}
+                                        isEditMode={isEditMode}
+                                        isOwnerMode={isOwnerMode}
+                                        dragState={dragState}
+                                        addedItem={addedItem}
+                                        onTap={handleTapToAdd}
+                                        onTouchStart={handleTouchStart}
+                                        onTouchEnd={handleTouchEndOrMove}
+                                        onMouseDown={initiateDrag}
+                                        isPlaceholder={isPlaceholder}
+                                    />
                                 )
                             })}
                         </div>

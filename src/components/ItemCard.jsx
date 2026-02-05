@@ -1,0 +1,71 @@
+
+import { formatPrice } from '../config/menuData'
+// import { getItemImage } from '../utils/imageUtils' // Removed: Inlined for portability
+
+// If getItemImage is local, I should move it to a util or pass it as a prop?
+// For now, I'll inline the image logic or expect a helper import.
+// Actually, Menu.jsx defined it locally? No, it usually uses a helper.
+// Let's assume a simple inline logic or prop for now.
+
+const ItemCard = ({
+    item,
+    category,
+    index,
+    isEditMode = false,
+    isOwnerMode = false,
+    dragState = null,
+    addedItem = null,
+    onTap,
+    onTouchStart,
+    onTouchEnd,
+    onMouseDown,
+    isPlaceholder = false,
+    readOnly = false
+}) => {
+    // 🛡️ VISUAL LOGIC
+    const isDragging = dragState?.itemId === item.id
+    const shakeStyle = (isEditMode && !dragState) ? { animation: 'wiggle 0.3s infinite linear alternate', animationDelay: `${Math.random() * 0.1}s` } : {}
+
+    // Image Source Logic 
+    const imageSrc = (item.image && !item.image.startsWith('blob:'))
+        ? item.image
+        : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80'
+
+    return (
+        <div
+            data-item-id={item.id}
+            onClick={() => !readOnly && !isEditMode && !dragState && onTap && onTap(item)}
+            onTouchStart={!readOnly && isEditMode && onTouchStart ? (e) => onTouchStart(e, category?.id, item, index, category?.items) : undefined}
+            onTouchEnd={!readOnly && onTouchEnd}
+            onTouchMove={!readOnly && onTouchEnd}
+            onMouseDown={!readOnly && isEditMode && onMouseDown ? (e) => onMouseDown(e, category?.id, item, index, category?.items) : undefined}
+            style={{
+                // 🛡️ VISUAL LOGIC
+                opacity: isDragging ? 0.3 : (addedItem === item.id ? 0.7 : 1), // Ghost Effect + Tactile Dip
+                transform: addedItem === item.id ? 'scale(0.95)' : 'scale(1)', // Tactile Scale
+                transition: isEditMode ? 'none' : 'transform 0.15s ease',
+                background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : 'white', // Landing Zone Green Tint
+                border: isPlaceholder ? '2px dashed #22C55E' : 'none', // Landing Zone Green Border
+                borderRadius: 12, overflow: 'hidden',
+                boxShadow: isPlaceholder ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
+                position: 'relative',
+                cursor: readOnly ? 'default' : (isEditMode ? 'grab' : 'pointer'),
+                touchAction: 'none',
+                ...shakeStyle
+            }}
+        >
+            <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none', opacity: isPlaceholder ? 0 : 1 }}>
+                <img src={imageSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
+            </div>
+            <div style={{ padding: '8px 4px', opacity: isPlaceholder ? 0 : 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', marginBottom: 2, lineHeight: 1.3 }}>{item.name}</p>
+                <p style={{ fontSize: 12, color: '#6B7280' }}>{formatPrice(item.price)}</p>
+            </div>
+            {!item.available && isOwnerMode && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', fontWeight: 700, fontSize: 12 }}>AGOTADO</div>
+            )}
+        </div>
+    )
+}
+
+export default ItemCard

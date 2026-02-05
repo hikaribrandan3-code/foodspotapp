@@ -226,9 +226,8 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
             <div style={{
                 position: 'fixed',
                 bottom: 96,
-                left: 0,
-                right: 0,
-                padding: '0 24px',
+                left: '2%',
+                right: '2%',
                 zIndex: 10
             }}>
                 <button
@@ -238,6 +237,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         padding: '16px 0',
                         background: primaryActionColor,
                         color: '#FFFFFF',
+                        fontFamily: 'Montserrat, sans-serif',
                         fontWeight: 900,
                         fontSize: 18,
                         border: 'none',

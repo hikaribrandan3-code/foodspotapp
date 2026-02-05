@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
+import ItemCard from '../../components/ItemCard'
 
 // Check icon for completed steps
 const CheckIcon = () => (
@@ -66,6 +67,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const grayMuted = '#9CA3AF'
     const grayLight = '#E5E7EB'
     const cardBg = '#F5F3EF'
+    const shadow = '0 4px 20px rgba(0,0,0,0.08)' // 3. Global Depth
 
     const activeOrders = orders.filter(o => o.status !== 'entregado')
     const mostRecentOrder = activeOrders[0]
@@ -90,7 +92,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         background: cardBg,
                         borderRadius: 16,
                         padding: '20px 16px 16px 16px',
-                        marginBottom: 12
+                        marginBottom: 12,
+                        boxShadow: shadow
                     }}>
                         {/* Order Number + Status Badge */}
                         <div style={{
@@ -213,21 +216,33 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         background: 'white',
                         borderRadius: 16,
                         padding: 20,
-                        marginBottom: 24
+                        marginBottom: 24,
+                        boxShadow: shadow
                     }}>
-                        {/* Items List */}
-                        {mostRecentOrder.items.map((item, index) => (
-                            <div key={index} style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginBottom: 12,
-                                fontSize: 15,
-                                color: '#374151'
-                            }}>
-                                <span>{item.name} ({item.quantity})</span>
-                                <span>{formatPrice(item.price * item.quantity)}</span>
-                            </div>
-                        ))}
+                        {/* Items List - REPLACED WITH ITEMCARD */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12, marginBottom: 16 }}>
+                            {mostRecentOrder.items.map((item, index) => (
+                                <div key={index} style={{ position: 'relative' }}>
+                                    <ItemCard
+                                        item={item}
+                                        readOnly={true}
+                                        isPlaceholder={false}
+                                        isOwnerMode={false}
+                                    />
+                                    {/* Quantity Badge */}
+                                    {item.quantity > 1 && (
+                                        <div style={{
+                                            position: 'absolute', top: -6, right: -6, background: '#EF4444', color: 'white',
+                                            fontSize: 12, fontWeight: 700, width: 22, height: 22, borderRadius: '50%',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                            zIndex: 10, border: '2px solid white'
+                                        }}>
+                                            {item.quantity}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
 
                         {/* Divider */}
                         <div style={{
