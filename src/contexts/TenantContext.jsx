@@ -22,9 +22,29 @@ const withTimeout = (promise, ms, errorMessage) => {
 }
 
 export function TenantProvider({ children }) {
-    const [loading, setLoading] = useState(true)
-    const [businessId, setBusinessId] = useState(null)
-    const [tenantData, setTenantData] = useState(null)
+    // 🛡️ ZERO-LATENCY CACHE: Hydrate Synchronously (prevents FOUC)
+    const [tenantData, setTenantData] = useState(() => {
+        try {
+            const pathSegments = window.location.pathname.split('/').filter(Boolean)
+            const slug = pathSegments[0]
+            if (!slug) return null
+
+            const CACHE_KEY = `tenant_cache_${slug}`
+            const cached = localStorage.getItem(CACHE_KEY)
+
+            if (cached) {
+                const parsed = JSON.parse(cached)
+                console.log('[TenantContext] ⚡ SYNC HYDRATION: Restored Vault', parsed.business_name)
+                return parsed
+            }
+        } catch (e) {
+            console.warn('[TenantContext] ⚠️ Sync Hydration Failed', e)
+        }
+        return null
+    })
+
+    const [loading, setLoading] = useState(() => !!tenantData ? false : true) // If hydrated, not loading!
+    const [businessId, setBusinessId] = useState(() => tenantData ? tenantData.business_id : null)
     const [trialExpired, setTrialExpired] = useState(false)
     const [error, setError] = useState(null)
 
@@ -34,6 +54,7 @@ export function TenantProvider({ children }) {
     useEffect(() => {
         const resolveTenant = async () => {
             try {
+                // If we already hydrated synchronously, we are just revalidating
                 const pathSegments = window.location.pathname.split('/').filter(Boolean)
                 const slug = pathSegments[0]
 
@@ -46,23 +67,6 @@ export function TenantProvider({ children }) {
 
                 console.log('[TenantContext] 🔍 Resolving Vault for slug:', slug)
 
-                // 🛡️ PERISCOPE CACHE: Check LocalStorage first (Instant Hydration)
-                const CACHE_KEY = `tenant_cache_${slug}`
-                const cached = localStorage.getItem(CACHE_KEY)
-
-                if (cached) {
-                    try {
-                        const parsed = JSON.parse(cached)
-                        console.log('[TenantContext] ⚡ CACHE HIT: Instant Hydration', parsed.business_name)
-                        setBusinessId(parsed.business_id)
-                        setTenantData(parsed)
-                        setTenantStoragePrefix(parsed.business_id)
-                        setLoading(false) // 🔓 Release the UI immediately
-                    } catch (e) {
-                        console.warn('[TenantContext] ⚠️ Corrupt Cache', e)
-                    }
-                }
-
                 // 🛡️ THE FIX: Use 'slug' column instead of 'tenant_id'
                 const { data, error } = await supabase
                     .from('branding')
@@ -73,14 +77,12 @@ export function TenantProvider({ children }) {
                 if (error) throw error
 
                 if (data) {
-                    console.log('[TenantContext] ✅ VAULT LOADED:', data.business_name)
+                    // Update State & Cache
+                    const CACHE_KEY = `tenant_cache_${slug}`
+                    const cached = localStorage.getItem(CACHE_KEY)
 
-                    // 🛡️ MIRROR BYPASS (Already implemented)
-                    // ...
-
-                    // 🛡️ SYNC CACHE: Update storage with fresh truth
                     if (JSON.stringify(data) !== cached) {
-                        console.log('[TenantContext] 🔄 CACHE UPDATE: Refreshing Storage')
+                        console.log('[TenantContext] 🔄 REVALIDATION: Updating Cache')
                         localStorage.setItem(CACHE_KEY, JSON.stringify(data))
 
                         setBusinessId(data.business_id)
@@ -88,7 +90,13 @@ export function TenantProvider({ children }) {
                         setTenantStoragePrefix(data.business_id)
                         setTrialExpired(false)
                     } else {
-                        console.log('[TenantContext] 💤 DATA STABLE: No changes from cloud')
+                        console.log('[TenantContext] 💤 DATA STABLE')
+                    }
+
+                    // Ensure these are set even if data matched cache (for context consumers)
+                    if (!businessId) {
+                        setBusinessId(data.business_id)
+                        setTenantStoragePrefix(data.business_id)
                     }
                 }
             } catch (err) {
