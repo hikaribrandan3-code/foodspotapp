@@ -657,9 +657,9 @@ function Home({ config: configProp }) {
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: 12,
-                    marginBottom: 20,
-                    width: '96%', /* 4% Tweak: Refined "Native Scale" */
-                    margin: '12px auto 20px auto' /* Gap from Hero, Centered */
+                    marginBottom: 10, /* Dead Space Kill: Reduced by 50% */
+                    width: '99%', /* Hero Authority: 3% Scale-Up */
+                    margin: '12px auto 10px auto' /* Gap from Hero, Centered */
                 }}
             >
                 {localPrimaryActions.map((actionId, index) => {
@@ -794,7 +794,7 @@ function Home({ config: configProp }) {
             {/* Featured Feed Section - Apple Path "Productos Destacados" */}
             <div style={{
                 padding: '0 4px',
-                marginTop: 48, /* Vertical Rhythm: 48px from Hero */
+                marginTop: 24, /* Dead Space Kill: Reduced to group with Hero */
                 marginBottom: 16, /* Vertical Rhythm: 16px to cards */
                 textAlign: 'center'
             }}>
@@ -812,7 +812,7 @@ function Home({ config: configProp }) {
                 <div style={{
                     width: '40%',
                     height: 1,
-                    backgroundColor: 'rgba(0,0,0,0.06)', /* Light Gray Anchor */
+                    backgroundColor: 'rgba(0,0,0,0.25)', /* The Anchor: 25% Opacity Upgrade */
                     margin: '12px auto 0 auto'
                 }} />
             </div>
