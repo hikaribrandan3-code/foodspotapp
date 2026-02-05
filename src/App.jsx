@@ -423,7 +423,11 @@ function App() {
             });
         };
         initCloudSync();
-        const handleVisibility = () => { if (document.visibilityState === 'visible') refreshConfig(); };
+        // 🛡️ REMOVED: visibilitychange handler that called refreshConfig()
+        // refreshConfig() only partially updates config (primaryColor, hero_url, logo)
+        // and was OVERWRITING the correct cached config with incomplete data on resume.
+        // TenantContext now handles resume correctly with the full app_config.
+
         const handleStorage = (e) => { if (e.key === 'grub_config' || e.key === null) refreshConfig(); };
         // 🚀 CLOUD-AWARE REACTIVITY: Prefer Cloud data, fallback to localStorage
         const handleFrontend = () => {
@@ -435,10 +439,10 @@ function App() {
                 setConfig(getConfig());
             }
         };
-        document.addEventListener('visibilitychange', handleVisibility);
+        // document.addEventListener('visibilitychange', handleVisibility); // ❌ REMOVED - Caused partial config overwrite
         window.addEventListener('storage', handleStorage);
         window.addEventListener('frontendSync', handleFrontend);
-        return () => { if (realtimeChannel) realtimeChannel.unsubscribe(); document.removeEventListener('visibilitychange', handleVisibility); window.removeEventListener('storage', handleStorage); window.removeEventListener('frontendSync', handleFrontend); };
+        return () => { if (realtimeChannel) realtimeChannel.unsubscribe(); window.removeEventListener('storage', handleStorage); window.removeEventListener('frontendSync', handleFrontend); };
     }, [businessId, refreshConfig]);
 
     // ============================================
