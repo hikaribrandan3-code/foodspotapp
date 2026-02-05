@@ -111,17 +111,36 @@ export function TenantProvider({ children }) {
     }, [])
 
     // 🎨 THEME HYDRATION ENGINE
+    // 🎨 THEME HYDRATION ENGINE
+    const applyTheme = (data) => {
+        if (!data) return
+        const root = document.documentElement.style
+        const fontFamily = data.font_family ? `'${data.font_family}', sans-serif` : 'Inter, system-ui, sans-serif'
+
+        console.log('[TenantContext] 🎨 APPLYING THEME:', data.business_name)
+        root.setProperty('--font-family-brand', fontFamily)
+        if (data.primary_color) root.setProperty('--color-primary', data.primary_color)
+        if (data.secondary_color) root.setProperty('--color-secondary', data.secondary_color)
+        if (data.confirmation_color) root.setProperty('--color-confirm', data.confirmation_color)
+        if (data.powered_by_color) root.setProperty('--color-powered', data.powered_by_color)
+        if (data.background_color) root.setProperty('--color-bg', data.background_color)
+    }
+
     useEffect(() => {
-        if (!tenantData) return;
-        const root = document.documentElement.style;
-        const fontFamily = tenantData.font_family ? `'${tenantData.font_family}', sans-serif` : 'Inter, system-ui, sans-serif';
-        root.setProperty('--font-family-brand', fontFamily);
-        if (tenantData.primary_color) root.setProperty('--color-primary', tenantData.primary_color);
-        if (tenantData.secondary_color) root.setProperty('--color-secondary', tenantData.secondary_color);
-        if (tenantData.confirmation_color) root.setProperty('--color-confirm', tenantData.confirmation_color);
-        if (tenantData.powered_by_color) root.setProperty('--color-powered', tenantData.powered_by_color);
-        if (tenantData.background_color) root.setProperty('--color-bg', tenantData.background_color);
-    }, [tenantData]);
+        if (!tenantData) return
+        applyTheme(tenantData)
+
+        // 🛡️ RESUME REPAIR: Force re-apply on wake
+        const handleResume = () => {
+            if (document.visibilityState === 'visible') {
+                console.log('[TenantContext] ☀️ WAKE DETECTED: Re-applying Theme')
+                applyTheme(tenantData)
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleResume)
+        return () => document.removeEventListener('visibilitychange', handleResume)
+    }, [tenantData])
 
     // Loading Splash
     if (loading) {
