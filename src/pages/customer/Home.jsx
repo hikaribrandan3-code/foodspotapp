@@ -592,8 +592,9 @@ function Home({ config: configProp }) {
             className={`page ${isEditMode ? 'home-edit-mode' : ''}`}
             onContextMenu={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation() } }}
             style={{
-                maxWidth: '92%',
+                maxWidth: '100%',
                 margin: '0 auto',
+                padding: '0 12px', /* The Invisible Grid (12px Rule) */
                 paddingBottom: 90,
                 minHeight: '100vh'
             }}
@@ -788,21 +789,22 @@ function Home({ config: configProp }) {
                 )}
             </div>
 
-            {/* Featured Feed Section - Editorial "Productos Destacados" */}
+            {/* Featured Feed Section - Apple Path "Productos Destacados" */}
             <div style={{
                 padding: '0 4px',
-                marginTop: 32, /* Curated Gap: Above title */
-                marginBottom: 8, /* Curated Gap: Below title (closer to cards) */
+                marginTop: 48, /* Vertical Rhythm: 48px from Hero */
+                marginBottom: 16, /* Vertical Rhythm: 16px to cards */
                 textAlign: 'center'
             }}>
                 <h2 style={{
                     fontSize: 18,
                     fontWeight: 600, /* Semi-Bold */
-                    color: '#374151', /* Dark Charcoal */
+                    color: '#333333', /* Deep Charcoal */
+                    letterSpacing: '0.02em',
                     margin: 0,
                     textWrap: 'balance'
                 }}>
-                    ⭐ Productos Destacados ⭐
+                    Productos Destacados
                 </h2>
             </div>
 
