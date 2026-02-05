@@ -657,7 +657,9 @@ function Home({ config: configProp }) {
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: 12,
-                    marginBottom: 20
+                    marginBottom: 20,
+                    width: '96%', /* 4% Tweak: Refined "Native Scale" */
+                    margin: '12px auto 20px auto' /* Gap from Hero, Centered */
                 }}
             >
                 {localPrimaryActions.map((actionId, index) => {
@@ -806,6 +808,13 @@ function Home({ config: configProp }) {
                 }}>
                     Productos Destacados
                 </h2>
+                {/* Section Anchor: The Line */}
+                <div style={{
+                    width: '40%',
+                    height: 1,
+                    backgroundColor: 'rgba(0,0,0,0.06)', /* Light Gray Anchor */
+                    margin: '12px auto 0 auto'
+                }} />
             </div>
 
             <div
