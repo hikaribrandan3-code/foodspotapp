@@ -533,7 +533,10 @@ export default function Menu({ config: configProp }) {
     return (
         <div style={{ minHeight: '100vh', paddingBottom: 100, background: 'var(--color-bg, #F9FAFB)', maxWidth: '100%', margin: '0 auto' }}>
             {/* Header */}
-            <HeaderClamp config={tenantData?.app_config || {}} />
+            {/* Header */}
+            <div style={{ margin: '0 2%' }}>
+                <HeaderClamp config={tenantData?.app_config || {}} />
+            </div>
 
             {/* Edit Mode HUD */}
             {isOwnerMode && isEditMode && (
