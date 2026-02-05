@@ -66,7 +66,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 {/* Structural Anchor: Card Center of Gravity */}
                 <div style={{
                     marginTop: 16,
-                    padding: '12px 16px',
+                    padding: '8px 16px', /* Active Card Refinement: 40% Collapse */
                     background: '#F8FAFC',
                     border: '1px solid #E2E8F0',
                     borderRadius: 12,
@@ -75,7 +75,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                     <p style={{
                         color: '#64748B',
                         fontSize: 14,
-                        fontWeight: 600,
+                        fontWeight: 500, /* Typography Shift: Medium */
                         margin: 0
                     }}>
                         No tenés pedidos activos
@@ -89,7 +89,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 gridTemplateColumns: '1fr 1fr',
                 gap: 12,
                 padding: '0 12px', /* 12px Gutter Sync */
-                marginBottom: 36 /* Vertical Squeeze: 48 -> 36 */
+                marginBottom: 24 /* Big Squeeze: 36 -> 24 (Combined with Title pull) */
             }}>
                 <button
                     onClick={() => navigate(enviosPath)}
@@ -99,7 +99,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         justifyContent: 'center',
                         gap: 8,
                         padding: '16px 0',
-                        borderRadius: 16,
+                        borderRadius: 12, /* Mute: Sync with Card Radius */
                         background: '#FFFFFF',
                         border: '1px solid #E2E8F0',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -107,7 +107,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         transition: 'transform 0.1s ease'
                     }}
                 >
-                    <span style={{ fontSize: 13.5, opacity: 0.7 }}>🚚</span>
+                    <span style={{ fontSize: 12, opacity: 0.7 }}>🚚</span> {/* Mute: 10% Reduction */}
                     <span style={{ fontWeight: 700, color: '#334155' }}>Delivery</span>
                 </button>
                 <button
@@ -118,7 +118,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         justifyContent: 'center',
                         gap: 8,
                         padding: '16px 0',
-                        borderRadius: 16,
+                        borderRadius: 12, /* Mute: Sync with Card Radius */
                         background: '#FFFFFF',
                         border: '1px solid #E2E8F0',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -126,7 +126,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         transition: 'transform 0.1s ease'
                     }}
                 >
-                    <span style={{ fontSize: 13.5, opacity: 0.7 }}>🎁</span>
+                    <span style={{ fontSize: 12, opacity: 0.7 }}>🎁</span> {/* Mute: 10% Reduction */}
                     <span style={{ fontWeight: 700, color: '#334155' }}>Promos</span>
                 </button>
             </div>
@@ -134,7 +134,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
             {/* 3. Featured Products Grid (Mapped from Config Props) */}
             <div style={{ padding: '0 12px' }}>
                 <div style={{
-                    marginBottom: 16,
+                    marginBottom: 12, /* Big Squeeze: Reduced gap */
                     textAlign: 'center'
                 }}>
                     <h2 style={{
@@ -142,7 +142,8 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         fontWeight: 600, /* Semi-Bold */
                         color: '#333333', /* Deep Charcoal */
                         letterSpacing: '0.02em',
-                        margin: 0,
+                        marginTop: 0, /* Big Squeeze: Pull UP */
+                        marginBottom: 0,
                         textWrap: 'balance'
                     }}>
                         Productos Destacados
