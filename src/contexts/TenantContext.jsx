@@ -46,6 +46,23 @@ export function TenantProvider({ children }) {
 
                 console.log('[TenantContext] 🔍 Resolving Vault for slug:', slug)
 
+                // 🛡️ PERISCOPE CACHE: Check LocalStorage first (Instant Hydration)
+                const CACHE_KEY = `tenant_cache_${slug}`
+                const cached = localStorage.getItem(CACHE_KEY)
+
+                if (cached) {
+                    try {
+                        const parsed = JSON.parse(cached)
+                        console.log('[TenantContext] ⚡ CACHE HIT: Instant Hydration', parsed.business_name)
+                        setBusinessId(parsed.business_id)
+                        setTenantData(parsed)
+                        setTenantStoragePrefix(parsed.business_id)
+                        setLoading(false) // 🔓 Release the UI immediately
+                    } catch (e) {
+                        console.warn('[TenantContext] ⚠️ Corrupt Cache', e)
+                    }
+                }
+
                 // 🛡️ THE FIX: Use 'slug' column instead of 'tenant_id'
                 const { data, error } = await supabase
                     .from('branding')
@@ -58,29 +75,21 @@ export function TenantProvider({ children }) {
                 if (data) {
                     console.log('[TenantContext] ✅ VAULT LOADED:', data.business_name)
 
-                    // 🛡️ MIRROR-FIRST HYDRATION: Fetch from 'menu_view' (The Universal Truth)
-                    // ⚠️ BLOCKED: Mirror is returning stale/dead blobs. Bypass to 'branding' table.
-                    /*
-                    const { data: mirrorData } = await supabase
-                        .from('menu_view')
-                        .select('menu_data')
-                        .eq('business_id', data.business_id)
-                        .single()
+                    // 🛡️ MIRROR BYPASS (Already implemented)
+                    // ...
 
-                    if (mirrorData?.menu_data) {
-                        console.log('[TenantContext] 🪞 MIRROR APPLIED: Using Universal Menu Data')
-                        data.menu_data = mirrorData.menu_data
+                    // 🛡️ SYNC CACHE: Update storage with fresh truth
+                    if (JSON.stringify(data) !== cached) {
+                        console.log('[TenantContext] 🔄 CACHE UPDATE: Refreshing Storage')
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(data))
+
+                        setBusinessId(data.business_id)
+                        setTenantData(data)
+                        setTenantStoragePrefix(data.business_id)
+                        setTrialExpired(false)
                     } else {
-                        console.log('[TenantContext] ⚠️ MIRROR MISSING: Falling back to Legacy-Stale Data')
+                        console.log('[TenantContext] 💤 DATA STABLE: No changes from cloud')
                     }
-                    */
-                    console.log('[TenantContext] 🛡️ MIRROR BYPASS: Reading direct from Branding Table')
-
-                    // 🛡️ ALIGNED: Using business_id column (Fixed 2026-01-29)
-                    setBusinessId(data.business_id)
-                    setTenantData(data)
-                    setTenantStoragePrefix(data.business_id)
-                    setTrialExpired(false) // 🛡️ RECOVERY MODE
                 }
             } catch (err) {
                 console.error('[TenantContext] ❌ Resolution Failed:', err.message)
