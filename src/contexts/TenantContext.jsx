@@ -142,6 +142,27 @@ export function TenantProvider({ children }) {
         return () => document.removeEventListener('visibilitychange', handleResume)
     }, [tenantData])
 
+    // 🛡️ CACHE SYNC ENGINE: Keep localStorage up-to-date with state changes
+    useEffect(() => {
+        if (!tenantData || !tenantData.business_id) return
+
+        try {
+            const slug = tenantData.slug || window.location.pathname.split('/').filter(Boolean)[0]
+            if (!slug) return
+
+            const CACHE_KEY = `tenant_cache_${slug}`
+            const currentCache = localStorage.getItem(CACHE_KEY)
+            const newData = JSON.stringify(tenantData)
+
+            if (currentCache !== newData) {
+                console.log('[TenantContext] 💾 CACHE SYNC: Persisting Latest State')
+                localStorage.setItem(CACHE_KEY, newData)
+            }
+        } catch (e) {
+            console.warn('[TenantContext] ⚠️ Cache Sync Failed', e)
+        }
+    }, [tenantData])
+
     // Loading Splash
     if (loading) {
         return (

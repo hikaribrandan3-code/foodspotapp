@@ -87,8 +87,38 @@ function App() {
     const navigate = useNavigate();
     const tenant = useTenant();
 
-    // 🛡️ CLOUD-FIRST: Initialize with EMPTY defaults, Cloud Hydration will populate
-    const [config, setConfig] = useState(() => normalizeConfig({}));
+    // 🛡️ ZERO-FLASH CONFIG: Initialize from tenant data if available (from cache)
+    // This prevents the "flash of defaults" that causes style degradation
+    const [config, setConfig] = useState(() => {
+        // If tenant data is already available (from sync cache), use it immediately
+        if (tenant?.tenantData?.app_config) {
+            console.log('[App] ⚡ INSTANT CONFIG: Using cached app_config')
+            return normalizeConfig({
+                ...tenant.tenantData,
+                ...tenant.tenantData.app_config,
+                infoPills: tenant.tenantData.info_pills || tenant.tenantData.app_config.infoPills,
+                businessInfo: tenant.tenantData.business_info || tenant.tenantData.app_config.businessInfo,
+                featuredPhotos: tenant.tenantData.featuredPhotos || tenant.tenantData.app_config.featuredPhotos,
+                businessName: tenant.tenantData.business_name || tenant.tenantData.app_config.businessName,
+                headerCover: {
+                    ...(tenant.tenantData.app_config.headerCover || {}),
+                    image: tenant.tenantData.hero_url || tenant.tenantData.app_config.headerCover?.image
+                },
+                headerBranding: {
+                    ...(tenant.tenantData.app_config.headerBranding || {}),
+                    mode: tenant.tenantData.hero_mode || tenant.tenantData.app_config.headerBranding?.mode || 'cover'
+                },
+                branding: {
+                    ...(tenant.tenantData.app_config.branding || {}),
+                    primaryColor: tenant.tenantData.primary_color || tenant.tenantData.app_config.branding?.primaryColor,
+                    navbar_color: tenant.tenantData.navbar_color || tenant.tenantData.app_config.branding?.navbar_color,
+                    nav_icon_mode: tenant.tenantData.nav_icon_mode || tenant.tenantData.app_config.branding?.nav_icon_mode
+                }
+            })
+        }
+        // Fallback to empty defaults (first visit, no cache)
+        return normalizeConfig({})
+    });
     const [orders, setOrders] = useState(() => getOrders());
 
     // 🔥 HYDRATION V5: MASTER MERGE - Full app_config restoration
