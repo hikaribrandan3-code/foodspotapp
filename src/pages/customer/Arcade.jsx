@@ -4,14 +4,9 @@ import { useTenant } from '../../contexts/TenantContext'
 
 /**
  * Arcade - TikTok-Style Vertical Swipe Game Discovery Feed
- * 
- * Architecture:
- * - Vertical snap scroll (100vh per card)
- * - Lazy iframe loading (only active game has iframe)
- * - Memory cleanup on swipe (unmount inactive iframes)
  */
 
-// 🎮 GAME REGISTRY: The 12 games with metadata (Folder Structure)
+// 🎮 GAME REGISTRY: The 12 games (Folder Structure)
 const GAMES = [
     { id: 'avoid-zone-engine', title: 'Avoid Zone', hook: 'Dodging is the only option.', cover: '/games/avoid-zone-engine/cover.jpg' },
     { id: 'collapse-stack', title: 'Collapse Stack', hook: 'Keep the tower stable!', cover: '/games/collapse-stack/cover.jpg' },
@@ -32,24 +27,23 @@ const Arcade = () => {
     const { tenantData, slug: tenantSlug } = useTenant()
     const containerRef = useRef(null)
 
-    // 🎮 STATE: Track which game is currently playing (only one at a time)
+    // 🎮 STATE
     const [activeGameId, setActiveGameId] = useState(null)
     const [visibleIndex, setVisibleIndex] = useState(0)
 
-    // 🛡️ SCROLL & INTERACTION UNLOCK: Force body to be scrollable
+    // 🛡️ SCROLL & INTERACTION UNLOCK
     useEffect(() => {
-        // Unlock body scroll (fix for Home.jsx lock)
+        // Force unlock body scroll and touch
         document.body.style.overflow = 'auto'
         document.body.style.touchAction = 'auto'
+        document.documentElement.style.overflow = 'auto'
 
         return () => {
-            // Cleanup not strictly necessary as next page handles it, but good practice
-            document.body.style.overflow = ''
-            document.body.style.touchAction = ''
+            // No cleanup to avoid re-locking
         }
     }, [])
 
-    // 🛡️ MEMORY CLEANUP: Intersection Observer to detect visible card
+    // 🛡️ MEMORY CLEANUP
     useEffect(() => {
         const container = containerRef.current
         if (!container) return
@@ -57,39 +51,31 @@ const Arcade = () => {
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
                         const index = parseInt(entry.target.getAttribute('data-index'), 10)
                         const gameId = entry.target.getAttribute('data-game-id')
 
                         setVisibleIndex(index)
 
-                        // 🛡️ CRITICAL: If user swiped away from active game, kill the iframe
+                        // If we are playing a different game than the one we just swiped into, kill it
                         if (activeGameId && activeGameId !== gameId) {
-                            console.log('[ARCADE] Memory Cleanup: Killing iframe for', activeGameId)
                             setActiveGameId(null)
                         }
                     }
                 })
             },
-            {
-                root: container,
-                threshold: 0.5
-            }
+            { root: container, threshold: 0.6 }
         )
 
         const cards = container.querySelectorAll('[data-game-card]')
         cards.forEach(card => observer.observe(card))
-
         return () => observer.disconnect()
     }, [activeGameId])
 
-    // 🎮 PLAY HANDLER: Load iframe for specific game
     const handlePlay = useCallback((gameId) => {
-        console.log('[ARCADE] Starting game:', gameId)
         setActiveGameId(gameId)
     }, [])
 
-    // 🔙 BACK HANDLER: Navigate to home
     const handleBack = useCallback(() => {
         const homePath = tenantSlug ? `/${tenantSlug}/home` : '/home'
         navigate(homePath)
@@ -100,29 +86,14 @@ const Arcade = () => {
     return (
         <div style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: '#FAFAFA',
-            zIndex: 50
+            inset: 0,
+            background: '#0F172A', /* Dark mode for arcade */
+            zIndex: 2000,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100dvh'
         }}>
-            {/* 🛡️ FORCE GLOBAL OVERRIDE: Kill any "touch-action: none" from Home.jsx */}
-            <style>
-                {`
-                    body, html {
-                        overflow: hidden !important; /* Lock background */
-                        touch-action: none; /* Prevent browser bounce */
-                    }
-                    .arcade-scroll-container {
-                        overflow-y: scroll !important;
-                        -webkit-overflow-scrolling: touch !important;
-                        touch-action: pan-y !important;
-                    }
-                `}
-            </style>
-
-            {/* 🎨 BRANDED GLASS HEADER */}
+            {/* 🎨 HEADER (Overlay Style) */}
             <header style={{
                 position: 'fixed',
                 top: 0,
@@ -131,80 +102,54 @@ const Arcade = () => {
                 zIndex: 100,
                 padding: '12px',
                 paddingTop: 'calc(env(safe-area-inset-top, 12px) + 12px)',
-                background: 'rgba(255, 255, 255, 0.85)',
+                background: 'rgba(15, 23, 42, 0.6)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
-                borderBottom: '1px solid rgba(0,0,0,0.06)'
+                borderBottom: '1px solid rgba(255,255,255,0.1)'
             }}>
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    maxWidth: '100%',
-                    margin: '0 auto'
                 }}>
-                    {/* Back Button */}
                     <button
                         onClick={handleBack}
                         style={{
-                            background: 'none',
+                            background: 'rgba(255,255,255,0.1)',
                             border: 'none',
                             padding: 8,
+                            borderRadius: '50%',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            pointerEvents: 'auto'
+                            justifyContent: 'center'
                         }}
                     >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M19 12H5M12 19l-7-7 7-7" />
                         </svg>
                     </button>
 
-                    {/* Title */}
                     <div style={{ textAlign: 'center' }}>
-                        <p style={{
-                            fontSize: 11,
-                            fontWeight: 500,
-                            color: '#94A3B8',
-                            margin: 0,
-                            letterSpacing: '0.05em'
-                        }}>
-                            {businessName}
-                        </p>
-                        <h1 style={{
-                            fontFamily: 'Montserrat, sans-serif',
-                            fontSize: 20,
-                            fontWeight: 800,
-                            color: '#0F172A',
-                            margin: 0,
-                            letterSpacing: '0.02em'
-                        }}>
-                            Mini Games
-                        </h1>
+                        <p style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{businessName}</p>
+                        <h1 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 18, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Discover Games</h1>
                     </div>
 
-                    {/* Spacer for alignment */}
                     <div style={{ width: 40 }} />
                 </div>
             </header>
 
-            {/* 🎮 VERTICAL SNAP SCROLL CONTAINER */}
+            {/* 🎮 SCROLL CONTAINER */}
             <div
                 ref={containerRef}
-                className="arcade-scroll-container"
                 style={{
-                    height: '100%',
-                    width: '100%',
+                    flex: 1,
                     overflowY: 'scroll',
                     scrollSnapType: 'y mandatory',
-                    paddingTop: 80, /* Space for header */
-                    paddingBottom: 80, /* Space for bottom nav */
-                    boxSizing: 'border-box',
-                    position: 'absolute', /* Ensure it fills parent */
-                    top: 0,
-                    left: 0
+                    WebkitOverflowScrolling: 'touch',
+                    overscrollBehaviorY: 'contain',
+                    height: '100%',
+                    width: '100%'
                 }}
             >
                 {GAMES.map((game, index) => (
@@ -218,13 +163,29 @@ const Arcade = () => {
                     />
                 ))}
             </div>
+
+            {/* 📊 FOOTER NAV INDICATOR */}
+            <div style={{
+                height: '4px',
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                display: 'flex',
+                zIndex: 100
+            }}>
+                {GAMES.map((_, idx) => (
+                    <div key={idx} style={{
+                        flex: 1,
+                        background: visibleIndex === idx ? '#3B82F6' : 'rgba(255,255,255,0.1)',
+                        transition: 'background 0.3s ease'
+                    }} />
+                ))}
+            </div>
         </div>
     )
 }
 
-/**
- * GameCard - Individual Discovery Card
- */
 const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
     return (
         <div
@@ -232,24 +193,23 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
             data-game-id={game.id}
             data-index={index}
             style={{
-                height: 'calc(100vh - 160px)', /* Account for header + nav */
+                height: '100%',
                 width: '100%',
                 scrollSnapAlign: 'start',
-                padding: '12px',
-                boxSizing: 'border-box'
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                flexShrink: 0
             }}
         >
             <div style={{
                 height: '100%',
                 width: '100%',
-                borderRadius: 24,
-                overflow: 'hidden',
                 position: 'relative',
-                background: '#E5E0D8',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.08)'
+                background: '#1E293B'
             }}>
                 {isPlaying ? (
-                    /* 🎮 IFRAME MODE: Game is active */
                     <iframe
                         src={`/games/${game.id}/index.html`}
                         title={game.title}
@@ -257,97 +217,56 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                             width: '100%',
                             height: '100%',
                             border: 'none',
-                            pointerEvents: 'auto', /* 🛡️ FORCE INTERACTION */
+                            pointerEvents: 'auto',
                             position: 'relative',
                             zIndex: 10
                         }}
+                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
                         allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
                     />
                 ) : (
-                    /* 📺 POSTER MODE: Show cover + Play button */
-                    <>
-                        {/* Cover Image or Fallback Gradient */}
-                        <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: '#CBD5E1', /* Fallback Grey */
-                        }}>
-                            {/* Try to load image, if missing, this div remains */}
-                            <div style={{
-                                width: '100%',
-                                height: '100%',
-                                backgroundImage: `url(${game.cover})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                opacity: 1
-                            }} />
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-end',
+                        padding: 24,
+                        paddingBottom: 80,
+                        backgroundImage: `linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.9) 100%), url(${game.cover})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundColor: '#1E293B'
+                    }}>
+                        <div style={{ maxWidth: '80%' }}>
+                            <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 28, fontWeight: 900, color: '#FFFFFF', margin: 0, marginBottom: 8 }}>{game.title}</h2>
+                            <p style={{ fontSize: 16, fontWeight: 400, color: '#CBD5E1', margin: 0, marginBottom: 24 }}>{game.hook}</p>
 
-                            {/* Gradient Overlay for Text Readability */}
-                            <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%)'
-                            }} />
-                        </div>
-
-                        {/* Game Info (Bottom) */}
-                        <div style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            padding: 20,
-                            zIndex: 10, /* Ensure text/button is above bg */
-                            pointerEvents: 'auto' /* Force Clickable */
-                        }}>
-                            <h2 style={{
-                                fontFamily: 'Montserrat, sans-serif',
-                                fontSize: 22,
-                                fontWeight: 800,
-                                color: '#FFFFFF', /* White text for contrast on dark gradient */
-                                margin: 0,
-                                marginBottom: 4
-                            }}>
-                                {game.title}
-                            </h2>
-                            <p style={{
-                                fontSize: 14,
-                                fontWeight: 400,
-                                color: '#E2E8F0', /* Light grey for contrast */
-                                margin: 0,
-                                marginBottom: 16
-                            }}>
-                                {game.hook}
-                            </p>
-
-                            {/* Play Button */}
                             <button
-                                onClick={onPlay}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onPlay(game.id);
+                                }}
                                 style={{
-                                    width: '100%',
-                                    padding: '14px 0',
-                                    background: '#FFFFFF',
+                                    padding: '16px 48px',
+                                    background: '#3B82F6',
                                     border: 'none',
-                                    borderRadius: 12,
+                                    borderRadius: 32,
                                     fontFamily: 'Montserrat, sans-serif',
-                                    fontSize: 16,
-                                    fontWeight: 700,
-                                    color: '#0F172A',
+                                    fontSize: 18,
+                                    fontWeight: 800,
+                                    color: '#FFFFFF',
                                     cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                    transition: 'transform 0.1s ease, box-shadow 0.1s ease'
+                                    boxShadow: '0 8px 16px rgba(59, 130, 246, 0.4)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
                                 }}
                             >
-                                Play
+                                PLAY NOW
                             </button>
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
         </div>
