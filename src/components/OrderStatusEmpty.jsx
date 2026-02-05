@@ -16,6 +16,8 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
 
     // 🛡️ DYNAMIC ROUTING: Ensure we stay within the tenant silo
     const menuPath = tenantData?.slug ? `/${tenantData.slug}/menu` : '/menu'
+    const promosPath = tenantData?.slug ? `/${tenantData.slug}/promos` : '/promos'
+    const enviosPath = tenantData?.slug ? `/${tenantData.slug}/envios` : '/envios'
 
     // INVARIANT: config MUST come from props (Battle 2: Single Source of Truth)
     if (!config) {
@@ -49,12 +51,15 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
 
                 <h2 style={{
                     color: '#0F172A', /* Darker, stronger */
-                    fontSize: 24, /* Bigger letters */
+                    fontSize: 28, /* Bigger letters: 24 -> 28 */
                     fontWeight: 800,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     marginBottom: 8,
-                    marginTop: 0
+                    marginTop: 0,
+                    transform: 'scaleX(1.15)', /* Horizontal Stretch: 15% */
+                    display: 'inline-block',
+                    transformOrigin: 'center'
                 }}>
                     Mis Pedidos
                 </h2>
@@ -87,7 +92,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 marginBottom: 36 /* Vertical Squeeze: 48 -> 36 */
             }}>
                 <button
-                    onClick={() => navigate('/envios')}
+                    onClick={() => navigate(enviosPath)}
                     style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -106,7 +111,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                     <span style={{ fontWeight: 700, color: '#334155' }}>Delivery</span>
                 </button>
                 <button
-                    onClick={() => navigate('/rewards')}
+                    onClick={() => navigate(promosPath)}
                     style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -122,7 +127,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                     }}
                 >
                     <span style={{ fontSize: 13.5, opacity: 0.7 }}>🎁</span>
-                    <span style={{ fontWeight: 700, color: '#334155' }}>Premios</span>
+                    <span style={{ fontWeight: 700, color: '#334155' }}>Promos</span>
                 </button>
             </div>
 
