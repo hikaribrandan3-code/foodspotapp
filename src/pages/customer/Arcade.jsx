@@ -107,6 +107,21 @@ const Arcade = () => {
             background: '#FAFAFA',
             zIndex: 50
         }}>
+            {/* 🛡️ FORCE GLOBAL OVERRIDE: Kill any "touch-action: none" from Home.jsx */}
+            <style>
+                {`
+                    body, html {
+                        overflow: hidden !important; /* Lock background */
+                        touch-action: none; /* Prevent browser bounce */
+                    }
+                    .arcade-scroll-container {
+                        overflow-y: scroll !important;
+                        -webkit-overflow-scrolling: touch !important;
+                        touch-action: pan-y !important;
+                    }
+                `}
+            </style>
+
             {/* 🎨 BRANDED GLASS HEADER */}
             <header style={{
                 position: 'fixed',
@@ -138,7 +153,8 @@ const Arcade = () => {
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            pointerEvents: 'auto'
                         }}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -177,13 +193,18 @@ const Arcade = () => {
             {/* 🎮 VERTICAL SNAP SCROLL CONTAINER */}
             <div
                 ref={containerRef}
+                className="arcade-scroll-container"
                 style={{
-                    height: '100vh',
+                    height: '100%',
+                    width: '100%',
                     overflowY: 'scroll',
                     scrollSnapType: 'y mandatory',
-                    WebkitOverflowScrolling: 'touch',
                     paddingTop: 80, /* Space for header */
-                    paddingBottom: 80 /* Space for bottom nav */
+                    paddingBottom: 80, /* Space for bottom nav */
+                    boxSizing: 'border-box',
+                    position: 'absolute', /* Ensure it fills parent */
+                    top: 0,
+                    left: 0
                 }}
             >
                 {GAMES.map((game, index) => (
@@ -235,9 +256,12 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                         style={{
                             width: '100%',
                             height: '100%',
-                            border: 'none'
+                            border: 'none',
+                            pointerEvents: 'auto', /* 🛡️ FORCE INTERACTION */
+                            position: 'relative',
+                            zIndex: 10
                         }}
-                        allow="accelerometer; gyroscope; autoplay"
+                        allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
                     />
                 ) : (
                     /* 📺 POSTER MODE: Show cover + Play button */
