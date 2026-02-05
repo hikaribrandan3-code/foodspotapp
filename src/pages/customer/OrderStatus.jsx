@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getOrders } from '../../utils/storage.js'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { supabase } from '../../lib/supabaseClient.js'
 import { formatPrice } from '../../config/menuData.js'
+import { getGuestToken } from '../../utils/guestToken.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import ItemCard from '../../components/ItemCard'
 
@@ -12,315 +14,526 @@ const CheckIcon = () => (
     </svg>
 )
 
-// Smiley icon for small orders thank-you
-const SmileyIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 256 256" fill="#4A4036">
-        <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM92,96a12,12,0,1,1-12,12A12,12,0,0,1,92,96Zm82.92,60c-10.29,17.79-27.39,28-46.92,28s-36.63-10.2-46.92-28a8,8,0,1,1,13.84-8c7.47,12.91,19.21,20,33.08,20s25.61-7.1,33.08-20a8,8,0,1,1,13.84,8ZM164,120a12,12,0,1,1,12-12A12,12,0,0,1,164,120Z"></path>
-    </svg>
-)
+// Status step definitions (Uber-style 4-step)
+const STEPS = [
+    { id: 1, label: 'Recibido', icon: '📋' },
+    { id: 2, label: 'En Cocina', icon: '👨‍🍳' },
+    { id: 3, label: 'En Camino', icon: '🚗' },
+    { id: 4, label: 'Entregado', icon: '✅' }
+]
+
+// Status to step mapping
+const getStepFromStatus = (status) => {
+    switch (status) {
+        case 'pendiente':
+        case 'pendiente_confirmacion':
+        case 'esperando_pago':
+            return 0 // Not yet started
+        case 'confirmado':
+        case 'en_preparacion':
+            return 1 // Recibido
+        case 'en_cocina':
+        case 'preparando':
+            return 2 // En Cocina
+        case 'en_camino':
+        case 'listo':
+            return 3 // En Camino
+        case 'entregado':
+            return 4 // Entregado
+        default:
+            return 1
+    }
+}
+
+const getStatusLabel = (status) => {
+    switch (status) {
+        case 'pendiente':
+        case 'pendiente_confirmacion':
+            return 'Esperando confirmación'
+        case 'esperando_pago':
+            return 'Esperando pago'
+        case 'confirmado':
+        case 'en_preparacion':
+            return 'Confirmado'
+        case 'en_cocina':
+        case 'preparando':
+            return 'En preparación'
+        case 'en_camino':
+            return 'En camino'
+        case 'listo':
+            return '¡Listo para recoger!'
+        case 'entregado':
+            return 'Entregado'
+        default:
+            return status
+    }
+}
+
+const getStatusColor = (status) => {
+    switch (status) {
+        case 'pendiente':
+        case 'pendiente_confirmacion':
+        case 'esperando_pago':
+            return { bg: '#FEF3C7', text: '#92400E', border: '#F59E0B' } // Yellow
+        case 'confirmado':
+        case 'en_preparacion':
+        case 'en_cocina':
+        case 'preparando':
+            return { bg: '#DBEAFE', text: '#1E40AF', border: '#3B82F6' } // Blue
+        case 'en_camino':
+            return { bg: '#E0E7FF', text: '#4338CA', border: '#6366F1' } // Indigo
+        case 'listo':
+        case 'entregado':
+            return { bg: '#DCFCE7', text: '#166534', border: '#22C55E' } // Green
+        default:
+            return { bg: '#F3F4F6', text: '#6B7280', border: '#9CA3AF' }
+    }
+}
 
 function OrderStatus({ config: configProp, featuredItems = [] }) {
-    const config = configProp || {};
+    const { businessId, tenantData } = useTenant()
+    const config = configProp || tenantData?.app_config || {};
     const navigate = useNavigate()
+    const { orderId } = useParams()
+    const [searchParams] = useSearchParams()
+
     const [orders, setOrders] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
 
+    // Check for payment callback
+    const paymentStatus = searchParams.get('payment')
+
+    // 🛡️ FETCH ORDERS FROM SUPABASE (by guest token or specific order ID)
     useEffect(() => {
-        const loadOrders = () => {
-            const allOrders = getOrders()
-            const today = new Date().toDateString()
-            const relevant = allOrders.filter(order => {
-                const orderDate = new Date(order.createdAt).toDateString()
-                return orderDate === today || order.status !== 'entregado'
-            }).slice(0, 10)
-            setOrders(relevant)
+        const fetchOrders = async () => {
+            setLoading(true)
+            try {
+                const guestToken = getGuestToken()
+                const storedPhone = localStorage.getItem('fs_customer_phone')
+
+                let query = supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('business_id', businessId)
+                    .order('created_at', { ascending: false })
+                    .limit(10)
+
+                // If we have a specific order ID, fetch that
+                if (orderId) {
+                    query = supabase
+                        .from('orders')
+                        .select('*')
+                        .eq('id', orderId)
+                        .single()
+
+                    const { data, error: fetchError } = await query
+                    if (fetchError) throw fetchError
+                    setOrders(data ? [data] : [])
+                } else {
+                    // Otherwise, fetch by guest token or phone
+                    if (guestToken) {
+                        query = query.eq('guest_token', guestToken)
+                    } else if (storedPhone) {
+                        query = query.eq('customer_phone', storedPhone)
+                    }
+
+                    const { data, error: fetchError } = await query
+                    if (fetchError) throw fetchError
+
+                    // Filter to today's orders or active orders
+                    const today = new Date().toDateString()
+                    const relevantOrders = (data || []).filter(order => {
+                        const orderDate = new Date(order.created_at).toDateString()
+                        return orderDate === today || order.status !== 'entregado'
+                    })
+                    setOrders(relevantOrders)
+                }
+            } catch (err) {
+                console.error('Error fetching orders:', err)
+                setError(err.message)
+            } finally {
+                setLoading(false)
+            }
         }
 
-        loadOrders()
-        const interval = setInterval(loadOrders, 2000)
-        return () => clearInterval(interval)
-    }, [])
-
-    // Status mapping for progress tracker
-    const getStepFromStatus = (status) => {
-        switch (status) {
-            case 'enviado': return 1
-            case 'preparacion': return 2
-            case 'listo':
-            case 'entregado': return 3
-            default: return 1
+        if (businessId) {
+            fetchOrders()
         }
-    }
+    }, [businessId, orderId])
 
-    const getStatusLabel = (status) => {
-        switch (status) {
-            case 'enviado': return 'Confirmado'
-            case 'preparacion': return 'En preparación'
-            case 'listo': return '¡Listo!'
-            case 'entregado': return 'Entregado'
-            default: return status
+    // ⚡ REAL-TIME SUBSCRIPTION
+    useEffect(() => {
+        if (!businessId || orders.length === 0) return
+
+        // Subscribe to changes on the orders we're tracking
+        const orderIds = orders.map(o => o.id)
+
+        const channel = supabase
+            .channel('order-status-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: orderIds.length === 1
+                        ? `id=eq.${orderIds[0]}`
+                        : `id=in.(${orderIds.join(',')})`
+                },
+                (payload) => {
+                    console.log('🔔 Order Updated:', payload)
+                    setOrders(prev => prev.map(order =>
+                        order.id === payload.new.id ? payload.new : order
+                    ))
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
         }
-    }
+    }, [businessId, orders.length])
 
     // Colors
+    const primaryColor = tenantData?.primary_color || '#C4856A'
     const greenActive = '#22C55E'
-    const greenLight = '#DCFCE7'
     const grayMuted = '#9CA3AF'
     const grayLight = '#E5E7EB'
-    const cardBg = '#F5F3EF'
-    const shadow = '0 4px 20px rgba(0,0,0,0.08)' // 3. Global Depth
 
-    const activeOrders = orders.filter(o => o.status !== 'entregado')
-    const mostRecentOrder = activeOrders[0]
+    const mostRecentOrder = orders[0]
 
-    // Use the new empty state component
+    // Loading state
+    if (loading) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#FAFAF8'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 48, marginBottom: 16, animation: 'pulse 1.5s infinite' }}>📦</div>
+                    <p style={{ color: '#6B7280' }}>Cargando pedidos...</p>
+                </div>
+            </div>
+        )
+    }
+
+    // Empty state
     if (orders.length === 0) {
         return <OrderStatusEmpty config={config} featuredItems={featuredItems} />
     }
 
+    const currentStep = getStepFromStatus(mostRecentOrder.status)
+    const statusColors = getStatusColor(mostRecentOrder.status)
+
     return (
         <div className="page" style={{
-            padding: '0 24px',
+            padding: '0 20px',
             paddingTop: 24,
-            paddingBottom: 90,
+            paddingBottom: 100,
             backgroundColor: '#FAFAF8',
             minHeight: '100vh'
         }}>
-            {mostRecentOrder && (
-                <>
-                    {/* Order Card (Primary Focus - wider, tighter) */}
-                    <div style={{
-                        background: cardBg,
-                        borderRadius: 16,
-                        padding: '20px 16px 16px 16px',
-                        marginBottom: 12,
-                        boxShadow: shadow
+            {/* Payment Status Banner */}
+            {paymentStatus === 'success' && (
+                <div style={{
+                    background: '#ECFDF5',
+                    border: '1px solid #22C55E',
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 16,
+                    textAlign: 'center'
+                }}>
+                    <span style={{ fontSize: 24, marginRight: 8 }}>✅</span>
+                    <span style={{ color: '#166534', fontWeight: 600 }}>¡Pago confirmado!</span>
+                </div>
+            )}
+            {paymentStatus === 'failure' && (
+                <div style={{
+                    background: '#FEE2E2',
+                    border: '1px solid #EF4444',
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 16,
+                    textAlign: 'center'
+                }}>
+                    <span style={{ fontSize: 24, marginRight: 8 }}>❌</span>
+                    <span style={{ color: '#DC2626', fontWeight: 600 }}>Error en el pago. Contacta al local.</span>
+                </div>
+            )}
+            {paymentStatus === 'pending' && (
+                <div style={{
+                    background: '#FEF3C7',
+                    border: '1px solid #F59E0B',
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 16,
+                    textAlign: 'center'
+                }}>
+                    <span style={{ fontSize: 24, marginRight: 8 }}>⏳</span>
+                    <span style={{ color: '#92400E', fontWeight: 600 }}>Pago pendiente de confirmación...</span>
+                </div>
+            )}
+
+            {/* Main Order Card */}
+            <div style={{
+                background: 'white',
+                borderRadius: 20,
+                padding: '24px 20px',
+                marginBottom: 16,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+            }}>
+                {/* Order Number + Status Badge */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 24
+                }}>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: '#1F2937' }}>
+                        Pedido #{String(mostRecentOrder.order_number || mostRecentOrder.orderNumber).padStart(3, '0')}
+                    </span>
+                    <span style={{
+                        background: statusColors.bg,
+                        color: statusColors.text,
+                        border: `1px solid ${statusColors.border}`,
+                        padding: '6px 14px',
+                        borderRadius: 20,
+                        fontSize: 13,
+                        fontWeight: 600
                     }}>
-                        {/* Order Number + Status Badge */}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: 20
-                        }}>
-                            <span style={{
-                                fontSize: 18,
-                                fontWeight: 600,
-                                color: '#1F2937'
-                            }}>
-                                Pedido #{String(mostRecentOrder.orderNumber).padStart(3, '0')}
-                            </span>
-                            <span style={{
-                                background: greenLight,
-                                color: '#166534',
-                                padding: '6px 14px',
-                                borderRadius: 20,
-                                fontSize: 13,
-                                fontWeight: 500
-                            }}>
-                                {getStatusLabel(mostRecentOrder.status)}
-                            </span>
-                        </div>
+                        {getStatusLabel(mostRecentOrder.status)}
+                    </span>
+                </div>
 
-                        {/* 3. Progress Tracker */}
-                        <div style={{ marginBottom: 20 }}>
-                            {/* Progress Line with Circles */}
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                position: 'relative',
-                                marginBottom: 8
-                            }}>
-                                {[1, 2, 3].map((step, i) => {
-                                    const currentStep = getStepFromStatus(mostRecentOrder.status)
-                                    const isCompleted = currentStep > step
-                                    const isCurrent = currentStep === step
-                                    const isActive = isCompleted || isCurrent
-
-                                    return (
-                                        <div key={step} style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            flex: i < 2 ? 1 : 'none'
-                                        }}>
-                                            {/* Circle - increased weight */}
-                                            <div style={{
-                                                width: 32,
-                                                height: 32,
-                                                borderRadius: '50%',
-                                                background: isCompleted ? greenActive : (isCurrent ? 'white' : grayLight),
-                                                border: isCurrent ? `3px solid ${greenActive}` : 'none',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: isCompleted ? 'white' : grayMuted,
-                                                flexShrink: 0
-                                            }}>
-                                                {isCompleted && <CheckIcon />}
-                                            </div>
-                                            {/* Connecting Line - increased weight */}
-                                            {i < 2 && (
-                                                <div style={{
-                                                    flex: 1,
-                                                    height: 4,
-                                                    background: currentStep > step ? greenActive : grayLight,
-                                                    marginLeft: 4,
-                                                    marginRight: 4,
-                                                    borderRadius: 2
-                                                }} />
-                                            )}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-
-                            {/* Step Labels */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between'
-                            }}>
-                                {['Confirmado', 'Preparando', 'Listo'].map((label, i) => {
-                                    const currentStep = getStepFromStatus(mostRecentOrder.status)
-                                    const step = i + 1
-                                    const isActive = currentStep >= step
-
-                                    return (
-                                        <span key={label} style={{
-                                            fontSize: 12,
-                                            fontWeight: isActive ? 600 : 400,
-                                            color: isActive ? '#374151' : grayMuted,
-                                            textAlign: i === 0 ? 'left' : (i === 2 ? 'right' : 'center'),
-                                            flex: 1
-                                        }}>
-                                            {label}
-                                        </span>
-                                    )
-                                })}
-                            </div>
-                        </div>
-
-                        {/* 4. Order Summary Line */}
-                        <div style={{
-                            textAlign: 'center',
-                            paddingTop: 16,
-                            borderTop: '1px solid rgba(0,0,0,0.06)',
-                            fontSize: 14,
-                            color: '#6B7280'
-                        }}>
-                            {mostRecentOrder.items.length} items · Total: {formatPrice(mostRecentOrder.total)}
-                        </div>
-                    </div>
-
-                    {/* 5. Itemized Order Card */}
+                {/* 🚀 UBER-STYLE HORIZONTAL STEPPER */}
+                <div style={{ marginBottom: 28 }}>
+                    {/* Progress Line with Circles */}
                     <div style={{
-                        background: 'white',
-                        borderRadius: 16,
-                        padding: 20,
-                        marginBottom: 24,
-                        boxShadow: shadow
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        position: 'relative',
+                        marginBottom: 12
                     }}>
-                        {/* Items List - REPLACED WITH ITEMCARD */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12, marginBottom: 16 }}>
-                            {mostRecentOrder.items.map((item, index) => (
-                                <div key={index} style={{ position: 'relative' }}>
-                                    <ItemCard
-                                        item={item}
-                                        readOnly={true}
-                                        isPlaceholder={false}
-                                        isOwnerMode={false}
-                                    />
-                                    {/* Quantity Badge */}
-                                    {item.quantity > 1 && (
+                        {STEPS.map((step, i) => {
+                            const isCompleted = currentStep > step.id
+                            const isCurrent = currentStep === step.id
+                            const isActive = isCompleted || isCurrent
+
+                            return (
+                                <div key={step.id} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    flex: i < STEPS.length - 1 ? 1 : 'none'
+                                }}>
+                                    {/* Circle */}
+                                    <div style={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: '50%',
+                                        background: isCompleted ? greenActive : (isCurrent ? primaryColor : grayLight),
+                                        border: isCurrent ? `3px solid ${primaryColor}` : 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: isActive ? 'white' : grayMuted,
+                                        fontSize: isCompleted ? 14 : 18,
+                                        fontWeight: 600,
+                                        flexShrink: 0,
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: isCurrent ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
+                                    }}>
+                                        {isCompleted ? <CheckIcon /> : step.icon}
+                                    </div>
+                                    {/* Connecting Line */}
+                                    {i < STEPS.length - 1 && (
                                         <div style={{
-                                            position: 'absolute', top: -6, right: -6, background: '#EF4444', color: 'white',
-                                            fontSize: 12, fontWeight: 700, width: 22, height: 22, borderRadius: '50%',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                            zIndex: 10, border: '2px solid white'
-                                        }}>
-                                            {item.quantity}
-                                        </div>
+                                            flex: 1,
+                                            height: 4,
+                                            background: currentStep > step.id ? greenActive : grayLight,
+                                            marginLeft: 8,
+                                            marginRight: 8,
+                                            borderRadius: 2,
+                                            transition: 'background 0.3s ease'
+                                        }} />
                                     )}
                                 </div>
-                            ))}
-                        </div>
-
-                        {/* Divider */}
-                        <div style={{
-                            borderTop: '1px solid #E5E7EB',
-                            margin: '16px 0',
-                            paddingTop: 16
-                        }}>
-                            {/* Subtotal */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginBottom: 8,
-                                fontSize: 14,
-                                color: '#6B7280'
-                            }}>
-                                <span>Subtotal:</span>
-                                <span>{formatPrice(mostRecentOrder.total)}</span>
-                            </div>
-
-                            {/* Impuestos */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginBottom: 12,
-                                fontSize: 14,
-                                color: '#6B7280'
-                            }}>
-                                <span>Impuestos:</span>
-                                <span>$0.00</span>
-                            </div>
-
-                            {/* Total */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                fontSize: 16,
-                                fontWeight: 600,
-                                color: '#1F2937'
-                            }}>
-                                <span>Total:</span>
-                                <span>{formatPrice(mostRecentOrder.total)}</span>
-                            </div>
-                        </div>
+                            )
+                        })}
                     </div>
 
-                    {/* Thank You (only for small orders < 5 items) */}
-                    {mostRecentOrder.items.length < 5 && (
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 6,
-                            marginTop: 16,
-                            marginBottom: 8
-                        }}>
-                            <SmileyIcon />
-                            <span style={{
-                                fontSize: 13,
-                                fontWeight: 500,
-                                color: '#5A4A3A'
-                            }}>
-                                Gracias por tu negocio
-                            </span>
+                    {/* Step Labels */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between'
+                    }}>
+                        {STEPS.map((step, i) => {
+                            const isActive = currentStep >= step.id
+
+                            return (
+                                <span key={step.id} style={{
+                                    fontSize: 11,
+                                    fontWeight: isActive ? 600 : 400,
+                                    color: isActive ? '#374151' : grayMuted,
+                                    textAlign: i === 0 ? 'left' : (i === STEPS.length - 1 ? 'right' : 'center'),
+                                    flex: 1,
+                                    transition: 'all 0.3s ease'
+                                }}>
+                                    {step.label}
+                                </span>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* Waiting Message for Pending Orders */}
+                {currentStep === 0 && (
+                    <div style={{
+                        background: '#FEF3C7',
+                        padding: 16,
+                        borderRadius: 12,
+                        marginBottom: 20,
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: 28, marginBottom: 8 }}>⏳</div>
+                        <p style={{ color: '#92400E', fontSize: 14, fontWeight: 500, margin: 0 }}>
+                            {mostRecentOrder.status === 'esperando_pago'
+                                ? 'Esperando confirmación del pago...'
+                                : 'El local está revisando tu pedido...'
+                            }
+                        </p>
+                    </div>
+                )}
+
+                {/* Order Summary Line */}
+                <div style={{
+                    textAlign: 'center',
+                    paddingTop: 16,
+                    borderTop: '1px solid rgba(0,0,0,0.06)',
+                    fontSize: 14,
+                    color: '#6B7280'
+                }}>
+                    {mostRecentOrder.items?.length || '?'} items · Total: {formatPrice(mostRecentOrder.total)}
+                </div>
+            </div>
+
+            {/* Itemized Order Card */}
+            <div style={{
+                background: 'white',
+                borderRadius: 20,
+                padding: 20,
+                marginBottom: 24,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+            }}>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', marginBottom: 16 }}>
+                    Detalle del pedido
+                </h3>
+
+                {/* Items Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 12, marginBottom: 16 }}>
+                    {(mostRecentOrder.items || []).map((item, index) => (
+                        <div key={index} style={{ position: 'relative' }}>
+                            <ItemCard item={item} readOnly={true} isPlaceholder={false} isOwnerMode={false} />
+                            {item.quantity > 1 && (
+                                <div style={{
+                                    position: 'absolute', top: -6, right: -6, background: '#EF4444', color: 'white',
+                                    fontSize: 11, fontWeight: 700, width: 20, height: 20, borderRadius: '50%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                    zIndex: 10, border: '2px solid white'
+                                }}>
+                                    {item.quantity}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Totals */}
+                <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: '#6B7280' }}>
+                        <span>Subtotal:</span>
+                        <span>{formatPrice(mostRecentOrder.subtotal || mostRecentOrder.total)}</span>
+                    </div>
+                    {mostRecentOrder.delivery_fee > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: '#6B7280' }}>
+                            <span>Envío:</span>
+                            <span>{formatPrice(mostRecentOrder.delivery_fee)}</span>
                         </div>
                     )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 700, color: '#1F2937' }}>
+                        <span>Total:</span>
+                        <span style={{ color: primaryColor }}>{formatPrice(mostRecentOrder.total)}</span>
+                    </div>
+                </div>
+            </div>
 
-                    {/* Helper Text */}
-                    <p style={{
-                        textAlign: 'center',
-                        fontSize: 13,
-                        color: grayMuted,
-                        paddingBottom: 4,
-                        marginTop: 0
-                    }}>
-                        Mostrá este pedido en el local si es necesario
+            {/* Delivery Info (if applicable) */}
+            {mostRecentOrder.order_type === 'delivery' && mostRecentOrder.delivery_address && (
+                <div style={{
+                    background: 'white',
+                    borderRadius: 16,
+                    padding: 20,
+                    marginBottom: 24,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+                }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', marginBottom: 12 }}>
+                        📍 Dirección de entrega
+                    </h3>
+                    <p style={{ fontSize: 14, color: '#6B7280', margin: 0 }}>
+                        {mostRecentOrder.delivery_address}
                     </p>
-                </>
+                    {mostRecentOrder.distance_km && (
+                        <p style={{ fontSize: 13, color: '#9CA3AF', marginTop: 8 }}>
+                            Distancia: {mostRecentOrder.distance_km}km
+                        </p>
+                    )}
+                </div>
             )}
+
+            {/* Help Text */}
+            <p style={{
+                textAlign: 'center',
+                fontSize: 13,
+                color: grayMuted,
+                paddingBottom: 4,
+                marginTop: 0
+            }}>
+                Mostrá este pedido en el local si es necesario
+            </p>
+
+            {/* Real-time indicator */}
+            <div style={{
+                position: 'fixed',
+                bottom: 80,
+                right: 20,
+                background: 'white',
+                borderRadius: 20,
+                padding: '8px 14px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+            }}>
+                <div style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: '#22C55E',
+                    animation: 'pulse 2s infinite'
+                }} />
+                <span style={{ fontSize: 11, color: '#6B7280' }}>En vivo</span>
+            </div>
+
+            <style>{`
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.5; transform: scale(0.9); }
+                }
+            `}</style>
         </div>
     )
 }

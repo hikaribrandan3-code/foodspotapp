@@ -7,6 +7,75 @@
  */
 
 // ============================================
+// 🌍 HAVERSINE DISTANCE CALCULATION
+// ============================================
+
+/**
+ * Calculate the distance between two points on Earth using Haversine formula.
+ * @param {number} lat1 - Latitude of point 1
+ * @param {number} lon1 - Longitude of point 1
+ * @param {number} lat2 - Latitude of point 2
+ * @param {number} lon2 - Longitude of point 2
+ * @returns {number} Distance in kilometers
+ */
+export const calculateHaversine = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+};
+
+/**
+ * Check if customer is within delivery radius.
+ * @param {Object} storeCoords - { lat, lon } of the store
+ * @param {Object} customerCoords - { lat, lon } of the customer
+ * @param {number} radiusKm - Delivery radius in kilometers
+ * @returns {{ withinRadius: boolean, distanceKm: number }}
+ */
+export const isWithinDeliveryRadius = (storeCoords, customerCoords, radiusKm) => {
+    if (!storeCoords?.lat || !storeCoords?.lon || !customerCoords?.lat || !customerCoords?.lon) {
+        return { withinRadius: true, distanceKm: null }; // Fallback: allow if no coords
+    }
+    const distanceKm = calculateHaversine(
+        storeCoords.lat, storeCoords.lon,
+        customerCoords.lat, customerCoords.lon
+    );
+    return {
+        withinRadius: distanceKm <= radiusKm,
+        distanceKm: Math.round(distanceKm * 10) / 10 // Round to 1 decimal
+    };
+};
+
+/**
+ * Build a WhatsApp summary string for an order.
+ * @param {Object} order - The order object
+ * @param {string} businessName - The business name
+ * @returns {string} WhatsApp-formatted summary
+ */
+export const buildWhatsAppSummary = (order, businessName, paymentMethod = 'efectivo') => {
+    const items = order.items.map(item =>
+        `• ${item.quantity}x ${item.name} - $${item.price * item.quantity}`
+    ).join('\\n');
+
+    const paymentNote = paymentMethod === 'tarjeta_envio' ? '\\n\\n⚠️ *TRAER POS*' : '';
+
+    return `🍔 *NUEVO PEDIDO - ${businessName}*\\n` +
+        `📋 Pedido #${order.orderNumber}\\n\\n` +
+        `*Items:*\\n${items}\\n\\n` +
+        `*Subtotal:* $${order.subtotal}\\n` +
+        `*Envío:* $${order.deliveryFee || 0}\\n` +
+        `*Total:* $${order.total}\\n\\n` +
+        `👤 *Cliente:* ${order.customerInfo?.name || 'N/A'}\\n` +
+        `📞 *Tel:* ${order.customerInfo?.phone || 'N/A'}\\n` +
+        `📍 *Dirección:* ${order.customerInfo?.address || 'Retiro en local'}` +
+        paymentNote;
+};
+
+
+// ============================================
 // TIME-BASED UTILITIES (No config needed)
 // ============================================
 
