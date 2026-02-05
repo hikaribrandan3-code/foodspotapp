@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase, getMenuCloud } from '../../lib/supabaseClient'
+import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { useCart } from '../../contexts/CartContext'
 import { MenuSkeleton } from '../../components/Shimmers.jsx'
@@ -117,7 +117,7 @@ const SEED_MENU = {
 }
 
 export default function Menu({ config: configProp }) {
-    const { businessId, tenantData, isLoaded: tenantLoaded, loading: tenantLoading } = useTenant()
+    const { businessId, tenantData, isLoaded: tenantLoaded, loading: tenantLoading, refreshTenantData } = useTenant()
     const { addToCart, removeFromCart, cart, cartTotal } = useCart()
     const navigate = useNavigate()
 
@@ -131,27 +131,18 @@ export default function Menu({ config: configProp }) {
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
     useEffect(() => {
-        const fetchMenu = async () => {
-            if (tenantLoaded && businessId) {
-                console.log('[Menu] 🦅 fetching from SQL...')
-                const { data, error } = await getMenuCloud(businessId)
-
-                if (data && data.categories && data.categories.length > 0) {
-                    console.log('[Menu] ☁️ SQL Menu Loaded', data)
-                    setMenu(data)
-                } else if (tenantData?.menu_data) {
-                    // Fallback to JSON if SQL is empty (Migration phase)
-                    console.log('[Menu] 📜 Legacy JSON Menu Loaded')
-                    setMenu(tenantData.menu_data)
-                } else {
-                    console.log('[Menu] 🌱 Loading Seed Data (Fallback)')
-                    setMenu(SEED_MENU)
-                }
-                setIsDataLoaded(true)
+        if (tenantLoaded) {
+            // Priority: 1. Cloud Data, 2. Seed Data
+            if (tenantData?.menu_data && tenantData.menu_data.categories.length > 0) {
+                console.log('[Menu] ☁️ Loading Cloud Data')
+                setMenu(tenantData.menu_data)
+            } else {
+                console.log('[Menu] 🌱 Loading Seed Data (Fallback)')
+                setMenu(SEED_MENU)
             }
+            setIsDataLoaded(true)
         }
-        fetchMenu()
-    }, [tenantLoaded, businessId, tenantData?.menu_data])
+    }, [tenantLoaded, tenantData])
 
     // =========================================================================
     // 2. AUTH & OWNER MODE (HARDWIRED BYPASS)
@@ -509,6 +500,41 @@ export default function Menu({ config: configProp }) {
                 .upsert(itemPayload, { onConflict: 'id' });
 
             if (itemError) throw itemError;
+
+            // 3. PHASE 3: THE UNIVERSAL TRUTH (JSON BLOB UPDATE)
+            // We must update the branding table's JSON blob to match the SQL rows.
+            // This prevents "Revert on Refresh" where stale JSON overrides fresh SQL.
+            const jsonCategories = validCategories.map((cat, idx) => ({
+                ...cat,
+                sort_order: idx,
+                display_order: idx,
+                items: cat.items.map((item, itemIdx) => ({
+                    ...item,
+                    sort_order: itemIdx,
+                    display_order: itemIdx
+                }))
+            }));
+
+            const { error: brandingError } = await supabase
+                .from('branding')
+                .update({
+                    menu_data: { categories: jsonCategories },
+                    updated_at: new Date()
+                })
+                .eq('business_id', businessId);
+
+            if (brandingError) {
+                console.error('❌ Error updating Branding JSON:', brandingError);
+                // We don't throw here to avoid rollback of partial success, but we log it.
+            } else {
+                console.log('✅ Branding JSON Synced (Universal Truth Established)');
+            }
+
+            // 4. PHASE 4: GLOBAL FLUSH
+            await refreshTenantData();
+            console.log('✅ Global Context Flushed');
+
+
 
             setHasChanges(false);
             if (navigator.vibrate) navigator.vibrate([50, 50]);
