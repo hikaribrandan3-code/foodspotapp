@@ -86,7 +86,8 @@ const Arcade = () => {
             zIndex: 2000,
             display: 'flex',
             flexDirection: 'column',
-            height: '100dvh'
+            height: '100dvh',
+            pointerEvents: 'auto' /* 🛡️ FORCE INTERACTION ON ROOT */
         }}>
             {/* 🎨 HEADER */}
             <header style={{
@@ -149,7 +150,8 @@ const Arcade = () => {
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
                     overscrollBehaviorY: 'contain',
-                    touchAction: 'pan-y' /* 🛡️ CRITICAL: ONLY VERTICAL SCROLL */
+                    touchAction: 'pan-y', /* 🛡️ CRITICAL: ONLY VERTICAL SCROLL */
+                    pointerEvents: 'auto' /* 🛡️ FORCE INTERACTION ON SCROLL CONTAINER */
                 }}
             >
                 {GAMES.map((game, index) => (
