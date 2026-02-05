@@ -4,22 +4,21 @@ import { useTenant } from '../../contexts/TenantContext'
 
 /**
  * Arcade - TikTok-Style Vertical Swipe Game Discovery Feed
+ * PERFECT 10 EDITION - All games have verified cover assets
  */
 
-// 🎮 GAME REGISTRY: The 12 games (Folder Structure)
+// 🎮 GAME REGISTRY: The Perfect 10 games with verified covers
 const GAMES = [
-    { id: 'avoid-zone-engine', title: 'Avoid Zone', hook: 'Dodging is the only option.', cover: '/games/avoid-zone-engine/cover.jpg' },
-    { id: 'collapse-stack', title: 'Collapse Stack', hook: 'Keep the tower stable!', cover: '/games/collapse-stack/cover.jpg' },
-    { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash/cover.jpg' },
-    { id: 'falling-choice-gate', title: 'Falling Gates', hook: 'Choose wisely or fall forever.', cover: '/games/falling-choice-gate/cover.jpg' },
-    { id: 'false-hold', title: 'False Hold', hook: 'Trust nothing. Keep moving.', cover: '/games/false-hold/cover.jpg' },
+    { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash.jpg' },
+    { id: 'triple-snap-slots', title: 'Triple Snap', hook: 'Can you hit the jackpot?', cover: '/games/triplesnapslots.jpg' },
+    { id: 'sushi-slicev2', title: 'Sushi Slice', hook: 'Slice precision required.', cover: '/games/sushislicernew.jpg' },
     { id: 'gravity-flip-runner', title: 'Gravity Flip', hook: 'Up is down. Down is up.', cover: '/games/gravityflip.jpg' },
-    { id: 'last-known-good', title: 'Last Known Good', hook: 'Restore order before the crash.', cover: '/games/last-known-good/cover.jpg' },
-    { id: 'lock-in-drift', title: 'Lock-In Drift', hook: 'Drift tight, hold the line.', cover: '/games/lock-in-drift/cover.jpg' },
-    { id: 'pegfall-panic', title: 'Pegfall Panic', hook: 'Don\'t let the pegs win.', cover: '/games/pegstacker.png' },
-    { id: 'side-scroller-runner', title: 'Side Scroller', hook: 'Classic running action.', cover: '/games/siderunnergamecover.png' },
-    { id: 'sushi-slicev2', title: 'Sushi Slice V2', hook: 'Slice precision required.', cover: '/games/sushislicernew.jpg' },
-    { id: 'triple-snap-slots', title: 'Triple Snap', hook: 'Can you hit the jackpot?', cover: '/games/triplesnapslots.jpg' }
+    { id: 'pegfall-panic', title: 'Peg Stack', hook: 'Don\'t let the pegs fall!', cover: '/games/pegstacker.png' },
+    { id: 'side-scroller-runner', title: 'Box Runner', hook: 'Classic running action.', cover: '/games/siderunnergamecover.png' },
+    { id: 'false-hold', title: 'False Hold', hook: 'Keep the rhythm!', cover: '/games/falsehold.jpg' },
+    { id: 'falling-choice-gate', title: 'Escapa del Turno', hook: 'Overtime Edition - Escape now!', cover: '/games/escapadelturno.jpg' },
+    { id: 'avoid-zone-engine', title: 'Cuidado con la Grasa', hook: 'Dodge the grease!', cover: '/games/avoid-zone-engine.png' },
+    { id: 'collapse-stack', title: 'Burger Stacker', hook: 'Stack the perfect burger!', cover: '/games/collapse-stack.jpg' }
 ]
 
 const Arcade = () => {
@@ -33,14 +32,10 @@ const Arcade = () => {
 
     // 🛡️ SCROLL & INTERACTION UNLOCK
     useEffect(() => {
-        // Force unlock body scroll and touch
         document.body.style.overflow = 'auto'
         document.body.style.touchAction = 'auto'
         document.documentElement.style.overflow = 'auto'
-
-        return () => {
-            // No cleanup to avoid re-locking
-        }
+        return () => { }
     }, [])
 
     // 🛡️ MEMORY CLEANUP
@@ -57,7 +52,6 @@ const Arcade = () => {
 
                         setVisibleIndex(index)
 
-                        // If we are playing a different game than the one we just swiped into, kill it
                         if (activeGameId && activeGameId !== gameId) {
                             setActiveGameId(null)
                         }
@@ -87,13 +81,13 @@ const Arcade = () => {
         <div style={{
             position: 'fixed',
             inset: 0,
-            background: '#0F172A', /* Dark mode for arcade */
+            background: '#0F172A',
             zIndex: 2000,
             display: 'flex',
             flexDirection: 'column',
             height: '100dvh'
         }}>
-            {/* 🎨 HEADER (Overlay Style) */}
+            {/* 🎨 HEADER */}
             <header style={{
                 position: 'fixed',
                 top: 0,
