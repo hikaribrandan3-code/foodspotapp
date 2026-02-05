@@ -42,45 +42,24 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingTop: 32, /* Push everything up */
-                paddingBottom: 40,
+                paddingTop: 32, /* Maintained */
+                paddingBottom: 32, /* The Big Squeeze Gap: exactly 32px to tiles */
                 paddingLeft: 12, /* 12px Gutter Sync */
                 paddingRight: 12, /* 12px Gutter Sync */
                 textAlign: 'center'
             }}>
 
-                <h2 style={{
-                    color: '#0F172A', /* Darker, stronger */
-                    fontSize: 28, /* Bigger letters: 24 -> 28 */
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    marginBottom: 8,
-                    marginTop: 0,
-                    transform: 'scaleX(1.15)', /* Horizontal Stretch: 15% */
-                    display: 'inline-block',
-                    transformOrigin: 'center'
+                {/* Status Hero: Replaces Header & Card */}
+                <p style={{
+                    color: '#0F172A',
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: 18, /* Hero Authority: +20% (14 -> 18ish) */
+                    fontWeight: 700, /* Bold */
+                    textAlign: 'center',
+                    margin: 0
                 }}>
-                    Mis Pedidos
-                </h2>
-                {/* Structural Anchor: Card Center of Gravity */}
-                <div style={{
-                    marginTop: 16,
-                    padding: '8px 16px', /* Active Card Refinement: 40% Collapse */
-                    background: '#F8FAFC',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: 12,
-                    display: 'inline-block'
-                }}>
-                    <p style={{
-                        color: '#64748B',
-                        fontSize: 14,
-                        fontWeight: 500, /* Typography Shift: Medium */
-                        margin: 0
-                    }}>
-                        No tenés pedidos activos
-                    </p>
-                </div>
+                    No tenés pedidos activos
+                </p>
             </div>
 
             {/* 2. SaaS Action Pills — Linked to Functional Logic */}
