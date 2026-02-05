@@ -46,7 +46,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 paddingRight: 12, /* 12px Gutter Sync */
                 textAlign: 'center'
             }}>
-                /* Emoji removed as requested */
+
                 <h2 style={{
                     color: '#0F172A', /* Darker, stronger */
                     fontSize: 24, /* Bigger letters */
