@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase, getMenuCloud } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { useCart } from '../../contexts/CartContext'
 import { MenuSkeleton } from '../../components/Shimmers.jsx'
@@ -131,18 +131,27 @@ export default function Menu({ config: configProp }) {
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
     useEffect(() => {
-        if (tenantLoaded) {
-            // Priority: 1. Cloud Data, 2. Seed Data
-            if (tenantData?.menu_data && tenantData.menu_data.categories.length > 0) {
-                console.log('[Menu] ☁️ Loading Cloud Data')
-                setMenu(tenantData.menu_data)
-            } else {
-                console.log('[Menu] 🌱 Loading Seed Data (Fallback)')
-                setMenu(SEED_MENU)
+        const fetchMenu = async () => {
+            if (tenantLoaded && businessId) {
+                console.log('[Menu] 🦅 fetching from SQL...')
+                const { data, error } = await getMenuCloud(businessId)
+
+                if (data && data.categories && data.categories.length > 0) {
+                    console.log('[Menu] ☁️ SQL Menu Loaded', data)
+                    setMenu(data)
+                } else if (tenantData?.menu_data) {
+                    // Fallback to JSON if SQL is empty (Migration phase)
+                    console.log('[Menu] 📜 Legacy JSON Menu Loaded')
+                    setMenu(tenantData.menu_data)
+                } else {
+                    console.log('[Menu] 🌱 Loading Seed Data (Fallback)')
+                    setMenu(SEED_MENU)
+                }
+                setIsDataLoaded(true)
             }
-            setIsDataLoaded(true)
         }
-    }, [tenantLoaded, tenantData])
+        fetchMenu()
+    }, [tenantLoaded, businessId, tenantData?.menu_data])
 
     // =========================================================================
     // 2. AUTH & OWNER MODE (HARDWIRED BYPASS)
