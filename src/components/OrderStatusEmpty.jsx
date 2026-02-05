@@ -40,34 +40,21 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingTop: 64,
+                paddingTop: 32, /* Push everything up */
                 paddingBottom: 40,
                 paddingLeft: 12, /* 12px Gutter Sync */
                 paddingRight: 12, /* 12px Gutter Sync */
                 textAlign: 'center'
             }}>
-                <div style={{
-                    width: 64,
-                    height: 64,
-                    background: '#FFFFFF',
-                    borderRadius: 16,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 16,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                    border: '1px solid rgba(241, 245, 249, 1)'
-                }}>
-                    <span style={{ fontSize: 22, opacity: 0.7 }}>📋</span>
-                </div>
+                /* Emoji removed as requested */
                 <h2 style={{
-                    color: '#94A3B8',
-                    fontSize: 12,
-                    fontWeight: 700,
+                    color: '#0F172A', /* Darker, stronger */
+                    fontSize: 24, /* Bigger letters */
+                    fontWeight: 800,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    marginBottom: 4,
-                    margin: 0
+                    letterSpacing: '0.05em',
+                    marginBottom: 8,
+                    marginTop: 0
                 }}>
                     Mis Pedidos
                 </h2>
