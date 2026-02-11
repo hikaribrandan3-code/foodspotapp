@@ -61,6 +61,14 @@ function Order({ config: configProp }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitted, setSubmitted] = useState(false)
     const [deliveryMode] = useState(() => isDeliveryMode())
+    // 🔔 TOAST STATE
+    const [toastMessage, setToastMessage] = useState(null)
+
+    // Helper to show toast
+    const showToast = (msg) => {
+        setToastMessage(msg)
+        setTimeout(() => setToastMessage(null), 4000)
+    }
 
     // Customer info
     const [customerInfo, setCustomerInfo] = useState({
@@ -234,13 +242,11 @@ function Order({ config: configProp }) {
                         }
                     } catch (mpError) {
                         console.error('MP Error:', mpError)
-                        // Fallback to cash
-                        await supabase
-                            .from('orders')
+                            // Fallback to cash
                             .update({ status: 'pendiente_confirmacion', payment_method: 'efectivo' })
                             .eq('id', savedOrder.id)
 
-                        alert('Error con Mercado Pago. Tu pedido fue enviado para pago en efectivo.')
+                        showToast('⚠️ Error con Mercado Pago. Se cambió a pago en efectivo.')
                     }
                 } else {
                     // No MP token - fall back to pending confirmation
@@ -275,7 +281,7 @@ function Order({ config: configProp }) {
 
         } catch (err) {
             console.error('Order Error:', err)
-            alert('Error al enviar el pedido: ' + err.message)
+            showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
         }
     }
@@ -612,6 +618,37 @@ function Order({ config: configProp }) {
                     {isSubmitting ? 'Enviando...' : (isOutOfRadius ? '🚫 Fuera de Radio' : `Confirmar Pedido · ${formatPrice(total)}`)}
                 </button>
             </div>
+
+            {/* 🍞 TOAST NOTIFICATION (Fixed Bottom) */}
+            {toastMessage && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: 100,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: '#1F2937',
+                    color: 'white',
+                    padding: '12px 20px',
+                    borderRadius: 30,
+                    fontSize: 14,
+                    fontWeight: 500,
+                    zIndex: 9999,
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    animation: 'slideUpToast 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    whiteSpace: 'nowrap'
+                }}>
+                    <span>{toastMessage}</span>
+                </div>
+            )}
+            <style>{`
+                @keyframes slideUpToast {
+                    from { transform: translate(-50%, 100%); opacity: 0; }
+                    to { transform: translate(-50%, 0); opacity: 1; }
+                }
+            `}</style>
         </div>
     )
 }

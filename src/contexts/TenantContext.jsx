@@ -1,123 +1,178 @@
 /**
- * TenantContext.jsx
+ * TenantContext.jsx - Strike 2: Tenant Lock
  * 
- * 🏢 Multi-Tenant Identity Provider
+ * 🏢 Multi-Tenant Identity Provider (Strict Mode)
+ * Reference: Antigravity Protocol Phase 3
  * 
- * 🛡️ RECOVERY MODE: FORCED BYPASS ACTIVE
+ * 🛡️ Features:
+ * - Strict Slug Resolution
+ * - System Route Fallback (Persistence)
+ * - Global Refresh Support
  */
 
-import { createContext, useContext, useState, useEffect, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../utils/storage.js'
 
-// Context
+// Context Definition
 const TenantContext = createContext(null)
 
-// 🛡️ Timeout utility
-const withTimeout = (promise, ms, errorMessage) => {
-    const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(errorMessage)), ms)
-    )
-    return Promise.race([promise, timeout])
-}
+// 🚫 SYSTEM ROUTES (Reserved Slugs)
+// Apps should be mounted at /:slug/*
+// But some global routes might exist.
+const SYSTEM_ROUTES = [
+    'admin', 'owner', 'login', 'signup',
+    'status', 'checkout', 'order' // Sub-resources that might appear at root
+]
 
 export function TenantProvider({ children }) {
-    // 🛡️ ZERO-LATENCY CACHE: Hydrate Synchronously (prevents FOUC)
-    const [tenantData, setTenantData] = useState(() => {
-        try {
-            const pathSegments = window.location.pathname.split('/').filter(Boolean)
-            const slug = pathSegments[0]
-            if (!slug) return null
-
-            const CACHE_KEY = `tenant_cache_${slug}`
-            const cached = localStorage.getItem(CACHE_KEY)
-
-            if (cached) {
-                const parsed = JSON.parse(cached)
-                console.log('[TenantContext] ⚡ SYNC HYDRATION: Restored Vault', parsed.business_name)
-                return parsed
-            }
-        } catch (e) {
-            console.warn('[TenantContext] ⚠️ Sync Hydration Failed', e)
-        }
-        return null
-    })
-
-    const [loading, setLoading] = useState(() => !!tenantData ? false : true) // If hydrated, not loading!
-    const [businessId, setBusinessId] = useState(() => tenantData ? tenantData.business_id : null)
-    const [trialExpired, setTrialExpired] = useState(false)
+    // 🛡️ STATE
+    const [tenantData, setTenantData] = useState(null)
+    const [businessId, setBusinessId] = useState(null)
+    const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
-    // Emergency Unblock State
+    // Compatibility State
+    const [trialExpired, setTrialExpired] = useState(false)
     const [emergencyUnblock, setEmergencyUnblock] = useState(false)
+    const [forceRefresh, setForceRefresh] = useState(0)
 
+    // Helper: Identify if current path segment is a tenant slug
+    const getTargetSlug = () => {
+        const pathSegments = window.location.pathname.split('/').filter(Boolean)
+        const possibleSlug = pathSegments[0]
+
+        // 1. If no slug, or it's a system route, try to RECOVER from storage
+        if (!possibleSlug || SYSTEM_ROUTES.includes(possibleSlug)) {
+            const lastActive = localStorage.getItem('fs_last_active_slug')
+            if (lastActive) {
+                console.log(`[TenantLock] 🔌 Recovered identity for system route '/${possibleSlug}': ${lastActive}`)
+                return lastActive
+            }
+            return null // Identity Lost
+        }
+
+        return possibleSlug
+    }
+
+    // 🛡️ RESOLUTION ENGINE
     useEffect(() => {
-        const resolveTenant = async () => {
-            try {
-                // If we already hydrated synchronously, we are just revalidating
-                const pathSegments = window.location.pathname.split('/').filter(Boolean)
-                const slug = pathSegments[0]
+        let mounted = true
 
-                // 🛡️ PROTECTED ROUTES: Skip vault resolution for static paths
-                const RESERVED = ['admin', 'owner', 'start-trial', 'login', 'signup', 'camera']
-                if (!slug || RESERVED.includes(slug)) {
+        const resolveIdentity = async () => {
+            try {
+                const targetSlug = getTargetSlug()
+
+                if (!targetSlug) {
+                    console.warn('[TenantLock] ⚠️ No Identity Found. Waiting for injection or manual slug.')
+                    // Don't error immediately, allows Admin/Login pages to render if they don't consume context
                     setLoading(false)
                     return
                 }
 
-                console.log('[TenantContext] 🔍 Resolving Vault for slug:', slug)
+                console.log(`[TenantLock] 🔐 Locking Tenant: ${targetSlug}`)
 
-                // 🛡️ THE FIX: Use 'slug' column instead of 'tenant_id'
-                const { data, error } = await supabase
-                    .from('branding')
-                    .select('*')
-                    .eq('slug', slug)
-                    .single()
+                // ⚡ CACHE-FIRST STRATEGY (Optimization)
+                const CACHE_KEY = `tenant_lock_${targetSlug}`
+                const cached = localStorage.getItem(CACHE_KEY)
 
-                if (error) throw error
+                if (cached) {
+                    const parsed = JSON.parse(cached)
+                    setTenantData(parsed)
+                    setBusinessId(parsed.business_id)
+                    setTenantStoragePrefix(parsed.business_id)
 
-                if (data) {
-                    // Update State & Cache
-                    const CACHE_KEY = `tenant_cache_${slug}`
-                    const cached = localStorage.getItem(CACHE_KEY)
+                    // Update last active
+                    localStorage.setItem('fs_last_active_slug', targetSlug)
 
-                    if (JSON.stringify(data) !== cached) {
-                        console.log('[TenantContext] 🔄 REVALIDATION: Updating Cache')
-                        localStorage.setItem(CACHE_KEY, JSON.stringify(data))
+                    setLoading(false) // Hydrated!
 
-                        setBusinessId(data.business_id)
-                        setTenantData(data)
-                        setTenantStoragePrefix(data.business_id)
-                        setTrialExpired(false)
-                    } else {
-                        console.log('[TenantContext] 💤 DATA STABLE')
-                    }
-
-                    // Ensure these are set even if data matched cache (for context consumers)
-                    if (!businessId) {
-                        setBusinessId(data.business_id)
-                        setTenantStoragePrefix(data.business_id)
-                    }
+                    // Background Revalidation
+                    setTimeout(() => revalidate(targetSlug), 100)
+                } else {
+                    await revalidate(targetSlug)
                 }
+
             } catch (err) {
-                console.error('[TenantContext] ❌ Resolution Failed:', err.message)
-                setError(err.message)
+                console.error('[TenantLock] 💥 Critical Failure:', err)
+                if (mounted) setError(err.message)
             } finally {
-                setLoading(false)
+                if (mounted) setLoading(false)
             }
         }
 
-        resolveTenant()
-    }, [])
+        const revalidate = async (slug) => {
+            const { data, error } = await supabase
+                .from('branding')
+                .select('*')
+                .eq('slug', slug)
+                .single()
 
-    // 🎨 THEME HYDRATION ENGINE
-    // 🎨 THEME HYDRATION ENGINE
+            if (error) throw error
+
+            if (data) {
+                // UPDATE STATE
+                if (mounted) {
+                    setTenantData(data)
+                    setBusinessId(data.business_id)
+                    setTenantStoragePrefix(data.business_id)
+                    // Reset compatibility flags
+                    setTrialExpired(false)
+                }
+
+                // UPDATE PERSISTENCE
+                const CACHE_KEY = `tenant_lock_${slug}`
+                localStorage.setItem(CACHE_KEY, JSON.stringify(data))
+                localStorage.setItem('fs_last_active_slug', slug)
+
+                // APPLY THEME
+                applyTheme(data)
+            }
+        }
+
+        resolveIdentity()
+
+        // Listen for forced refreshes
+        if (forceRefresh > 0 && businessId) {
+            refreshTenantData()
+        }
+
+        return () => { mounted = false }
+    }, [forceRefresh])
+
+    // 🔄 GLOBAL REFRESH Action
+    const refreshTenantData = async () => {
+        if (!businessId) return
+        console.log('🔄 FORCING GLOBAL REFRESH...')
+
+        try {
+            const { data, error } = await supabase
+                .from('branding')
+                .select('*')
+                .eq('business_id', businessId)
+                .single()
+
+            if (!error && data) {
+                setTenantData(data)
+                applyTheme(data)
+
+                // Update Cache
+                if (data.slug) {
+                    localStorage.setItem(`tenant_lock_${data.slug}`, JSON.stringify(data))
+                }
+                console.log('✅ GLOBAL REFRESH COMPLETE')
+            }
+        } catch (err) {
+            console.error('Refresh Failed', err)
+        }
+    }
+
+    // 🎨 THEME ENGINE
     const applyTheme = (data) => {
         if (!data) return
         const root = document.documentElement.style
         const fontFamily = data.font_family ? `'${data.font_family}', sans-serif` : 'Inter, system-ui, sans-serif'
 
-        console.log('[TenantContext] 🎨 APPLYING THEME:', data.business_name)
         root.setProperty('--font-family-brand', fontFamily)
         if (data.primary_color) root.setProperty('--color-primary', data.primary_color)
         if (data.secondary_color) root.setProperty('--color-secondary', data.secondary_color)
@@ -126,124 +181,42 @@ export function TenantProvider({ children }) {
         if (data.background_color) root.setProperty('--color-bg', data.background_color)
     }
 
-    useEffect(() => {
-        if (!tenantData) return
-        applyTheme(tenantData)
-
-        // 🛡️ RESUME REPAIR: Force re-apply on wake
-        const handleResume = () => {
-            if (document.visibilityState === 'visible') {
-                console.log('[TenantContext] ☀️ WAKE DETECTED: Re-applying Theme')
-                applyTheme(tenantData)
-            }
-        }
-
-        document.addEventListener('visibilitychange', handleResume)
-        return () => document.removeEventListener('visibilitychange', handleResume)
-    }, [tenantData])
-
-    // 🛡️ CACHE SYNC ENGINE: Keep localStorage up-to-date with state changes
-    useEffect(() => {
-        if (!tenantData || !tenantData.business_id) return
-
-        try {
-            const slug = tenantData.slug || window.location.pathname.split('/').filter(Boolean)[0]
-            if (!slug) return
-
-            const CACHE_KEY = `tenant_cache_${slug}`
-            const currentCache = localStorage.getItem(CACHE_KEY)
-            const newData = JSON.stringify(tenantData)
-
-            if (currentCache !== newData) {
-                console.log('[TenantContext] 💾 CACHE SYNC: Persisting Latest State')
-                localStorage.setItem(CACHE_KEY, newData)
-            }
-        } catch (e) {
-            console.warn('[TenantContext] ⚠️ Cache Sync Failed', e)
-        }
-    }, [tenantData])
-
-    // Loading Splash
-    if (loading) {
-        return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#1a1a2e', color: '#fff' }}>
-                <div style={{ width: 48, height: 48, border: '4px solid rgba(255,255,255,0.1)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-            </div>
-        )
-    }
-
-    // Error Screen
-    if (error && !loading) {
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#1a1a2e', color: '#fff', textAlign: 'center' }}>
-                <h1>🏢 Negocio no encontrado</h1>
-                <button onClick={() => window.location.reload()} style={{ marginTop: 20, padding: '10px 20px', background: '#7C3AED', color: 'white', border: 'none', borderRadius: 8 }}>Reintentar</button>
-            </div>
-        )
-    }
-
-    // 🔄 GLOBAL REFRESH: Force re-fetch from Cloud after saves
-    const refreshTenantData = async () => {
-        if (!businessId) return
-        console.log('🔄 FORCING GLOBAL REFRESH...')
-        const { data, error } = await supabase
-            .from('branding')
-            .select('*')
-            .eq('business_id', businessId)
-            .single()
-
-        if (!error && data) {
-            // 🛡️ MIRROR-FIRST REFRESH
-            // ⚠️ BLOCKED: Mirror is stale. Bypass.
-            /*
-            const { data: mirrorData } = await supabase
-                .from('menu_view')
-                .select('menu_data')
-                .eq('business_id', businessId)
-                .single()
-
-            if (mirrorData?.menu_data) {
-                console.log('[TenantContext] 🪞 REFRESH MIRROR: Updated with Universal Data')
-                data.menu_data = mirrorData.menu_data
-            }
-            */
-            console.log('[TenantContext] 🛡️ REFRESH BYPASS: Reading direct from Branding Table')
-
-            setTenantData(data)
-            console.log('✅ GLOBAL REFRESH COMPLETE')
-        }
+    // PUBLIC API
+    const contextValue = {
+        businessId,
+        tenantData,
+        loading,
+        error,
+        // Compatibility
+        trialExpired,
+        emergencyUnblock,
+        refreshTenantData,
+        forceRefresh,
+        isLoaded: !loading
     }
 
     return (
-        <TenantContext.Provider value={{
-            businessId,
-            tenantData,
-            trialExpired,
-            loading,
-            isLoaded: !loading,
-            emergencyUnblock,
-            forceRefresh: Date.now(),
-            refreshTenantData
-        }}>
+        <TenantContext.Provider value={contextValue}>
             {children}
         </TenantContext.Provider>
     )
 }
 
+// HOOK
 export function useTenant() {
-    const context = useContext(TenantContext);
-    if (!context) return { businessId: null, tenantData: {}, isLoaded: false, loading: false, forceRefresh: 0, branding: {}, settings: {}, slug: null, refreshTenantData: async () => { } };
-    return {
-        ...context,
-        branding: context.tenantData || {},
-        settings: context.tenantData?.settings || {},
-        slug: context.tenantData?.slug
-    };
+    const context = useContext(TenantContext)
+    if (!context) {
+        // Return mostly empty/safe object for components used outside provider (rare)
+        return {
+            businessId: null, tenantData: {}, loading: false, error: null,
+            refreshTenantData: async () => { }, isLoaded: false
+        }
+    }
+    return context
 }
 
+// Compatibility Hook
 export function useBusinessId() {
-    const context = useContext(TenantContext);
-    if (!context) return null;
-    return context.businessId;
+    const context = useContext(TenantContext)
+    return context?.businessId || null
 }

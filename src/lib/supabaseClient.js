@@ -27,7 +27,34 @@ const SUPABASE_URL = 'https://buendqgmwpxdixwvlkhd.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1ZW5kcWdtd3B4ZGl4d3Zsa2hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNjEzNzUsImV4cCI6MjA4MjkzNzM3NX0.oKSivOi-JhHZhM9Cp8W-uofbK_-I7slOPgTWtWLpysI'
 
 // Initialize the Supabase client
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// Initialize the Supabase client with Header Injection for RLS
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: {
+        // 🛡️ PERIMETER LOCK: Inject Guest Token into every request header
+        // This allows RLS policies to validate the guest_token matches the database
+        fetch: (url, options = {}) => {
+            const headers = new Headers(options?.headers || {})
+
+            if (typeof window !== 'undefined') {
+                const guestToken = localStorage.getItem('fs_guest_token')
+                if (guestToken) {
+                    headers.set('x-guest-token', guestToken)
+                    // console.log('[Supabase] 🔐 Injecting x-guest-token', guestToken)
+                }
+
+                // 🔐 OWNER OVERRIDE: Inject Business ID for Dashboard Access
+                // This matches the 'Owner Select' RLS policy
+                const businessId = localStorage.getItem('fs_business_id') // Owner dashboard must set this
+                if (businessId) {
+                    headers.set('x-business-id', businessId)
+                }
+            }
+
+            return fetch(url, { ...options, headers })
+        }
+    }
+})
 
 /**
  * Upload an asset to Supabase Storage (Multi-Tenant)

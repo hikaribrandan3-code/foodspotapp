@@ -93,6 +93,9 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
+    // Retry Payment State
+    const [retrying, setRetrying] = useState(false)
+
     const paymentStatus = searchParams.get('payment')
     const primaryColor = tenantData?.primary_color || '#C4856A'
 
@@ -177,16 +180,71 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }, [order?.id])
 
     // Handle MP payment callback - update order status
-    useEffect(() => {
-        if (paymentStatus === 'success' && order?.id && order.status === 'awaiting_payment') {
-            // Update to confirmed
-            supabase
-                .from('orders')
-                .update({ status: 'confirmado', paid_at: new Date().toISOString() })
-                .eq('id', order.id)
-                .then(() => console.log('✅ Payment confirmed'))
+    // 🛡️ DUAL-WRITE PROTECTION: Removed client-side status update.
+    // The Webhook is the SOLE authority for payment confirmation.
+    // The Realtime subscription above handles the UI update.
+
+
+    // ============================================
+    // 🔄 RECOVERY ENGINE: RETRY PAYMENT
+    // ============================================
+    const handleRetryPayment = async () => {
+        if (!order || !tenantData) return
+        setRetrying(true)
+
+        try {
+            console.log('🔄 Initiating Payment Retry for Order:', order.id)
+
+            // ⚠️ SECURITY NOTE: Ideally this should be an Edge Function call to avoid exposing the token.
+            // However, adhering to the "Strike 2" instruction to call MP API directly here.
+            // If the token was moved to 'branding_secrets', this might fail unless proxied.
+            const mpToken = tenantData.mp_access_token
+
+            if (!mpToken) {
+                throw new Error('No configuration for payments found.')
+            }
+
+            const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${mpToken}`
+                },
+                body: JSON.stringify({
+                    items: [{
+                        title: `Pedido #${order.order_number} - Reintento`,
+                        quantity: 1,
+                        unit_price: order.total,
+                        currency_id: 'ARS'
+                    }],
+                    // 🛡️ ZERO-DUPLICATE: Use EXISTING order ID
+                    external_reference: order.id,
+                    back_urls: {
+                        success: `${window.location.origin}/status/${order.id}?payment=success`,
+                        failure: `${window.location.origin}/status/${order.id}?payment=failure`,
+                        pending: `${window.location.origin}/status/${order.id}?payment=pending`
+                    },
+                    auto_return: 'approved',
+                    notification_url: `${window.location.origin}/api/mp-webhook`
+                })
+            })
+
+            const data = await response.json()
+            if (data.init_point) {
+                console.log('✅ Preference Re-created:', data.id)
+                window.location.href = data.init_point
+            } else {
+                throw new Error('Mercado Pago did not return an init_point')
+            }
+
+        } catch (err) {
+            console.error('Retry Failed:', err)
+            alert('Error al reintentar el pago. Por favor intenta de nuevo.')
+        } finally {
+            setRetrying(false)
         }
-    }, [paymentStatus, order?.id, order?.status])
+    }
+
 
     // Loading
     if (loading) {
@@ -236,8 +294,29 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     background: '#FEE2E2', border: '1px solid #EF4444',
                     borderRadius: 12, padding: 16, marginBottom: 16, textAlign: 'center'
                 }}>
-                    <span style={{ fontSize: 24, marginRight: 8 }}>❌</span>
-                    <span style={{ color: '#DC2626', fontWeight: 600 }}>Error en el pago</span>
+                    <div style={{ marginBottom: 12 }}>
+                        <span style={{ fontSize: 24, marginRight: 8 }}>❌</span>
+                        <span style={{ color: '#DC2626', fontWeight: 600 }}>Error en el pago</span>
+                    </div>
+                    {/* 🔄 RETRY BUTTON */}
+                    <button
+                        onClick={handleRetryPayment}
+                        disabled={retrying}
+                        style={{
+                            background: primaryColor,
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 24px',
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            fontSize: 14,
+                            cursor: retrying ? 'not-allowed' : 'pointer',
+                            opacity: retrying ? 0.7 : 1,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                    >
+                        {retrying ? 'Procesando...' : 'Intentar de nuevo'}
+                    </button>
                 </div>
             )}
             {paymentStatus === 'pending' && (
