@@ -156,16 +156,29 @@ const TrialSignup = () => {
 
             if (loginError) throw loginError
 
-            const role = data.user?.user_metadata?.role || 'staff'
-            const slug = data.user?.user_metadata?.slug
+            // STRIKE 13.1: TENANT/SLUG ARCHITECTURE ENFORCEMENT
+            const user = data.user
+            const metadata = user?.user_metadata || {}
+            const slug = metadata.slug
+            const role = metadata.role
 
             setLoading(false)
+
             if (slug) {
+                // If we have a slug, ALWAYS go to the tenant owner dashboard
+                // This prevents owners from landing on generic /admin
                 window.location.href = `/${slug}/owner`
             } else {
-                window.location.href = '/'
+                // Fallback for platform admins or legacy users without slugs
+                window.location.href = '/admin'
             }
+
         } catch (err) {
+            console.error('[AUTH] Login error:', err)
+
+            // CRITICAL: Clear ghost sessions if login failed but state lingered
+            await supabase.auth.signOut()
+
             setError(err.message || 'Error al iniciar sesión')
             setLoading(false)
         }
