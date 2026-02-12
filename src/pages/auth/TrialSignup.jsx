@@ -570,19 +570,6 @@ const TrialSignup = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 position: 'relative', overflow: 'hidden'
             }}>
-                {/* BACKGROUND BURGER (Behind Card) */}
-                <div style={{
-                    position: 'absolute',
-                    top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '600px', height: '600px',
-                    backgroundImage: 'url(https://pngimg.com/uploads/burger_sandwich/burger_sandwich_PNG4135.png)',
-                    backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-                    filter: 'blur(0px) drop-shadow(0 40px 80px rgba(0,0,0,0.15))',
-                    zIndex: 0,
-                    opacity: 1
-                }} />
-
                 {/* MODAL CARD */}
                 <div style={{
                     position: 'relative', zIndex: 10,
@@ -595,7 +582,7 @@ const TrialSignup = () => {
                 }}>
                     {/* LOGO HEADER */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
-                        <div style={{ position: 'relative', width: 24, height: 24, marginBottom: 8 }}>
+                        <div style={{ width: 24, height: 24, marginBottom: 0 }}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M12 19V6M5 12l7-7 7 7" stroke="none" />
                                 <path d="M2.05 10.5a9 9 0 0 1 17.4 3.5l1.55 1.55a9 9 0 0 1-1.55 1.55l-1.55-1.55a9 9 0 0 1-3.5 17.4" stroke="none" />
@@ -605,7 +592,7 @@ const TrialSignup = () => {
                                 <path d="M12 2C12 2 6 4 6 10C6 16 12 12 12 12" stroke="#1F2937" strokeWidth="2.5" fill="none" />
                             </svg>
                         </div>
-                        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1F2937', margin: 0, letterSpacing: '-0.02em' }}>
+                        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1F2937', margin: 0, letterSpacing: '-0.02em', marginTop: -4 }}>
                             FoodSpot
                             <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#6B7280', marginTop: 2 }}>Mobile</span>
                         </h1>
