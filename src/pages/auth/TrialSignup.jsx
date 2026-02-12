@@ -204,22 +204,90 @@ const TrialSignup = () => {
                 background: 'radial-gradient(circle at center, rgba(255, 69, 0, 0.1) 0%, rgba(180, 20, 0, 0.6) 100%)'
             }} />
 
-            {/* 3. BURGER IMAGE (TRANSPARENT PNG) */}
+            {/* 3. HERO BURGER (CENTER) */}
             <div style={{
                 position: 'absolute',
-                top: '55%', left: '50%',
+                top: '52%', left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: '125%',
+                width: '120%',
                 height: 'auto',
                 aspectRatio: '1/1',
                 zIndex: 2,
-                backgroundImage: 'url(https://assets.stickpng.com/images/580b57fcd9996e24bc43c1a8.png)',
+                backgroundImage: 'url(https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=90)',
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
-                marginTop: 20
+                filter: 'saturate(1.3) contrast(1.1) drop-shadow(0 25px 50px rgba(0,0,0,0.45))',
             }} />
+
+            {/* 4. FLOATING FOOD SATELLITES */}
+            {/* Pizza slice — top right */}
+            <img
+                src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&q=80"
+                alt=""
+                style={{
+                    position: 'absolute',
+                    top: '28%', right: '-8%',
+                    width: 120, height: 120,
+                    objectFit: 'cover',
+                    borderRadius: '50%',
+                    zIndex: 3,
+                    border: '3px solid rgba(255,255,255,0.25)',
+                    filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.4))',
+                    transform: 'rotate(12deg)',
+                    animation: 'floatA 6s ease-in-out infinite',
+                }}
+            />
+            {/* Sushi — bottom left */}
+            <img
+                src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=300&q=80"
+                alt=""
+                style={{
+                    position: 'absolute',
+                    bottom: '30%', left: '-5%',
+                    width: 100, height: 100,
+                    objectFit: 'cover',
+                    borderRadius: '50%',
+                    zIndex: 3,
+                    border: '3px solid rgba(255,255,255,0.2)',
+                    filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.35))',
+                    transform: 'rotate(-8deg)',
+                    animation: 'floatB 7s ease-in-out infinite',
+                }}
+            />
+            {/* Tacos — top left */}
+            <img
+                src="https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=300&q=80"
+                alt=""
+                style={{
+                    position: 'absolute',
+                    top: '22%', left: '-4%',
+                    width: 90, height: 90,
+                    objectFit: 'cover',
+                    borderRadius: '50%',
+                    zIndex: 3,
+                    border: '3px solid rgba(255,255,255,0.2)',
+                    filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.35))',
+                    transform: 'rotate(-15deg)',
+                    animation: 'floatC 5s ease-in-out infinite',
+                }}
+            />
+
+            {/* Float Keyframes */}
+            <style>{`
+                @keyframes floatA {
+                    0%, 100% { transform: rotate(12deg) translateY(0); }
+                    50% { transform: rotate(12deg) translateY(-12px); }
+                }
+                @keyframes floatB {
+                    0%, 100% { transform: rotate(-8deg) translateY(0); }
+                    50% { transform: rotate(-8deg) translateY(-10px); }
+                }
+                @keyframes floatC {
+                    0%, 100% { transform: rotate(-15deg) translateY(0); }
+                    50% { transform: rotate(-15deg) translateY(-8px); }
+                }
+            `}</style>
 
             {/* 4. CONTENT LAYER */}
             <div style={{
@@ -302,18 +370,18 @@ const TrialSignup = () => {
 
                     {!showEmailForm ? (
                         /* BUTTON STACK - PURE WHITE PILLS */
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                             {/* GOOGLE */}
                             <button
                                 onClick={handleGoogleLogin}
                                 disabled={loading}
                                 style={{
-                                    width: '100%', padding: '18px 24px',
-                                    background: '#FFFFFF', // Solid White
+                                    width: '100%', padding: '16px 20px',
+                                    background: '#FFFFFF',
                                     border: 'none',
                                     borderRadius: 50,
-                                    display: 'flex', alignItems: 'center', gap: 16,
-                                    fontSize: 16, fontWeight: 700, color: '#1F2937',
+                                    display: 'flex', alignItems: 'center', gap: 14,
+                                    fontSize: 14, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                     opacity: loading ? 0.7 : 1
@@ -335,12 +403,12 @@ const TrialSignup = () => {
                                 onClick={() => setShowEmailForm(true)}
                                 disabled={loading}
                                 style={{
-                                    width: '100%', padding: '18px 24px',
-                                    background: '#FFFFFF', // Solid White
+                                    width: '100%', padding: '16px 20px',
+                                    background: '#FFFFFF',
                                     border: 'none',
                                     borderRadius: 50,
-                                    display: 'flex', alignItems: 'center', gap: 16,
-                                    fontSize: 16, fontWeight: 700, color: '#1F2937',
+                                    display: 'flex', alignItems: 'center', gap: 14,
+                                    fontSize: 14, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                 }}
