@@ -252,10 +252,12 @@ export function clearCurrentOrder() {
     return removeItem(STORAGE_KEYS.CURRENT_ORDER);
 }
 
-export function addToCurrentOrder(item, quantity = 1, selectedExtras = []) {
+export function addToCurrentOrder(item, quantity = 1, selectedExtras = [], selectedVariants = []) {
     const order = getCurrentOrder();
     const existingIndex = order.items.findIndex(
-        i => i.id === item.id && JSON.stringify(i.extras) === JSON.stringify(selectedExtras)
+        i => i.id === item.id &&
+            JSON.stringify(i.extras) === JSON.stringify(selectedExtras) &&
+            JSON.stringify(i.variants) === JSON.stringify(selectedVariants)
     );
 
     if (existingIndex !== -1) {
@@ -265,6 +267,7 @@ export function addToCurrentOrder(item, quantity = 1, selectedExtras = []) {
             ...item,
             quantity,
             extras: selectedExtras,
+            variants: selectedVariants
         });
     }
 

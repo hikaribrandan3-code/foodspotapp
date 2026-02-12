@@ -24,12 +24,9 @@ import {
 import { useTenant } from '../../contexts/TenantContext.jsx'
 
 // ============================================
-// 🛒 ORDER.JSX - THE PAY BEFORE PLAY ENGINE
+// 🛒 ORDER.JSX - THE UNIVERSAL CHECKOUT ENGINE
 // ============================================
-// Status Flow:
-// 1. Order created as 'awaiting_payment'
-// 2. Digital → MP Preference → 'awaiting_payment' until webhook confirms
-// 3. Cash → 'pendiente_confirmacion' → WhatsApp summary to owner
+// Supports: Dine-In (Table Service), Delivery, Pickup
 // ============================================
 
 const placeholderImages = [
@@ -39,7 +36,7 @@ const placeholderImages = [
 ]
 
 function Order({ config: configProp }) {
-    const { businessId, tenantData } = useTenant()
+    const { businessId, tenantData, serviceModes } = useTenant()
     const config = configProp || tenantData?.app_config || {}
     const navigate = useNavigate()
 
@@ -56,11 +53,29 @@ function Order({ config: configProp }) {
     const ownerPhone = tenantData?.whatsapp_number || tenantData?.phone || null
     const mpAccessToken = tenantData?.mp_access_token || null
 
+    // --------------------------------------------
+    // 🚦 SERVICE MODE LOGIC (Universal Mode)
+    // --------------------------------------------
+    // Determine initial mode based on availability and session preference
+    const [orderType, setOrderType] = useState(() => {
+        // 1. If explicit delivery session exists, respect it
+        if (isDeliveryMode() && serviceModes?.delivery) return 'delivery'
+
+        // 2. Default to Dine-In if available
+        if (serviceModes?.dineIn) return 'dine_in'
+
+        // 3. Fallback to Delivery if Dine-In disabled
+        if (serviceModes?.delivery) return 'delivery'
+
+        // 4. Pickup as last resort
+        return 'pickup'
+    })
+
     // UI STATE
     const [order, setOrder] = useState(() => getCurrentOrder())
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitted, setSubmitted] = useState(false)
-    const [deliveryMode] = useState(() => isDeliveryMode())
+
     // 🔔 TOAST STATE
     const [toastMessage, setToastMessage] = useState(null)
 
@@ -70,11 +85,12 @@ function Order({ config: configProp }) {
         setTimeout(() => setToastMessage(null), 4000)
     }
 
-    // Customer info
+    // Customer info (Shared State)
     const [customerInfo, setCustomerInfo] = useState({
         name: '',
         phone: '',
-        address: '',
+        address: '',     // Delivery Only
+        tableNumber: '', // Dine-In Only
         lat: null,
         lon: null
     })
@@ -85,16 +101,16 @@ function Order({ config: configProp }) {
     const [cashFallbackNotice, setCashFallbackNotice] = useState(false)
     const [validationErrors, setValidationErrors] = useState([])
 
-    // 📍 DISTANCE STATE
+    // 📍 DISTANCE STATE (Delivery Only)
     const [distanceResult, setDistanceResult] = useState({ withinRadius: true, distanceKm: null })
 
     // Recalculate distance when coords change
     useEffect(() => {
-        if (customerInfo.lat && customerInfo.lon && storeCoords.lat && storeCoords.lon) {
+        if (orderType === 'delivery' && customerInfo.lat && customerInfo.lon && storeCoords.lat && storeCoords.lon) {
             const result = isWithinDeliveryRadius(storeCoords, { lat: customerInfo.lat, lon: customerInfo.lon }, deliveryRadius)
             setDistanceResult(result)
         }
-    }, [customerInfo.lat, customerInfo.lon, storeCoords, deliveryRadius])
+    }, [customerInfo.lat, customerInfo.lon, storeCoords, deliveryRadius, orderType])
 
     // Poll order and cash availability
     useEffect(() => {
@@ -117,12 +133,14 @@ function Order({ config: configProp }) {
     }
 
     const subtotal = calculateSubtotal()
-    const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold
-    const actualDeliveryFee = deliveryMode ? (isFreeDelivery ? 0 : deliveryFee) : 0
+    // Delivery Logic
+    const isDelivery = orderType === 'delivery'
+    const isFreeDelivery = isDelivery && freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold
+    const actualDeliveryFee = isDelivery ? (isFreeDelivery ? 0 : deliveryFee) : 0
     const total = subtotal + actualDeliveryFee
 
     // 🚫 HARD FENCE
-    const isOutOfRadius = deliveryMode && !distanceResult.withinRadius && distanceResult.distanceKm !== null
+    const isOutOfRadius = isDelivery && !distanceResult.withinRadius && distanceResult.distanceKm !== null
 
     const handleQuantityChange = (index, delta) => {
         const newQuantity = (order.items[index]?.quantity || 1) + delta
@@ -147,13 +165,21 @@ function Order({ config: configProp }) {
         if (config.pauseOrders) return
         if (isOutOfRadius) return
 
-        // Validate delivery info
-        if (deliveryMode) {
+        // 🛡️ VALIDATION
+        const errors = []
+        if (!customerInfo.name || customerInfo.name.length < 2) errors.push('Nombre requerido')
+
+        if (orderType === 'delivery') {
             const validation = validateDeliveryInfo(customerInfo)
-            if (!validation.valid) {
-                setValidationErrors(validation.errors)
-                return
-            }
+            if (!validation.valid) errors.push(...validation.errors)
+        } else if (orderType === 'dine_in') {
+            if (!customerInfo.tableNumber) errors.push('Número de mesa requerido')
+        }
+
+        if (errors.length > 0) {
+            setValidationErrors(errors)
+            showToast('⚠️ Completa los datos requeridos')
+            return
         }
 
         setValidationErrors([])
@@ -164,7 +190,7 @@ function Order({ config: configProp }) {
 
         // 💎 STATUS 0: All orders start as 'awaiting_payment'
         // They are INVISIBLE to the Staff Dashboard until payment is confirmed
-        const isCashPath = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio'
+        const isCashPath = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
         const initialStatus = isCashPath ? 'pendiente_confirmacion' : 'awaiting_payment'
 
         const newOrder = {
@@ -176,12 +202,14 @@ function Order({ config: configProp }) {
             delivery_fee: actualDeliveryFee,
             total: total,
             status: initialStatus,
-            order_type: deliveryMode ? 'delivery' : 'pickup',
+            order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
-            delivery_address: customerInfo.address || null,
+            // 🛡️ CRASH FIX: Only include delivery_address if isDelivery
+            delivery_address: isDelivery ? (customerInfo.address || null) : null,
+            table_number: orderType === 'dine_in' ? customerInfo.tableNumber : null,
             payment_method: paymentMethod,
-            distance_km: distanceResult.distanceKm,
+            distance_km: isDelivery ? distanceResult.distanceKm : null,
             created_at: new Date().toISOString()
         }
 
@@ -234,7 +262,7 @@ function Order({ config: configProp }) {
                         if (mpData.init_point) {
                             clearCurrentOrder()
                             incrementOrderCount()
-                            if (deliveryMode) clearDeliveryMode()
+                            if (isDelivery) clearDeliveryMode()
                             window.location.href = mpData.init_point
                             return
                         } else {
@@ -242,11 +270,19 @@ function Order({ config: configProp }) {
                         }
                     } catch (mpError) {
                         console.error('MP Error:', mpError)
-                            // Fallback to cash
+                        // 🛡️ CRASH FIX: Fix broken .update chain
+                        await supabase
+                            .from('orders')
                             .update({ status: 'pendiente_confirmacion', payment_method: 'efectivo' })
                             .eq('id', savedOrder.id)
 
                         showToast('⚠️ Error con Mercado Pago. Se cambió a pago en efectivo.')
+                        // Proceed to success screen as fallback
+                        setSubmitted(true)
+                        setTimeout(() => {
+                            navigate(`/status/${savedOrder.id}`)
+                        }, 1500)
+                        return
                     }
                 } else {
                     // No MP token - fall back to pending confirmation
@@ -257,8 +293,8 @@ function Order({ config: configProp }) {
                 }
             }
 
-            // ========== CASH / DEBIT PATH ==========
-            // Open WhatsApp with order summary
+            // ========== CASH / OTHER PATHS ==========
+            // Open WhatsApp with order summary if needed
             if (ownerPhone && isCashPath) {
                 const whatsappMessage = buildWhatsAppSummary(
                     { ...newOrder, orderNumber, customerInfo },
@@ -266,13 +302,18 @@ function Order({ config: configProp }) {
                     paymentMethod
                 )
                 const whatsappUrl = `https://wa.me/${ownerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
-                window.open(whatsappUrl, '_blank')
+
+                // For dine-in, maybe we don't open WhatsApp automatically? 
+                // Let's keep it for now as "Notify Waiter" fallback.
+                if (orderType === 'delivery' || paymentMethod === 'efectivo') {
+                    window.open(whatsappUrl, '_blank')
+                }
             }
 
             // Cleanup
             clearCurrentOrder()
             incrementOrderCount()
-            if (deliveryMode) clearDeliveryMode()
+            if (isDelivery) clearDeliveryMode()
 
             setSubmitted(true)
             setTimeout(() => {
@@ -320,7 +361,7 @@ function Order({ config: configProp }) {
                         ¡Pedido enviado!
                     </h2>
                     <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 24 }}>
-                        Redirigiendo al estado del pedido...
+                        {orderType === 'dine_in' ? 'Avisando a cocina...' : 'Redirigiendo al estado...'}
                     </p>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
                         {[0, 1, 2].map(i => (
@@ -376,7 +417,8 @@ function Order({ config: configProp }) {
     // RENDER: MAIN CHECKOUT
     // ============================================
     return (
-        <div style={{ minHeight: '100vh', paddingBottom: 120, background: '#FAFAF8' }}>
+        <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#FAFAF8' }}>
+            {/* BRANDING HEADER UPDATE (Modern Look) */}
             <HeaderClamp config={config} />
 
             {/* Divider Strip */}
@@ -398,9 +440,26 @@ function Order({ config: configProp }) {
                 <div style={{ background: 'white', borderRadius: 20, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
 
                     {/* Header */}
-                    <div style={{ marginBottom: 20 }}>
-                        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1F2937', marginBottom: 4 }}>Tu Pedido</h1>
-                        <p style={{ fontSize: 14, color: '#9CA3AF' }}>Revisá antes de confirmar</p>
+                    <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1F2937', marginBottom: 4 }}>Tu Pedido</h1>
+                            <p style={{ fontSize: 14, color: '#9CA3AF' }}>
+                                {orderType === 'dine_in' ? 'Para comer aquí' : 'Para envío'}
+                            </p>
+                        </div>
+                        {/* MODE TOGGLE (Only if both modes enabled) */}
+                        {serviceModes?.dineIn && serviceModes?.delivery && (
+                            <button
+                                onClick={() => setOrderType(prev => prev === 'dine_in' ? 'delivery' : 'dine_in')}
+                                style={{
+                                    fontSize: 12, padding: '6px 12px', borderRadius: 20,
+                                    background: '#F3F4F6', border: '1px solid #E5E7EB',
+                                    color: '#4B5563', fontWeight: 600, cursor: 'pointer'
+                                }}
+                            >
+                                Cambiar
+                            </button>
+                        )}
                     </div>
 
                     {/* Pause Warning */}
@@ -410,96 +469,108 @@ function Order({ config: configProp }) {
                         </div>
                     )}
 
-                    {/* Delivery Form */}
-                    {deliveryMode && (
-                        <div style={{ background: '#F9FAFB', padding: 16, borderRadius: 12, marginBottom: 16 }}>
-                            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Datos de envío</h3>
+                    {/* DYNAMIC FORM (Universal) */}
+                    <div style={{ background: '#F9FAFB', padding: 16, borderRadius: 12, marginBottom: 16 }}>
+                        <h3 style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
+                            {orderType === 'dine_in' ? 'Datos de Mesa' : 'Datos de Envío'}
+                        </h3>
 
-                            {/* Validation Errors */}
-                            {validationErrors.length > 0 && (
-                                <div style={{ background: '#FEE2E2', padding: 10, borderRadius: 8, marginBottom: 12 }}>
-                                    {validationErrors.map((err, i) => (
-                                        <p key={i} style={{ color: '#DC2626', fontSize: 13, margin: '2px 0' }}>{err}</p>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* 🚫 HARD FENCE WARNING */}
-                            {isOutOfRadius && (
-                                <div style={{
-                                    background: '#FEE2E2', border: '2px solid #EF4444',
-                                    padding: 16, borderRadius: 12, marginBottom: 16, textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: 32, marginBottom: 8 }}>🚫</div>
-                                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#DC2626', marginBottom: 4 }}>
-                                        Fuera de Radio de Entrega
-                                    </h4>
-                                    <p style={{ fontSize: 14, color: '#7F1D1D' }}>
-                                        Estás a <strong>{distanceResult.distanceKm}km</strong> del local.
-                                        <br />Máximo: {deliveryRadius}km
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* Distance OK */}
-                            {!isOutOfRadius && distanceResult.distanceKm !== null && (
-                                <div style={{ background: '#ECFDF5', padding: 10, borderRadius: 8, marginBottom: 12, textAlign: 'center' }}>
-                                    <p style={{ color: '#166534', fontSize: 13, margin: 0 }}>📍 Estás a {distanceResult.distanceKm}km del local</p>
-                                </div>
-                            )}
-
-                            {/* Name */}
-                            <div style={{ marginBottom: 12 }}>
-                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre *</label>
-                                <input
-                                    type="text"
-                                    value={customerInfo.name}
-                                    onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
-                                    placeholder="Tu nombre"
-                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
-                                />
+                        {/* Validation Errors */}
+                        {validationErrors.length > 0 && (
+                            <div style={{ background: '#FEE2E2', padding: 10, borderRadius: 8, marginBottom: 12 }}>
+                                {validationErrors.map((err, i) => (
+                                    <p key={i} style={{ color: '#DC2626', fontSize: 13, margin: '2px 0' }}>{err}</p>
+                                ))}
                             </div>
+                        )}
 
-                            {/* Phone */}
-                            <div style={{ marginBottom: 12 }}>
-                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Teléfono *</label>
-                                <input
-                                    type="tel"
-                                    value={customerInfo.phone}
-                                    onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
-                                    placeholder="+54 11 1234-5678"
-                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
-                                />
-                            </div>
-
-                            {/* Address */}
-                            <div>
-                                <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección *</label>
-                                <textarea
-                                    value={customerInfo.address}
-                                    onChange={(e) => setCustomerInfo(p => ({ ...p, address: e.target.value }))}
-                                    placeholder="Calle, número, piso..."
-                                    rows={2}
-                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, resize: 'none', boxSizing: 'border-box' }}
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Payment Method */}
-                    {deliveryMode && (
-                        <div style={{ background: '#F9FAFB', padding: 16, borderRadius: 12, marginBottom: 16 }}>
-                            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Método de pago</h3>
-
-                            {cashFallbackNotice && (
-                                <div style={{ background: '#FEF3C7', padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 13 }}>
-                                    <p style={{ color: '#92400E', margin: 0 }}>
-                                        ⏰ Efectivo no disponible (fuera de horario). Se seleccionó Mercado Pago.
-                                    </p>
+                        {/* Order Type Specific Fields */}
+                        {orderType === 'delivery' ? (
+                            <>
+                                {/* 🚫 HARD FENCE WARNING */}
+                                {isOutOfRadius && (
+                                    <div style={{
+                                        background: '#FEE2E2', border: '2px solid #EF4444',
+                                        padding: 16, borderRadius: 12, marginBottom: 16, textAlign: 'center'
+                                    }}>
+                                        <div style={{ fontSize: 32, marginBottom: 8 }}>🚫</div>
+                                        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#DC2626', marginBottom: 4 }}>
+                                            Fuera de Radio de Entrega
+                                        </h4>
+                                        <p style={{ fontSize: 14, color: '#7F1D1D' }}>
+                                            Máximo: {deliveryRadius}km
+                                        </p>
+                                    </div>
+                                )}
+                                {/* Name */}
+                                <div style={{ marginBottom: 12 }}>
+                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre *</label>
+                                    <input
+                                        type="text"
+                                        value={customerInfo.name}
+                                        onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
+                                        placeholder="Tu nombre"
+                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
+                                    />
                                 </div>
-                            )}
+                                {/* Phone */}
+                                <div style={{ marginBottom: 12 }}>
+                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Teléfono *</label>
+                                    <input
+                                        type="tel"
+                                        value={customerInfo.phone}
+                                        onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
+                                        placeholder="+54 11 1234-5678"
+                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                                {/* Address */}
+                                <div>
+                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección *</label>
+                                    <textarea
+                                        value={customerInfo.address}
+                                        onChange={(e) => setCustomerInfo(p => ({ ...p, address: e.target.value }))}
+                                        placeholder="Calle, número, piso..."
+                                        rows={2}
+                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, resize: 'none', boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            /* DINE-IN FIELDS */
+                            <>
+                                <div style={{ marginBottom: 12 }}>
+                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre (Opcional)</label>
+                                    <input
+                                        type="text"
+                                        value={customerInfo.name}
+                                        onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
+                                        placeholder="Tu nombre"
+                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Número de Mesa *</label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        value={customerInfo.tableNumber}
+                                        onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
+                                        placeholder="Ej: 5"
+                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                            </>
+                        )}
+                    </div>
 
-                            {/* Mercado Pago */}
+                    {/* DYNAMIC PAYMENT SELECTOR (Unified) */}
+                    <div style={{ background: '#F9FAFB', padding: 16, borderRadius: 12, marginBottom: 16 }}>
+                        <h3 style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Método de pago</h3>
+
+                        {/* Pay Before Logic (Mercado Pago) - Only if enabled for Dine-In or always for Delivery */}
+                        {(orderType === 'delivery' || serviceModes?.dineInPayment === 'before') && (
                             <label style={{
                                 display: 'flex', alignItems: 'center', gap: 10, padding: 12,
                                 background: paymentMethod === 'mercadopago' ? '#EFF6FF' : 'white',
@@ -512,38 +583,35 @@ function Order({ config: configProp }) {
                                     <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>Transferencia o QR</p>
                                 </div>
                             </label>
+                        )}
 
-                            {/* Cash */}
-                            {cashAvailable && (
-                                <label style={{
-                                    display: 'flex', alignItems: 'center', gap: 10, padding: 12,
-                                    background: paymentMethod === 'efectivo' ? '#F0FDF4' : 'white',
-                                    border: paymentMethod === 'efectivo' ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                    borderRadius: 10, cursor: 'pointer', marginBottom: 8
-                                }}>
-                                    <input type="radio" name="pay" value="efectivo" checked={paymentMethod === 'efectivo'} onChange={(e) => setPaymentMethod(e.target.value)} style={{ accentColor: '#22C55E' }} />
-                                    <div>
-                                        <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>Efectivo</span>
-                                        <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>Pago al recibir</p>
-                                    </div>
-                                </label>
-                            )}
-
-                            {/* Debit at Door */}
+                        {/* Cash / Pay After Logic */}
+                        {(cashAvailable || serviceModes?.dineInPayment === 'after') && (
                             <label style={{
                                 display: 'flex', alignItems: 'center', gap: 10, padding: 12,
-                                background: paymentMethod === 'tarjeta_envio' ? '#FEF3C7' : 'white',
-                                border: paymentMethod === 'tarjeta_envio' ? '2px solid #F59E0B' : '1px solid #E5E7EB',
-                                borderRadius: 10, cursor: 'pointer'
+                                background: (paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter') ? '#F0FDF4' : 'white',
+                                border: (paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter') ? '2px solid #22C55E' : '1px solid #E5E7EB',
+                                borderRadius: 10, cursor: 'pointer', marginBottom: 8
                             }}>
-                                <input type="radio" name="pay" value="tarjeta_envio" checked={paymentMethod === 'tarjeta_envio'} onChange={(e) => setPaymentMethod(e.target.value)} style={{ accentColor: '#F59E0B' }} />
+                                <input
+                                    type="radio"
+                                    name="pay"
+                                    value={orderType === 'dine_in' ? 'pay_at_counter' : 'efectivo'}
+                                    checked={paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter'}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    style={{ accentColor: '#22C55E' }}
+                                />
                                 <div>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>Tarjeta (al recibir)</span>
-                                    <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>Débito/Crédito en la puerta</p>
+                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>
+                                        {orderType === 'dine_in' ? 'Pagar al Final' : 'Efectivo'}
+                                    </span>
+                                    <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>
+                                        {orderType === 'dine_in' ? 'En caja o al mozo' : 'Pago al recibir'}
+                                    </p>
                                 </div>
                             </label>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {/* Order Items */}
                     <div style={{ marginBottom: 16 }}>
@@ -574,17 +642,12 @@ function Order({ config: configProp }) {
                             <span style={{ color: '#6B7280' }}>Subtotal</span>
                             <span style={{ fontWeight: 500 }}>{formatPrice(subtotal)}</span>
                         </div>
-                        {deliveryMode && (
+                        {isDelivery && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                                 <span style={{ color: '#6B7280' }}>Envío</span>
                                 <span style={{ fontWeight: 500, color: isFreeDelivery ? '#22C55E' : 'inherit' }}>
                                     {isFreeDelivery ? '¡GRATIS!' : formatPrice(actualDeliveryFee)}
                                 </span>
-                            </div>
-                        )}
-                        {isFreeDelivery && (
-                            <div style={{ background: '#ECFDF5', padding: '8px 12px', borderRadius: 8, marginBottom: 12, textAlign: 'center' }}>
-                                <span style={{ color: '#166534', fontSize: 13, fontWeight: 500 }}>🎉 ¡Envío Gratis aplicado!</span>
                             </div>
                         )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
@@ -595,11 +658,12 @@ function Order({ config: configProp }) {
                 </div>
             </div>
 
-            {/* Floating Submit Button */}
+            {/* Floating Submit Button (with Safe Area) */}
             <div style={{
                 position: 'fixed', bottom: 0, left: 0, right: 0,
-                padding: '16px 20px 32px',
-                background: 'linear-gradient(to top, white 80%, transparent)',
+                padding: '16px 20px',
+                paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 20px))',
+                background: 'linear-gradient(to top, white 85%, transparent)',
                 zIndex: 100
             }}>
                 <button
@@ -615,40 +679,28 @@ function Order({ config: configProp }) {
                         boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
                     }}
                 >
-                    {isSubmitting ? 'Enviando...' : (isOutOfRadius ? '🚫 Fuera de Radio' : `Confirmar Pedido · ${formatPrice(total)}`)}
+                    {isSubmitting ? 'Procesando...' : (isOutOfRadius ? '🚫 Fuera de Radio' : `Confirmar Pedido · ${formatPrice(total)}`)}
                 </button>
             </div>
 
-            {/* 🍞 TOAST NOTIFICATION (Fixed Bottom) */}
+            {/* 🍞 TOAST NOTIFICATION */}
             {toastMessage && (
                 <div style={{
                     position: 'fixed',
                     bottom: 100,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: '#1F2937',
-                    color: 'white',
-                    padding: '12px 20px',
-                    borderRadius: 30,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    zIndex: 9999,
+                    background: '#1F2937', color: 'white', padding: '12px 20px',
+                    borderRadius: 30, fontSize: 14, fontWeight: 500, zIndex: 9999,
                     boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
+                    display: 'flex', alignItems: 'center', gap: 10,
                     animation: 'slideUpToast 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     whiteSpace: 'nowrap'
                 }}>
                     <span>{toastMessage}</span>
                 </div>
             )}
-            <style>{`
-                @keyframes slideUpToast {
-                    from { transform: translate(-50%, 100%); opacity: 0; }
-                    to { transform: translate(-50%, 0); opacity: 1; }
-                }
-            `}</style>
+            <style>{`@keyframes slideUpToast { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }`}</style>
         </div>
     )
 }

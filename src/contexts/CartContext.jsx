@@ -35,8 +35,8 @@ export function CartProvider({ children }) {
     }, [sheetItem, sheetQuantity, refreshCart, closeOrderSheet])
 
     // DIRECT ADD (Instant Velocity)
-    const addToCart = useCallback((item, quantity = 1, extras = []) => {
-        addToCurrentOrder(item, quantity, extras)
+    const addToCart = useCallback((item, quantity = 1, extras = [], variants = []) => {
+        addToCurrentOrder(item, quantity, extras, variants)
         refreshCart()
     }, [refreshCart])
 

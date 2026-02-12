@@ -218,11 +218,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                 return {
                     ...prev,
-                    ...tenantData.app_config
+                    ...tenantData.app_config,
+                    // 🆕 HYDRATE SERVICE MODES
+                    service_modes: tenantData.service_modes || { dineIn: true, dineInPayment: 'before', delivery: true }
                 }
             })
         }
-    }, [tenantLoaded, tenantData?.app_config])
+    }, [tenantLoaded, tenantData?.app_config, tenantData?.service_modes])
 
     // 🛡️ ANTI-RECURSION GUARD: Only sync prop to state on actual identity change
     // Prevents "Hurricane" re-renders caused by object reference changes
@@ -460,6 +462,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     delivery_fee: localConfig.delivery?.flatFee,
                     free_delivery_threshold: localConfig.delivery?.freeDeliveryThreshold,
                     app_config: localConfig,
+                    service_modes: localConfig.service_modes,
                     updated_at: new Date()
                 })
                 .eq('business_id', targetBusinessId)
@@ -998,123 +1001,215 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
                     </div>
 
-                    {/* Delivery Configuration */}
-                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
-                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
+                    {/* OPERATIONAL COMMAND CENTER (Strike 9) */}
+                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>⚙️ Configuración de Operación</p>
 
-                        <div style={{ marginBottom: 12 }}>
-                            {/* SaaS-Scale Static Map & Radius Visualizer */}
-                            <div style={{
-                                height: 160,
-                                background: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&q=80') center/cover",
-                                borderRadius: 10,
-                                marginBottom: 16,
-                                position: 'relative',
-                                overflow: 'hidden',
-                                border: '1px solid #CBD5E1'
-                            }}>
-                                {/* Dark overlay for contrast */}
-                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.2)' }} />
-
-                                {/* Center Pin */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%', left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    zIndex: 10,
-                                    fontSize: 24,
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                                }}>
-                                    🏪
-                                </div>
-
-                                {/* Dynamic Radius Circle */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%', left: '50%',
-                                    width: 40, height: 40,
-                                    marginLeft: -20, marginTop: -20,
-                                    borderRadius: '50%',
-                                    border: '2px solid #22C55E',
-                                    background: 'rgba(34, 197, 94, 0.15)',
-                                    transform: `scale(${localConfig.delivery?.radiusKm || 5})`,
-                                    willChange: 'transform',
-                                    transition: 'transform 0.1s linear',
-                                    pointerEvents: 'none',
-                                    boxShadow: '0 0 0 1000px rgba(0,0,0,0.1)'
-                                }} />
-                            </div>
-
-                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
-                            <input
-                                type="range"
-                                min="1"
-                                max="50"
-                                value={localConfig.delivery?.radiusKm || 5}
-                                onChange={(e) => {
-                                    const newValue = parseInt(e.target.value)
-                                    const oldValue = localConfig.delivery?.radiusKm || 5
-                                    if (newValue !== oldValue) {
-                                        recordDeliveryConfigChange('radiusKm', oldValue, newValue)
-                                    }
-                                    // Instant Local Update
-                                    setLocalConfig(prev => ({
-                                        ...prev,
-                                        delivery: { ...prev.delivery, radiusKm: newValue }
-                                    }))
-                                    updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                    setHasChanges(true)
-                                }}
-                                style={{ width: '100%' }}
-                            />
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        {/* Dine-In Toggle */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                             <div>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="50"
-                                    value={localConfig.delivery?.flatFee === 0 ? '' : localConfig.delivery?.flatFee} // 🛡️ KILL STICKY ZERO
-                                    onChange={(e) => {
-                                        const val = e.target.value === '' ? 0 : parseInt(e.target.value)
-                                        setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
-                                        updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        setHasChanges(true)
-                                    }}
-                                    placeholder="0"
-                                    style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
-                                />
+                                <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🍽️ Comer en Local</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>Habilita mesas y mozos</p>
                             </div>
-                            <div>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
+                            <label className="toggle">
                                 <input
-                                    type="number"
-                                    min="0"
-                                    step="100"
-                                    value={localConfig.delivery?.freeDeliveryThreshold ?? ''}
+                                    type="checkbox"
+                                    checked={localConfig.service_modes?.dineIn ?? true}
                                     onChange={(e) => {
-                                        // 🛡️ STICKY ZERO FIX
-                                        const val = e.target.value
-                                        const newValue = val === '' ? 0 : parseInt(val)
-
+                                        const val = e.target.checked
                                         setLocalConfig(prev => ({
-                                            ...prev,
-                                            delivery: { ...prev.delivery, freeDeliveryThreshold: val === '' ? '' : newValue }
+                                            ...prev, service_modes: { ...prev.service_modes, dineIn: val }
                                         }))
-
-                                        updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
                                         setHasChanges(true)
                                     }}
-                                    placeholder="0"
-                                    style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
                                 />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        {/* Dine-In Payment Logic (Conditional) */}
+                        {(localConfig.service_modes?.dineIn ?? true) && (
+                            <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Momento de Pago</label>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <button
+                                        onClick={() => {
+                                            setLocalConfig(prev => ({
+                                                ...prev, service_modes: { ...prev.service_modes, dineInPayment: 'before' }
+                                            }))
+                                            setHasChanges(true)
+                                        }}
+                                        style={{
+                                            flex: 1, padding: '8px', borderRadius: 6, fontSize: 13, border: '1px solid', cursor: 'pointer',
+                                            borderColor: localConfig.service_modes?.dineInPayment === 'before' ? '#3B82F6' : '#E2E8F0',
+                                            background: localConfig.service_modes?.dineInPayment === 'before' ? '#EFF6FF' : 'white',
+                                            color: localConfig.service_modes?.dineInPayment === 'before' ? '#1D4ED8' : '#64748B'
+                                        }}
+                                    >
+                                        Antes de comer
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setLocalConfig(prev => ({
+                                                ...prev, service_modes: { ...prev.service_modes, dineInPayment: 'after' }
+                                            }))
+                                            setHasChanges(true)
+                                        }}
+                                        style={{
+                                            flex: 1, padding: '8px', borderRadius: 6, fontSize: 13, border: '1px solid', cursor: 'pointer',
+                                            borderColor: localConfig.service_modes?.dineInPayment === 'after' ? '#3B82F6' : '#E2E8F0',
+                                            background: localConfig.service_modes?.dineInPayment === 'after' ? '#EFF6FF' : 'white',
+                                            color: localConfig.service_modes?.dineInPayment === 'after' ? '#1D4ED8' : '#64748B'
+                                        }}
+                                    >
+                                        Después (Mesa)
+                                    </button>
+                                </div>
                             </div>
+                        )}
+
+                        {/* Delivery Toggle */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🛵 Envíos</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>Habilita delivery y zonas</p>
+                            </div>
+                            <label className="toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={localConfig.service_modes?.delivery ?? true}
+                                    onChange={(e) => {
+                                        const val = e.target.checked
+                                        setLocalConfig(prev => ({
+                                            ...prev, service_modes: { ...prev.service_modes, delivery: val }
+                                        }))
+                                        setHasChanges(true)
+                                    }}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
+
+                    {/* Delivery Configuration (Conditionally Hidden) */}
+                    {(localConfig.service_modes?.delivery ?? true) && (
+                        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
+                            <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
+
+                            <div style={{ marginBottom: 12 }}>
+                                {/* SaaS-Scale Static Map & Radius Visualizer */}
+                                <div style={{
+                                    height: 160,
+                                    background: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&q=80') center/cover",
+                                    borderRadius: 10,
+                                    marginBottom: 16,
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    border: '1px solid #CBD5E1'
+                                }}>
+                                    {/* Dark overlay for contrast */}
+                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.2)' }} />
+
+                                    {/* Center Pin */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '50%', left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        zIndex: 10,
+                                        fontSize: 24,
+                                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                                    }}>
+                                        🏪
+                                    </div>
+
+                                    {/* Dynamic Radius Circle */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '50%', left: '50%',
+                                        width: 40, height: 40,
+                                        marginLeft: -20, marginTop: -20,
+                                        borderRadius: '50%',
+                                        border: '2px solid #22C55E',
+                                        background: 'rgba(34, 197, 94, 0.15)',
+                                        transform: `scale(${localConfig.delivery?.radiusKm || 5})`,
+                                        willChange: 'transform',
+                                        transition: 'transform 0.1s linear',
+                                        pointerEvents: 'none',
+                                        boxShadow: '0 0 0 1000px rgba(0,0,0,0.1)'
+                                    }} />
+                                </div>
+
+                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="50"
+                                    value={localConfig.delivery?.radiusKm || 5}
+                                    onChange={(e) => {
+                                        const newValue = parseInt(e.target.value)
+                                        const oldValue = localConfig.delivery?.radiusKm || 5
+                                        if (newValue !== oldValue) {
+                                            recordDeliveryConfigChange('radiusKm', oldValue, newValue)
+                                        }
+                                        // Instant Local Update
+                                        setLocalConfig(prev => ({
+                                            ...prev,
+                                            delivery: { ...prev.delivery, radiusKm: newValue }
+                                        }))
+                                        updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
+                                        window.dispatchEvent(new CustomEvent('frontendSync'))
+                                        setHasChanges(true)
+                                    }}
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                <div>
+                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="50"
+                                        value={localConfig.delivery?.flatFee === 0 ? '' : localConfig.delivery?.flatFee} // 🛡️ KILL STICKY ZERO
+                                        onChange={(e) => {
+                                            const val = e.target.value === '' ? 0 : parseInt(e.target.value)
+                                            setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
+                                            updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            setHasChanges(true)
+                                        }}
+                                        placeholder="0"
+                                        style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="100"
+                                        value={localConfig.delivery?.freeDeliveryThreshold ?? ''}
+                                        onChange={(e) => {
+                                            // 🛡️ STICKY ZERO FIX
+                                            const val = e.target.value
+                                            const newValue = val === '' ? 0 : parseInt(val)
+
+                                            setLocalConfig(prev => ({
+                                                ...prev,
+                                                delivery: { ...prev.delivery, freeDeliveryThreshold: val === '' ? '' : newValue }
+                                            }))
+
+                                            updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
+                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            setHasChanges(true)
+                                        }}
+                                        placeholder="0"
+                                        style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* ==================== BRIDGED BRANDING SECTION ==================== */}

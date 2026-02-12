@@ -179,12 +179,21 @@ export function TenantProvider({ children }) {
         if (data.confirmation_color) root.setProperty('--color-confirm', data.confirmation_color)
         if (data.powered_by_color) root.setProperty('--color-powered', data.powered_by_color)
         if (data.background_color) root.setProperty('--color-bg', data.background_color)
+
+        // 🆕 UNIVERSAL MODES
+        // Expose service modes to CSS for conditional styling if needed
+        if (data.service_modes) {
+            if (data.service_modes.dineIn) root.classList.add('mode-dine-in')
+            else root.classList.remove('mode-dine-in')
+        }
     }
 
     // PUBLIC API
     const contextValue = {
         businessId,
         tenantData,
+        // 🆕 EXPOSE SERVICE MODES
+        serviceModes: tenantData?.service_modes || { dineIn: true, dineInPayment: 'before', delivery: true, events: true },
         loading,
         error,
         // Compatibility
