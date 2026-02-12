@@ -183,24 +183,25 @@ function TrialSignup() {
             position: 'relative',
             overflow: 'hidden',
             fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-            backgroundColor: '#DC3C14'
+            backgroundColor: '#D80000'
         }}>
-            {/* 1. STATIC SWIRL BACKGROUND (No Animation) */}
+            {/* 1. SOFT-GLOW SWIRL BACKGROUND */}
             <div style={{
                 position: 'absolute', inset: -200, zIndex: 0,
                 background: `
                     repeating-conic-gradient(
                         from 0deg at 50% 50%,
-                        #D93611 0deg 15deg,
-                        #EF5830 15deg 30deg
+                        #D80000 0deg 15deg,
+                        #FF4500 15deg 30deg
                     )
                 `,
+                filter: 'blur(8px)',
             }} />
 
-            {/* 2. VIGNETTE For Legibility */}
+            {/* 2. WARM VIGNETTE */}
             <div style={{
                 position: 'absolute', inset: 0, zIndex: 1,
-                background: 'radial-gradient(circle at center, rgba(217, 54, 17, 0) 20%, rgba(160, 30, 10, 0.4) 100%)'
+                background: 'radial-gradient(circle at center, rgba(255, 69, 0, 0.1) 0%, rgba(180, 20, 0, 0.5) 100%)'
             }} />
 
             {/* 3. BURGER IMAGE */}
@@ -208,7 +209,7 @@ function TrialSignup() {
                 position: 'absolute',
                 top: '50%', left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: '115%', // Slightly smaller than "too big"
+                width: '130%',
                 height: 'auto',
                 aspectRatio: '1/1',
                 zIndex: 2,
@@ -216,8 +217,8 @@ function TrialSignup() {
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                filter: 'saturate(1.2) contrast(1.05) drop-shadow(0 25px 50px rgba(0,0,0,0.35))',
-                marginTop: -20
+                filter: 'saturate(1.3) contrast(1.08) drop-shadow(0 30px 60px rgba(0,0,0,0.4))',
+                marginTop: -10
             }} />
 
             {/* 4. CONTENT LAYER */}
@@ -242,13 +243,13 @@ function TrialSignup() {
                         TU NEGOCIO. TU MARCA. TU APP.
                     </p>
 
-                    {/* Main Title - STRICTLY INTER BLACK 900 WHITE */}
+                    {/* Main Title - INTER BLACK 900, HEAVY STAMP */}
                     <h1 id="trial-title" style={{
-                        color: '#FFFFFF', fontSize: 'clamp(40px, 11vw, 52px)',
-                        fontWeight: 900, lineHeight: 0.9,
+                        color: '#FFFFFF', fontSize: 'clamp(48px, 13vw, 64px)',
+                        fontWeight: 900, lineHeight: 0.85,
                         margin: 0,
-                        textShadow: '0 4px 16px rgba(0,0,0,0.25)',
-                        letterSpacing: '-0.03em',
+                        textShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                        letterSpacing: '-0.04em',
                         fontFamily: "'Inter', sans-serif"
                     }}>
                         ¡Bienvenidos a<br />
@@ -295,12 +296,15 @@ function TrialSignup() {
                                 disabled={loading}
                                 style={{
                                     width: '100%', padding: '18px 24px',
-                                    background: '#FFFFFF', border: 'none',
+                                    background: 'rgba(255, 255, 255, 0.9)',
+                                    backdropFilter: 'blur(4px)',
+                                    WebkitBackdropFilter: 'blur(4px)',
+                                    border: 'none',
                                     borderRadius: 50,
-                                    display: 'flex', alignItems: 'center', gap: 14,
+                                    display: 'flex', alignItems: 'center', gap: 16,
                                     fontSize: 16, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
-                                    boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                                     opacity: loading ? 0.7 : 1
                                 }}
                             >
@@ -321,12 +325,15 @@ function TrialSignup() {
                                 disabled={loading}
                                 style={{
                                     width: '100%', padding: '18px 24px',
-                                    background: '#FFFFFF', border: 'none',
+                                    background: 'rgba(255, 255, 255, 0.9)',
+                                    backdropFilter: 'blur(4px)',
+                                    WebkitBackdropFilter: 'blur(4px)',
+                                    border: 'none',
                                     borderRadius: 50,
-                                    display: 'flex', alignItems: 'center', gap: 14,
+                                    display: 'flex', alignItems: 'center', gap: 16,
                                     fontSize: 16, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
-                                    boxShadow: '0 6px 20px rgba(0,0,0,0.15)'
+                                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
                                 }}
                             >
                                 <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
