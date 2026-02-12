@@ -28,7 +28,7 @@ import { setTenantStoragePrefix } from '../../utils/storage.js'
 // 🔐 PREMIER AUTH SCREEN (Strike 12)
 // ============================================
 
-function TrialSignup() {
+const TrialSignup = () => {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
 
@@ -201,24 +201,24 @@ function TrialSignup() {
             {/* 2. WARM VIGNETTE */}
             <div style={{
                 position: 'absolute', inset: 0, zIndex: 1,
-                background: 'radial-gradient(circle at center, rgba(255, 69, 0, 0.1) 0%, rgba(180, 20, 0, 0.5) 100%)'
+                background: 'radial-gradient(circle at center, rgba(255, 69, 0, 0.1) 0%, rgba(180, 20, 0, 0.6) 100%)'
             }} />
 
-            {/* 3. BURGER IMAGE */}
+            {/* 3. BURGER IMAGE (TRANSPARENT PNG) */}
             <div style={{
                 position: 'absolute',
-                top: '50%', left: '50%',
+                top: '55%', left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: '130%',
+                width: '125%',
                 height: 'auto',
                 aspectRatio: '1/1',
                 zIndex: 2,
-                backgroundImage: 'url(https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=100)',
+                backgroundImage: 'url(https://assets.stickpng.com/images/580b57fcd9996e24bc43c1a8.png)',
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                filter: 'saturate(1.3) contrast(1.08) drop-shadow(0 30px 60px rgba(0,0,0,0.4))',
-                marginTop: -10
+                filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
+                marginTop: 20
             }} />
 
             {/* 4. CONTENT LAYER */}
@@ -227,7 +227,7 @@ function TrialSignup() {
                 flex: 1, display: 'flex', flexDirection: 'column',
                 justifyContent: 'space-between',
                 padding: '0 24px',
-                paddingTop: 'calc(env(safe-area-inset-top, 20px) + 56px)',
+                paddingTop: 'calc(env(safe-area-inset-top, 20px) + 40px)',
                 paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 32px)',
                 minHeight: '100vh', minHeight: '100dvh'
             }}>
@@ -236,26 +236,39 @@ function TrialSignup() {
                     {/* Slogan */}
                     <p style={{
                         color: '#FFFFFF', fontSize: 13,
-                        fontWeight: 700, letterSpacing: '0.08em',
-                        textTransform: 'uppercase', marginBottom: 20,
-                        textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        fontWeight: 700, letterSpacing: '0.12em',
+                        textTransform: 'uppercase', marginBottom: 16,
+                        textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        opacity: 0.95
                     }}>
                         TU NEGOCIO. TU MARCA. TU APP.
                     </p>
 
                     {/* Main Title - INTER BLACK 900, HEAVY STAMP */}
-                    <h1 id="trial-title" style={{
-                        color: '#FFFFFF', fontSize: 'clamp(48px, 13vw, 64px)',
-                        fontWeight: 900, lineHeight: 0.85,
-                        margin: 0,
-                        textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                        letterSpacing: '-0.04em',
+                    <div id="trial-title" style={{
+                        color: '#FFFFFF',
+                        textShadow: '0 4px 24px rgba(0,0,0,0.4)',
                         fontFamily: "'Inter', sans-serif"
                     }}>
-                        ¡Bienvenidos a<br />
-                        <span style={{ display: 'block' }}>FoodSpot</span>
-                        <span style={{ display: 'block' }}>Mobile!</span>
-                    </h1>
+                        <div style={{
+                            fontSize: '42px', fontWeight: 900, lineHeight: 1,
+                            letterSpacing: '-0.03em', marginBottom: 4
+                        }}>
+                            ¡Bienvenidos a
+                        </div>
+                        <div style={{
+                            fontSize: '64px', fontWeight: 900, lineHeight: 0.9,
+                            letterSpacing: '-0.04em', display: 'block'
+                        }}>
+                            FoodSpot
+                        </div>
+                        <div style={{
+                            fontSize: '64px', fontWeight: 900, lineHeight: 0.9,
+                            letterSpacing: '-0.04em', display: 'block'
+                        }}>
+                            Mobile!
+                        </div>
+                    </div>
                 </div>
 
                 {/* FORCE WHITE OVERRIDE */}
@@ -296,15 +309,13 @@ function TrialSignup() {
                                 disabled={loading}
                                 style={{
                                     width: '100%', padding: '18px 24px',
-                                    background: 'rgba(255, 255, 255, 0.9)',
-                                    backdropFilter: 'blur(4px)',
-                                    WebkitBackdropFilter: 'blur(4px)',
+                                    background: '#FFFFFF', // Solid White
                                     border: 'none',
                                     borderRadius: 50,
                                     display: 'flex', alignItems: 'center', gap: 16,
                                     fontSize: 16, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
-                                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                     opacity: loading ? 0.7 : 1
                                 }}
                             >
@@ -325,15 +336,13 @@ function TrialSignup() {
                                 disabled={loading}
                                 style={{
                                     width: '100%', padding: '18px 24px',
-                                    background: 'rgba(255, 255, 255, 0.9)',
-                                    backdropFilter: 'blur(4px)',
-                                    WebkitBackdropFilter: 'blur(4px)',
+                                    background: '#FFFFFF', // Solid White
                                     border: 'none',
                                     borderRadius: 50,
                                     display: 'flex', alignItems: 'center', gap: 16,
                                     fontSize: 16, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
-                                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                 }}
                             >
                                 <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -446,8 +455,6 @@ function TrialSignup() {
                     </p>
                 </div>
             </div>
-
-
         </div>
     )
 }
