@@ -267,7 +267,8 @@ const TrialSignup = () => {
                         </div>
                         <div style={{
                             fontSize: '68px', fontWeight: 900, lineHeight: 0.85, // Tighter
-                            letterSpacing: '-0.05em', display: 'block'
+                            letterSpacing: '-0.05em', display: 'block',
+                            marginBottom: -5 // Pull 'Mobile!' up
                         }}>
                             FoodSpot
                         </div>
