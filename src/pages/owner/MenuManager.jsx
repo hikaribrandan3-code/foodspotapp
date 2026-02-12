@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
-import { supabase, updateBranding, getMenuCloud } from '../../lib/supabaseClient.js'
+import { supabase, updateBranding, getMenuCloud, updateMenuItemCloud, uploadAsset } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
 import { updateConfig } from '../../config/appConfig.v2.js'
@@ -255,6 +255,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         () => sessionStorage.getItem(`dirty_${targetBusinessId}`) === 'true'
     )
     const [isSaving, setIsSaving] = useState(false)
+    const [stagedChanges, setStagedChanges] = useState({})
+    const [isBatchSaving, setIsBatchSaving] = useState(false)
     // 📦 PENDING FILE BUFFER: Holds raw File objects until save
     const [pendingFiles, setPendingFiles] = useState({})
 
@@ -403,79 +405,75 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setHasChanges(true)
     }
 
-    // 💾 THE ATOMIC SAVE ("Microsoft Word" Button) - Storage-First Edition
+    // 💾 THE ATOMIC SAVE (BATCH EDITION) - Strike 7
     const handlePlatformSave = async () => {
-        setIsSaving(true)
-        console.log('💾 SAVING VAULT:', targetBusinessId)
-
-        // 0. 🖼️ STORAGE-FIRST: Process all pending files before DB write
-        const processedMenu = await processMenuImages(menu, pendingFiles)
-
-        // 0.5. 🛡️ BOUNCER GUARD: Filter invalid categories
-        const validCategories = processedMenu.categories.filter(cat =>
-            cat && cat.id && Array.isArray(cat.items)
-        )
-        const menuToSave = { ...processedMenu, categories: validCategories }
-
-        // 🔍 INTERCEPTOR: Audit menuToSave for blob URLs
-        console.log('🔍 INTERCEPTOR: Auditing menu payload before save...')
-        menuToSave.categories.forEach(cat => {
-            cat.items.forEach(item => {
-                if (item.image && item.image.startsWith('blob:')) {
-                    console.error(`🚨 CRITICAL: Blob URL detected in payload for ${item.name}!`, item.image)
-                }
-            })
-        })
-
-        // 1. SYNC BRANDING (Including Processed Menu)
-        const { error: brandingError } = await supabase
-            .from('branding')
-            .update({
-                is_paused: localConfig.pauseOrders,
-                delivery_radius: localConfig.delivery?.radiusKm,
-                delivery_fee: localConfig.delivery?.flatFee,
-                free_delivery_threshold: localConfig.delivery?.freeDeliveryThreshold,
-                app_config: localConfig,
-                menu_data: menuToSave,         // 🛡️ LOCKS FOOD with processed images
-                updated_at: new Date()
-            })
-            .eq('business_id', targetBusinessId)
-
-        if (brandingError) {
-            alert('❌ Error Branding: ' + brandingError.message)
-            setIsSaving(false)
+        if (Object.keys(stagedChanges).length === 0 && !hasChanges) {
+            alert('No hay cambios pendientes.')
             return
         }
 
-        // 2. 🛡️ DUAL-SYNC: UPSERT HERO ITEMS to menu_items table
-        const heroItems = (localConfig.featuredPhotos || []).slice(0, 4).map((slot, index) => ({
-            id: `hero-${index + 1}`,
-            business_id: targetBusinessId,
-            name: slot?.name || 'Destacado',
-            price: parseInt(slot?.price) || 0,
-            image: slot?.image || null,
-            available: true,
-            description: 'Hero Item'
-        }))
+        setIsBatchSaving(true)
+        console.log('💾 BATCH SAVE INITIATED:', targetBusinessId)
 
-        const { error: menuError } = await supabase
-            .from('menu_items')
-            .upsert(heroItems, { onConflict: 'id' })
+        try {
+            // 0. PREPARE PAYLOAD
+            // Deep clone menu to strictly avoid mutating state during async
+            const menuToSave = JSON.parse(JSON.stringify(menu))
 
-        if (menuError) {
-            console.error('❌ Error Syncing Hero Items:', menuError)
-        } else {
-            console.log('✅ Hero Items Synced to DB')
+            // 1. BATCH IMAGE PROCESSING
+            const stagedKeys = Object.keys(stagedChanges)
+            if (stagedKeys.length > 0) {
+                console.log(`🚀 BATCH: Processing images for ${stagedKeys.length} items...`)
 
-            // 4. 🛡️ UNIVERSAL MENU SYNC (The "Law of the Land")
-            // We must sync the JSON structure to the SQL Rows with explicit Sort Order
+                await Promise.all(stagedKeys.map(async (itemId) => {
+                    const changes = stagedChanges[itemId]
+
+                    // Only process files. Metadata is already in menuToSave (Optimistic UI)
+                    if (changes.file) {
+                        const { url, error } = await uploadAsset(changes.file, targetBusinessId, 'menu-images')
+                        if (error) {
+                            console.error(`❌ Upload failed for ${itemId}`, error)
+                        } else {
+                            // 💉 INJECT: Update the clone with the real cloud URL
+                            // We must find the item in the cloned structure
+                            let found = false
+                            for (const cat of menuToSave.categories) {
+                                const item = cat.items.find(i => i.id === itemId)
+                                if (item) {
+                                    item.image = url
+                                    found = true
+                                    break
+                                }
+                            }
+                            if (found) console.log(`📸 Image Updated in Payload: ${itemId} -> ${url}`)
+                        }
+                    }
+                }))
+            }
+
+            // 2. SYNC BRANDING (App Config)
+            const { error: brandingError } = await supabase
+                .from('branding')
+                .update({
+                    is_paused: localConfig.pauseOrders,
+                    delivery_radius: localConfig.delivery?.radiusKm,
+                    delivery_fee: localConfig.delivery?.flatFee,
+                    free_delivery_threshold: localConfig.delivery?.freeDeliveryThreshold,
+                    app_config: localConfig,
+                    updated_at: new Date()
+                })
+                .eq('business_id', targetBusinessId)
+
+            if (brandingError) throw brandingError
+
+            // 3. UNIVERSAL SYNC: SQL TABLES (The Source of Truth)
+            // We verify and construct the payload from menuToSave
             const categoriesPayload = menuToSave.categories.map((cat, index) => ({
                 id: cat.id,
                 business_id: targetBusinessId,
                 name: cat.name,
                 icon: cat.icon || '',
-                sort_order: index, // ⚡ THE MAGIC SDU
-                display_order: index, // Legacy Fallback
+                sort_order: index,
                 enabled: cat.enabled
             }))
 
@@ -489,44 +487,49 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             category_id: cat.id,
                             name: item.name,
                             price: item.price,
-                            image_url: item.image,
+                            image_url: item.image, // URL is now clean (no blobs)
                             available: item.available,
                             featured: item.featured,
-                            sort_order: itemIndex, // ⚡ THE MAGIC SDU
-                            display_order: itemIndex // Legacy Fallback
+                            sort_order: itemIndex,
+                            description: item.description
                         })
                     })
                 }
             })
 
-            // BATCH UPSERT CATEGORIES
+            // BATCH UPSERT
             const { error: catError } = await supabase
                 .from('categories')
                 .upsert(categoriesPayload, { onConflict: 'id' })
 
             if (catError) console.error('❌ SQL Category Sync Error:', catError)
 
-            // BATCH UPSERT ITEMS
             const { error: itemsError } = await supabase
                 .from('menu_items')
                 .upsert(itemsPayload, { onConflict: 'id' })
 
-            if (itemsError) console.error('❌ SQL Items Sync Error:', itemsError)
-            else console.log('✅ UNIVERSAL SYNC COMPLETE: SQL Tables Updated')
+            if (itemsError) throw itemsError
 
-            // 3. FINALIZE
-            setMenu(menuToSave) // Update local state with processed URLs
-            setPendingFiles({}) // 🗑️ CLEANUP: Clear the file buffer
+            console.log('✅ UNIVERSAL SYNC COMPLETE')
+
+            // 4. FINALIZE
+            setMenu(menuToSave) // Update local state with the resolved URLs
+            setStagedChanges({})
             setHasChanges(false)
             sessionStorage.removeItem(`dirty_${targetBusinessId}`)
-            setSaveStatus({ message: '✓ Sistema Sincronizado' })
-            setTimeout(() => setSaveStatus(null), 3000)
 
-            // 🔄 GLOBAL REFRESH
-            ignoreCloudUpdateRef.current = true // 🛡️ ACTIVATE ANTI-BOUNCE
+            // 5. RE-HYDRATE
+            ignoreCloudUpdateRef.current = false
             await refreshTenantData()
 
-            setIsSaving(false)
+            setSaveStatus({ message: '✓ Menú Publicado con Éxito' })
+            setTimeout(() => setSaveStatus(null), 3000)
+
+        } catch (error) {
+            console.error('❌ BATCH SAVE ERROR:', error)
+            alert('Error guardando cambios: ' + error.message)
+        } finally {
+            setIsBatchSaving(false)
         }
     }
 
@@ -613,12 +616,21 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         const newMenu = { ...prevMenu }
                         const cat = newMenu.categories.find(c => c.id === targetItem.categoryId)
                         const item = cat?.items.find(i => i.id === targetItem.itemId)
-                        if (item) item.image = result.publicUrl
+                        if (item) item.image = previewUrl
                         resolve(newMenu)
                         return newMenu
                     })
                 })
-                // 🛡️ CLOUD-ONLY: saveMenu removed (Anti-Gravity V3.0)
+
+                // 📦 STAGE CHANGE: Queue file for batch upload
+                setStagedChanges(prev => ({
+                    ...prev,
+                    [targetItem.itemId]: {
+                        ...prev[targetItem.itemId],
+                        file: file
+                    }
+                }))
+
                 setHasChanges(true)
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
                 setUploadStatus({ success: true, message: '✔ Guardado' })
@@ -677,10 +689,20 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 if (editForm.image) {
                     item.image = editForm.image
                 }
-                // 🛡️ CLOUD-ONLY: saveMenu removed
+                // 📦 STAGE CHANGE: Queue metadata updates
+                setStagedChanges(prev => ({
+                    ...prev,
+                    [item.id]: {
+                        ...prev[item.id],
+                        name: editForm.name,
+                        price: parseInt(editForm.price) || item.price,
+                        // If image was changed via preview URL in form, we assume it's already staged via handleImageUpload
+                    }
+                }))
+
                 setMenu(updatedMenu)
                 setHasChanges(true)
-                setSaveStatus({ message: 'Guardado correctamente' })
+                setSaveStatus({ message: 'Cambio estagedo (Guardar para aplicar)' })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
@@ -695,7 +717,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
             const item = category.items.find(i => i.id === itemId)
             if (item) {
                 item.available = !item.available
-                // 🛡️ CLOUD-ONLY: saveMenu removed
+                item.available = !item.available
+
+                // 📦 STAGE CHANGE
+                setStagedChanges(prev => ({
+                    ...prev,
+                    [itemId]: { ...prev[itemId], available: item.available }
+                }))
+
                 setMenu(updatedMenu)
                 setHasChanges(true)
             }
@@ -752,10 +781,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
             const item = category.items.find(i => i.id === itemId)
             if (item) {
                 item.price = price
+                item.price = price
                 setMenu(updatedMenu)
-                // 🛡️ CLOUD-ONLY: saveMenu removed
+
+                // 📦 STAGE CHANGE
+                setStagedChanges(prev => ({
+                    ...prev,
+                    [itemId]: { ...prev[itemId], price }
+                }))
+
                 setHasChanges(true)
-                setSaveStatus({ message: 'Precio actualizado' })
+                setSaveStatus({ message: 'Precio estagedo' })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
@@ -771,10 +807,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
             const item = category.items.find(i => i.id === itemId)
             if (item) {
                 item.name = newName
+                item.name = newName
                 setMenu(updatedMenu)
-                // 🛡️ CLOUD-ONLY: saveMenu removed
+
+                // 📦 STAGE CHANGE
+                setStagedChanges(prev => ({
+                    ...prev,
+                    [itemId]: { ...prev[itemId], name: newName }
+                }))
+
                 setHasChanges(true)
-                setSaveStatus({ message: 'Nombre actualizado' })
+                setSaveStatus({ message: 'Nombre estagedo' })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
@@ -1766,6 +1809,24 @@ function MenuManager({ config: configProp, demoMode = false }) {
             )}
 
             {/* 💾 FLOATING SAVE BAR (Strike 1) */}
+            {/* 🛡️ BATCH LOADER OVERLAY */}
+            {isBatchSaving && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 99999,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    backdropFilter: 'blur(4px)'
+                }}>
+                    <div style={{
+                        width: 50, height: 50, border: '4px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 1s linear infinite'
+                    }} />
+                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                    <h2 style={{ color: 'white', marginTop: 20, fontSize: 18, fontWeight: 600 }}>Publicando Cambios...</h2>
+                    <p style={{ color: '#94A3B8', marginTop: 8, fontSize: 14 }}>Sincronizando con la nube...</p>
+                </div>
+            )}
+
             {hasChanges && (
                 <div style={{
                     position: 'fixed', bottom: 95, left: 12, right: 12,
@@ -1778,14 +1839,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
                     <button
                         onClick={handlePlatformSave}
-                        disabled={isSaving}
+                        disabled={isBatchSaving}
                         style={{
                             background: '#3B82F6', color: 'white', border: 'none',
                             padding: '10px 24px', borderRadius: 12, fontWeight: 800,
-                            fontSize: 14, cursor: 'pointer'
+                            fontSize: 14, cursor: 'pointer', opacity: isBatchSaving ? 0.5 : 1
                         }}
                     >
-                        {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
+                        {isBatchSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
                     </button>
                 </div>
             )}
