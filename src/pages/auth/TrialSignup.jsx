@@ -175,7 +175,7 @@ const TrialSignup = () => {
     // RENDER: RESPONSIVE SPLIT
     // ============================
 
-    // ── Shared Brand Panel (used in both mobile & desktop) ──
+    // ── Shared Brand Panel (Desktop Optimized) ──
     const BrandPanel = ({ isDesktopPanel }) => (
         <div className={isDesktopPanel ? 'ts-brand-panel' : undefined} style={{
             position: 'relative',
@@ -201,10 +201,23 @@ const TrialSignup = () => {
                 mixBlendMode: 'overlay'
             }} />
 
-            {/* HERO BURGER */}
+            {/* SLOGAN - MOVED TO TOP (DESKTOP) */}
+            <p style={{
+                position: 'absolute', top: 48, left: 0, width: '100%',
+                textAlign: 'center', zIndex: 10,
+                color: '#FFFFFF', fontSize: 13, fontWeight: 700,
+                letterSpacing: '0.12em', textTransform: 'uppercase',
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)', opacity: 0.95,
+                margin: 0
+            }}>
+                TU NEGOCIO. TU MARCA. TU APP.
+            </p>
+
+            {/* HERO BURGER - SHIFTED DOWN */}
             <div style={{
                 position: 'absolute',
-                top: '50%', left: '50%',
+                top: isDesktopPanel ? '55%' : '50%', // Push down on desktop
+                left: '50%',
                 transform: 'translate(-50%, -50%)',
                 width: isDesktopPanel ? '80%' : '95%',
                 height: 'auto', aspectRatio: '1/1', zIndex: 2,
@@ -214,22 +227,13 @@ const TrialSignup = () => {
                 marginTop: 10
             }} />
 
-            {/* BRAND TEXT (overlaid) */}
+            {/* BRAND TEXT (Just Title) */}
             <div style={{
                 position: 'relative', zIndex: 10,
                 textAlign: 'center',
-                padding: isDesktopPanel ? '60px 40px' : '0 24px',
-                paddingTop: isDesktopPanel ? 60 : 'calc(env(safe-area-inset-top, 20px) + 40px)',
+                padding: '0 40px',
+                marginTop: isDesktopPanel ? 60 : 0 // Push Title down to match burger
             }}>
-                <p style={{
-                    color: '#FFFFFF', fontSize: 13, fontWeight: 700,
-                    letterSpacing: '0.12em', textTransform: 'uppercase',
-                    marginBottom: 16, textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                    opacity: 0.95
-                }}>
-                    TU NEGOCIO. TU MARCA. TU APP.
-                </p>
-
                 <div id="trial-title" style={{
                     color: '#FFFFFF',
                     textShadow: '0 4px 30px rgba(0,0,0,0.5)',
