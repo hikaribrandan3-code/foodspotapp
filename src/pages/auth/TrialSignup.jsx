@@ -207,9 +207,9 @@ const TrialSignup = () => {
             {/* 3. HERO BURGER (CENTER) */}
             <div style={{
                 position: 'absolute',
-                top: '52%', left: '50%',
+                top: '50%', left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: '120%',
+                width: '95%',
                 height: 'auto',
                 aspectRatio: '1/1',
                 zIndex: 2,
@@ -227,8 +227,8 @@ const TrialSignup = () => {
                 alt=""
                 style={{
                     position: 'absolute',
-                    top: '28%', right: '-8%',
-                    width: 120, height: 120,
+                    top: '28%', right: '2%',
+                    width: 100, height: 100,
                     objectFit: 'cover',
                     borderRadius: '50%',
                     zIndex: 3,
@@ -244,8 +244,8 @@ const TrialSignup = () => {
                 alt=""
                 style={{
                     position: 'absolute',
-                    bottom: '30%', left: '-5%',
-                    width: 100, height: 100,
+                    bottom: '30%', left: '2%',
+                    width: 90, height: 90,
                     objectFit: 'cover',
                     borderRadius: '50%',
                     zIndex: 3,
@@ -261,8 +261,8 @@ const TrialSignup = () => {
                 alt=""
                 style={{
                     position: 'absolute',
-                    top: '22%', left: '-4%',
-                    width: 90, height: 90,
+                    top: '22%', left: '2%',
+                    width: 80, height: 80,
                     objectFit: 'cover',
                     borderRadius: '50%',
                     zIndex: 3,
