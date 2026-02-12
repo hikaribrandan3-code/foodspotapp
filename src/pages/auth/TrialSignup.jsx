@@ -182,53 +182,81 @@ function TrialSignup() {
             flexDirection: 'column',
             position: 'relative',
             overflow: 'hidden',
-            fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+            backgroundColor: '#DC3C14' // Fallback color
         }}>
-            {/* 1. HERO BACKGROUND */}
+            {/* 1. SWIRL BACKGROUND */}
             <div style={{
-                position: 'absolute', inset: 0, zIndex: 0,
-                backgroundImage: 'url(https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center 30%'
+                position: 'absolute', inset: -100, zIndex: 0,
+                background: `
+                    repeating-conic-gradient(
+                        from 0deg at 50% 50%,
+                        #DC3C14 0deg 15deg,
+                        #E84820 15deg 30deg
+                    )
+                `,
+                animation: 'slowSpin 60s linear infinite',
+                filter: 'blur(0px)',
+                opacity: 1
             }} />
 
-            {/* 2. GRADIENT OVERLAY (Red/Orange swirl) */}
+            {/* 2. RADIAL VIGNETTE (Depth) */}
             <div style={{
                 position: 'absolute', inset: 0, zIndex: 1,
-                background: 'linear-gradient(180deg, rgba(220, 60, 20, 0.75) 0%, rgba(200, 80, 30, 0.6) 35%, rgba(180, 60, 20, 0.85) 65%, rgba(30, 10, 5, 0.95) 100%)'
+                background: 'radial-gradient(circle at center, rgba(220, 60, 20, 0.4) 0%, rgba(180, 40, 10, 0.6) 100%)'
             }} />
 
-            {/* 3. CONTENT LAYER */}
+            {/* 3. BURGER IMAGE (High Saturation) */}
             <div style={{
-                position: 'relative', zIndex: 2,
+                position: 'absolute',
+                top: '50%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '120%',
+                height: 'auto',
+                aspectRatio: '1/1',
+                zIndex: 2,
+                backgroundImage: 'url(https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=100)',
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                filter: 'saturate(1.4) contrast(1.1) drop-shadow(0 20px 40px rgba(0,0,0,0.3))',
+                marginTop: -40 // Visual adjustment
+            }} />
+
+            {/* 4. CONTENT LAYER */}
+            <div style={{
+                position: 'relative', zIndex: 10,
                 flex: 1, display: 'flex', flexDirection: 'column',
                 justifyContent: 'space-between',
-                padding: '0 28px',
-                paddingTop: 'calc(env(safe-area-inset-top, 20px) + 48px)',
-                paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
+                padding: '0 24px',
+                paddingTop: 'calc(env(safe-area-inset-top, 20px) + 64px)',
+                paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 32px)',
                 minHeight: '100vh', minHeight: '100dvh'
             }}>
                 {/* TOP: BRANDING */}
                 <div style={{ textAlign: 'center' }}>
                     {/* Slogan */}
                     <p style={{
-                        color: 'rgba(255,255,255,0.85)', fontSize: 13,
-                        fontWeight: 600, letterSpacing: '0.15em',
-                        textTransform: 'uppercase', marginBottom: 24
+                        color: 'rgba(255,255,255,0.9)', fontSize: 13,
+                        fontWeight: 700, letterSpacing: '0.05em',
+                        textTransform: 'uppercase', marginBottom: 24,
+                        textShadow: '0 2px 4px rgba(0,0,0,0.2)'
                     }}>
                         TU NEGOCIO. TU MARCA. TU APP.
                     </p>
 
-                    {/* Main Title */}
+                    {/* Main Title - EXTRA BOLD / BLACK */}
                     <h1 style={{
-                        color: 'white', fontSize: 'clamp(36px, 10vw, 52px)',
-                        fontWeight: 800, lineHeight: 1.05,
-                        margin: 0, textShadow: '0 4px 24px rgba(0,0,0,0.3)',
-                        letterSpacing: '-0.02em'
+                        color: 'white', fontSize: 'clamp(42px, 11vw, 56px)',
+                        fontWeight: 900, lineHeight: 0.95,
+                        margin: 0,
+                        textShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                        letterSpacing: '-0.04em',
+                        fontFamily: "'Inter', sans-serif" // Ensure font supports 900
                     }}>
                         ¡Bienvenidos a<br />
-                        <span style={{ fontStyle: 'italic' }}>FoodSpot</span><br />
-                        Mobile!
+                        <span style={{ display: 'block', marginTop: 4 }}>FoodSpot</span>
+                        <span style={{ display: 'block' }}>Mobile!</span>
                     </h1>
                 </div>
 
@@ -237,35 +265,38 @@ function TrialSignup() {
                     {/* Error Toast */}
                     {error && (
                         <div style={{
-                            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
-                            border: '1px solid rgba(239, 68, 68, 0.5)',
-                            borderRadius: 12, padding: '12px 16px', marginBottom: 16,
-                            color: '#fca5a5', fontSize: 14, textAlign: 'center'
+                            background: '#FEE2E2',
+                            border: '2px solid #EF4444',
+                            borderRadius: 16, padding: '12px 16px', marginBottom: 16,
+                            color: '#991B1B', fontSize: 14, textAlign: 'center',
+                            fontWeight: 600,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                         }}>
                             {error}
                         </div>
                     )}
 
                     {!showEmailForm ? (
-                        /* BUTTON STACK (Holy Trinity Lite) */
-                        <>
-                            {/* GOOGLE BUTTON */}
+                        /* BUTTON STACK */
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            {/* GOOGLE BUTTON - WHITE PILL */}
                             <button
                                 onClick={handleGoogleLogin}
                                 disabled={loading}
                                 style={{
-                                    width: '100%', padding: '16px 20px',
-                                    background: '#FFFFFF', border: 'none', borderRadius: 14,
-                                    display: 'flex', alignItems: 'center', gap: 16,
-                                    fontSize: 16, fontWeight: 600, color: '#1F2937',
-                                    cursor: 'pointer', marginBottom: 12,
-                                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                                    width: '100%', padding: '18px 24px',
+                                    background: '#FFFFFF', border: 'none',
+                                    borderRadius: 50, // Pill shape
+                                    display: 'flex', alignItems: 'center', gap: 12,
+                                    fontSize: 17, fontWeight: 700, color: '#1F2937',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                                     opacity: loading ? 0.7 : 1,
-                                    transition: 'transform 0.15s, box-shadow 0.15s'
+                                    transition: 'transform 0.1s, box-shadow 0.1s'
                                 }}
                             >
                                 {/* Google G Logo */}
-                                <div style={{ width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <svg width="24" height="24" viewBox="0 0 48 48">
                                         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
                                         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
@@ -276,58 +307,60 @@ function TrialSignup() {
                                 <span style={{ flex: 1, textAlign: 'center' }}>Continuar con Google</span>
                             </button>
 
-                            {/* EMAIL BUTTON */}
+                            {/* EMAIL BUTTON - WHITE PILL (Identical Style) */}
                             <button
                                 onClick={() => setShowEmailForm(true)}
                                 disabled={loading}
                                 style={{
-                                    width: '100%', padding: '16px 20px',
-                                    background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-                                    border: '1px solid rgba(255,255,255,0.3)', borderRadius: 14,
-                                    display: 'flex', alignItems: 'center', gap: 16,
-                                    fontSize: 16, fontWeight: 600, color: 'white',
-                                    cursor: 'pointer', marginBottom: 24,
-                                    transition: 'background 0.15s'
+                                    width: '100%', padding: '18px 24px',
+                                    background: '#FFFFFF', border: 'none',
+                                    borderRadius: 50, // Pill shape
+                                    display: 'flex', alignItems: 'center', gap: 12,
+                                    fontSize: 17, fontWeight: 700, color: '#1F2937',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                                    transition: 'transform 0.1s'
                                 }}
                             >
                                 {/* Envelope Icon */}
-                                <div style={{ width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <rect x="2" y="4" width="20" height="16" rx="2" />
                                         <path d="M22 7l-10 7L2 7" />
                                     </svg>
                                 </div>
                                 <span style={{ flex: 1, textAlign: 'center' }}>Continuar con Email</span>
                             </button>
-                        </>
+                        </div>
                     ) : (
                         /* EMAIL FORM (Expanded) */
                         <div style={{
-                            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(16px)',
-                            borderRadius: 20, padding: 24,
-                            border: '1px solid rgba(255,255,255,0.15)',
+                            background: '#FFFFFF',
+                            borderRadius: 32, padding: 28,
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
                             marginBottom: 24
                         }}>
                             {/* Back Arrow */}
                             <button
                                 onClick={() => { setShowEmailForm(false); setError(null) }}
                                 style={{
-                                    background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)',
-                                    fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 16,
-                                    display: 'flex', alignItems: 'center', gap: 6
+                                    background: 'none', border: 'none', color: '#6B7280',
+                                    fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 20,
+                                    display: 'flex', alignItems: 'center', gap: 6,
+                                    fontWeight: 600
                                 }}
                             >
                                 ← Volver
                             </button>
 
-                            <h3 style={{ color: 'white', fontSize: 20, fontWeight: 700, margin: '0 0 20px', textAlign: 'center' }}>
+                            <h3 style={{ color: '#1F2937', fontSize: 22, fontWeight: 800, margin: '0 0 24px', textAlign: 'center' }}>
                                 {mode === 'signup' ? 'Creá tu cuenta' : 'Iniciá sesión'}
                             </h3>
 
                             <form onSubmit={mode === 'signup' ? handleSignup : handleLogin}>
                                 {/* Business Name (Signup only) */}
                                 {mode === 'signup' && (
-                                    <div style={{ marginBottom: 14 }}>
+                                    <div style={{ marginBottom: 16 }}>
                                         <label style={labelStyle}>Nombre del Negocio</label>
                                         <div style={{ position: 'relative' }}>
                                             <div style={iconWrapStyle}>
@@ -341,7 +374,7 @@ function TrialSignup() {
                                             />
                                         </div>
                                         {businessName && (
-                                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 4, marginBottom: 0 }}>
+                                            <p style={{ color: '#6B7280', fontSize: 11, marginTop: 4, marginBottom: 0 }}>
                                                 Tu URL: foodspot.app/<strong>{generateSlug(businessName)}</strong>
                                             </p>
                                         )}
@@ -349,7 +382,7 @@ function TrialSignup() {
                                 )}
 
                                 {/* Email */}
-                                <div style={{ marginBottom: 14 }}>
+                                <div style={{ marginBottom: 16 }}>
                                     <label style={labelStyle}>Email</label>
                                     <div style={{ position: 'relative' }}>
                                         <div style={iconWrapStyle}>
@@ -365,7 +398,7 @@ function TrialSignup() {
                                 </div>
 
                                 {/* Password */}
-                                <div style={{ marginBottom: 20 }}>
+                                <div style={{ marginBottom: 24 }}>
                                     <label style={labelStyle}>Contraseña</label>
                                     <div style={{ position: 'relative' }}>
                                         <div style={iconWrapStyle}>
@@ -384,25 +417,25 @@ function TrialSignup() {
                                 <button
                                     type="submit" disabled={loading}
                                     style={{
-                                        width: '100%', padding: 16, fontSize: 16,
-                                        fontWeight: 700, borderRadius: 14, border: 'none',
-                                        background: loading ? 'rgba(255,255,255,0.3)' : '#FFFFFF',
-                                        color: loading ? 'rgba(0,0,0,0.4)' : '#DC3C14',
+                                        width: '100%', padding: 18, fontSize: 16,
+                                        fontWeight: 800, borderRadius: 16, border: 'none',
+                                        background: loading ? '#E5E7EB' : '#DC3C14',
+                                        color: loading ? '#9CA3AF' : '#FFFFFF',
                                         cursor: loading ? 'not-allowed' : 'pointer',
-                                        boxShadow: loading ? 'none' : '0 4px 20px rgba(0,0,0,0.2)',
+                                        boxShadow: loading ? 'none' : '0 4px 12px rgba(220, 60, 20, 0.3)',
                                         transition: 'all 0.2s'
                                     }}
                                 >
                                     {loading ? (
                                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                                             <span style={{
-                                                width: 16, height: 16,
-                                                border: '2px solid rgba(0,0,0,0.2)',
-                                                borderTopColor: '#DC3C14',
+                                                width: 18, height: 18,
+                                                border: '2px solid rgba(0,0,0,0.1)',
+                                                borderTopColor: '#FFFFFF',
                                                 borderRadius: '50%',
                                                 animation: 'authSpin 0.8s linear infinite'
                                             }} />
-                                            {mode === 'signup' ? 'Creando tu espacio...' : 'Ingresando...'}
+                                            Procesando...
                                         </span>
                                     ) : (
                                         mode === 'signup' ? 'Comenzar prueba gratis →' : 'Iniciar sesión →'
@@ -414,8 +447,10 @@ function TrialSignup() {
 
                     {/* MODE TOGGLE */}
                     <p style={{
-                        color: 'rgba(255,255,255,0.7)', fontSize: 14,
-                        textAlign: 'center', margin: 0
+                        color: 'rgba(255,255,255,0.9)', fontSize: 14,
+                        textAlign: 'center', margin: 0,
+                        fontWeight: 600,
+                        textShadow: '0 1px 2px rgba(0,0,0,0.1)'
                     }}>
                         {mode === 'signup' ? (
                             <>
@@ -424,9 +459,10 @@ function TrialSignup() {
                                     onClick={() => { setMode('login'); setShowEmailForm(true); setError(null) }}
                                     style={{
                                         background: 'none', border: 'none',
-                                        color: 'white', fontWeight: 600,
+                                        color: 'white', fontWeight: 800,
                                         cursor: 'pointer', textDecoration: 'underline',
-                                        fontSize: 14, padding: 0
+                                        fontSize: 14, padding: 0,
+                                        marginLeft: 4
                                     }}
                                 >
                                     Inicia Sesión
@@ -439,9 +475,10 @@ function TrialSignup() {
                                     onClick={() => { setMode('signup'); setShowEmailForm(true); setError(null) }}
                                     style={{
                                         background: 'none', border: 'none',
-                                        color: 'white', fontWeight: 600,
+                                        color: 'white', fontWeight: 800,
                                         cursor: 'pointer', textDecoration: 'underline',
-                                        fontSize: 14, padding: 0
+                                        fontSize: 14, padding: 0,
+                                        marginLeft: 4
                                     }}
                                 >
                                     Regístrate
@@ -457,12 +494,17 @@ function TrialSignup() {
                 @keyframes authSpin {
                     to { transform: rotate(360deg); }
                 }
+                @keyframes slowSpin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
                 input::placeholder {
                     color: #9CA3AF;
                 }
                 input:focus {
-                    border-color: rgba(255,255,255,0.5) !important;
-                    box-shadow: 0 0 0 3px rgba(255,255,255,0.1) !important;
+                    border-color: #DC3C14 !important;
+                    box-shadow: 0 0 0 4px rgba(220, 60, 20, 0.1) !important;
+                    background: #FFFFFF !important;
                 }
             `}</style>
         </div>
@@ -473,23 +515,24 @@ function TrialSignup() {
 // SHARED STYLES
 // ============================
 const labelStyle = {
-    display: 'block', color: 'rgba(255,255,255,0.8)',
-    fontSize: 12, fontWeight: 600, marginBottom: 6,
-    textTransform: 'uppercase', letterSpacing: '0.03em'
+    display: 'block', color: '#4B5563',
+    fontSize: 13, fontWeight: 700, marginBottom: 8,
+    textTransform: 'uppercase', letterSpacing: '0.02em'
 }
 
 const iconWrapStyle = {
-    position: 'absolute', left: 14, top: '50%',
-    transform: 'translateY(-50%)', pointerEvents: 'none'
+    position: 'absolute', left: 16, top: '50%',
+    transform: 'translateY(-50%)', pointerEvents: 'none',
+    zIndex: 5
 }
 
 const inputStyle = {
-    width: '100%', padding: '14px 16px 14px 46px',
-    borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)',
-    fontSize: 15, color: '#1F2937', background: 'rgba(255,255,255,0.92)',
+    width: '100%', padding: '16px 16px 16px 48px',
+    borderRadius: 14, border: '2px solid #E5E7EB',
+    fontSize: 16, color: '#1F2937', background: '#F9FAFB',
     boxSizing: 'border-box', outline: 'none',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    transition: 'border-color 0.2s, box-shadow 0.2s'
+    fontWeight: 500,
+    transition: 'all 0.2s ease'
 }
 
 export default TrialSignup
