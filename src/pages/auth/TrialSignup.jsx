@@ -243,7 +243,7 @@ function TrialSignup() {
                     </p>
 
                     {/* Main Title - STRICTLY INTER BLACK 900 WHITE */}
-                    <h1 style={{
+                    <h1 id="trial-title" style={{
                         color: '#FFFFFF', fontSize: 'clamp(40px, 11vw, 52px)',
                         fontWeight: 900, lineHeight: 0.9,
                         margin: 0,
@@ -256,6 +256,19 @@ function TrialSignup() {
                         <span style={{ display: 'block' }}>Mobile!</span>
                     </h1>
                 </div>
+
+                {/* FORCE WHITE OVERRIDE */}
+                <style>{`
+                    #trial-title, #trial-title * {
+                        color: #FFFFFF !important;
+                    }
+                    input::placeholder { color: #9CA3AF; }
+                    input:focus {
+                        border-color: #DC3C14 !important;
+                        box-shadow: 0 0 0 4px rgba(220, 60, 20, 0.1) !important;
+                        background: #FFFFFF !important;
+                    }
+                `}</style>
 
                 {/* BOTTOM: ACTIONS */}
                 <div style={{ maxWidth: 400, width: '100%', margin: '0 auto' }}>
@@ -427,14 +440,7 @@ function TrialSignup() {
                 </div>
             </div>
 
-            <style>{`
-                input::placeholder { color: #9CA3AF; }
-                input:focus {
-                    border-color: #DC3C14 !important;
-                    box-shadow: 0 0 0 4px rgba(220, 60, 20, 0.1) !important;
-                    background: #FFFFFF !important;
-                }
-            `}</style>
+
         </div>
     )
 }
