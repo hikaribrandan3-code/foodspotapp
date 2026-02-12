@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { formatPrice } from '../../config/menuData.js'
 import { getGuestToken } from '../../utils/guestToken.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
-import { CartContext } from '../../contexts/CartContext.jsx' // 🆕 Context Import
+// CartContext removed - using direct storage for reorder logic
 import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js' // 🆕 Utils Import
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import ItemCard from '../../components/ItemCard'
@@ -194,7 +194,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     // ============================================
     // 🔄 REORDER ENGINE (Strike 10)
     // ============================================
-    const { addToCart } = useContext(CartContext) // We need this from context
+    // Using direct storage manipulation for reorder since we are redirecting anyway
 
     const handleReorder = () => {
         if (!order || !order.items) return
