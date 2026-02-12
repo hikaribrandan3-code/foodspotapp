@@ -29,6 +29,68 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 // Supports: Dine-In (Table Service), Delivery, Pickup
 // ============================================
 
+// 🎨 PREMIUM UI COMPONENTS (Strike 11)
+const InputGroup = ({ label, icon, value, onChange, placeholder, type = 'text', inputMode, pattern, isTextArea }) => (
+    <div style={{ marginBottom: 16 }}>
+        <label style={{
+            fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.02em'
+        }}>
+            {label}
+        </label>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div style={{ position: 'absolute', left: 16, top: isTextArea ? 16 : '50%', transform: isTextArea ? 'none' : 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }}>
+                {icon}
+            </div>
+            {isTextArea ? (
+                <textarea
+                    value={value} onChange={onChange} placeholder={placeholder} rows={3}
+                    style={{
+                        width: '100%', padding: '14px 16px 14px 48px', borderRadius: 12, border: '1px solid #E5E7EB', fontSize: 15, color: '#1F2937', background: '#FFFFFF', resize: 'none', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', transition: 'border-color 0.2s', outline: 'none'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#6366F1'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                />
+            ) : (
+                <input
+                    type={type} value={value} onChange={onChange} placeholder={placeholder} inputMode={inputMode} pattern={pattern}
+                    style={{
+                        width: '100%', padding: '14px 16px 14px 48px', borderRadius: 12, border: '1px solid #E5E7EB', fontSize: 15, color: '#1F2937', background: '#FFFFFF', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', transition: 'border-color 0.2s', outline: 'none'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#6366F1'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                />
+            )}
+        </div>
+    </div>
+)
+
+const PaymentMethodCard = ({ id, selected, onClick, title, subtitle, icon, color }) => (
+    <div
+        onClick={onClick}
+        style={{
+            position: 'relative', padding: 16, marginBottom: 12,
+            background: selected ? (id === 'mercadopago' ? '#EFF6FF' : '#F0FDF4') : '#FFFFFF',
+            border: selected ? `2px solid ${color}` : '1px solid #E5E7EB',
+            borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease',
+            display: 'flex', alignItems: 'center', gap: 16,
+            boxShadow: selected ? `0 4px 12px ${color}20` : '0 2px 4px rgba(0,0,0,0.02)'
+        }}
+    >
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: selected ? 'white' : '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: color, flexShrink: 0 }}>
+            {icon}
+        </div>
+        <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', marginBottom: 2 }}>{title}</div>
+            <div style={{ fontSize: 13, color: '#6B7280' }}>{subtitle}</div>
+        </div>
+        <div style={{
+            width: 24, height: 24, borderRadius: '50%',
+            border: selected ? `6px solid ${color}` : '2px solid #D1D5DB',
+            background: 'white', transition: 'all 0.2s ease'
+        }} />
+    </div>
+)
+
 const placeholderImages = [
     'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=100&h=100&fit=crop',
     'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=100&h=100&fit=crop',
@@ -414,11 +476,11 @@ function Order({ config: configProp }) {
     }
 
     // ============================================
-    // RENDER: MAIN CHECKOUT
+    // RENDER: MAIN CHECKOUT (Strike 11 Specs)
     // ============================================
     return (
-        <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#FAFAF8' }}>
-            {/* BRANDING HEADER UPDATE (Modern Look) */}
+        <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#F8F9FA' }}>
+            {/* BRANDING HEADER UPDATE */}
             <HeaderClamp config={config} />
 
             {/* Divider Strip */}
@@ -435,29 +497,27 @@ function Order({ config: configProp }) {
                 )
             })()}
 
-            {/* Main Card */}
+            {/* Main Wrapper */}
             <div style={{ margin: '0 14px' }}>
-                <div style={{ background: 'white', borderRadius: 20, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
 
-                    {/* Header */}
-                    <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1F2937', marginBottom: 4 }}>Tu Pedido</h1>
-                            <p style={{ fontSize: 14, color: '#9CA3AF' }}>
-                                {orderType === 'dine_in' ? 'Para comer aquí' : 'Para envío'}
-                            </p>
-                        </div>
-                        {/* MODE TOGGLE (Only if both modes enabled) */}
+                {/* 1. DYNAMIC HEADER & CONTEXT */}
+                <div style={{ marginBottom: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+                            {orderType === 'dine_in' ? 'Para la mesa' : 'Tu Pedido'}
+                        </h1>
+                        {/* MODE TOGGLE */}
                         {serviceModes?.dineIn && serviceModes?.delivery && (
                             <button
                                 onClick={() => setOrderType(prev => prev === 'dine_in' ? 'delivery' : 'dine_in')}
                                 style={{
-                                    fontSize: 12, padding: '6px 12px', borderRadius: 20,
-                                    background: '#F3F4F6', border: '1px solid #E5E7EB',
-                                    color: '#4B5563', fontWeight: 600, cursor: 'pointer'
+                                    fontSize: 12, padding: '6px 14px', borderRadius: 20,
+                                    background: 'white', border: '1px solid #E5E7EB',
+                                    color: '#4B5563', fontWeight: 600, cursor: 'pointer',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                 }}
                             >
-                                Cambiar
+                                Cambiar a {orderType === 'dine_in' ? 'Delivery' : 'Mesa'}
                             </button>
                         )}
                     </div>
@@ -468,239 +528,226 @@ function Order({ config: configProp }) {
                             <p style={{ color: '#92400E', fontSize: 14 }}>⏸️ {config.pauseOrdersMessage || 'Pedidos pausados'}</p>
                         </div>
                     )}
+                </div>
 
-                    {/* DYNAMIC FORM (Universal) */}
-                    <div style={{ background: '#F9FAFB', padding: 16, borderRadius: 12, marginBottom: 16 }}>
-                        <h3 style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
-                            {orderType === 'dine_in' ? 'Datos de Mesa' : 'Datos de Envío'}
-                        </h3>
-
-                        {/* Validation Errors */}
-                        {validationErrors.length > 0 && (
-                            <div style={{ background: '#FEE2E2', padding: 10, borderRadius: 8, marginBottom: 12 }}>
-                                {validationErrors.map((err, i) => (
-                                    <p key={i} style={{ color: '#DC2626', fontSize: 13, margin: '2px 0' }}>{err}</p>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Order Type Specific Fields */}
-                        {orderType === 'delivery' ? (
-                            <>
-                                {/* 🚫 HARD FENCE WARNING */}
-                                {isOutOfRadius && (
-                                    <div style={{
-                                        background: '#FEE2E2', border: '2px solid #EF4444',
-                                        padding: 16, borderRadius: 12, marginBottom: 16, textAlign: 'center'
-                                    }}>
-                                        <div style={{ fontSize: 32, marginBottom: 8 }}>🚫</div>
-                                        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#DC2626', marginBottom: 4 }}>
-                                            Fuera de Radio de Entrega
-                                        </h4>
-                                        <p style={{ fontSize: 14, color: '#7F1D1D' }}>
-                                            Máximo: {deliveryRadius}km
-                                        </p>
-                                    </div>
-                                )}
-                                {/* Name */}
-                                <div style={{ marginBottom: 12 }}>
-                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre *</label>
-                                    <input
-                                        type="text"
-                                        value={customerInfo.name}
-                                        onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
-                                        placeholder="Tu nombre"
-                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
-                                    />
-                                </div>
-                                {/* Phone */}
-                                <div style={{ marginBottom: 12 }}>
-                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Teléfono *</label>
-                                    <input
-                                        type="tel"
-                                        value={customerInfo.phone}
-                                        onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
-                                        placeholder="+54 11 1234-5678"
-                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
-                                    />
-                                </div>
-                                {/* Address */}
+                {/* 2. PREMIUM FORM SECTION */}
+                <div style={{
+                    background: 'white', borderRadius: 24, padding: 24,
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
+                }}>
+                    {/* Header based on Context */}
+                    <div style={{ marginBottom: 24 }}>
+                        {orderType === 'dine_in' ? (
+                            // MESA BADGE (Reference IMG_9072)
+                            <div style={{
+                                background: '#1F2937', color: 'white',
+                                padding: '16px 20px', borderRadius: 16,
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                            }}>
                                 <div>
-                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección *</label>
-                                    <textarea
-                                        value={customerInfo.address}
-                                        onChange={(e) => setCustomerInfo(p => ({ ...p, address: e.target.value }))}
-                                        placeholder="Calle, número, piso..."
-                                        rows={2}
-                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, resize: 'none', boxSizing: 'border-box' }}
-                                    />
+                                    <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>Ubicación</span>
+                                    <div style={{ fontSize: 20, fontWeight: 700 }}>Comer en Mesa</div>
                                 </div>
-                            </>
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.1)', padding: 8, borderRadius: 12
+                                }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><line x1="6" y1="6" x2="6" y2="6" /><line x1="6" y1="30" x2="6" y2="30" /></svg>
+                                </div>
+                            </div>
                         ) : (
-                            /* DINE-IN FIELDS */
-                            <>
-                                <div style={{ marginBottom: 12 }}>
-                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Nombre (Opcional)</label>
-                                    <input
-                                        type="text"
-                                        value={customerInfo.name}
-                                        onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
-                                        placeholder="Tu nombre"
-                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>Número de Mesa *</label>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        value={customerInfo.tableNumber}
-                                        onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
-                                        placeholder="Ej: 5"
-                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
-                                    />
-                                </div>
-                            </>
+                            // DELIVERY HEADER (Reference IMG_9069)
+                            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 4 }}>
+                                Detalles de Entrega
+                            </h3>
                         )}
                     </div>
 
-                    {/* DYNAMIC PAYMENT SELECTOR (Unified) */}
-                    <div style={{ background: '#F9FAFB', padding: 16, borderRadius: 12, marginBottom: 16 }}>
-                        <h3 style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Método de pago</h3>
+                    {/* Validation Errors */}
+                    {validationErrors.length > 0 && (
+                        <div style={{ background: '#FEE2E2', padding: 12, borderRadius: 12, marginBottom: 20 }}>
+                            {validationErrors.map((err, i) => (
+                                <p key={i} style={{ color: '#DC2626', fontSize: 14, margin: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span>⚠️</span> {err}
+                                </p>
+                            ))}
+                        </div>
+                    )}
 
-                        {/* Pay Before Logic (Mercado Pago) - Only if enabled for Dine-In or always for Delivery */}
-                        {(orderType === 'delivery' || serviceModes?.dineInPayment === 'before') && (
-                            <label style={{
-                                display: 'flex', alignItems: 'center', gap: 10, padding: 12,
-                                background: paymentMethod === 'mercadopago' ? '#EFF6FF' : 'white',
-                                border: paymentMethod === 'mercadopago' ? '2px solid #3B82F6' : '1px solid #E5E7EB',
-                                borderRadius: 10, cursor: 'pointer', marginBottom: 8
-                            }}>
-                                <input type="radio" name="pay" value="mercadopago" checked={paymentMethod === 'mercadopago'} onChange={(e) => setPaymentMethod(e.target.value)} style={{ accentColor: '#3B82F6' }} />
-                                <div>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>Mercado Pago</span>
-                                    <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>Transferencia o QR</p>
+                    {/* INPUT FIELDS */}
+                    {orderType === 'delivery' ? (
+                        <>
+                            {/* Hard Fence Warning */}
+                            {isOutOfRadius && (
+                                <div style={{ background: '#FEE2E2', border: '1px solid #EF4444', padding: 16, borderRadius: 12, marginBottom: 20, textAlign: 'center' }}>
+                                    <div style={{ fontSize: 24, marginBottom: 4 }}>🚫</div>
+                                    <h4 style={{ color: '#DC2626', margin: 0 }}>Fuera de Radio ({deliveryRadius}km)</h4>
                                 </div>
-                            </label>
-                        )}
+                            )}
 
-                        {/* Cash / Pay After Logic */}
-                        {(cashAvailable || serviceModes?.dineInPayment === 'after') && (
-                            <label style={{
-                                display: 'flex', alignItems: 'center', gap: 10, padding: 12,
-                                background: (paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter') ? '#F0FDF4' : 'white',
-                                border: (paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter') ? '2px solid #22C55E' : '1px solid #E5E7EB',
-                                borderRadius: 10, cursor: 'pointer', marginBottom: 8
-                            }}>
-                                <input
-                                    type="radio"
-                                    name="pay"
-                                    value={orderType === 'dine_in' ? 'pay_at_counter' : 'efectivo'}
-                                    checked={paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter'}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <div>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>
-                                        {orderType === 'dine_in' ? 'Pagar al Final' : 'Efectivo'}
-                                    </span>
-                                    <p style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 0' }}>
-                                        {orderType === 'dine_in' ? 'En caja o al mozo' : 'Pago al recibir'}
-                                    </p>
-                                </div>
-                            </label>
-                        )}
-                    </div>
+                            <InputGroup
+                                label="Nombre" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                                value={customerInfo.name}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
+                                placeholder="Tu nombre y apellido"
+                            />
+                            <InputGroup
+                                label="Teléfono" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
+                                value={customerInfo.phone}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
+                                placeholder="WhatsApp (ej: 11 1234 5678)"
+                                type="tel"
+                            />
+                            <InputGroup
+                                label="Dirección" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>}
+                                value={customerInfo.address}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, address: e.target.value }))}
+                                placeholder="Calle, Altura, Piso / Depto"
+                                isTextArea={true}
+                            />
+                        </>
+                    ) : (
+                        /* DINE-IN FIELDS */
+                        <>
+                            <InputGroup
+                                label="Número de Mesa" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" /><path d="M21 9H3" /><path d="M21 15H3" /><path d="M9 3v18" /><path d="M15 3v18" /></svg>}
+                                value={customerInfo.tableNumber}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
+                                placeholder="Indica el número"
+                                inputMode="numeric" pattern="[0-9]*"
+                            />
+                            <InputGroup
+                                label="Nombre (Opcional)" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                                value={customerInfo.name}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
+                                placeholder="Para llamarte"
+                            />
+                        </>
+                    )}
+                </div>
 
-                    {/* Order Items */}
-                    <div style={{ marginBottom: 16 }}>
-                        {order.items.map((item, index) => (
-                            <div key={index} style={{
-                                display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0',
-                                borderBottom: index < order.items.length - 1 ? '1px solid #F3F4F6' : 'none'
-                            }}>
-                                <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: '#F3F0EB' }}>
-                                    <img src={getItemImage(item, index)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontSize: 15, fontWeight: 600, color: '#1F2937', marginBottom: 2 }}>{item.name}</p>
-                                    <p style={{ fontSize: 14, color: tenantData?.primary_color || '#C4856A', fontWeight: 500, margin: 0 }}>{formatPrice(item.price)}</p>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <button onClick={() => handleQuantityChange(index, -1)} style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid #E5E7EB', background: 'white', cursor: 'pointer', fontSize: 16 }}>−</button>
-                                    <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', minWidth: 20, textAlign: 'center' }}>{item.quantity}</span>
-                                    <button onClick={() => handleQuantityChange(index, 1)} style={{ width: 28, height: 28, borderRadius: '50%', border: 'none', background: tenantData?.primary_color || '#C4856A', color: 'white', cursor: 'pointer', fontSize: 16 }}>+</button>
-                                </div>
+                {/* 3. PREMIUM PAYMENT SELECTOR (Cards) */}
+                <div style={{
+                    background: 'white', borderRadius: 24, padding: 24,
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
+                }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>
+                        Método de Pago
+                    </h3>
+
+                    {/* MERCADO PAGO CARD */}
+                    {(orderType === 'delivery' || serviceModes?.dineInPayment === 'before') && (
+                        <PaymentMethodCard
+                            id="mercadopago"
+                            selected={paymentMethod === 'mercadopago'}
+                            onClick={() => setPaymentMethod('mercadopago')}
+                            title="Mercado Pago"
+                            subtitle="Tarjetas, Débito, QR"
+                            color="#009EE3"
+                            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
+                        />
+                    )}
+
+                    {/* CASH / COUNTER CARD */}
+                    {(cashAvailable || serviceModes?.dineInPayment === 'after') && (
+                        <PaymentMethodCard
+                            id="efectivo"
+                            selected={paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter'}
+                            onClick={() => setPaymentMethod(orderType === 'dine_in' ? 'pay_at_counter' : 'efectivo')}
+                            title={orderType === 'dine_in' ? 'Pagar al Final' : 'Efectivo'}
+                            subtitle={orderType === 'dine_in' ? 'En caja o al mozo' : 'Pagar al recibir'}
+                            color="#22C55E"
+                            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
+                        />
+                    )}
+                </div>
+
+                {/* 4. ORDER ITEMS (Visual Clean) */}
+                <div style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>Resumen</h3>
+                    {order.items.map((item, index) => (
+                        <div key={index} style={{
+                            display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0',
+                            borderBottom: index < order.items.length - 1 ? '1px solid #F3F4F6' : 'none'
+                        }}>
+                            <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: '#F3F0EB' }}>
+                                <img src={getItemImage(item, index)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />
                             </div>
-                        ))}
-                    </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{item.name}</div>
+                                <div style={{ fontSize: 14, color: '#6B7280' }}>{formatPrice(item.price)}</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#F9FAFB', padding: '4px 8px', borderRadius: 20 }}>
+                                <button onClick={() => handleQuantityChange(index, -1)} style={{ border: 'none', background: 'none', fontSize: 16, cursor: 'pointer', color: '#6B7280' }}>−</button>
+                                <span style={{ fontSize: 14, fontWeight: 600, minWidth: 16, textAlign: 'center' }}>{item.quantity}</span>
+                                <button onClick={() => handleQuantityChange(index, 1)} style={{ border: 'none', background: 'none', fontSize: 16, cursor: 'pointer', color: '#111827' }}>+</button>
+                            </div>
+                        </div>
+                    ))}
 
                     {/* Totals */}
-                    <div style={{ paddingTop: 16, borderTop: '1px solid #F3F4F6' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ marginTop: 20, paddingTop: 20, borderTop: '2px dashed #E5E7EB' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 15 }}>
                             <span style={{ color: '#6B7280' }}>Subtotal</span>
                             <span style={{ fontWeight: 500 }}>{formatPrice(subtotal)}</span>
                         </div>
                         {isDelivery && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 15 }}>
                                 <span style={{ color: '#6B7280' }}>Envío</span>
                                 <span style={{ fontWeight: 500, color: isFreeDelivery ? '#22C55E' : 'inherit' }}>
-                                    {isFreeDelivery ? '¡GRATIS!' : formatPrice(actualDeliveryFee)}
+                                    {isFreeDelivery ? 'Gratis' : formatPrice(actualDeliveryFee)}
                                 </span>
                             </div>
                         )}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
-                            <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>Total</span>
-                            <span style={{ fontSize: 18, fontWeight: 700, color: tenantData?.primary_color || '#C4856A' }}>{formatPrice(total)}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, alignItems: 'flex-end' }}>
+                            <span style={{ fontSize: 20, fontWeight: 800, color: '#1F2937' }}>Total</span>
+                            <span style={{ fontSize: 24, fontWeight: 800, color: tenantData?.primary_color || '#C4856A' }}>{formatPrice(total)}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Floating Submit Button (with Safe Area) */}
+            {/* FLOATING ACTION BUTTON */}
             <div style={{
                 position: 'fixed', bottom: 0, left: 0, right: 0,
-                padding: '16px 20px',
-                paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 20px))',
-                background: 'linear-gradient(to top, white 85%, transparent)',
+                padding: '20px 20px',
+                paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
+                background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)',
+                borderTop: '1px solid rgba(0,0,0,0.05)',
                 zIndex: 100
             }}>
                 <button
                     onClick={handleSubmit}
                     disabled={isSubmitting || config.pauseOrders || isOutOfRadius}
                     style={{
-                        width: '100%', padding: 16,
+                        width: '100%', padding: 18,
                         background: isOutOfRadius ? '#EF4444' : (tenantData?.primary_color || '#C4856A'),
-                        color: 'white', border: 'none', borderRadius: 14,
-                        fontSize: 17, fontWeight: 700,
+                        color: 'white', border: 'none', borderRadius: 16,
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        fontSize: 18, fontWeight: 700,
                         cursor: isOutOfRadius ? 'not-allowed' : 'pointer',
                         opacity: (isSubmitting || config.pauseOrders) ? 0.6 : 1,
-                        boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
+                        boxShadow: '0 8px 24px -4px rgba(0,0,0,0.2)',
+                        transform: 'translateZ(0)' // HW accel
                     }}
                 >
-                    {isSubmitting ? 'Procesando...' : (isOutOfRadius ? '🚫 Fuera de Radio' : `Confirmar Pedido · ${formatPrice(total)}`)}
+                    <span>{isSubmitting ? 'Procesando...' : (isOutOfRadius ? 'Fuera de Radio' : 'Confirmar Pedido')}</span>
+                    {!isSubmitting && !isOutOfRadius && <span>➜</span>}
                 </button>
             </div>
 
-            {/* 🍞 TOAST NOTIFICATION */}
+            {/* TOAST */}
             {toastMessage && (
                 <div style={{
-                    position: 'fixed',
-                    bottom: 100,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: '#1F2937', color: 'white', padding: '12px 20px',
-                    borderRadius: 30, fontSize: 14, fontWeight: 500, zIndex: 9999,
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    animation: 'slideUpToast 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                    whiteSpace: 'nowrap'
+                    position: 'fixed', bottom: 120, left: '50%', transform: 'translateX(-50%)',
+                    background: '#1F2937', color: 'white', padding: '12px 24px',
+                    borderRadius: 30, fontSize: 14, fontWeight: 600, zIndex: 9999,
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                    animation: 'slideUpToast 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}>
-                    <span>{toastMessage}</span>
+                    {toastMessage}
                 </div>
             )}
-            <style>{`@keyframes slideUpToast { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }`}</style>
+            <style>{`@keyframes slideUpToast { from { transform: translate(-50%, 40px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }`}</style>
         </div>
     )
 }
