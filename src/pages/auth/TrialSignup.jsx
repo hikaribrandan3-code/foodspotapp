@@ -213,11 +213,11 @@ const TrialSignup = () => {
                 height: 'auto',
                 aspectRatio: '1/1',
                 zIndex: 2,
-                backgroundImage: 'url(https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=90)',
+                backgroundImage: 'url(https://pngimg.com/uploads/burger_sandwich/burger_sandwich_PNG4135.png)',
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                filter: 'saturate(1.3) contrast(1.1) drop-shadow(0 25px 50px rgba(0,0,0,0.45))',
+                filter: 'drop-shadow(0 25px 50px rgba(0,0,0,0.5))',
             }} />
 
             {/* 4. FLOATING FOOD SATELLITES */}
