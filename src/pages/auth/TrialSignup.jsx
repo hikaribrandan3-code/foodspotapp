@@ -561,18 +561,144 @@ const TrialSignup = () => {
             </div>
 
             {/* ═══════════════════════════════════ */}
-            {/* DESKTOP LAYOUT (≥ 1024px) — 50/50 SPLIT */}
+            {/* DESKTOP LAYOUT (≥ 1024px) — CENTERED MODAL REPLICA */}
             {/* ═══════════════════════════════════ */}
             <div className="ts-desktop-shell" style={{
-                flexDirection: 'row',
                 minHeight: '100vh',
-                fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+                fontFamily: "'Inter', sans-serif",
+                backgroundColor: '#FDF8F0', // Beige background from reference
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                position: 'relative', overflow: 'hidden'
             }}>
-                {/* LEFT: BRAND */}
-                <BrandPanel isDesktopPanel={true} />
+                {/* BACKGROUND BURGER (Behind Card) */}
+                <div style={{
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '600px', height: '600px',
+                    backgroundImage: 'url(https://pngimg.com/uploads/burger_sandwich/burger_sandwich_PNG4135.png)',
+                    backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+                    filter: 'blur(0px) drop-shadow(0 40px 80px rgba(0,0,0,0.15))',
+                    zIndex: 0,
+                    opacity: 1
+                }} />
 
-                {/* RIGHT: FORM */}
-                <ActionsPanel isDesktopPanel={true} />
+                {/* MODAL CARD */}
+                <div style={{
+                    position: 'relative', zIndex: 10,
+                    width: 440,
+                    background: '#FFFFFF',
+                    borderRadius: 32,
+                    padding: '48px 40px',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.02)',
+                    textAlign: 'center'
+                }}>
+                    {/* LOGO HEADER */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
+                        <div style={{ position: 'relative', width: 24, height: 24, marginBottom: 8 }}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 19V6M5 12l7-7 7 7" stroke="none" />
+                                <path d="M2.05 10.5a9 9 0 0 1 17.4 3.5l1.55 1.55a9 9 0 0 1-1.55 1.55l-1.55-1.55a9 9 0 0 1-3.5 17.4" stroke="none" />
+                                {/* Simple Leaf Icon Replica */}
+                                <path d="M12 2L12 12" stroke="#1F2937" strokeWidth="2.5" />
+                                <path d="M12 2C12 2 18 4 18 10C18 16 12 12 12 12" stroke="#1F2937" strokeWidth="2.5" fill="none" />
+                                <path d="M12 2C12 2 6 4 6 10C6 16 12 12 12 12" stroke="#1F2937" strokeWidth="2.5" fill="none" />
+                            </svg>
+                        </div>
+                        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1F2937', margin: 0, letterSpacing: '-0.02em' }}>
+                            FoodSpot
+                            <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#6B7280', marginTop: 2 }}>Mobile</span>
+                        </h1>
+                    </div>
+
+                    {/* TITLE */}
+                    <h2 style={{ fontSize: 32, fontWeight: 900, color: '#1F2937', margin: '0 0 12px', letterSpacing: '-0.03em' }}>
+                        {mode === 'signup' ? 'Empezá gratis' : '¡Hola de nuevo!'}
+                    </h2>
+                    <p style={{ fontSize: 15, color: '#4B5563', margin: '0 0 32px', lineHeight: 1.5 }}>
+                        {mode === 'signup' ? '14 días gratis. Sin tarjeta. Cancelás cuando quieras.' : 'Ingresá a tu panel de control.'}
+                    </p>
+
+                    {/* BUTTONS (Desktop Styles) */}
+                    {!showEmailForm ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            {/* GOOGLE - ORANGE/RED */}
+                            <button
+                                onClick={handleGoogleLogin}
+                                disabled={loading}
+                                style={{
+                                    width: '100%', padding: '16px',
+                                    background: 'linear-gradient(135deg, #E2552D 0%, #CC3210 100%)',
+                                    border: 'none', borderRadius: 50,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                                    fontSize: 16, fontWeight: 600, color: '#FFFFFF',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(220, 60, 20, 0.3)',
+                                    transition: 'transform 0.1s'
+                                }}
+                            >
+                                <div style={{ background: 'white', borderRadius: '50%', padding: 4, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#EA4335" d="M12.48 10.92v3.28h5.22c-.2 1.05-2.55 3.3-5.22 3.3-3.15 0-5.73-2.6-5.73-5.77s2.57-5.77 5.73-5.77c1.78 0 2.96.76 3.65 1.41l2.58-2.6C16.96 2.86 14.88 2 12.48 2 6.72 2 2 6.72 2 12.5s4.72 10.5 10.48 10.5c6.04 0 10.04-4.24 10.04-10.25 0-.7-.07-1.3-.18-1.83h-9.86z"></path></svg>
+                                </div>
+                                Continuar con Google
+                            </button>
+
+                            <div style={{ fontSize: 12, color: '#9CA3AF', fontWeight: 600 }}>o</div>
+
+                            {/* EMAIL - BLUE */}
+                            <button
+                                onClick={() => setShowEmailForm(true)}
+                                disabled={loading}
+                                style={{
+                                    width: '100%', padding: '16px',
+                                    background: '#4285F4',
+                                    border: 'none', borderRadius: 50,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                                    fontSize: 16, fontWeight: 600, color: '#FFFFFF',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(66, 133, 244, 0.3)',
+                                    transition: 'transform 0.1s'
+                                }}
+                            >
+                                Continuar con Email
+                            </button>
+                        </div>
+                    ) : (
+                        /* EMAIL FORM (Simplified for desktop modal) */
+                        <form onSubmit={mode === 'signup' ? handleSignup : handleLogin} style={{ textAlign: 'left' }}>
+                            {/* ... Inputs ... Reuse Input Styles but maybe scoped? Using style={inputStyle} */}
+                            {mode === 'signup' && (
+                                <div style={{ marginBottom: 16 }}>
+                                    <label style={labelStyle}>Nombre del Negocio</label>
+                                    <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Ej: Burger Palace" required style={inputStyle} />
+                                </div>
+                            )}
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={labelStyle}>Email</label>
+                                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" required style={inputStyle} />
+                            </div>
+                            <div style={{ marginBottom: 24 }}>
+                                <label style={labelStyle}>Contraseña</label>
+                                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 caracteres" required minLength={6} style={inputStyle} />
+                            </div>
+                            <div style={{ display: 'flex', gap: 12 }}>
+                                <button type="button" onClick={() => setShowEmailForm(false)} style={{ flex: 1, padding: 14, background: '#F3F4F6', border: 'none', borderRadius: 12, color: '#4B5563', fontWeight: 600, cursor: 'pointer' }}>Volver</button>
+                                <button type="submit" disabled={loading} style={{ flex: 2, padding: 14, background: '#DC3C14', border: 'none', borderRadius: 12, color: 'white', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
+                                    {loading ? '...' : 'Continuar'}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* FOOTER */}
+                    <p style={{ marginTop: 32, fontSize: 13, color: '#6B7280' }}>
+                        {mode === 'signup' ? '¿Ya tenés cuenta? ' : '¿Sos nuevo? '}
+                        <button onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError(null); setShowEmailForm(false) }}
+                            style={{ background: 'none', border: 'none', color: '#1F2937', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>
+                            {mode === 'signup' ? 'Inicia sesión' : 'Registrate'}
+                        </button>
+                    </p>
+                </div>
             </div>
         </>
     )
