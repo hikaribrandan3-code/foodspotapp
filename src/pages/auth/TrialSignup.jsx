@@ -167,23 +167,35 @@ const TrialSignup = () => {
             // ---------------------------------------------------------
             if (!slug) {
                 console.warn('[AUTH] Missing slug in metadata. Attempting DB recovery...')
-                // Attempt to find the business associated with this user
-                const { data: brandingData, error: brandingError } = await supabase
-                    .from('branding')
-                    .select('slug')
-                    .eq('user_id', user.id)
+
+                // STAGE 1: Find Business ID from Profiles
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('business_id')
+                    .eq('id', user.id)
                     .single()
 
-                if (brandingData?.slug) {
-                    slug = brandingData.slug
-                    console.log('[AUTH] Recovered slug from DB:', slug)
+                if (profileData?.business_id) {
+                    // STAGE 2: Find Slug from Branding using Business ID
+                    const { data: brandingData, error: brandingError } = await supabase
+                        .from('branding')
+                        .select('slug')
+                        .eq('business_id', profileData.business_id)
+                        .single()
 
-                    // 🩹 HEAL: Backfill metadata for future logins (Fire & Forget)
-                    supabase.auth.updateUser({
-                        data: { ...metadata, slug: slug }
-                    }).then(() => console.log('[AUTH] Metadata backfilled successfully'))
+                    if (brandingData?.slug) {
+                        slug = brandingData.slug
+                        console.log('[AUTH] Recovered slug from DB:', slug)
+
+                        // 🩹 HEAL: Backfill metadata for future logins (Fire & Forget)
+                        supabase.auth.updateUser({
+                            data: { ...metadata, slug: slug, business_id: profileData.business_id }
+                        }).then(() => console.log('[AUTH] Metadata backfilled successfully'))
+                    } else {
+                        console.warn('[AUTH] Branding lookup failed:', brandingError)
+                    }
                 } else {
-                    console.warn('[AUTH] DB Recovery failed or no business found:', brandingError)
+                    console.warn('[AUTH] Profile lookup failed:', profileError)
                 }
             }
 
