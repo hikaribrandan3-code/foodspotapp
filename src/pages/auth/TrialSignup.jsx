@@ -172,7 +172,7 @@ function TrialSignup() {
     }
 
     // ============================
-    // RENDER
+    // RENDER: STRICT MODE 1:1
     // ============================
     return (
         <div style={{
@@ -183,35 +183,32 @@ function TrialSignup() {
             position: 'relative',
             overflow: 'hidden',
             fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-            backgroundColor: '#DC3C14' // Fallback color
+            backgroundColor: '#DC3C14'
         }}>
-            {/* 1. SWIRL BACKGROUND */}
+            {/* 1. STATIC SWIRL BACKGROUND (No Animation) */}
             <div style={{
-                position: 'absolute', inset: -100, zIndex: 0,
+                position: 'absolute', inset: -200, zIndex: 0,
                 background: `
                     repeating-conic-gradient(
                         from 0deg at 50% 50%,
-                        #DC3C14 0deg 15deg,
-                        #E84820 15deg 30deg
+                        #D93611 0deg 15deg,
+                        #EF5830 15deg 30deg
                     )
                 `,
-                animation: 'slowSpin 60s linear infinite',
-                filter: 'blur(0px)',
-                opacity: 1
             }} />
 
-            {/* 2. RADIAL VIGNETTE (Depth) */}
+            {/* 2. VIGNETTE For Legibility */}
             <div style={{
                 position: 'absolute', inset: 0, zIndex: 1,
-                background: 'radial-gradient(circle at center, rgba(220, 60, 20, 0.4) 0%, rgba(180, 40, 10, 0.6) 100%)'
+                background: 'radial-gradient(circle at center, rgba(217, 54, 17, 0) 20%, rgba(160, 30, 10, 0.4) 100%)'
             }} />
 
-            {/* 3. BURGER IMAGE (High Saturation) */}
+            {/* 3. BURGER IMAGE */}
             <div style={{
                 position: 'absolute',
                 top: '50%', left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: '120%',
+                width: '115%', // Slightly smaller than "too big"
                 height: 'auto',
                 aspectRatio: '1/1',
                 zIndex: 2,
@@ -219,8 +216,8 @@ function TrialSignup() {
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                filter: 'saturate(1.4) contrast(1.1) drop-shadow(0 20px 40px rgba(0,0,0,0.3))',
-                marginTop: -40 // Visual adjustment
+                filter: 'saturate(1.2) contrast(1.05) drop-shadow(0 25px 50px rgba(0,0,0,0.35))',
+                marginTop: -20
             }} />
 
             {/* 4. CONTENT LAYER */}
@@ -229,7 +226,7 @@ function TrialSignup() {
                 flex: 1, display: 'flex', flexDirection: 'column',
                 justifyContent: 'space-between',
                 padding: '0 24px',
-                paddingTop: 'calc(env(safe-area-inset-top, 20px) + 64px)',
+                paddingTop: 'calc(env(safe-area-inset-top, 20px) + 56px)',
                 paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 32px)',
                 minHeight: '100vh', minHeight: '100dvh'
             }}>
@@ -237,30 +234,30 @@ function TrialSignup() {
                 <div style={{ textAlign: 'center' }}>
                     {/* Slogan */}
                     <p style={{
-                        color: 'rgba(255,255,255,0.9)', fontSize: 13,
-                        fontWeight: 700, letterSpacing: '0.05em',
-                        textTransform: 'uppercase', marginBottom: 24,
+                        color: '#FFFFFF', fontSize: 13,
+                        fontWeight: 700, letterSpacing: '0.08em',
+                        textTransform: 'uppercase', marginBottom: 20,
                         textShadow: '0 2px 4px rgba(0,0,0,0.2)'
                     }}>
                         TU NEGOCIO. TU MARCA. TU APP.
                     </p>
 
-                    {/* Main Title - EXTRA BOLD / BLACK */}
+                    {/* Main Title - STRICTLY INTER BLACK 900 WHITE */}
                     <h1 style={{
-                        color: 'white', fontSize: 'clamp(42px, 11vw, 56px)',
-                        fontWeight: 900, lineHeight: 0.95,
+                        color: '#FFFFFF', fontSize: 'clamp(40px, 11vw, 52px)',
+                        fontWeight: 900, lineHeight: 0.9,
                         margin: 0,
-                        textShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                        letterSpacing: '-0.04em',
-                        fontFamily: "'Inter', sans-serif" // Ensure font supports 900
+                        textShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                        letterSpacing: '-0.03em',
+                        fontFamily: "'Inter', sans-serif"
                     }}>
                         ¡Bienvenidos a<br />
-                        <span style={{ display: 'block', marginTop: 4 }}>FoodSpot</span>
+                        <span style={{ display: 'block' }}>FoodSpot</span>
                         <span style={{ display: 'block' }}>Mobile!</span>
                     </h1>
                 </div>
 
-                {/* BOTTOM: AUTH ACTIONS */}
+                {/* BOTTOM: ACTIONS */}
                 <div style={{ maxWidth: 400, width: '100%', margin: '0 auto' }}>
                     {/* Error Toast */}
                     {error && (
@@ -268,8 +265,8 @@ function TrialSignup() {
                             background: '#FEE2E2',
                             border: '2px solid #EF4444',
                             borderRadius: 16, padding: '12px 16px', marginBottom: 16,
-                            color: '#991B1B', fontSize: 14, textAlign: 'center',
-                            fontWeight: 600,
+                            color: '#991B1B', fontSize: 13, textAlign: 'center',
+                            fontWeight: 700,
                             boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                         }}>
                             {error}
@@ -277,25 +274,23 @@ function TrialSignup() {
                     )}
 
                     {!showEmailForm ? (
-                        /* BUTTON STACK */
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            {/* GOOGLE BUTTON - WHITE PILL */}
+                        /* BUTTON STACK - PURE WHITE PILLS */
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                            {/* GOOGLE */}
                             <button
                                 onClick={handleGoogleLogin}
                                 disabled={loading}
                                 style={{
                                     width: '100%', padding: '18px 24px',
                                     background: '#FFFFFF', border: 'none',
-                                    borderRadius: 50, // Pill shape
-                                    display: 'flex', alignItems: 'center', gap: 12,
-                                    fontSize: 17, fontWeight: 700, color: '#1F2937',
+                                    borderRadius: 50,
+                                    display: 'flex', alignItems: 'center', gap: 14,
+                                    fontSize: 16, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                                    opacity: loading ? 0.7 : 1,
-                                    transition: 'transform 0.1s, box-shadow 0.1s'
+                                    boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                                    opacity: loading ? 0.7 : 1
                                 }}
                             >
-                                {/* Google G Logo */}
                                 <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <svg width="24" height="24" viewBox="0 0 48 48">
                                         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -307,24 +302,22 @@ function TrialSignup() {
                                 <span style={{ flex: 1, textAlign: 'center' }}>Continuar con Google</span>
                             </button>
 
-                            {/* EMAIL BUTTON - WHITE PILL (Identical Style) */}
+                            {/* EMAIL */}
                             <button
                                 onClick={() => setShowEmailForm(true)}
                                 disabled={loading}
                                 style={{
                                     width: '100%', padding: '18px 24px',
                                     background: '#FFFFFF', border: 'none',
-                                    borderRadius: 50, // Pill shape
-                                    display: 'flex', alignItems: 'center', gap: 12,
-                                    fontSize: 17, fontWeight: 700, color: '#1F2937',
+                                    borderRadius: 50,
+                                    display: 'flex', alignItems: 'center', gap: 14,
+                                    fontSize: 16, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                                    transition: 'transform 0.1s'
+                                    boxShadow: '0 6px 20px rgba(0,0,0,0.15)'
                                 }}
                             >
-                                {/* Envelope Icon */}
                                 <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <rect x="2" y="4" width="20" height="16" rx="2" />
                                         <path d="M22 7l-10 7L2 7" />
                                     </svg>
@@ -333,21 +326,20 @@ function TrialSignup() {
                             </button>
                         </div>
                     ) : (
-                        /* EMAIL FORM (Expanded) */
+                        /* EMAIL FORM - CLEAN CARD */
                         <div style={{
                             background: '#FFFFFF',
                             borderRadius: 32, padding: 28,
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-                            marginBottom: 24
+                            boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+                            marginBottom: 20
                         }}>
-                            {/* Back Arrow */}
                             <button
                                 onClick={() => { setShowEmailForm(false); setError(null) }}
                                 style={{
                                     background: 'none', border: 'none', color: '#6B7280',
                                     fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 20,
                                     display: 'flex', alignItems: 'center', gap: 6,
-                                    fontWeight: 600
+                                    fontWeight: 700
                                 }}
                             >
                                 ← Volver
@@ -358,62 +350,36 @@ function TrialSignup() {
                             </h3>
 
                             <form onSubmit={mode === 'signup' ? handleSignup : handleLogin}>
-                                {/* Business Name (Signup only) */}
                                 {mode === 'signup' && (
                                     <div style={{ marginBottom: 16 }}>
                                         <label style={labelStyle}>Nombre del Negocio</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <div style={iconWrapStyle}>
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-                                            </div>
-                                            <input
-                                                type="text" value={businessName}
-                                                onChange={(e) => setBusinessName(e.target.value)}
-                                                placeholder="Ej: Burger Palace"
-                                                required style={inputStyle}
-                                            />
-                                        </div>
-                                        {businessName && (
-                                            <p style={{ color: '#6B7280', fontSize: 11, marginTop: 4, marginBottom: 0 }}>
-                                                Tu URL: foodspot.app/<strong>{generateSlug(businessName)}</strong>
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Email */}
-                                <div style={{ marginBottom: 16 }}>
-                                    <label style={labelStyle}>Email</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <div style={iconWrapStyle}>
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M22 7l-10 7L2 7" /></svg>
-                                        </div>
                                         <input
-                                            type="email" value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="tu@email.com"
+                                            type="text" value={businessName}
+                                            onChange={(e) => setBusinessName(e.target.value)}
+                                            placeholder="Ej: Burger Palace"
                                             required style={inputStyle}
                                         />
                                     </div>
+                                )}
+                                <div style={{ marginBottom: 16 }}>
+                                    <label style={labelStyle}>Email</label>
+                                    <input
+                                        type="email" value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="tu@email.com"
+                                        required style={inputStyle}
+                                    />
                                 </div>
-
-                                {/* Password */}
                                 <div style={{ marginBottom: 24 }}>
                                     <label style={labelStyle}>Contraseña</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <div style={iconWrapStyle}>
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                                        </div>
-                                        <input
-                                            type="password" value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder={mode === 'signup' ? 'Mínimo 6 caracteres' : 'Tu contraseña'}
-                                            required minLength={6} style={inputStyle}
-                                        />
-                                    </div>
+                                    <input
+                                        type="password" value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Min. 6 caracteres"
+                                        required minLength={6} style={inputStyle}
+                                    />
                                 </div>
 
-                                {/* Submit */}
                                 <button
                                     type="submit" disabled={loading}
                                     style={{
@@ -426,81 +392,43 @@ function TrialSignup() {
                                         transition: 'all 0.2s'
                                     }}
                                 >
-                                    {loading ? (
-                                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                                            <span style={{
-                                                width: 18, height: 18,
-                                                border: '2px solid rgba(0,0,0,0.1)',
-                                                borderTopColor: '#FFFFFF',
-                                                borderRadius: '50%',
-                                                animation: 'authSpin 0.8s linear infinite'
-                                            }} />
-                                            Procesando...
-                                        </span>
-                                    ) : (
-                                        mode === 'signup' ? 'Comenzar prueba gratis →' : 'Iniciar sesión →'
-                                    )}
+                                    {loading ? 'Procesando...' : (mode === 'signup' ? 'Comenzar prueba gratis →' : 'Iniciar sesión →')}
                                 </button>
                             </form>
                         </div>
                     )}
 
-                    {/* MODE TOGGLE */}
+                    {/* FOOTER LINK */}
                     <p style={{
                         color: 'rgba(255,255,255,0.9)', fontSize: 14,
                         textAlign: 'center', margin: 0,
+                        marginTop: 12,
                         fontWeight: 600,
                         textShadow: '0 1px 2px rgba(0,0,0,0.1)'
                     }}>
-                        {mode === 'signup' ? (
-                            <>
-                                ¿Ya tienes cuenta?{' '}
-                                <button
-                                    onClick={() => { setMode('login'); setShowEmailForm(true); setError(null) }}
-                                    style={{
-                                        background: 'none', border: 'none',
-                                        color: 'white', fontWeight: 800,
-                                        cursor: 'pointer', textDecoration: 'underline',
-                                        fontSize: 14, padding: 0,
-                                        marginLeft: 4
-                                    }}
-                                >
-                                    Inicia Sesión
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                ¿Eres nuevo?{' '}
-                                <button
-                                    onClick={() => { setMode('signup'); setShowEmailForm(true); setError(null) }}
-                                    style={{
-                                        background: 'none', border: 'none',
-                                        color: 'white', fontWeight: 800,
-                                        cursor: 'pointer', textDecoration: 'underline',
-                                        fontSize: 14, padding: 0,
-                                        marginLeft: 4
-                                    }}
-                                >
-                                    Regístrate
-                                </button>
-                            </>
-                        )}
+                        {mode === 'signup' ? '¿Ya tienes cuenta? ' : '¿Eres nuevo? '}
+                        <button
+                            onClick={() => {
+                                setMode(mode === 'signup' ? 'login' : 'signup')
+                                setShowEmailForm(true)
+                                setError(null)
+                            }}
+                            style={{
+                                background: 'none', border: 'none',
+                                color: 'white', fontWeight: 800,
+                                cursor: 'pointer', textDecoration: 'underline',
+                                fontSize: 14, padding: 0,
+                                marginLeft: 4
+                            }}
+                        >
+                            {mode === 'signup' ? 'Inicia Sesión' : 'Regístrate'}
+                        </button>
                     </p>
                 </div>
             </div>
 
-            {/* ANIMATIONS */}
             <style>{`
-                @keyframes authSpin {
-                    to { transform: rotate(360deg); }
-                }
-                @keyframes slowSpin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                input::placeholder {
-                    color: #9CA3AF;
-                }
+                input::placeholder { color: #9CA3AF; }
                 input:focus {
                     border-color: #DC3C14 !important;
                     box-shadow: 0 0 0 4px rgba(220, 60, 20, 0.1) !important;
@@ -512,27 +440,20 @@ function TrialSignup() {
 }
 
 // ============================
-// SHARED STYLES
+// STYLES
 // ============================
 const labelStyle = {
     display: 'block', color: '#4B5563',
-    fontSize: 13, fontWeight: 700, marginBottom: 8,
-    textTransform: 'uppercase', letterSpacing: '0.02em'
-}
-
-const iconWrapStyle = {
-    position: 'absolute', left: 16, top: '50%',
-    transform: 'translateY(-50%)', pointerEvents: 'none',
-    zIndex: 5
+    fontSize: 12, fontWeight: 800, marginBottom: 6,
+    textTransform: 'uppercase', letterSpacing: '0.05em'
 }
 
 const inputStyle = {
-    width: '100%', padding: '16px 16px 16px 48px',
+    width: '100%', padding: '16px',
     borderRadius: 14, border: '2px solid #E5E7EB',
     fontSize: 16, color: '#1F2937', background: '#F9FAFB',
     boxSizing: 'border-box', outline: 'none',
-    fontWeight: 500,
-    transition: 'all 0.2s ease'
+    fontWeight: 600
 }
 
 export default TrialSignup
