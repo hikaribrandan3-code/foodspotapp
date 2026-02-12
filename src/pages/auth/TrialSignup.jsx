@@ -226,6 +226,7 @@ const TrialSignup = () => {
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
                 filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.6))',
+                marginTop: 10
             }} />
 
             {/* 4. CONTENT LAYER */}
