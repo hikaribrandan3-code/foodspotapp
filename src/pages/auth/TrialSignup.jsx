@@ -185,26 +185,34 @@ const TrialSignup = () => {
             fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
             backgroundColor: '#D80000'
         }}>
-            {/* 1. SOFT-GLOW SWIRL BACKGROUND */}
+            {/* 1. HIGH-SATURATION SUNBURST (WINDMILL) */}
             <div style={{
-                position: 'absolute', inset: -200, zIndex: 0,
+                position: 'absolute', inset: -400, zIndex: 0,
                 background: `
                     repeating-conic-gradient(
                         from 0deg at 50% 50%,
-                        #D80000 0deg 15deg,
-                        #FF4500 15deg 30deg
+                        #D00000 0deg 15deg,
+                        #FF3300 15deg 30deg
                     )
                 `,
-                filter: 'blur(8px)',
+                filter: 'blur(4px) contrast(1.2)',
+                animation: 'spin 60s linear infinite',
             }} />
+            <style>{`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
 
-            {/* 2. WARM VIGNETTE */}
+            {/* 2. HEAT GLOW OVERLAY */}
             <div style={{
                 position: 'absolute', inset: 0, zIndex: 1,
-                background: 'radial-gradient(circle at center, rgba(255, 69, 0, 0.1) 0%, rgba(180, 20, 0, 0.6) 100%)'
+                background: 'radial-gradient(circle at center, rgba(255, 100, 0, 0.2) 0%, rgba(160, 0, 0, 0.6) 90%)',
+                mixBlendMode: 'overlay'
             }} />
 
-            {/* 3. HERO BURGER (CENTER) */}
+            {/* 3. HERO BURGER (CENTER - NO SATELLITES) */}
             <div style={{
                 position: 'absolute',
                 top: '50%', left: '50%',
@@ -217,77 +225,8 @@ const TrialSignup = () => {
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                filter: 'drop-shadow(0 25px 50px rgba(0,0,0,0.5))',
+                filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.6))',
             }} />
-
-            {/* 4. FLOATING FOOD SATELLITES */}
-            {/* Pizza slice — top right */}
-            <img
-                src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&q=80"
-                alt=""
-                style={{
-                    position: 'absolute',
-                    top: '28%', right: '2%',
-                    width: 100, height: 100,
-                    objectFit: 'cover',
-                    borderRadius: '50%',
-                    zIndex: 3,
-                    border: '3px solid rgba(255,255,255,0.25)',
-                    filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.4))',
-                    transform: 'rotate(12deg)',
-                    animation: 'floatA 6s ease-in-out infinite',
-                }}
-            />
-            {/* Sushi — bottom left */}
-            <img
-                src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=300&q=80"
-                alt=""
-                style={{
-                    position: 'absolute',
-                    bottom: '30%', left: '2%',
-                    width: 90, height: 90,
-                    objectFit: 'cover',
-                    borderRadius: '50%',
-                    zIndex: 3,
-                    border: '3px solid rgba(255,255,255,0.2)',
-                    filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.35))',
-                    transform: 'rotate(-8deg)',
-                    animation: 'floatB 7s ease-in-out infinite',
-                }}
-            />
-            {/* Tacos — top left */}
-            <img
-                src="https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=300&q=80"
-                alt=""
-                style={{
-                    position: 'absolute',
-                    top: '22%', left: '2%',
-                    width: 80, height: 80,
-                    objectFit: 'cover',
-                    borderRadius: '50%',
-                    zIndex: 3,
-                    border: '3px solid rgba(255,255,255,0.2)',
-                    filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.35))',
-                    transform: 'rotate(-15deg)',
-                    animation: 'floatC 5s ease-in-out infinite',
-                }}
-            />
-
-            {/* Float Keyframes */}
-            <style>{`
-                @keyframes floatA {
-                    0%, 100% { transform: rotate(12deg) translateY(0); }
-                    50% { transform: rotate(12deg) translateY(-12px); }
-                }
-                @keyframes floatB {
-                    0%, 100% { transform: rotate(-8deg) translateY(0); }
-                    50% { transform: rotate(-8deg) translateY(-10px); }
-                }
-                @keyframes floatC {
-                    0%, 100% { transform: rotate(-15deg) translateY(0); }
-                    50% { transform: rotate(-15deg) translateY(-8px); }
-                }
-            `}</style>
 
             {/* 4. CONTENT LAYER */}
             <div style={{
@@ -315,24 +254,25 @@ const TrialSignup = () => {
                     {/* Main Title - INTER BLACK 900, HEAVY STAMP */}
                     <div id="trial-title" style={{
                         color: '#FFFFFF',
-                        textShadow: '0 4px 24px rgba(0,0,0,0.4)',
-                        fontFamily: "'Inter', sans-serif"
+                        textShadow: '0 4px 30px rgba(0,0,0,0.5)',
+                        fontFamily: "'Inter', sans-serif",
+                        transform: 'skewY(-3deg) translateY(-10px)', // THE WAVE/ARCH
                     }}>
                         <div style={{
                             fontSize: '42px', fontWeight: 900, lineHeight: 1,
-                            letterSpacing: '-0.03em', marginBottom: 4
+                            letterSpacing: '-0.02em', marginBottom: 2
                         }}>
                             ¡Bienvenidos a
                         </div>
                         <div style={{
-                            fontSize: '64px', fontWeight: 900, lineHeight: 0.9,
-                            letterSpacing: '-0.04em', display: 'block'
+                            fontSize: '68px', fontWeight: 900, lineHeight: 0.85, // Tighter
+                            letterSpacing: '-0.05em', display: 'block'
                         }}>
                             FoodSpot
                         </div>
                         <div style={{
-                            fontSize: '64px', fontWeight: 900, lineHeight: 0.9,
-                            letterSpacing: '-0.04em', display: 'block'
+                            fontSize: '68px', fontWeight: 900, lineHeight: 0.85, // Tighter
+                            letterSpacing: '-0.05em', display: 'block'
                         }}>
                             Mobile!
                         </div>
@@ -376,14 +316,16 @@ const TrialSignup = () => {
                                 onClick={handleGoogleLogin}
                                 disabled={loading}
                                 style={{
-                                    width: '100%', padding: '16px 20px',
-                                    background: '#FFFFFF',
-                                    border: 'none',
+                                    width: '100%', padding: '14px 20px', // SLIMMER
+                                    background: 'rgba(255, 255, 255, 0.9)', // GLASS
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(255,255,255,0.5)',
                                     borderRadius: 50,
                                     display: 'flex', alignItems: 'center', gap: 14,
                                     fontSize: 14, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                                     opacity: loading ? 0.7 : 1
                                 }}
                             >
@@ -403,14 +345,16 @@ const TrialSignup = () => {
                                 onClick={() => setShowEmailForm(true)}
                                 disabled={loading}
                                 style={{
-                                    width: '100%', padding: '16px 20px',
-                                    background: '#FFFFFF',
-                                    border: 'none',
+                                    width: '100%', padding: '14px 20px', // SLIMMER
+                                    background: 'rgba(255, 255, 255, 0.9)', // GLASS
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(255,255,255,0.5)',
                                     borderRadius: 50,
                                     display: 'flex', alignItems: 'center', gap: 14,
                                     fontSize: 14, fontWeight: 700, color: '#1F2937',
                                     cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
                                 }}
                             >
                                 <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
