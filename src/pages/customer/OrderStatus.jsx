@@ -88,8 +88,12 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const { businessId, tenantData } = useTenant()
     const config = configProp || tenantData?.app_config || {}
     const navigate = useNavigate()
-    const { orderId } = useParams()
+    const { orderId: paramOrderId, tenantSlug } = useParams()
     const [searchParams] = useSearchParams()
+
+    // Support both /status/:id (if added later) and /status?orderId=...
+    const queryOrderId = searchParams.get('orderId')
+    const orderId = paramOrderId || queryOrderId
 
     const [order, setOrder] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -213,10 +217,12 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
         // 3. Redirect
         if (addedCount > 0) {
-            // navigate(`/${tenantSlug}/menu`) 
-            // We usually don't have tenantSlug in params if we are in /status/:id
-            // Let's use the window location or a safe redirect
-            window.location.href = `/menu?reorder=true`
+            // Use tenantSlug if available for absolute clarity, else relative
+            if (tenantSlug) {
+                window.location.href = `/${tenantSlug}/menu?reorder=true`
+            } else {
+                window.location.href = `/menu?reorder=true`
+            }
         }
     }
 

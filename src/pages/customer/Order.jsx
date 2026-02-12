@@ -342,7 +342,7 @@ function Order({ config: configProp }) {
                         // Proceed to success screen as fallback
                         setSubmitted(true)
                         setTimeout(() => {
-                            navigate(`/status/${savedOrder.id}`)
+                            navigate(`../status?orderId=${savedOrder.id}`)
                         }, 1500)
                         return
                     }
@@ -379,7 +379,7 @@ function Order({ config: configProp }) {
 
             setSubmitted(true)
             setTimeout(() => {
-                navigate(`/status/${savedOrder.id}`)
+                navigate(`../status?orderId=${savedOrder.id}`)
             }, 1500)
 
         } catch (err) {
