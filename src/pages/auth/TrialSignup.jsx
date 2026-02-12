@@ -158,9 +158,34 @@ const TrialSignup = () => {
 
             // STRIKE 13.1: TENANT/SLUG ARCHITECTURE ENFORCEMENT
             const user = data.user
-            const metadata = user?.user_metadata || {}
-            const slug = metadata.slug
-            const role = metadata.role
+            let metadata = user?.user_metadata || {}
+            let slug = metadata.slug
+
+            // ---------------------------------------------------------
+            // 🛡️ SELF-HEALING: Database Lookup Fallback for Legacy Users
+            // If slug is missing in metadata, check the branding table
+            // ---------------------------------------------------------
+            if (!slug) {
+                console.warn('[AUTH] Missing slug in metadata. Attempting DB recovery...')
+                // Attempt to find the business associated with this user
+                const { data: brandingData, error: brandingError } = await supabase
+                    .from('branding')
+                    .select('slug')
+                    .eq('user_id', user.id)
+                    .single()
+
+                if (brandingData?.slug) {
+                    slug = brandingData.slug
+                    console.log('[AUTH] Recovered slug from DB:', slug)
+
+                    // 🩹 HEAL: Backfill metadata for future logins (Fire & Forget)
+                    supabase.auth.updateUser({
+                        data: { ...metadata, slug: slug }
+                    }).then(() => console.log('[AUTH] Metadata backfilled successfully'))
+                } else {
+                    console.warn('[AUTH] DB Recovery failed or no business found:', brandingError)
+                }
+            }
 
             setLoading(false)
 
@@ -170,6 +195,7 @@ const TrialSignup = () => {
                 window.location.href = `/${slug}/owner`
             } else {
                 // Fallback for platform admins or legacy users without slugs
+                console.warn('[AUTH] No slug found anywhere. Redirecting to /admin as fallback.')
                 window.location.href = '/admin'
             }
 
