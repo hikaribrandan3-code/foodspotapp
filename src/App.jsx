@@ -220,11 +220,22 @@ function App() {
     }, [location.pathname]);
 
     useEffect(() => {
-        const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                 localStorage.removeItem('admin_intent');
                 localStorage.removeItem('simulatedRole');
                 localStorage.removeItem('activeRoleView');
+            }
+
+            // 🛡️ STRIKE 13.6: ACCESO ADMIN LOOP FIX
+            // If user is signed in and has a slug, NEVER let them sit on /admin or /
+            if (event === 'SIGNED_IN' && session?.user?.user_metadata?.slug) {
+                const slug = session.user.user_metadata.slug;
+                const path = window.location.pathname;
+                if (path === '/admin' || path === '/') {
+                    console.log("🚀 AUTH GUARD: Redirecting to owner dashboard:", slug);
+                    window.location.assign(`/${slug}/owner`);
+                }
             }
         });
         return () => authListener?.subscription.unsubscribe();
