@@ -204,11 +204,14 @@ const TrialSignup = () => {
             if (slug) {
                 // If we have a slug, ALWAYS go to the tenant owner dashboard
                 // This prevents owners from landing on generic /admin
-                window.location.href = `/${slug}/owner`
+                console.log("🚀 FORCE REDIRECTING TO:", `/${slug}/owner`);
+                window.location.assign(`/${slug}/owner`);
+                return; // Stop any downstream logic
             } else {
                 // Fallback for platform admins or legacy users without slugs
                 console.warn('[AUTH] No slug found anywhere. Redirecting to /admin as fallback.')
-                window.location.href = '/admin'
+                window.location.assign('/admin');
+                return;
             }
 
         } catch (err) {
