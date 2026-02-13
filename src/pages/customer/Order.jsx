@@ -113,7 +113,8 @@ function Order({ config: configProp }) {
     const freeDeliveryThreshold = tenantData?.free_delivery_threshold || 0
     const businessName = tenantData?.business_name || 'Local'
     const ownerPhone = tenantData?.whatsapp_number || tenantData?.phone || null
-    const mpAccessToken = tenantData?.mp_access_token || null
+    // 🛡️ VAULT: mp_access_token is NO LONGER exposed to the frontend
+    // Payment preference creation is handled by the create-preference Edge Function
 
     // --------------------------------------------
     // 🚦 SERVICE MODE LOGIC (Universal Mode)
@@ -292,66 +293,59 @@ function Order({ config: configProp }) {
 
             // 💳 PAYMENT ROUTING
             if (paymentMethod === 'mercadopago') {
-                // ========== MERCADO PAGO PATH ==========
-                if (mpAccessToken) {
-                    try {
-                        const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${mpAccessToken}`
-                            },
-                            body: JSON.stringify({
-                                items: [{
-                                    title: `Pedido #${orderNumber} - ${businessName}`,
-                                    quantity: 1,
-                                    unit_price: total,
-                                    currency_id: 'ARS'
-                                }],
-                                back_urls: {
-                                    success: `${window.location.origin}/status/${savedOrder.id}?payment=success`,
-                                    failure: `${window.location.origin}/status/${savedOrder.id}?payment=failure`,
-                                    pending: `${window.location.origin}/status/${savedOrder.id}?payment=pending`
-                                },
-                                auto_return: 'approved',
-                                external_reference: savedOrder.id,
-                                notification_url: `${window.location.origin}/api/mp-webhook`
-                            })
-                        })
+                // ========== MERCADO PAGO PATH (VIA EDGE FUNCTION) ==========
+                // 🛡️ VAULT: Token stays on the server. We only send order_id.
+                try {
+                    const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
+                        body: { order_id: savedOrder.id }
+                    })
 
-                        const mpData = await mpResponse.json()
+                    if (prefError) throw prefError
 
-                        if (mpData.init_point) {
-                            clearCurrentOrder()
-                            incrementOrderCount()
-                            if (isDelivery) clearDeliveryMode()
-                            window.location.href = mpData.init_point
-                            return
-                        } else {
-                            throw new Error('No init_point from MP')
-                        }
-                    } catch (mpError) {
-                        console.error('MP Error:', mpError)
-                        // 🛡️ CRASH FIX: Fix broken .update chain
+                    // 🛡️ AGOTADO / INFLATION GUARD: Edge Function may reject
+                    if (prefData?.error === 'item_unavailable' || prefData?.error === 'price_mismatch') {
+                        showToast(`⚠️ ${prefData.message}`)
+                        setIsSubmitting(false)
+                        return
+                    }
+
+                    if (prefData?.error === 'mp_not_configured') {
+                        // No MP token — fall back to cash
                         await supabase
                             .from('orders')
                             .update({ status: 'pendiente_confirmacion', payment_method: 'efectivo' })
                             .eq('id', savedOrder.id)
-
-                        showToast('⚠️ Error con Mercado Pago. Se cambió a pago en efectivo.')
-                        // Proceed to success screen as fallback
+                        showToast('⚠️ Mercado Pago no configurado. Se cambió a efectivo.')
                         setSubmitted(true)
                         setTimeout(() => {
                             navigate(`../status?orderId=${savedOrder.id}`)
                         }, 1500)
                         return
                     }
-                } else {
-                    // No MP token - fall back to pending confirmation
+
+                    if (prefData?.init_point) {
+                        clearCurrentOrder()
+                        incrementOrderCount()
+                        if (isDelivery) clearDeliveryMode()
+                        window.location.href = prefData.init_point
+                        return
+                    } else {
+                        throw new Error('No init_point from Edge Function')
+                    }
+                } catch (mpError) {
+                    console.error('MP Error:', mpError)
+                    // 🛡️ CRASH FIX: Fallback to cash
                     await supabase
                         .from('orders')
-                        .update({ status: 'pendiente_confirmacion' })
+                        .update({ status: 'pendiente_confirmacion', payment_method: 'efectivo' })
                         .eq('id', savedOrder.id)
+
+                    showToast('⚠️ Error con Mercado Pago. Se cambió a pago en efectivo.')
+                    setSubmitted(true)
+                    setTimeout(() => {
+                        navigate(`../status?orderId=${savedOrder.id}`)
+                    }, 1500)
+                    return
                 }
             }
 

@@ -61,8 +61,22 @@ const ItemCard = ({
                 <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', marginBottom: 2, lineHeight: 1.3 }}>{item.name}</p>
                 <p style={{ fontSize: 12, color: '#6B7280' }}>{formatPrice(item.price)}</p>
             </div>
-            {!item.available && isOwnerMode && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', fontWeight: 700, fontSize: 12 }}>AGOTADO</div>
+            {item.available === false && (
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'rgba(255,255,255,0.7)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexDirection: 'column', gap: 4,
+                    pointerEvents: 'none'
+                }}>
+                    <div style={{
+                        background: '#EF4444', color: 'white',
+                        padding: '4px 12px', borderRadius: 20,
+                        fontSize: 11, fontWeight: 800, letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 2px 8px rgba(239,68,68,0.3)'
+                    }}>AGOTADO</div>
+                </div>
             )}
         </div>
     )

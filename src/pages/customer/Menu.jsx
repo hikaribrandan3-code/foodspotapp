@@ -683,7 +683,7 @@ export default function Menu({ config: configProp }) {
                             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                            {category.items.filter(i => isOwnerMode || i.available !== false).map((item, index) => {
+                            {category.items.map((item, index) => {
                                 // 🛡️ PHYSICS VISUALS: Green Frame & Ghost Opacity
                                 const isDragging = dragState?.itemId === item.id
                                 const isPlaceholder = dragState?.categoryId === category.id && dragState?.targetIndex === index && !isDragging
