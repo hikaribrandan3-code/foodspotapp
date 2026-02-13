@@ -182,7 +182,7 @@ export function TenantProvider({ children }) {
 
         // 🆕 UNIVERSAL MODES
         // Expose service modes to CSS for conditional styling if needed
-        if (data.service_modes) {
+        if (data.service_modes && root && root.classList) {
             if (data.service_modes.dineIn) root.classList.add('mode-dine-in')
             else root.classList.remove('mode-dine-in')
         }
