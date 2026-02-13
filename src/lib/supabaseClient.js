@@ -31,8 +31,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Initialize the Supabase client with Header Injection for RLS
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-        persistSession: false, // 🛑 STOP GHOST SESSIONS: Force fresh login
-        autoRefreshToken: false, // 🛑 STOP LOOPING: Handle refresh manually if needed
+        persistSession: true, // ✅ RESTORED: Sessions MUST survive page reloads (window.location.assign)
+        autoRefreshToken: true, // ✅ RESTORED: Keep session alive across tab switches
         detectSessionInUrl: true
     },
     global: {
