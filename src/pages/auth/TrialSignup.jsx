@@ -131,7 +131,7 @@ const TrialSignup = () => {
 
             setTenantStoragePrefix(userId)
             setLoading(false)
-            window.location.href = `/${slug}/owner`
+            window.location.href = `/${slug}/owner/summary`
 
         } catch (err) {
             console.error('[TRIAL] Signup error:', err)
@@ -202,10 +202,10 @@ const TrialSignup = () => {
             setLoading(false)
 
             if (slug) {
-                // If we have a slug, ALWAYS go to the tenant owner dashboard
-                // This prevents owners from landing on generic /admin
-                console.log("🚀 [TrialSignup] SUCCESS: Redirecting to owner dashboard:", `/${slug}/owner`);
-                window.location.assign(`/${slug}/owner`);
+                // If we have a slug, ALWAYS go to the tenant owner SUMMARY (not /owner which is OwnerLogin)
+                // This prevents the double-login problem
+                console.log("🚀 [TrialSignup] SUCCESS: Redirecting to owner dashboard:", `/${slug}/owner/summary`);
+                window.location.assign(`/${slug}/owner/summary`);
                 return; // Stop any downstream logic
             } else {
                 // Fallback for platform admins or legacy users without slugs

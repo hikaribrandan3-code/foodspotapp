@@ -240,7 +240,7 @@ function App() {
 
                     if (path === '/admin' || path === '/') {
                         console.log("🚀 AUTH GUARD: Redirecting to owner dashboard:", slug);
-                        window.location.assign(`/${slug}/owner`);
+                        window.location.assign(`/${slug}/owner/summary`);
                     }
                 } else {
                     console.warn("⚠️ [App.jsx] User signed in but NO SLUG in metadata!");
@@ -534,8 +534,8 @@ function App() {
         // If we have a tenant session active, FORCE redirect
         if (tenant?.session?.user?.user_metadata?.slug) {
             const slug = tenant.session.user.user_metadata.slug;
-            console.log("🚀 [App.jsx] User already logged in. Redirecting to:", `/${slug}/owner`);
-            return <Navigate to={`/${slug}/owner`} replace />;
+            console.log("🚀 [App.jsx] User already logged in. Redirecting to:", `/${slug}/owner/summary`);
+            return <Navigate to={`/${slug}/owner/summary`} replace />;
         }
 
         return <Routes><Route path="*" element={<OwnerLogin />} /></Routes>;
