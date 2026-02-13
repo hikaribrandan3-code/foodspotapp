@@ -229,12 +229,21 @@ function App() {
 
             // 🛡️ STRIKE 13.6: ACCESO ADMIN LOOP FIX
             // If user is signed in and has a slug, NEVER let them sit on /admin or /
-            if (event === 'SIGNED_IN' && session?.user?.user_metadata?.slug) {
-                const slug = session.user.user_metadata.slug;
-                const path = window.location.pathname;
-                if (path === '/admin' || path === '/') {
-                    console.log("🚀 AUTH GUARD: Redirecting to owner dashboard:", slug);
-                    window.location.assign(`/${slug}/owner`);
+            if (event === 'SIGNED_IN') {
+                console.log("🔐 [App.jsx] Auth Event: SIGNED_IN", session?.user);
+                console.log("🔐 [App.jsx] User Metadata:", session?.user?.user_metadata);
+
+                if (session?.user?.user_metadata?.slug) {
+                    const slug = session.user.user_metadata.slug;
+                    const path = window.location.pathname;
+                    console.log("🔐 [App.jsx] Slug found:", slug, "Current Path:", path);
+
+                    if (path === '/admin' || path === '/') {
+                        console.log("🚀 AUTH GUARD: Redirecting to owner dashboard:", slug);
+                        window.location.assign(`/${slug}/owner`);
+                    }
+                } else {
+                    console.warn("⚠️ [App.jsx] User signed in but NO SLUG in metadata!");
                 }
             }
         });
@@ -512,7 +521,23 @@ function App() {
     // ============================================
     // Note: 'path' already declared above in Global Route Immunity
 
+    // 🛡️ STRIKE 13.7: LOGIN INTERCEPTOR FIX
+    // If user attempts to visit /login but is already authenticated with a slug,
+    // bounce them to their dashboard instead of trapping them in the login screen.
     if (path === '/login/owner' || path === '/login') {
+        const session = getSession(); // Synchronous check if available, or rely on effect
+        // NOTE: getSession is async in utils/auth.js, so we might need a more robust check here.
+        // For now, we'll let the onAuthStateChange listener handle the redirect if they ARE logged in.
+        // But we should at least log that we are hitting this interceptor.
+        console.log("🛑 [App.jsx] Intercepting Login Route. Auth State:", tenant?.session?.user ? "Logged In" : "Logged Out");
+
+        // If we have a tenant session active, FORCE redirect
+        if (tenant?.session?.user?.user_metadata?.slug) {
+            const slug = tenant.session.user.user_metadata.slug;
+            console.log("🚀 [App.jsx] User already logged in. Redirecting to:", `/${slug}/owner`);
+            return <Navigate to={`/${slug}/owner`} replace />;
+        }
+
         return <Routes><Route path="*" element={<OwnerLogin />} /></Routes>;
     }
 

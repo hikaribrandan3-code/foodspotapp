@@ -204,18 +204,20 @@ const TrialSignup = () => {
             if (slug) {
                 // If we have a slug, ALWAYS go to the tenant owner dashboard
                 // This prevents owners from landing on generic /admin
-                console.log("🚀 FORCE REDIRECTING TO:", `/${slug}/owner`);
+                console.log("🚀 [TrialSignup] SUCCESS: Redirecting to owner dashboard:", `/${slug}/owner`);
                 window.location.assign(`/${slug}/owner`);
                 return; // Stop any downstream logic
             } else {
                 // Fallback for platform admins or legacy users without slugs
-                console.warn('[AUTH] No slug found anywhere. Redirecting to /admin as fallback.')
+                console.warn('⚠️ [TrialSignup] WARNING: No slug found after DB lookup. Redirecting to /admin as last resort.')
+                console.warn('⚠️ [TrialSignup] User ID:', user.id);
+                console.warn('⚠️ [TrialSignup] Metadata:', metadata);
                 window.location.assign('/admin');
                 return;
             }
 
         } catch (err) {
-            console.error('[AUTH] Login error:', err)
+            console.error('🛑 [TrialSignup] Login CRITICAL error:', err)
 
             // CRITICAL: Clear ghost sessions if login failed but state lingered
             await supabase.auth.signOut()
