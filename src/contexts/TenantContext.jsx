@@ -21,7 +21,7 @@ const TenantContext = createContext(null)
 // Apps should be mounted at /:slug/*
 // But some global routes might exist.
 const SYSTEM_ROUTES = [
-    'admin', 'owner', 'login', 'signup',
+    'admin', 'owner', 'login', 'signup', 'start-trial',
     'status', 'checkout', 'order' // Sub-resources that might appear at root
 ]
 
