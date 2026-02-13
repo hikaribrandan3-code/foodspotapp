@@ -251,10 +251,9 @@ function Order({ config: configProp }) {
         const orderNumber = generateOrderNumber()
         const guestToken = getGuestToken()
 
-        // 💎 STATUS 0: All orders start as 'awaiting_payment'
-        // They are INVISIBLE to the Staff Dashboard until payment is confirmed
+        // 💎 STATUS 0: All orders start as 'pending_payment' (FSM)
         const isCashPath = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
-        const initialStatus = isCashPath ? 'pendiente_confirmacion' : 'awaiting_payment'
+        const initialStatus = 'pending_payment'
 
         const newOrder = {
             business_id: businessId,
@@ -313,7 +312,7 @@ function Order({ config: configProp }) {
                         // No MP token — fall back to cash
                         await supabase
                             .from('orders')
-                            .update({ status: 'pendiente_confirmacion', payment_method: 'efectivo' })
+                            .update({ status: 'pending_payment', payment_method: 'efectivo' })
                             .eq('id', savedOrder.id)
                         showToast('⚠️ Mercado Pago no configurado. Se cambió a efectivo.')
                         setSubmitted(true)
@@ -337,7 +336,7 @@ function Order({ config: configProp }) {
                     // 🛡️ CRASH FIX: Fallback to cash
                     await supabase
                         .from('orders')
-                        .update({ status: 'pendiente_confirmacion', payment_method: 'efectivo' })
+                        .update({ status: 'pending_payment', payment_method: 'efectivo' })
                         .eq('id', savedOrder.id)
 
                     showToast('⚠️ Error con Mercado Pago. Se cambió a pago en efectivo.')

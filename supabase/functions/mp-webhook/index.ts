@@ -172,7 +172,7 @@ serve(async (req: Request) => {
         }
 
         // Check if order is already confirmed by ANOTHER payment (Edge case)
-        if (existingOrder.status === 'confirmado' && existingOrder.payment_id && existingOrder.payment_id !== dataId) {
+        if (existingOrder.status === 'paid_unreleased' && existingOrder.payment_id && existingOrder.payment_id !== dataId) {
             console.warn(`⚠️ Order ${orderId} already confirmed with DIFFERENT payment ID: ${existingOrder.payment_id}. Ignoring ${dataId}`);
             return new Response(JSON.stringify({ status: "ignored_duplicate_payment" }), { status: 200, headers: corsHeaders });
         }
@@ -184,7 +184,7 @@ serve(async (req: Request) => {
             const { data: updatedOrder, error: updateError } = await supabase
                 .from("orders")
                 .update({
-                    status: "confirmado",
+                    status: "paid_unreleased",
                     payment_id: dataId,
                     paid_at: new Date().toISOString(),
                     payment_status: "approved",

@@ -28,18 +28,20 @@ const playNotificationSound = () => {
     }
 }
 
-// STATUS CONFIG
-const KITCHEN_STAGES = ['confirmado', 'en_cocina', 'en_camino'] // 'entregado' disappears
+// STATUS CONFIG (FSM Values)
+const KITCHEN_STAGES = ['released_to_kitchen', 'preparing', 'ready', 'dispatched'] // 'delivered' disappears
 const STAGE_LABELS = {
-    'confirmado': '🔥 Nuevo Pedido',
-    'en_cocina': '👨‍🍳 En Cocina',
-    'en_camino': '🚀 En Camino'
+    'released_to_kitchen': '🔥 Nuevo Pedido',
+    'preparing': '👨‍🍳 En Cocina',
+    'ready': '✨ Listo',
+    'dispatched': '🚀 En Camino'
 }
 
 const NEXT_STEP = {
-    'confirmado': { next: 'en_cocina', label: 'Empezar a Cocinar' },
-    'en_cocina': { next: 'en_camino', label: 'Despachar / Enviar' },
-    'en_camino': { next: 'entregado', label: 'Marcar Entregado' }
+    'released_to_kitchen': { next: 'preparing', label: 'Empezar a Cocinar' },
+    'preparing': { next: 'ready', label: 'Marcar Listo' },
+    'ready': { next: 'dispatched', label: 'Despachar / Enviar' },
+    'dispatched': { next: 'delivered', label: 'Marcar Entregado' }
 }
 
 export default function Dashboard() {
@@ -128,10 +130,25 @@ export default function Dashboard() {
                 return { ...o, status: next.next }
             }
             return o
-        }).filter(o => KITCHEN_STAGES.includes(o.status))) // Filter out if moved to 'entregado'
+        }).filter(o => KITCHEN_STAGES.includes(o.status))) // Filter out if moved to 'delivered'
 
-        // Cloud Update
-        await updateOrderCloud(orderId, { status: next.next }, businessId)
+        // 🛡️ FSM RPC Call (replaces direct DB update)
+        const { data, error } = await supabase.rpc('advance_order_status', {
+            p_order_id: orderId,
+            p_target_status: next.next
+        })
+
+        if (error || (data && !data.success)) {
+            console.error('FSM Error:', error || data)
+            // Revert on failure
+            const { data: freshOrders } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('business_id', businessId)
+                .in('status', KITCHEN_STAGES)
+                .order('created_at', { ascending: true })
+            if (freshOrders) setOrders(freshOrders)
+        }
     }
 
     // Helpers
@@ -176,7 +193,7 @@ export default function Dashboard() {
                 }}>
                     {orders.map(order => {
                         const stepConfig = NEXT_STEP[order.status]
-                        const isUrgent = order.status === 'confirmado'
+                        const isUrgent = order.status === 'released_to_kitchen'
 
                         return (
                             <div key={order.id} style={{

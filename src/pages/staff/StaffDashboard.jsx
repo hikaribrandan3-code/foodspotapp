@@ -5,32 +5,93 @@ import { formatPrice } from '../../config/menuData.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 
 // ============================================
-// 🎯 STAFF MISSION CONTROL - TABLET VIEW
+// 🎯 STAFF MISSION CONTROL v2 — FSM SAFETY CAGE
 // ============================================
-// High-concurrency dashboard for kitchen/delivery staff
-// Real-Time Queue via Supabase Channels
-// One-tap status progression
+// Strict state machine: no impossible jumps.
+// Row-locked RPC: no double-click race conditions.
+// Status-specific action buttons: no ambiguity.
 // ============================================
 
-// Status Pipeline (linear progression)
+// ============================================
+// 🔄 FSM STATUS PIPELINE (New Enum Values)
+// ============================================
 const STATUS_PIPELINE = [
-    { id: 'pendiente_confirmacion', label: 'Pago Manual', color: '#F59E0B', bg: '#FEF3C7', icon: '💰' },
-    { id: 'confirmado', label: 'Recibido', color: '#3B82F6', bg: '#DBEAFE', icon: '📋' },
-    { id: 'en_cocina', label: 'En Cocina', color: '#8B5CF6', bg: '#EDE9FE', icon: '👨‍🍳' },
-    { id: 'en_camino', label: 'En Camino', color: '#6366F1', bg: '#E0E7FF', icon: '🚗' },
-    { id: 'entregado', label: 'Entregado', color: '#22C55E', bg: '#DCFCE7', icon: '✅' }
+    { id: 'pending_payment', label: 'Esperando Pago', color: '#F59E0B', bg: '#FEF3C7', icon: '⏳' },
+    { id: 'paid_unreleased', label: 'Pago Recibido', color: '#8B5CF6', bg: '#EDE9FE', icon: '💰' },
+    { id: 'released_to_kitchen', label: 'Recibido', color: '#3B82F6', bg: '#DBEAFE', icon: '📋' },
+    { id: 'preparing', label: 'En Cocina', color: '#F97316', bg: '#FFF7ED', icon: '👨‍🍳' },
+    { id: 'ready', label: 'Listo', color: '#06B6D4', bg: '#CFFAFE', icon: '✨' },
+    { id: 'dispatched', label: 'En Camino', color: '#6366F1', bg: '#E0E7FF', icon: '🚗' },
+    { id: 'delivered', label: 'Entregado', color: '#22C55E', bg: '#DCFCE7', icon: '✅' }
 ]
 
-// Get next status in pipeline
-const getNextStatus = (currentStatus) => {
-    const currentIndex = STATUS_PIPELINE.findIndex(s => s.id === currentStatus)
-    if (currentIndex === -1 || currentIndex >= STATUS_PIPELINE.length - 1) return null
-    return STATUS_PIPELINE[currentIndex + 1].id
+// Get status config by id
+const getStatusConfig = (status) => {
+    return STATUS_PIPELINE.find(s => s.id === status) || { label: status, color: '#9CA3AF', bg: '#F3F4F6', icon: '❓' }
 }
 
-// Get status config
-const getStatusConfig = (status) => {
-    return STATUS_PIPELINE.find(s => s.id === status) || { label: 'Desconocido', color: '#9CA3AF', bg: '#F3F4F6', icon: '❓' }
+// ============================================
+// 🛡️ SAFETY CAGE: Status-Specific Action Buttons
+// ============================================
+// Each status has ONE clear action. No ambiguity.
+const getActionForStatus = (status, orderType) => {
+    switch (status) {
+        case 'pending_payment':
+            // ❌ NO BUTTON — Only webhook can advance this
+            return null
+
+        case 'paid_unreleased':
+            return {
+                label: '✅ ACEPTAR PEDIDO',
+                targetStatus: 'released_to_kitchen',
+                color: '#22C55E',
+                confirm: false
+            }
+
+        case 'released_to_kitchen':
+            return {
+                label: '👨‍🍳 ENVIAR A COCINA',
+                targetStatus: 'preparing',
+                color: '#F97316',
+                confirm: false
+            }
+
+        case 'preparing':
+            return {
+                label: '✨ MARCAR LISTO',
+                targetStatus: 'ready',
+                color: '#06B6D4',
+                confirm: false
+            }
+
+        case 'ready':
+            if (orderType === 'delivery') {
+                return {
+                    label: '🚗 DESPACHAR',
+                    targetStatus: 'dispatched',
+                    color: '#6366F1',
+                    confirm: false
+                }
+            } else {
+                return {
+                    label: '🏪 ENTREGAR',
+                    targetStatus: 'delivered',
+                    color: '#22C55E',
+                    confirm: false
+                }
+            }
+
+        case 'dispatched':
+            return {
+                label: '✅ CONFIRMAR ENTREGA',
+                targetStatus: 'delivered',
+                color: '#22C55E',
+                confirm: false
+            }
+
+        default:
+            return null // Terminal states: delivered, cancelled, refunded
+    }
 }
 
 function StaffDashboard() {
@@ -43,6 +104,7 @@ function StaffDashboard() {
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('active') // 'active' | 'completed'
     const [processingOrderId, setProcessingOrderId] = useState(null)
+    const [errorMessage, setErrorMessage] = useState(null)
 
     // ============================================
     // 📡 FETCH ORDERS
@@ -55,7 +117,6 @@ function StaffDashboard() {
                 .from('orders')
                 .select('*')
                 .eq('business_id', businessId)
-                .neq('status', 'awaiting_payment') // 💎 INVISIBLE until payment
                 .order('created_at', { ascending: false })
                 .limit(50)
 
@@ -92,10 +153,7 @@ function StaffDashboard() {
                     console.log('🔔 Order Change:', payload.eventType, payload.new?.id)
 
                     if (payload.eventType === 'INSERT') {
-                        // Only add if not awaiting_payment
-                        if (payload.new.status !== 'awaiting_payment') {
-                            setOrders(prev => [payload.new, ...prev])
-                        }
+                        setOrders(prev => [payload.new, ...prev])
                     } else if (payload.eventType === 'UPDATE') {
                         setOrders(prev => prev.map(o =>
                             o.id === payload.new.id ? payload.new : o
@@ -113,31 +171,45 @@ function StaffDashboard() {
     }, [businessId])
 
     // ============================================
-    // 🔄 STATUS PROGRESSION
+    // 🔄 FSM STATUS ADVANCE (via RPC)
     // ============================================
-    const advanceStatus = async (order) => {
-        const nextStatus = getNextStatus(order.status)
-        if (!nextStatus) return
+    const advanceStatus = async (order, targetStatus) => {
+        if (processingOrderId) return // Prevent double-clicks
 
         setProcessingOrderId(order.id)
+        setErrorMessage(null)
 
         try {
-            const updates = { status: nextStatus }
-
-            // If confirming manual payment, add paid_at
-            if (order.status === 'pendiente_confirmacion' && nextStatus === 'confirmado') {
-                updates.paid_at = new Date().toISOString()
-            }
-
-            const { error } = await supabase
-                .from('orders')
-                .update(updates)
-                .eq('id', order.id)
+            const { data, error } = await supabase.rpc('advance_order_status', {
+                p_order_id: order.id,
+                p_target_status: targetStatus
+            })
 
             if (error) throw error
+
+            // Handle RPC response
+            if (data && !data.success) {
+                // RPC returned a controlled error
+                console.warn('⚠️ FSM Rejection:', data.error, data.message)
+
+                if (data.error === 'INVALID_TRANSITION') {
+                    setErrorMessage(`⚠️ ${data.message}`)
+                    // Refresh to get current state
+                    fetchOrders()
+                } else if (data.error === 'PAYMENT_PENDING') {
+                    setErrorMessage('⏳ Esperando confirmación de pago automática')
+                } else {
+                    setErrorMessage(data.message || 'Error desconocido')
+                }
+
+                setTimeout(() => setErrorMessage(null), 4000)
+            } else {
+                console.log('✅ FSM Transition:', data?.from_status, '→', data?.to_status)
+            }
         } catch (err) {
             console.error('Status Update Error:', err)
-            alert('Error actualizando estado: ' + err.message)
+            setErrorMessage('❌ Error: ' + err.message)
+            setTimeout(() => setErrorMessage(null), 4000)
         } finally {
             setProcessingOrderId(null)
         }
@@ -146,18 +218,22 @@ function StaffDashboard() {
     // ============================================
     // 🗂️ FILTER ORDERS
     // ============================================
+    // Active statuses for the kanban view (excludes terminal + cart)
+    const ACTIVE_STATUSES = ['pending_payment', 'paid_unreleased', 'released_to_kitchen', 'preparing', 'ready', 'dispatched']
+    const TERMINAL_STATUSES = ['delivered', 'cancelled', 'refunded']
+
     const filteredOrders = useMemo(() => {
         if (activeTab === 'active') {
-            return orders.filter(o => o.status !== 'entregado' && o.status !== 'awaiting_payment')
+            return orders.filter(o => ACTIVE_STATUSES.includes(o.status))
         } else {
-            return orders.filter(o => o.status === 'entregado')
+            return orders.filter(o => TERMINAL_STATUSES.includes(o.status))
         }
     }, [orders, activeTab])
 
     // Group by status for Kanban view
     const ordersByStatus = useMemo(() => {
         const groups = {}
-        STATUS_PIPELINE.slice(0, -1).forEach(s => { groups[s.id] = [] })
+        ACTIVE_STATUSES.forEach(s => { groups[s] = [] })
         filteredOrders.forEach(order => {
             if (groups[order.status]) {
                 groups[order.status].push(order)
@@ -166,11 +242,14 @@ function StaffDashboard() {
         return groups
     }, [filteredOrders])
 
+    // The columns to show in the kanban (only active pipeline statuses)
+    const kanbanColumns = STATUS_PIPELINE.filter(s => ACTIVE_STATUSES.includes(s.id))
+
     // Stats
     const stats = useMemo(() => ({
-        pending: orders.filter(o => o.status === 'pendiente_confirmacion').length,
-        active: orders.filter(o => !['entregado', 'awaiting_payment'].includes(o.status)).length,
-        completed: orders.filter(o => o.status === 'entregado').length
+        pending: orders.filter(o => ['pending_payment', 'paid_unreleased'].includes(o.status)).length,
+        active: orders.filter(o => ACTIVE_STATUSES.includes(o.status)).length,
+        completed: orders.filter(o => o.status === 'delivered').length
     }), [orders])
 
     // ============================================
@@ -243,6 +322,19 @@ function StaffDashboard() {
                 </div>
             </header>
 
+            {/* Error Toast */}
+            {errorMessage && (
+                <div style={{
+                    position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)',
+                    background: '#DC2626', color: 'white', padding: '12px 24px', borderRadius: 12,
+                    fontWeight: 600, fontSize: 14, zIndex: 999,
+                    boxShadow: '0 8px 25px rgba(220,38,38,0.4)',
+                    animation: 'slideDown 0.3s ease'
+                }}>
+                    {errorMessage}
+                </div>
+            )}
+
             {/* Tabs */}
             <div style={{ padding: '16px 24px 0', display: 'flex', gap: 8 }}>
                 <button
@@ -281,18 +373,20 @@ function StaffDashboard() {
             {activeTab === 'active' && (
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gridTemplateColumns: `repeat(${kanbanColumns.length}, 1fr)`,
                     gap: 16,
                     padding: 24,
-                    minHeight: 'calc(100vh - 160px)'
+                    minHeight: 'calc(100vh - 160px)',
+                    overflowX: 'auto'
                 }}>
-                    {STATUS_PIPELINE.slice(0, 4).map(status => (
+                    {kanbanColumns.map(status => (
                         <div key={status.id} style={{
                             background: '#1F2937',
                             borderRadius: 16,
                             padding: 16,
                             display: 'flex',
-                            flexDirection: 'column'
+                            flexDirection: 'column',
+                            minWidth: 240
                         }}>
                             {/* Column Header */}
                             <div style={{
@@ -304,7 +398,7 @@ function StaffDashboard() {
                                 borderBottom: `2px solid ${status.color}`
                             }}>
                                 <span style={{ fontSize: 20 }}>{status.icon}</span>
-                                <span style={{ fontWeight: 700, fontSize: 16, color: status.color }}>{status.label}</span>
+                                <span style={{ fontWeight: 700, fontSize: 14, color: status.color }}>{status.label}</span>
                                 <span style={{
                                     marginLeft: 'auto',
                                     background: status.bg,
@@ -321,8 +415,7 @@ function StaffDashboard() {
                             {/* Order Cards */}
                             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {(ordersByStatus[status.id] || []).map(order => {
-                                    const nextStatus = getNextStatus(order.status)
-                                    const nextConfig = nextStatus ? getStatusConfig(nextStatus) : null
+                                    const action = getActionForStatus(order.status, order.order_type)
                                     const isProcessing = processingOrderId === order.id
 
                                     return (
@@ -359,7 +452,7 @@ function StaffDashboard() {
                                                 </div>
                                             )}
 
-                                            {/* Order Type Badge */}
+                                            {/* Order Type Badge + Total */}
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                                                 <span style={{
                                                     background: order.order_type === 'delivery' ? '#3B82F6' : '#10B981',
@@ -376,34 +469,49 @@ function StaffDashboard() {
                                                 </span>
                                             </div>
 
-                                            {/* Advance Button */}
-                                            {nextStatus && (
+                                            {/* 🛡️ SAFETY CAGE: Status-Specific Action Button */}
+                                            {action ? (
                                                 <button
-                                                    onClick={() => advanceStatus(order)}
+                                                    onClick={() => advanceStatus(order, action.targetStatus)}
                                                     disabled={isProcessing}
                                                     style={{
                                                         width: '100%',
                                                         padding: '10px 14px',
-                                                        background: nextConfig?.color || '#22C55E',
+                                                        background: isProcessing ? '#4B5563' : action.color,
                                                         color: 'white',
                                                         border: 'none',
                                                         borderRadius: 8,
-                                                        fontWeight: 600,
+                                                        fontWeight: 700,
                                                         cursor: isProcessing ? 'wait' : 'pointer',
                                                         opacity: isProcessing ? 0.6 : 1,
                                                         fontSize: 13,
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        gap: 8
+                                                        gap: 8,
+                                                        transition: 'all 0.2s ease',
+                                                        boxShadow: `0 2px 12px ${action.color}33`
                                                     }}
                                                 >
-                                                    {isProcessing ? '...' : (
-                                                        <>
-                                                            {status.id === 'pendiente_confirmacion' ? '💰 Confirmar Pago' : `${nextConfig?.icon} → ${nextConfig?.label}`}
-                                                        </>
-                                                    )}
+                                                    {isProcessing ? '⏳ Procesando...' : action.label}
                                                 </button>
+                                            ) : (
+                                                // No action = pending payment or terminal state
+                                                status.id === 'pending_payment' && (
+                                                    <div style={{
+                                                        width: '100%',
+                                                        padding: '10px 14px',
+                                                        background: '#1F2937',
+                                                        border: '1px dashed #4B5563',
+                                                        borderRadius: 8,
+                                                        fontSize: 12,
+                                                        color: '#9CA3AF',
+                                                        textAlign: 'center',
+                                                        fontWeight: 500
+                                                    }}>
+                                                        ⏳ Esperando confirmación de pago...
+                                                    </div>
+                                                )
                                             )}
                                         </div>
                                     )
@@ -431,28 +539,40 @@ function StaffDashboard() {
             {activeTab === 'completed' && (
                 <div style={{ padding: 24 }}>
                     <div style={{ display: 'grid', gap: 12 }}>
-                        {filteredOrders.map(order => (
-                            <div key={order.id} style={{
-                                background: '#1F2937',
-                                borderRadius: 12,
-                                padding: 16,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 16
-                            }}>
-                                <span style={{ fontSize: 24 }}>✅</span>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 600 }}>#{String(order.order_number).padStart(3, '0')}</div>
-                                    <div style={{ fontSize: 12, color: '#9CA3AF' }}>
-                                        {new Date(order.created_at).toLocaleString('es-AR')}
+                        {filteredOrders.map(order => {
+                            const statusConf = getStatusConfig(order.status)
+                            return (
+                                <div key={order.id} style={{
+                                    background: '#1F2937',
+                                    borderRadius: 12,
+                                    padding: 16,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 16
+                                }}>
+                                    <span style={{ fontSize: 24 }}>{statusConf.icon}</span>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 600 }}>#{String(order.order_number).padStart(3, '0')}</div>
+                                        <div style={{ fontSize: 12, color: '#9CA3AF' }}>
+                                            {new Date(order.created_at).toLocaleString('es-AR')}
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontWeight: 700, color: statusConf.color }}>{formatPrice(order.total)}</div>
+                                        <div style={{ fontSize: 11, color: '#9CA3AF' }}>
+                                            <span style={{
+                                                background: statusConf.bg.replace(')', ', 0.3)').replace('rgb', 'rgba'),
+                                                color: statusConf.color,
+                                                padding: '2px 8px',
+                                                borderRadius: 6,
+                                                fontSize: 10,
+                                                fontWeight: 600
+                                            }}>{statusConf.label}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <div style={{ fontWeight: 700, color: '#22C55E' }}>{formatPrice(order.total)}</div>
-                                    <div style={{ fontSize: 11, color: '#9CA3AF' }}>{order.items?.length} items</div>
-                                </div>
-                            </div>
-                        ))}
+                            )
+                        })}
 
                         {filteredOrders.length === 0 && (
                             <div style={{ textAlign: 'center', padding: 48, color: '#6B7280' }}>
@@ -468,6 +588,10 @@ function StaffDashboard() {
                 @keyframes pulse {
                     0%, 100% { opacity: 1; transform: scale(1); }
                     50% { opacity: 0.5; transform: scale(0.9); }
+                }
+                @keyframes slideDown {
+                    from { transform: translate(-50%, -20px); opacity: 0; }
+                    to { transform: translate(-50%, 0); opacity: 1; }
                 }
             `}</style>
         </div>

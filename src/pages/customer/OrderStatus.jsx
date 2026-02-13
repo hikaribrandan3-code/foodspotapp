@@ -33,19 +33,21 @@ const STEPS = [
 // Map backend status to step number
 const getStepFromStatus = (status) => {
     switch (status) {
-        case 'awaiting_payment':
-        case 'pendiente_confirmacion':
+        case 'pending_payment':
+        case 'paid_unreleased':
             return 0 // Not yet visible to staff
-        case 'confirmado':
+        case 'released_to_kitchen':
             return 1 // Recibido
-        case 'en_cocina':
-        case 'preparando':
+        case 'preparing':
             return 2 // En Cocina
-        case 'en_camino':
-        case 'listo':
-            return 3 // En Camino
-        case 'entregado':
+        case 'ready':
+        case 'dispatched':
+            return 3 // En Camino / Listo
+        case 'delivered':
             return 4 // Entregado
+        case 'cancelled':
+        case 'refunded':
+            return -1 // Terminal
         default:
             return 0
     }
@@ -53,32 +55,36 @@ const getStepFromStatus = (status) => {
 
 const getStatusLabel = (status) => {
     switch (status) {
-        case 'awaiting_payment': return 'Esperando pago...'
-        case 'pendiente_confirmacion': return 'Esperando confirmación...'
-        case 'confirmado': return 'Pedido confirmado'
-        case 'en_cocina': return 'En preparación'
-        case 'preparando': return 'En preparación'
-        case 'en_camino': return 'En camino'
-        case 'listo': return '¡Listo para recoger!'
-        case 'entregado': return 'Entregado'
+        case 'pending_payment': return 'Esperando pago...'
+        case 'paid_unreleased': return 'Pago recibido'
+        case 'released_to_kitchen': return 'Pedido confirmado'
+        case 'preparing': return 'En preparación'
+        case 'ready': return '¡Listo para recoger!'
+        case 'dispatched': return 'En camino'
+        case 'delivered': return 'Entregado'
+        case 'cancelled': return 'Cancelado'
+        case 'refunded': return 'Reembolsado'
         default: return status
     }
 }
 
 const getStatusColor = (status) => {
     switch (status) {
-        case 'awaiting_payment':
-        case 'pendiente_confirmacion':
+        case 'pending_payment':
             return { bg: '#FEF3C7', text: '#92400E', border: '#F59E0B' }
-        case 'confirmado':
-        case 'en_cocina':
-        case 'preparando':
+        case 'paid_unreleased':
+        case 'released_to_kitchen':
+        case 'preparing':
             return { bg: '#DBEAFE', text: '#1E40AF', border: '#3B82F6' }
-        case 'en_camino':
+        case 'ready':
+            return { bg: '#CFFAFE', text: '#0E7490', border: '#06B6D4' }
+        case 'dispatched':
             return { bg: '#E0E7FF', text: '#4338CA', border: '#6366F1' }
-        case 'listo':
-        case 'entregado':
+        case 'delivered':
             return { bg: '#DCFCE7', text: '#166534', border: '#22C55E' }
+        case 'cancelled':
+        case 'refunded':
+            return { bg: '#FEE2E2', text: '#991B1B', border: '#EF4444' }
         default:
             return { bg: '#F3F4F6', text: '#6B7280', border: '#9CA3AF' }
     }
