@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { getGuestToken } from '../../utils/guestToken.js'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
+import { formatAddressForDisplay } from '../../utils/logistics.js' // Strike 17 Import
 import {
     getCurrentOrder,
     clearCurrentOrder,
@@ -113,24 +114,14 @@ function Order({ config: configProp }) {
     const freeDeliveryThreshold = tenantData?.free_delivery_threshold || 0
     const businessName = tenantData?.business_name || 'Local'
     const ownerPhone = tenantData?.whatsapp_number || tenantData?.phone || null
-    // 🛡️ VAULT: mp_access_token is NO LONGER exposed to the frontend
-    // Payment preference creation is handled by the create-preference Edge Function
 
     // --------------------------------------------
     // 🚦 SERVICE MODE LOGIC (Universal Mode)
     // --------------------------------------------
-    // Determine initial mode based on availability and session preference
     const [orderType, setOrderType] = useState(() => {
-        // 1. If explicit delivery session exists, respect it
         if (isDeliveryMode() && serviceModes?.delivery) return 'delivery'
-
-        // 2. Default to Dine-In if available
         if (serviceModes?.dineIn) return 'dine_in'
-
-        // 3. Fallback to Delivery if Dine-In disabled
         if (serviceModes?.delivery) return 'delivery'
-
-        // 4. Pickup as last resort
         return 'pickup'
     })
 
@@ -141,8 +132,6 @@ function Order({ config: configProp }) {
 
     // 🔔 TOAST STATE
     const [toastMessage, setToastMessage] = useState(null)
-
-    // Helper to show toast
     const showToast = (msg) => {
         setToastMessage(msg)
         setTimeout(() => setToastMessage(null), 4000)
@@ -152,7 +141,7 @@ function Order({ config: configProp }) {
     const [customerInfo, setCustomerInfo] = useState({
         name: '',
         phone: '',
-        address: '',     // Delivery Only
+        address: { street: '', number: '', floor: '', notes: '' }, // 🛡️ STRUCTURED ADDRESS (Strike 17)
         tableNumber: '', // Dine-In Only
         lat: null,
         lon: null
@@ -268,6 +257,8 @@ function Order({ config: configProp }) {
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
             // 🛡️ CRASH FIX: Only include delivery_address if isDelivery
+            // For Strike 17, this is now an object. Supabase/Postgres will handle it as JSON if column is JSONB.
+            // If column is TEXT, we might consider JSON.stringify(), but we'll try sending object first as Supabase JS client usually handles this.
             delivery_address: isDelivery ? (customerInfo.address || null) : null,
             table_number: orderType === 'dine_in' ? customerInfo.tableNumber : null,
             payment_method: paymentMethod,
@@ -293,7 +284,6 @@ function Order({ config: configProp }) {
             // 💳 PAYMENT ROUTING
             if (paymentMethod === 'mercadopago') {
                 // ========== MERCADO PAGO PATH (VIA EDGE FUNCTION) ==========
-                // 🛡️ VAULT: Token stays on the server. We only send order_id.
                 try {
                     const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
                         body: { order_id: savedOrder.id }
@@ -301,7 +291,6 @@ function Order({ config: configProp }) {
 
                     if (prefError) throw prefError
 
-                    // 🛡️ AGOTADO / INFLATION GUARD: Edge Function may reject
                     if (prefData?.error === 'item_unavailable' || prefData?.error === 'price_mismatch') {
                         showToast(`⚠️ ${prefData.message}`)
                         setIsSubmitting(false)
@@ -309,7 +298,7 @@ function Order({ config: configProp }) {
                     }
 
                     if (prefData?.error === 'mp_not_configured') {
-                        // No MP token — fall back to cash
+                        // Fallback to cash
                         await supabase
                             .from('orders')
                             .update({ status: 'pending_payment', payment_method: 'efectivo' })
@@ -333,7 +322,7 @@ function Order({ config: configProp }) {
                     }
                 } catch (mpError) {
                     console.error('MP Error:', mpError)
-                    // 🛡️ CRASH FIX: Fallback to cash
+                    // Fallback to cash
                     await supabase
                         .from('orders')
                         .update({ status: 'pending_payment', payment_method: 'efectivo' })
@@ -358,8 +347,6 @@ function Order({ config: configProp }) {
                 )
                 const whatsappUrl = `https://wa.me/${ownerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
 
-                // For dine-in, maybe we don't open WhatsApp automatically? 
-                // Let's keep it for now as "Notify Waiter" fallback.
                 if (orderType === 'delivery' || paymentMethod === 'efectivo') {
                     window.open(whatsappUrl, '_blank')
                 }
@@ -473,7 +460,6 @@ function Order({ config: configProp }) {
     // ============================================
     return (
         <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#F8F9FA' }}>
-            {/* BRANDING HEADER UPDATE */}
             <HeaderClamp config={config} />
 
             {/* Divider Strip */}
@@ -490,16 +476,12 @@ function Order({ config: configProp }) {
                 )
             })()}
 
-            {/* Main Wrapper */}
             <div style={{ margin: '0 14px' }}>
-
-                {/* 1. DYNAMIC HEADER & CONTEXT */}
                 <div style={{ marginBottom: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
                             {orderType === 'dine_in' ? 'Para la mesa' : 'Tu Pedido'}
                         </h1>
-                        {/* MODE TOGGLE */}
                         {serviceModes?.dineIn && serviceModes?.delivery && (
                             <button
                                 onClick={() => setOrderType(prev => prev === 'dine_in' ? 'delivery' : 'dine_in')}
@@ -515,7 +497,6 @@ function Order({ config: configProp }) {
                         )}
                     </div>
 
-                    {/* Pause Warning */}
                     {config.pauseOrders && (
                         <div style={{ background: '#FEF3C7', padding: 12, borderRadius: 12, marginBottom: 16, textAlign: 'center' }}>
                             <p style={{ color: '#92400E', fontSize: 14 }}>⏸️ {config.pauseOrdersMessage || 'Pedidos pausados'}</p>
@@ -528,10 +509,8 @@ function Order({ config: configProp }) {
                     background: 'white', borderRadius: 24, padding: 24,
                     boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
                 }}>
-                    {/* Header based on Context */}
                     <div style={{ marginBottom: 24 }}>
                         {orderType === 'dine_in' ? (
-                            // MESA BADGE (Reference IMG_9072)
                             <div style={{
                                 background: '#1F2937', color: 'white',
                                 padding: '16px 20px', borderRadius: 16,
@@ -541,14 +520,11 @@ function Order({ config: configProp }) {
                                     <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>Ubicación</span>
                                     <div style={{ fontSize: 20, fontWeight: 700 }}>Comer en Mesa</div>
                                 </div>
-                                <div style={{
-                                    background: 'rgba(255,255,255,0.1)', padding: 8, borderRadius: 12
-                                }}>
+                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: 8, borderRadius: 12 }}>
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><line x1="6" y1="6" x2="6" y2="6" /><line x1="6" y1="30" x2="6" y2="30" /></svg>
                                 </div>
                             </div>
                         ) : (
-                            // DELIVERY HEADER (Reference IMG_9069)
                             <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 4 }}>
                                 Detalles de Entrega
                             </h3>
@@ -569,7 +545,6 @@ function Order({ config: configProp }) {
                     {/* INPUT FIELDS */}
                     {orderType === 'delivery' ? (
                         <>
-                            {/* Hard Fence Warning */}
                             {isOutOfRadius && (
                                 <div style={{ background: '#FEE2E2', border: '1px solid #EF4444', padding: 16, borderRadius: 12, marginBottom: 20, textAlign: 'center' }}>
                                     <div style={{ fontSize: 24, marginBottom: 4 }}>🚫</div>
@@ -590,16 +565,44 @@ function Order({ config: configProp }) {
                                 placeholder="WhatsApp (ej: 11 1234 5678)"
                                 type="tel"
                             />
+
+                            {/* 🛡️ STRIKE 17: STRUCTURED ADDRESS GRID */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+                                <InputGroup
+                                    label="Calle"
+                                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>}
+                                    value={customerInfo.address.street}
+                                    onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, street: e.target.value } }))}
+                                    placeholder="Ej: Av. Cabildo"
+                                />
+                                <InputGroup
+                                    label="Altura"
+                                    icon={<span style={{ fontSize: 16, fontWeight: 700 }}>#</span>}
+                                    value={customerInfo.address.number}
+                                    onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, number: e.target.value } }))}
+                                    placeholder="1234"
+                                    inputMode="numeric"
+                                />
+                            </div>
+
                             <InputGroup
-                                label="Dirección" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>}
-                                value={customerInfo.address}
-                                onChange={(e) => setCustomerInfo(p => ({ ...p, address: e.target.value }))}
-                                placeholder="Calle, Altura, Piso / Depto"
+                                label="Piso / Depto (Opcional)"
+                                icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18" /><rect x="5" y="3" width="14" height="14" rx="2" /></svg>}
+                                value={customerInfo.address.floor}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, floor: e.target.value } }))}
+                                placeholder="Ej: 5B, PB, etc."
+                            />
+
+                            <InputGroup
+                                label="Nota / Timbre (Opcional)"
+                                icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>}
+                                value={customerInfo.address.notes}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, notes: e.target.value } }))}
+                                placeholder="Ej: Timbre no anda, al fondo"
                                 isTextArea={true}
                             />
                         </>
                     ) : (
-                        /* DINE-IN FIELDS */
                         <>
                             <InputGroup
                                 label="Número de Mesa" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" /><path d="M21 9H3" /><path d="M21 15H3" /><path d="M9 3v18" /><path d="M15 3v18" /></svg>}
@@ -618,7 +621,7 @@ function Order({ config: configProp }) {
                     )}
                 </div>
 
-                {/* 3. PREMIUM PAYMENT SELECTOR (Cards) */}
+                {/* 3. PREMIUM PAYMENT SELECTOR */}
                 <div style={{
                     background: 'white', borderRadius: 24, padding: 24,
                     boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
@@ -627,7 +630,6 @@ function Order({ config: configProp }) {
                         Método de Pago
                     </h3>
 
-                    {/* MERCADO PAGO CARD */}
                     {(orderType === 'delivery' || serviceModes?.dineInPayment === 'before') && (
                         <PaymentMethodCard
                             id="mercadopago"
@@ -640,7 +642,6 @@ function Order({ config: configProp }) {
                         />
                     )}
 
-                    {/* CASH / COUNTER CARD */}
                     {(cashAvailable || serviceModes?.dineInPayment === 'after') && (
                         <PaymentMethodCard
                             id="efectivo"
@@ -654,7 +655,7 @@ function Order({ config: configProp }) {
                     )}
                 </div>
 
-                {/* 4. ORDER ITEMS (Visual Clean) */}
+                {/* 4. ORDER ITEMS */}
                 <div style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>Resumen</h3>
                     {order.items.map((item, index) => (
@@ -677,7 +678,6 @@ function Order({ config: configProp }) {
                         </div>
                     ))}
 
-                    {/* Totals */}
                     <div style={{ marginTop: 20, paddingTop: 20, borderTop: '2px dashed #E5E7EB' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 15 }}>
                             <span style={{ color: '#6B7280' }}>Subtotal</span>
@@ -720,7 +720,7 @@ function Order({ config: configProp }) {
                         cursor: isOutOfRadius ? 'not-allowed' : 'pointer',
                         opacity: (isSubmitting || config.pauseOrders) ? 0.6 : 1,
                         boxShadow: '0 8px 24px -4px rgba(0,0,0,0.2)',
-                        transform: 'translateZ(0)' // HW accel
+                        transform: 'translateZ(0)'
                     }}
                 >
                     <span>{isSubmitting ? 'Procesando...' : (isOutOfRadius ? 'Fuera de Radio' : 'Confirmar Pedido')}</span>
@@ -728,7 +728,6 @@ function Order({ config: configProp }) {
                 </button>
             </div>
 
-            {/* TOAST */}
             {toastMessage && (
                 <div style={{
                     position: 'fixed', bottom: 120, left: '50%', transform: 'translateX(-50%)',

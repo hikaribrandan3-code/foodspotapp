@@ -133,8 +133,19 @@ export function validateDeliveryInfo(info) {
         errors.push('Número de teléfono válido requerido')
     }
 
-    if (!info.address || info.address.trim().length < 5) {
-        errors.push('Dirección de entrega requerida')
+    // 🛡️ STRUCTURED ADRESS VALIDATION (Strike 17)
+    if (typeof info.address === 'object' && info.address !== null) {
+        if (!info.address.street || info.address.street.trim().length < 2) {
+            errors.push('Calle requerida')
+        }
+        if (!info.address.number || info.address.number.trim().length < 1) {
+            errors.push('Altura/Número requerida')
+        }
+    } else {
+        // Legacy String Validation
+        if (!info.address || info.address.trim().length < 5) {
+            errors.push('Dirección de entrega requerida')
+        }
     }
 
     return {
