@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { formatPrice } from '../../config/menuData.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics.js' // Strike 17 Imports
+import { useOrdersRealtime } from '../../hooks/useOrdersRealtime.js'
 
 // ============================================
 // 🎯 STAFF MISSION CONTROL v2 — FSM SAFETY CAGE
@@ -101,75 +102,20 @@ function StaffDashboard() {
     const primaryColor = tenantData?.primary_color || '#C4856A'
     const businessName = tenantData?.business_name || 'Dashboard'
 
-    const [orders, setOrders] = useState([])
-    const [loading, setLoading] = useState(true)
+    // 🛡️ HOOK INJECTION: SILO-HARDENED REALTIME DATA
+    const { orders, loading, refreshOrders: fetchOrders } = useOrdersRealtime(businessId)
+
+    // const [orders, setOrders] = useState([]) // Removed local state
+    // const [loading, setLoading] = useState(true) // Removed local loading
     const [activeTab, setActiveTab] = useState('active') // 'active' | 'completed'
     const [processingOrderId, setProcessingOrderId] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
 
     // ============================================
-    // 📡 FETCH ORDERS
+    // 📡 FETCH & REAL-TIME (Handled by Hook)
     // ============================================
-    const fetchOrders = async () => {
-        if (!businessId) return
-
-        try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('business_id', businessId)
-                .order('created_at', { ascending: false })
-                .limit(50)
-
-            if (error) throw error
-            setOrders(data || [])
-        } catch (err) {
-            console.error('Fetch Orders Error:', err)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        fetchOrders()
-    }, [businessId])
-
-    // ============================================
-    // ⚡ REAL-TIME SUBSCRIPTION
-    // ============================================
-    useEffect(() => {
-        if (!businessId) return
-
-        const channel = supabase
-            .channel(`staff-orders-${businessId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'orders',
-                    filter: `business_id=eq.${businessId}`
-                },
-                (payload) => {
-                    console.log('🔔 Order Change:', payload.eventType, payload.new?.id)
-
-                    if (payload.eventType === 'INSERT') {
-                        setOrders(prev => [payload.new, ...prev])
-                    } else if (payload.eventType === 'UPDATE') {
-                        setOrders(prev => prev.map(o =>
-                            o.id === payload.new.id ? payload.new : o
-                        ))
-                    } else if (payload.eventType === 'DELETE') {
-                        setOrders(prev => prev.filter(o => o.id !== payload.old.id))
-                    }
-                }
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [businessId])
+    // Logic extracted to useOrdersRealtime.js hook
+    // for security and cleaner architecture.
 
     // ============================================
     // 🔄 FSM STATUS ADVANCE (via RPC)

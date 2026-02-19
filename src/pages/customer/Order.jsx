@@ -701,12 +701,13 @@ function Order({ config: configProp }) {
 
             {/* FLOATING ACTION BUTTON */}
             <div style={{
-                position: 'fixed', bottom: 0, left: 0, right: 0,
-                padding: '20px 20px',
-                paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
-                background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)',
+                position: 'fixed', bottom: '70px', left: 0, right: 0,
+                padding: '12px 20px',
+                paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+                background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(16px)',
                 borderTop: '1px solid rgba(0,0,0,0.05)',
-                zIndex: 100
+                marginBottom: '10px',
+                zIndex: 40 // Below BottomNav (z-50) but above content
             }}>
                 <button
                     onClick={handleSubmit}
