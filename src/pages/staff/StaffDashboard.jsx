@@ -115,6 +115,22 @@ function StaffDashboard() {
     const [activeTab, setActiveTab] = useState('active') // 'active' | 'completed'
     const [processingOrderId, setProcessingOrderId] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
+    const [userRole, setUserRole] = useState(null)
+
+    // ============================================
+    // 🔐 AUTH (ROLE DETECTION FOR NAV)
+    // ============================================
+    useEffect(() => {
+        const fetchRole = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session?.user) {
+                setUserRole(session.user.user_metadata?.role || null)
+            }
+        }
+        fetchRole()
+    }, [])
+
+    const isOwner = userRole === 'owner' || userRole === 'superadmin'
 
     // ============================================
     // 📡 FETCH & REAL-TIME (Handled by Hook)
@@ -227,8 +243,8 @@ function StaffDashboard() {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#111827',
-            color: 'white',
+            background: '#F9FAFB', // Light Theme Base
+            color: '#111827', // Dark text
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}>
             {/* Header: Pro-Grade White Scheme */}
@@ -245,27 +261,29 @@ function StaffDashboard() {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <button
-                            onClick={() => {
-                                // Robust navigation fallback: If slug is missing, parse current URL
-                                const currentSlug = tenantSlug || window.location.pathname.split('/')[1];
-                                navigate(`/${currentSlug}/owner`);
-                            }}
-                            style={{
-                                background: '#FFFFFF',
-                                border: '1px solid #D1D5DB',
-                                color: '#374151',
-                                padding: '8px 16px',
-                                borderRadius: '8px',
-                                fontSize: '13px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            ← Volver
-                        </button>
-                        <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#111827' }}>
+                        {isOwner && (
+                            <button
+                                onClick={() => {
+                                    // Robust navigation fallback: If slug is missing, parse current URL
+                                    const currentSlug = tenantSlug || window.location.pathname.split('/')[1];
+                                    navigate(`/${currentSlug}/owner`);
+                                }}
+                                style={{
+                                    background: '#FFFFFF',
+                                    border: '1px solid #D1D5DB',
+                                    color: '#374151',
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                ← Volver
+                            </button>
+                        )}
+                        <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#111827', marginLeft: isOwner ? 0 : 8 }}>
                             Mission Control
                         </h1>
                     </div>
@@ -300,13 +318,15 @@ function StaffDashboard() {
                     onClick={() => setActiveTab('active')}
                     style={{
                         padding: '10px 20px',
-                        background: activeTab === 'active' ? primaryColor : '#374151',
-                        color: 'white',
-                        border: 'none',
+                        background: activeTab === 'active' ? primaryColor : '#FFFFFF',
+                        color: activeTab === 'active' ? 'white' : '#4B5563',
+                        border: activeTab === 'active' ? '1px solid transparent' : '1px solid #E5E7EB',
                         borderRadius: 10,
                         fontWeight: 600,
                         cursor: 'pointer',
-                        fontSize: 14
+                        fontSize: 14,
+                        transition: 'all 0.2s ease',
+                        boxShadow: activeTab === 'active' ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)'
                     }}
                 >
                     🔥 Activos ({stats.active})
@@ -315,13 +335,15 @@ function StaffDashboard() {
                     onClick={() => setActiveTab('completed')}
                     style={{
                         padding: '10px 20px',
-                        background: activeTab === 'completed' ? primaryColor : '#374151',
-                        color: 'white',
-                        border: 'none',
+                        background: activeTab === 'completed' ? primaryColor : '#FFFFFF',
+                        color: activeTab === 'completed' ? 'white' : '#4B5563',
+                        border: activeTab === 'completed' ? '1px solid transparent' : '1px solid #E5E7EB',
                         borderRadius: 10,
                         fontWeight: 600,
                         cursor: 'pointer',
-                        fontSize: 14
+                        fontSize: 14,
+                        transition: 'all 0.2s ease',
+                        boxShadow: activeTab === 'completed' ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)'
                     }}
                 >
                     ✅ Completados ({stats.completed})
@@ -335,19 +357,20 @@ function StaffDashboard() {
                     // Stacks columns on phone, grids on desktop
                     gridTemplateColumns: window.innerWidth < 768 ? '1fr' : `repeat(${kanbanColumns.length}, 1fr)`,
                     gap: 16,
-                    padding: '16px',
+                    padding: '16px 24px',
                     minHeight: 'calc(100vh - 160px)',
                     overflowX: 'auto'
                 }}>
                     {kanbanColumns.map(status => (
                         <div key={status.id} style={{
-                            background: '#1F2937',
+                            background: '#F3F4F6', // Light gray column background
                             borderRadius: 16,
                             padding: 16,
                             display: 'flex',
                             flexDirection: 'column',
                             minWidth: 240,
-                            borderTop: `4px solid ${status.color}` // Visual indicator moved to top for pro look
+                            borderTop: `4px solid ${status.color}`, // Visual indicator moved to top for pro look
+                            border: '1px solid #E5E7EB' // Subtle border outline
                         }}>
                             {/* Column Header */}
                             <div style={{
@@ -379,23 +402,24 @@ function StaffDashboard() {
 
                                     return (
                                         <div key={order.id} style={{
-                                            background: '#374151',
+                                            background: '#FFFFFF', // White cards
                                             borderRadius: 12,
                                             padding: 16,
-                                            borderLeft: `4px solid ${status.color}`
+                                            borderLeft: `4px solid ${status.color}`,
+                                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)' // Soft shadow
                                         }}>
                                             {/* Order Header */}
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                                <span style={{ fontWeight: 700, fontSize: 16 }}>
+                                                <span style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>
                                                     #{String(order.order_number).padStart(3, '0')}
                                                 </span>
-                                                <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                                                <span style={{ fontSize: 12, color: '#6B7280' }}>
                                                     {new Date(order.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
 
                                             {/* Items Summary */}
-                                            <div style={{ fontSize: 13, color: '#D1D5DB', marginBottom: 12 }}>
+                                            <div style={{ fontSize: 13, color: '#4B5563', marginBottom: 12 }}>
                                                 {(order.items || []).slice(0, 3).map((item, i) => (
                                                     <div key={i}>{item.quantity}x {item.name}</div>
                                                 ))}
@@ -406,8 +430,8 @@ function StaffDashboard() {
 
                                             {/* Customer Info */}
                                             {order.customer_name && (
-                                                <div style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 8 }}>
-                                                    👤 {order.customer_name}
+                                                <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
+                                                    👤 <span style={{ fontWeight: 500, color: '#374151' }}>{order.customer_name}</span>
                                                 </div>
                                             )}
 
@@ -492,15 +516,15 @@ function StaffDashboard() {
                                                     <div style={{
                                                         width: '100%',
                                                         padding: '10px 14px',
-                                                        background: '#1F2937',
-                                                        border: '1px dashed #4B5563',
+                                                        background: '#F9FAFB',
+                                                        border: '1px dashed #D1D5DB',
                                                         borderRadius: 8,
                                                         fontSize: 12,
-                                                        color: '#9CA3AF',
+                                                        color: '#6B7280',
                                                         textAlign: 'center',
                                                         fontWeight: 500
                                                     }}>
-                                                        ⏳ Esperando confirmación de pago...
+                                                        ⏳ Esperando confimación
                                                     </div>
                                                 )
                                             )}
@@ -533,16 +557,18 @@ function StaffDashboard() {
                             const statusConf = getStatusConfig(order.status)
                             return (
                                 <div key={order.id} style={{
-                                    background: '#1F2937',
+                                    background: '#FFFFFF',
                                     borderRadius: 12,
                                     padding: 16,
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: 16
+                                    gap: 16,
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                    border: '1px solid #E5E7EB'
                                 }}>
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 600 }}>#{String(order.order_number).padStart(3, '0')}</div>
-                                        <div style={{ fontSize: 12, color: '#9CA3AF' }}>
+                                        <div style={{ fontWeight: 600, color: '#111827' }}>#{String(order.order_number).padStart(3, '0')}</div>
+                                        <div style={{ fontSize: 12, color: '#6B7280' }}>
                                             {new Date(order.created_at).toLocaleString('es-AR')}
                                         </div>
                                     </div>
