@@ -90,21 +90,21 @@ function StaffDashboard() {
     const tenantSlug = tenantData?.slug || ''
 
     // ============================================
-    // 🔄 FSM STATUS PIPELINE (Sync to Primary Red)
+    // 🔄 FSM STATUS PIPELINE (Professional)
     // ============================================
     const STATUS_PIPELINE = [
-        { id: 'pending_payment', label: 'Esperando Pago', color: '#F59E0B', bg: '#FEF3C7', icon: '⏳' },
-        { id: 'paid_unreleased', label: 'Pago Recibido', color: '#8B5CF6', bg: '#EDE9FE', icon: '💰' },
-        { id: 'released_to_kitchen', label: 'Recibido', color: primaryColor, bg: `${primaryColor}22`, icon: '📋' }, // 🚀 BRAND SYNC
-        { id: 'preparing', label: 'En Cocina', color: '#F97316', bg: '#FFF7ED', icon: '👨‍🍳' },
-        { id: 'ready', label: 'Listo', color: '#06B6D4', bg: '#CFFAFE', icon: '✨' },
-        { id: 'dispatched', label: 'En Camino', color: '#6366F1', bg: '#E0E7FF', icon: '🚗' },
-        { id: 'delivered', label: 'Entregado', color: '#22C55E', bg: '#DCFCE7', icon: '✅' }
+        { id: 'pending_payment', label: 'Esperando Pago', color: '#F59E0B', bg: '#FEF3C7' },
+        { id: 'paid_unreleased', label: 'Pago Recibido', color: '#8B5CF6', bg: '#EDE9FE' },
+        { id: 'released_to_kitchen', label: 'Recibido', color: primaryColor, bg: `${primaryColor}22` }, // 🚀 BRAND SYNC
+        { id: 'preparing', label: 'En Cocina', color: '#F97316', bg: '#FFF7ED' },
+        { id: 'ready', label: 'Listo', color: '#06B6D4', bg: '#CFFAFE' },
+        { id: 'dispatched', label: 'En Camino', color: '#6366F1', bg: '#E0E7FF' },
+        { id: 'delivered', label: 'Entregado', color: '#22C55E', bg: '#DCFCE7' }
     ];
 
     // Get status config by id
     const getStatusConfig = (status) => {
-        return STATUS_PIPELINE.find(s => s.id === status) || { label: status, color: '#9CA3AF', bg: '#F3F4F6', icon: '❓' }
+        return STATUS_PIPELINE.find(s => s.id === status) || { label: status, color: '#9CA3AF', bg: '#F3F4F6' }
     }
 
     // 🛡️ HOOK INJECTION: SILO-HARDENED REALTIME DATA
@@ -231,24 +231,52 @@ function StaffDashboard() {
             color: 'white',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}>
-            {/* Header */}
+            {/* Header: Pro-Grade White Scheme */}
             <header style={{
-                background: '#1F2937', padding: '12px 16px', borderBottom: '1px solid #374151',
-                display: 'flex', flexDirection: 'column', gap: '12px', position: 'sticky', top: 0, zIndex: 100
+                background: '#FFFFFF', // Clean White Professional Surface
+                padding: '12px 16px',
+                borderBottom: '1px solid #E5E7EB',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                position: 'sticky',
+                top: 0,
+                zIndex: 100
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <button
-                            onClick={() => navigate(`/${tenantSlug}/owner`)}
-                            style={{ background: '#374151', border: 'none', color: '#9CA3AF', padding: '8px 12px', borderRadius: '8px', fontSize: '12px' }}
+                            onClick={() => {
+                                // Robust navigation fallback: If slug is missing, parse current URL
+                                const currentSlug = tenantSlug || window.location.pathname.split('/')[1];
+                                navigate(`/${currentSlug}/owner`);
+                            }}
+                            style={{
+                                background: '#FFFFFF',
+                                border: '1px solid #D1D5DB',
+                                color: '#374151',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
                         >
                             ← Volver
                         </button>
-                        <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Mission Control</h1>
+                        <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#111827' }}>
+                            Mission Control
+                        </h1>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} />
-                        <span style={{ fontSize: 11, color: '#9CA3AF' }}>En vivo</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{
+                            width: 8, height: 8, borderRadius: '50%', background: '#22C55E',
+                            boxShadow: '0 0 8px #22C55E'
+                        }} />
+                        <span style={{ fontSize: 11, color: '#6B7280', fontWeight: '600', textTransform: 'uppercase' }}>
+                            En Vivo
+                        </span>
                     </div>
                 </div>
             </header>
@@ -318,26 +346,25 @@ function StaffDashboard() {
                             padding: 16,
                             display: 'flex',
                             flexDirection: 'column',
-                            minWidth: 240
+                            minWidth: 240,
+                            borderTop: `4px solid ${status.color}` // Visual indicator moved to top for pro look
                         }}>
                             {/* Column Header */}
                             <div style={{
                                 display: 'flex',
+                                justifyContent: 'space-between',
                                 alignItems: 'center',
-                                gap: 8,
-                                marginBottom: 16,
-                                paddingBottom: 12,
-                                borderBottom: `2px solid ${status.color}`
+                                marginBottom: 16
                             }}>
-                                <span style={{ fontSize: 20 }}>{status.icon}</span>
-                                <span style={{ fontWeight: 700, fontSize: 14, color: status.color }}>{status.label}</span>
+                                <span style={{ fontWeight: 700, fontSize: 13, color: status.color, textTransform: 'uppercase' }}>
+                                    {status.label}
+                                </span>
                                 <span style={{
-                                    marginLeft: 'auto',
                                     background: status.bg,
                                     color: status.color,
-                                    padding: '4px 10px',
-                                    borderRadius: 12,
-                                    fontSize: 12,
+                                    padding: '2px 8px',
+                                    borderRadius: 6,
+                                    fontSize: 11,
                                     fontWeight: 700
                                 }}>
                                     {ordersByStatus[status.id]?.length || 0}
@@ -489,7 +516,6 @@ function StaffDashboard() {
                                         color: '#6B7280',
                                         fontSize: 14
                                     }}>
-                                        <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>{status.icon}</div>
                                         Sin pedidos
                                     </div>
                                 )}
@@ -514,7 +540,6 @@ function StaffDashboard() {
                                     alignItems: 'center',
                                     gap: 16
                                 }}>
-                                    <span style={{ fontSize: 24 }}>{statusConf.icon}</span>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 600 }}>#{String(order.order_number).padStart(3, '0')}</div>
                                         <div style={{ fontSize: 12, color: '#9CA3AF' }}>
