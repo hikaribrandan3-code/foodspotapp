@@ -15,22 +15,8 @@ import { useOrdersRealtime } from '../../hooks/useOrdersRealtime.js'
 // ============================================
 
 // ============================================
-// 🔄 FSM STATUS PIPELINE (New Enum Values)
+// 🔄 FSM STATUS PIPELINE (Moved inside component)
 // ============================================
-const STATUS_PIPELINE = [
-    { id: 'pending_payment', label: 'Esperando Pago', color: '#F59E0B', bg: '#FEF3C7', icon: '⏳' },
-    { id: 'paid_unreleased', label: 'Pago Recibido', color: '#8B5CF6', bg: '#EDE9FE', icon: '💰' },
-    { id: 'released_to_kitchen', label: 'Recibido', color: '#3B82F6', bg: '#DBEAFE', icon: '📋' },
-    { id: 'preparing', label: 'En Cocina', color: '#F97316', bg: '#FFF7ED', icon: '👨‍🍳' },
-    { id: 'ready', label: 'Listo', color: '#06B6D4', bg: '#CFFAFE', icon: '✨' },
-    { id: 'dispatched', label: 'En Camino', color: '#6366F1', bg: '#E0E7FF', icon: '🚗' },
-    { id: 'delivered', label: 'Entregado', color: '#22C55E', bg: '#DCFCE7', icon: '✅' }
-]
-
-// Get status config by id
-const getStatusConfig = (status) => {
-    return STATUS_PIPELINE.find(s => s.id === status) || { label: status, color: '#9CA3AF', bg: '#F3F4F6', icon: '❓' }
-}
 
 // ============================================
 // 🛡️ SAFETY CAGE: Status-Specific Action Buttons
@@ -101,6 +87,25 @@ function StaffDashboard() {
     const navigate = useNavigate()
     const primaryColor = tenantData?.primary_color || '#C4856A'
     const businessName = tenantData?.business_name || 'Dashboard'
+    const tenantSlug = tenantData?.slug || ''
+
+    // ============================================
+    // 🔄 FSM STATUS PIPELINE (Sync to Primary Red)
+    // ============================================
+    const STATUS_PIPELINE = [
+        { id: 'pending_payment', label: 'Esperando Pago', color: '#F59E0B', bg: '#FEF3C7', icon: '⏳' },
+        { id: 'paid_unreleased', label: 'Pago Recibido', color: '#8B5CF6', bg: '#EDE9FE', icon: '💰' },
+        { id: 'released_to_kitchen', label: 'Recibido', color: primaryColor, bg: `${primaryColor}22`, icon: '📋' }, // 🚀 BRAND SYNC
+        { id: 'preparing', label: 'En Cocina', color: '#F97316', bg: '#FFF7ED', icon: '👨‍🍳' },
+        { id: 'ready', label: 'Listo', color: '#06B6D4', bg: '#CFFAFE', icon: '✨' },
+        { id: 'dispatched', label: 'En Camino', color: '#6366F1', bg: '#E0E7FF', icon: '🚗' },
+        { id: 'delivered', label: 'Entregado', color: '#22C55E', bg: '#DCFCE7', icon: '✅' }
+    ];
+
+    // Get status config by id
+    const getStatusConfig = (status) => {
+        return STATUS_PIPELINE.find(s => s.id === status) || { label: status, color: '#9CA3AF', bg: '#F3F4F6', icon: '❓' }
+    }
 
     // 🛡️ HOOK INJECTION: SILO-HARDENED REALTIME DATA
     const { orders, loading, refreshOrders: fetchOrders } = useOrdersRealtime(businessId)
@@ -228,44 +233,23 @@ function StaffDashboard() {
         }}>
             {/* Header */}
             <header style={{
-                background: '#1F2937',
-                padding: '16px 24px',
-                borderBottom: '1px solid #374151',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                position: 'sticky',
-                top: 0,
-                zIndex: 100
+                background: '#1F2937', padding: '12px 16px', borderBottom: '1px solid #374151',
+                display: 'flex', flexDirection: 'column', gap: '12px', position: 'sticky', top: 0, zIndex: 100
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <span style={{ fontSize: 32 }}>🎯</span>
-                    <div>
-                        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Mission Control</h1>
-                        <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>{businessName}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <button
+                            onClick={() => navigate(`/${tenantSlug}/owner`)}
+                            style={{ background: '#374151', border: 'none', color: '#9CA3AF', padding: '8px 12px', borderRadius: '8px', fontSize: '12px' }}
+                        >
+                            ← Volver
+                        </button>
+                        <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Mission Control</h1>
                     </div>
-                </div>
-
-                {/* Stats Pills */}
-                <div style={{ display: 'flex', gap: 12 }}>
-                    <div style={{ background: '#FEF3C7', color: '#92400E', padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
-                        💰 {stats.pending} Pendientes
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} />
+                        <span style={{ fontSize: 11, color: '#9CA3AF' }}>En vivo</span>
                     </div>
-                    <div style={{ background: '#DBEAFE', color: '#1E40AF', padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
-                        🔥 {stats.active} Activos
-                    </div>
-                    <div style={{ background: '#DCFCE7', color: '#166534', padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
-                        ✅ {stats.completed} Hoy
-                    </div>
-                </div>
-
-                {/* Real-time indicator */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{
-                        width: 10, height: 10, borderRadius: '50%', background: '#22C55E',
-                        animation: 'pulse 2s infinite'
-                    }} />
-                    <span style={{ fontSize: 12, color: '#9CA3AF' }}>En vivo</span>
                 </div>
             </header>
 
@@ -318,11 +302,12 @@ function StaffDashboard() {
 
             {/* Kanban Columns */}
             {activeTab === 'active' && (
-                <div style={{
+                <div className="kanban-grid" style={{
                     display: 'grid',
-                    gridTemplateColumns: `repeat(${kanbanColumns.length}, 1fr)`,
+                    // Stacks columns on phone, grids on desktop
+                    gridTemplateColumns: window.innerWidth < 768 ? '1fr' : `repeat(${kanbanColumns.length}, 1fr)`,
                     gap: 16,
-                    padding: 24,
+                    padding: '16px',
                     minHeight: 'calc(100vh - 160px)',
                     overflowX: 'auto'
                 }}>
