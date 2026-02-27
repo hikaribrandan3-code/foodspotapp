@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 
@@ -12,6 +12,30 @@ function OwnerLogin() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+
+    // ============================
+    // GLOBAL AUTH STATE LISTENER
+    // Automatically redirect when OAuth completes
+    // ============================
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session?.user) {
+                const metadata = session.user.user_metadata || {}
+                const role = metadata.role || 'owner'
+                const slug = metadata.slug || metadata.business_name || 'default'
+
+                if (role === 'superadmin') {
+                    window.location.replace('/admin')
+                } else if (role === 'owner') {
+                    window.location.replace(`/${slug}/owner/summary`)
+                } else {
+                    window.location.replace(`/${slug}/staff/dashboard`)
+                }
+            }
+        })
+
+        return () => subscription?.unsubscribe()
+    }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault()

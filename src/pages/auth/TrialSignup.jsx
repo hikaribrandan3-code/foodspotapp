@@ -51,6 +51,60 @@ const TrialSignup = () => {
         }
     }, [searchParams])
 
+    // ============================
+    // GLOBAL AUTH STATE LISTENER
+    // Automatically redirect when Google OAuth completes
+    // ============================
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session?.user) {
+                const user = session.user
+                let metadata = user.user_metadata || {}
+                let slug = metadata.slug
+                let role = metadata.role || 'owner'
+
+                // Self-healing fallback for slug
+                if (!slug) {
+                    const { data: profileData } = await supabase
+                        .from('profiles')
+                        .select('business_id')
+                        .eq('id', user.id)
+                        .single()
+
+                    if (profileData?.business_id) {
+                        const { data: brandingData } = await supabase
+                            .from('branding')
+                            .select('slug')
+                            .eq('business_id', profileData.business_id)
+                            .single()
+
+                        if (brandingData?.slug) {
+                            slug = brandingData.slug
+                            supabase.auth.updateUser({
+                                data: { ...metadata, slug: slug, business_id: profileData.business_id }
+                            })
+                        }
+                    }
+                }
+
+                // Redirect based on role
+                if (slug) {
+                    if (role === 'customer') {
+                        window.location.replace(`/${slug}/menu`)
+                    } else if (role === 'staff') {
+                        window.location.replace(`/${slug}/staff/dashboard`)
+                    } else {
+                        window.location.replace(`/${slug}/owner/summary`)
+                    }
+                } else {
+                    window.location.replace('/admin')
+                }
+            }
+        })
+
+        return () => subscription?.unsubscribe()
+    }, [])
+
     // Generate URL-safe slug from business name
     const generateSlug = (name) => {
         return name
