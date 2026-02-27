@@ -12,6 +12,7 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import PrintableMenu from '../../components/PrintableMenu.jsx'
+import DesignWorkspace from '../../components/editor/DesignWorkspace.jsx'
 import './MenuStyles.css'
 
 /**
@@ -279,6 +280,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // Operational controls
     const [pauseMessage, setPauseMessage] = useState(config?.pauseOrdersMessage || '')
+    const [showEditor, setShowEditor] = useState(false)
 
     // 🚀 SILO-AWARE LOGOUT
     const handleLogout = async () => {
@@ -1035,40 +1037,41 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
                     </div>
 
-                    {/* ==================== PRINTABLE MENU GENERATOR ==================== */}
-                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+                    {/* ==================== FOODSPOT EDITOR ==================== */}
+                    <div style={{ background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)', borderRadius: 14, padding: 20, marginBottom: 12, border: '1px solid #334155' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>🖨️ Menú Físico (PDF/Imprimir)</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0', maxWidth: '280px' }}>
-                                    Genera un menú limpio y sin fotos, optimizado para impresión en hoja A4 o PDF.
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                    <span style={{ fontSize: 18 }}>{'🎨'}</span>
+                                    <p style={{ fontWeight: 700, fontSize: 15, color: '#FFFFFF', margin: 0 }}>FoodSpot Editor</p>
+                                </div>
+                                <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, maxWidth: '260px', lineHeight: 1.4 }}>
+                                    {'Diseñá tu menú con temas, colores, y tipografías. Exportá en PDF A4 profesional.'}
                                 </p>
                             </div>
                             <button
-                                onClick={handlePrintMenu}
+                                onClick={() => setShowEditor(true)}
                                 style={{
-                                    background: '#1E293B', color: 'white', border: 'none',
-                                    padding: '8px 16px', borderRadius: 8, fontWeight: 600,
+                                    background: '#3B82F6', color: 'white', border: 'none',
+                                    padding: '10px 20px', borderRadius: 10, fontWeight: 700,
                                     fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                                    whiteSpace: 'nowrap'
+                                    whiteSpace: 'nowrap', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)',
+                                    transition: 'all 0.15s ease'
                                 }}
                             >
-                                Imprimir
+                                Abrir Editor
                             </button>
                         </div>
 
                         {/* Version Sync Warning */}
                         {(hasChanges || (localConfig.lastPrintedAt && tenantData?.updated_at && new Date(tenantData.updated_at) > new Date(localConfig.lastPrintedAt))) && (
-                            <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                                <span style={{ fontSize: 16 }}>⚠️</span>
-                                <div>
-                                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#991B1B' }}>Sincronización de Versión</p>
-                                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#B91C1C' }}>
-                                        {hasChanges
-                                            ? 'Tienes cambios sin guardar. Guárdalos antes de imprimir para obtener la versión final.'
-                                            : 'El menú digital ha sido modificado. Vuelve a imprimir para tener los precios actualizados.'}
-                                    </p>
-                                </div>
+                            <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                                <span style={{ fontSize: 14 }}>{'⚠️'}</span>
+                                <p style={{ margin: 0, fontSize: 11, color: '#FCA5A5', lineHeight: 1.4 }}>
+                                    {hasChanges
+                                        ? 'Cambios sin guardar. Guardá antes de imprimir.'
+                                        : 'El menú digital fue modificado. Volvé a imprimir.'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -1164,131 +1167,134 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     </div>
 
                     {/* Delivery Configuration (Conditionally Hidden) */}
-                    {(localConfig.service_modes?.delivery ?? true) && (
-                        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
-                            <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
+                    {
+                        (localConfig.service_modes?.delivery ?? true) && (
+                            <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
+                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
 
-                            <div style={{ marginBottom: 12 }}>
-                                {/* SaaS-Scale Static Map & Radius Visualizer */}
-                                <div style={{
-                                    height: 160,
-                                    background: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&q=80') center/cover",
-                                    borderRadius: 10,
-                                    marginBottom: 16,
-                                    position: 'relative',
-                                    overflow: 'hidden',
-                                    border: '1px solid #CBD5E1'
-                                }}>
-                                    {/* Dark overlay for contrast */}
-                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.2)' }} />
-
-                                    {/* Center Pin */}
+                                <div style={{ marginBottom: 12 }}>
+                                    {/* SaaS-Scale Static Map & Radius Visualizer */}
                                     <div style={{
-                                        position: 'absolute',
-                                        top: '50%', left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        zIndex: 10,
-                                        fontSize: 24,
-                                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                                        height: 160,
+                                        background: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&q=80') center/cover",
+                                        borderRadius: 10,
+                                        marginBottom: 16,
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        border: '1px solid #CBD5E1'
                                     }}>
-                                        🏪
+                                        {/* Dark overlay for contrast */}
+                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.2)' }} />
+
+                                        {/* Center Pin */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '50%', left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            zIndex: 10,
+                                            fontSize: 24,
+                                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                                        }}>
+                                            🏪
+                                        </div>
+
+                                        {/* Dynamic Radius Circle */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '50%', left: '50%',
+                                            width: 40, height: 40,
+                                            marginLeft: -20, marginTop: -20,
+                                            borderRadius: '50%',
+                                            border: '2px solid #22C55E',
+                                            background: 'rgba(34, 197, 94, 0.15)',
+                                            transform: `scale(${localConfig.delivery?.radiusKm || 5})`,
+                                            willChange: 'transform',
+                                            transition: 'transform 0.1s linear',
+                                            pointerEvents: 'none',
+                                            boxShadow: '0 0 0 1000px rgba(0,0,0,0.1)'
+                                        }} />
                                     </div>
 
-                                    {/* Dynamic Radius Circle */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '50%', left: '50%',
-                                        width: 40, height: 40,
-                                        marginLeft: -20, marginTop: -20,
-                                        borderRadius: '50%',
-                                        border: '2px solid #22C55E',
-                                        background: 'rgba(34, 197, 94, 0.15)',
-                                        transform: `scale(${localConfig.delivery?.radiusKm || 5})`,
-                                        willChange: 'transform',
-                                        transition: 'transform 0.1s linear',
-                                        pointerEvents: 'none',
-                                        boxShadow: '0 0 0 1000px rgba(0,0,0,0.1)'
-                                    }} />
-                                </div>
-
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="50"
-                                    value={localConfig.delivery?.radiusKm || 5}
-                                    onChange={(e) => {
-                                        const newValue = parseInt(e.target.value)
-                                        const oldValue = localConfig.delivery?.radiusKm || 5
-                                        if (newValue !== oldValue) {
-                                            recordDeliveryConfigChange('radiusKm', oldValue, newValue)
-                                        }
-                                        // Instant Local Update
-                                        setLocalConfig(prev => ({
-                                            ...prev,
-                                            delivery: { ...prev.delivery, radiusKm: newValue }
-                                        }))
-                                        updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        setHasChanges(true)
-                                    }}
-                                    style={{ width: '100%' }}
-                                />
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                <div>
-                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
+                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
                                     <input
-                                        type="number"
-                                        min="0"
-                                        step="50"
-                                        value={localConfig.delivery?.flatFee === 0 ? '' : localConfig.delivery?.flatFee} // 🛡️ KILL STICKY ZERO
+                                        type="range"
+                                        min="1"
+                                        max="50"
+                                        value={localConfig.delivery?.radiusKm || 5}
                                         onChange={(e) => {
-                                            const val = e.target.value === '' ? 0 : parseInt(e.target.value)
-                                            setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
-                                            updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
-                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                            setHasChanges(true)
-                                        }}
-                                        placeholder="0"
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="100"
-                                        value={localConfig.delivery?.freeDeliveryThreshold ?? ''}
-                                        onChange={(e) => {
-                                            // 🛡️ STICKY ZERO FIX
-                                            const val = e.target.value
-                                            const newValue = val === '' ? 0 : parseInt(val)
-
+                                            const newValue = parseInt(e.target.value)
+                                            const oldValue = localConfig.delivery?.radiusKm || 5
+                                            if (newValue !== oldValue) {
+                                                recordDeliveryConfigChange('radiusKm', oldValue, newValue)
+                                            }
+                                            // Instant Local Update
                                             setLocalConfig(prev => ({
                                                 ...prev,
-                                                delivery: { ...prev.delivery, freeDeliveryThreshold: val === '' ? '' : newValue }
+                                                delivery: { ...prev.delivery, radiusKm: newValue }
                                             }))
-
-                                            updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
+                                            updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
                                             window.dispatchEvent(new CustomEvent('frontendSync'))
                                             setHasChanges(true)
                                         }}
-                                        placeholder="0"
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                        style={{ width: '100%' }}
                                     />
                                 </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                    <div>
+                                        <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="50"
+                                            value={localConfig.delivery?.flatFee === 0 ? '' : localConfig.delivery?.flatFee} // 🛡️ KILL STICKY ZERO
+                                            onChange={(e) => {
+                                                const val = e.target.value === '' ? 0 : parseInt(e.target.value)
+                                                setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
+                                                updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                setHasChanges(true)
+                                            }}
+                                            placeholder="0"
+                                            style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="100"
+                                            value={localConfig.delivery?.freeDeliveryThreshold ?? ''}
+                                            onChange={(e) => {
+                                                // 🛡️ STICKY ZERO FIX
+                                                const val = e.target.value
+                                                const newValue = val === '' ? 0 : parseInt(val)
+
+                                                setLocalConfig(prev => ({
+                                                    ...prev,
+                                                    delivery: { ...prev.delivery, freeDeliveryThreshold: val === '' ? '' : newValue }
+                                                }))
+
+                                                updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
+                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                setHasChanges(true)
+                                            }}
+                                            placeholder="0"
+                                            style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )
+                    }
+                </div >
 
                 {/* ==================== BRIDGED BRANDING SECTION ==================== */}
-                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Estilo de Menú (Píldora)
-                </h3>
+                < hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }
+                } />
+                < h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Estilo de Menú(Píldora)
+                </h3 >
                 <div style={{ background: 'white', padding: '20px', borderRadius: 16, border: '1px solid #E2E8F0', marginBottom: 24 }}>
                     {/* Visual Preset Picker - iPhone Wallpaper Style */}
                     {(() => {
@@ -1495,353 +1501,357 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 </h3>
 
                 {/* Add Category Button / Form */}
-                {!showAddCategory ? (
-                    <button
-                        onClick={() => setShowAddCategory(true)}
-                        style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            marginBottom: 16,
-                            background: '#F1F5F9',
-                            border: '2px dashed #CBD5E1',
-                            borderRadius: 10,
-                            fontSize: 14,
-                            fontWeight: 500,
-                            color: '#64748B',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 6
-                        }}
-                    >
-                        ➕ Agregar Categoría
-                    </button>
-                ) : (
-                    <div style={{
-                        background: '#FFFFFF',
-                        borderRadius: 10,
-                        border: '2px solid #22C55E',
-                        padding: 16,
-                        marginBottom: 16
-                    }}>
-                        <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                            <input
-                                type="text"
-                                placeholder="Nombre de categoría"
-                                value={newCategoryName}
-                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                autoFocus
-                                style={{
-                                    flex: 1,
-                                    padding: '10px 14px',
-                                    border: '1px solid #E2E8F0',
-                                    borderRadius: 8,
-                                    fontSize: 14
-                                }}
-                            />
-                        </div>
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <button
-                                onClick={() => {
-                                    if (newCategoryName.trim()) {
-                                        // 🛡️ NULL-POINTER DEFENSE: Ensure object exists
-                                        const updatedMenu = menu ? { ...menu } : { categories: [] }
-                                        if (!updatedMenu.categories) updatedMenu.categories = []
-
-                                        updatedMenu.categories.push({
-                                            id: generateId('category'),
-                                            name: newCategoryName.trim(),
-                                            icon: '',
-                                            enabled: true,
-                                            items: []
-                                        })
-                                        setMenu(updatedMenu)
-                                        syncMenuToCloud(updatedMenu)
-                                        setNewCategoryName('')
-                                        setNewCategoryIcon('📦')
-                                        setShowAddCategory(false)
-                                    }
-                                }}
-                                style={{
-                                    flex: 1,
-                                    padding: '10px 16px',
-                                    background: '#22C55E',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Crear
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowAddCategory(false)
-                                    setNewCategoryName('')
-                                    setNewCategoryIcon('📦')
-                                }}
-                                style={{
-                                    padding: '10px 16px',
-                                    background: '#F1F5F9',
-                                    color: '#64748B',
-                                    border: 'none',
-                                    borderRadius: 8,
-                                    fontWeight: 500,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
-                {console.log('[MenuManager] 🎨 RENDER CHECK - Menu State:', menu)}
-                {(menu?.categories || []).map(category => {
-                    const isEnabled = category.enabled !== false
-                    return (
-                        <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>
-                            <div style={{
+                {
+                    !showAddCategory ? (
+                        <button
+                            onClick={() => setShowAddCategory(true)}
+                            style={{
+                                width: '100%',
+                                padding: '12px 16px',
+                                marginBottom: 16,
+                                background: '#F1F5F9',
+                                border: '2px dashed #CBD5E1',
+                                borderRadius: 10,
+                                fontSize: 14,
+                                fontWeight: 500,
+                                color: '#64748B',
+                                cursor: 'pointer',
                                 display: 'flex',
-                                justifyContent: 'space-between',
                                 alignItems: 'center',
-                                marginBottom: 8
-                            }}>
-                                <div style={{ flex: 1 }}>
-                                    {editingCategory?.id === category.id ? (
-                                        <input
-                                            type="text"
-                                            value={editingCategory.name}
-                                            onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                                            onBlur={() => handleRenameCategory(category.id)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleRenameCategory(category.id)}
-                                            autoFocus
-                                            style={{
-                                                fontSize: 14,
-                                                fontWeight: 600,
-                                                color: '#374151',
-                                                border: '1px solid #3B82F6',
-                                                borderRadius: 4,
-                                                padding: '2px 6px',
-                                                width: '100%',
-                                                maxWidth: 200,
-                                                outline: 'none'
-                                            }}
-                                        />
-                                    ) : (
-                                        <h3
-                                            onClick={() => setEditingCategory({ id: category.id, name: category.name })}
-                                            style={{
-                                                fontSize: 14,
-                                                fontWeight: 600,
-                                                color: '#374151',
-                                                margin: 0,
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 8
-                                            }}
-                                            title="Clic para renombrar"
-                                        >
-                                            {category.name}
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M12 20h9"></path>
-                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                                            </svg>
-                                            {/* 🗑️ DELETE CATEGORY BUTTON */}
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id) }}
-                                                title="Eliminar Categoría"
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    padding: 4,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    marginLeft: 4
-                                                }}
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                </svg>
-                                            </button>
-                                            {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
-                                        </h3>
-                                    )}
-                                </div>
-                                <label className="toggle">
-                                    <input
-                                        type="checkbox"
-                                        checked={isEnabled}
-                                        onChange={() => handleToggleCategory(category.id)}
-                                    />
-                                    <span className="toggle-slider"></span>
-                                </label>
-                            </div>
-
-                            <div style={{
-                                background: '#FFFFFF',
-                                borderRadius: 12,
-                                border: '1px solid #E2E8F0',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-                            }}>
-                                {(category.items || []).map((item, idx) => (
-                                    <div key={item.id} style={{
-                                        display: 'flex',
-                                        alignItems: 'flex-start',
-                                        padding: '12px 14px',
-                                        borderBottom: idx < category.items.length - 1 ? '1px solid #F1F5F9' : 'none',
-                                        gap: 10
-                                    }}>
-                                        {/* Image Placeholder - SuperAdmin Style (always visible, clickable) */}
-                                        <div style={{ width: 60, flexShrink: 0 }}>
-                                            <div
-                                                onClick={() => handleBoxTap(category.id, item)}
-                                                className="empty-box"
-                                                style={{
-                                                    width: 60,
-                                                    height: 60,
-                                                    borderRadius: 10,
-                                                    background: item.image ? 'none' : '#F3F4F6',
-                                                    border: '2px dashed #D1D5DB',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    overflow: 'hidden',
-                                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                                }}
-                                            >
-                                                {item.image ? (
-                                                    <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
-                                                ) : (
-                                                    <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        {/* Item Details - SuperAdmin Style */}
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                                        {/* 🛡️ UNLOCKED NAME INPUT */}
-                                                        <input
-                                                            type="text"
-                                                            defaultValue={item.name}
-                                                            onBlur={(e) => handleNameUpdate(category.id, item.id, e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()} // Prevent card tap
-                                                            style={{
-                                                                fontWeight: 500,
-                                                                fontSize: 14,
-                                                                color: '#1E293B',
-                                                                margin: 0,
-                                                                border: 'none',
-                                                                background: 'transparent',
-                                                                width: '100%',
-                                                                outline: 'none',
-                                                                pointerEvents: 'auto',
-                                                                zIndex: 10
-                                                            }}
-                                                        />
-                                                        <div
-                                                            style={{
-                                                                fontSize: 16,
-                                                                filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
-                                                                opacity: isFeatured(item) ? 1 : 0.2
-                                                            }}
-                                                        >
-                                                            ⭐
-                                                        </div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                        <span style={{ fontSize: 13, color: '#22C55E', fontWeight: 600 }}>$</span>
-                                                        <input
-                                                            type="number"
-                                                            defaultValue={item.price}
-                                                            onBlur={(e) => handlePriceUpdate(category.id, item.id, e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()} // Prevent card tap
-                                                            style={{
-                                                                fontSize: 13,
-                                                                color: '#22C55E',
-                                                                fontWeight: 600,
-                                                                border: 'none',
-                                                                background: 'transparent',
-                                                                width: 60,
-                                                                outline: 'none',
-                                                                padding: 0
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
-                                                        Agotado
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={!item.available}
-                                                            onChange={() => handleToggleAvailability(category.id, item.id)}
-                                                            style={{ width: 18, height: 18, accentColor: '#EF4444' }}
-                                                        />
-                                                    </label>
-                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
-                                                        Promo
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isFeatured(item)}
-                                                            onChange={() => handleToggleFeatured(item)}
-                                                            style={{ width: 18, height: 18, accentColor: '#EAB308' }}
-                                                        />
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* Delete Button - SuperAdmin Style */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                handleRemoveItem(category.id, item)
-                                            }}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: '#EF4444',
-                                                fontSize: 18,
-                                                cursor: 'pointer',
-                                                padding: 4,
-                                                alignSelf: 'flex-start',
-                                                marginLeft: 8
-                                            }}
-                                            title="Eliminar ítem"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                                {/* Add Item Button (New) */}
-                                <div
-                                    onClick={() => handleAddItem(category.id)}
+                                justifyContent: 'center',
+                                gap: 6
+                            }}
+                        >
+                            ➕ Agregar Categoría
+                        </button>
+                    ) : (
+                        <div style={{
+                            background: '#FFFFFF',
+                            borderRadius: 10,
+                            border: '2px solid #22C55E',
+                            padding: 16,
+                            marginBottom: 16
+                        }}>
+                            <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                                <input
+                                    type="text"
+                                    placeholder="Nombre de categoría"
+                                    value={newCategoryName}
+                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                    autoFocus
                                     style={{
-                                        padding: '12px',
-                                        background: '#F8FAFC',
-                                        borderTop: '1px solid #E2E8F0',
-                                        color: '#3B82F6',
-                                        fontSize: 13,
+                                        flex: 1,
+                                        padding: '10px 14px',
+                                        border: '1px solid #E2E8F0',
+                                        borderRadius: 8,
+                                        fontSize: 14
+                                    }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: 10 }}>
+                                <button
+                                    onClick={() => {
+                                        if (newCategoryName.trim()) {
+                                            // 🛡️ NULL-POINTER DEFENSE: Ensure object exists
+                                            const updatedMenu = menu ? { ...menu } : { categories: [] }
+                                            if (!updatedMenu.categories) updatedMenu.categories = []
+
+                                            updatedMenu.categories.push({
+                                                id: generateId('category'),
+                                                name: newCategoryName.trim(),
+                                                icon: '',
+                                                enabled: true,
+                                                items: []
+                                            })
+                                            setMenu(updatedMenu)
+                                            syncMenuToCloud(updatedMenu)
+                                            setNewCategoryName('')
+                                            setNewCategoryIcon('📦')
+                                            setShowAddCategory(false)
+                                        }
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px 16px',
+                                        background: '#22C55E',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: 8,
                                         fontWeight: 600,
-                                        cursor: 'pointer',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                        cursor: 'pointer'
                                     }}
                                 >
-                                    ➕ Agregar Ítem
-                                </div>
+                                    Crear
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowAddCategory(false)
+                                        setNewCategoryName('')
+                                        setNewCategoryIcon('📦')
+                                    }}
+                                    style={{
+                                        padding: '10px 16px',
+                                        background: '#F1F5F9',
+                                        color: '#64748B',
+                                        border: 'none',
+                                        borderRadius: 8,
+                                        fontWeight: 500,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
                             </div>
                         </div>
                     )
-                })}
-            </div>
+                }
+
+                {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
+                {console.log('[MenuManager] 🎨 RENDER CHECK - Menu State:', menu)}
+                {
+                    (menu?.categories || []).map(category => {
+                        const isEnabled = category.enabled !== false
+                        return (
+                            <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: 8
+                                }}>
+                                    <div style={{ flex: 1 }}>
+                                        {editingCategory?.id === category.id ? (
+                                            <input
+                                                type="text"
+                                                value={editingCategory.name}
+                                                onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                                                onBlur={() => handleRenameCategory(category.id)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleRenameCategory(category.id)}
+                                                autoFocus
+                                                style={{
+                                                    fontSize: 14,
+                                                    fontWeight: 600,
+                                                    color: '#374151',
+                                                    border: '1px solid #3B82F6',
+                                                    borderRadius: 4,
+                                                    padding: '2px 6px',
+                                                    width: '100%',
+                                                    maxWidth: 200,
+                                                    outline: 'none'
+                                                }}
+                                            />
+                                        ) : (
+                                            <h3
+                                                onClick={() => setEditingCategory({ id: category.id, name: category.name })}
+                                                style={{
+                                                    fontSize: 14,
+                                                    fontWeight: 600,
+                                                    color: '#374151',
+                                                    margin: 0,
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 8
+                                                }}
+                                                title="Clic para renombrar"
+                                            >
+                                                {category.name}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M12 20h9"></path>
+                                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                                </svg>
+                                                {/* 🗑️ DELETE CATEGORY BUTTON */}
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id) }}
+                                                    title="Eliminar Categoría"
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        padding: 4,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        marginLeft: 4
+                                                    }}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    </svg>
+                                                </button>
+                                                {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
+                                            </h3>
+                                        )}
+                                    </div>
+                                    <label className="toggle">
+                                        <input
+                                            type="checkbox"
+                                            checked={isEnabled}
+                                            onChange={() => handleToggleCategory(category.id)}
+                                        />
+                                        <span className="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div style={{
+                                    background: '#FFFFFF',
+                                    borderRadius: 12,
+                                    border: '1px solid #E2E8F0',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                                }}>
+                                    {(category.items || []).map((item, idx) => (
+                                        <div key={item.id} style={{
+                                            display: 'flex',
+                                            alignItems: 'flex-start',
+                                            padding: '12px 14px',
+                                            borderBottom: idx < category.items.length - 1 ? '1px solid #F1F5F9' : 'none',
+                                            gap: 10
+                                        }}>
+                                            {/* Image Placeholder - SuperAdmin Style (always visible, clickable) */}
+                                            <div style={{ width: 60, flexShrink: 0 }}>
+                                                <div
+                                                    onClick={() => handleBoxTap(category.id, item)}
+                                                    className="empty-box"
+                                                    style={{
+                                                        width: 60,
+                                                        height: 60,
+                                                        borderRadius: 10,
+                                                        background: item.image ? 'none' : '#F3F4F6',
+                                                        border: '2px dashed #D1D5DB',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        overflow: 'hidden',
+                                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                                    }}
+                                                >
+                                                    {item.image ? (
+                                                        <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                                                    ) : (
+                                                        <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {/* Item Details - SuperAdmin Style */}
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                                            {/* 🛡️ UNLOCKED NAME INPUT */}
+                                                            <input
+                                                                type="text"
+                                                                defaultValue={item.name}
+                                                                onBlur={(e) => handleNameUpdate(category.id, item.id, e.target.value)}
+                                                                onClick={(e) => e.stopPropagation()} // Prevent card tap
+                                                                style={{
+                                                                    fontWeight: 500,
+                                                                    fontSize: 14,
+                                                                    color: '#1E293B',
+                                                                    margin: 0,
+                                                                    border: 'none',
+                                                                    background: 'transparent',
+                                                                    width: '100%',
+                                                                    outline: 'none',
+                                                                    pointerEvents: 'auto',
+                                                                    zIndex: 10
+                                                                }}
+                                                            />
+                                                            <div
+                                                                style={{
+                                                                    fontSize: 16,
+                                                                    filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
+                                                                    opacity: isFeatured(item) ? 1 : 0.2
+                                                                }}
+                                                            >
+                                                                ⭐
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                            <span style={{ fontSize: 13, color: '#22C55E', fontWeight: 600 }}>$</span>
+                                                            <input
+                                                                type="number"
+                                                                defaultValue={item.price}
+                                                                onBlur={(e) => handlePriceUpdate(category.id, item.id, e.target.value)}
+                                                                onClick={(e) => e.stopPropagation()} // Prevent card tap
+                                                                style={{
+                                                                    fontSize: 13,
+                                                                    color: '#22C55E',
+                                                                    fontWeight: 600,
+                                                                    border: 'none',
+                                                                    background: 'transparent',
+                                                                    width: 60,
+                                                                    outline: 'none',
+                                                                    padding: 0
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
+                                                            Agotado
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={!item.available}
+                                                                onChange={() => handleToggleAvailability(category.id, item.id)}
+                                                                style={{ width: 18, height: 18, accentColor: '#EF4444' }}
+                                                            />
+                                                        </label>
+                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
+                                                            Promo
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isFeatured(item)}
+                                                                onChange={() => handleToggleFeatured(item)}
+                                                                style={{ width: 18, height: 18, accentColor: '#EAB308' }}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {/* Delete Button - SuperAdmin Style */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleRemoveItem(category.id, item)
+                                                }}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#EF4444',
+                                                    fontSize: 18,
+                                                    cursor: 'pointer',
+                                                    padding: 4,
+                                                    alignSelf: 'flex-start',
+                                                    marginLeft: 8
+                                                }}
+                                                title="Eliminar ítem"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {/* Add Item Button (New) */}
+                                    <div
+                                        onClick={() => handleAddItem(category.id)}
+                                        style={{
+                                            padding: '12px',
+                                            background: '#F8FAFC',
+                                            borderTop: '1px solid #E2E8F0',
+                                            color: '#3B82F6',
+                                            fontSize: 13,
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                        }}
+                                    >
+                                        ➕ Agregar Ítem
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })
+                }
+            </div >
 
             {/* Edit Modal */}
             {
@@ -1958,65 +1968,86 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 useRoutes={true}
             />
             {/* SAVE SUCCESS TOAST */}
-            {saveStatus && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: 24,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
-                    padding: '10px 24px', borderRadius: 50,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                    fontWeight: 600, fontSize: 14, zIndex: 9999,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    animation: 'fadeIn 0.2s ease-out'
-                }}>
-                    <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
-                </div>
-            )}
+            {
+                saveStatus && (
+                    <div style={{
+                        position: 'fixed',
+                        bottom: 24,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
+                        padding: '10px 24px', borderRadius: 50,
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                        fontWeight: 600, fontSize: 14, zIndex: 9999,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}>
+                        <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
+                    </div>
+                )
+            }
 
             {/* 💾 FLOATING SAVE BAR (Strike 1) */}
             {/* 🛡️ BATCH LOADER OVERLAY */}
-            {isBatchSaving && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 99999,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    backdropFilter: 'blur(4px)'
-                }}>
+            {
+                isBatchSaving && (
                     <div style={{
-                        width: 50, height: 50, border: '4px solid rgba(255,255,255,0.3)',
-                        borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 1s linear infinite'
-                    }} />
-                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-                    <h2 style={{ color: 'white', marginTop: 20, fontSize: 18, fontWeight: 600 }}>Publicando Cambios...</h2>
-                    <p style={{ color: '#94A3B8', marginTop: 8, fontSize: 14 }}>Sincronizando con la nube...</p>
-                </div>
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 99999,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        backdropFilter: 'blur(4px)'
+                    }}>
+                        <div style={{
+                            width: 50, height: 50, border: '4px solid rgba(255,255,255,0.3)',
+                            borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 1s linear infinite'
+                        }} />
+                        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                        <h2 style={{ color: 'white', marginTop: 20, fontSize: 18, fontWeight: 600 }}>Publicando Cambios...</h2>
+                        <p style={{ color: '#94A3B8', marginTop: 8, fontSize: 14 }}>Sincronizando con la nube...</p>
+                    </div>
+                )
+            }
+
+            {
+                hasChanges && (
+                    <div style={{
+                        position: 'fixed', bottom: 95, left: 12, right: 12,
+                        background: '#1E293B', color: 'white', padding: '14px 20px',
+                        borderRadius: 16, display: 'flex', justifyContent: 'space-between',
+                        alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                        zIndex: 10000, animation: 'slideUp 0.3s ease-out',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
+                        <button
+                            onClick={handlePlatformSave}
+                            disabled={isBatchSaving}
+                            style={{
+                                background: '#3B82F6', color: 'white', border: 'none',
+                                padding: '10px 24px', borderRadius: 12, fontWeight: 800,
+                                fontSize: 14, cursor: 'pointer', opacity: isBatchSaving ? 0.5 : 1
+                            }}
+                        >
+                            {isBatchSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+                        </button>
+                    </div>
+                )
+            }
+            {/* ==================== FOODSPOT EDITOR OVERLAY ==================== */}
+            {showEditor && (
+                <DesignWorkspace
+                    menu={menu}
+                    businessName={tenantData?.business_name || localConfig?.businessName || 'Menú'}
+                    logoUrl={localConfig?.logoUrl}
+                    tenantData={tenantData}
+                    localConfig={localConfig}
+                    targetBusinessId={targetBusinessId}
+                    hasChanges={hasChanges}
+                    onClose={() => setShowEditor(false)}
+                    onPrint={handlePrintMenu}
+                />
             )}
 
-            {hasChanges && (
-                <div style={{
-                    position: 'fixed', bottom: 95, left: 12, right: 12,
-                    background: '#1E293B', color: 'white', padding: '14px 20px',
-                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
-                    <button
-                        onClick={handlePlatformSave}
-                        disabled={isBatchSaving}
-                        style={{
-                            background: '#3B82F6', color: 'white', border: 'none',
-                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
-                            fontSize: 14, cursor: 'pointer', opacity: isBatchSaving ? 0.5 : 1
-                        }}
-                    >
-                        {isBatchSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
-                    </button>
-                </div>
-            )}
         </div >
     )
 }
