@@ -2,14 +2,16 @@ import React, { useMemo } from 'react'
 import { getFontPairing } from './themes.js'
 
 /**
- * MenuCanvas — The A4 Live Preview
+ * MenuCanvas — The A4 Live Preview V2
  * Renders the printable menu using CSS variables for real-time theme switching.
+ * Supports logoMode toggle (image vs text).
  */
 
 export default function MenuCanvas({
     menu,
     businessName,
     logoUrl,
+    logoMode = 'text',
     theme,
     fontPairingId,
     colorOverrides,
@@ -76,13 +78,9 @@ export default function MenuCanvas({
             <div className="menu-canvas-content">
                 {/* Header */}
                 <div className="menu-canvas-header">
-                    {logoUrl ? (
+                    {logoMode === 'image' && logoUrl ? (
                         <img src={logoUrl} alt={businessName} className="menu-canvas-logo" />
-                    ) : (
-                        <div className="menu-canvas-logo-placeholder">
-                            {theme.icon}
-                        </div>
-                    )}
+                    ) : null}
                     <h1 className="menu-canvas-biz-name">
                         {businessName || 'Mi Negocio'}
                     </h1>
@@ -96,8 +94,6 @@ export default function MenuCanvas({
                     const items = (cat.items || []).filter(i => i.available !== false)
                     if (items.length === 0) return null
 
-                    // For dense menus with images: use card layout in 2 cols
-                    // For dense menus without images: use text-only dotted line layout
                     const hasImages = items.some(i => i.image)
                     const useCards = hasImages && !isDense
 

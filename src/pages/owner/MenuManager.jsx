@@ -1053,10 +1053,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     </p>
                                 </div>
                                 <button
-                                    onClick={() => {
-                                        console.log('🔴 ABRIR EDITOR BUTTON CLICKED');
-                                        setShowEditor(true);
-                                    }}
+                                    onClick={() => setShowEditor(true)}
                                     style={{
                                         background: '#3B82F6', color: 'white', border: 'none',
                                         padding: '10px 20px', borderRadius: 10, fontWeight: 700,
@@ -2046,7 +2043,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 <DesignWorkspace
                     menu={menu}
                     businessName={tenantData?.business_name || localConfig?.businessName || 'Menú'}
-                    logoUrl={localConfig?.logoUrl}
+                    logoUrl={localConfig?.headerCover?.image || tenantData?.hero_url || localConfig?.logoUrl}
                     tenantData={tenantData}
                     localConfig={localConfig}
                     targetBusinessId={targetBusinessId}

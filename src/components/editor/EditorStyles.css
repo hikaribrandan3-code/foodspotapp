@@ -1,6 +1,6 @@
 /**
- * FoodSpot Editor — Styles
- * Vanilla CSS. No Tailwind.
+ * FoodSpot Editor — Styles V2
+ * Light-friendly. Canva-style collapsible mobile sheet.
  */
 
 /* ==========================================
@@ -9,12 +9,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@400;700&family=Lato:wght@400;700&family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap');
 
 /* ==========================================
-   CSS VARIABLES (Overridden by JS at runtime)
+   CSS VARIABLES
    ========================================== */
 :root {
-    --editor-bg: #212121;
+    --editor-bg: #FFFFFF;
     --editor-accent: #E74C3C;
-    --editor-text: #FFFFFF;
+    --editor-text: #1A1A1A;
     --editor-category: #E74C3C;
     --editor-font-heading: 'Oswald', sans-serif;
     --editor-font-body: 'Montserrat', sans-serif;
@@ -29,7 +29,7 @@
     position: fixed;
     inset: 0;
     z-index: 50000;
-    background: #0F0F0F;
+    background: #F5F5F5;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -40,17 +40,18 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
-    background: #1A1A1A;
-    border-bottom: 1px solid #2A2A2A;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E5E7EB;
     flex-shrink: 0;
     z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .editor-topbar-title {
     font-family: 'Inter', system-ui, sans-serif;
     font-size: 15px;
     font-weight: 700;
-    color: #FFFFFF;
+    color: #1F2937;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -85,14 +86,14 @@
 }
 
 .editor-btn-ghost {
-    background: transparent;
-    color: #9CA3AF;
-    border: 1px solid #374151;
+    background: #F3F4F6;
+    color: #6B7280;
+    border: 1px solid #D1D5DB;
 }
 
 .editor-btn-ghost:hover {
-    background: #1F2937;
-    color: #E5E7EB;
+    background: #E5E7EB;
+    color: #374151;
 }
 
 .editor-btn-primary {
@@ -117,9 +118,9 @@
 /* SIDEBAR (Desktop Only) */
 .editor-sidebar {
     display: none;
-    width: 360px;
-    background: #141414;
-    border-right: 1px solid #2A2A2A;
+    width: 340px;
+    background: #FFFFFF;
+    border-right: 1px solid #E5E7EB;
     flex-shrink: 0;
     overflow-y: auto;
     padding: 20px;
@@ -132,17 +133,17 @@
 }
 
 .editor-sidebar-section {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 }
 
 .editor-sidebar-label {
     font-family: 'Inter', system-ui, sans-serif;
     font-size: 11px;
     font-weight: 800;
-    color: #6B7280;
+    color: #9CA3AF;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 /* Theme Picker */
@@ -170,24 +171,24 @@
     align-items: center;
     justify-content: center;
     font-size: 22px;
-    border: 2px solid transparent;
+    border: 2px solid #E5E7EB;
     transition: all 0.2s ease;
 }
 
 .editor-theme-card.active .editor-theme-thumb {
     border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .editor-theme-name {
     font-size: 11px;
-    color: #9CA3AF;
+    color: #6B7280;
     font-weight: 600;
     text-align: center;
 }
 
 .editor-theme-card.active .editor-theme-name {
-    color: #E5E7EB;
+    color: #1F2937;
 }
 
 /* Font Toggle */
@@ -199,26 +200,26 @@
 
 .editor-font-option {
     padding: 10px 14px;
-    background: #1F1F1F;
+    background: #F9FAFB;
     border: 2px solid transparent;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.15s ease;
     font-size: 13px;
-    color: #D1D5DB;
+    color: #374151;
     font-weight: 500;
 }
 
 .editor-font-option.active {
     border-color: #3B82F6;
-    background: #1A2332;
-    color: #FFFFFF;
+    background: #EFF6FF;
+    color: #1E40AF;
 }
 
 /* Color Pickers */
 .editor-color-row {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
@@ -238,8 +239,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #1F1F1F;
-    border: 1px solid #374151;
+    background: #F9FAFB;
+    border: 1px solid #D1D5DB;
     border-radius: 8px;
     padding: 4px 10px 4px 4px;
     cursor: pointer;
@@ -260,13 +261,13 @@
 }
 
 .editor-color-swatch input[type="color"]::-webkit-color-swatch {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 5px;
 }
 
 .editor-color-hex {
     font-size: 11px;
-    color: #9CA3AF;
+    color: #6B7280;
     font-family: 'SF Mono', 'Fira Code', monospace;
     font-weight: 500;
 }
@@ -277,14 +278,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 14px;
-    background: #1F1F1F;
+    background: #F9FAFB;
     border-radius: 10px;
     margin-bottom: 8px;
 }
 
 .editor-toggle-label {
     font-size: 13px;
-    color: #D1D5DB;
+    color: #374151;
     font-weight: 500;
 }
 
@@ -294,14 +295,34 @@
     margin-top: 8px;
 }
 
+/* Logo Mode Toggle Buttons */
+.editor-mode-btn {
+    padding: 6px 10px;
+    border: 1px solid #D1D5DB;
+    background: #F9FAFB;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B7280;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.editor-mode-btn.active {
+    background: #3B82F6;
+    color: white;
+    border-color: #3B82F6;
+}
+
 /* Sync Warning */
 .editor-sync-warning {
     display: flex;
     align-items: flex-start;
     gap: 8px;
     padding: 10px 12px;
-    background: #451A1A;
-    border: 1px solid #7F1D1D;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
     border-radius: 8px;
     margin-bottom: 16px;
 }
@@ -309,7 +330,7 @@
 .editor-sync-warning p {
     margin: 0;
     font-size: 12px;
-    color: #FCA5A5;
+    color: #B91C1C;
     line-height: 1.4;
 }
 
@@ -327,19 +348,23 @@
     display: flex;
     justify-content: center;
     padding: 24px;
-    background: #0A0A0A;
+    background: #EBEBEB;
     /* Subtle grid pattern */
     background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
     background-size: 20px 20px;
 }
 
 @media (max-width: 1023px) {
     .editor-canvas-viewport {
         padding: 12px 8px;
-        padding-bottom: 280px;
-        /* Space for bottom sheet */
+        padding-bottom: 300px;
+        transition: padding-bottom 0.3s ease;
+    }
+
+    .editor-canvas-viewport.sheet-collapsed {
+        padding-bottom: 90px;
     }
 }
 
@@ -352,9 +377,10 @@
     background: var(--editor-bg);
     color: var(--editor-text);
     position: relative;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     overflow: hidden;
     flex-shrink: 0;
+    border-radius: 4px;
 }
 
 @media (max-width: 1023px) {
@@ -391,16 +417,6 @@
     height: var(--editor-logo-size);
     object-fit: contain;
     margin-bottom: 8px;
-}
-
-.menu-canvas-logo-placeholder {
-    width: var(--editor-logo-size);
-    height: var(--editor-logo-size);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(var(--editor-logo-size) * 0.6);
-    margin: 0 auto 8px;
 }
 
 .menu-canvas-biz-name {
@@ -549,7 +565,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     z-index: 5;
 }
 
@@ -596,7 +612,7 @@
 }
 
 /* ==========================================
-   MOBILE BOTTOM SHEET
+   MOBILE BOTTOM SHEET — Canva-Style Collapsible
    ========================================== */
 .editor-bottom-sheet {
     display: none;
@@ -604,35 +620,43 @@
 
 @media (max-width: 1023px) {
     .editor-bottom-sheet {
-        display: block;
+        display: flex;
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         z-index: 60000;
-        background: #1A1A1A;
+        background: #FFFFFF;
         border-top-left-radius: 20px;
         border-top-right-radius: 20px;
-        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
-        max-height: 55vh;
-        overflow: hidden;
-        display: flex;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
         flex-direction: column;
+        transition: max-height 0.3s ease;
+        overflow: hidden;
+    }
+
+    .editor-bottom-sheet.expanded {
+        max-height: 50vh;
+    }
+
+    .editor-bottom-sheet.collapsed {
+        max-height: 72px;
     }
 }
 
 .editor-sheet-handle {
     width: 36px;
     height: 4px;
-    background: #4B5563;
+    background: #D1D5DB;
     border-radius: 2px;
     margin: 10px auto;
     flex-shrink: 0;
+    cursor: pointer;
 }
 
 .editor-sheet-tabs {
     display: flex;
-    border-bottom: 1px solid #2A2A2A;
+    border-bottom: 1px solid #E5E7EB;
     padding: 0 16px;
     flex-shrink: 0;
 }
@@ -640,9 +664,9 @@
 .editor-sheet-tab {
     flex: 1;
     padding: 10px 0;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    color: #6B7280;
+    color: #9CA3AF;
     background: none;
     border: none;
     cursor: pointer;
@@ -652,7 +676,7 @@
 }
 
 .editor-sheet-tab.active {
-    color: #FFFFFF;
+    color: #1F2937;
     border-bottom-color: #3B82F6;
 }
 
@@ -681,13 +705,13 @@
 }
 
 .editor-mobile-theme-icon {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 24px;
     border: 3px solid transparent;
     transition: all 0.2s ease;
 }
@@ -699,34 +723,34 @@
 
 .editor-mobile-theme-label {
     font-size: 11px;
-    color: #9CA3AF;
+    color: #6B7280;
     font-weight: 600;
 }
 
 .editor-mobile-theme-card.active .editor-mobile-theme-label {
-    color: #FFFFFF;
+    color: #1F2937;
 }
 
 /* Mobile Color Dots */
 .editor-mobile-colors {
     display: flex;
-    gap: 12px;
-    margin-top: 16px;
+    gap: 10px;
+    margin-top: 14px;
     justify-content: center;
 }
 
 .editor-mobile-color-dot {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: 3px solid transparent;
     cursor: pointer;
     transition: all 0.15s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .editor-mobile-color-dot.active {
-    border-color: #FFFFFF;
+    border-color: #1F2937;
     transform: scale(1.15);
 }
 
@@ -749,6 +773,45 @@
 
 .editor-mobile-save-btn:hover {
     background: #2563EB;
+}
+
+/* Mini Toolbar (Collapsed State) */
+.editor-mini-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px 8px;
+    justify-content: center;
+}
+
+.editor-mini-theme {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.editor-mini-theme.active {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.editor-mini-print {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #3B82F6;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 8px;
 }
 
 /* ==========================================
@@ -800,8 +863,7 @@
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
-        overflow: visible !important;
-        position: static !important;
+        margin: 0 !important;
     }
 
     .editor-topbar,

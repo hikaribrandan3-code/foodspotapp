@@ -4,14 +4,14 @@ import { THEMES, FONT_PAIRINGS, getThemeById, getFontPairing } from './themes.js
 import './EditorStyles.css'
 
 /**
- * DesignWorkspace — The FoodSpot Editor
+ * DesignWorkspace — The FoodSpot Editor V2
  * Desktop: Sidebar (left) + Live A4 Canvas (right)
- * Mobile: Full-screen Canvas + Fixed Bottom-Sheet
+ * Mobile: Full-screen Canvas + Collapsible Bottom-Sheet (Canva-style)
  */
 
 // Quick-access color presets for mobile
 const QUICK_COLORS = [
-    '#3B82F6', '#E74C3C', '#F0C040', '#4CAF50', '#212121', '#FFFFFF'
+    '#3B82F6', '#E74C3C', '#F0C040', '#4CAF50', '#8B4513', '#1A1A1A'
 ]
 
 export default function DesignWorkspace({
@@ -26,12 +26,11 @@ export default function DesignWorkspace({
     onPrint,
     onSaveState
 }) {
-    console.log('🔴 DESIGN WORKSPACE MOUNTED / RENDERED');
     // ============================
     // DESIGN STATE
     // ============================
-    const [activeThemeId, setActiveThemeId] = useState('burger')
-    const [fontPairingId, setFontPairingId] = useState('oswald')
+    const [activeThemeId, setActiveThemeId] = useState('bistro')
+    const [fontPairingId, setFontPairingId] = useState('playfair')
     const [colorOverrides, setColorOverrides] = useState({ bg: null, accent: null, text: null })
     const [logoSize, setLogoSize] = useState(60)
     const [qrPosition, setQrPosition] = useState('bottom-right')
@@ -39,15 +38,18 @@ export default function DesignWorkspace({
     const [showQR, setShowQR] = useState(true)
     const [tagline, setTagline] = useState(localConfig?.tagline || '')
 
-    // Mobile bottom-sheet tab
+    // Logo mode: 'image' (from hero/branding) or 'text' (business name only)
+    const [logoMode, setLogoMode] = useState(logoUrl ? 'image' : 'text')
+
+    // Mobile bottom-sheet tab & collapse state
     const [activeTab, setActiveTab] = useState('quick')
+    const [sheetOpen, setSheetOpen] = useState(true)
 
     const theme = getThemeById(activeThemeId)
 
     // QR URL placeholder (Mercado Pago or business link)
     const qrUrl = useMemo(() => {
         if (!showQR) return null
-        // Generate a QR code URL using a free API
         const menuUrl = `${window.location.origin}/${tenantData?.slug || 'menu'}`
         return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(menuUrl)}&bgcolor=FFFFFF&color=000000`
     }, [showQR, tenantData?.slug])
@@ -66,7 +68,6 @@ export default function DesignWorkspace({
         setActiveThemeId(id)
         const t = getThemeById(id)
         setFontPairingId(t.fontPairing)
-        // Reset color overrides when switching themes
         setColorOverrides({ bg: null, accent: null, text: null })
     }, [])
 
@@ -81,6 +82,7 @@ export default function DesignWorkspace({
                 fontPairing: fontPairingId,
                 colors: colorOverrides,
                 logoSize,
+                logoMode,
                 qrPosition,
                 showCurrency,
                 showQR,
@@ -89,7 +91,7 @@ export default function DesignWorkspace({
         }
         if (onPrint) onPrint()
         else window.print()
-    }, [onPrint, onSaveState, activeThemeId, fontPairingId, colorOverrides, logoSize, qrPosition, showCurrency, showQR, tagline])
+    }, [onPrint, onSaveState, activeThemeId, fontPairingId, colorOverrides, logoSize, logoMode, qrPosition, showCurrency, showQR, tagline])
 
     // ============================
     // SIDEBAR CONTROLS (Shared between desktop sidebar and mobile sheet)
@@ -104,7 +106,7 @@ export default function DesignWorkspace({
                 >
                     <div
                         className={isMobile ? 'editor-mobile-theme-icon' : 'editor-theme-thumb'}
-                        style={{ background: t.bg }}
+                        style={{ background: t.bg, border: `2px solid ${t.accent}` }}
                     >
                         {t.icon}
                     </div>
@@ -135,9 +137,9 @@ export default function DesignWorkspace({
     const renderColorPickers = () => (
         <div className="editor-color-row">
             {[
-                { key: 'bg', label: 'Background', fallback: theme.bg },
-                { key: 'accent', label: 'Accent', fallback: theme.accent },
-                { key: 'text', label: 'Text', fallback: theme.text }
+                { key: 'bg', label: 'Fondo', fallback: theme.bg },
+                { key: 'accent', label: 'Acento', fallback: theme.accent },
+                { key: 'text', label: 'Texto', fallback: theme.text }
             ].map(({ key, label, fallback }) => (
                 <div key={key} className="editor-color-group">
                     <label>{label}</label>
@@ -156,21 +158,51 @@ export default function DesignWorkspace({
         </div>
     )
 
+    const renderLogoControls = () => (
+        <div className="editor-sidebar-section">
+            <div className="editor-sidebar-label">Logo / Encabezado</div>
+            {/* Logo Mode Toggle */}
+            <div className="editor-toggle-row">
+                <span className="editor-toggle-label">Modo</span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                    <button
+                        className={`editor-mode-btn ${logoMode === 'image' ? 'active' : ''}`}
+                        onClick={() => setLogoMode('image')}
+                        disabled={!logoUrl}
+                        style={{ opacity: logoUrl ? 1 : 0.4 }}
+                    >
+                        🖼️ Imagen
+                    </button>
+                    <button
+                        className={`editor-mode-btn ${logoMode === 'text' ? 'active' : ''}`}
+                        onClick={() => setLogoMode('text')}
+                    >
+                        Aa Texto
+                    </button>
+                </div>
+            </div>
+            {/* Logo Size (only when image mode) */}
+            {logoMode === 'image' && logoUrl && (
+                <>
+                    <div className="editor-sidebar-label" style={{ marginTop: 12 }}>Tamaño Logo</div>
+                    <input
+                        type="range"
+                        min="30"
+                        max="120"
+                        value={logoSize}
+                        onChange={(e) => setLogoSize(Number(e.target.value))}
+                        className="editor-range"
+                    />
+                    <div style={{ fontSize: 11, color: '#6B7280', marginTop: 4 }}>{logoSize}px</div>
+                </>
+            )}
+        </div>
+    )
+
     const renderToggles = () => (
         <>
-            {/* Logo Size */}
-            <div className="editor-sidebar-section">
-                <div className="editor-sidebar-label">Logo Size</div>
-                <input
-                    type="range"
-                    min="30"
-                    max="120"
-                    value={logoSize}
-                    onChange={(e) => setLogoSize(Number(e.target.value))}
-                    className="editor-range"
-                />
-                <div style={{ fontSize: 11, color: '#6B7280', marginTop: 4 }}>{logoSize}px</div>
-            </div>
+            {/* Logo Controls */}
+            {renderLogoControls()}
 
             {/* QR Code */}
             <div className="editor-sidebar-section">
@@ -189,7 +221,7 @@ export default function DesignWorkspace({
                             value={qrPosition}
                             onChange={(e) => setQrPosition(e.target.value)}
                             style={{
-                                background: '#2A2A2A', color: '#E5E7EB', border: '1px solid #374151',
+                                background: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB',
                                 borderRadius: 6, padding: '4px 8px', fontSize: 12, fontWeight: 600
                             }}
                         >
@@ -221,8 +253,8 @@ export default function DesignWorkspace({
                     onChange={(e) => setTagline(e.target.value)}
                     placeholder="Ej: Est. 2023 | Artesanal"
                     style={{
-                        width: '100%', padding: '10px 12px', background: '#1F1F1F',
-                        border: '1px solid #374151', borderRadius: 8, color: '#E5E7EB',
+                        width: '100%', padding: '10px 12px', background: '#F9FAFB',
+                        border: '1px solid #D1D5DB', borderRadius: 8, color: '#374151',
                         fontSize: 13, boxSizing: 'border-box', fontFamily: 'Inter, system-ui, sans-serif'
                     }}
                 />
@@ -239,14 +271,14 @@ export default function DesignWorkspace({
             <div className="editor-topbar">
                 <div className="editor-topbar-title">
                     <span className="brand">FoodSpot</span>
-                    <span>Menu Editor</span>
+                    <span>Editor</span>
                 </div>
                 <div className="editor-topbar-actions">
                     <button className="editor-btn editor-btn-ghost" onClick={onClose}>
                         ← Volver
                     </button>
                     <button className="editor-btn editor-btn-primary" onClick={handlePrint}>
-                        🖨️ Save & Print
+                        🖨️ Imprimir
                     </button>
                 </div>
             </div>
@@ -269,19 +301,19 @@ export default function DesignWorkspace({
 
                     {/* Themes */}
                     <div className="editor-sidebar-section">
-                        <div className="editor-sidebar-label">Themes</div>
+                        <div className="editor-sidebar-label">Temas</div>
                         {renderThemePicker(false)}
                     </div>
 
                     {/* Fonts */}
                     <div className="editor-sidebar-section">
-                        <div className="editor-sidebar-label">Fonts</div>
+                        <div className="editor-sidebar-label">Tipografía</div>
                         {renderFontPicker()}
                     </div>
 
                     {/* Colors */}
                     <div className="editor-sidebar-section">
-                        <div className="editor-sidebar-label">Colors</div>
+                        <div className="editor-sidebar-label">Colores</div>
                         {renderColorPickers()}
                     </div>
 
@@ -290,11 +322,12 @@ export default function DesignWorkspace({
                 </div>
 
                 {/* CANVAS VIEWPORT */}
-                <div className="editor-canvas-viewport">
+                <div className={`editor-canvas-viewport ${sheetOpen ? '' : 'sheet-collapsed'}`}>
                     <MenuCanvas
                         menu={menu}
                         businessName={businessName}
                         logoUrl={logoUrl}
+                        logoMode={logoMode}
                         theme={theme}
                         fontPairingId={fontPairingId}
                         colorOverrides={colorOverrides}
@@ -307,87 +340,145 @@ export default function DesignWorkspace({
                 </div>
             </div>
 
-            {/* MOBILE BOTTOM SHEET */}
-            <div className="editor-bottom-sheet">
-                <div className="editor-sheet-handle" />
-                <div className="editor-sheet-tabs">
-                    <button
-                        className={`editor-sheet-tab ${activeTab === 'quick' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('quick')}
-                    >
-                        Quick Edits
-                    </button>
-                    <button
-                        className={`editor-sheet-tab ${activeTab === 'save' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('save')}
-                    >
-                        Save & Print
-                    </button>
-                </div>
+            {/* MOBILE BOTTOM SHEET — Collapsible Canva-Style */}
+            <div className={`editor-bottom-sheet ${sheetOpen ? 'expanded' : 'collapsed'}`}>
+                {/* Drag Handle — toggles sheet */}
+                <div
+                    className="editor-sheet-handle"
+                    onClick={() => setSheetOpen(prev => !prev)}
+                />
 
-                <div className="editor-sheet-content">
-                    {activeTab === 'quick' ? (
-                        <>
-                            {/* Theme Picker (Horizontal) */}
-                            {renderThemePicker(true)}
-
-                            {/* Quick Color Dots */}
-                            <div className="editor-mobile-colors">
-                                {QUICK_COLORS.map(color => (
-                                    <div
-                                        key={color}
-                                        className={`editor-mobile-color-dot ${colorOverrides.accent === color ? 'active' : ''}`}
-                                        style={{ background: color }}
-                                        onClick={() => handleColorChange('accent', color)}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* Psychological Pricing Toggle */}
-                            <div className="editor-toggle-row" style={{ marginTop: 16 }}>
-                                <span className="editor-toggle-label">Mostrar $</span>
-                                <label className="toggle">
-                                    <input type="checkbox" checked={showCurrency} onChange={(e) => setShowCurrency(e.target.checked)} />
-                                    <span className="toggle-slider" />
-                                </label>
-                            </div>
-
-                            {/* QR Toggle */}
-                            <div className="editor-toggle-row">
-                                <span className="editor-toggle-label">QR Code</span>
-                                <label className="toggle">
-                                    <input type="checkbox" checked={showQR} onChange={(e) => setShowQR(e.target.checked)} />
-                                    <span className="toggle-slider" />
-                                </label>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            {/* Sync Warning */}
-                            {isOutOfSync && (
-                                <div className="editor-sync-warning">
-                                    <span className="icon">⚠️</span>
-                                    <p>
-                                        {hasChanges
-                                            ? 'Guarda tus cambios primero para imprimir la versión final.'
-                                            : 'El menú digital fue modificado. Vuelve a imprimir.'}
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* Font Picker */}
-                            <div style={{ marginBottom: 16 }}>
-                                <div className="editor-sidebar-label">Tipografía</div>
-                                {renderFontPicker()}
-                            </div>
-
-                            {/* Save & Print */}
-                            <button className="editor-mobile-save-btn" onClick={handlePrint}>
-                                Save & Print
+                {sheetOpen ? (
+                    <>
+                        <div className="editor-sheet-tabs">
+                            <button
+                                className={`editor-sheet-tab ${activeTab === 'quick' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('quick')}
+                            >
+                                Diseño
                             </button>
-                        </>
-                    )}
-                </div>
+                            <button
+                                className={`editor-sheet-tab ${activeTab === 'settings' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('settings')}
+                            >
+                                Ajustes
+                            </button>
+                            <button
+                                className={`editor-sheet-tab ${activeTab === 'save' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('save')}
+                            >
+                                Guardar
+                            </button>
+                        </div>
+
+                        <div className="editor-sheet-content">
+                            {activeTab === 'quick' ? (
+                                <>
+                                    {/* Theme Picker (Horizontal) */}
+                                    {renderThemePicker(true)}
+
+                                    {/* Quick Color Dots */}
+                                    <div className="editor-mobile-colors">
+                                        {QUICK_COLORS.map(color => (
+                                            <div
+                                                key={color}
+                                                className={`editor-mobile-color-dot ${colorOverrides.accent === color ? 'active' : ''}`}
+                                                style={{ background: color }}
+                                                onClick={() => handleColorChange('accent', color)}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Color Pickers (Full) */}
+                                    <div style={{ marginTop: 16 }}>
+                                        {renderColorPickers()}
+                                    </div>
+                                </>
+                            ) : activeTab === 'settings' ? (
+                                <>
+                                    {/* Logo Controls */}
+                                    {renderLogoControls()}
+
+                                    {/* Psychological Pricing Toggle */}
+                                    <div className="editor-toggle-row" style={{ marginTop: 12 }}>
+                                        <span className="editor-toggle-label">Mostrar $</span>
+                                        <label className="toggle">
+                                            <input type="checkbox" checked={showCurrency} onChange={(e) => setShowCurrency(e.target.checked)} />
+                                            <span className="toggle-slider" />
+                                        </label>
+                                    </div>
+
+                                    {/* QR Toggle */}
+                                    <div className="editor-toggle-row">
+                                        <span className="editor-toggle-label">QR Code</span>
+                                        <label className="toggle">
+                                            <input type="checkbox" checked={showQR} onChange={(e) => setShowQR(e.target.checked)} />
+                                            <span className="toggle-slider" />
+                                        </label>
+                                    </div>
+
+                                    {/* Tagline */}
+                                    <div style={{ marginTop: 12 }}>
+                                        <div className="editor-sidebar-label">Subtítulo</div>
+                                        <input
+                                            type="text"
+                                            value={tagline}
+                                            onChange={(e) => setTagline(e.target.value)}
+                                            placeholder="Ej: Est. 2023"
+                                            style={{
+                                                width: '100%', padding: '10px 12px', background: '#F9FAFB',
+                                                border: '1px solid #D1D5DB', borderRadius: 8, color: '#374151',
+                                                fontSize: 13, boxSizing: 'border-box', fontFamily: 'Inter, system-ui, sans-serif'
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Font Picker */}
+                                    <div style={{ marginTop: 16 }}>
+                                        <div className="editor-sidebar-label">Tipografía</div>
+                                        {renderFontPicker()}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    {/* Sync Warning */}
+                                    {isOutOfSync && (
+                                        <div className="editor-sync-warning">
+                                            <span className="icon">⚠️</span>
+                                            <p>
+                                                {hasChanges
+                                                    ? 'Guarda tus cambios primero para imprimir la versión final.'
+                                                    : 'El menú digital fue modificado. Vuelve a imprimir.'}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Save & Print */}
+                                    <button className="editor-mobile-save-btn" onClick={handlePrint}>
+                                        🖨️ Guardar e Imprimir
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    /* COLLAPSED: Mini toolbar */
+                    <div className="editor-mini-toolbar">
+                        {THEMES.map(t => (
+                            <div
+                                key={t.id}
+                                className={`editor-mini-theme ${activeThemeId === t.id ? 'active' : ''}`}
+                                style={{ background: t.bg, border: `2px solid ${t.accent}` }}
+                                onClick={() => selectTheme(t.id)}
+                            >
+                                {t.icon}
+                            </div>
+                        ))}
+                        <button className="editor-mini-print" onClick={handlePrint}>
+                            🖨️
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )

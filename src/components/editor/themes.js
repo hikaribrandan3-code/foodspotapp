@@ -1,6 +1,6 @@
 /**
- * FoodSpot Editor — Theme Engine
- * 5 Deterministic presets with color, font, and layout definitions.
+ * FoodSpot Editor — Theme Engine V2
+ * 5 Light, print-optimized presets. Zero ink waste.
  */
 
 export const FONT_PAIRINGS = [
@@ -14,45 +14,45 @@ export const THEMES = [
         id: 'cafe',
         name: 'Cafe',
         icon: '☕',
-        bg: '#1A1512',
-        accent: '#C8956C',
-        text: '#F5F0EB',
-        categoryColor: '#C8956C',
+        bg: '#FDF8F3',
+        accent: '#8B6F47',
+        text: '#3D2B1F',
+        categoryColor: '#8B6F47',
         fontPairing: 'playfair',
-        bgTexture: 'radial-gradient(circle at 20% 80%, rgba(200,149,108,0.06) 0%, transparent 50%)'
+        bgTexture: 'radial-gradient(circle at 20% 80%, rgba(139,111,71,0.04) 0%, transparent 50%)'
     },
     {
         id: 'burger',
         name: 'Burger',
         icon: '🍔',
-        bg: '#212121',
+        bg: '#FFFFFF',
         accent: '#E74C3C',
-        text: '#FFFFFF',
+        text: '#1A1A1A',
         categoryColor: '#E74C3C',
         fontPairing: 'oswald',
-        bgTexture: 'radial-gradient(circle at 80% 20%, rgba(231,76,60,0.05) 0%, transparent 50%)'
+        bgTexture: 'radial-gradient(circle at 80% 20%, rgba(231,76,60,0.03) 0%, transparent 50%)'
     },
     {
         id: 'asian',
         name: 'Asian',
         icon: '🍜',
-        bg: '#1C1C2E',
-        accent: '#F0C040',
-        text: '#F5F5F5',
-        categoryColor: '#F0C040',
+        bg: '#FFF9F0',
+        accent: '#D4A017',
+        text: '#2C2C2C',
+        categoryColor: '#D4A017',
         fontPairing: 'poppins',
-        bgTexture: 'radial-gradient(circle at 50% 50%, rgba(240,192,64,0.04) 0%, transparent 60%)'
+        bgTexture: 'radial-gradient(circle at 50% 50%, rgba(212,160,23,0.03) 0%, transparent 60%)'
     },
     {
         id: 'street',
         name: 'Street',
         icon: '🌮',
-        bg: '#2D2D2D',
-        accent: '#4CAF50',
-        text: '#FAFAFA',
-        categoryColor: '#4CAF50',
+        bg: '#F5FFF5',
+        accent: '#2E7D32',
+        text: '#1B1B1B',
+        categoryColor: '#2E7D32',
         fontPairing: 'oswald',
-        bgTexture: 'linear-gradient(135deg, rgba(76,175,80,0.03) 0%, transparent 100%)'
+        bgTexture: 'linear-gradient(135deg, rgba(46,125,50,0.02) 0%, transparent 100%)'
     },
     {
         id: 'bistro',
