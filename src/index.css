@@ -1506,7 +1506,7 @@ body {
 /* Dropdown backdrop: Force destruction when closed */
 .dropdown-backdrop,
 .modal-backdrop,
-[class*="overlay"]:not(.loading-overlay) {
+[class*="overlay"]:not(.loading-overlay):not(.editor-overlay) {
   pointer-events: none !important;
   z-index: -1 !important;
 }
