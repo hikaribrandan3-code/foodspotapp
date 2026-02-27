@@ -466,6 +466,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     free_delivery_threshold: localConfig.delivery?.freeDeliveryThreshold,
                     app_config: localConfig,
                     service_modes: localConfig.service_modes,
+                    design_state: localConfig.design_state || {},
+                    last_printed_at: localConfig.lastPrintedAt || null,
                     updated_at: new Date()
                 })
                 .eq('business_id', targetBusinessId)
@@ -2044,6 +2046,11 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     targetBusinessId={targetBusinessId}
                     hasChanges={hasChanges}
                     onClose={() => setShowEditor(false)}
+                    onSaveState={(editorState) => {
+                        const updatedConfig = { ...localConfig, design_state: editorState }
+                        setLocalConfig(updatedConfig)
+                        setHasChanges(true)
+                    }}
                     onPrint={handlePrintMenu}
                 />
             )}

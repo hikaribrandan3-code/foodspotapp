@@ -23,7 +23,8 @@ export default function DesignWorkspace({
     targetBusinessId,
     hasChanges,
     onClose,
-    onPrint
+    onPrint,
+    onSaveState
 }) {
     // ============================
     // DESIGN STATE
@@ -73,9 +74,21 @@ export default function DesignWorkspace({
     }, [])
 
     const handlePrint = useCallback(() => {
+        if (onSaveState) {
+            onSaveState({
+                theme: activeThemeId,
+                fontPairing: fontPairingId,
+                colors: colorOverrides,
+                logoSize,
+                qrPosition,
+                showCurrency,
+                showQR,
+                tagline
+            })
+        }
         if (onPrint) onPrint()
         else window.print()
-    }, [onPrint])
+    }, [onPrint, onSaveState, activeThemeId, fontPairingId, colorOverrides, logoSize, qrPosition, showCurrency, showQR, tagline])
 
     // ============================
     // SIDEBAR CONTROLS (Shared between desktop sidebar and mobile sheet)
