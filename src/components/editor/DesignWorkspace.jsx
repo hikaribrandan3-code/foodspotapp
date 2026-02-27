@@ -26,6 +26,7 @@ export default function DesignWorkspace({
     onPrint,
     onSaveState
 }) {
+    console.log('🔴 DESIGN WORKSPACE MOUNTED / RENDERED');
     // ============================
     // DESIGN STATE
     // ============================

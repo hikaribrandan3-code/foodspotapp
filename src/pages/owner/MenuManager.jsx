@@ -976,510 +976,493 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     return (
-        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
-            {/* 🖨️ THE PRINTABLE MENU COMPONENT (Hidden except on print) */}
-            <PrintableMenu
-                menu={menu}
-                businessName={tenantData?.business_name || localConfig?.businessName || 'Menú'}
-                primaryColor={localConfig?.themeColor || '#1E293B'}
-                logoUrl={localConfig?.logoUrl}
-            />
+        <>
+            <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+                {/* 🖨️ THE PRINTABLE MENU COMPONENT (Hidden except on print) */}
+                <PrintableMenu
+                    menu={menu}
+                    businessName={tenantData?.business_name || localConfig?.businessName || 'Menú'}
+                    primaryColor={localConfig?.themeColor || '#1E293B'}
+                    logoUrl={localConfig?.logoUrl}
+                />
 
-            <BackendHeader
-                title={demoMode ? "Demo Menú" : "Menú"}
-                onLogout={handleLogout}
-            />
+                <BackendHeader
+                    title={demoMode ? "Demo Menú" : "Menú"}
+                    onLogout={handleLogout}
+                />
 
-            <div style={{ padding: 16, paddingBottom: 100 }}>
-                {/* ==================== OPERATIONAL COMMAND CENTER ==================== */}
-                <div style={{ marginBottom: 24 }}>
-                    {/* Pause Orders Toggle */}
-                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ Pausar pedidos</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Desactiva temporalmente los pedidos</p>
-                            </div>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={localConfig.pauseOrders}
-                                    onChange={(e) => {
-                                        const newPauseState = e.target.checked
-                                        setLocalConfig(prev => ({ ...prev, pauseOrders: newPauseState }))
-                                        setHasChanges(true)
-                                    }}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-                        {/* Pause Message */}
-                        {localConfig.pauseOrders && (
-                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Mensaje para clientes</label>
-                                <input
-                                    type="text"
-                                    value={pauseMessage}
-                                    onChange={(e) => {
-                                        setPauseMessage(e.target.value)
-                                        setHasChanges(true)
-                                    }}
-                                    onBlur={() => {
-                                        setLocalConfig(prev => ({ ...prev, pauseOrdersMessage: pauseMessage }))
-                                    }}
-                                    placeholder="Ej: Estamos con muchos pedidos"
-                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Archive Info */}
-                    <div style={{ background: '#F0FDF4', borderRadius: 12, border: '1px solid #BBF7D0', padding: 12, marginBottom: 12 }}>
-                        <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
-                    </div>
-
-                    {/* ==================== FOODSPOT EDITOR ==================== */}
-                    <div style={{ background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)', borderRadius: 14, padding: 20, marginBottom: 12, border: '1px solid #334155' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                                    <span style={{ fontSize: 18 }}>{'🎨'}</span>
-                                    <p style={{ fontWeight: 700, fontSize: 15, color: '#FFFFFF', margin: 0 }}>FoodSpot Editor</p>
+                <div style={{ padding: 16, paddingBottom: 100 }}>
+                    {/* ==================== OPERATIONAL COMMAND CENTER ==================== */}
+                    <div style={{ marginBottom: 24 }}>
+                        {/* Pause Orders Toggle */}
+                        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ Pausar pedidos</p>
+                                    <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Desactiva temporalmente los pedidos</p>
                                 </div>
-                                <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, maxWidth: '260px', lineHeight: 1.4 }}>
-                                    {'Diseñá tu menú con temas, colores, y tipografías. Exportá en PDF A4 profesional.'}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setShowEditor(true)}
-                                style={{
-                                    background: '#3B82F6', color: 'white', border: 'none',
-                                    padding: '10px 20px', borderRadius: 10, fontWeight: 700,
-                                    fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                                    whiteSpace: 'nowrap', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)',
-                                    transition: 'all 0.15s ease'
-                                }}
-                            >
-                                Abrir Editor
-                            </button>
-                        </div>
-
-                        {/* Version Sync Warning */}
-                        {(hasChanges || (localConfig.lastPrintedAt && tenantData?.updated_at && new Date(tenantData.updated_at) > new Date(localConfig.lastPrintedAt))) && (
-                            <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                                <span style={{ fontSize: 14 }}>{'⚠️'}</span>
-                                <p style={{ margin: 0, fontSize: 11, color: '#FCA5A5', lineHeight: 1.4 }}>
-                                    {hasChanges
-                                        ? 'Cambios sin guardar. Guardá antes de imprimir.'
-                                        : 'El menú digital fue modificado. Volvé a imprimir.'}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* OPERATIONAL COMMAND CENTER (Strike 9) */}
-                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
-                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>⚙️ Configuración de Operación</p>
-
-                        {/* Dine-In Toggle */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <div>
-                                <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🍽️ Comer en Local</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>Habilita mesas y mozos</p>
-                            </div>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={localConfig.service_modes?.dineIn ?? true}
-                                    onChange={(e) => {
-                                        const val = e.target.checked
-                                        setLocalConfig(prev => ({
-                                            ...prev, service_modes: { ...prev.service_modes, dineIn: val }
-                                        }))
-                                        setHasChanges(true)
-                                    }}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-
-                        {/* Dine-In Payment Logic (Conditional) */}
-                        {(localConfig.service_modes?.dineIn ?? true) && (
-                            <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Momento de Pago</label>
-                                <div style={{ display: 'flex', gap: 8 }}>
-                                    <button
-                                        onClick={() => {
-                                            setLocalConfig(prev => ({
-                                                ...prev, service_modes: { ...prev.service_modes, dineInPayment: 'before' }
-                                            }))
-                                            setHasChanges(true)
-                                        }}
-                                        style={{
-                                            flex: 1, padding: '8px', borderRadius: 6, fontSize: 13, border: '1px solid', cursor: 'pointer',
-                                            borderColor: localConfig.service_modes?.dineInPayment === 'before' ? '#3B82F6' : '#E2E8F0',
-                                            background: localConfig.service_modes?.dineInPayment === 'before' ? '#EFF6FF' : 'white',
-                                            color: localConfig.service_modes?.dineInPayment === 'before' ? '#1D4ED8' : '#64748B'
-                                        }}
-                                    >
-                                        Antes de comer
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setLocalConfig(prev => ({
-                                                ...prev, service_modes: { ...prev.service_modes, dineInPayment: 'after' }
-                                            }))
-                                            setHasChanges(true)
-                                        }}
-                                        style={{
-                                            flex: 1, padding: '8px', borderRadius: 6, fontSize: 13, border: '1px solid', cursor: 'pointer',
-                                            borderColor: localConfig.service_modes?.dineInPayment === 'after' ? '#3B82F6' : '#E2E8F0',
-                                            background: localConfig.service_modes?.dineInPayment === 'after' ? '#EFF6FF' : 'white',
-                                            color: localConfig.service_modes?.dineInPayment === 'after' ? '#1D4ED8' : '#64748B'
-                                        }}
-                                    >
-                                        Después (Mesa)
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Delivery Toggle */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🛵 Envíos</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>Habilita delivery y zonas</p>
-                            </div>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={localConfig.service_modes?.delivery ?? true}
-                                    onChange={(e) => {
-                                        const val = e.target.checked
-                                        setLocalConfig(prev => ({
-                                            ...prev, service_modes: { ...prev.service_modes, delivery: val }
-                                        }))
-                                        setHasChanges(true)
-                                    }}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Delivery Configuration (Conditionally Hidden) */}
-                    {
-                        (localConfig.service_modes?.delivery ?? true) && (
-                            <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
-                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
-
-                                <div style={{ marginBottom: 12 }}>
-                                    {/* SaaS-Scale Static Map & Radius Visualizer */}
-                                    <div style={{
-                                        height: 160,
-                                        background: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&q=80') center/cover",
-                                        borderRadius: 10,
-                                        marginBottom: 16,
-                                        position: 'relative',
-                                        overflow: 'hidden',
-                                        border: '1px solid #CBD5E1'
-                                    }}>
-                                        {/* Dark overlay for contrast */}
-                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.2)' }} />
-
-                                        {/* Center Pin */}
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '50%', left: '50%',
-                                            transform: 'translate(-50%, -50%)',
-                                            zIndex: 10,
-                                            fontSize: 24,
-                                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                                        }}>
-                                            🏪
-                                        </div>
-
-                                        {/* Dynamic Radius Circle */}
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '50%', left: '50%',
-                                            width: 40, height: 40,
-                                            marginLeft: -20, marginTop: -20,
-                                            borderRadius: '50%',
-                                            border: '2px solid #22C55E',
-                                            background: 'rgba(34, 197, 94, 0.15)',
-                                            transform: `scale(${localConfig.delivery?.radiusKm || 5})`,
-                                            willChange: 'transform',
-                                            transition: 'transform 0.1s linear',
-                                            pointerEvents: 'none',
-                                            boxShadow: '0 0 0 1000px rgba(0,0,0,0.1)'
-                                        }} />
-                                    </div>
-
-                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
+                                <label className="toggle">
                                     <input
-                                        type="range"
-                                        min="1"
-                                        max="50"
-                                        value={localConfig.delivery?.radiusKm || 5}
+                                        type="checkbox"
+                                        checked={localConfig.pauseOrders}
                                         onChange={(e) => {
-                                            const newValue = parseInt(e.target.value)
-                                            const oldValue = localConfig.delivery?.radiusKm || 5
-                                            if (newValue !== oldValue) {
-                                                recordDeliveryConfigChange('radiusKm', oldValue, newValue)
-                                            }
-                                            // Instant Local Update
-                                            setLocalConfig(prev => ({
-                                                ...prev,
-                                                delivery: { ...prev.delivery, radiusKm: newValue }
-                                            }))
-                                            updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
-                                            window.dispatchEvent(new CustomEvent('frontendSync'))
+                                            const newPauseState = e.target.checked
+                                            setLocalConfig(prev => ({ ...prev, pauseOrders: newPauseState }))
                                             setHasChanges(true)
                                         }}
-                                        style={{ width: '100%' }}
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                            </div>
+                            {/* Pause Message */}
+                            {localConfig.pauseOrders && (
+                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Mensaje para clientes</label>
+                                    <input
+                                        type="text"
+                                        value={pauseMessage}
+                                        onChange={(e) => {
+                                            setPauseMessage(e.target.value)
+                                            setHasChanges(true)
+                                        }}
+                                        onBlur={() => {
+                                            setLocalConfig(prev => ({ ...prev, pauseOrdersMessage: pauseMessage }))
+                                        }}
+                                        placeholder="Ej: Estamos con muchos pedidos"
+                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
                                     />
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                    <div>
-                                        <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="50"
-                                            value={localConfig.delivery?.flatFee === 0 ? '' : localConfig.delivery?.flatFee} // 🛡️ KILL STICKY ZERO
-                                            onChange={(e) => {
-                                                const val = e.target.value === '' ? 0 : parseInt(e.target.value)
-                                                setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
-                                                updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
-                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                            )}
+                        </div>
+
+                        {/* Archive Info */}
+                        <div style={{ background: '#F0FDF4', borderRadius: 12, border: '1px solid #BBF7D0', padding: 12, marginBottom: 12 }}>
+                            <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
+                        </div>
+
+                        {/* ==================== FOODSPOT EDITOR ==================== */}
+                        <div style={{ background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)', borderRadius: 14, padding: 20, marginBottom: 12, border: '1px solid #334155' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                        <span style={{ fontSize: 18 }}>{'🎨'}</span>
+                                        <p style={{ fontWeight: 700, fontSize: 15, color: '#FFFFFF', margin: 0 }}>FoodSpot Editor</p>
+                                    </div>
+                                    <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, maxWidth: '260px', lineHeight: 1.4 }}>
+                                        {'Diseñá tu menú con temas, colores, y tipografías. Exportá en PDF A4 profesional.'}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        console.log('🔴 ABRIR EDITOR BUTTON CLICKED');
+                                        setShowEditor(true);
+                                    }}
+                                    style={{
+                                        background: '#3B82F6', color: 'white', border: 'none',
+                                        padding: '10px 20px', borderRadius: 10, fontWeight: 700,
+                                        fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                                        whiteSpace: 'nowrap', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)',
+                                        transition: 'all 0.15s ease'
+                                    }}
+                                >
+                                    Abrir Editor
+                                </button>
+                            </div>
+
+                            {/* Version Sync Warning */}
+                            {(hasChanges || (localConfig.lastPrintedAt && tenantData?.updated_at && new Date(tenantData.updated_at) > new Date(localConfig.lastPrintedAt))) && (
+                                <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                                    <span style={{ fontSize: 14 }}>{'⚠️'}</span>
+                                    <p style={{ margin: 0, fontSize: 11, color: '#FCA5A5', lineHeight: 1.4 }}>
+                                        {hasChanges
+                                            ? 'Cambios sin guardar. Guardá antes de imprimir.'
+                                            : 'El menú digital fue modificado. Volvé a imprimir.'}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* OPERATIONAL COMMAND CENTER (Strike 9) */}
+                        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+                            <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>⚙️ Configuración de Operación</p>
+
+                            {/* Dine-In Toggle */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                <div>
+                                    <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🍽️ Comer en Local</p>
+                                    <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>Habilita mesas y mozos</p>
+                                </div>
+                                <label className="toggle">
+                                    <input
+                                        type="checkbox"
+                                        checked={localConfig.service_modes?.dineIn ?? true}
+                                        onChange={(e) => {
+                                            const val = e.target.checked
+                                            setLocalConfig(prev => ({
+                                                ...prev, service_modes: { ...prev.service_modes, dineIn: val }
+                                            }))
+                                            setHasChanges(true)
+                                        }}
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            {/* Dine-In Payment Logic (Conditional) */}
+                            {(localConfig.service_modes?.dineIn ?? true) && (
+                                <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Momento de Pago</label>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button
+                                            onClick={() => {
+                                                setLocalConfig(prev => ({
+                                                    ...prev, service_modes: { ...prev.service_modes, dineInPayment: 'before' }
+                                                }))
                                                 setHasChanges(true)
                                             }}
-                                            placeholder="0"
-                                            style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
-                                        />
+                                            style={{
+                                                flex: 1, padding: '8px', borderRadius: 6, fontSize: 13, border: '1px solid', cursor: 'pointer',
+                                                borderColor: localConfig.service_modes?.dineInPayment === 'before' ? '#3B82F6' : '#E2E8F0',
+                                                background: localConfig.service_modes?.dineInPayment === 'before' ? '#EFF6FF' : 'white',
+                                                color: localConfig.service_modes?.dineInPayment === 'before' ? '#1D4ED8' : '#64748B'
+                                            }}
+                                        >
+                                            Antes de comer
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setLocalConfig(prev => ({
+                                                    ...prev, service_modes: { ...prev.service_modes, dineInPayment: 'after' }
+                                                }))
+                                                setHasChanges(true)
+                                            }}
+                                            style={{
+                                                flex: 1, padding: '8px', borderRadius: 6, fontSize: 13, border: '1px solid', cursor: 'pointer',
+                                                borderColor: localConfig.service_modes?.dineInPayment === 'after' ? '#3B82F6' : '#E2E8F0',
+                                                background: localConfig.service_modes?.dineInPayment === 'after' ? '#EFF6FF' : 'white',
+                                                color: localConfig.service_modes?.dineInPayment === 'after' ? '#1D4ED8' : '#64748B'
+                                            }}
+                                        >
+                                            Después (Mesa)
+                                        </button>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="100"
-                                            value={localConfig.delivery?.freeDeliveryThreshold ?? ''}
-                                            onChange={(e) => {
-                                                // 🛡️ STICKY ZERO FIX
-                                                const val = e.target.value
-                                                const newValue = val === '' ? 0 : parseInt(val)
+                                </div>
+                            )}
 
+                            {/* Delivery Toggle */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🛵 Envíos</p>
+                                    <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>Habilita delivery y zonas</p>
+                                </div>
+                                <label className="toggle">
+                                    <input
+                                        type="checkbox"
+                                        checked={localConfig.service_modes?.delivery ?? true}
+                                        onChange={(e) => {
+                                            const val = e.target.checked
+                                            setLocalConfig(prev => ({
+                                                ...prev, service_modes: { ...prev.service_modes, delivery: val }
+                                            }))
+                                            setHasChanges(true)
+                                        }}
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Delivery Configuration (Conditionally Hidden) */}
+                        {
+                            (localConfig.service_modes?.delivery ?? true) && (
+                                <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
+                                    <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
+
+                                    <div style={{ marginBottom: 12 }}>
+                                        {/* SaaS-Scale Static Map & Radius Visualizer */}
+                                        <div style={{
+                                            height: 160,
+                                            background: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&q=80') center/cover",
+                                            borderRadius: 10,
+                                            marginBottom: 16,
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                            border: '1px solid #CBD5E1'
+                                        }}>
+                                            {/* Dark overlay for contrast */}
+                                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.2)' }} />
+
+                                            {/* Center Pin */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '50%', left: '50%',
+                                                transform: 'translate(-50%, -50%)',
+                                                zIndex: 10,
+                                                fontSize: 24,
+                                                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                                            }}>
+                                                🏪
+                                            </div>
+
+                                            {/* Dynamic Radius Circle */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '50%', left: '50%',
+                                                width: 40, height: 40,
+                                                marginLeft: -20, marginTop: -20,
+                                                borderRadius: '50%',
+                                                border: '2px solid #22C55E',
+                                                background: 'rgba(34, 197, 94, 0.15)',
+                                                transform: `scale(${localConfig.delivery?.radiusKm || 5})`,
+                                                willChange: 'transform',
+                                                transition: 'transform 0.1s linear',
+                                                pointerEvents: 'none',
+                                                boxShadow: '0 0 0 1000px rgba(0,0,0,0.1)'
+                                            }} />
+                                        </div>
+
+                                        <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="50"
+                                            value={localConfig.delivery?.radiusKm || 5}
+                                            onChange={(e) => {
+                                                const newValue = parseInt(e.target.value)
+                                                const oldValue = localConfig.delivery?.radiusKm || 5
+                                                if (newValue !== oldValue) {
+                                                    recordDeliveryConfigChange('radiusKm', oldValue, newValue)
+                                                }
+                                                // Instant Local Update
                                                 setLocalConfig(prev => ({
                                                     ...prev,
-                                                    delivery: { ...prev.delivery, freeDeliveryThreshold: val === '' ? '' : newValue }
+                                                    delivery: { ...prev.delivery, radiusKm: newValue }
                                                 }))
-
-                                                updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
+                                                updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
                                                 window.dispatchEvent(new CustomEvent('frontendSync'))
                                                 setHasChanges(true)
                                             }}
-                                            placeholder="0"
-                                            style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                            style={{ width: '100%' }}
                                         />
                                     </div>
-                                </div>
-                            </div>
-                        )
-                    }
-                </div >
-
-                {/* ==================== BRIDGED BRANDING SECTION ==================== */}
-                < hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }
-                } />
-                < h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Estilo de Menú(Píldora)
-                </h3 >
-                <div style={{ background: 'white', padding: '20px', borderRadius: 16, border: '1px solid #E2E8F0', marginBottom: 24 }}>
-                    {/* Visual Preset Picker - iPhone Wallpaper Style */}
-                    {(() => {
-                        // Group presets by category
-                        const grouped = DIVIDER_PRESETS.reduce((acc, preset) => {
-                            const cat = preset.category || 'Varios'
-                            if (!acc[cat]) acc[cat] = []
-                            acc[cat].push(preset)
-                            return acc
-                        }, {})
-
-                        const categories = Object.keys(grouped)
-
-                        return (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                                {categories.map(cat => (
-                                    <div key={cat}>
-                                        <h4 style={{
-                                            fontSize: 12, fontWeight: 800, color: '#9CA3AF',
-                                            textTransform: 'uppercase', marginBottom: 12,
-                                            letterSpacing: '0.05em'
-                                        }}>
-                                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                        </h4>
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                                            gap: 12
-                                        }}>
-                                            {grouped[cat].map(preset => {
-                                                const isActive = (localConfig.dividerPresetId || 'coffee-1') === preset.id
-
-                                                return (
-                                                    <div
-                                                        key={preset.id}
-                                                        onClick={() => {
-                                                            const newConfig = { ...localConfig, dividerPresetId: preset.id }
-                                                            updateConfig(newConfig)
-                                                            setLocalConfig(newConfig)
-                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                            setHasChanges(true)
-                                                        }}
-                                                        style={{
-                                                            position: 'relative',
-                                                            aspectRatio: '3/1',
-                                                            borderRadius: 8,
-                                                            overflow: 'hidden',
-                                                            cursor: 'pointer',
-                                                            border: isActive ? '3px solid #22C55E' : '1px solid #E5E7EB',
-                                                            transition: 'all 0.2s ease',
-                                                            transform: isActive ? 'scale(1.02)' : 'scale(1)',
-                                                            boxShadow: isActive ? '0 4px 12px rgba(34, 197, 94, 0.2)' : 'none'
-                                                        }}
-                                                    >
-                                                        <img
-                                                            src={preset.url}
-                                                            alt={preset.name}
-                                                            loading="lazy"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                        />
-
-                                                        {/* Checkmark Overlay */}
-                                                        {isActive && (
-                                                            <div style={{
-                                                                position: 'absolute',
-                                                                top: 0, left: 0, right: 0, bottom: 0,
-                                                                background: 'rgba(34, 197, 94, 0.2)',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                            }}>
-                                                                <div style={{
-                                                                    background: '#22C55E', color: 'white',
-                                                                    borderRadius: '50%', width: 24, height: 24,
-                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                    fontSize: 14, boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                                                                }}>
-                                                                    ✓
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Hover Label */}
-                                                        {!isActive && (
-                                                            <div className="hover-label" style={{
-                                                                position: 'absolute', bottom: 0, left: 0, right: 0,
-                                                                background: 'rgba(0,0,0,0.6)', color: 'white',
-                                                                fontSize: 10, padding: '4px', textAlign: 'center',
-                                                                opacity: 0, transition: 'opacity 0.2s'
-                                                            }}>
-                                                                {preset.name}
-                                                            </div>
-                                                        )}
-                                                        <style>{`
-                                                            div:hover > .hover-label { opacity: 1; }
-                                                        `}</style>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )
-                    })()}
-                </div>
-
-                {/* ==================== VISUAL DIVIDER ==================== */}
-                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
-                {/* 1. FEATURED SECTION (TOP 4) */}
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Destaques de Inicio (Top 4)
-                </h3>
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: 8,
-                    marginBottom: 24,
-                    background: 'white',
-                    padding: 12,
-                    borderRadius: 12,
-                    border: '1px solid #E2E8F0'
-                }}>
-                    {[0, 1, 2, 3].map(i => {
-                        const slot = activeFeaturedItems[i]
-                        return (
-                            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                {/* Image Box */}
-                                <div
-                                    onClick={() => handleFeaturedTap(i)}
-                                    className={!slot ? "empty-box" : ""}
-                                    style={{
-                                        aspectRatio: '1/1',
-                                        background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
-                                        borderRadius: 10,
-                                        border: '1px dashed #CBD5E1',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        overflow: 'hidden',
-                                        cursor: 'pointer',
-                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                    }}>
-                                    {!slot && (
-                                        <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center', pointerEvents: 'none' }}>Editar</span>
-                                    )}
-                                </div>
-                                {/* Meta Data (Below Image) */}
-                                {slot && (
-                                    <div style={{ textAlign: 'center' }}>
-                                        {/* INLINE NAME INPUT */}
-                                        <input
-                                            type="text"
-                                            defaultValue={slot.name || 'Destacado'}
-                                            onBlur={(e) => handleFeaturedUpdate(i, 'name', e.target.value)}
-                                            onClick={(e) => e.stopPropagation()} // 🛡️ Prevent Modal Open
-                                            style={{
-                                                fontWeight: 600,
-                                                fontSize: 11,
-                                                color: '#1E293B',
-                                                marginBottom: 2,
-                                                width: '100%',
-                                                textAlign: 'center',
-                                                border: 'none',
-                                                background: 'transparent',
-                                                outline: 'none',
-                                                padding: 0
-                                            }}
-                                        />
-                                        {/* INLINE PRICE INPUT */}
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                                            <span style={{ fontSize: 11, color: '#22C55E', fontWeight: 700 }}>$</span>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                        <div>
+                                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
                                             <input
                                                 type="number"
-                                                defaultValue={slot.price || ''}
-                                                onBlur={(e) => handleFeaturedUpdate(i, 'price', parseInt(e.target.value) || 0)}
-                                                onClick={(e) => e.stopPropagation()} // 🛡️ Prevent Modal Open
+                                                min="0"
+                                                step="50"
+                                                value={localConfig.delivery?.flatFee === 0 ? '' : localConfig.delivery?.flatFee} // 🛡️ KILL STICKY ZERO
+                                                onChange={(e) => {
+                                                    const val = e.target.value === '' ? 0 : parseInt(e.target.value)
+                                                    setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
+                                                    updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                    setHasChanges(true)
+                                                }}
                                                 placeholder="0"
+                                                style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="100"
+                                                value={localConfig.delivery?.freeDeliveryThreshold ?? ''}
+                                                onChange={(e) => {
+                                                    // 🛡️ STICKY ZERO FIX
+                                                    const val = e.target.value
+                                                    const newValue = val === '' ? 0 : parseInt(val)
+
+                                                    setLocalConfig(prev => ({
+                                                        ...prev,
+                                                        delivery: { ...prev.delivery, freeDeliveryThreshold: val === '' ? '' : newValue }
+                                                    }))
+
+                                                    updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
+                                                    window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                    setHasChanges(true)
+                                                }}
+                                                placeholder="0"
+                                                style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        }
+                    </div >
+
+                    {/* ==================== BRIDGED BRANDING SECTION ==================== */}
+                    < hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }
+                    } />
+                    < h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Estilo de Menú(Píldora)
+                    </h3 >
+                    <div style={{ background: 'white', padding: '20px', borderRadius: 16, border: '1px solid #E2E8F0', marginBottom: 24 }}>
+                        {/* Visual Preset Picker - iPhone Wallpaper Style */}
+                        {(() => {
+                            // Group presets by category
+                            const grouped = DIVIDER_PRESETS.reduce((acc, preset) => {
+                                const cat = preset.category || 'Varios'
+                                if (!acc[cat]) acc[cat] = []
+                                acc[cat].push(preset)
+                                return acc
+                            }, {})
+
+                            const categories = Object.keys(grouped)
+
+                            return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                                    {categories.map(cat => (
+                                        <div key={cat}>
+                                            <h4 style={{
+                                                fontSize: 12, fontWeight: 800, color: '#9CA3AF',
+                                                textTransform: 'uppercase', marginBottom: 12,
+                                                letterSpacing: '0.05em'
+                                            }}>
+                                                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                            </h4>
+                                            <div style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                                                gap: 12
+                                            }}>
+                                                {grouped[cat].map(preset => {
+                                                    const isActive = (localConfig.dividerPresetId || 'coffee-1') === preset.id
+
+                                                    return (
+                                                        <div
+                                                            key={preset.id}
+                                                            onClick={() => {
+                                                                const newConfig = { ...localConfig, dividerPresetId: preset.id }
+                                                                updateConfig(newConfig)
+                                                                setLocalConfig(newConfig)
+                                                                window.dispatchEvent(new CustomEvent('frontendSync'))
+                                                                setHasChanges(true)
+                                                            }}
+                                                            style={{
+                                                                position: 'relative',
+                                                                aspectRatio: '3/1',
+                                                                borderRadius: 8,
+                                                                overflow: 'hidden',
+                                                                cursor: 'pointer',
+                                                                border: isActive ? '3px solid #22C55E' : '1px solid #E5E7EB',
+                                                                transition: 'all 0.2s ease',
+                                                                transform: isActive ? 'scale(1.02)' : 'scale(1)',
+                                                                boxShadow: isActive ? '0 4px 12px rgba(34, 197, 94, 0.2)' : 'none'
+                                                            }}
+                                                        >
+                                                            <img
+                                                                src={preset.url}
+                                                                alt={preset.name}
+                                                                loading="lazy"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            />
+
+                                                            {/* Checkmark Overlay */}
+                                                            {isActive && (
+                                                                <div style={{
+                                                                    position: 'absolute',
+                                                                    top: 0, left: 0, right: 0, bottom: 0,
+                                                                    background: 'rgba(34, 197, 94, 0.2)',
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                                }}>
+                                                                    <div style={{
+                                                                        background: '#22C55E', color: 'white',
+                                                                        borderRadius: '50%', width: 24, height: 24,
+                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                        fontSize: 14, boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                                                    }}>
+                                                                        ✓
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Hover Label */}
+                                                            {!isActive && (
+                                                                <div className="hover-label" style={{
+                                                                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                                                                    background: 'rgba(0,0,0,0.6)', color: 'white',
+                                                                    fontSize: 10, padding: '4px', textAlign: 'center',
+                                                                    opacity: 0, transition: 'opacity 0.2s'
+                                                                }}>
+                                                                    {preset.name}
+                                                                </div>
+                                                            )}
+                                                            <style>{`
+                                                            div:hover > .hover-label { opacity: 1; }
+                                                        `}</style>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        })()}
+                    </div>
+
+                    {/* ==================== VISUAL DIVIDER ==================== */}
+                    <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
+                    {/* 1. FEATURED SECTION (TOP 4) */}
+                    <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Destaques de Inicio (Top 4)
+                    </h3>
+
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gap: 8,
+                        marginBottom: 24,
+                        background: 'white',
+                        padding: 12,
+                        borderRadius: 12,
+                        border: '1px solid #E2E8F0'
+                    }}>
+                        {[0, 1, 2, 3].map(i => {
+                            const slot = activeFeaturedItems[i]
+                            return (
+                                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                    {/* Image Box */}
+                                    <div
+                                        onClick={() => handleFeaturedTap(i)}
+                                        className={!slot ? "empty-box" : ""}
+                                        style={{
+                                            aspectRatio: '1/1',
+                                            background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
+                                            borderRadius: 10,
+                                            border: '1px dashed #CBD5E1',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                        }}>
+                                        {!slot && (
+                                            <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center', pointerEvents: 'none' }}>Editar</span>
+                                        )}
+                                    </div>
+                                    {/* Meta Data (Below Image) */}
+                                    {slot && (
+                                        <div style={{ textAlign: 'center' }}>
+                                            {/* INLINE NAME INPUT */}
+                                            <input
+                                                type="text"
+                                                defaultValue={slot.name || 'Destacado'}
+                                                onBlur={(e) => handleFeaturedUpdate(i, 'name', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()} // 🛡️ Prevent Modal Open
                                                 style={{
-                                                    color: '#22C55E',
-                                                    fontWeight: 700,
-                                                    fontSize: 12,
-                                                    width: 40,
+                                                    fontWeight: 600,
+                                                    fontSize: 11,
+                                                    color: '#1E293B',
+                                                    marginBottom: 2,
+                                                    width: '100%',
                                                     textAlign: 'center',
                                                     border: 'none',
                                                     background: 'transparent',
@@ -1487,119 +1470,485 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                     padding: 0
                                                 }}
                                             />
+                                            {/* INLINE PRICE INPUT */}
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                                <span style={{ fontSize: 11, color: '#22C55E', fontWeight: 700 }}>$</span>
+                                                <input
+                                                    type="number"
+                                                    defaultValue={slot.price || ''}
+                                                    onBlur={(e) => handleFeaturedUpdate(i, 'price', parseInt(e.target.value) || 0)}
+                                                    onClick={(e) => e.stopPropagation()} // 🛡️ Prevent Modal Open
+                                                    placeholder="0"
+                                                    style={{
+                                                        color: '#22C55E',
+                                                        fontWeight: 700,
+                                                        fontSize: 12,
+                                                        width: 40,
+                                                        textAlign: 'center',
+                                                        border: 'none',
+                                                        background: 'transparent',
+                                                        outline: 'none',
+                                                        padding: 0
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })}
-                </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
 
-                {/* 2. VISUAL DIVIDER */}
-                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
+                    {/* 2. VISUAL DIVIDER */}
+                    <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
 
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Menú Principal
-                </h3>
+                    <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Menú Principal
+                    </h3>
 
-                {/* Add Category Button / Form */}
-                {
-                    !showAddCategory ? (
-                        <button
-                            onClick={() => setShowAddCategory(true)}
-                            style={{
-                                width: '100%',
-                                padding: '12px 16px',
-                                marginBottom: 16,
-                                background: '#F1F5F9',
-                                border: '2px dashed #CBD5E1',
+                    {/* Add Category Button / Form */}
+                    {
+                        !showAddCategory ? (
+                            <button
+                                onClick={() => setShowAddCategory(true)}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    marginBottom: 16,
+                                    background: '#F1F5F9',
+                                    border: '2px dashed #CBD5E1',
+                                    borderRadius: 10,
+                                    fontSize: 14,
+                                    fontWeight: 500,
+                                    color: '#64748B',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 6
+                                }}
+                            >
+                                ➕ Agregar Categoría
+                            </button>
+                        ) : (
+                            <div style={{
+                                background: '#FFFFFF',
                                 borderRadius: 10,
-                                fontSize: 14,
-                                fontWeight: 500,
-                                color: '#64748B',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 6
-                            }}
-                        >
-                            ➕ Agregar Categoría
-                        </button>
-                    ) : (
-                        <div style={{
-                            background: '#FFFFFF',
-                            borderRadius: 10,
-                            border: '2px solid #22C55E',
-                            padding: 16,
-                            marginBottom: 16
-                        }}>
-                            <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                                <input
-                                    type="text"
-                                    placeholder="Nombre de categoría"
-                                    value={newCategoryName}
-                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                    autoFocus
-                                    style={{
-                                        flex: 1,
-                                        padding: '10px 14px',
-                                        border: '1px solid #E2E8F0',
-                                        borderRadius: 8,
-                                        fontSize: 14
-                                    }}
-                                />
-                            </div>
-                            <div style={{ display: 'flex', gap: 10 }}>
-                                <button
-                                    onClick={() => {
-                                        if (newCategoryName.trim()) {
-                                            // 🛡️ NULL-POINTER DEFENSE: Ensure object exists
-                                            const updatedMenu = menu ? { ...menu } : { categories: [] }
-                                            if (!updatedMenu.categories) updatedMenu.categories = []
+                                border: '2px solid #22C55E',
+                                padding: 16,
+                                marginBottom: 16
+                            }}>
+                                <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Nombre de categoría"
+                                        value={newCategoryName}
+                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                        autoFocus
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px 14px',
+                                            border: '1px solid #E2E8F0',
+                                            borderRadius: 8,
+                                            fontSize: 14
+                                        }}
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', gap: 10 }}>
+                                    <button
+                                        onClick={() => {
+                                            if (newCategoryName.trim()) {
+                                                // 🛡️ NULL-POINTER DEFENSE: Ensure object exists
+                                                const updatedMenu = menu ? { ...menu } : { categories: [] }
+                                                if (!updatedMenu.categories) updatedMenu.categories = []
 
-                                            updatedMenu.categories.push({
-                                                id: generateId('category'),
-                                                name: newCategoryName.trim(),
-                                                icon: '',
-                                                enabled: true,
-                                                items: []
-                                            })
-                                            setMenu(updatedMenu)
-                                            syncMenuToCloud(updatedMenu)
+                                                updatedMenu.categories.push({
+                                                    id: generateId('category'),
+                                                    name: newCategoryName.trim(),
+                                                    icon: '',
+                                                    enabled: true,
+                                                    items: []
+                                                })
+                                                setMenu(updatedMenu)
+                                                syncMenuToCloud(updatedMenu)
+                                                setNewCategoryName('')
+                                                setNewCategoryIcon('📦')
+                                                setShowAddCategory(false)
+                                            }
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px 16px',
+                                            background: '#22C55E',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: 8,
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Crear
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowAddCategory(false)
                                             setNewCategoryName('')
                                             setNewCategoryIcon('📦')
-                                            setShowAddCategory(false)
-                                        }
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '10px 16px',
-                                        background: '#22C55E',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: 8,
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
+                                        }}
+                                        style={{
+                                            padding: '10px 16px',
+                                            background: '#F1F5F9',
+                                            color: '#64748B',
+                                            border: 'none',
+                                            borderRadius: 8,
+                                            fontWeight: 500,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        )
+                    }
+
+                    {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
+                    {console.log('[MenuManager] 🎨 RENDER CHECK - Menu State:', menu)}
+                    {
+                        (menu?.categories || []).map(category => {
+                            const isEnabled = category.enabled !== false
+                            return (
+                                <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        marginBottom: 8
+                                    }}>
+                                        <div style={{ flex: 1 }}>
+                                            {editingCategory?.id === category.id ? (
+                                                <input
+                                                    type="text"
+                                                    value={editingCategory.name}
+                                                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                                                    onBlur={() => handleRenameCategory(category.id)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleRenameCategory(category.id)}
+                                                    autoFocus
+                                                    style={{
+                                                        fontSize: 14,
+                                                        fontWeight: 600,
+                                                        color: '#374151',
+                                                        border: '1px solid #3B82F6',
+                                                        borderRadius: 4,
+                                                        padding: '2px 6px',
+                                                        width: '100%',
+                                                        maxWidth: 200,
+                                                        outline: 'none'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <h3
+                                                    onClick={() => setEditingCategory({ id: category.id, name: category.name })}
+                                                    style={{
+                                                        fontSize: 14,
+                                                        fontWeight: 600,
+                                                        color: '#374151',
+                                                        margin: 0,
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 8
+                                                    }}
+                                                    title="Clic para renombrar"
+                                                >
+                                                    {category.name}
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M12 20h9"></path>
+                                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                                    </svg>
+                                                    {/* 🗑️ DELETE CATEGORY BUTTON */}
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id) }}
+                                                        title="Eliminar Categoría"
+                                                        style={{
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            padding: 4,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            marginLeft: 4
+                                                        }}
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                        </svg>
+                                                    </button>
+                                                    {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
+                                                </h3>
+                                            )}
+                                        </div>
+                                        <label className="toggle">
+                                            <input
+                                                type="checkbox"
+                                                checked={isEnabled}
+                                                onChange={() => handleToggleCategory(category.id)}
+                                            />
+                                            <span className="toggle-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div style={{
+                                        background: '#FFFFFF',
+                                        borderRadius: 12,
+                                        border: '1px solid #E2E8F0',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                                    }}>
+                                        {(category.items || []).map((item, idx) => (
+                                            <div key={item.id} style={{
+                                                display: 'flex',
+                                                alignItems: 'flex-start',
+                                                padding: '12px 14px',
+                                                borderBottom: idx < category.items.length - 1 ? '1px solid #F1F5F9' : 'none',
+                                                gap: 10
+                                            }}>
+                                                {/* Image Placeholder - SuperAdmin Style (always visible, clickable) */}
+                                                <div style={{ width: 60, flexShrink: 0 }}>
+                                                    <div
+                                                        onClick={() => handleBoxTap(category.id, item)}
+                                                        className="empty-box"
+                                                        style={{
+                                                            width: 60,
+                                                            height: 60,
+                                                            borderRadius: 10,
+                                                            background: item.image ? 'none' : '#F3F4F6',
+                                                            border: '2px dashed #D1D5DB',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            overflow: 'hidden',
+                                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                                        }}
+                                                    >
+                                                        {item.image ? (
+                                                            <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                                                        ) : (
+                                                            <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {/* Item Details - SuperAdmin Style */}
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                        <div style={{ flex: 1 }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                                                {/* 🛡️ UNLOCKED NAME INPUT */}
+                                                                <input
+                                                                    type="text"
+                                                                    defaultValue={item.name}
+                                                                    onBlur={(e) => handleNameUpdate(category.id, item.id, e.target.value)}
+                                                                    onClick={(e) => e.stopPropagation()} // Prevent card tap
+                                                                    style={{
+                                                                        fontWeight: 500,
+                                                                        fontSize: 14,
+                                                                        color: '#1E293B',
+                                                                        margin: 0,
+                                                                        border: 'none',
+                                                                        background: 'transparent',
+                                                                        width: '100%',
+                                                                        outline: 'none',
+                                                                        pointerEvents: 'auto',
+                                                                        zIndex: 10
+                                                                    }}
+                                                                />
+                                                                <div
+                                                                    style={{
+                                                                        fontSize: 16,
+                                                                        filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
+                                                                        opacity: isFeatured(item) ? 1 : 0.2
+                                                                    }}
+                                                                >
+                                                                    ⭐
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                                <span style={{ fontSize: 13, color: '#22C55E', fontWeight: 600 }}>$</span>
+                                                                <input
+                                                                    type="number"
+                                                                    defaultValue={item.price}
+                                                                    onBlur={(e) => handlePriceUpdate(category.id, item.id, e.target.value)}
+                                                                    onClick={(e) => e.stopPropagation()} // Prevent card tap
+                                                                    style={{
+                                                                        fontSize: 13,
+                                                                        color: '#22C55E',
+                                                                        fontWeight: 600,
+                                                                        border: 'none',
+                                                                        background: 'transparent',
+                                                                        width: 60,
+                                                                        outline: 'none',
+                                                                        padding: 0
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
+                                                                Agotado
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={!item.available}
+                                                                    onChange={() => handleToggleAvailability(category.id, item.id)}
+                                                                    style={{ width: 18, height: 18, accentColor: '#EF4444' }}
+                                                                />
+                                                            </label>
+                                                            <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
+                                                                Promo
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isFeatured(item)}
+                                                                    onChange={() => handleToggleFeatured(item)}
+                                                                    style={{ width: 18, height: 18, accentColor: '#EAB308' }}
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Delete Button - SuperAdmin Style */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleRemoveItem(category.id, item)
+                                                    }}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: '#EF4444',
+                                                        fontSize: 18,
+                                                        cursor: 'pointer',
+                                                        padding: 4,
+                                                        alignSelf: 'flex-start',
+                                                        marginLeft: 8
+                                                    }}
+                                                    title="Eliminar ítem"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {/* Add Item Button (New) */}
+                                        <div
+                                            onClick={() => handleAddItem(category.id)}
+                                            style={{
+                                                padding: '12px',
+                                                background: '#F8FAFC',
+                                                borderTop: '1px solid #E2E8F0',
+                                                color: '#3B82F6',
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                            }}
+                                        >
+                                            ➕ Agregar Ítem
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })
+                    }
+                </div >
+
+                {/* Edit Modal */}
+                {
+                    editingItem && (
+                        <div className="modal-overlay" onClick={() => setEditingItem(null)}>
+                            <div className="modal" onClick={e => e.stopPropagation()}>
+                                <h2 className="modal-title">Editar item</h2>
+
+                                <div className="form-group">
+                                    <label className="form-label">Nombre</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Precio (ARS)</label>
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        value={editForm.price}
+                                        onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Imagen (JPG/PNG)</label>
+                                    {editForm.image && (
+                                        <div style={{ marginBottom: 8 }}>
+                                            <img
+                                                src={editForm.image}
+                                                alt="Preview"
+                                                onClick={() => {
+                                                    // 🛡️ CLICK-TO-OVERWRITE
+                                                    if (editingItem.isFeaturedSlot) {
+                                                        activeFeaturedSlotRef.current = editingItem.index
+                                                    } else if (editingItem.categoryId) {
+                                                        activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
+                                                    }
+                                                    fileInputRef.current?.click()
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    maxHeight: 120,
+                                                    objectFit: 'cover',
+                                                    borderRadius: 10,
+                                                    cursor: 'pointer' // Hand cursor for interactivity
+                                                }}
+                                                title="Clic para cambiar imagen"
+                                            />
+                                        </div>
+                                    )}
+                                    {/* File Input moved to root */}
+                                    <button
+                                        className="btn btn-secondary btn-block"
+                                        onClick={() => {
+                                            if (editingItem.isFeaturedSlot) {
+                                                activeFeaturedSlotRef.current = editingItem.index
+                                            } else if (editingItem.categoryId) {
+                                                activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
+                                            }
+                                            fileInputRef.current?.click()
+                                        }}
+                                        disabled={isUploading}
+                                    >
+                                        {isUploading ? 'Optimizando...' : (editForm.image ? 'Cambiar imagen' : 'Subir imagen')}
+                                    </button>
+                                    {uploadStatus && (
+                                        <p style={{
+                                            fontSize: 12,
+                                            color: uploadStatus.success ? '#22C55E' : '#EF4444',
+                                            marginTop: 6
+                                        }}>
+                                            {uploadStatus.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <button
+                                    className="btn btn-primary btn-block"
+                                    onClick={handleSave}
                                 >
-                                    Crear
+                                    Guardar
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        setShowAddCategory(false)
-                                        setNewCategoryName('')
-                                        setNewCategoryIcon('📦')
-                                    }}
-                                    style={{
-                                        padding: '10px 16px',
-                                        background: '#F1F5F9',
-                                        color: '#64748B',
-                                        border: 'none',
-                                        borderRadius: 8,
-                                        fontWeight: 500,
-                                        cursor: 'pointer'
-                                    }}
+                                    className="btn btn-secondary btn-block"
+                                    style={{ marginTop: 8 }}
+                                    onClick={() => setEditingItem(null)}
                                 >
                                     Cancelar
                                 </button>
@@ -1608,433 +1957,90 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     )
                 }
 
-                {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
-                {console.log('[MenuManager] 🎨 RENDER CHECK - Menu State:', menu)}
-                {
-                    (menu?.categories || []).map(category => {
-                        const isEnabled = category.enabled !== false
-                        return (
-                            <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: 8
-                                }}>
-                                    <div style={{ flex: 1 }}>
-                                        {editingCategory?.id === category.id ? (
-                                            <input
-                                                type="text"
-                                                value={editingCategory.name}
-                                                onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                                                onBlur={() => handleRenameCategory(category.id)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleRenameCategory(category.id)}
-                                                autoFocus
-                                                style={{
-                                                    fontSize: 14,
-                                                    fontWeight: 600,
-                                                    color: '#374151',
-                                                    border: '1px solid #3B82F6',
-                                                    borderRadius: 4,
-                                                    padding: '2px 6px',
-                                                    width: '100%',
-                                                    maxWidth: 200,
-                                                    outline: 'none'
-                                                }}
-                                            />
-                                        ) : (
-                                            <h3
-                                                onClick={() => setEditingCategory({ id: category.id, name: category.name })}
-                                                style={{
-                                                    fontSize: 14,
-                                                    fontWeight: 600,
-                                                    color: '#374151',
-                                                    margin: 0,
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: 8
-                                                }}
-                                                title="Clic para renombrar"
-                                            >
-                                                {category.name}
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M12 20h9"></path>
-                                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                                                </svg>
-                                                {/* 🗑️ DELETE CATEGORY BUTTON */}
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id) }}
-                                                    title="Eliminar Categoría"
-                                                    style={{
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        padding: 4,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        marginLeft: 4
-                                                    }}
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                    </svg>
-                                                </button>
-                                                {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
-                                            </h3>
-                                        )}
-                                    </div>
-                                    <label className="toggle">
-                                        <input
-                                            type="checkbox"
-                                            checked={isEnabled}
-                                            onChange={() => handleToggleCategory(category.id)}
-                                        />
-                                        <span className="toggle-slider"></span>
-                                    </label>
-                                </div>
 
-                                <div style={{
-                                    background: '#FFFFFF',
-                                    borderRadius: 12,
-                                    border: '1px solid #E2E8F0',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-                                }}>
-                                    {(category.items || []).map((item, idx) => (
-                                        <div key={item.id} style={{
-                                            display: 'flex',
-                                            alignItems: 'flex-start',
-                                            padding: '12px 14px',
-                                            borderBottom: idx < category.items.length - 1 ? '1px solid #F1F5F9' : 'none',
-                                            gap: 10
-                                        }}>
-                                            {/* Image Placeholder - SuperAdmin Style (always visible, clickable) */}
-                                            <div style={{ width: 60, flexShrink: 0 }}>
-                                                <div
-                                                    onClick={() => handleBoxTap(category.id, item)}
-                                                    className="empty-box"
-                                                    style={{
-                                                        width: 60,
-                                                        height: 60,
-                                                        borderRadius: 10,
-                                                        background: item.image ? 'none' : '#F3F4F6',
-                                                        border: '2px dashed #D1D5DB',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        overflow: 'hidden',
-                                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                                    }}
-                                                >
-                                                    {item.image ? (
-                                                        <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
-                                                    ) : (
-                                                        <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {/* Item Details - SuperAdmin Style */}
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                                            {/* 🛡️ UNLOCKED NAME INPUT */}
-                                                            <input
-                                                                type="text"
-                                                                defaultValue={item.name}
-                                                                onBlur={(e) => handleNameUpdate(category.id, item.id, e.target.value)}
-                                                                onClick={(e) => e.stopPropagation()} // Prevent card tap
-                                                                style={{
-                                                                    fontWeight: 500,
-                                                                    fontSize: 14,
-                                                                    color: '#1E293B',
-                                                                    margin: 0,
-                                                                    border: 'none',
-                                                                    background: 'transparent',
-                                                                    width: '100%',
-                                                                    outline: 'none',
-                                                                    pointerEvents: 'auto',
-                                                                    zIndex: 10
-                                                                }}
-                                                            />
-                                                            <div
-                                                                style={{
-                                                                    fontSize: 16,
-                                                                    filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
-                                                                    opacity: isFeatured(item) ? 1 : 0.2
-                                                                }}
-                                                            >
-                                                                ⭐
-                                                            </div>
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                            <span style={{ fontSize: 13, color: '#22C55E', fontWeight: 600 }}>$</span>
-                                                            <input
-                                                                type="number"
-                                                                defaultValue={item.price}
-                                                                onBlur={(e) => handlePriceUpdate(category.id, item.id, e.target.value)}
-                                                                onClick={(e) => e.stopPropagation()} // Prevent card tap
-                                                                style={{
-                                                                    fontSize: 13,
-                                                                    color: '#22C55E',
-                                                                    fontWeight: 600,
-                                                                    border: 'none',
-                                                                    background: 'transparent',
-                                                                    width: 60,
-                                                                    outline: 'none',
-                                                                    padding: 0
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
-                                                            Agotado
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={!item.available}
-                                                                onChange={() => handleToggleAvailability(category.id, item.id)}
-                                                                style={{ width: 18, height: 18, accentColor: '#EF4444' }}
-                                                            />
-                                                        </label>
-                                                        <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
-                                                            Promo
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isFeatured(item)}
-                                                                onChange={() => handleToggleFeatured(item)}
-                                                                style={{ width: 18, height: 18, accentColor: '#EAB308' }}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {/* Delete Button - SuperAdmin Style */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleRemoveItem(category.id, item)
-                                                }}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    color: '#EF4444',
-                                                    fontSize: 18,
-                                                    cursor: 'pointer',
-                                                    padding: 4,
-                                                    alignSelf: 'flex-start',
-                                                    marginLeft: 8
-                                                }}
-                                                title="Eliminar ítem"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    ))}
-                                    {/* Add Item Button (New) */}
-                                    <div
-                                        onClick={() => handleAddItem(category.id)}
-                                        style={{
-                                            padding: '12px',
-                                            background: '#F8FAFC',
-                                            borderTop: '1px solid #E2E8F0',
-                                            color: '#3B82F6',
-                                            fontSize: 13,
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                                        }}
-                                    >
-                                        ➕ Agregar Ítem
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })
+                {/* Hidden File Input (Always Mounted for "Vacío" Tap) */}
+                <input
+                    key={inputKey}
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                />
+
+                {/* Backend Navigation */}
+                <BackendNav
+                    role={demoMode ? 'demo' : 'owner'}
+                    useRoutes={true}
+                />
+                {/* SAVE SUCCESS TOAST */}
+                {
+                    saveStatus && (
+                        <div style={{
+                            position: 'fixed',
+                            bottom: 24,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
+                            padding: '10px 24px', borderRadius: 50,
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                            fontWeight: 600, fontSize: 14, zIndex: 9999,
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            animation: 'fadeIn 0.2s ease-out'
+                        }}>
+                            <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
+                        </div>
+                    )
+                }
+
+                {/* 💾 FLOATING SAVE BAR (Strike 1) */}
+                {/* 🛡️ BATCH LOADER OVERLAY */}
+                {
+                    isBatchSaving && (
+                        <div style={{
+                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 99999,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            backdropFilter: 'blur(4px)'
+                        }}>
+                            <div style={{
+                                width: 50, height: 50, border: '4px solid rgba(255,255,255,0.3)',
+                                borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 1s linear infinite'
+                            }} />
+                            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                            <h2 style={{ color: 'white', marginTop: 20, fontSize: 18, fontWeight: 600 }}>Publicando Cambios...</h2>
+                            <p style={{ color: '#94A3B8', marginTop: 8, fontSize: 14 }}>Sincronizando con la nube...</p>
+                        </div>
+                    )
+                }
+
+                {
+                    hasChanges && (
+                        <div style={{
+                            position: 'fixed', bottom: 95, left: 12, right: 12,
+                            background: '#1E293B', color: 'white', padding: '14px 20px',
+                            borderRadius: 16, display: 'flex', justifyContent: 'space-between',
+                            alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                            zIndex: 10000, animation: 'slideUp 0.3s ease-out',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
+                            <button
+                                onClick={handlePlatformSave}
+                                disabled={isBatchSaving}
+                                style={{
+                                    background: '#3B82F6', color: 'white', border: 'none',
+                                    padding: '10px 24px', borderRadius: 12, fontWeight: 800,
+                                    fontSize: 14, cursor: 'pointer', opacity: isBatchSaving ? 0.5 : 1
+                                }}
+                            >
+                                {isBatchSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+                            </button>
+                        </div>
+                    )
                 }
             </div >
 
-            {/* Edit Modal */}
-            {
-                editingItem && (
-                    <div className="modal-overlay" onClick={() => setEditingItem(null)}>
-                        <div className="modal" onClick={e => e.stopPropagation()}>
-                            <h2 className="modal-title">Editar item</h2>
-
-                            <div className="form-group">
-                                <label className="form-label">Nombre</label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    value={editForm.name}
-                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">Precio (ARS)</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    value={editForm.price}
-                                    onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">Imagen (JPG/PNG)</label>
-                                {editForm.image && (
-                                    <div style={{ marginBottom: 8 }}>
-                                        <img
-                                            src={editForm.image}
-                                            alt="Preview"
-                                            onClick={() => {
-                                                // 🛡️ CLICK-TO-OVERWRITE
-                                                if (editingItem.isFeaturedSlot) {
-                                                    activeFeaturedSlotRef.current = editingItem.index
-                                                } else if (editingItem.categoryId) {
-                                                    activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
-                                                }
-                                                fileInputRef.current?.click()
-                                            }}
-                                            style={{
-                                                width: '100%',
-                                                maxHeight: 120,
-                                                objectFit: 'cover',
-                                                borderRadius: 10,
-                                                cursor: 'pointer' // Hand cursor for interactivity
-                                            }}
-                                            title="Clic para cambiar imagen"
-                                        />
-                                    </div>
-                                )}
-                                {/* File Input moved to root */}
-                                <button
-                                    className="btn btn-secondary btn-block"
-                                    onClick={() => {
-                                        if (editingItem.isFeaturedSlot) {
-                                            activeFeaturedSlotRef.current = editingItem.index
-                                        } else if (editingItem.categoryId) {
-                                            activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
-                                        }
-                                        fileInputRef.current?.click()
-                                    }}
-                                    disabled={isUploading}
-                                >
-                                    {isUploading ? 'Optimizando...' : (editForm.image ? 'Cambiar imagen' : 'Subir imagen')}
-                                </button>
-                                {uploadStatus && (
-                                    <p style={{
-                                        fontSize: 12,
-                                        color: uploadStatus.success ? '#22C55E' : '#EF4444',
-                                        marginTop: 6
-                                    }}>
-                                        {uploadStatus.message}
-                                    </p>
-                                )}
-                            </div>
-
-                            <button
-                                className="btn btn-primary btn-block"
-                                onClick={handleSave}
-                            >
-                                Guardar
-                            </button>
-                            <button
-                                className="btn btn-secondary btn-block"
-                                style={{ marginTop: 8 }}
-                                onClick={() => setEditingItem(null)}
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                )
-            }
-
-
-            {/* Hidden File Input (Always Mounted for "Vacío" Tap) */}
-            <input
-                key={inputKey}
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                style={{ display: 'none' }}
-            />
-
-            {/* Backend Navigation */}
-            <BackendNav
-                role={demoMode ? 'demo' : 'owner'}
-                useRoutes={true}
-            />
-            {/* SAVE SUCCESS TOAST */}
-            {
-                saveStatus && (
-                    <div style={{
-                        position: 'fixed',
-                        bottom: 24,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
-                        padding: '10px 24px', borderRadius: 50,
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                        fontWeight: 600, fontSize: 14, zIndex: 9999,
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        animation: 'fadeIn 0.2s ease-out'
-                    }}>
-                        <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
-                    </div>
-                )
-            }
-
-            {/* 💾 FLOATING SAVE BAR (Strike 1) */}
-            {/* 🛡️ BATCH LOADER OVERLAY */}
-            {
-                isBatchSaving && (
-                    <div style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 99999,
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        backdropFilter: 'blur(4px)'
-                    }}>
-                        <div style={{
-                            width: 50, height: 50, border: '4px solid rgba(255,255,255,0.3)',
-                            borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 1s linear infinite'
-                        }} />
-                        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-                        <h2 style={{ color: 'white', marginTop: 20, fontSize: 18, fontWeight: 600 }}>Publicando Cambios...</h2>
-                        <p style={{ color: '#94A3B8', marginTop: 8, fontSize: 14 }}>Sincronizando con la nube...</p>
-                    </div>
-                )
-            }
-
-            {
-                hasChanges && (
-                    <div style={{
-                        position: 'fixed', bottom: 95, left: 12, right: 12,
-                        background: '#1E293B', color: 'white', padding: '14px 20px',
-                        borderRadius: 16, display: 'flex', justifyContent: 'space-between',
-                        alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-                        zIndex: 10000, animation: 'slideUp 0.3s ease-out',
-                        border: '1px solid rgba(255,255,255,0.1)'
-                    }}>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
-                        <button
-                            onClick={handlePlatformSave}
-                            disabled={isBatchSaving}
-                            style={{
-                                background: '#3B82F6', color: 'white', border: 'none',
-                                padding: '10px 24px', borderRadius: 12, fontWeight: 800,
-                                fontSize: 14, cursor: 'pointer', opacity: isBatchSaving ? 0.5 : 1
-                            }}
-                        >
-                            {isBatchSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
-                        </button>
-                    </div>
-                )
-            }
             {/* ==================== FOODSPOT EDITOR OVERLAY ==================== */}
             {showEditor && (
                 <DesignWorkspace
@@ -2054,11 +2060,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     onPrint={handlePrintMenu}
                 />
             )}
-
-        </div >
+        </>
     )
 }
-
-
 
 export default MenuManager
