@@ -210,14 +210,29 @@ function Order({ config: configProp }) {
     }
 
     // ============================================
-    // 🚀 THE SUBMISSION ENGINE
+    // 🚀 THE SUBMISSION ENGINE (PERSISTENT-FIRST v2)
     // ============================================
+    // Strategy: DB INSERT → WhatsApp Shadow Receipt → MP Attempt → Fallback
+    // The order is NEVER lost, even if MP lags or crashes.
+    // ============================================
+
+    // 📲 WhatsApp link builder (extracted for reuse across branches)
+    const buildWhatsAppUrl = (orderPayload) => {
+        if (!ownerPhone) return null
+        const message = buildWhatsAppSummary(
+            { ...orderPayload, orderNumber: orderPayload.order_number, customerInfo },
+            businessName,
+            orderPayload.payment_method
+        )
+        return `https://wa.me/${ownerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
+    }
+
     const handleSubmit = async () => {
         if (isSubmitting || submitted || !order?.items?.length) return
         if (config.pauseOrders) return
         if (isOutOfRadius) return
 
-        // 🛡️ VALIDATION
+        // ─── STEP 1: VALIDATION ───────────────────────────
         const errors = []
         if (!customerInfo.name || customerInfo.name.length < 2) errors.push('Nombre requerido')
 
@@ -239,10 +254,7 @@ function Order({ config: configProp }) {
 
         const orderNumber = generateOrderNumber()
         const guestToken = getGuestToken()
-
-        // 💎 STATUS 0: All orders start as 'pending_payment' (FSM)
         const isCashPath = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
-        const initialStatus = 'pending_payment'
 
         const newOrder = {
             business_id: businessId,
@@ -252,13 +264,10 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: initialStatus,
+            status: 'pendiente', // 💎 PERSISTENT-FIRST: Saved immediately, payment resolved after
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
-            // 🛡️ CRASH FIX: Only include delivery_address if isDelivery
-            // For Strike 17, this is now an object. Supabase/Postgres will handle it as JSON if column is JSONB.
-            // If column is TEXT, we might consider JSON.stringify(), but we'll try sending object first as Supabase JS client usually handles this.
             delivery_address: isDelivery ? (customerInfo.address || null) : null,
             table_number: orderType === 'dine_in' ? customerInfo.tableNumber : null,
             payment_method: paymentMethod,
@@ -267,7 +276,9 @@ function Order({ config: configProp }) {
         }
 
         try {
-            // 🛡️ CLOUD-FIRST: Create order in Supabase
+            // ─── STEP 2: PERSISTENT-FIRST DB INSERT ───────────
+            // The order exists in Supabase BEFORE any external API call.
+            // Even if the user's phone dies here, the owner sees the order.
             const { data: savedOrder, error } = await supabase
                 .from('orders')
                 .insert(newOrder)
@@ -281,9 +292,18 @@ function Order({ config: configProp }) {
                 localStorage.setItem('fs_customer_phone', customerInfo.phone)
             }
 
-            // 💳 PAYMENT ROUTING
+            // ─── STEP 3: THE SHADOW RECEIPT (WhatsApp) ────────
+            // Pre-build the WhatsApp URL so it's ready for any branch
+            const whatsappUrl = buildWhatsAppUrl(newOrder)
+
+            // For non-MP paths, fire WhatsApp immediately
+            if (isCashPath && whatsappUrl) {
+                window.open(whatsappUrl, '_blank')
+            }
+
+            // ─── STEP 4: PAYMENT ROUTING ──────────────────────
             if (paymentMethod === 'mercadopago') {
-                // ========== MERCADO PAGO PATH (VIA EDGE FUNCTION) ==========
+                // ========== MERCADO PAGO BRANCH ==========
                 try {
                     const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
                         body: { order_id: savedOrder.id }
@@ -291,68 +311,50 @@ function Order({ config: configProp }) {
 
                     if (prefError) throw prefError
 
+                    // Item/price guard from Edge Function
                     if (prefData?.error === 'item_unavailable' || prefData?.error === 'price_mismatch') {
                         showToast(`⚠️ ${prefData.message}`)
                         setIsSubmitting(false)
                         return
                     }
 
+                    // MP not configured → silent fallback
                     if (prefData?.error === 'mp_not_configured') {
-                        // Fallback to cash
-                        await supabase
-                            .from('orders')
-                            .update({ status: 'pending_payment', payment_method: 'efectivo' })
-                            .eq('id', savedOrder.id)
-                        showToast('⚠️ Mercado Pago no configurado. Se cambió a efectivo.')
-                        setSubmitted(true)
-                        setTimeout(() => {
-                            navigate(`../status?orderId=${savedOrder.id}`)
-                        }, 1500)
-                        return
+                        throw new Error('mp_not_configured')
                     }
 
+                    // 🎯 SUCCESS: Redirect to Mercado Pago checkout
                     if (prefData?.init_point) {
                         clearCurrentOrder()
                         incrementOrderCount()
                         if (isDelivery) clearDeliveryMode()
                         window.location.href = prefData.init_point
                         return
-                    } else {
-                        throw new Error('No init_point from Edge Function')
                     }
+
+                    // No init_point → treat as failure
+                    throw new Error('No init_point returned from Edge Function')
+
                 } catch (mpError) {
-                    console.error('MP Error:', mpError)
-                    // Fallback to cash
+                    // ========== SILENT MP FALLBACK ==========
+                    // Order already exists (Step 2). Patch it to cash.
+                    console.warn('[Order] MP fallback triggered:', mpError.message)
+
                     await supabase
                         .from('orders')
-                        .update({ status: 'pending_payment', payment_method: 'efectivo' })
+                        .update({ payment_method: 'efectivo' })
                         .eq('id', savedOrder.id)
 
-                    showToast('⚠️ Error con Mercado Pago. Se cambió a pago en efectivo.')
-                    setSubmitted(true)
-                    setTimeout(() => {
-                        navigate(`../status?orderId=${savedOrder.id}`)
-                    }, 1500)
-                    return
+                    // Fire WhatsApp as the receipt for the now-cash order
+                    if (whatsappUrl) {
+                        window.open(whatsappUrl, '_blank')
+                    }
+
+                    showToast('Redirigiendo a pago manual...')
                 }
             }
 
-            // ========== CASH / OTHER PATHS ==========
-            // Open WhatsApp with order summary if needed
-            if (ownerPhone && isCashPath) {
-                const whatsappMessage = buildWhatsAppSummary(
-                    { ...newOrder, orderNumber, customerInfo },
-                    businessName,
-                    paymentMethod
-                )
-                const whatsappUrl = `https://wa.me/${ownerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
-
-                if (orderType === 'delivery' || paymentMethod === 'efectivo') {
-                    window.open(whatsappUrl, '_blank')
-                }
-            }
-
-            // Cleanup
+            // ─── STEP 5: FINALIZE ─────────────────────────────
             clearCurrentOrder()
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()
@@ -363,7 +365,7 @@ function Order({ config: configProp }) {
             }, 1500)
 
         } catch (err) {
-            console.error('Order Error:', err)
+            console.error('[Order] Submission Error:', err)
             showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
         }

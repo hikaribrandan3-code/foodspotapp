@@ -11,6 +11,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
+import PrintableMenu from '../../components/PrintableMenu.jsx'
 import './MenuStyles.css'
 
 /**
@@ -926,6 +927,31 @@ function MenuManager({ config: configProp, demoMode = false }) {
         fileInputRef.current?.click()
     }
 
+    // 🖨️ PRINT MENU LOGIC
+    const DISCORD_WEBHOOK_URL = import.meta.env.VITE_DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1344449833215889418/aCszT58g7hH9M1k0Q8Q9j7Z-Z5r4Y6k1t5M9j7Z-Z5r4Y6k1t5M9j7Z-Z5r4Y6k1t5M9'
+
+    const handlePrintMenu = async () => {
+        window.print()
+
+        try {
+            await fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: `🖨️ **Menú Impreso**\nNegocio: \`${tenantData?.business_name || 'Desconocido'}\`\nID: \`${targetBusinessId}\`\nFecha: ${new Date().toLocaleString('es-AR')}`
+                })
+            })
+        } catch (e) {
+            console.error('Discord Webhook Failed', e)
+        }
+
+        const newConfig = { ...localConfig, lastPrintedAt: new Date().toISOString() }
+        setLocalConfig(newConfig)
+        updateConfig(newConfig)
+        window.dispatchEvent(new CustomEvent('frontendSync'))
+        setHasChanges(true)
+    }
+
     // 🚧 THE GATEKEEPER (Bypass Mode): Only block if tenant context is NOT loaded.
     // If loaded but empty, LET US IN to add initial data.
     if (!tenantLoaded) {
@@ -947,6 +973,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+            {/* 🖨️ THE PRINTABLE MENU COMPONENT (Hidden except on print) */}
+            <PrintableMenu
+                menu={menu}
+                businessName={tenantData?.business_name || localConfig?.businessName || 'Menú'}
+                primaryColor={localConfig?.themeColor || '#1E293B'}
+                logoUrl={localConfig?.logoUrl}
+            />
+
             <BackendHeader
                 title={demoMode ? "Demo Menú" : "Menú"}
                 onLogout={handleLogout}
@@ -999,6 +1033,44 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     {/* Archive Info */}
                     <div style={{ background: '#F0FDF4', borderRadius: 12, border: '1px solid #BBF7D0', padding: 12, marginBottom: 12 }}>
                         <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
+                    </div>
+
+                    {/* ==================== PRINTABLE MENU GENERATOR ==================== */}
+                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>🖨️ Menú Físico (PDF/Imprimir)</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0', maxWidth: '280px' }}>
+                                    Genera un menú limpio y sin fotos, optimizado para impresión en hoja A4 o PDF.
+                                </p>
+                            </div>
+                            <button
+                                onClick={handlePrintMenu}
+                                style={{
+                                    background: '#1E293B', color: 'white', border: 'none',
+                                    padding: '8px 16px', borderRadius: 8, fontWeight: 600,
+                                    fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                Imprimir
+                            </button>
+                        </div>
+
+                        {/* Version Sync Warning */}
+                        {(hasChanges || (localConfig.lastPrintedAt && tenantData?.updated_at && new Date(tenantData.updated_at) > new Date(localConfig.lastPrintedAt))) && (
+                            <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                                <span style={{ fontSize: 16 }}>⚠️</span>
+                                <div>
+                                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#991B1B' }}>Sincronización de Versión</p>
+                                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#B91C1C' }}>
+                                        {hasChanges
+                                            ? 'Tienes cambios sin guardar. Guárdalos antes de imprimir para obtener la versión final.'
+                                            : 'El menú digital ha sido modificado. Vuelve a imprimir para tener los precios actualizados.'}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* OPERATIONAL COMMAND CENTER (Strike 9) */}
