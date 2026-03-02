@@ -50,6 +50,35 @@ export default function Dashboard() {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
 
+    // 🔊 P0 #3: Audio unlock state (iOS/Safari blocks audio without user gesture)
+    const [audioUnlocked, setAudioUnlocked] = useState(false)
+    const [flashActive, setFlashActive] = useState(false)
+    const flashTimerRef = useRef(null)
+
+    const unlockAudio = () => {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)()
+            // Play a silent buffer to unlock
+            const buffer = ctx.createBuffer(1, 1, 22050)
+            const source = ctx.createBufferSource()
+            source.buffer = buffer
+            source.connect(ctx.destination)
+            source.start(0)
+            setAudioUnlocked(true)
+            console.log('🔊 Audio unlocked by user gesture')
+        } catch (e) {
+            // Fallback: mark as unlocked anyway so banner disappears
+            setAudioUnlocked(true)
+        }
+    }
+
+    // Visual flash trigger
+    const triggerFlash = () => {
+        setFlashActive(true)
+        if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+        flashTimerRef.current = setTimeout(() => setFlashActive(false), 3000)
+    }
+
     // 🔐 AUTH SYNC: Ensure Global Client sends x-business-id for RLS
     useEffect(() => {
         if (businessId) {
@@ -96,6 +125,7 @@ export default function Dashboard() {
                 if (KITCHEN_STAGES.includes(newOrder.status)) {
                     console.log('🔔 NEW ORDER:', newOrder.id)
                     playNotificationSound()
+                    triggerFlash() // 🚨 P0 #3: Visual flash for muted screens
                     setOrders(prev => [...prev, newOrder])
                 }
             },
@@ -163,11 +193,31 @@ export default function Dashboard() {
     return (
         <div style={{
             padding: 20,
-            background: '#111827', // Dark Mode for Kitchen
+            background: '#111827',
             minHeight: '100vh',
             color: 'white',
-            fontFamily: 'Inter, system-ui, sans-serif'
+            fontFamily: 'Inter, system-ui, sans-serif',
+            // 🚨 P0 #3: Visual flash border when new order arrives
+            boxShadow: flashActive ? 'inset 0 0 0 6px #EF4444' : 'none',
+            animation: flashActive ? 'kitchenFlash 0.5s ease-in-out 6' : 'none',
+            transition: 'box-shadow 0.3s'
         }}>
+            {/* 🔊 P0 #3: Audio Unlock Banner */}
+            {!audioUnlocked && (
+                <div
+                    onClick={unlockAudio}
+                    style={{
+                        background: '#FBBF24', color: '#78350F',
+                        padding: '14px 20px', borderRadius: 12, marginBottom: 16,
+                        textAlign: 'center', cursor: 'pointer', fontWeight: 700, fontSize: 15,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        animation: 'pulse 1.5s infinite',
+                        boxShadow: '0 4px 12px rgba(251, 191, 36, 0.4)'
+                    }}
+                >
+                    🔔 Toca aquí para activar las alertas de sonido
+                </div>
+            )}
             <header style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>👩‍🍳 Cocina en Vivo</h1>
                 <div style={{ display: 'flex', gap: 10 }}>
@@ -298,6 +348,10 @@ export default function Dashboard() {
 
             <style>{`
                 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+                @keyframes kitchenFlash {
+                    0%, 100% { box-shadow: inset 0 0 0 6px #EF4444; }
+                    50% { box-shadow: inset 0 0 0 6px transparent; }
+                }
             `}</style>
         </div>
     )

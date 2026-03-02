@@ -8,7 +8,16 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import { hmac } from "https://deno.land/x/hmac@v2.0.1/mod.ts";
+
+// Built-in HMAC-SHA256 using Web Crypto API (no external deps)
+async function hmacSha256(secret: string, message: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+        "raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
+    return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
 // CORS Headers
 const corsHeaders = {
@@ -49,17 +58,15 @@ serve(async (req: Request) => {
         if (req.method === "GET") {
             type = url.searchParams.get("type");
             dataId = url.searchParams.get("data.id");
-            // Note: GET requests usually don't carry user_id in params in standard IPN, 
-            // but we'll prioritize POST handling for security/completeness.
         } else {
             type = body.type;
             dataId = body.data?.id?.toString();
-            mpUserId = body.user_id?.toString(); // Critical for Tenant Lookup
+            mpUserId = body.user_id?.toString();
         }
 
         console.log(`🔔 Webhook received: type=${type}, data.id=${dataId}, request_id=${requestId}`);
 
-        // HMAC Verification
+        // HMAC Verification (using built-in crypto.subtle)
         if (MP_WEBHOOK_SECRET && signature && requestId && dataId) {
             const parts = signature.split(",");
             let ts: string | null = null;
@@ -73,7 +80,7 @@ serve(async (req: Request) => {
 
             if (ts && v1) {
                 const signingTemplate = `id:${dataId};request-id:${requestId};ts:${ts};`;
-                const calculatedHash = hmac("sha256", MP_WEBHOOK_SECRET, signingTemplate, "utf8", "hex");
+                const calculatedHash = await hmacSha256(MP_WEBHOOK_SECRET, signingTemplate);
 
                 if (calculatedHash !== v1) {
                     console.error("🚨 HMAC Signature Mismatch!");

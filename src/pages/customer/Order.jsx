@@ -236,7 +236,18 @@ function Order({ config: configProp }) {
         const errors = []
         if (!customerInfo.name || customerInfo.name.length < 2) errors.push('Nombre requerido')
 
+        // 🛡️ P0 #2: Phone validation (strip non-digits, require 8+ digits)
+        if (customerInfo.phone) {
+            const digitsOnly = customerInfo.phone.replace(/\D/g, '')
+            if (digitsOnly.length < 8) {
+                errors.push('Número de teléfono inválido (mínimo 8 dígitos, ej: 1123456789)')
+            }
+        }
+
         if (orderType === 'delivery') {
+            if (!customerInfo.phone || customerInfo.phone.replace(/\D/g, '').length < 8) {
+                errors.push('WhatsApp requerido para delivery (ej: 1123456789)')
+            }
             const validation = validateDeliveryInfo(customerInfo)
             if (!validation.valid) errors.push(...validation.errors)
         } else if (orderType === 'dine_in') {
