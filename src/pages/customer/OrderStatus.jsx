@@ -4,10 +4,10 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { formatPrice } from '../../config/menuData.js'
 import { getGuestToken } from '../../utils/guestToken.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
-// CartContext removed - using direct storage for reorder logic
-import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js' // 🆕 Utils Import
+import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import ItemCard from '../../components/ItemCard'
+import { QRCodeSVG } from 'qrcode.react'
 
 // ============================================
 // 📊 ORDER STATUS - REAL-TIME LIVE TRACKER
@@ -105,8 +105,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
-    // Retry Payment State
     const [retrying, setRetrying] = useState(false)
+    const [showTicket, setShowTicket] = useState(false)
 
     const paymentStatus = searchParams.get('payment')
     const primaryColor = tenantData?.primary_color || '#C4856A'
@@ -354,6 +354,109 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                 </button>
             </div>
 
+            {/* 🎟️ TICKET BUTTON (if order has ticket items) */}
+            {order && hasTicketItems(order) && (
+                <div style={{ width: '100%', maxWidth: 320, marginTop: 16 }}>
+                    <button
+                        onClick={() => setShowTicket(true)}
+                        style={{
+                            width: '100%',
+                            padding: '16px',
+                            background: isTicketRedeemed(order) ? '#6B7280' : 'linear-gradient(135deg, #F59E0B, #D97706)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 12,
+                            fontSize: 16,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            boxShadow: isTicketRedeemed(order) ? 'none' : '0 4px 16px rgba(245,158,11,0.3)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                        }}
+                    >
+                        {isTicketRedeemed(order) ? '✅ Entrada Canjeada' : '🎟️ Ver mi Entrada'}
+                    </button>
+                </div>
+            )}
+
+            {/* 🎟️ DIGITAL TICKET OVERLAY */}
+            {showTicket && order && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 200,
+                    background: 'rgba(0,0,0,0.85)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    padding: 24,
+                }}>
+                    {/* Close */}
+                    <button
+                        onClick={() => setShowTicket(false)}
+                        style={{
+                            position: 'absolute', top: 20, right: 20,
+                            background: 'rgba(255,255,255,0.1)', border: 'none',
+                            color: '#FFF', fontSize: 24, width: 44, height: 44,
+                            borderRadius: 12, cursor: 'pointer',
+                        }}
+                    >✕</button>
+
+                    {/* Ticket Card */}
+                    <div style={{
+                        background: '#FFFFFF', borderRadius: 24,
+                        padding: '32px 24px', maxWidth: 340, width: '100%',
+                        textAlign: 'center', position: 'relative',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
+                        border: '3px solid #F59E0B',
+                    }}>
+                        {/* Event Title */}
+                        <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
+                            {tenantData?.business_name || 'FoodSpot'}
+                        </p>
+                        <h3 style={{ fontSize: 20, fontWeight: 800, color: '#1F2937', margin: '0 0 4px' }}>
+                            {getTicketItemName(order)}
+                        </h3>
+                        <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 20px' }}>
+                            Pedido #{order.order_number} · {order.customer_name || 'Invitado'}
+                        </p>
+
+                        {/* QR Code */}
+                        <div style={{
+                            background: '#FFFFFF', padding: 16, borderRadius: 16,
+                            display: 'inline-block',
+                            border: '2px dashed #E5E7EB',
+                        }}>
+                            <QRCodeSVG
+                                value={`FS-TICKET|${order.id}|${tenantSlug}`}
+                                size={200}
+                                level="H"
+                                includeMargin={false}
+                                bgColor="#FFFFFF"
+                                fgColor="#1F2937"
+                            />
+                        </div>
+
+                        <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 16, margin: '16px 0 0' }}>
+                            Mostrá este código al staff para ingresar
+                        </p>
+
+                        {/* REDEEMED STAMP */}
+                        {isTicketRedeemed(order) && (
+                            <div style={{
+                                position: 'absolute', top: '50%', left: '50%',
+                                transform: 'translate(-50%, -50%) rotate(-15deg)',
+                                border: '4px solid #EF4444',
+                                borderRadius: 12, padding: '8px 24px',
+                                color: '#EF4444', fontSize: 28, fontWeight: 900,
+                                letterSpacing: '0.1em', opacity: 0.8,
+                                pointerEvents: 'none',
+                            }}>
+                                CANJEADA
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* LINKS */}
             <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
                 <a
@@ -407,6 +510,24 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             `}</style>
         </div>
     )
+}
+
+// 🎟️ TICKET HELPERS
+const hasTicketItems = (order) => {
+    return order?.items?.some(item =>
+        item.name?.startsWith('🎟️') || item.isTicket === true
+    )
+}
+
+const getTicketItemName = (order) => {
+    const ticket = order?.items?.find(item =>
+        item.name?.startsWith('🎟️') || item.isTicket === true
+    )
+    return ticket?.name?.replace('🎟️ ', '') || 'Entrada'
+}
+
+const isTicketRedeemed = (order) => {
+    return order?.mp_payment_data?.ticket_redeemed === true
 }
 
 export default OrderStatus

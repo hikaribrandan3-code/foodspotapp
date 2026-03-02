@@ -1,10 +1,13 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { formatPrice } from '../../config/menuData.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
-import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics.js' // Strike 17 Imports
+import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics.js'
 import { useOrdersRealtime } from '../../hooks/useOrdersRealtime.js'
+
+// Lazy-load scanner to avoid camera bundle on every page load
+const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
 
 // ============================================
 // 🎯 STAFF MISSION CONTROL v2 — FSM SAFETY CAGE
@@ -116,6 +119,7 @@ function StaffDashboard() {
     const [processingOrderId, setProcessingOrderId] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
     const [userRole, setUserRole] = useState(null)
+    const [showScanner, setShowScanner] = useState(false)
 
     // ============================================
     // 🔐 AUTH (ROLE DETECTION FOR NAV)
@@ -288,6 +292,19 @@ function StaffDashboard() {
                         </h1>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {/* 🎟️ TICKET SCANNER BUTTON */}
+                        <button
+                            onClick={() => setShowScanner(true)}
+                            style={{
+                                background: '#F59E0B', border: 'none',
+                                color: '#FFF', padding: '8px 14px',
+                                borderRadius: 8, fontSize: 13,
+                                fontWeight: 700, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: 4,
+                            }}
+                        >
+                            🎟️ Escanear
+                        </button>
                         <div style={{
                             width: 8, height: 8, borderRadius: '50%', background: '#22C55E',
                             boxShadow: '0 0 8px #22C55E'
@@ -609,6 +626,13 @@ function StaffDashboard() {
                     to { transform: translate(-50%, 0); opacity: 1; }
                 }
             `}</style>
+
+            {/* 🎟️ TICKET SCANNER OVERLAY */}
+            {showScanner && (
+                <Suspense fallback={<div style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>Cargando escáner...</div>}>
+                    <TicketScanner onClose={() => setShowScanner(false)} />
+                </Suspense>
+            )}
         </div>
     )
 }
