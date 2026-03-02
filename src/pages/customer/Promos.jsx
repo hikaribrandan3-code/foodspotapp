@@ -1,88 +1,146 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { addToCurrentOrder } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 
 // ============================================
-// 🎯 PROMOS — CLOUD-FIRST (P1 #16)
+// 🎯 PROMOS — EVENT HUB (STRIKE 2)
 // ============================================
-// Data source: tenantData.app_config.promos
-// Silo lock: useTenant() guarantees business isolation
-// Architecture prep: CSS-var driven cards ready for
-// 9:16 vertical "Flyer/Event Hub" conversion (next strike)
+// 9:16 Vertical Flyer Feed + Box Office Checkout
+// Scroll-snap-y mandatory. Glassmorphism overlays.
+// Pulsing "Live" CTA. Native OS share sheet.
+// Data: tenantData.app_config.promos
+// Silo: useTenant() only — zero direct Supabase calls.
 // ============================================
 
-// --- Default fallback promos (shown if owner hasn't configured any) ---
-const FALLBACK_PROMOS = [
+// --- Fallback flyers (shown if owner hasn't configured promos yet) ---
+const FALLBACK_FLYERS = [
     {
-        id: 'promo-1',
-        title: 'ESPECIAL DE LA SEMANA',
-        name: 'Combo del Día',
-        description: 'Plato principal + bebida + postre',
-        price: 1499,
-        originalPrice: 1899,
-        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=400&fit=crop',
-        type: 'featured'
+        id: 'flyer-1',
+        title: 'NOCHE DE CERVEZAS',
+        subtitle: 'Happy Hour — 2x1 en pintas',
+        description: 'Todos los jueves de 19 a 23hs. La mejor selección de cervezas artesanales.',
+        date: 'Todos los Jueves',
+        price: null,
+        image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&h=1400&fit=crop',
+        isTicket: false,
+        isLive: false
     },
     {
-        id: 'promo-2',
-        title: 'Happy Hour',
-        name: '2x1 en Bebidas',
-        description: 'Todos los días de 17 a 20hs',
-        price: null,
-        originalPrice: null,
-        image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&h=400&fit=crop',
-        type: 'bundle'
+        id: 'flyer-2',
+        title: 'DJ SET — NOCHE ELÉCTRICA',
+        subtitle: 'Sábado 15 de Marzo',
+        description: 'DJ Fuego trae los beats más calientes. Cover incluye una bebida.',
+        date: 'Sáb 15 Mar · 23:00',
+        price: 3500,
+        image: 'https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?w=800&h=1400&fit=crop',
+        isTicket: true,
+        isLive: false
+    },
+    {
+        id: 'flyer-3',
+        title: 'BRUNCH DOMINGUERO',
+        subtitle: 'Reservá tu lugar',
+        description: 'Waffles, café de especialidad y mimosas ilimitadas. Cupos limitados.',
+        date: 'Domingos · 11:00 a 15:00',
+        price: 4500,
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=1400&fit=crop',
+        isTicket: true,
+        isLive: false
     }
 ]
+
+// --- Share Icon SVG ---
+const ShareIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+        <polyline points="16 6 12 2 8 6" />
+        <line x1="12" y1="2" x2="12" y2="15" />
+    </svg>
+)
 
 function Promos() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
+    const feedRef = useRef(null)
 
-    // ☁️ SILO LOCK: All data from useTenant() — no direct Supabase calls
+    // ☁️ SILO LOCK
     const { tenantData } = useTenant()
     const appConfig = tenantData?.app_config || {}
     const primaryColor = tenantData?.primary_color || '#C4856A'
+    const businessName = tenantData?.business_name || ''
 
-    // Cloud promos (owner-configured) or fallback
-    const promos = appConfig?.promos?.items || FALLBACK_PROMOS
-    const promosEnabled = appConfig?.promos?.enabled !== false // default: enabled
+    // Cloud flyers or fallback
+    const flyers = appConfig?.promos?.items?.length > 0
+        ? appConfig.promos.items
+        : FALLBACK_FLYERS
+    const promosEnabled = appConfig?.promos?.enabled !== false
 
-    // Split promos by type for layout
-    const featuredPromo = promos.find(p => p.type === 'featured') || promos[0]
-    const bundlePromos = promos.filter(p => p !== featuredPromo)
+    // Active flyer index for dot indicator
+    const [activeIndex, setActiveIndex] = useState(0)
 
-    // Rewards config (for the bottom pill)
-    const rewardsEnabled = appConfig?.features?.rewardsEnabled ?? false
-    const stampsRequired = appConfig?.rewards?.stampsRequired || 10
+    // Scroll handler for dot indicator
+    const handleScroll = () => {
+        if (!feedRef.current) return
+        const container = feedRef.current
+        const scrollTop = container.scrollTop
+        const flyerHeight = container.clientHeight
+        const index = Math.round(scrollTop / flyerHeight)
+        setActiveIndex(Math.min(index, flyers.length - 1))
+    }
 
-    // Add item to cart handler
-    const handleAddToCart = (item) => {
-        if (!item.price) return // Skip items without price (info-only promos)
+    // 🎟️ BOX OFFICE: Add ticket/promo to cart
+    const handleBuyTicket = (flyer) => {
+        if (!flyer.price) return
         const cartItem = {
-            id: item.id,
-            name: item.name || item.subtitle || item.title,
-            price: item.price,
+            id: flyer.id,
+            name: `🎟️ ${flyer.title}`,
+            price: flyer.price,
             quantity: 1,
-            image: item.image
+            image: flyer.image
         }
         addToCurrentOrder(cartItem)
         navigate(`/${tenantSlug}/order`)
     }
 
-    // ☁️ Empty state when promos disabled
+    // 📤 NATIVE SHARE
+    const handleShare = async (flyer) => {
+        const shareData = {
+            title: flyer.title,
+            text: `${flyer.title} — ${flyer.subtitle}\n${flyer.description}`,
+            url: window.location.href
+        }
+
+        try {
+            if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                await navigator.share(shareData)
+            } else {
+                // Fallback: copy to clipboard
+                await navigator.clipboard.writeText(`${flyer.title}\n${flyer.description}\n${window.location.href}`)
+                alert('📋 Link copiado al portapapeles')
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.log('Share failed:', err)
+            }
+        }
+    }
+
+    // ☁️ Empty state
     if (!promosEnabled) {
         return (
-            <div style={styles.page}>
-                <div style={styles.emptyState}>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-                    <p style={{ color: '#8C8476', textAlign: 'center', fontSize: 15, margin: 0 }}>
-                        No hay promociones activas en este momento.
+            <div style={{
+                minHeight: '100vh', background: '#000', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', padding: 32
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+                    <p style={{ color: '#9CA3AF', fontSize: 16, margin: 0 }}>
+                        No hay eventos activos en este momento.
                     </p>
-                    <p style={{ color: '#B8AFA4', textAlign: 'center', fontSize: 13, marginTop: 8 }}>
-                        ¡Volvé pronto para enterarte de las ofertas!
+                    <p style={{ color: '#6B7280', fontSize: 13, marginTop: 8 }}>
+                        ¡Volvé pronto para enterarte de los próximos eventos!
                     </p>
                 </div>
             </div>
@@ -90,292 +148,291 @@ function Promos() {
     }
 
     return (
-        <div style={styles.page}>
-            {/* HEADER */}
-            <header style={styles.header}>
-                <h1 style={{ ...styles.title, color: primaryColor }}>Promos</h1>
-                <p style={styles.subtitle}>Ofertas especiales para vos 🔥</p>
-            </header>
+        <div style={{
+            position: 'fixed', inset: 0,
+            background: '#000',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        }}>
+            {/* === INLINE STYLES (animations) === */}
+            <style>{`
+                @keyframes livePulse {
+                    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 ${primaryColor}88; }
+                    50% { transform: scale(1.03); box-shadow: 0 0 20px 4px ${primaryColor}44; }
+                }
+                @keyframes dotPulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+                @keyframes shimmer {
+                    0% { background-position: -200% 0; }
+                    100% { background-position: 200% 0; }
+                }
+            `}</style>
 
-            {/* === FEATURED PROMO (9:16-ready card) === */}
-            {featuredPromo && (
-                <div style={styles.featuredCard}>
-                    {/* Hero Image — aspect-ratio ready for 9:16 flyer conversion */}
-                    <div style={styles.featuredImageWrap}>
+            {/* === HEADER (Floating over feed) === */}
+            <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0,
+                zIndex: 20, padding: '12px 16px',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                paddingTop: 'max(12px, env(safe-area-inset-top))'
+            }}>
+                <div>
+                    <p style={{
+                        color: '#FFFFFF', fontSize: 18, fontWeight: 800,
+                        margin: 0, letterSpacing: '-0.02em'
+                    }}>
+                        {businessName || 'Eventos'}
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: '2px 0 0', fontWeight: 500 }}>
+                        EVENTOS & PROMOS
+                    </p>
+                </div>
+
+                {/* Dot Indicator */}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    {flyers.map((_, i) => (
+                        <div key={i} style={{
+                            width: i === activeIndex ? 18 : 6,
+                            height: 6,
+                            borderRadius: 3,
+                            background: i === activeIndex ? primaryColor : 'rgba(255,255,255,0.3)',
+                            transition: 'all 0.3s ease',
+                            animation: i === activeIndex ? 'dotPulse 2s ease-in-out infinite' : 'none'
+                        }} />
+                    ))}
+                </div>
+            </div>
+
+            {/* === 9:16 VERTICAL FLYER FEED === */}
+            <div
+                ref={feedRef}
+                onScroll={handleScroll}
+                style={{
+                    height: '100%',
+                    overflowY: 'scroll',
+                    scrollSnapType: 'y mandatory',
+                    WebkitOverflowScrolling: 'touch',
+                }}
+            >
+                {flyers.map((flyer, index) => (
+                    <div
+                        key={flyer.id || index}
+                        style={{
+                            height: '100vh',
+                            width: '100%',
+                            scrollSnapAlign: 'start',
+                            scrollSnapStop: 'always',
+                            position: 'relative',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {/* === BLURRED BACKDROP (for non-perfect images) === */}
+                        <div style={{
+                            position: 'absolute', inset: '-20px',
+                            backgroundImage: `url(${flyer.image})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            filter: 'blur(30px) brightness(0.4)',
+                            transform: 'scale(1.1)',
+                        }} />
+
+                        {/* === MAIN IMAGE === */}
                         <img
-                            src={featuredPromo.image}
-                            alt={featuredPromo.name}
-                            style={styles.featuredImage}
+                            src={flyer.image}
+                            alt={flyer.title}
+                            loading={index === 0 ? 'eager' : 'lazy'}
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                            }}
                         />
 
-                        {/* Price Badge */}
-                        {featuredPromo.price && (
-                            <div style={styles.priceBadge}>
-                                {featuredPromo.originalPrice && (
-                                    <p style={styles.originalPrice}>
-                                        {formatPrice(featuredPromo.originalPrice)}
-                                    </p>
-                                )}
-                                <p style={{ ...styles.currentPrice, color: primaryColor }}>
-                                    {formatPrice(featuredPromo.price)}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Add Button */}
-                        {featuredPromo.price && (
-                            <button
-                                onClick={() => handleAddToCart(featuredPromo)}
-                                style={{ ...styles.addButton, background: primaryColor }}
-                            >
-                                <span style={{ fontSize: 18, marginRight: 4 }}>+</span> AGREGAR
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Info */}
-                    <div style={styles.featuredInfo}>
-                        <p style={styles.featuredLabel}>{featuredPromo.title}</p>
-                        <p style={styles.featuredName}>{featuredPromo.name}</p>
-                        <p style={styles.featuredDesc}>{featuredPromo.description}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* === BUNDLE PROMOS (horizontal scroll, flyer-ready) === */}
-            {bundlePromos.length > 0 && (
-                <>
-                    <h3 style={styles.sectionTitle}>Más ofertas</h3>
-                    <div style={styles.scrollContainer}>
-                        {bundlePromos.map((promo) => (
-                            <div key={promo.id} style={styles.bundleCard}>
-                                {/* Image */}
-                                <div style={styles.bundleImageWrap}>
-                                    <img
-                                        src={promo.image}
-                                        alt={promo.name}
-                                        style={styles.bundleImage}
-                                    />
+                        {/* === GLASSMORPHISM BOTTOM OVERLAY === */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: 0, left: 0, right: 0,
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)',
+                            padding: '80px 20px 100px',
+                            paddingBottom: 'max(100px, calc(80px + env(safe-area-inset-bottom)))',
+                        }}>
+                            {/* Date Badge */}
+                            {flyer.date && (
+                                <div style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                                    background: 'rgba(255,255,255,0.12)',
+                                    backdropFilter: 'blur(16px)',
+                                    WebkitBackdropFilter: 'blur(16px)',
+                                    borderRadius: 20, padding: '5px 12px',
+                                    marginBottom: 12,
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                }}>
+                                    <span style={{ fontSize: 12 }}>📅</span>
+                                    <span style={{
+                                        color: '#FFFFFF', fontSize: 12, fontWeight: 600,
+                                        letterSpacing: '0.02em'
+                                    }}>
+                                        {flyer.date}
+                                    </span>
                                 </div>
+                            )}
 
-                                {/* Info */}
-                                <div style={styles.bundleInfo}>
-                                    <p style={styles.bundleTitle}>{promo.title}</p>
-                                    <p style={styles.bundleName}>{promo.name}</p>
-                                    <p style={styles.bundleDesc}>{promo.description}</p>
-                                    <div style={styles.bundleFooter}>
-                                        {promo.price && (
-                                            <p style={{ ...styles.bundlePrice, color: primaryColor }}>
-                                                {formatPrice(promo.price)}
-                                            </p>
-                                        )}
-                                        {promo.price && (
-                                            <button
-                                                onClick={() => handleAddToCart(promo)}
-                                                style={{ ...styles.bundleAddBtn, background: primaryColor }}
-                                            >
-                                                + AGREGAR
-                                            </button>
-                                        )}
+                            {/* Title */}
+                            <h2 style={{
+                                color: '#FFFFFF', fontSize: 28, fontWeight: 900,
+                                margin: '0 0 6px', lineHeight: 1.1,
+                                letterSpacing: '-0.03em',
+                                textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+                            }}>
+                                {flyer.title}
+                            </h2>
+
+                            {/* Subtitle */}
+                            <p style={{
+                                color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 500,
+                                margin: '0 0 8px',
+                            }}>
+                                {flyer.subtitle}
+                            </p>
+
+                            {/* Description */}
+                            <p style={{
+                                color: 'rgba(255,255,255,0.6)', fontSize: 13,
+                                margin: '0 0 20px', lineHeight: 1.5,
+                                maxWidth: 320,
+                            }}>
+                                {flyer.description}
+                            </p>
+
+                            {/* === ACTION ROW === */}
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: 12,
+                            }}>
+                                {/* BUY / RESERVE BUTTON */}
+                                {flyer.price ? (
+                                    <button
+                                        onClick={() => handleBuyTicket(flyer)}
+                                        style={{
+                                            flex: 1,
+                                            background: primaryColor,
+                                            color: '#FFFFFF',
+                                            border: 'none',
+                                            borderRadius: 14,
+                                            padding: '14px 24px',
+                                            fontSize: 15,
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            letterSpacing: '-0.01em',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 8,
+                                            animation: flyer.isLive ? 'livePulse 2s ease-in-out infinite' : 'none',
+                                            boxShadow: `0 4px 20px ${primaryColor}66`,
+                                        }}
+                                    >
+                                        <span>{flyer.isTicket ? '🎟️' : '🔥'}</span>
+                                        <span>
+                                            {flyer.isTicket ? 'Comprar Entrada' : 'Reservar Lugar'}
+                                            {' · '}
+                                            {formatPrice(flyer.price)}
+                                        </span>
+                                    </button>
+                                ) : (
+                                    /* Info-only flyer — no price */
+                                    <div style={{
+                                        flex: 1,
+                                        background: 'rgba(255,255,255,0.1)',
+                                        backdropFilter: 'blur(12px)',
+                                        WebkitBackdropFilter: 'blur(12px)',
+                                        borderRadius: 14,
+                                        padding: '14px 24px',
+                                        textAlign: 'center',
+                                        border: '1px solid rgba(255,255,255,0.15)',
+                                    }}>
+                                        <span style={{
+                                            color: '#FFFFFF', fontSize: 14, fontWeight: 600,
+                                        }}>
+                                            ✨ Entrada libre
+                                        </span>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </>
-            )}
+                                )}
 
-            {/* Bottom spacing for nav */}
-            <div style={{ height: 100 }} />
+                                {/* SHARE BUTTON */}
+                                <button
+                                    onClick={() => handleShare(flyer)}
+                                    style={{
+                                        width: 48, height: 48,
+                                        borderRadius: 14,
+                                        background: 'rgba(255,255,255,0.12)',
+                                        backdropFilter: 'blur(16px)',
+                                        WebkitBackdropFilter: 'blur(16px)',
+                                        border: '1px solid rgba(255,255,255,0.15)',
+                                        color: '#FFFFFF',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    <ShareIcon />
+                                </button>
+                            </div>
+
+                            {/* LIVE BADGE */}
+                            {flyer.isLive && (
+                                <div style={{
+                                    position: 'absolute', top: -60, right: 20,
+                                    background: '#EF4444',
+                                    color: '#FFFFFF',
+                                    padding: '4px 12px',
+                                    borderRadius: 20,
+                                    fontSize: 11,
+                                    fontWeight: 800,
+                                    letterSpacing: '0.08em',
+                                    display: 'flex', alignItems: 'center', gap: 6,
+                                    boxShadow: '0 2px 12px rgba(239,68,68,0.4)',
+                                }}>
+                                    <div style={{
+                                        width: 6, height: 6, borderRadius: '50%',
+                                        background: '#FFFFFF',
+                                        animation: 'dotPulse 1s ease-in-out infinite',
+                                    }} />
+                                    EN VIVO
+                                </div>
+                            )}
+                        </div>
+
+                        {/* === SHARE FLOATING (top-right) === */}
+                        <button
+                            onClick={() => handleShare(flyer)}
+                            style={{
+                                position: 'absolute', top: 64, right: 16,
+                                width: 40, height: 40,
+                                borderRadius: 12,
+                                background: 'rgba(0,0,0,0.3)',
+                                backdropFilter: 'blur(12px)',
+                                WebkitBackdropFilter: 'blur(12px)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                color: '#FFFFFF',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 10,
+                            }}
+                        >
+                            <ShareIcon />
+                        </button>
+                    </div>
+                ))}
+            </div>
         </div>
     )
-}
-
-// --- STYLES (Standard CSS, var(--color-primary) ready) ---
-const styles = {
-    page: {
-        minHeight: '100vh',
-        backgroundColor: '#F7F4EF',
-        paddingBottom: 24,
-    },
-    header: {
-        textAlign: 'center',
-        padding: '24px 16px 20px',
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 700,
-        margin: 0,
-        letterSpacing: '-0.02em',
-    },
-    subtitle: {
-        fontSize: 14,
-        color: '#8C8476',
-        marginTop: 6,
-        margin: '6px 0 0',
-    },
-    emptyState: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        padding: 40,
-        margin: '40px 16px',
-        textAlign: 'center',
-    },
-
-    // Featured Promo (9:16 flyer-ready)
-    featuredCard: {
-        margin: '0 16px 20px',
-        borderRadius: 20,
-        overflow: 'hidden',
-        backgroundColor: '#FFFFFF',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-    },
-    featuredImageWrap: {
-        position: 'relative',
-        aspectRatio: '16 / 10', // Swap to 9/16 for flyer mode
-        overflow: 'hidden',
-    },
-    featuredImage: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        display: 'block',
-    },
-    priceBadge: {
-        position: 'absolute',
-        top: 12,
-        left: 12,
-        background: 'rgba(255,255,255,0.95)',
-        backdropFilter: 'blur(8px)',
-        borderRadius: 10,
-        padding: '6px 12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    },
-    originalPrice: {
-        fontSize: 11,
-        color: '#9CA3AF',
-        textDecoration: 'line-through',
-        margin: 0,
-    },
-    currentPrice: {
-        fontSize: 18,
-        fontWeight: 700,
-        margin: 0,
-    },
-    addButton: {
-        position: 'absolute',
-        bottom: 12,
-        right: 12,
-        color: 'white',
-        fontWeight: 700,
-        fontSize: 13,
-        padding: '10px 20px',
-        borderRadius: 24,
-        border: 'none',
-        cursor: 'pointer',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-        display: 'flex',
-        alignItems: 'center',
-    },
-    featuredInfo: {
-        padding: '14px 16px 18px',
-    },
-    featuredLabel: {
-        fontSize: 11,
-        fontWeight: 700,
-        color: '#9CA3AF',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        margin: '0 0 4px',
-    },
-    featuredName: {
-        fontSize: 20,
-        fontWeight: 700,
-        color: '#1F2937',
-        margin: '0 0 4px',
-    },
-    featuredDesc: {
-        fontSize: 13,
-        color: '#6B7280',
-        margin: 0,
-    },
-
-    // Section
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: 700,
-        color: '#4A4238',
-        margin: '0 16px 12px',
-    },
-
-    // Bundle cards (horizontal scroll)
-    scrollContainer: {
-        display: 'flex',
-        gap: 14,
-        overflowX: 'auto',
-        padding: '0 16px 16px',
-        WebkitOverflowScrolling: 'touch',
-        scrollSnapType: 'x mandatory',
-    },
-    bundleCard: {
-        flexShrink: 0,
-        width: 180,
-        scrollSnapAlign: 'start',
-        borderRadius: 16,
-        overflow: 'hidden',
-        backgroundColor: '#FFFFFF',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-    },
-    bundleImageWrap: {
-        aspectRatio: '1 / 1',
-        overflow: 'hidden',
-    },
-    bundleImage: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        display: 'block',
-    },
-    bundleInfo: {
-        padding: 12,
-    },
-    bundleTitle: {
-        fontSize: 10,
-        fontWeight: 700,
-        color: '#9CA3AF',
-        textTransform: 'uppercase',
-        margin: '0 0 2px',
-    },
-    bundleName: {
-        fontSize: 14,
-        fontWeight: 700,
-        color: '#1F2937',
-        margin: '0 0 2px',
-    },
-    bundleDesc: {
-        fontSize: 11,
-        color: '#6B7280',
-        margin: '0 0 8px',
-    },
-    bundleFooter: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    bundlePrice: {
-        fontSize: 15,
-        fontWeight: 700,
-        margin: 0,
-    },
-    bundleAddBtn: {
-        color: 'white',
-        fontSize: 10,
-        fontWeight: 700,
-        padding: '6px 12px',
-        borderRadius: 16,
-        border: 'none',
-        cursor: 'pointer',
-    },
 }
 
 export default Promos
