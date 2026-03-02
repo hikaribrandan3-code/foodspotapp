@@ -13,7 +13,7 @@ import './EditorLayer.css'
  */
 export const VERSION = 'CamTech v1.8'
 
-function Camera() {
+function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
 
     const [mode, setMode] = useState('CAMERA')
@@ -80,6 +80,8 @@ function Camera() {
                     onRetake={handleRetake}
                     onDone={handleDone}
                     toolPosition={toolPosition}
+                    neonContext={neonContext}
+                    branding={branding}
                 />
             )}
 

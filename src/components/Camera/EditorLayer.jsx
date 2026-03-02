@@ -13,7 +13,7 @@ import './EditorLayer.css'
  * + Persistent Close (X) with high z-index (keyboard-safe)
  * + Instagram-style text wrapping (~16-18 chars)
  */
-export default function EditorLayer({ imageData, onRetake, onDone, toolPosition }) {
+export default function EditorLayer({ imageData, onRetake, onDone, toolPosition, neonContext = null, branding = null }) {
     // Canvas refs for layer architecture
     const containerRef = useRef(null)
     const baseCanvasRef = useRef(null)
@@ -296,7 +296,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition 
                 strokes,
                 elements: placedElements,
                 displayWidth: canvasDimensions.width,
-                displayHeight: canvasDimensions.height
+                displayHeight: canvasDimensions.height,
+                neonContext,
+                branding
             })
 
             setExportResult(result)
