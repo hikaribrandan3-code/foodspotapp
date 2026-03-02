@@ -1,47 +1,138 @@
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { formatPrice } from '../../config/menuData.js'
 import { logout } from '../../utils/auth.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 
-/* --- ANALYTICS COMPONENT (SUPABASE-READY READ LAYER) --- */
-const Analytics = ({ orders = [] }) => {
+// ============================================
+// 📊 ANALYTICS — REAL SUPABASE DATA (P0 #9)
+// ============================================
+
+const DATE_RANGES = [
+    { id: 'today', label: 'Hoy' },
+    { id: 'week', label: '7 días' },
+    { id: 'month', label: '30 días' },
+    { id: 'all', label: 'Todo' }
+]
+
+function getDateCutoff(rangeId) {
+    const now = new Date()
+    switch (rangeId) {
+        case 'today': {
+            const start = new Date(now)
+            start.setHours(0, 0, 0, 0)
+            return start.toISOString()
+        }
+        case 'week': {
+            const d = new Date(now)
+            d.setDate(d.getDate() - 7)
+            return d.toISOString()
+        }
+        case 'month': {
+            const d = new Date(now)
+            d.setDate(d.getDate() - 30)
+            return d.toISOString()
+        }
+        default:
+            return null
+    }
+}
+
+const Analytics = () => {
     const navigate = useNavigate()
-    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
+    const { tenantSlug } = useParams()
+    const { businessId, tenantData } = useTenant()
+    const primaryColor = tenantData?.primary_color || '#C4856A'
 
-    // Navigation Exit Strategy: Prevents Admin Sub-Page Trap
     const handleBack = () => navigate(`/${tenantSlug}/owner/summary`)
-    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
     const handleLogout = async () => {
         await supabase.auth.signOut()
         logout()
         window.location.href = `/${tenantSlug}`
     }
 
-    // Data Logic: Purely functional, derived from 'orders' prop to ensure Single Source of Truth
+    // STATE
+    const [orders, setOrders] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [dateRange, setDateRange] = useState('today')
+
+    // FETCH ORDERS
+    useEffect(() => {
+        if (!businessId) return
+        let cancelled = false
+
+        const fetchOrders = async () => {
+            setLoading(true)
+            let query = supabase
+                .from('orders')
+                .select('id, total, subtotal, delivery_fee, items, status, order_type, payment_method, created_at')
+                .eq('business_id', businessId)
+                .order('created_at', { ascending: false })
+
+            const cutoff = getDateCutoff(dateRange)
+            if (cutoff) query = query.gte('created_at', cutoff)
+
+            const { data, error } = await query
+
+            if (!cancelled && !error && data) {
+                setOrders(data)
+            }
+            if (!cancelled) setLoading(false)
+        }
+
+        fetchOrders()
+        return () => { cancelled = true }
+    }, [businessId, dateRange])
+
+    // COMPUTED STATS
     const stats = useMemo(() => {
-        const deliveredOrders = orders.filter(o => o.status === 'entregado')
-        const totalRevenue = deliveredOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-        const deliveryTotal = orders.filter(o => o.orderType === 'delivery').length
-        const pickupTotal = orders.filter(o => o.orderType === 'pickup').length
+        const completed = orders.filter(o =>
+            ['delivered', 'ready', 'dispatched', 'released_to_kitchen', 'preparing'].includes(o.status)
+        )
+        const delivered = orders.filter(o => o.status === 'delivered')
+        const totalRevenue = completed.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+        const deliveryCount = completed.filter(o => o.order_type === 'delivery').length
+        const pickupCount = completed.filter(o => o.order_type === 'pickup').length
+        const dineInCount = completed.filter(o => o.order_type === 'dine_in').length
+        const avgTicket = completed.length > 0 ? totalRevenue / completed.length : 0
+        const mpCount = completed.filter(o => o.payment_method === 'mercadopago').length
+        const cashCount = completed.filter(o => o.payment_method === 'efectivo' || o.payment_method === 'pay_at_counter').length
+
+        // Top items
+        const itemMap = {}
+        completed.forEach(o => {
+            (o.items || []).forEach(item => {
+                const key = item.name || 'Desconocido'
+                if (!itemMap[key]) itemMap[key] = { name: key, qty: 0, revenue: 0 }
+                itemMap[key].qty += item.quantity || 1
+                itemMap[key].revenue += (item.price || 0) * (item.quantity || 1)
+            })
+        })
+        const topItems = Object.values(itemMap).sort((a, b) => b.qty - a.qty).slice(0, 5)
 
         return {
-            totalRevenue,
-            deliveredCount: deliveredOrders.length,
-            deliveryTotal,
-            pickupTotal
+            totalRevenue, orderCount: completed.length, deliveredCount: delivered.length,
+            deliveryCount, pickupCount, dineInCount, avgTicket,
+            mpCount, cashCount, topItems
         }
     }, [orders])
 
-    // Styles
-    const cardStyle = { padding: '20px', background: '#fff', borderRadius: '12px', border: '1px solid #eee', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }
-    const labelStyle = { display: 'block', color: '#888', fontSize: '12px', marginBottom: '8px', textTransform: 'uppercase' }
-    const valueStyle = { margin: 0, fontSize: '22px', fontWeight: 'bold', color: '#000' }
+    // STYLES
+    const cardStyle = {
+        padding: 20, background: '#FFFFFF', borderRadius: 16,
+        border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+    }
+    const labelStyle = {
+        display: 'block', color: '#6B7280', fontSize: 11, marginBottom: 8,
+        textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600
+    }
+    const valueStyle = { margin: 0, fontSize: 24, fontWeight: 800, color: '#111827' }
 
     return (
-        <div className="page backend-surface" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="page backend-surface" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))', background: '#F9FAFB', minHeight: '100vh' }}>
             <BackendHeader
                 title="Analytics"
                 onLogout={handleLogout}
@@ -49,7 +140,7 @@ const Analytics = ({ orders = [] }) => {
                 extraActions={
                     <button
                         onClick={handleBack}
-                        style={{ background: '#f0f0f0', border: 'none', padding: '8px 14px', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', fontSize: 12 }}
+                        style={{ background: '#F3F4F6', border: 'none', padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: 12, color: '#374151' }}
                     >
                         ← Volver
                     </button>
@@ -57,34 +148,130 @@ const Analytics = ({ orders = [] }) => {
             />
 
             <div style={{ padding: 16 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: 20 }}>
-                    <div style={cardStyle}>
-                        <span style={labelStyle}>Ingresos Totales</span>
-                        <h3 style={valueStyle}>{formatPrice(stats.totalRevenue)}</h3>
-                    </div>
-                    <div style={cardStyle}>
-                        <span style={labelStyle}>Entregados</span>
-                        <h3 style={valueStyle}>{stats.deliveredCount}</h3>
-                    </div>
-                    <div style={cardStyle}>
-                        <span style={labelStyle}>Envíos</span>
-                        <h3 style={valueStyle}>{stats.deliveryTotal}</h3>
-                    </div>
-                    <div style={cardStyle}>
-                        <span style={labelStyle}>Pickup</span>
-                        <h3 style={valueStyle}>{stats.pickupTotal}</h3>
-                    </div>
+                {/* DATE RANGE TABS */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
+                    {DATE_RANGES.map(range => (
+                        <button
+                            key={range.id}
+                            onClick={() => setDateRange(range.id)}
+                            style={{
+                                padding: '8px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                                background: dateRange === range.id ? primaryColor : '#FFFFFF',
+                                color: dateRange === range.id ? '#FFFFFF' : '#4B5563',
+                                boxShadow: dateRange === range.id ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {range.label}
+                        </button>
+                    ))}
                 </div>
 
-                <div style={{ marginTop: '30px', padding: '30px', textAlign: 'center', border: '1px dashed #ccc', borderRadius: '20px', color: '#888' }}>
-                    <p style={{ margin: 0 }}>📈 Real-time Supabase insights pendiente migración.</p>
-                </div>
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF' }}>
+                        <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
+                        <p>Cargando datos...</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* KPI GRID */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                            <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
+                                <span style={labelStyle}>Ingresos Totales</span>
+                                <h3 style={{ ...valueStyle, color: primaryColor }}>{formatPrice(stats.totalRevenue)}</h3>
+                            </div>
+                            <div style={cardStyle}>
+                                <span style={labelStyle}>Pedidos</span>
+                                <h3 style={valueStyle}>{stats.orderCount}</h3>
+                            </div>
+                            <div style={cardStyle}>
+                                <span style={labelStyle}>Ticket Promedio</span>
+                                <h3 style={valueStyle}>{formatPrice(stats.avgTicket)}</h3>
+                            </div>
+                            <div style={cardStyle}>
+                                <span style={labelStyle}>Entregados</span>
+                                <h3 style={valueStyle}>{stats.deliveredCount}</h3>
+                            </div>
+                        </div>
+
+                        {/* ORDER TYPE BREAKDOWN */}
+                        <div style={{ ...cardStyle, marginBottom: 20 }}>
+                            <span style={{ ...labelStyle, marginBottom: 16 }}>Por Tipo de Pedido</span>
+                            <div style={{ display: 'flex', gap: 12 }}>
+                                {[
+                                    { label: 'Delivery', count: stats.deliveryCount, icon: '🚗', color: '#3B82F6' },
+                                    { label: 'Pickup', count: stats.pickupCount, icon: '🏪', color: '#10B981' },
+                                    { label: 'Mesa', count: stats.dineInCount, icon: '🍽️', color: '#8B5CF6' }
+                                ].map(t => (
+                                    <div key={t.label} style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#F9FAFB', borderRadius: 12 }}>
+                                        <div style={{ fontSize: 20, marginBottom: 4 }}>{t.icon}</div>
+                                        <div style={{ fontSize: 20, fontWeight: 800, color: t.color }}>{t.count}</div>
+                                        <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 500 }}>{t.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* PAYMENT METHOD SPLIT */}
+                        <div style={{ ...cardStyle, marginBottom: 20 }}>
+                            <span style={{ ...labelStyle, marginBottom: 16 }}>Medio de Pago</span>
+                            <div style={{ display: 'flex', gap: 12 }}>
+                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#EFF6FF', borderRadius: 12 }}>
+                                    <div style={{ fontSize: 18 }}>💳</div>
+                                    <div>
+                                        <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>{stats.mpCount}</div>
+                                        <div style={{ fontSize: 11, color: '#6B7280' }}>Mercado Pago</div>
+                                    </div>
+                                </div>
+                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#F0FDF4', borderRadius: 12 }}>
+                                    <div style={{ fontSize: 18 }}>💵</div>
+                                    <div>
+                                        <div style={{ fontSize: 18, fontWeight: 800, color: '#16A34A' }}>{stats.cashCount}</div>
+                                        <div style={{ fontSize: 11, color: '#6B7280' }}>Efectivo</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* TOP ITEMS */}
+                        <div style={cardStyle}>
+                            <span style={{ ...labelStyle, marginBottom: 16 }}>Top 5 Productos</span>
+                            {stats.topItems.length === 0 ? (
+                                <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 }}>Sin datos aún</p>
+                            ) : (
+                                stats.topItems.map((item, i) => (
+                                    <div key={item.name} style={{
+                                        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
+                                        borderBottom: i < stats.topItems.length - 1 ? '1px solid #F3F4F6' : 'none'
+                                    }}>
+                                        <div style={{
+                                            width: 28, height: 28, borderRadius: 8,
+                                            background: primaryColor + '15', color: primaryColor,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontWeight: 800, fontSize: 13
+                                        }}>
+                                            {i + 1}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{item.name}</div>
+                                            <div style={{ fontSize: 12, color: '#6B7280' }}>{item.qty} vendidos</div>
+                                        </div>
+                                        <div style={{ fontSize: 14, fontWeight: 700, color: primaryColor }}>
+                                            {formatPrice(item.revenue)}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
 
             <BackendNav
                 role="owner"
                 activeTab="analytics"
-                onTabChange={(tab) => navigate(`/owner/${tab}`)}
+                onTabChange={(tab) => navigate(`/${tenantSlug}/owner/${tab}`)}
             />
         </div>
     )

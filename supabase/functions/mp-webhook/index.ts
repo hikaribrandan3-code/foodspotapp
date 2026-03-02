@@ -181,13 +181,18 @@ serve(async (req: Request) => {
         // 6. PROCESS PAYMENT
         // ============================================
         if (payment.status === "approved") {
+            // 🚀 P0 #4 FIX: Auto-advance to kitchen
+            // Previously set to 'paid_unreleased' which stalled orders.
+            // Now goes straight to 'released_to_kitchen' so the Owner Dashboard
+            // picks it up immediately and staff get the notification.
             const { data: updatedOrder, error: updateError } = await supabase
                 .from("orders")
                 .update({
-                    status: "paid_unreleased",
+                    status: "released_to_kitchen",
                     payment_id: dataId,
                     paid_at: new Date().toISOString(),
                     payment_status: "approved",
+                    payment_confirmed: true,
                     mp_payment_data: {
                         id: payment.id,
                         status: payment.status,
@@ -207,7 +212,7 @@ serve(async (req: Request) => {
                 return new Response(JSON.stringify({ error: "Failed to update order" }), { status: 500, headers: corsHeaders });
             }
 
-            console.log(`🎉 Order #${updatedOrder.order_number} confirmed!`);
+            console.log(`🎉 Order #${updatedOrder.order_number} PAID → KITCHEN! Auto-released.`);
             return new Response(JSON.stringify({ success: true, order_id: orderId }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         } else {
