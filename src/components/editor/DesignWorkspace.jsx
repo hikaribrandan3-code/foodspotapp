@@ -32,6 +32,14 @@ export default function DesignWorkspace({
     const [activeThemeId, setActiveThemeId] = useState('bistro')
     const [fontPairingId, setFontPairingId] = useState('playfair')
     const [colorOverrides, setColorOverrides] = useState({ bg: null, accent: null, text: null })
+
+    // Feature Toggles
+    const [qrPosition, setQrPosition] = useState('bottom-right')
+    const [showCurrency, setShowCurrency] = useState(true)
+    const [showQR, setShowQR] = useState(true)
+    const [tagline, setTagline] = useState(localConfig?.tagline || '')
+    const [dividerStyle, setDividerStyle] = useState('line')
+
     // Mobile bottom-sheet tab & collapse state
     const [activeTab, setActiveTab] = useState('quick')
     const [sheetOpen, setSheetOpen] = useState(true)
