@@ -38,6 +38,7 @@ import MenuManager from './pages/owner/MenuManager.jsx'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
 import Analytics from './pages/owner/Analytics.jsx'
+import FoodSpotAI from './pages/owner/FoodSpotAI.jsx'
 import DeliveryManager from './pages/owner/DeliveryManager.jsx'
 
 // Admin Pages (Lazy-loaded)
@@ -633,6 +634,7 @@ function App() {
                             <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
                             <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
                             <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><FoodSpotAI /></ProtectedRoute>} />
                             <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
 
                             <Route path="*" element={<Navigate to="/" replace />} />

@@ -38,7 +38,8 @@ const OWNER_TABS = [
     { id: 'menu', label: 'Menu', route: null },
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
-    { id: 'analytics', label: 'Analytics', route: null }
+    { id: 'analytics', label: 'Analytics', route: null },
+    { id: 'ai', label: 'AI', route: null }
 ]
 
 const STAFF_TABS = [
@@ -53,7 +54,8 @@ const SUPERADMIN_TABS = [
     { id: 'menu', label: 'Menu', route: null },
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
-    { id: 'analytics', label: 'Analytics', route: null }
+    { id: 'analytics', label: 'Analytics', route: null },
+    { id: 'ai', label: 'AI', route: null }
 ]
 
 /**
@@ -67,7 +69,8 @@ const getRouteMaps = (tenantSlug) => ({
         menu: `/${tenantSlug}/owner/menu`,
         branding: `/${tenantSlug}/owner/branding`,
         orders: `/${tenantSlug}/owner/delivery`,
-        analytics: `/${tenantSlug}/owner/analytics`
+        analytics: `/${tenantSlug}/owner/analytics`,
+        ai: `/${tenantSlug}/owner/ai`
     },
     staff: {
         orders: `/${tenantSlug}/staff/dashboard/orders`,
@@ -79,7 +82,8 @@ const getRouteMaps = (tenantSlug) => ({
         menu: '/demo/menu',
         branding: '/demo/branding',
         orders: '/demo/orders',
-        analytics: '/demo/analytics'
+        analytics: '/demo/analytics',
+        ai: '/demo/ai'
     },
     // SuperAdmin uses state-based navigation (no routes)
     superadmin: null
@@ -130,6 +134,12 @@ function TabIcon({ id, active }) {
                 <line x1="8" y1="16" x2="8" y2="10" />
                 <line x1="12" y1="16" x2="12" y2="6" />
                 <line x1="16" y1="16" x2="16" y2="12" />
+            </svg>
+        ),
+        // AI (Sparkle/Brain icon)
+        ai: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z" />
             </svg>
         ),
         // Branding (Settings/Gear icon from reference)
