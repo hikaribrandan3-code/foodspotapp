@@ -350,7 +350,7 @@ function Order({ config: configProp }) {
                         window.open(whatsappUrl, '_blank')
                     }
 
-                    showToast('Redirigiendo a pago manual...')
+                    showToast('✅ Pedido registrado — Pagás en efectivo al recibir')
                 }
             }
 
@@ -439,7 +439,7 @@ function Order({ config: configProp }) {
                 <div style={{ fontSize: 64, marginBottom: 16 }}>🛒</div>
                 <p style={{ color: '#6B7280', marginBottom: 20 }}>Tu pedido está vacío</p>
                 <button
-                    onClick={() => navigate('/menu')}
+                    onClick={() => navigate('../menu')}
                     style={{
                         padding: '14px 32px',
                         background: tenantData?.primary_color || '#C4856A',
