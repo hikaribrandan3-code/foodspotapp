@@ -32,7 +32,7 @@ export default function DesignWorkspace({
     const [activeThemeId, setActiveThemeId] = useState('bistro')
     const [fontPairingId, setFontPairingId] = useState('playfair')
     const [colorOverrides, setColorOverrides] = useState({ bg: null, accent: null, text: null })
-    const [logoSize, setLogoSize] = useState(60)
+    const [logoSize, setLogoSize] = useState(100)
     const [qrPosition, setQrPosition] = useState('bottom-right')
     const [showCurrency, setShowCurrency] = useState(true)
     const [showQR, setShowQR] = useState(true)
@@ -188,7 +188,7 @@ export default function DesignWorkspace({
                     <input
                         type="range"
                         min="30"
-                        max="120"
+                        max="200"
                         value={logoSize}
                         onChange={(e) => setLogoSize(Number(e.target.value))}
                         className="editor-range"

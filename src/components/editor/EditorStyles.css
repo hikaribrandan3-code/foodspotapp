@@ -18,7 +18,7 @@
     --editor-category: #E74C3C;
     --editor-font-heading: 'Oswald', sans-serif;
     --editor-font-body: 'Montserrat', sans-serif;
-    --editor-logo-size: 60px;
+    --editor-logo-size: 100px;
     --editor-font-scale: 1;
 }
 
@@ -60,6 +60,7 @@
 .editor-topbar-title .brand {
     background: linear-gradient(135deg, #6366F1, #8B5CF6);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 800;
 }
@@ -414,9 +415,12 @@
 
 .menu-canvas-logo {
     width: var(--editor-logo-size);
-    height: var(--editor-logo-size);
+    height: auto;
+    max-height: calc(var(--editor-logo-size) * 1.5);
     object-fit: contain;
     margin-bottom: 8px;
+    mix-blend-mode: multiply;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
 }
 
 .menu-canvas-biz-name {
@@ -841,7 +845,7 @@
         box-shadow: none !important;
         border-radius: 0 !important;
         -webkit-print-color-adjust: exact;
-        color-adjust: exact;
+
         print-color-adjust: exact;
     }
 

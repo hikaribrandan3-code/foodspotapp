@@ -11,7 +11,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
-import PrintableMenu from '../../components/PrintableMenu.jsx'
+
 import DesignWorkspace from '../../components/editor/DesignWorkspace.jsx'
 import './MenuStyles.css'
 
@@ -978,13 +978,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     return (
         <>
             <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
-                {/* 🖨️ THE PRINTABLE MENU COMPONENT (Hidden except on print) */}
-                <PrintableMenu
-                    menu={menu}
-                    businessName={tenantData?.business_name || localConfig?.businessName || 'Menú'}
-                    primaryColor={localConfig?.themeColor || '#1E293B'}
-                    logoUrl={localConfig?.logoUrl}
-                />
+
 
                 <BackendHeader
                     title={demoMode ? "Demo Menú" : "Menú"}
