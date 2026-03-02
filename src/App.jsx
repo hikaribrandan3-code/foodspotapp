@@ -615,12 +615,12 @@ function App() {
                             <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
                             <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
                             <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
-                            <Route path="/:tenantSlug/rewards" element={<Rewards config={safeConfig} />} />
+                            <Route path="/:tenantSlug/rewards" element={<Rewards />} />
                             <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
                             <Route path="/:tenantSlug/game" element={<PerfectPour />} />
                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
-                            <Route path="/:tenantSlug/promos" element={<Promos config={safeConfig} />} />
+                            <Route path="/:tenantSlug/promos" element={<Promos />} />
 
                             <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
                             <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
@@ -630,7 +630,7 @@ function App() {
                             <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
                             <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
                             <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
-                            <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager config={safeConfig} /></ProtectedRoute>} />
+                            <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
                             <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
                             <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
                             <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />

@@ -1,230 +1,381 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { addToCurrentOrder, getRewards } from '../../utils/storage.js'
+import { useNavigate, useParams } from 'react-router-dom'
+import { addToCurrentOrder } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
-import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 
 // ============================================
-// PROMOS PAGE - McDonald's Vibe UI
+// 🎯 PROMOS — CLOUD-FIRST (P1 #16)
+// ============================================
+// Data source: tenantData.app_config.promos
+// Silo lock: useTenant() guarantees business isolation
+// Architecture prep: CSS-var driven cards ready for
+// 9:16 vertical "Flyer/Event Hub" conversion (next strike)
 // ============================================
 
-// Calculate Happy Hour end time (2 hours from now)
-function getHappyHourEnd() {
-    const end = new Date()
-    end.setHours(end.getHours() + 2)
-    return end
-}
-
-// Promo data (McDonald's Vibe)
-const PROMO_DATA = {
-    headerTitle: 'DELIVERY HAPPY HOUR',
-    weeklySpecial: {
-        id: 'weekly-boss',
-        title: 'WEEKLY SPECIAL',
-        name: 'Double Stack "The Boss"',
-        description: 'Double patty, special sauce, crispy bacon',
+// --- Default fallback promos (shown if owner hasn't configured any) ---
+const FALLBACK_PROMOS = [
+    {
+        id: 'promo-1',
+        title: 'ESPECIAL DE LA SEMANA',
+        name: 'Combo del Día',
+        description: 'Plato principal + bebida + postre',
         price: 1499,
         originalPrice: 1899,
-        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=400&fit=crop'
+        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=400&fit=crop',
+        type: 'featured'
     },
-    feastBundles: [
-        {
-            id: 'feast-crispy',
-            title: 'Feast Bundle',
-            subtitle: 'Crispy Bucket Feast',
-            description: '8pc Crispy Chicken + Fries + Drinks',
-            price: 2499,
-            borderColor: 'border-[#DC2626]',
-            bgColor: 'bg-red-50',
-            image: 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=300&h=300&fit=crop'
-        },
-        {
-            id: 'feast-taco',
-            title: 'Family Crnete',
-            subtitle: 'Taco Tuesday Pack',
-            description: '6 Tacos + Nachos + Salsa',
-            price: 1899,
-            borderColor: 'border-[#FCD34D]',
-            bgColor: 'bg-yellow-50',
-            image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=300&h=300&fit=crop'
-        },
-        {
-            id: 'feast-game',
-            title: 'Feast Bundle',
-            subtitle: 'Game Night Combo',
-            description: 'Pizza + Wings + 2L Soda',
-            price: 2199,
-            borderColor: 'border-[#F97316]',
-            bgColor: 'bg-orange-50',
-            image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop'
-        }
-    ]
-}
+    {
+        id: 'promo-2',
+        title: 'Happy Hour',
+        name: '2x1 en Bebidas',
+        description: 'Todos los días de 17 a 20hs',
+        price: null,
+        originalPrice: null,
+        image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&h=400&fit=crop',
+        type: 'bundle'
+    }
+]
 
-// RewardsPill Component (Black Sticky Punch Card)
-function RewardsPill({ stamps, total }) {
-    if (stamps === 0) return null
-
-    return (
-        <div className="fixed bottom-20 left-4 right-4 bg-black rounded-2xl p-4 shadow-xl z-50">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#FCD34D] rounded-full flex items-center justify-center">
-                        <span className="text-black font-bold">{stamps}</span>
-                    </div>
-                    <div>
-                        <p className="text-white font-semibold text-sm">Punch Card</p>
-                        <p className="text-gray-400 text-xs">{total - stamps} more for free item!</p>
-                    </div>
-                </div>
-                <div className="flex gap-1">
-                    {Array.from({ length: total }).map((_, i) => (
-                        <div
-                            key={i}
-                            className={`w-2 h-2 rounded-full ${i < stamps ? 'bg-[#FCD34D]' : 'bg-gray-600'}`}
-                        />
-                    ))}
-                </div>
-            </div>
-        </div>
-    )
-}
-
-function Promos({ config: configProp }) {
-    const config = configProp || {};
+function Promos() {
     const navigate = useNavigate()
-    const [timeRemaining, setTimeRemaining] = useState('')
-    const [happyHourEnd] = useState(() => getHappyHourEnd())
-    const [rewards] = useState(() => getRewards())
+    const { tenantSlug } = useParams()
 
-    // Countdown timer
-    useEffect(() => {
-        const updateTimer = () => {
-            const now = new Date()
-            const diff = happyHourEnd - now
+    // ☁️ SILO LOCK: All data from useTenant() — no direct Supabase calls
+    const { tenantData } = useTenant()
+    const appConfig = tenantData?.app_config || {}
+    const primaryColor = tenantData?.primary_color || '#C4856A'
 
-            if (diff <= 0) {
-                setTimeRemaining('00:00:00')
-                return
-            }
+    // Cloud promos (owner-configured) or fallback
+    const promos = appConfig?.promos?.items || FALLBACK_PROMOS
+    const promosEnabled = appConfig?.promos?.enabled !== false // default: enabled
 
-            const hours = Math.floor(diff / (1000 * 60 * 60))
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+    // Split promos by type for layout
+    const featuredPromo = promos.find(p => p.type === 'featured') || promos[0]
+    const bundlePromos = promos.filter(p => p !== featuredPromo)
 
-            setTimeRemaining(
-                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-            )
-        }
-
-        updateTimer()
-        const interval = setInterval(updateTimer, 1000)
-        return () => clearInterval(interval)
-    }, [happyHourEnd])
+    // Rewards config (for the bottom pill)
+    const rewardsEnabled = appConfig?.features?.rewardsEnabled ?? false
+    const stampsRequired = appConfig?.rewards?.stampsRequired || 10
 
     // Add item to cart handler
     const handleAddToCart = (item) => {
+        if (!item.price) return // Skip items without price (info-only promos)
         const cartItem = {
             id: item.id,
-            name: item.name || item.subtitle,
+            name: item.name || item.subtitle || item.title,
             price: item.price,
             quantity: 1,
             image: item.image
         }
         addToCurrentOrder(cartItem)
-        navigate('/order')
+        navigate(`/${tenantSlug}/order`)
     }
 
-    const { weeklySpecial, feastBundles, headerTitle } = PROMO_DATA
-    const rewardsEnabled = config?.features?.rewardsEnabled
-    const currentStamps = rewards?.stamps || 0
-    const stampsRequired = config?.rewards?.stampsRequired || 10
+    // ☁️ Empty state when promos disabled
+    if (!promosEnabled) {
+        return (
+            <div style={styles.page}>
+                <div style={styles.emptyState}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+                    <p style={{ color: '#8C8476', textAlign: 'center', fontSize: 15, margin: 0 }}>
+                        No hay promociones activas en este momento.
+                    </p>
+                    <p style={{ color: '#B8AFA4', textAlign: 'center', fontSize: 13, marginTop: 8 }}>
+                        ¡Volvé pronto para enterarte de las ofertas!
+                    </p>
+                </div>
+            </div>
+        )
+    }
 
     return (
-        <div className="min-h-screen bg-white pb-24">
-            {/* === STANDARD HERO COVER (Matches Home/Menu) === */}
-            <div style={{ maxWidth: '92%', margin: '0 auto' }}>
-                <HeaderClamp config={config} />
-            </div>
+        <div style={styles.page}>
+            {/* HEADER */}
+            <header style={styles.header}>
+                <h1 style={{ ...styles.title, color: primaryColor }}>Promos</h1>
+                <p style={styles.subtitle}>Ofertas especiales para vos 🔥</p>
+            </header>
 
-            {/* === WHITE BODY === */}
-            <main className="px-4 pt-6">
-                {/* Weekly Special Section */}
-                <h2 className="text-xl font-bold text-gray-900 mb-4">WEEKLY SPECIAL</h2>
-
-                <div className="relative border-4 border-[#FCD34D] rounded-2xl overflow-hidden mb-8">
-                    {/* Hero Image */}
-                    <div className="aspect-[16/10] relative">
+            {/* === FEATURED PROMO (9:16-ready card) === */}
+            {featuredPromo && (
+                <div style={styles.featuredCard}>
+                    {/* Hero Image — aspect-ratio ready for 9:16 flyer conversion */}
+                    <div style={styles.featuredImageWrap}>
                         <img
-                            src={weeklySpecial.image}
-                            alt={weeklySpecial.name}
-                            className="w-full h-full object-cover"
+                            src={featuredPromo.image}
+                            alt={featuredPromo.name}
+                            style={styles.featuredImage}
                         />
 
+                        {/* Price Badge */}
+                        {featuredPromo.price && (
+                            <div style={styles.priceBadge}>
+                                {featuredPromo.originalPrice && (
+                                    <p style={styles.originalPrice}>
+                                        {formatPrice(featuredPromo.originalPrice)}
+                                    </p>
+                                )}
+                                <p style={{ ...styles.currentPrice, color: primaryColor }}>
+                                    {formatPrice(featuredPromo.price)}
+                                </p>
+                            </div>
+                        )}
+
                         {/* Add Button */}
-                        <button
-                            onClick={() => handleAddToCart(weeklySpecial)}
-                            className="absolute bottom-4 right-4 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-6 py-3 rounded-full shadow-lg transition-transform active:scale-95 flex items-center gap-2"
-                        >
-                            <span className="text-xl">+</span>
-                            <span>ADD</span>
-                        </button>
+                        {featuredPromo.price && (
+                            <button
+                                onClick={() => handleAddToCart(featuredPromo)}
+                                style={{ ...styles.addButton, background: primaryColor }}
+                            >
+                                <span style={{ fontSize: 18, marginRight: 4 }}>+</span> AGREGAR
+                            </button>
+                        )}
                     </div>
 
-                    {/* Price Badge */}
-                    <div className="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-2 shadow-md">
-                        <p className="text-xs text-gray-500 line-through">{formatPrice(weeklySpecial.originalPrice)}</p>
-                        <p className="text-lg font-bold text-[#DB0007]">{formatPrice(weeklySpecial.price)}</p>
+                    {/* Info */}
+                    <div style={styles.featuredInfo}>
+                        <p style={styles.featuredLabel}>{featuredPromo.title}</p>
+                        <p style={styles.featuredName}>{featuredPromo.name}</p>
+                        <p style={styles.featuredDesc}>{featuredPromo.description}</p>
                     </div>
                 </div>
+            )}
 
-                {/* Feast Bundle Section */}
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Feast Bundle Triple-Threat</h3>
+            {/* === BUNDLE PROMOS (horizontal scroll, flyer-ready) === */}
+            {bundlePromos.length > 0 && (
+                <>
+                    <h3 style={styles.sectionTitle}>Más ofertas</h3>
+                    <div style={styles.scrollContainer}>
+                        {bundlePromos.map((promo) => (
+                            <div key={promo.id} style={styles.bundleCard}>
+                                {/* Image */}
+                                <div style={styles.bundleImageWrap}>
+                                    <img
+                                        src={promo.image}
+                                        alt={promo.name}
+                                        style={styles.bundleImage}
+                                    />
+                                </div>
 
-                {/* Horizontal Scroll Container */}
-                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 touch-pan-x">
-                    {feastBundles.map((bundle) => (
-                        <div
-                            key={bundle.id}
-                            className={`flex-shrink-0 w-40 snap-start ${bundle.bgColor} border-2 ${bundle.borderColor} rounded-2xl overflow-hidden`}
-                        >
-                            {/* Bundle Image */}
-                            <div className="aspect-square relative">
-                                <img
-                                    src={bundle.image}
-                                    alt={bundle.subtitle}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-
-                            {/* Bundle Info */}
-                            <div className="p-3">
-                                <p className="font-bold text-sm text-gray-900 truncate">{bundle.title}</p>
-                                <p className="text-xs text-gray-500 truncate">{bundle.subtitle}</p>
-                                <div className="flex items-center justify-between mt-2">
-                                    <p className="font-bold text-[#DB0007]">{formatPrice(bundle.price)}</p>
-                                    <button
-                                        onClick={() => handleAddToCart(bundle)}
-                                        className="bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-bold px-3 py-1.5 rounded-full transition-transform active:scale-95"
-                                    >
-                                        +ADD
-                                    </button>
+                                {/* Info */}
+                                <div style={styles.bundleInfo}>
+                                    <p style={styles.bundleTitle}>{promo.title}</p>
+                                    <p style={styles.bundleName}>{promo.name}</p>
+                                    <p style={styles.bundleDesc}>{promo.description}</p>
+                                    <div style={styles.bundleFooter}>
+                                        {promo.price && (
+                                            <p style={{ ...styles.bundlePrice, color: primaryColor }}>
+                                                {formatPrice(promo.price)}
+                                            </p>
+                                        )}
+                                        {promo.price && (
+                                            <button
+                                                onClick={() => handleAddToCart(promo)}
+                                                style={{ ...styles.bundleAddBtn, background: primaryColor }}
+                                            >
+                                                + AGREGAR
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Extra spacing for RewardsPill */}
-                {rewardsEnabled && <div className="h-20" />}
-            </main>
-
-            {/* === REWARDS PILL (Conditional) === */}
-            {rewardsEnabled && (
-                <RewardsPill stamps={currentStamps} total={stampsRequired} />
+                        ))}
+                    </div>
+                </>
             )}
+
+            {/* Bottom spacing for nav */}
+            <div style={{ height: 100 }} />
         </div>
     )
+}
+
+// --- STYLES (Standard CSS, var(--color-primary) ready) ---
+const styles = {
+    page: {
+        minHeight: '100vh',
+        backgroundColor: '#F7F4EF',
+        paddingBottom: 24,
+    },
+    header: {
+        textAlign: 'center',
+        padding: '24px 16px 20px',
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 700,
+        margin: 0,
+        letterSpacing: '-0.02em',
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#8C8476',
+        marginTop: 6,
+        margin: '6px 0 0',
+    },
+    emptyState: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 40,
+        margin: '40px 16px',
+        textAlign: 'center',
+    },
+
+    // Featured Promo (9:16 flyer-ready)
+    featuredCard: {
+        margin: '0 16px 20px',
+        borderRadius: 20,
+        overflow: 'hidden',
+        backgroundColor: '#FFFFFF',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+    },
+    featuredImageWrap: {
+        position: 'relative',
+        aspectRatio: '16 / 10', // Swap to 9/16 for flyer mode
+        overflow: 'hidden',
+    },
+    featuredImage: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        display: 'block',
+    },
+    priceBadge: {
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        background: 'rgba(255,255,255,0.95)',
+        backdropFilter: 'blur(8px)',
+        borderRadius: 10,
+        padding: '6px 12px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    },
+    originalPrice: {
+        fontSize: 11,
+        color: '#9CA3AF',
+        textDecoration: 'line-through',
+        margin: 0,
+    },
+    currentPrice: {
+        fontSize: 18,
+        fontWeight: 700,
+        margin: 0,
+    },
+    addButton: {
+        position: 'absolute',
+        bottom: 12,
+        right: 12,
+        color: 'white',
+        fontWeight: 700,
+        fontSize: 13,
+        padding: '10px 20px',
+        borderRadius: 24,
+        border: 'none',
+        cursor: 'pointer',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+        display: 'flex',
+        alignItems: 'center',
+    },
+    featuredInfo: {
+        padding: '14px 16px 18px',
+    },
+    featuredLabel: {
+        fontSize: 11,
+        fontWeight: 700,
+        color: '#9CA3AF',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        margin: '0 0 4px',
+    },
+    featuredName: {
+        fontSize: 20,
+        fontWeight: 700,
+        color: '#1F2937',
+        margin: '0 0 4px',
+    },
+    featuredDesc: {
+        fontSize: 13,
+        color: '#6B7280',
+        margin: 0,
+    },
+
+    // Section
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 700,
+        color: '#4A4238',
+        margin: '0 16px 12px',
+    },
+
+    // Bundle cards (horizontal scroll)
+    scrollContainer: {
+        display: 'flex',
+        gap: 14,
+        overflowX: 'auto',
+        padding: '0 16px 16px',
+        WebkitOverflowScrolling: 'touch',
+        scrollSnapType: 'x mandatory',
+    },
+    bundleCard: {
+        flexShrink: 0,
+        width: 180,
+        scrollSnapAlign: 'start',
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: '#FFFFFF',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    },
+    bundleImageWrap: {
+        aspectRatio: '1 / 1',
+        overflow: 'hidden',
+    },
+    bundleImage: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        display: 'block',
+    },
+    bundleInfo: {
+        padding: 12,
+    },
+    bundleTitle: {
+        fontSize: 10,
+        fontWeight: 700,
+        color: '#9CA3AF',
+        textTransform: 'uppercase',
+        margin: '0 0 2px',
+    },
+    bundleName: {
+        fontSize: 14,
+        fontWeight: 700,
+        color: '#1F2937',
+        margin: '0 0 2px',
+    },
+    bundleDesc: {
+        fontSize: 11,
+        color: '#6B7280',
+        margin: '0 0 8px',
+    },
+    bundleFooter: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    bundlePrice: {
+        fontSize: 15,
+        fontWeight: 700,
+        margin: 0,
+    },
+    bundleAddBtn: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 700,
+        padding: '6px 12px',
+        borderRadius: 16,
+        border: 'none',
+        cursor: 'pointer',
+    },
 }
 
 export default Promos

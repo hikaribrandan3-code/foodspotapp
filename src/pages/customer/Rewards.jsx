@@ -1,16 +1,12 @@
-import { useState, useEffect } from 'react'
-import { getRewards } from '../../utils/storage.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 
-// --- REWARDS CONFIG (Backend-editable) ---
-// Owner can modify these values via backend config
-const defaultRewardsConfig = {
-    enabled: true,
-    stampsRequired: 10,
-    nextReward: {
-        enabled: true,
-        title: '¡Café gratis!'
-    }
-}
+// ============================================
+// 🎯 REWARDS — CLOUD-FIRST (P1 #15)
+// ============================================
+// Data source: tenantData.app_config.rewards
+// Silo lock: useTenant() guarantees business isolation
+// No localStorage. No config prop. No amnesia.
+// ============================================
 
 // --- SVG ICONS ---
 const GiftIcon = () => (
@@ -61,43 +57,33 @@ const CoffeeStampIcon = ({ filled }) => (
 )
 
 // --- MAIN COMPONENT ---
-function Rewards({ config: configProp }) {
-    const config = configProp || {};
-    // BATTLE 2: Config MUST come from props (App.jsx is source of truth)
-    if (!config) {
-        console.error('[FATAL] Rewards: Missing config prop — check App.jsx routing')
-        return null
-    }
-    const appConfig = config
-    const [rewards, setRewards] = useState(() => getRewards())
+function Rewards() {
+    // ☁️ SILO LOCK: All data from useTenant() — no direct Supabase calls
+    const { tenantData } = useTenant()
+    const appConfig = tenantData?.app_config || {}
 
-    // Backend config hook - merge with defaults
-    const rewardsConfig = {
-        ...defaultRewardsConfig,
-        ...appConfig.rewards
-    }
+    const rewardsEnabled = appConfig?.features?.rewardsEnabled ?? false
+    const stampsRequired = appConfig?.rewards?.stampsRequired || 10
+    const rewardDescription = appConfig?.rewards?.rewardDescription || '¡Café gratis!'
 
-    // Poll for updates
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setRewards(getRewards())
-        }, 2000)
-        return () => clearInterval(interval)
-    }, [])
-
-    const stampsRequired = rewardsConfig.stampsRequired || 10
-    const currentStamps = rewards.stamps || 0
+    // TODO: Customer stamp count will come from a user-scoped table in a future strike.
+    // For now, stamps are display-only from the config (the owner sets the program, 
+    // and staff validates stamps in-person).
+    const currentStamps = 0
     const progress = Math.min(currentStamps / stampsRequired, 1)
     const stampsRemaining = Math.max(0, stampsRequired - currentStamps)
 
-    // If rewards disabled, show nothing
-    if (!rewardsConfig.enabled) {
+    // If rewards disabled, show clean empty state
+    if (!rewardsEnabled) {
         return (
             <div style={styles.page}>
                 <div style={styles.disabledCard}>
-                    <p style={{ color: '#8C8476', textAlign: 'center' }}>
-                        Las recompensas no están disponibles en este momento.
-                    </p>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 48, marginBottom: 16 }}>🎁</div>
+                        <p style={{ color: '#8C8476', textAlign: 'center', fontSize: 15, margin: 0 }}>
+                            No hay un programa de recompensas activo en este momento.
+                        </p>
+                    </div>
                 </div>
             </div>
         )
@@ -143,17 +129,14 @@ function Rewards({ config: configProp }) {
                 </div>
             </div>
 
-            {/* NEXT REWARD CARD (Owner-editable) */}
-            {rewardsConfig.nextReward?.enabled && (
-                <div style={styles.card}>
-                    <div style={styles.rewardIconWrap}>
-                        <GiftIcon />
-                    </div>
-                    <p style={styles.rewardLabel}>Tu próxima recompensa</p>
-                    <p style={styles.rewardTitle}>{rewardsConfig.nextReward.title}</p>
-                    <p style={styles.rewardNote}>Placeholder configurable by store owner</p>
+            {/* NEXT REWARD CARD (Cloud-driven) */}
+            <div style={styles.card}>
+                <div style={styles.rewardIconWrap}>
+                    <GiftIcon />
                 </div>
-            )}
+                <p style={styles.rewardLabel}>Tu próxima recompensa</p>
+                <p style={styles.rewardTitle}>{rewardDescription}</p>
+            </div>
 
             {/* HOW TO EARN STAMPS (Static rules) */}
             <div style={styles.card}>
@@ -188,7 +171,7 @@ function Rewards({ config: configProp }) {
             {currentStamps >= stampsRequired && (
                 <div style={styles.claimBanner}>
                     <p style={styles.claimText}>🎁 Mostrá esto al staff para canjear</p>
-                    <p style={styles.claimReward}>{rewardsConfig.nextReward?.title}</p>
+                    <p style={styles.claimReward}>{rewardDescription}</p>
                 </div>
             )}
         </div>
@@ -293,13 +276,6 @@ const styles = {
         fontWeight: 700,
         color: '#4A4238',
         textAlign: 'center',
-        margin: 0,
-    },
-    rewardNote: {
-        fontSize: 10,
-        color: '#B8AFA4',
-        textAlign: 'center',
-        marginTop: 8,
         margin: 0,
     },
     rulesTitle: {
