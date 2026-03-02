@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react'
-import MenuCanvas from './MenuCanvas.jsx'
+import MenuCanvas, { DIVIDER_STYLES } from './MenuCanvas.jsx'
 import { THEMES, FONT_PAIRINGS, getThemeById, getFontPairing } from './themes.js'
 import './EditorStyles.css'
 
@@ -37,6 +37,7 @@ export default function DesignWorkspace({
     const [showCurrency, setShowCurrency] = useState(true)
     const [showQR, setShowQR] = useState(true)
     const [tagline, setTagline] = useState(localConfig?.tagline || '')
+    const [dividerStyle, setDividerStyle] = useState('line')
 
     // Logo mode: 'image' (from hero/branding) or 'text' (business name only)
     const [logoMode, setLogoMode] = useState(logoUrl ? 'image' : 'text')
@@ -259,6 +260,22 @@ export default function DesignWorkspace({
                     }}
                 />
             </div>
+
+            {/* Category Dividers */}
+            <div className="editor-sidebar-section">
+                <div className="editor-sidebar-label">Separador</div>
+                <div className="editor-font-toggle">
+                    {Object.entries(DIVIDER_STYLES).map(([key, style]) => (
+                        <div
+                            key={key}
+                            className={`editor-font-option ${dividerStyle === key ? 'active' : ''}`}
+                            onClick={() => setDividerStyle(key)}
+                        >
+                            {style.label}
+                        </div>
+                    ))}
+                </div>
+            </div>
         </>
     )
 
@@ -336,6 +353,7 @@ export default function DesignWorkspace({
                         showCurrency={showCurrency}
                         qrUrl={qrUrl}
                         tagline={tagline}
+                        dividerStyle={dividerStyle}
                     />
                 </div>
             </div>

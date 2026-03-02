@@ -4,8 +4,59 @@ import { getFontPairing } from './themes.js'
 /**
  * MenuCanvas — The A4 Live Preview V2
  * Renders the printable menu using CSS variables for real-time theme switching.
- * Supports logoMode toggle (image vs text).
+ * Supports logoMode toggle (image vs text) and decorative category dividers.
  */
+
+// ─── DIVIDER DEFINITIONS ───────────────────────────────────────
+const DIVIDER_STYLES = {
+    none: { label: 'Ninguno', render: () => null },
+    line: {
+        label: 'Línea',
+        render: (accent) => (
+            <div className="menu-canvas-divider" style={{ borderBottom: `1px solid ${accent}`, opacity: 0.3, margin: '16px 0' }} />
+        )
+    },
+    double: {
+        label: 'Doble',
+        render: (accent) => (
+            <div className="menu-canvas-divider" style={{ borderBottom: `3px double ${accent}`, opacity: 0.3, margin: '16px 0' }} />
+        )
+    },
+    dotted: {
+        label: 'Puntos',
+        render: (accent) => (
+            <div className="menu-canvas-divider" style={{ borderBottom: `2px dotted ${accent}`, opacity: 0.35, margin: '16px 0' }} />
+        )
+    },
+    dashed: {
+        label: 'Guiones',
+        render: (accent) => (
+            <div className="menu-canvas-divider" style={{ borderBottom: `2px dashed ${accent}`, opacity: 0.3, margin: '16px 0' }} />
+        )
+    },
+    ornament: {
+        label: '◆ Diamante',
+        render: (accent) => (
+            <div className="menu-canvas-divider" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '18px 0', opacity: 0.4 }}>
+                <span style={{ flex: 1, borderBottom: `1px solid ${accent}` }} />
+                <span style={{ color: accent, fontSize: '10pt', lineHeight: 1 }}>◆</span>
+                <span style={{ flex: 1, borderBottom: `1px solid ${accent}` }} />
+            </div>
+        )
+    },
+    flourish: {
+        label: '✦ Ornamental',
+        render: (accent) => (
+            <div className="menu-canvas-divider" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '18px 0', opacity: 0.35 }}>
+                <span style={{ flex: 1, borderBottom: `1px solid ${accent}` }} />
+                <span style={{ color: accent, fontSize: '8pt', letterSpacing: '0.15em', lineHeight: 1 }}>✦ ── ✦</span>
+                <span style={{ flex: 1, borderBottom: `1px solid ${accent}` }} />
+            </div>
+        )
+    }
+}
+
+export { DIVIDER_STYLES }
 
 export default function MenuCanvas({
     menu,
@@ -19,7 +70,8 @@ export default function MenuCanvas({
     qrPosition,
     showCurrency,
     qrUrl,
-    tagline
+    tagline,
+    dividerStyle = 'none'
 }) {
     const fonts = getFontPairing(fontPairingId || theme.fontPairing)
 
@@ -50,6 +102,9 @@ export default function MenuCanvas({
         return showCurrency ? `$${formatted}` : formatted
     }
 
+    // Divider renderer
+    const renderDivider = DIVIDER_STYLES[dividerStyle]?.render || (() => null)
+
     // CSS Variables for real-time theme override
     const cssVars = {
         '--editor-bg': bg,
@@ -58,7 +113,7 @@ export default function MenuCanvas({
         '--editor-category': categoryColor,
         '--editor-font-heading': fonts.heading,
         '--editor-font-body': fonts.body,
-        '--editor-logo-size': `${logoSize || 60}px`,
+        '--editor-logo-size': `${logoSize || 100}px`,
         '--editor-font-scale': fontScale
     }
 
@@ -90,7 +145,7 @@ export default function MenuCanvas({
                 </div>
 
                 {/* Categories & Items */}
-                {categories.map(cat => {
+                {categories.map((cat, catIndex) => {
                     const items = (cat.items || []).filter(i => i.available !== false)
                     if (items.length === 0) return null
 
@@ -98,43 +153,48 @@ export default function MenuCanvas({
                     const useCards = hasImages && !isDense
 
                     return (
-                        <div key={cat.id} className="menu-canvas-category">
-                            <h2 className="menu-canvas-cat-title">{cat.name}</h2>
-                            <div className={`menu-canvas-items ${isDense ? 'cols-2' : (useCards ? 'cols-2' : 'cols-1')}`}>
-                                {items.map(item => (
-                                    useCards ? (
-                                        // IMAGE CARD VARIANT
-                                        <div key={item.id} className="menu-canvas-item-card">
-                                            {item.image && (
-                                                <img src={item.image} alt={item.name} className="menu-canvas-item-img" />
-                                            )}
-                                            <div className="menu-canvas-item-info">
-                                                <div className="menu-canvas-item-top">
-                                                    <p className="menu-canvas-item-name">{item.name}</p>
-                                                    <span className="menu-canvas-item-price">{fmtPrice(item.price)}</span>
-                                                </div>
-                                                {item.description && (
-                                                    <p className="menu-canvas-item-desc">{item.description}</p>
+                        <React.Fragment key={cat.id}>
+                            {/* Decorative divider between categories */}
+                            {catIndex > 0 && renderDivider(accent)}
+
+                            <div className="menu-canvas-category">
+                                <h2 className="menu-canvas-cat-title">{cat.name}</h2>
+                                <div className={`menu-canvas-items ${isDense ? 'cols-2' : (useCards ? 'cols-2' : 'cols-1')}`}>
+                                    {items.map(item => (
+                                        useCards ? (
+                                            // IMAGE CARD VARIANT
+                                            <div key={item.id} className="menu-canvas-item-card">
+                                                {item.image && (
+                                                    <img src={item.image} alt={item.name} className="menu-canvas-item-img" />
                                                 )}
+                                                <div className="menu-canvas-item-info">
+                                                    <div className="menu-canvas-item-top">
+                                                        <p className="menu-canvas-item-name">{item.name}</p>
+                                                        <span className="menu-canvas-item-price">{fmtPrice(item.price)}</span>
+                                                    </div>
+                                                    {item.description && (
+                                                        <p className="menu-canvas-item-desc">{item.description}</p>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        // TEXT-ONLY DOTTED VARIANT
-                                        <div key={item.id} className="menu-canvas-item-text">
-                                            <span className="name">{item.name}</span>
-                                            <span className="dots" />
-                                            <span className="price">{fmtPrice(item.price)}</span>
-                                        </div>
-                                    )
-                                ))}
+                                        ) : (
+                                            // TEXT-ONLY DOTTED VARIANT
+                                            <div key={item.id} className="menu-canvas-item-text">
+                                                <span className="name">{item.name}</span>
+                                                <span className="dots" />
+                                                <span className="price">{fmtPrice(item.price)}</span>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        </React.Fragment>
                     )
                 })}
 
-                {/* Footer */}
+                {/* Footer — just the date, no branding */}
                 <div className="menu-canvas-footer">
-                    <p>Generado por FoodSpot • {new Date().toLocaleDateString('es-AR')}</p>
+                    <p>Precios actualizados al {new Date().toLocaleDateString('es-AR')}</p>
                 </div>
             </div>
         </div>

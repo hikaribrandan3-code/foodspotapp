@@ -833,7 +833,8 @@
     .editor-bottom-sheet,
     .backend-surface,
     .backend-overlay,
-    .bottom-nav {
+    .bottom-nav,
+    nav[aria-label="Backend navigation"] {
         display: none !important;
     }
 
