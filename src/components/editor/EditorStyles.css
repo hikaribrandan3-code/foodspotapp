@@ -379,7 +379,7 @@
     color: var(--editor-text);
     position: relative;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-    overflow: hidden;
+    overflow: visible;
     flex-shrink: 0;
     border-radius: 4px;
 }
@@ -389,16 +389,7 @@
         /* WYSIWYG: Keep true A4 dimensions, scale to fit viewport */
         transform: scale(var(--canvas-scale, 0.48));
         transform-origin: top center;
-        /* Collapse the visual gap caused by the scaled-down element */
-        margin-bottom: calc((var(--canvas-scale, 0.48) - 1) * 297mm);
     }
-}
-
-.menu-canvas-texture {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
 }
 
 .menu-canvas-content {
@@ -413,16 +404,6 @@
     margin-bottom: 32px;
     padding-bottom: 20px;
     border-bottom: 2px solid var(--editor-accent);
-}
-
-.menu-canvas-logo {
-    width: var(--editor-logo-size);
-    height: auto;
-    max-height: calc(var(--editor-logo-size) * 1.5);
-    object-fit: contain;
-    margin-bottom: 8px;
-    mix-blend-mode: multiply;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
 }
 
 .menu-canvas-biz-name {
@@ -862,8 +843,14 @@
         min-height: 297mm !important;
         box-shadow: none !important;
         border-radius: 0 !important;
+        overflow: visible !important;
+        transform: none !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+
+    .menu-canvas-content {
+        padding: 24px 28px !important;
     }
 
     /* 4. RENDER QUALITY */

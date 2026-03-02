@@ -18,8 +18,7 @@ export const THEMES = [
         accent: '#8B6F47',
         text: '#3D2B1F',
         categoryColor: '#8B6F47',
-        fontPairing: 'playfair',
-        bgTexture: 'radial-gradient(circle at 20% 80%, rgba(139,111,71,0.04) 0%, transparent 50%)'
+        fontPairing: 'playfair'
     },
     {
         id: 'burger',
@@ -29,8 +28,7 @@ export const THEMES = [
         accent: '#E74C3C',
         text: '#1A1A1A',
         categoryColor: '#E74C3C',
-        fontPairing: 'oswald',
-        bgTexture: 'radial-gradient(circle at 80% 20%, rgba(231,76,60,0.03) 0%, transparent 50%)'
+        fontPairing: 'oswald'
     },
     {
         id: 'asian',
@@ -40,8 +38,7 @@ export const THEMES = [
         accent: '#D4A017',
         text: '#2C2C2C',
         categoryColor: '#D4A017',
-        fontPairing: 'poppins',
-        bgTexture: 'radial-gradient(circle at 50% 50%, rgba(212,160,23,0.03) 0%, transparent 60%)'
+        fontPairing: 'poppins'
     },
     {
         id: 'street',
@@ -51,8 +48,7 @@ export const THEMES = [
         accent: '#2E7D32',
         text: '#1B1B1B',
         categoryColor: '#2E7D32',
-        fontPairing: 'oswald',
-        bgTexture: 'linear-gradient(135deg, rgba(46,125,50,0.02) 0%, transparent 100%)'
+        fontPairing: 'oswald'
     },
     {
         id: 'bistro',
@@ -62,8 +58,7 @@ export const THEMES = [
         accent: '#8B4513',
         text: '#2C1810',
         categoryColor: '#8B4513',
-        fontPairing: 'playfair',
-        bgTexture: 'none'
+        fontPairing: 'playfair'
     }
 ]
 

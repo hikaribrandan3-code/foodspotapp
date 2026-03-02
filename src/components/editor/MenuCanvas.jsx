@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef, useEffect, useCallback } from 'react'
 import { getFontPairing } from './themes.js'
 
 /**
@@ -68,8 +68,21 @@ export default function MenuCanvas({
     showCurrency,
     qrUrl,
     tagline,
-    dividerStyle = 'none'
+    dividerStyle = 'none',
+    onHeightChange
 }) {
+    // Ref for measuring actual canvas height (for multi-page scaling)
+    const canvasRef = useRef(null)
+    useEffect(() => {
+        if (!canvasRef.current) return
+        const observer = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                if (onHeightChange) onHeightChange(entry.contentRect.height)
+            }
+        })
+        observer.observe(canvasRef.current)
+        return () => observer.disconnect()
+    }, [onHeightChange])
     const fonts = getFontPairing(fontPairingId || theme.fontPairing)
 
     // Merge theme defaults with user overrides
@@ -122,9 +135,7 @@ export default function MenuCanvas({
     ) : null)
 
     return (
-        <div className="menu-canvas-a4" style={cssVars}>
-            {/* Background texture overlay */}
-            <div className="menu-canvas-texture" style={{ background: theme.bgTexture }} />
+        <div className="menu-canvas-a4" ref={canvasRef} style={cssVars}>
 
             <div className="menu-canvas-content">
                 {/* Header Row: Contains Text and optionally Top-Right QR */}

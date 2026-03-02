@@ -46,6 +46,7 @@ export default function DesignWorkspace({
 
     // A4 WYSIWYG: Compute scale factor so A4 page fits mobile viewport
     const [canvasScale, setCanvasScale] = useState(1)
+    const [canvasHeight, setCanvasHeight] = useState(1122) // default 297mm in px
     useEffect(() => {
         const computeScale = () => {
             const A4_WIDTH_PX = 793.7 // 210mm in pixels at 96dpi
@@ -57,6 +58,8 @@ export default function DesignWorkspace({
         window.addEventListener('resize', computeScale)
         return () => window.removeEventListener('resize', computeScale)
     }, [])
+
+    const handleCanvasHeight = useCallback((h) => setCanvasHeight(h), [])
 
     const theme = getThemeById(activeThemeId)
 
@@ -309,18 +312,25 @@ export default function DesignWorkspace({
                     className={`editor-canvas-viewport ${sheetOpen ? '' : 'sheet-collapsed'}`}
                     style={{ '--canvas-scale': canvasScale }}
                 >
-                    <MenuCanvas
-                        menu={menu}
-                        businessName={businessName}
-                        theme={theme}
-                        fontPairingId={fontPairingId}
-                        colorOverrides={colorOverrides}
-                        qrPosition={qrPosition}
-                        showCurrency={showCurrency}
-                        qrUrl={qrUrl}
-                        tagline={tagline}
-                        dividerStyle={dividerStyle}
-                    />
+                    {/* Wrapper: collapses to the scaled visual height */}
+                    <div style={{
+                        height: canvasScale < 1 ? canvasHeight * canvasScale : 'auto',
+                        overflow: 'visible'
+                    }}>
+                        <MenuCanvas
+                            menu={menu}
+                            businessName={businessName}
+                            theme={theme}
+                            fontPairingId={fontPairingId}
+                            colorOverrides={colorOverrides}
+                            qrPosition={qrPosition}
+                            showCurrency={showCurrency}
+                            qrUrl={qrUrl}
+                            tagline={tagline}
+                            dividerStyle={dividerStyle}
+                            onHeightChange={handleCanvasHeight}
+                        />
+                    </div>
                 </div>
             </div>
 
