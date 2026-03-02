@@ -386,9 +386,11 @@
 
 @media (max-width: 1023px) {
     .menu-canvas-a4 {
-        width: 100%;
-        min-height: auto;
-        border-radius: 12px;
+        /* WYSIWYG: Keep true A4 dimensions, scale to fit viewport */
+        transform: scale(var(--canvas-scale, 0.48));
+        transform-origin: top center;
+        /* Collapse the visual gap caused by the scaled-down element */
+        margin-bottom: calc((var(--canvas-scale, 0.48) - 1) * 297mm);
     }
 }
 

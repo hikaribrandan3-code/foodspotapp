@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import MenuCanvas, { DIVIDER_STYLES } from './MenuCanvas.jsx'
 import { THEMES, FONT_PAIRINGS, getThemeById, getFontPairing } from './themes.js'
 import './EditorStyles.css'
@@ -45,6 +45,20 @@ export default function DesignWorkspace({
     // Mobile bottom-sheet tab & collapse state
     const [activeTab, setActiveTab] = useState('quick')
     const [sheetOpen, setSheetOpen] = useState(true)
+
+    // A4 WYSIWYG: Compute scale factor so A4 page fits mobile viewport
+    const [canvasScale, setCanvasScale] = useState(1)
+    useEffect(() => {
+        const computeScale = () => {
+            const A4_WIDTH_PX = 793.7 // 210mm in pixels at 96dpi
+            const padding = 24 // 12px each side
+            const available = window.innerWidth - padding
+            setCanvasScale(Math.min(1, available / A4_WIDTH_PX))
+        }
+        computeScale()
+        window.addEventListener('resize', computeScale)
+        return () => window.removeEventListener('resize', computeScale)
+    }, [])
 
     const theme = getThemeById(activeThemeId)
 
@@ -339,7 +353,10 @@ export default function DesignWorkspace({
                 </div>
 
                 {/* CANVAS VIEWPORT */}
-                <div className={`editor-canvas-viewport ${sheetOpen ? '' : 'sheet-collapsed'}`}>
+                <div
+                    className={`editor-canvas-viewport ${sheetOpen ? '' : 'sheet-collapsed'}`}
+                    style={{ '--canvas-scale': canvasScale }}
+                >
                     <MenuCanvas
                         menu={menu}
                         businessName={businessName}
