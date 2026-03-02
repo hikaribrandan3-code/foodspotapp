@@ -1,91 +1,119 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getAuth, clearAuth, getOrders } from '../../utils/storage.js'
-import { updateConfig } from '../../config/appConfig.v2.js'
+import { clearAuth } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
+import { formatPrice } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 
 /**
- * OwnerSummary - Summary dashboard for Owner (matches SuperAdmin Summary layout)
- * 
- * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
- * This ensures Single Source of Truth from App.jsx.
+ * OwnerSummary - Summary dashboard for Owner
+ * P0 #11: Cloud-first — All stats from Supabase, no localStorage.
  */
-function OwnerSummary({ config: configProp }) {
-    const config = configProp || {};
+function OwnerSummary() {
     const navigate = useNavigate()
-    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
-    const [orders, setOrders] = useState(() => getOrders())
-    const { tenantData } = useTenant() // 🛡️ Cloud Data Auditor
+    const { tenantSlug } = useParams()
+    const { businessId, tenantData, refreshTenantData } = useTenant()
+    const appConfig = tenantData?.app_config || {}
     const [showAuditor, setShowAuditor] = useState(false)
 
-    // 🔓 GHOST WALL FIX: Manage body scroll when modal is open
+    // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
+    const [orders, setOrders] = useState([])
+    const [ordersLoading, setOrdersLoading] = useState(true)
+
+    // Fetch today's + recent orders from Supabase
     useEffect(() => {
-        if (showAuditor) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
+        if (!businessId) return
+        let cancelled = false
+
+        const fetchOrders = async () => {
+            setOrdersLoading(true)
+            const monthAgo = new Date()
+            monthAgo.setDate(monthAgo.getDate() - 30)
+
+            const { data, error } = await supabase
+                .from('orders')
+                .select('id, total, status, payment_method, created_at')
+                .eq('business_id', businessId)
+                .gte('created_at', monthAgo.toISOString())
+                .neq('status', 'cancelado')
+                .order('created_at', { ascending: false })
+
+            if (!cancelled && !error && data) {
+                setOrders(data)
+            }
+            if (!cancelled) setOrdersLoading(false)
         }
-        // Cleanup on unmount
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [showAuditor]);
 
-    // NOTE: Auth check removed - ProtectedRoute handles authentication
+        fetchOrders()
 
-    // Poll for order updates
+        // Refresh every 30s instead of polling localStorage
+        const interval = setInterval(fetchOrders, 30000)
+        return () => { cancelled = true; clearInterval(interval) }
+    }, [businessId])
+
+    // Ghost Wall scroll lock
     useEffect(() => {
-        const interval = setInterval(() => {
-            setOrders(getOrders())
-        }, 5000)
-        return () => clearInterval(interval)
-    }, [])
+        document.body.style.overflow = showAuditor ? 'hidden' : 'unset'
+        return () => { document.body.style.overflow = 'unset' }
+    }, [showAuditor])
 
-    // 🔐 GHOST ADMIN: Fetch session to detect superadmin role
+    // Session for superadmin detection
     const [session, setSession] = useState(null)
     useEffect(() => {
-        const fetchSession = async () => {
-            try {
-                const sessionData = await getSession()
-                setSession(sessionData)
-            } catch {
-                setSession(null)
-            }
-        }
-        fetchSession()
+        getSession().then(s => setSession(s)).catch(() => setSession(null))
     }, [])
 
-    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
     const handleLogout = async () => {
         await supabase.auth.signOut()
         clearAuth()
-        // Redirect to customer home of this business, not landing page
         window.location.href = `/${tenantSlug}`
     }
 
-    // Stats calculations
-    const today = new Date().toDateString()
-    const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today)
-    const mpOrders = todayOrders.filter(o => o.paymentMethod === 'mercadopago')
-    const cashOrders = todayOrders.filter(o => o.paymentMethod === 'efectivo' || !o.paymentMethod)
-    const mpTotal = mpOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-    const cashTotal = cashOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-    const totalToday = mpTotal + cashTotal
+    // Stats calculations (from Supabase data)
+    const stats = useMemo(() => {
+        const today = new Date().toDateString()
+        const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
 
-    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
-    const monthAgo = new Date(); monthAgo.setMonth(monthAgo.getMonth() - 1)
-    const weekOrders = orders.filter(o => new Date(o.createdAt) >= weekAgo)
-    const monthOrders = orders.filter(o => new Date(o.createdAt) >= monthAgo)
+        const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today)
+        const mpOrders = todayOrders.filter(o => o.payment_method === 'mercadopago')
+        const cashOrders = todayOrders.filter(o => o.payment_method === 'efectivo' || o.payment_method === 'pay_at_counter')
+        const mpTotal = mpOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+        const cashTotal = cashOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
 
-    // Update business info
-    const updateBusinessInfo = (field, value) => {
-        const newInfo = { ...config?.businessInfo, [field]: value }
-        updateConfig({ businessInfo: newInfo })
-        window.dispatchEvent(new CustomEvent('frontendSync'))
+        const weekOrders = orders.filter(o => new Date(o.created_at) >= weekAgo)
+
+        return {
+            todayOrders, mpOrders, cashOrders, mpTotal, cashTotal,
+            totalToday: mpTotal + cashTotal,
+            weekCount: weekOrders.length,
+            monthCount: orders.length
+        }
+    }, [orders])
+
+    // ☁️ CLOUD SAVE for business info
+    const [savingConfig, setSavingConfig] = useState(false)
+    const updateBusinessInfo = async (field, value) => {
+        const newInfo = { ...appConfig?.businessInfo, [field]: value }
+        const updatedConfig = { ...appConfig, businessInfo: newInfo }
+        setSavingConfig(true)
+        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+        await refreshTenantData()
+        setSavingConfig(false)
+    }
+
+    const updateExternalOrdering = async (updates) => {
+        const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
+        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+        await refreshTenantData()
+    }
+
+    const updatePayments = async (updates) => {
+        const updatedConfig = { ...appConfig, payments: { ...appConfig?.payments, ...updates } }
+        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+        await refreshTenantData()
     }
 
     // Card style helper
@@ -106,10 +134,12 @@ function OwnerSummary({ config: configProp }) {
             {/* Sync Button */}
             <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', display: 'flex', gap: 8 }}>
                 <button
-                    onClick={() => {
-                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                        setOrders(getOrders())
-                        alert('✅ Frontend synced!')
+                    onClick={async () => {
+                        setOrdersLoading(true)
+                        const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30)
+                        const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', 'cancelado').order('created_at', { ascending: false })
+                        if (data) setOrders(data)
+                        setOrdersLoading(false)
                     }}
                     style={{
                         flex: 1,
@@ -159,52 +189,52 @@ function OwnerSummary({ config: configProp }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 32, height: 32, borderRadius: 10, background: '#E0F2F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💳</div>
-                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{mpOrders.length} sesiones</p></div>
+                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.mpOrders.length} pedidos</p></div>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>${mpTotal.toLocaleString()}</span>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>{formatPrice(stats.mpTotal)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 32, height: 32, borderRadius: 10, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💵</div>
-                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Efectivo</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{cashOrders.length} sesiones</p></div>
+                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Efectivo</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.cashOrders.length} pedidos</p></div>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>${cashTotal.toLocaleString()}</span>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>{formatPrice(stats.cashTotal)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                        <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>Total del día</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{todayOrders.length} sesiones</p></div>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>${totalToday.toLocaleString()}</span>
+                        <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>Total del día</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.todayOrders.length} pedidos</p></div>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>{formatPrice(stats.totalToday)}</span>
                     </div>
                 </div>
 
                 {/* ==================== SESIONES ==================== */}
                 <h3 style={labelStyle}>SESIONES</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{weekOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Esta semana</p></div>
-                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{monthOrders.length}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Este mes</p></div>
+                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.weekCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Esta semana</p></div>
+                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.monthCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Este mes</p></div>
                 </div>
 
                 {/* ==================== INFORMACIÓN DEL LOCAL ==================== */}
                 <h3 style={labelStyle}>📍 INFORMACIÓN DEL LOCAL</h3>
                 <div style={cardStyle}>
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>WhatsApp (contacto principal)</label>
-                    <input type="text" placeholder="+54 11 1234-5678" value={config?.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
+                    <input type="text" placeholder="+54 11 1234-5678" value={appConfig?.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
 
-                    {/* 📍 HYBRID LOCATION GROUP (Polished with 12px Visual Rhyme) */}
+                    {/* 📍 HYBRID LOCATION GROUP */}
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
                         <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 12 }}>📍 Localización (Unificada)</label>
 
                         <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>Dirección (Etiqueta)</label>
-                        <input type="text" placeholder="Av. Corrientes 1234" value={config?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} />
+                        <input type="text" placeholder="Av. Corrientes 1234" value={appConfig?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} />
 
                         <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>Google Maps Link (Acción)</label>
-                        <input type="text" placeholder="https://maps.google.com/..." value={config?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={{ ...inputStyle, marginBottom: 8 }} />
+                        <input type="text" placeholder="https://maps.google.com/..." value={appConfig?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={{ ...inputStyle, marginBottom: 8 }} />
                         <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
                             ℹ️ Si ambos están presentes, se mostrará un botón con la dirección que abre el mapa.
                         </p>
                     </div>
 
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Indicaciones / Notas</label>
-                    <input type="text" placeholder="Timbre 2A, subir escaleras" value={config?.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
+                    <input type="text" placeholder="Timbre 2A, subir escaleras" value={appConfig?.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
                 </div>
 
                 {/* ==================== LINKS EXTERNOS ==================== */}
@@ -212,15 +242,15 @@ function OwnerSummary({ config: configProp }) {
                 <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
-                        <label className="toggle"><input type="checkbox" checked={config?.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config?.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
+                        <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.rappiEnabled ?? false} onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })} /><span className="toggle-slider"></span></label>
                     </div>
-                    <input type="text" placeholder="Link de Rappi" value={config?.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config?.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
+                    <input type="text" placeholder="Link de Rappi" value={appConfig?.externalOrdering?.rappiUrl || ''} onChange={(e) => updateExternalOrdering({ rappiUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
-                        <label className="toggle"><input type="checkbox" checked={config?.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config?.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
+                        <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })} /><span className="toggle-slider"></span></label>
                     </div>
-                    <input type="text" placeholder="Link de PedidosYa" value={config?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config?.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
+                    <input type="text" placeholder="Link de PedidosYa" value={appConfig?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
 
                     {/* Mercado Pago Alias */}
                     <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
@@ -228,12 +258,8 @@ function OwnerSummary({ config: configProp }) {
                         <input
                             type="text"
                             placeholder="ej: grubclub.mp"
-                            value={config?.payments?.mercadoPagoAlias || ''}
-                            onChange={(e) => {
-                                const c = config?.payments || {};
-                                updateConfig({ payments: { ...c, mercadoPagoAlias: e.target.value } });
-                                window.dispatchEvent(new CustomEvent('frontendSync'))
-                            }}
+                            value={appConfig?.payments?.mercadoPagoAlias || ''}
+                            onChange={(e) => updatePayments({ mercadoPagoAlias: e.target.value })}
                             style={inputStyle}
                         />
                         <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Si está vacío, no aparece en Info</p>

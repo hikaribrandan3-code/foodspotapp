@@ -1,46 +1,70 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
-import { getAuth, clearAuth } from '../../utils/storage.js'
-import { updateConfig } from '../../config/appConfig.v2.js'
+import { clearAuth } from '../../utils/storage.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 
-// INVARIANT: config must come from prop (App.jsx safeConfig)
-function RewardsManager({ config: configProp }) {
-    const config = configProp || {};
+// ============================================
+// 🎯 REWARDS MANAGER — CLOUD-FIRST (P0 #10)
+// ============================================
+// All config persists to Supabase branding.app_config
+// No localStorage. No local config. No amnesia.
+// ============================================
+
+function RewardsManager() {
     const navigate = useNavigate()
-    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
-    const [stampsRequired, setStampsRequired] = useState(config?.rewards?.stampsRequired || 10)
-    const [rewardDescription, setRewardDescription] = useState(config?.rewards?.rewardDescription || '')
+    const { tenantSlug } = useParams()
+    const { businessId, tenantData, refreshTenantData } = useTenant()
+    const appConfig = tenantData?.app_config || {}
 
-    // NOTE: Auth check removed - ProtectedRoute handles authentication
+    // Hydrate from cloud
+    const [stampsRequired, setStampsRequired] = useState(appConfig?.rewards?.stampsRequired || 10)
+    const [rewardDescription, setRewardDescription] = useState(appConfig?.rewards?.rewardDescription || '¡Café gratis!')
+    const [rewardsEnabled, setRewardsEnabled] = useState(appConfig?.features?.rewardsEnabled ?? false)
+    const [saving, setSaving] = useState(false)
 
-    // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
     const handleLogout = async () => {
         await supabase.auth.signOut()
         clearAuth()
         window.location.href = `/${tenantSlug}`
     }
 
-    const handleSave = () => {
-        updateConfig({
+    // ☁️ CLOUD SAVE: Atomic update to branding.app_config
+    const handleSave = async () => {
+        if (saving) return
+        setSaving(true)
+
+        const updatedConfig = {
+            ...appConfig,
             rewards: {
                 stampsRequired: parseInt(stampsRequired) || 10,
                 rewardDescription: rewardDescription || '¡Café gratis!'
+            },
+            features: {
+                ...appConfig?.features,
+                rewardsEnabled
             }
-        })
-        window.dispatchEvent(new CustomEvent('frontendSync'))
-        alert('¡Cambios guardados!')
+        }
+
+        const { error } = await supabase
+            .from('branding')
+            .update({ app_config: updatedConfig })
+            .eq('business_id', businessId)
+
+        if (error) {
+            console.error('Save failed:', error)
+            alert('❌ Error al guardar: ' + error.message)
+        } else {
+            await refreshTenantData()
+            alert('✅ ¡Cambios guardados en la nube!')
+        }
+        setSaving(false)
     }
 
+    // Toggle updates local state (saved on "Guardar")
     const handleToggleRewards = () => {
-        updateConfig({
-            features: {
-                ...config?.features,
-                rewardsEnabled: !config?.features?.rewardsEnabled
-            }
-        })
-        window.dispatchEvent(new CustomEvent('frontendSync'))
+        setRewardsEnabled(prev => !prev)
     }
 
     return (
@@ -67,13 +91,13 @@ function RewardsManager({ config: configProp }) {
                         <div>
                             <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>Recompensas activas</p>
                             <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>
-                                {config.features?.rewardsEnabled ? '✓ Activo' : '✗ Inactivo'}
+                                {rewardsEnabled ? '✓ Activo' : '✗ Inactivo'}
                             </p>
                         </div>
                         <label className="toggle">
                             <input
                                 type="checkbox"
-                                checked={config.features?.rewardsEnabled}
+                                checked={rewardsEnabled}
                                 onChange={handleToggleRewards}
                             />
                             <span className="toggle-slider"></span>
@@ -116,8 +140,10 @@ function RewardsManager({ config: configProp }) {
                     <button
                         className="btn btn-primary btn-block"
                         onClick={handleSave}
+                        disabled={saving}
+                        style={{ opacity: saving ? 0.6 : 1 }}
                     >
-                        Guardar cambios
+                        {saving ? '☁️ Guardando...' : '☁️ Guardar en la nube'}
                     </button>
                 </div>
 
