@@ -292,42 +292,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // --- 🛡️ SAFE-SYNC: Sync Logic (Final Boss Fix) ---
 
 
-    const syncMenuToCloud = async (updatedMenu) => {
-        // 🔒 HYDRATION GUARD: Block sync until cloud data is loaded
-        if (!isHydratedRef.current) {
-            console.warn('⚠️ SYNC BLOCKED: Hydration not complete. Waiting for cloud data before allowing writes.')
-            return
-        }
 
-        // 🛡️ AMNESIA GUARD: NEVER sync null or empty data
-        if (!updatedMenu || !Array.isArray(updatedMenu.categories)) {
-            console.warn('⚠️ SYNC BLOCKED: Attempted to sync null/invalid menu. Aborting to protect Cloud Vault.')
-            return
-        }
-
-        console.log('☁️ Syncing Menu to Supabase (JSONB Strict)... Target:', targetBusinessId)
-
-        // ⚡ STRICT UPDATE: Partial update to avoid wiping other fields
-        const { error } = await supabase
-            .from('branding')
-            .update({
-                menu_data: updatedMenu,
-                updated_at: new Date()
-            })
-            .eq('business_id', targetBusinessId) // 🛡️ GLOBAL PLATFORM STANDARD
-
-        if (error) {
-            console.error('❌ Cloud Sync Failed:', error)
-            window.alert(`❌ SYNC ERROR: ${error.message}\nCode: ${error.code || 'N/A'}\nDetails: ${error.details || 'None'}`)
-            setSaveStatus({ message: 'Error al guardar en nube', error: true })
-        } else {
-            console.log('✅ Cloud Sync Validated')
-            // 💧 FORCE STATE HYDRATION: Immediately update local state to match saved data
-            setMenu(updatedMenu)
-            setSaveStatus({ message: '☁️ Sincronizado' })
-            setTimeout(() => setSaveStatus(null), 2000)
-        }
-    }
     // --------------------------------
 
     const syncConfigToCloud = async (updatedConfig) => {
@@ -465,6 +430,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     delivery_fee: localConfig.delivery?.flatFee,
                     free_delivery_threshold: localConfig.delivery?.freeDeliveryThreshold,
                     app_config: localConfig,
+                    menu_data: menuToSave, // 💉 THE KILL-SHOT: Updates the JSON blob
                     service_modes: localConfig.service_modes,
                     design_state: localConfig.design_state || {},
                     last_printed_at: localConfig.lastPrintedAt || null,
@@ -1561,7 +1527,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                     items: []
                                                 })
                                                 setMenu(updatedMenu)
-                                                syncMenuToCloud(updatedMenu)
+                                                setHasChanges(true) // 💉 FIX: Stage the new category for Batch Save
                                                 setNewCategoryName('')
                                                 setNewCategoryIcon('📦')
                                                 setShowAddCategory(false)
