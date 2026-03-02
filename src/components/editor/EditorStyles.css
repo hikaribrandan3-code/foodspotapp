@@ -561,7 +561,6 @@
 
 /* QR Code Container — ALWAYS high-contrast white */
 .menu-canvas-qr {
-    position: absolute;
     width: 2cm;
     height: 2cm;
     background: #FFFFFF;
@@ -572,18 +571,11 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 5;
+    /* Flex child sizing protection */
+    flex-shrink: 0;
 }
 
-.menu-canvas-qr.pos-top-right {
-    top: 24px;
-    right: 24px;
-}
-
-.menu-canvas-qr.pos-bottom-right {
-    bottom: 24px;
-    right: 24px;
-}
+/* Remove old pos-top-right / pos-bottom-right absolute positioning */
 
 .menu-canvas-qr img {
     width: 100%;

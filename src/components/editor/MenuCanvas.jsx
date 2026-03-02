@@ -61,12 +61,9 @@ export { DIVIDER_STYLES }
 export default function MenuCanvas({
     menu,
     businessName,
-    logoUrl,
-    logoMode = 'text',
     theme,
     fontPairingId,
     colorOverrides,
-    logoSize,
     qrPosition,
     showCurrency,
     qrUrl,
@@ -113,35 +110,34 @@ export default function MenuCanvas({
         '--editor-category': categoryColor,
         '--editor-font-heading': fonts.heading,
         '--editor-font-body': fonts.body,
-        '--editor-logo-size': `${logoSize || 100}px`,
         '--editor-font-scale': fontScale
     }
+
+    // The inline QR component to avoid absolute overlap
+    const QRBlock = () => (qrUrl ? (
+        <div className="menu-canvas-qr">
+            <img src={qrUrl} alt="QR Code" />
+            <span className="menu-canvas-qr-label">Escanear</span>
+        </div>
+    ) : null)
 
     return (
         <div className="menu-canvas-a4" style={cssVars}>
             {/* Background texture overlay */}
             <div className="menu-canvas-texture" style={{ background: theme.bgTexture }} />
 
-            {/* QR Code (always white background for scannability) */}
-            {qrUrl && (
-                <div className={`menu-canvas-qr ${qrPosition === 'top-right' ? 'pos-top-right' : 'pos-bottom-right'}`}>
-                    <img src={qrUrl} alt="QR Code" />
-                    <span className="menu-canvas-qr-label">Escanear</span>
-                </div>
-            )}
-
             <div className="menu-canvas-content">
-                {/* Header */}
-                <div className="menu-canvas-header">
-                    {logoMode === 'image' && logoUrl ? (
-                        <img src={logoUrl} alt={businessName} className="menu-canvas-logo" />
-                    ) : null}
-                    <h1 className="menu-canvas-biz-name">
-                        {businessName || 'Mi Negocio'}
-                    </h1>
-                    {tagline && (
-                        <div className="menu-canvas-tagline">{tagline}</div>
-                    )}
+                {/* Header Row: Contains Text and optionally Top-Right QR */}
+                <div className="menu-canvas-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+                    <div className="menu-canvas-header-text" style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <h1 className="menu-canvas-biz-name">
+                            {businessName || 'Mi Negocio'}
+                        </h1>
+                        {tagline && (
+                            <div className="menu-canvas-tagline">{tagline}</div>
+                        )}
+                    </div>
+                    {qrPosition === 'top-right' && <QRBlock />}
                 </div>
 
                 {/* Categories & Items */}
@@ -192,9 +188,12 @@ export default function MenuCanvas({
                     )
                 })}
 
-                {/* Footer — just the date, no branding */}
-                <div className="menu-canvas-footer">
-                    <p>Precios actualizados al {new Date().toLocaleDateString('es-AR')}</p>
+                {/* Footer Row: Contains Date and optionally Bottom-Right QR */}
+                <div className="menu-canvas-footer" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 'auto' }}>
+                    <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0 }}>Precios actualizados al {new Date().toLocaleDateString('es-AR')}</p>
+                    </div>
+                    {qrPosition === 'bottom-right' && <QRBlock />}
                 </div>
             </div>
         </div>

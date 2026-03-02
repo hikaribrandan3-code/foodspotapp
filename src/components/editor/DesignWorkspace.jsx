@@ -32,16 +32,6 @@ export default function DesignWorkspace({
     const [activeThemeId, setActiveThemeId] = useState('bistro')
     const [fontPairingId, setFontPairingId] = useState('playfair')
     const [colorOverrides, setColorOverrides] = useState({ bg: null, accent: null, text: null })
-    const [logoSize, setLogoSize] = useState(100)
-    const [qrPosition, setQrPosition] = useState('bottom-right')
-    const [showCurrency, setShowCurrency] = useState(true)
-    const [showQR, setShowQR] = useState(true)
-    const [tagline, setTagline] = useState(localConfig?.tagline || '')
-    const [dividerStyle, setDividerStyle] = useState('line')
-
-    // Logo mode: 'image' (from hero/branding) or 'text' (business name only)
-    const [logoMode, setLogoMode] = useState(logoUrl ? 'image' : 'text')
-
     // Mobile bottom-sheet tab & collapse state
     const [activeTab, setActiveTab] = useState('quick')
     const [sheetOpen, setSheetOpen] = useState(true)
@@ -96,8 +86,6 @@ export default function DesignWorkspace({
                 theme: activeThemeId,
                 fontPairing: fontPairingId,
                 colors: colorOverrides,
-                logoSize,
-                logoMode,
                 qrPosition,
                 showCurrency,
                 showQR,
@@ -106,7 +94,7 @@ export default function DesignWorkspace({
         }
         if (onPrint) onPrint()
         else window.print()
-    }, [onPrint, onSaveState, activeThemeId, fontPairingId, colorOverrides, logoSize, logoMode, qrPosition, showCurrency, showQR, tagline])
+    }, [onPrint, onSaveState, activeThemeId, fontPairingId, colorOverrides, qrPosition, showCurrency, showQR, tagline])
 
     // ============================
     // SIDEBAR CONTROLS (Shared between desktop sidebar and mobile sheet)
@@ -173,52 +161,8 @@ export default function DesignWorkspace({
         </div>
     )
 
-    const renderLogoControls = () => (
-        <div className="editor-sidebar-section">
-            <div className="editor-sidebar-label">Logo / Encabezado</div>
-            {/* Logo Mode Toggle */}
-            <div className="editor-toggle-row">
-                <span className="editor-toggle-label">Modo</span>
-                <div style={{ display: 'flex', gap: 4 }}>
-                    <button
-                        className={`editor-mode-btn ${logoMode === 'image' ? 'active' : ''}`}
-                        onClick={() => setLogoMode('image')}
-                        disabled={!logoUrl}
-                        style={{ opacity: logoUrl ? 1 : 0.4 }}
-                    >
-                        🖼️ Imagen
-                    </button>
-                    <button
-                        className={`editor-mode-btn ${logoMode === 'text' ? 'active' : ''}`}
-                        onClick={() => setLogoMode('text')}
-                    >
-                        Aa Texto
-                    </button>
-                </div>
-            </div>
-            {/* Logo Size (only when image mode) */}
-            {logoMode === 'image' && logoUrl && (
-                <>
-                    <div className="editor-sidebar-label" style={{ marginTop: 12 }}>Tamaño Logo</div>
-                    <input
-                        type="range"
-                        min="30"
-                        max="200"
-                        value={logoSize}
-                        onChange={(e) => setLogoSize(Number(e.target.value))}
-                        className="editor-range"
-                    />
-                    <div style={{ fontSize: 11, color: '#6B7280', marginTop: 4 }}>{logoSize}px</div>
-                </>
-            )}
-        </div>
-    )
-
     const renderToggles = () => (
         <>
-            {/* Logo Controls */}
-            {renderLogoControls()}
-
             {/* QR Code */}
             <div className="editor-sidebar-section">
                 <div className="editor-sidebar-label">QR Code</div>
@@ -360,12 +304,9 @@ export default function DesignWorkspace({
                     <MenuCanvas
                         menu={menu}
                         businessName={businessName}
-                        logoUrl={logoUrl}
-                        logoMode={logoMode}
                         theme={theme}
                         fontPairingId={fontPairingId}
                         colorOverrides={colorOverrides}
-                        logoSize={logoSize}
                         qrPosition={qrPosition}
                         showCurrency={showCurrency}
                         qrUrl={qrUrl}
@@ -431,9 +372,6 @@ export default function DesignWorkspace({
                                 </>
                             ) : activeTab === 'settings' ? (
                                 <>
-                                    {/* Logo Controls */}
-                                    {renderLogoControls()}
-
                                     {/* Psychological Pricing Toggle */}
                                     <div className="editor-toggle-row" style={{ marginTop: 12 }}>
                                         <span className="editor-toggle-label">Mostrar $</span>
@@ -466,6 +404,22 @@ export default function DesignWorkspace({
                                                 fontSize: 13, boxSizing: 'border-box', fontFamily: 'Inter, system-ui, sans-serif'
                                             }}
                                         />
+                                    </div>
+
+                                    {/* Category Dividers */}
+                                    <div style={{ marginTop: 16 }}>
+                                        <div className="editor-sidebar-label">Separador</div>
+                                        <div className="editor-font-toggle">
+                                            {Object.entries(DIVIDER_STYLES).map(([key, style]) => (
+                                                <div
+                                                    key={key}
+                                                    className={`editor-font-option ${dividerStyle === key ? 'active' : ''}`}
+                                                    onClick={() => setDividerStyle(key)}
+                                                >
+                                                    {style.label}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     {/* Font Picker */}
