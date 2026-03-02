@@ -1,16 +1,12 @@
 /**
- * ExportEngine.js - CamTech v2.0 (STRIKE 5B)
- * Full layer compositing + Nano Banana Filters + Venue Branding
+ * ExportEngine.js - CamTech v2.1 (STRIKE 5B — Nintendo Pill)
+ * Full layer compositing + Nano Banana Filters + Nintendo Pill Branding
  * 
- * Pipeline: photo → NanoBanana filter → strokes → stickers → emojis → text → branding overlay → JPEG blob
+ * Pipeline: photo → NanoBanana filter → strokes → stickers → emojis → text → Nintendo Pill → JPEG blob
  * 
  * Capped at 1080x1920 (Story ratio) to prevent VRAM crashes.
  * All filters are pixel-level (ImageData manipulation) — they "burn" permanently.
  */
-
-import { QRCodeCanvas } from 'qrcode.react'
-import { createElement } from 'react'
-import { createRoot } from 'react-dom/client'
 
 // ============================================
 // CONSTANTS
@@ -45,7 +41,6 @@ function applyFoodPornFilter(ctx, width, height) {
     const imageData = ctx.getImageData(0, 0, width, height)
     const data = imageData.data
 
-    // Center for vignette
     const cx = width / 2
     const cy = height / 2
     const maxDist = Math.sqrt(cx * cx + cy * cy)
@@ -55,26 +50,22 @@ function applyFoodPornFilter(ctx, width, height) {
         let g = data[i + 1]
         let b = data[i + 2]
 
-        // --- Contrast +10% ---
         r = clamp(((r / 255 - 0.5) * 1.10 + 0.5) * 255)
         g = clamp(((g / 255 - 0.5) * 1.10 + 0.5) * 255)
         b = clamp(((b / 255 - 0.5) * 1.10 + 0.5) * 255)
 
-        // --- Saturation +15% (via luminance) ---
         const lum = 0.299 * r + 0.587 * g + 0.114 * b
         r = clamp(lum + (r - lum) * 1.15)
         g = clamp(lum + (g - lum) * 1.15)
         b = clamp(lum + (b - lum) * 1.15)
 
-        // --- Warm tone shift (subtle +5 red, -3 blue) ---
         r = clamp(r + 5)
         b = clamp(b - 3)
 
-        // --- Radial vignette ---
         const px = (i / 4) % width
         const py = Math.floor((i / 4) / width)
         const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2)
-        const vignette = 1 - (dist / maxDist) * 0.35 // darken edges by up to 35%
+        const vignette = 1 - (dist / maxDist) * 0.35
         r *= vignette
         g *= vignette
         b *= vignette
@@ -100,43 +91,38 @@ function applyNeonGlowFilter(ctx, width, height) {
         let g = data[i + 1]
         let b = data[i + 2]
 
-        // --- Contrast +30% ---
         r = clamp(((r / 255 - 0.5) * 1.30 + 0.5) * 255)
         g = clamp(((g / 255 - 0.5) * 1.30 + 0.5) * 255)
         b = clamp(((b / 255 - 0.5) * 1.30 + 0.5) * 255)
 
-        // --- Saturation +40% ---
         const lum = 0.299 * r + 0.587 * g + 0.114 * b
         r = clamp(lum + (r - lum) * 1.40)
         g = clamp(lum + (g - lum) * 1.40)
         b = clamp(lum + (b - lum) * 1.40)
 
-        // --- Hue rotate +15° (simplified RGB rotation) ---
         const cos = Math.cos(15 * Math.PI / 180)
         const sin = Math.sin(15 * Math.PI / 180)
         const rr = clamp(r * (0.213 + cos * 0.787 - sin * 0.213) + g * (0.715 - cos * 0.715 - sin * 0.715) + b * (0.072 - cos * 0.072 + sin * 0.928))
         const gg = clamp(r * (0.213 - cos * 0.213 + sin * 0.143) + g * (0.715 + cos * 0.285 + sin * 0.140) + b * (0.072 - cos * 0.072 - sin * 0.283))
         const bb = clamp(r * (0.213 - cos * 0.213 - sin * 0.787) + g * (0.715 - cos * 0.715 + sin * 0.715) + b * (0.072 + cos * 0.928 + sin * 0.072))
 
-        // --- Deepen blacks (lift shadows slightly for "film" look) ---
         data[i] = clamp(rr * 0.95 + 8)
         data[i + 1] = clamp(gg * 0.95 + 5)
-        data[i + 2] = clamp(bb * 0.95 + 12) // subtle blue in shadows
+        data[i + 2] = clamp(bb * 0.95 + 12)
     }
 
     ctx.putImageData(imageData, 0, 0)
 
-    // --- Film grain overlay (4% alpha noise) ---
+    // Film grain overlay (4% alpha noise)
     const grainData = ctx.createImageData(width, height)
     for (let i = 0; i < grainData.data.length; i += 4) {
         const noise = Math.random() * 255
         grainData.data[i] = noise
         grainData.data[i + 1] = noise
         grainData.data[i + 2] = noise
-        grainData.data[i + 3] = 10  // ~4% alpha (10/255)
+        grainData.data[i + 3] = 10
     }
 
-    // Composite grain over the image
     const grainCanvas = document.createElement('canvas')
     grainCanvas.width = width
     grainCanvas.height = height
@@ -155,7 +141,6 @@ export function applyNanoBanana(ctx, width, height, context) {
     } else if (context === 'event') {
         applyNeonGlowFilter(ctx, width, height)
     }
-    // null context = no filter (raw photo)
 }
 
 function clamp(val) {
@@ -163,167 +148,84 @@ function clamp(val) {
 }
 
 // ============================================
-// 🏷️ VENUE BRANDING OVERLAY
+// 🏷️ NINTENDO PILL BRANDING
 // ============================================
 
 /**
- * Load an image URL as an HTMLImageElement
+ * Burn the "Nintendo Pill" venue branding onto the canvas.
+ * Centered capsule with red map pin + bold business name.
+ * 80px from bottom (above IG interface zone).
  */
-function loadImage(url) {
-    return new Promise((resolve, reject) => {
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        img.onload = () => resolve(img)
-        img.onerror = () => reject(new Error(`Failed to load: ${url}`))
-        img.src = url
-    })
-}
+function burnBranding(ctx, width, height, branding) {
+    if (!branding?.businessName) return
 
-/**
- * Generate QR code as a canvas element
- */
-function generateQRCanvas(text, size = 120) {
-    return new Promise((resolve) => {
-        const container = document.createElement('div')
-        container.style.position = 'fixed'
-        container.style.left = '-9999px'
-        document.body.appendChild(container)
+    const { businessName } = branding
+    const scale = width / 1080
 
-        const root = createRoot(container)
-        root.render(createElement(QRCodeCanvas, {
-            value: text,
-            size: size,
-            level: 'M',
-            bgColor: '#FFFFFF',
-            fgColor: '#000000',
-            includeMargin: false,
-        }))
+    // --- Measure text to size the pill ---
+    const fontSize = Math.round(16 * scale)
+    const pinSize = Math.round(18 * scale)
+    const pillPaddingH = Math.round(20 * scale)  // horizontal padding
+    const pillPaddingV = Math.round(12 * scale)   // vertical padding
+    const pinTextGap = Math.round(8 * scale)      // gap between pin and text
+    const pillRadius = Math.round(24 * scale)     // capsule corner radius
+    const bottomOffset = Math.round(80 * scale)   // above IG interface zone
 
-        // Wait for render
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                const qrCanvas = container.querySelector('canvas')
-                if (qrCanvas) {
-                    // Clone the canvas data before cleanup
-                    const cloned = document.createElement('canvas')
-                    cloned.width = qrCanvas.width
-                    cloned.height = qrCanvas.height
-                    cloned.getContext('2d').drawImage(qrCanvas, 0, 0)
-                    root.unmount()
-                    document.body.removeChild(container)
-                    resolve(cloned)
-                } else {
-                    root.unmount()
-                    document.body.removeChild(container)
-                    resolve(null)
-                }
-            })
-        })
-    })
-}
-
-/**
- * Burn venue branding onto the canvas
- * @param {CanvasRenderingContext2D} ctx
- * @param {Object} branding - { logoUrl, businessName, tenantSlug, context }
- */
-async function burnBranding(ctx, width, height, branding) {
-    if (!branding) return
-
-    const { logoUrl, businessName, tenantSlug, context } = branding
-    const padding = Math.round(width * 0.04) // 4% padding
-    const scale = width / 1080 // scale factor relative to 1080p
-
-    // --- Logo (top-left) ---
-    if (logoUrl) {
-        try {
-            const logo = await loadImage(logoUrl)
-            const logoSize = Math.round(64 * scale)
-            const logoX = padding
-            const logoY = padding
-
-            // Logo circle mask
-            ctx.save()
-            ctx.beginPath()
-            ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2)
-            ctx.clip()
-            ctx.drawImage(logo, logoX, logoY, logoSize, logoSize)
-            ctx.restore()
-
-            // Business name next to logo
-            if (businessName) {
-                ctx.save()
-                ctx.font = `700 ${Math.round(18 * scale)}px -apple-system, sans-serif`
-                ctx.fillStyle = '#FFFFFF'
-                ctx.shadowColor = 'rgba(0,0,0,0.6)'
-                ctx.shadowBlur = 6 * scale
-                ctx.textBaseline = 'middle'
-                ctx.fillText(businessName, logoX + logoSize + padding / 2, logoY + logoSize / 2)
-                ctx.restore()
-            }
-        } catch (e) {
-            console.log('Logo load failed, skipping branding logo', e)
-        }
-    }
-
-    // --- QR Code + CTA (bottom-right) ---
-    if (tenantSlug) {
-        const qrLink = `https://foodspot.app/${tenantSlug}/promos`
-        const ctaText = context === 'food' ? 'Pedí acá 🍔' : 'Comprá tu entrada 🎟️'
-        const qrSize = Math.round(100 * scale)
-
-        try {
-            const qrCanvas = await generateQRCanvas(qrLink, qrSize)
-
-            if (qrCanvas) {
-                const qrX = width - qrSize - padding
-                const qrY = height - qrSize - padding - Math.round(28 * scale)
-
-                // Glass background for QR area
-                ctx.save()
-                ctx.fillStyle = 'rgba(0,0,0,0.5)'
-                ctx.beginPath()
-                ctx.roundRect(
-                    qrX - padding,
-                    qrY - padding,
-                    qrSize + padding * 2,
-                    qrSize + padding * 2 + Math.round(28 * scale),
-                    Math.round(16 * scale)
-                )
-                ctx.fill()
-                ctx.restore()
-
-                // QR code with white border
-                ctx.save()
-                const borderSize = Math.round(4 * scale)
-                ctx.fillStyle = '#FFFFFF'
-                ctx.beginPath()
-                ctx.roundRect(qrX - borderSize, qrY - borderSize, qrSize + borderSize * 2, qrSize + borderSize * 2, Math.round(8 * scale))
-                ctx.fill()
-                ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize)
-                ctx.restore()
-
-                // CTA text below QR
-                ctx.save()
-                ctx.font = `700 ${Math.round(13 * scale)}px -apple-system, sans-serif`
-                ctx.fillStyle = '#FFFFFF'
-                ctx.textAlign = 'center'
-                ctx.shadowColor = 'rgba(0,0,0,0.5)'
-                ctx.shadowBlur = 4 * scale
-                ctx.fillText(ctaText, qrX + qrSize / 2, qrY + qrSize + Math.round(18 * scale))
-                ctx.restore()
-            }
-        } catch (e) {
-            console.log('QR generation failed, skipping', e)
-        }
-    }
-
-    // --- FoodSpot watermark (bottom-left) ---
     ctx.save()
-    ctx.font = `600 ${Math.round(11 * scale)}px -apple-system, sans-serif`
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'
-    ctx.textBaseline = 'bottom'
-    ctx.fillText('🔥 FoodSpot', padding, height - padding)
+    ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
+    const textMetrics = ctx.measureText(businessName)
+    const textW = textMetrics.width
+
+    // Total pill dimensions
+    const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
+    const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
+    const pillX = (width - pillW) / 2
+    const pillY = height - bottomOffset - pillH
+
+    // --- Drop shadow ---
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.25)'
+    ctx.shadowBlur = 12 * scale
+    ctx.shadowOffsetX = 0
+    ctx.shadowOffsetY = 4 * scale
+
+    // --- Pill background (white, 0.9 alpha) ---
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+    ctx.beginPath()
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillRadius)
+    ctx.fill()
+
+    // Reset shadow for content
+    ctx.shadowColor = 'transparent'
+    ctx.shadowBlur = 0
+    ctx.shadowOffsetX = 0
+    ctx.shadowOffsetY = 0
+
+    // --- Red Map Pin Icon ---
+    const pinX = pillX + pillPaddingH
+    const pinCenterY = pillY + pillH / 2
+
+    // Pin body (teardrop shape using arc + triangle)
+    const pinR = pinSize * 0.35
+    ctx.fillStyle = '#EF4444'
+    ctx.beginPath()
+    ctx.arc(pinX + pinSize / 2, pinCenterY - pinR * 0.3, pinR, Math.PI, 0, false)
+    ctx.lineTo(pinX + pinSize / 2, pinCenterY + pinR * 1.4)
+    ctx.closePath()
+    ctx.fill()
+
+    // Pin dot (white center)
+    ctx.fillStyle = '#FFFFFF'
+    ctx.beginPath()
+    ctx.arc(pinX + pinSize / 2, pinCenterY - pinR * 0.3, pinR * 0.35, 0, Math.PI * 2)
+    ctx.fill()
+
+    // --- Business Name (bold, black) ---
+    ctx.fillStyle = '#111827'
+    ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    ctx.fillText(businessName, pinX + pinSize + pinTextGap, pinCenterY)
+
     ctx.restore()
 }
 
