@@ -448,7 +448,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 name: cat.name,
                 icon: cat.icon || '',
                 sort_order: index,
-                enabled: cat.enabled
+                // enabled: cat.enabled // removed until DB schema is updated
             }))
 
             const itemsPayload = []
