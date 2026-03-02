@@ -4,7 +4,8 @@ import TextEditor from './TextEditor.jsx'
 import StickerDrawer from './StickerDrawer.jsx'
 import EmojiPicker from './EmojiPicker.jsx'
 import DrawTool from './DrawTool.jsx'
-import { exportAndShare } from './utils/ExportEngine.js'
+import { exportPreview } from './utils/ExportEngine.js'
+import DualPostScreen from './DualPostScreen.jsx'
 import './EditorLayer.css'
 
 /**
@@ -48,6 +49,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     // Export state
     const [isExporting, setIsExporting] = useState(false)
     const [exportResult, setExportResult] = useState(null)
+
+    // DualPost state
+    const [showDualPost, setShowDualPost] = useState(false)
+    const [dualPostData, setDualPostData] = useState(null)
 
     // PATCH 15: Rapid action protection
     const lastActionRef = useRef(0)
@@ -284,14 +289,14 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         setPlacedElements(prev => [...prev, newElement])
     }, [canvasDimensions])
 
-    // Handle Done button - export and share
+    // Handle Done button - export preview and show DualPostScreen
     const handleDone = useCallback(async () => {
         if (!baseCanvasRef.current) return
 
         setIsExporting(true)
 
         try {
-            const result = await exportAndShare({
+            const { dataURL, blob } = await exportPreview({
                 baseCanvas: baseCanvasRef.current,
                 strokes,
                 elements: placedElements,
@@ -301,26 +306,14 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 branding
             })
 
-            setExportResult(result)
-
-            // Handle share result
-            if (result.notSupported) {
-                // Web Share not supported - show message, don't exit
-                alert('Sharing is not supported on this device')
-                return
-            }
-
-            // Exit editor after successful share or user cancel
-            if (onDone && (result.shared || result.cancelled)) {
-                onDone()
-            }
+            setDualPostData({ dataURL, blob })
+            setShowDualPost(true)
         } catch (error) {
-            // Only log actual errors, show fallback message
             console.error('Export failed:', error)
         } finally {
             setIsExporting(false)
         }
-    }, [strokes, placedElements, canvasDimensions, onDone])
+    }, [strokes, placedElements, canvasDimensions, neonContext, branding])
 
     return (
         <div className="editor-layer" ref={containerRef}>
@@ -542,6 +535,17 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 onClose={() => setIsEmojiPickerOpen(false)}
                 onSelect={handleAddEmoji}
             />
+
+            {/* DualPost Decision Screen overlay */}
+            {showDualPost && dualPostData && (
+                <DualPostScreen
+                    previewDataURL={dualPostData.dataURL}
+                    previewBlob={dualPostData.blob}
+                    neonContext={neonContext}
+                    onClose={() => setShowDualPost(false)}
+                    onComplete={onDone}
+                />
+            )}
         </div>
     )
 }
