@@ -28,8 +28,9 @@ serve(async (req) => {
     try {
         const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
         if (!GEMINI_API_KEY) {
+            console.error("Missing GEMINI_API_KEY secret.");
             return new Response(
-                JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
+                JSON.stringify({ error: "MISSING_SECRET", detail: "Configurá GEMINI_API_KEY en Supabase secrets." }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
@@ -38,7 +39,7 @@ serve(async (req) => {
 
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
             return new Response(
-                JSON.stringify({ error: "messages array required" }),
+                JSON.stringify({ error: "BAD_REQUEST", detail: "Messages should be an array" }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }

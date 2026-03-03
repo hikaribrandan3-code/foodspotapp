@@ -290,14 +290,22 @@ ${salesContext}`
             })
 
             if (error) {
+                const isAuthError = error.message?.includes('401') || error.status === 401 || error.message?.toLowerCase().includes('jwt');
+
                 setMessages([...newMessages, {
                     role: 'assistant',
-                    content: `ℹ️ Info: ${error.message}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
+                    content: isAuthError
+                        ? '⚠️ Error de Conexión: Re-iniciá sesión o revisá los permisos de la función.'
+                        : `ℹ️ Info: ${error.message}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
                 }])
             } else if (data?.error) {
+                const isError500 = data.error === 'MISSING_SECRET' || data.error?.includes('500');
+
                 setMessages([...newMessages, {
                     role: 'assistant',
-                    content: `ℹ️ Info: ${data.error}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
+                    content: isError500
+                        ? `ℹ️ Info: ${data.detail || data.error}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
+                        : `ℹ️ Info: ${data.detail || data.error}.`
                 }])
             } else {
                 let aiResponse = data.reply
