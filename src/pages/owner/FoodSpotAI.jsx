@@ -184,7 +184,7 @@ ${salesContext}`
             if (data.error) {
                 setMessages([...newMessages, {
                     role: 'assistant',
-                    content: `⚠️ Error: ${data.error}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
+                    content: `ℹ️ Info: ${data.error}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
                 }])
             } else {
                 setMessages([...newMessages, { role: 'assistant', content: data.reply }])
@@ -192,7 +192,7 @@ ${salesContext}`
         } catch (err) {
             setMessages([...newMessages, {
                 role: 'assistant',
-                content: '⚠️ No pude conectar con el servidor. Verificá tu conexión.'
+                content: 'ℹ️ No pude conectar con el servidor. Verificá tu conexión.'
             }])
         } finally {
             setIsLoading(false)
