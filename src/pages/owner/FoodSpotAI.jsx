@@ -137,9 +137,22 @@ REGLAS:
 1. Respondé SIEMPRE en español rioplatense (vos, tenés, querés).
 2. Sé directo, conciso, y estratégico. No des vueltas.
 3. Usá emojis con moderación para dar energía.
-4. Si te piden un flyer o imagen, describí exactamente qué debería tener (título, subtítulo, colores, estilo visual). No generes la imagen vos, solo el concepto creativo.
-5. Si sugerís una promo, incluí: nombre, descripción corta, precio sugerido, y duración.
-6. Basate en los datos REALES de ventas para dar insights. No inventes números.
+4. Si sugerís una promo, incluí: nombre, descripción corta, precio sugerido, y duración.
+5. Basate en los datos REALES de ventas para dar insights. No inventes números.
+
+OPEN CLAW PROTOCOL:
+You have permission to automate the owner's backend.
+When an action is requested, you MUST append a JSON block delimited by |||:
+
+||| { "action": "SYNC_CONFIG", "patch": { ... } } |||
+or
+||| { "action": "READ_DATA", "query": "event_leads" } |||   <-- Use this to read the leads table if asked about recent reservations.
+
+Supported SYNC_CONFIG patches:
+- promos.items (array push) — For new flyers.
+  - Image Synthesis: If you create a flyer, set the image URL to \`https://image.pollinations.ai/prompt/\${prompt}?width=800&height=1400&nologo=true\` where \${prompt} is an english description of the background image.
+  - Text: Force \`color: '#FFFFFF'\` and \`textShadow: '0 4px 15px rgba(0,0,0,1)'\`.
+- update branding keys (e.g. \`business_name\`, \`is_paused\`, \`pause_message\`, \`whatsapp_number\`)
 
 DATOS DEL NEGOCIO:
 - Nombre: ${businessName}
@@ -153,20 +166,120 @@ ${menuCategories}
 ${salesContext}`
     }, [tenantData, salesSummary, businessName])
 
-    // Send message
-    const handleSend = async (text) => {
-        const userMsg = text || input.trim()
-        if (!userMsg || isLoading) return
+    // State for Image Attachments
+    const [attachment, setAttachment] = useState(null)
+    const fileInputRef = useRef(null)
 
-        const newMessages = [...messages, { role: 'user', content: userMsg }]
-        setMessages(newMessages)
-        setInput('')
-        setIsLoading(true)
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const reader = new FileReader()
+        reader.onloadend = () => {
+            const base64Data = reader.result.split(',')[1]
+            setAttachment({
+                mimeType: file.type,
+                data: base64Data,
+                preview: URL.createObjectURL(file)
+            })
+        }
+        reader.readAsDataURL(file)
+    }
+
+    // Open Claw Logic
+    const { refreshTenantData } = useTenant()
+
+    const executeOpenClaw = async (actionStr) => {
+        try {
+            const action = JSON.parse(actionStr)
+            console.log('[OpenClaw] Executing:', action)
+
+            if (action.action === 'SYNC_CONFIG' && action.patch) {
+                showToast('🤖 AI Sincronizando Sistema...')
+
+                let dbUpdates = { updated_at: new Date().toISOString() }
+
+                // Handle complex deep merges (like promos.items)
+                if (action.patch['promos.items']) {
+                    const currentPromos = tenantData?.app_config?.promos || { style: 'magazine', items: [] }
+                    const newItems = Array.isArray(action.patch['promos.items']) ? action.patch['promos.items'] : [action.patch['promos.items']]
+                    dbUpdates.app_config = {
+                        ...tenantData.app_config,
+                        promos: {
+                            ...currentPromos,
+                            items: [...currentPromos.items, ...newItems]
+                        }
+                    }
+                } else {
+                    // Flat merges
+                    Object.entries(action.patch).forEach(([k, v]) => {
+                        dbUpdates[k] = v
+                    })
+                }
+
+                const { error } = await supabase.from('branding').update(dbUpdates).eq('business_id', businessId)
+                if (error) throw error
+
+                await refreshTenantData()
+                showToast('✅ Cambios aplicados')
+                return "SUCCESS"
+            }
+
+            if (action.action === 'READ_DATA') {
+                showToast('🔍 AI Analizando Datos...')
+                if (action.query === 'event_leads') {
+                    const { data, error } = await supabase.from('event_leads').select('*').eq('business_id', businessId).order('created_at', { ascending: false }).limit(20)
+                    if (error) throw error
+                    return JSON.stringify(data)
+                } else if (action.query === 'orders') {
+                    const { data, error } = await supabase.from('orders').select('id, total, status, created_at').eq('business_id', businessId).order('created_at', { ascending: false }).limit(50)
+                    if (error) throw error
+                    return JSON.stringify(data)
+                }
+            }
+        } catch (err) {
+            console.error('[OpenClaw] Parse Error:', err)
+            showToast('❌ Error de sincronización AI')
+            return "ERROR"
+        }
+    }
+
+    // Send message
+    const handleSend = async (text, hiddenSystemFeedback = null) => {
+        const userText = text || input.trim()
+        if (!userText && !attachment && !hiddenSystemFeedback) return
+
+        // Prevent double submit if already loading manually, 
+        // but allow hidden system feedback (from READ_DATA loop) to proceed
+        if (isLoading && !hiddenSystemFeedback) return
+
+        let newMessages = [...messages]
+
+        let msgPayload = { role: 'user', content: userText }
+        if (attachment && !hiddenSystemFeedback) {
+            msgPayload.image = { mimeType: attachment.mimeType, data: attachment.data }
+            // UI only needs preview
+            msgPayload.clientPreview = attachment.preview
+        }
+
+        if (hiddenSystemFeedback) {
+            newMessages = [...messages, { role: 'user', content: `[DATA RETURNED FROM READ_DATA QUERY]: ${hiddenSystemFeedback}` }]
+        } else {
+            newMessages = [...messages, msgPayload]
+            setMessages(newMessages)
+            setInput('')
+            setAttachment(null)
+            setIsLoading(true)
+        }
 
         try {
             const { data, error } = await supabase.functions.invoke('foodspot-ai', {
                 body: {
-                    messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+                    messages: newMessages.map(m => {
+                        const out = { role: m.role, content: m.content }
+                        if (m.image) out.image = m.image
+                        return out
+                    }),
                     systemPrompt
                 }
             })
@@ -182,9 +295,26 @@ ${salesContext}`
                     content: `ℹ️ Info: ${data.error}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
                 }])
             } else {
-                setMessages([...newMessages, { role: 'assistant', content: data.reply }])
+                let aiResponse = data.reply
+
+                // Open Claw Interceptor
+                const clawMatch = aiResponse.match(/\|\|\|([\s\S]*?)\|\|\|/)
+                if (clawMatch) {
+                    const clawJson = clawMatch[1].trim()
+                    aiResponse = aiResponse.replace(clawMatch[0], '').trim() // Strip JSON from UI
+
+                    const clawResult = await executeOpenClaw(clawJson)
+                    if (clawJson.includes('READ_DATA') && clawResult && clawResult !== 'ERROR') {
+                        // Immediately feed data back to AI to continue thinking
+                        setMessages([...newMessages, { role: 'assistant', content: aiResponse }])
+                        return handleSend(null, clawResult)
+                    }
+                }
+
+                setMessages([...newMessages, { role: 'assistant', content: aiResponse }])
             }
         } catch (err) {
+            console.error('AI Comms Error:', err)
             setMessages([...newMessages, {
                 role: 'assistant',
                 content: 'ℹ️ No pude conectar con el servidor. Verificá tu conexión.'
@@ -214,8 +344,26 @@ ${salesContext}`
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }
 
+    // Temporary toast state for AI
+    const [toastMsg, setToastMsg] = useState('')
+    const showToast = (msg) => {
+        setToastMsg(msg)
+        setTimeout(() => setToastMsg(''), 3000)
+    }
+
     return (
         <div style={containerStyle}>
+            {toastMsg && (
+                <div style={{
+                    position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+                    background: '#111827', color: '#FFF', padding: '12px 24px', borderRadius: 30,
+                    zIndex: 99999, fontSize: 14, fontWeight: 500, boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                    animation: 'slideDown 0.3s ease-out'
+                }}>
+                    {toastMsg}
+                </div>
+            )}
+
             <BackendHeader
                 title="FoodSpot AI"
                 onLogout={handleLogout}
@@ -314,7 +462,14 @@ ${salesContext}`
                         }}>
                             {msg.content}
 
-                            {/* Action buttons for AI responses */}
+                            {/* Multimodal Preview UI */}
+                            {msg.clientPreview && (
+                                <div style={{ marginTop: 8 }}>
+                                    <img src={msg.clientPreview} alt="Attached" style={{ maxWidth: '100%', borderRadius: 8, maxHeight: 150, objectFit: 'cover' }} />
+                                </div>
+                            )}
+
+                            {/* Action buttons for AI responses (disabled since Open Claw automates this now, but leaving UI hooks for future) */}
                             {msg.role === 'assistant' && (msg.content || '').toLowerCase().includes('flyer') && (
                                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
                                     <button
@@ -403,58 +558,99 @@ ${salesContext}`
                     </div>
                 )}
 
-                <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-                    <textarea
-                        ref={inputRef}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Preguntale algo a tu AI..."
-                        rows={1}
-                        style={{
-                            flex: 1, padding: '12px 16px',
-                            borderRadius: 20, border: '1px solid #D1D5DB',
-                            fontSize: 14, fontFamily: 'inherit',
-                            resize: 'none', outline: 'none',
-                            background: '#FFFFFF',
-                            maxHeight: 100, overflowY: 'auto',
-                            transition: 'border-color 0.2s'
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = primaryColor}
-                        onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
-                    />
-                    <button
-                        onClick={() => handleSend()}
-                        disabled={!input.trim() || isLoading}
-                        style={{
-                            width: 44, height: 44, borderRadius: '50%',
-                            border: 'none', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: (!input.trim() || isLoading) ? '#E5E7EB' : primaryColor,
-                            color: '#FFF', transition: 'all 0.2s',
-                            flexShrink: 0
-                        }}
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexDirection: 'column' }}>
+                    {/* Image Attachment Preview */}
+                    {attachment?.preview && (
+                        <div style={{ alignSelf: 'flex-start', position: 'relative', marginBottom: 8, padding: 4, background: '#FFF', borderRadius: 8, border: '1px solid #E5E7EB' }}>
+                            <img src={attachment.preview} alt="Upload" style={{ height: 60, borderRadius: 4 }} />
+                            <button
+                                onClick={() => setAttachment(null)}
+                                style={{ position: 'absolute', top: -5, right: -5, background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}
+                            >✕</button>
+                        </div>
+                    )}
 
-            {/* Bounce animation for typing indicator */}
-            <style>{`
+                    <div style={{ display: 'flex', gap: 8, width: '100%', alignItems: 'flex-end' }}>
+                        {/* 📎 Attachment Button */}
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            style={{
+                                width: 44, height: 44, borderRadius: '50%',
+                                border: '1px solid #D1D5DB', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: '#FFFFFF', color: '#6B7280', transition: 'all 0.2s', flexShrink: 0
+                            }}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                            </svg>
+                        </button>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            style={{ display: 'none' }}
+                        />
+
+                        <textarea
+                            ref={inputRef}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Preguntale algo a tu AI..."
+                            rows={1}
+                            style={{
+                                flex: 1, padding: '12px 16px',
+                                borderRadius: 20, border: '1px solid #D1D5DB',
+                                fontSize: 14, fontFamily: 'inherit',
+                                resize: 'none', outline: 'none',
+                                background: '#FFFFFF',
+                                maxHeight: 100, overflowY: 'auto',
+                                transition: 'border-color 0.2s'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = primaryColor}
+                            onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
+                        />
+                        <button
+                            onClick={() => handleSend()}
+                            disabled={(!input.trim() && !attachment) || isLoading}
+                            style={{
+                                width: 44, height: 44, borderRadius: '50%',
+                                border: 'none', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: (!input.trim() && !attachment) || isLoading ? '#E5E7EB' : primaryColor,
+                                color: '#FFF', transition: 'all 0.2s',
+                                flexShrink: 0
+                            }}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Bounce animation for typing indicator */}
+                <style>{`
+                @keyframes slideDown {
+                    from { transform: translate(-50%, -20px); opacity: 0; }
+                    to { transform: translate(-50%, 0); opacity: 1; }
+                }
                 @keyframes bounce {
                     0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
                     40% { transform: translateY(-6px); opacity: 1; }
                 }
             `}</style>
 
-            <BackendNav
-                role="owner"
-                activeTab="ai"
-                onTabChange={(tab) => navigate(`/${tenantSlug}/owner/${tab}`)}
-            />
+                <BackendNav
+                    role="owner"
+                    activeTab="ai"
+                    onTabChange={(tab) => navigate(`/${tenantSlug}/owner/${tab}`)}
+                />
+            </div>
         </div>
     )
 }

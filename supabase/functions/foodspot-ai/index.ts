@@ -42,11 +42,30 @@ serve(async (req) => {
             );
         }
 
-        // Build Gemini request format
-        const contents = messages.map((msg) => ({
-            role: msg.role === "assistant" ? "model" : "user",
-            parts: [{ text: msg.content }],
-        }));
+        // Build Gemini request format with Multimodal Support
+        const contents = messages.map((msg) => {
+            const parts = [];
+
+            // Text part
+            if (msg.content) {
+                parts.push({ text: msg.content });
+            }
+
+            // Image part (expecting base64 string from frontend)
+            if (msg.image) {
+                parts.push({
+                    inlineData: {
+                        mimeType: msg.image.mimeType || "image/jpeg",
+                        data: msg.image.data
+                    }
+                });
+            }
+
+            return {
+                role: msg.role === "assistant" ? "model" : "user",
+                parts
+            };
+        });
 
         const geminiBody = {
             contents,
@@ -55,27 +74,46 @@ serve(async (req) => {
                 : undefined,
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 2048,
+                maxOutputTokens: 4096, // Increased for Open Claw JSON
                 topP: 0.9,
             },
         };
 
-        // Call Gemini API
-        const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(geminiBody),
+        // Call Gemini API with Retry Logic
+        let geminiRes;
+        let retries = 1;
+
+        while (retries >= 0) {
+            geminiRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": GEMINI_API_KEY
+                    },
+                    body: JSON.stringify(geminiBody),
+                }
+            );
+
+            if (geminiRes.ok || retries === 0) break;
+
+            // If 429 or 500, wait 1s and retry
+            if (geminiRes.status === 429 || geminiRes.status >= 500) {
+                console.warn(`Gemini API ${geminiRes.status}, retrying...`);
+                await new Promise(r => setTimeout(r, 1000));
+                retries--;
+            } else {
+                break; // Don't retry 400s
             }
-        );
+        }
 
         if (!geminiRes.ok) {
             const errText = await geminiRes.text();
             console.error("Gemini API error:", errText);
             return new Response(
-                JSON.stringify({ error: `Gemini API error: ${geminiRes.status}` }),
-                { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                JSON.stringify({ error: "API_ERROR", detail: `Gemini responded with ${geminiRes.status}` }),
+                { status: geminiRes.status === 429 ? 429 : 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
