@@ -80,6 +80,35 @@ function Promos() {
     // Active flyer index for dot indicator
     const [activeIndex, setActiveIndex] = useState(0)
 
+    // 🎫 Lead-capture modal state
+    const [leadModal, setLeadModal] = useState({ open: false, flyerTitle: '' })
+    const [leadName, setLeadName] = useState('')
+    const [leadPhone, setLeadPhone] = useState('')
+
+    // 🔔 Toast state
+    const [toastMsg, setToastMsg] = useState(null)
+    const showToast = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 3000) }
+
+    // 📅 Calendar tap handler
+    const handleCalendarTap = (flyer) => {
+        showToast(`📅 ¡Listo! Te avisaremos sobre "${flyer.title}"`)
+    }
+
+    // 🎫 Entrada Libre tap handler
+    const handleEntradaLibre = (flyer) => {
+        setLeadModal({ open: true, flyerTitle: flyer.title })
+        setLeadName('')
+        setLeadPhone('')
+    }
+
+    // 🎫 Lead submit
+    const handleLeadSubmit = () => {
+        if (!leadName.trim()) { showToast('⚠️ Ingresá tu nombre'); return }
+        console.log('[Promos] Lead captured:', { name: leadName, phone: leadPhone, event: leadModal.flyerTitle })
+        setLeadModal({ open: false, flyerTitle: '' })
+        showToast('✅ ¡Reservado! Te esperamos')
+    }
+
     // Scroll handler for dot indicator
     const handleScroll = () => {
         if (!feedRef.current) return
@@ -259,17 +288,20 @@ function Promos() {
                             padding: '80px 20px 100px',
                             paddingBottom: 'max(100px, calc(80px + env(safe-area-inset-bottom)))',
                         }}>
-                            {/* Date Badge */}
+                            {/* Date Badge (tappable) */}
                             {flyer.date && (
-                                <div style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                                    background: 'rgba(255,255,255,0.12)',
-                                    backdropFilter: 'blur(16px)',
-                                    WebkitBackdropFilter: 'blur(16px)',
-                                    borderRadius: 20, padding: '5px 12px',
-                                    marginBottom: 12,
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                }}>
+                                <div
+                                    onClick={() => handleCalendarTap(flyer)}
+                                    style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                                        background: 'rgba(255,255,255,0.12)',
+                                        backdropFilter: 'blur(16px)',
+                                        WebkitBackdropFilter: 'blur(16px)',
+                                        borderRadius: 20, padding: '5px 12px',
+                                        marginBottom: 12,
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        cursor: 'pointer',
+                                    }}>
                                     <span style={{ fontSize: 12 }}>📅</span>
                                     <span style={{
                                         color: '#FFFFFF', fontSize: 12, fontWeight: 600,
@@ -285,15 +317,16 @@ function Promos() {
                                 color: '#FFFFFF', fontSize: 28, fontWeight: 900,
                                 margin: '0 0 6px', lineHeight: 1.1,
                                 letterSpacing: '-0.03em',
-                                textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+                                textShadow: '0 4px 15px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.8)',
                             }}>
                                 {flyer.title}
                             </h2>
 
                             {/* Subtitle */}
                             <p style={{
-                                color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 500,
+                                color: '#FFFFFF', fontSize: 15, fontWeight: 600,
                                 margin: '0 0 8px',
+                                textShadow: '0 4px 15px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.8)',
                             }}>
                                 {flyer.subtitle}
                             </p>
@@ -342,23 +375,24 @@ function Promos() {
                                         </span>
                                     </button>
                                 ) : (
-                                    /* Info-only flyer — no price */
-                                    <div style={{
-                                        flex: 1,
-                                        background: 'rgba(255,255,255,0.1)',
-                                        backdropFilter: 'blur(12px)',
-                                        WebkitBackdropFilter: 'blur(12px)',
-                                        borderRadius: 14,
-                                        padding: '14px 24px',
-                                        textAlign: 'center',
-                                        border: '1px solid rgba(255,255,255,0.15)',
-                                    }}>
-                                        <span style={{
+                                    /* Info-only flyer — clickable lead capture */
+                                    <button
+                                        onClick={() => handleEntradaLibre(flyer)}
+                                        style={{
+                                            flex: 1,
+                                            background: 'rgba(255,255,255,0.1)',
+                                            backdropFilter: 'blur(12px)',
+                                            WebkitBackdropFilter: 'blur(12px)',
+                                            borderRadius: 14,
+                                            padding: '14px 24px',
+                                            textAlign: 'center',
+                                            border: '1px solid rgba(255,255,255,0.15)',
+                                            cursor: 'pointer',
                                             color: '#FFFFFF', fontSize: 14, fontWeight: 600,
-                                        }}>
-                                            ✨ Entrada libre
-                                        </span>
-                                    </div>
+                                        }}
+                                    >
+                                        ✨ Entrada libre
+                                    </button>
                                 )}
 
                                 {/* SHARE BUTTON */}
@@ -460,6 +494,88 @@ function Promos() {
                     animation: 'dotPulse 2s ease-in-out infinite'
                 }} />
             </button>
+
+            {/* 🔔 TOAST */}
+            {toastMsg && (
+                <div style={{
+                    position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)',
+                    background: '#1F2937', color: 'white', padding: '12px 24px',
+                    borderRadius: 30, fontSize: 14, fontWeight: 600, zIndex: 9999,
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
+                    animation: 'slideDownToast 0.3s ease-out',
+                    whiteSpace: 'nowrap'
+                }}>
+                    {toastMsg}
+                </div>
+            )}
+
+            {/* 🎫 LEAD-CAPTURE MODAL */}
+            {leadModal.open && (
+                <div
+                    onClick={() => setLeadModal({ open: false, flyerTitle: '' })}
+                    style={{
+                        position: 'fixed', inset: 0, zIndex: 9998,
+                        background: 'rgba(0,0,0,0.6)',
+                        backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: 24
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: '#FFFFFF', borderRadius: 24, padding: 28,
+                            width: '100%', maxWidth: 340,
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                            animation: 'slideDownToast 0.3s ease-out'
+                        }}
+                    >
+                        <h3 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#111827' }}>
+                            ✨ Reservá tu lugar
+                        </h3>
+                        <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6B7280' }}>
+                            {leadModal.flyerTitle}
+                        </p>
+                        <input
+                            type="text" placeholder="Tu nombre"
+                            value={leadName} onChange={(e) => setLeadName(e.target.value)}
+                            style={{
+                                width: '100%', padding: '12px 16px', borderRadius: 12,
+                                border: '1px solid #E5E7EB', fontSize: 15, marginBottom: 12,
+                                outline: 'none', boxSizing: 'border-box'
+                            }}
+                        />
+                        <input
+                            type="tel" placeholder="WhatsApp (opcional)"
+                            value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)}
+                            style={{
+                                width: '100%', padding: '12px 16px', borderRadius: 12,
+                                border: '1px solid #E5E7EB', fontSize: 15, marginBottom: 20,
+                                outline: 'none', boxSizing: 'border-box'
+                            }}
+                        />
+                        <button
+                            onClick={handleLeadSubmit}
+                            style={{
+                                width: '100%', padding: 14, borderRadius: 14,
+                                background: primaryColor, color: '#FFFFFF',
+                                border: 'none', fontSize: 16, fontWeight: 700,
+                                cursor: 'pointer',
+                                boxShadow: `0 4px 16px ${primaryColor}44`
+                            }}
+                        >
+                            Reservar
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                @keyframes slideDownToast {
+                    from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+                    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                }
+            `}</style>
         </div>
     )
 }
