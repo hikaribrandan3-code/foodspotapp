@@ -12,8 +12,6 @@ import BackendNav from '../../components/BackendNav.jsx'
 // Gemini-powered business partner chatbox
 // ============================================
 
-const SUPABASE_URL = 'https://buendqgmwpxdixwvlkhd.supabase.co'
-
 // Quick-action suggestion chips
 const SUGGESTIONS = [
     { label: '📊 ¿Cómo va el mes?', prompt: '¿Cómo van las ventas este mes? Dámelo resumido.' },
@@ -166,22 +164,19 @@ ${salesContext}`
         setIsLoading(true)
 
         try {
-            const res = await fetch(`${SUPABASE_URL}/functions/v1/foodspot-ai`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
-                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
-                },
-                body: JSON.stringify({
+            const { data, error } = await supabase.functions.invoke('foodspot-ai', {
+                body: {
                     messages: newMessages.map(m => ({ role: m.role, content: m.content })),
                     systemPrompt
-                })
+                }
             })
 
-            const data = await res.json()
-
-            if (data.error) {
+            if (error) {
+                setMessages([...newMessages, {
+                    role: 'assistant',
+                    content: `ℹ️ Info: ${error.message}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
+                }])
+            } else if (data?.error) {
                 setMessages([...newMessages, {
                     role: 'assistant',
                     content: `ℹ️ Info: ${data.error}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
