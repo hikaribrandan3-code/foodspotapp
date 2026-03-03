@@ -319,7 +319,7 @@ ${salesContext}`
                             {msg.content}
 
                             {/* Action buttons for AI responses */}
-                            {msg.role === 'assistant' && msg.content.toLowerCase().includes('flyer') && (
+                            {msg.role === 'assistant' && (msg.content || '').toLowerCase().includes('flyer') && (
                                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
                                     <button
                                         onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
@@ -335,7 +335,7 @@ ${salesContext}`
                                 </div>
                             )}
 
-                            {msg.role === 'assistant' && (msg.content.toLowerCase().includes('promo') || msg.content.toLowerCase().includes('promoción')) && !msg.content.toLowerCase().includes('flyer') && (
+                            {msg.role === 'assistant' && ((msg.content || '').toLowerCase().includes('promo') || (msg.content || '').toLowerCase().includes('promoción')) && !(msg.content || '').toLowerCase().includes('flyer') && (
                                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
                                     <button
                                         onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
