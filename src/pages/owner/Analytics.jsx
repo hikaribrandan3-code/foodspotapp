@@ -200,12 +200,11 @@ const Analytics = () => {
                             <span style={{ ...labelStyle, marginBottom: 16 }}>Por Tipo de Pedido</span>
                             <div style={{ display: 'flex', gap: 12 }}>
                                 {[
-                                    { label: 'Delivery', count: stats.deliveryCount, icon: '🚗', color: '#3B82F6' },
-                                    { label: 'Pickup', count: stats.pickupCount, icon: '🏪', color: '#10B981' },
-                                    { label: 'Mesa', count: stats.dineInCount, icon: '🍽️', color: '#8B5CF6' }
+                                    { label: 'Delivery', count: stats.deliveryCount, color: '#3B82F6' },
+                                    { label: 'Pickup', count: stats.pickupCount, color: '#10B981' },
+                                    { label: 'Mesa', count: stats.dineInCount, color: '#8B5CF6' }
                                 ].map(t => (
                                     <div key={t.label} style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#F9FAFB', borderRadius: 12 }}>
-                                        <div style={{ fontSize: 20, marginBottom: 4 }}>{t.icon}</div>
                                         <div style={{ fontSize: 20, fontWeight: 800, color: t.color }}>{t.count}</div>
                                         <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 500 }}>{t.label}</div>
                                     </div>
