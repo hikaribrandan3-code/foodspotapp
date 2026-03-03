@@ -25,6 +25,7 @@ import ShareFood from './pages/customer/ShareFood.jsx'
 import PerfectPour from './pages/customer/PerfectPour.jsx'
 import Info from './pages/customer/Info.jsx'
 import Promos from './pages/customer/Promos.jsx'
+import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
 
 // Staff Pages
@@ -622,6 +623,7 @@ function App() {
                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
                             <Route path="/:tenantSlug/promos" element={<Promos />} />
+                            <Route path="/:tenantSlug/wall" element={<Wall />} />
 
                             <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
                             <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
