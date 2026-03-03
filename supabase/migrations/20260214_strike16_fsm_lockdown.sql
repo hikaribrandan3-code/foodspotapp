@@ -121,14 +121,12 @@ ON public.order_transitions FOR SELECT
 USING (
     order_id IN (
         SELECT id FROM public.orders
-        WHERE business_id IN (
-            SELECT business_id FROM public.branding WHERE owner_id = auth.uid()
-        )
+        WHERE business_id = (current_setting('request.headers', true)::json->>'x-business-id')::uuid
     )
 );
 
--- System (service role) can insert
-CREATE POLICY "System can insert transitions"
+-- RLS: Only Owners can insert transitions
+CREATE POLICY "Owners can log transitions"
 ON public.order_transitions FOR INSERT
 WITH CHECK (true);
 

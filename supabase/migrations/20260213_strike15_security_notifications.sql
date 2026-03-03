@@ -22,7 +22,7 @@ ADD COLUMN IF NOT EXISTS cancel_reason TEXT;
 -- 3. OWNER NOTIFICATIONS TABLE
 CREATE TABLE IF NOT EXISTS public.owner_notifications (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    business_id UUID NOT NULL,
+    business_id UUID,
     order_id UUID REFERENCES public.orders(id),
     message TEXT NOT NULL,
     type TEXT DEFAULT 'alert',  -- 'alert', 'escalation', 'info'
@@ -30,15 +30,17 @@ CREATE TABLE IF NOT EXISTS public.owner_notifications (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Safely add business_id if the table was created previously without it
+ALTER TABLE public.owner_notifications ADD COLUMN IF NOT EXISTS business_id UUID;
+
 -- RLS: Owners can only see their notifications
 ALTER TABLE public.owner_notifications ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Owners see own notifications"
 ON public.owner_notifications FOR SELECT
-USING (business_id IN (
-    SELECT business_id FROM public.branding
-    WHERE owner_id = auth.uid()
-));
+USING (
+    business_id = (current_setting('request.headers', true)::json->>'x-business-id')::uuid
+);
 
 CREATE POLICY "System can insert notifications"
 ON public.owner_notifications FOR INSERT

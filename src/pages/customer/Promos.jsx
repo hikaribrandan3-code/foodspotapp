@@ -66,7 +66,7 @@ function Promos() {
     const feedRef = useRef(null)
 
     // ☁️ SILO LOCK
-    const { tenantData } = useTenant()
+    const { tenantData, businessId } = useTenant()
     const appConfig = tenantData?.app_config || {}
     const primaryColor = tenantData?.primary_color || '#C4856A'
     const businessName = tenantData?.business_name || ''
@@ -81,32 +81,54 @@ function Promos() {
     const [activeIndex, setActiveIndex] = useState(0)
 
     // 🎫 Lead-capture modal state
-    const [leadModal, setLeadModal] = useState({ open: false, flyerTitle: '' })
+    const [leadModal, setLeadModal] = useState({ open: false, flyerId: null, flyerTitle: '' })
     const [leadName, setLeadName] = useState('')
     const [leadPhone, setLeadPhone] = useState('')
+    const [isSubmittingLead, setIsSubmittingLead] = useState(false)
 
     // 🔔 Toast state
     const [toastMsg, setToastMsg] = useState(null)
     const showToast = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 3000) }
 
     // 📅 Calendar tap handler
-    const handleCalendarTap = (flyer) => {
+    const handleCalendarTap = (e, flyer) => {
+        e.stopPropagation()
+        e.preventDefault()
         showToast(`📅 ¡Listo! Te avisaremos sobre "${flyer.title}"`)
     }
 
     // 🎫 Entrada Libre tap handler
-    const handleEntradaLibre = (flyer) => {
-        setLeadModal({ open: true, flyerTitle: flyer.title })
+    const handleEntradaLibre = (e, flyer) => {
+        e.stopPropagation()
+        e.preventDefault()
+        setLeadModal({ open: true, flyerId: flyer.id, flyerTitle: flyer.title })
         setLeadName('')
         setLeadPhone('')
     }
 
-    // 🎫 Lead submit
-    const handleLeadSubmit = () => {
+    // 🎫 Lead submit (Supabase Insert)
+    const handleLeadSubmit = async () => {
         if (!leadName.trim()) { showToast('⚠️ Ingresá tu nombre'); return }
-        console.log('[Promos] Lead captured:', { name: leadName, phone: leadPhone, event: leadModal.flyerTitle })
-        setLeadModal({ open: false, flyerTitle: '' })
-        showToast('✅ ¡Reservado! Te esperamos')
+
+        setIsSubmittingLead(true)
+        try {
+            const { error } = await supabase.from('event_leads').insert({
+                business_id: businessId,
+                event_id: leadModal.flyerId,
+                full_name: leadName,
+                phone: leadPhone || null
+            })
+
+            if (error) throw error
+
+            setLeadModal({ open: false, flyerId: null, flyerTitle: '' })
+            showToast('✅ ¡Reservado! Te esperamos')
+        } catch (err) {
+            console.error('[Promos] DB Insert Error:', err)
+            showToast('❌ Ocurrió un error. Intentalo de nuevo.')
+        } finally {
+            setIsSubmittingLead(false)
+        }
     }
 
     // Scroll handler for dot indicator
@@ -291,7 +313,7 @@ function Promos() {
                             {/* Date Badge (tappable) */}
                             {flyer.date && (
                                 <div
-                                    onClick={() => handleCalendarTap(flyer)}
+                                    onClick={(e) => handleCalendarTap(e, flyer)}
                                     style={{
                                         display: 'inline-flex', alignItems: 'center', gap: 6,
                                         background: 'rgba(255,255,255,0.12)',
@@ -317,7 +339,7 @@ function Promos() {
                                 color: '#FFFFFF', fontSize: 28, fontWeight: 900,
                                 margin: '0 0 6px', lineHeight: 1.1,
                                 letterSpacing: '-0.03em',
-                                textShadow: '0 4px 15px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.8)',
+                                textShadow: '0 4px 15px rgba(0,0,0,1)',
                             }}>
                                 {flyer.title}
                             </h2>
@@ -326,7 +348,7 @@ function Promos() {
                             <p style={{
                                 color: '#FFFFFF', fontSize: 15, fontWeight: 600,
                                 margin: '0 0 8px',
-                                textShadow: '0 4px 15px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.8)',
+                                textShadow: '0 4px 15px rgba(0,0,0,1)',
                             }}>
                                 {flyer.subtitle}
                             </p>
@@ -377,7 +399,7 @@ function Promos() {
                                 ) : (
                                     /* Info-only flyer — clickable lead capture */
                                     <button
-                                        onClick={() => handleEntradaLibre(flyer)}
+                                        onClick={(e) => handleEntradaLibre(e, flyer)}
                                         style={{
                                             flex: 1,
                                             background: 'rgba(255,255,255,0.1)',
@@ -495,26 +517,12 @@ function Promos() {
                 }} />
             </button>
 
-            {/* 🔔 TOAST */}
-            {toastMsg && (
-                <div style={{
-                    position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)',
-                    background: '#1F2937', color: 'white', padding: '12px 24px',
-                    borderRadius: 30, fontSize: 14, fontWeight: 600, zIndex: 9999,
-                    boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
-                    animation: 'slideDownToast 0.3s ease-out',
-                    whiteSpace: 'nowrap'
-                }}>
-                    {toastMsg}
-                </div>
-            )}
-
             {/* 🎫 LEAD-CAPTURE MODAL */}
             {leadModal.open && (
                 <div
-                    onClick={() => setLeadModal({ open: false, flyerTitle: '' })}
+                    onClick={(e) => { e.stopPropagation(); setLeadModal({ open: false, flyerId: null, flyerTitle: '' }); }}
                     style={{
-                        position: 'fixed', inset: 0, zIndex: 9998,
+                        position: 'fixed', inset: 0, zIndex: 99999, // Guaranteed to override everything
                         background: 'rgba(0,0,0,0.6)',
                         backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -555,16 +563,18 @@ function Promos() {
                             }}
                         />
                         <button
-                            onClick={handleLeadSubmit}
+                            onClick={(e) => { e.stopPropagation(); handleLeadSubmit(); }}
+                            disabled={isSubmittingLead}
                             style={{
                                 width: '100%', padding: 14, borderRadius: 14,
                                 background: primaryColor, color: '#FFFFFF',
                                 border: 'none', fontSize: 16, fontWeight: 700,
                                 cursor: 'pointer',
+                                opacity: isSubmittingLead ? 0.6 : 1,
                                 boxShadow: `0 4px 16px ${primaryColor}44`
                             }}
                         >
-                            Reservar
+                            {isSubmittingLead ? 'Reservando...' : 'Reservar'}
                         </button>
                     </div>
                 </div>
