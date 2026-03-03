@@ -170,7 +170,8 @@ ${salesContext}`
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
+                    'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
                 },
                 body: JSON.stringify({
                     messages: newMessages.map(m => ({ role: m.role, content: m.content })),
