@@ -24,7 +24,9 @@ export default function FoodSpotAI() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData } = useTenant()
-    const primaryColor = tenantData?.primary_color || '#C4856A'
+
+    // BLUE OVERRIDE: Lock AI UI to Admin Blue instead of tenant branding
+    const adminBlue = '#2563EB'
     const businessName = tenantData?.business_name || 'Mi Negocio'
 
     // Chat state
@@ -153,6 +155,9 @@ Supported SYNC_CONFIG patches:
   - Image Synthesis: If you create a flyer, set the image URL to \`https://image.pollinations.ai/prompt/\${prompt}?width=800&height=1400&nologo=true\` where \${prompt} is an english description of the background image.
   - Text: Force \`color: '#FFFFFF'\` and \`textShadow: '0 4px 15px rgba(0,0,0,1)'\`.
 - update branding keys (e.g. \`business_name\`, \`is_paused\`, \`pause_message\`, \`whatsapp_number\`)
+
+VISION GUARD (MULTIMODAL INPUT):
+If the user uploads an image, they are NOT reporting an IT problem. Treat the image as a "Creative Brief" or a "Reference Photo" to generate a promo, a flyer, or an insight. Describe what you see and suggest an action using Open Claw.
 
 DATOS DEL NEGOCIO:
 - Nombre: ${businessName}
@@ -356,8 +361,8 @@ ${salesContext}`
             {toastMsg && (
                 <div style={{
                     position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
-                    background: '#111827', color: '#FFF', padding: '12px 24px', borderRadius: 30,
-                    zIndex: 99999, fontSize: 14, fontWeight: 500, boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                    background: adminBlue, color: '#FFF', padding: '12px 24px', borderRadius: 30,
+                    zIndex: 99999, fontSize: 14, fontWeight: 500, boxShadow: '0 4px 15px rgba(37,99,235,0.3)',
                     animation: 'slideDown 0.3s ease-out'
                 }}>
                     {toastMsg}
@@ -453,11 +458,10 @@ ${salesContext}`
                             maxWidth: '85%',
                             padding: '12px 16px',
                             borderRadius: msg.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                            background: msg.role === 'user' ? primaryColor : '#FFFFFF',
+                            background: msg.role === 'user' ? adminBlue : '#FFFFFF',
                             color: msg.role === 'user' ? '#FFFFFF' : '#111827',
-                            fontSize: 14, lineHeight: 1.6,
-                            border: msg.role === 'user' ? 'none' : '1px solid #E5E7EB',
-                            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                            border: msg.role === 'assistant' ? '1px solid #E5E7EB' : 'none',
+                            boxShadow: msg.role === 'user' ? `0 4px 12px ${adminBlue}40` : '0 1px 2px rgba(0,0,0,0.04)',
                             whiteSpace: 'pre-wrap', wordBreak: 'break-word'
                         }}>
                             {msg.content}
@@ -476,7 +480,7 @@ ${salesContext}`
                                         onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
                                         style={{
                                             padding: '8px 16px', borderRadius: 12,
-                                            background: primaryColor, color: '#FFF',
+                                            background: adminBlue, color: '#FFF',
                                             border: 'none', fontSize: 12, fontWeight: 700,
                                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
                                         }}
@@ -517,7 +521,7 @@ ${salesContext}`
                                 {[0, 1, 2].map(i => (
                                     <div key={i} style={{
                                         width: 8, height: 8, borderRadius: '50%',
-                                        background: primaryColor, opacity: 0.4,
+                                        background: adminBlue, opacity: 0.4,
                                         animation: `bounce 1.4s ease-in-out ${i * 0.16}s infinite`
                                     }} />
                                 ))}
@@ -611,7 +615,7 @@ ${salesContext}`
                                 maxHeight: 100, overflowY: 'auto',
                                 transition: 'border-color 0.2s'
                             }}
-                            onFocus={(e) => e.target.style.borderColor = primaryColor}
+                            onFocus={(e) => e.target.style.borderColor = adminBlue}
                             onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
                         />
                         <button
@@ -621,7 +625,7 @@ ${salesContext}`
                                 width: 44, height: 44, borderRadius: '50%',
                                 border: 'none', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                background: (!input.trim() && !attachment) || isLoading ? '#E5E7EB' : primaryColor,
+                                background: (!input.trim() && !attachment) || isLoading ? '#E5E7EB' : adminBlue,
                                 color: '#FFF', transition: 'all 0.2s',
                                 flexShrink: 0
                             }}
