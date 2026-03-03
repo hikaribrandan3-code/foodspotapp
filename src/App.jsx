@@ -645,8 +645,18 @@ function App() {
 
                     {(() => {
                         const p = location.pathname;
+                        const pathParts = p.split('/').filter(Boolean);
+
                         const isOwner = p.includes('/owner');
                         const isStaff = p.includes('/staff');
+
+                        // Detect login routes (e.g. /:tenantSlug/owner or /:tenantSlug/staff)
+                        const isOwnerLogin = pathParts.length === 2 && pathParts[1] === 'owner';
+                        const isStaffLogin = pathParts.length === 2 && pathParts[1] === 'staff';
+
+                        if (isOwnerLogin || isStaffLogin) {
+                            return null; // Hide all navigation on login screens
+                        }
 
                         if (isOwner || isStaff) {
                             return (
