@@ -206,13 +206,16 @@ ${salesContext}`
 
                 // Handle complex deep merges (like promos.items)
                 if (action.patch['promos.items']) {
-                    const currentPromos = tenantData?.app_config?.promos || { style: 'magazine', items: [] }
+                    const currentAppConfig = tenantData?.app_config || {}
+                    const currentPromos = currentAppConfig.promos || { style: 'magazine', items: [] }
+                    const currentItems = Array.isArray(currentPromos.items) ? currentPromos.items : []
                     const newItems = Array.isArray(action.patch['promos.items']) ? action.patch['promos.items'] : [action.patch['promos.items']]
+
                     dbUpdates.app_config = {
-                        ...tenantData.app_config,
+                        ...currentAppConfig,
                         promos: {
                             ...currentPromos,
-                            items: [...currentPromos.items, ...newItems]
+                            items: [...currentItems, ...newItems]
                         }
                     }
                 } else {
@@ -485,7 +488,7 @@ ${salesContext}`
                             {msg.role === 'assistant' && (msg.content || '').toLowerCase().includes('flyer') && (
                                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
                                     <button
-                                        onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
+                                        onClick={() => navigate(`/${tenantSlug}/owner/branding`)}
                                         style={{
                                             padding: '8px 16px', borderRadius: 12,
                                             background: adminBlue, color: '#FFF',
@@ -493,7 +496,7 @@ ${salesContext}`
                                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
                                         }}
                                     >
-                                        📝 Publicar en Hub
+                                        📝 Ver en Branding
                                     </button>
                                 </div>
                             )}
@@ -501,7 +504,7 @@ ${salesContext}`
                             {msg.role === 'assistant' && ((msg.content || '').toLowerCase().includes('promo') || (msg.content || '').toLowerCase().includes('promoción')) && !(msg.content || '').toLowerCase().includes('flyer') && (
                                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
                                     <button
-                                        onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
+                                        onClick={() => navigate(`/${tenantSlug}/owner/branding`)}
                                         style={{
                                             padding: '8px 16px', borderRadius: 12,
                                             background: '#10B981', color: '#FFF',
