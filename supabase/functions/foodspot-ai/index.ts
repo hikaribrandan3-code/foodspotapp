@@ -100,18 +100,23 @@ async function callGemini(messages: any[], systemPrompt: string, apiKey: string)
         },
     };
 
-    const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
-    let lastStatus = 0;
-    let errText = "";
+    // Call Gemini API — only gemini-2.0-flash (available on v1beta)
+    const MODELS = [
+        "gemini-2.0-flash",
+    ];
+
+    let geminiRes: Response | undefined;
+    let lastStatus = 500;
+    let errText = "Unknown error";
 
     for (const model of MODELS) {
         let retries = 1;
-        let geminiRes: Response | undefined;
 
         while (retries >= 0) {
             console.log(`[Gemini] Trying model: ${model} (retries left: ${retries})`);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
             geminiRes = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+                url,
                 {
                     method: "POST",
                     headers: {
@@ -174,6 +179,7 @@ serve(async (req: Request) => {
     try {
         const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
         const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+        const HF_TOKEN = Deno.env.get("HF_TOKEN"); // Added Hugging Face proxy support
 
         const { messages, systemPrompt } = await req.json();
 
