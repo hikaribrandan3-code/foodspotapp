@@ -6,6 +6,46 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import { Sparkles } from 'lucide-react' // Added Sparkles import
+
+// ─── Image Loader Component ───
+const LazyImage = ({ src, alt, style, className }) => {
+    const [loaded, setLoaded] = useState(false)
+
+    return (
+        <div className={className} style={{ position: 'relative', width: '100%', minHeight: '150px', background: '#F3F4F6', ...style, border: 'none' }}>
+            {/* Loading Skeleton / Spinner */}
+            {!loaded && (
+                <div style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 12, color: '#9CA3AF'
+                }}>
+                    <Sparkles size={24} className="animate-pulse" />
+                    <span style={{ fontSize: 12, fontWeight: 500, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
+                        Generando imagen...
+                    </span>
+                </div>
+            )}
+
+            {/* Actual Image (Hidden until loaded) */}
+            <img
+                src={src}
+                alt={alt}
+                onLoad={() => setLoaded(true)}
+                style={{
+                    width: '100%',
+                    display: 'block',
+                    objectFit: 'cover',
+                    opacity: loaded ? 1 : 0,
+                    transition: 'opacity 0.4s ease-in',
+                    position: loaded ? 'relative' : 'absolute',
+                    top: 0, left: 0
+                }}
+            />
+        </div>
+    )
+}
 
 // ============================================
 // 🧠 FOODSPOT AI — STRIKE 3
@@ -559,7 +599,11 @@ ${salesContext}`
                             {/* AI Generated Flyer Preview */}
                             {msg.generatedImage && (
                                 <div style={{ marginTop: 12, overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)' }}>
-                                    <img src={msg.generatedImage} alt="AI Generated Flyer" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
+                                    <LazyImage
+                                        src={msg.generatedImage}
+                                        alt="AI Generated Flyer"
+                                        style={{ width: '100%', minHeight: '200px' }}
+                                    />
                                 </div>
                             )}
 
