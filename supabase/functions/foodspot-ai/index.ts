@@ -1,14 +1,18 @@
 /**
- * foodspot-ai: Gemini Proxy Edge Function
+ * foodspot-ai: Split-Brain AI Edge Function
  * 
- * 🧠 Proxies chat requests to Google Gemini API.
- * 🛡️ Keeps API key server-side (never exposed to client).
+ * 🧠 SPLIT-BRAIN ROUTING:
+ *   - TEXT ONLY → Groq (Llama 3 70B) — Free, fast, preserves Gemini quota
+ *   - IMAGE ATTACHED → Google Gemini 2.0 Flash — World-class vision
  * 
- * Expects POST body: { messages: [{role, content}], systemPrompt: string }
- * Returns: { reply: string, error?: string }
+ * 🛡️ All API keys stay server-side (never exposed to client).
  * 
- * Set GEMINI_API_KEY in Supabase secrets:
- *   supabase secrets set GEMINI_API_KEY=your-key-here
+ * Expects POST body: { messages: [{role, content, image?}], systemPrompt: string }
+ * Returns: { reply: string, error?: string, provider?: string }
+ * 
+ * Set secrets in Supabase:
+ *   supabase secrets set GEMINI_API_KEY=your-key
+ *   supabase secrets set GROQ_API_KEY=your-key
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -19,149 +23,215 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-serve(async (req) => {
-    // CORS preflight
+// ─── GROQ HANDLER (Text Only) ──────────────────────────────────────
+async function callGroq(messages: any[], systemPrompt: string, apiKey: string) {
+    console.log("[foodspot-ai] 🧠 Routing to GROQ (text-only)");
+
+    const groqMessages = [];
+
+    // System prompt
+    if (systemPrompt) {
+        groqMessages.push({ role: "system", content: systemPrompt });
+    }
+
+    // Convert messages (strip any image data, Groq can't handle it)
+    for (const msg of messages) {
+        groqMessages.push({
+            role: msg.role === "assistant" ? "assistant" : "user",
+            content: msg.content || "",
+        });
+    }
+
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: groqMessages,
+            temperature: 0.7,
+            max_tokens: 4096,
+            top_p: 0.9,
+        }),
+    });
+
+    if (!res.ok) {
+        const errText = await res.text();
+        console.error("[Groq] Error:", res.status, errText);
+        return { error: res.status === 429 ? "RATE_LIMIT" : "API_ERROR", detail: errText, status: res.status };
+    }
+
+    const data = await res.json();
+    const reply = data?.choices?.[0]?.message?.content || "No pude generar una respuesta. Intentá de nuevo.";
+    return { reply, provider: "groq" };
+}
+
+// ─── GEMINI HANDLER (Vision / Image) ───────────────────────────────
+async function callGemini(messages: any[], systemPrompt: string, apiKey: string) {
+    console.log("[foodspot-ai] 👁️ Routing to GEMINI (vision/image)");
+
+    // Build Gemini multimodal format
+    const contents = messages.map((msg: any) => {
+        const parts: any[] = [];
+        if (msg.content) parts.push({ text: msg.content });
+        if (msg.image) {
+            parts.push({
+                inlineData: {
+                    mimeType: msg.image.mimeType || "image/jpeg",
+                    data: msg.image.data,
+                },
+            });
+        }
+        return {
+            role: msg.role === "assistant" ? "model" : "user",
+            parts,
+        };
+    });
+
+    const geminiBody = {
+        contents,
+        systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4096,
+            topP: 0.9,
+        },
+    };
+
+    const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
+    let lastStatus = 0;
+    let errText = "";
+
+    for (const model of MODELS) {
+        let retries = 1;
+        let geminiRes: Response | undefined;
+
+        while (retries >= 0) {
+            console.log(`[Gemini] Trying model: ${model} (retries left: ${retries})`);
+            geminiRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": apiKey,
+                    },
+                    body: JSON.stringify(geminiBody),
+                }
+            );
+
+            lastStatus = geminiRes.status;
+            if (geminiRes.ok) break;
+
+            if (geminiRes.status === 429 || geminiRes.status >= 500) {
+                const delay = (2 - retries) * 1000;
+                console.warn(`[Gemini] ${geminiRes.status} on ${model}, waiting ${delay}ms...`);
+                await new Promise((r) => setTimeout(r, delay));
+                retries--;
+            } else {
+                break;
+            }
+        }
+
+        if (geminiRes && !geminiRes.ok) {
+            errText = await geminiRes.text();
+        }
+
+        if (geminiRes?.ok) {
+            console.log(`[Gemini] ✅ Success with model: ${model}`);
+            const data = await geminiRes.json();
+            const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No pude generar una respuesta. Intentá de nuevo.";
+            return { reply, provider: "gemini" };
+        }
+
+        // 400 = payload error, don't try next model
+        if (lastStatus === 400) {
+            console.warn(`[Gemini] Payload error (400), aborting fallbacks...`);
+            break;
+        }
+
+        console.warn(`[Gemini] Model ${model} failed with ${lastStatus}, trying next...`);
+    }
+
+    // All models exhausted
+    return {
+        error: lastStatus === 429 ? "RATE_LIMIT" : "API_ERROR",
+        detail: lastStatus === 429
+            ? "Los servidores de IA están saturados. Esperá 30 segundos y probá de vuelta."
+            : `Gemini error (${lastStatus}): ${errText.substring(0, 300)}`,
+        status: lastStatus,
+    };
+}
+
+// ─── MAIN HANDLER ──────────────────────────────────────────────────
+serve(async (req: Request) => {
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
 
     try {
         const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-        if (!GEMINI_API_KEY) {
-            console.error("Missing GEMINI_API_KEY secret.");
-            return new Response(
-                JSON.stringify({ error: "MISSING_SECRET", detail: "Configurá GEMINI_API_KEY en Supabase secrets." }),
-                { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-        }
+        const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 
         const { messages, systemPrompt } = await req.json();
 
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
             return new Response(
                 JSON.stringify({ error: "BAD_REQUEST", detail: "Messages should be an array" }),
-                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-        }
-
-        // Build Gemini request format with Multimodal Support
-        const contents = messages.map((msg) => {
-            const parts = [];
-
-            // Text part
-            if (msg.content) {
-                parts.push({ text: msg.content });
-            }
-
-            // Image part (expecting base64 string from frontend)
-            if (msg.image) {
-                parts.push({
-                    inlineData: {
-                        mimeType: msg.image.mimeType || "image/jpeg",
-                        data: msg.image.data
-                    }
-                });
-            }
-
-            return {
-                role: msg.role === "assistant" ? "model" : "user",
-                parts
-            };
-        });
-
-        const geminiBody = {
-            contents,
-            systemInstruction: systemPrompt
-                ? { parts: [{ text: systemPrompt }] }
-                : undefined,
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 4096, // Increased for Open Claw JSON
-                topP: 0.9,
-            },
-        };
-
-        // Call Gemini API with Retry Logic + Model Fallback
-        const MODELS = [
-            "gemini-2.5-flash",
-            "gemini-2.0-flash-lite",
-            "gemini-1.5-flash", // Final fallback with different quota pool
-        ];
-
-        let geminiRes;
-        let lastStatus = 0;
-        let errText = "";
-
-        for (const model of MODELS) {
-            let retries = 1; // 1 retry per model (to avoid massive hangups)
-
-            while (retries >= 0) {
-                console.log(`[foodspot-ai] Trying model: ${model} (retries left: ${retries})`);
-                geminiRes = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "x-goog-api-key": GEMINI_API_KEY
-                        },
-                        body: JSON.stringify(geminiBody),
-                    }
-                );
-
-                lastStatus = geminiRes.status;
-
-                if (geminiRes.ok) break;
-
-                // If 429 or 500+, wait with exponential backoff and retry
-                if (geminiRes.status === 429 || geminiRes.status >= 500) {
-                    const delay = (2 - retries) * 1000; // 1s, 2s
-                    console.warn(`Gemini API ${geminiRes.status} on ${model}, waiting ${delay}ms...`);
-                    await new Promise(r => setTimeout(r, delay));
-                    retries--;
-                } else {
-                    break; // Don't retry 400s
-                }
-            }
-
-            // If we got a successful response, stop trying other models
-            if (geminiRes.ok) {
-                console.log(`[foodspot-ai] ✅ Success with model: ${model}`);
-                break;
-            } else if (geminiRes) {
-                errText = await geminiRes.text();
-            }
-
-            console.warn(`[foodspot-ai] Model ${model} failed with ${lastStatus}, trying next...`);
-        }
-
-        if (!geminiRes.ok) {
-            console.error("Gemini API error exhausted all models:", errText);
-            // Return 200 OK so Supabase client doesn't throw a generic exception,
-            // allowing the frontend to read the actual error payload.
-            return new Response(
-                JSON.stringify({
-                    error: lastStatus === 429 ? "RATE_LIMIT" : "API_ERROR",
-                    detail: lastStatus === 429 ? "Los servidores de IA están saturados. Esperá 30 segundos y probá de vuelta." : `Gemini responded with ${lastStatus}`
-                }),
                 { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        const geminiData = await geminiRes.json();
-        const reply =
-            geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ||
-            "No pude generar una respuesta. Intentá de nuevo.";
+        // ─── SPLIT-BRAIN DECISION ──────────────────────────────
+        // Check if ANY message in the conversation contains an image
+        const hasImage = messages.some((msg: any) => msg.image);
 
+        let result;
+
+        if (hasImage) {
+            // IMAGE PATH → Gemini (vision required)
+            if (!GEMINI_API_KEY) {
+                return new Response(
+                    JSON.stringify({ error: "MISSING_SECRET", detail: "Configurá GEMINI_API_KEY en Supabase secrets para usar visión." }),
+                    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+            result = await callGemini(messages, systemPrompt, GEMINI_API_KEY);
+        } else {
+            // TEXT PATH → Groq first, Gemini fallback
+            if (GROQ_API_KEY) {
+                result = await callGroq(messages, systemPrompt, GROQ_API_KEY);
+
+                // If Groq failed, fallback to Gemini
+                if (result.error && GEMINI_API_KEY) {
+                    console.warn(`[foodspot-ai] Groq failed (${result.error}), falling back to Gemini...`);
+                    result = await callGemini(messages, systemPrompt, GEMINI_API_KEY);
+                }
+            } else if (GEMINI_API_KEY) {
+                // No Groq key, use Gemini
+                result = await callGemini(messages, systemPrompt, GEMINI_API_KEY);
+            } else {
+                return new Response(
+                    JSON.stringify({ error: "MISSING_SECRET", detail: "Configurá GROQ_API_KEY o GEMINI_API_KEY en Supabase secrets." }),
+                    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+        }
+
+        // Return result (could be success or error)
         return new Response(
-            JSON.stringify({ reply }),
+            JSON.stringify(result),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
-    } catch (error) {
-        console.error("foodspot-ai error:", error);
+
+    } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        console.error("foodspot-ai error:", errorMessage);
         return new Response(
-            JSON.stringify({ error: error.message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            JSON.stringify({ error: "INTERNAL", detail: errorMessage }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }
 });
