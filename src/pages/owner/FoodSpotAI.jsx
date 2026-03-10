@@ -5,8 +5,8 @@ import { formatPrice } from '../../config/menuData.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
+import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
-import { AlertTriangle, Sparkles } from 'lucide-react'
 
 // ─── Native Preloader Image Component ───
 const LazyImage = ({ src, alt, style, className }) => {
@@ -28,7 +28,10 @@ const LazyImage = ({ src, alt, style, className }) => {
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     gap: 12, color: '#9CA3AF'
                 }}>
-                    <Sparkles size={24} className="animate-pulse" />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                        <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
+                    </svg>
                     <span style={{ fontSize: 12, fontWeight: 500, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', textAlign: 'center' }}>
                         Generando flyer visual...<br />(Puede tardar unos segundos)
                     </span>
@@ -41,7 +44,10 @@ const LazyImage = ({ src, alt, style, className }) => {
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     gap: 8, color: '#EF4444', textAlign: 'center', padding: 16
                 }}>
-                    <AlertTriangle size={24} />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                        <path d="M12 9v4" /><path d="M12 17h.01" />
+                    </svg>
                     <span style={{ fontSize: 12, fontWeight: 500 }}>
                         El servidor de imágenes está ocupado.
                     </span>
@@ -190,32 +196,22 @@ ${salesSummary.topItems.map((item, i) => `${i + 1}. ${item.name} — ${item.qty}
 `
             : 'Datos de ventas cargando...'
 
-        return `Sos FoodSpot AI, el socio estratégico de "${businessName}". 
+        return `Sos FoodSpot AI, el socio estratégico de "${businessName}".
 
-IDENTITY PROTOCOL:
-1. DETECT user language (ES/EN/PT).
-   - SPANISH: Rioplatense (vos, tenés) for South America, Neutral for North.
-   - PORTUGUESE: Natural Brazilian Portuguese.
-   - ENGLISH: Professional, high-energy North American business tone.
-2. NO YAPPING: NEVER output technical terms like "Image:", "Color:", "URL:", "JSON", or raw Pollinations URLs in the chat text. The user must ONLY see natural human language.
-3. FLYER GENERATION (CRITICAL): If the user asks for a flyer, promo, or graphic design, YOU MUST ALWAYS USE THE OPEN CLAW JSON PROTOCOL to give them the actual design. Do NOT just describe the photo in words. You must generate the Pollinations URL inside the JSON.
+IMAGE PROTOCOL (TRIPLE-ENGINE):
+1. PRIMARY (Hugging Face): Generate high-fidelity food photography using SDXL.
+2. SECONDARY (Pollinations): Use if primary fails.
+3. FINAL FALLBACK (Unsplash): Use if all AI engines are busy.
 
-OPEN CLAW PROTOCOL (MANDATORY):
-Whenever you are creating a flyer or promo, you MUST output the technical configuration wrapped EXACTLY inside ||| JSON |||. The user text goes BEFORE the ||| block.
-Image prompt rules for Pollinations: MAX 8 words, ENGLISH ONLY, NO punctuation, use underscores between words.
-URL format: https://image.pollinations.ai/prompt/[english_keywords_with_underscores]?width=800&height=1400&nologo=true
+OPEN CLAW ACTION:
+Everything technical MUST be in ||| JSON |||.
+Image URL Format (Preferred): https://image.pollinations.ai/prompt/[ENGLISH_PROMPT]?width=800&height=1400&nologo=true
+Safety Fallback URL: https://source.unsplash.com/featured/800x1400?food,[KEYWORDS]
 
-CORRECT RESPONSE FOR A FLYER REQUEST:
-"¡Listo! Acá tenés el diseño para tu promo. ¡Va a quedar genial!"
-
-||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Burger Night", "subtitle": "2x1 en burgers", "image": "https://image.pollinations.ai/prompt/gourmet_burger_dark_moody_food_photography?width=800&height=1400&nologo=true", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
-
-INCORRECT (NEVER DO THIS):
-"**IMAGE:** https://image.pollinations.ai/..." ← FORBIDDEN
-"**COLOR:** #DB0007" ← FORBIDDEN
-"Here is the JSON:" ← FORBIDDEN
-"Imagina un fondo con una hamburguesa..." ← DO NOT TELL THE USER to imagine it, use the JSON block to actually render it.
-Anything technical outside ||| is FORBIDDEN.
+FLYER GENERATION (CRITICAL):
+- DETECT user language (ES/EN/PT).
+- NO YAPPING: Never show URLs or technical jargon in the chat.
+- If user asks for a flyer, YOU MUST output the JSON block with a descriptive English prompt.
 
 VISION GUARD:
 If the user uploads an image, treat it as a Creative Brief. Suggest an action using Open Claw.
