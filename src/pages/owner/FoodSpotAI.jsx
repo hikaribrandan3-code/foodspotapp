@@ -19,7 +19,14 @@ const LazyImage = ({ src, alt, style, className }) => {
     const parsedPayload = useMemo(() => {
         if (!src || !src.startsWith('PROXY://')) return null;
         try {
-            const jsonStr = decodeURIComponent(src.replace('PROXY://', ''));
+            const rawStr = src.replace('PROXY://', '');
+            let jsonStr = rawStr;
+            try {
+                // Try decoding first (if AI URI-encoded it as requested)
+                jsonStr = decodeURIComponent(rawStr);
+            } catch (e) {
+                // Fallback if AI used a raw literal JSON string with a stray %
+            }
             return JSON.parse(jsonStr);
         } catch (e) {
             console.error("[LazyImage] Failed to parse PROXY payload:", e);
@@ -134,16 +141,32 @@ const LazyImage = ({ src, alt, style, className }) => {
         };
     }, [activeSrc, parsedPayload]);
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         if (!compositeDataUrl) return;
         setDownloading(true);
-        const link = document.createElement('a');
-        link.download = `Promo_${Date.now()}.png`;
-        link.href = compositeDataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => setDownloading(false), 500);
+        try {
+            const response = await fetch(compositeDataUrl);
+            const blob = await response.blob();
+            const file = new File([blob], `Promo_${Date.now()}.png`, { type: 'image/png' });
+
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'FoodSpot Promo'
+                });
+            } else {
+                const link = document.createElement('a');
+                link.download = `Promo_${Date.now()}.png`;
+                link.href = compositeDataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        } catch (error) {
+            console.error("Error sharing:", error);
+        } finally {
+            setTimeout(() => setDownloading(false), 500);
+        }
     };
 
     return (
@@ -476,6 +499,9 @@ ${salesContext}`
 
     // ─── Pollinations URL Sanitizer ───
     const sanitizePollinationsUrl = (rawUrl) => {
+        if (!rawUrl) return rawUrl;
+        if (rawUrl.startsWith('PROXY://')) return rawUrl; // DO NOT double-encode PROXY JSON payloads
+
         if (rawUrl.includes('pollinations.ai/prompt/')) {
             const [baseUrl, queryParams] = rawUrl.split('?')
             const promptPart = baseUrl.split('prompt/')[1] || ''
