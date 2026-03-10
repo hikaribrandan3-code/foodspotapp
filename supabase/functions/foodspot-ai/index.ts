@@ -85,13 +85,15 @@ serve(async (req) => {
         const MODELS = [
             "gemini-2.5-flash",
             "gemini-2.0-flash-lite",
+            "gemini-1.5-flash", // Final fallback with different quota pool
         ];
 
         let geminiRes;
         let lastStatus = 0;
+        let errText = "";
 
         for (const model of MODELS) {
-            let retries = 2;
+            let retries = 1; // 1 retry per model (to avoid massive hangups)
 
             while (retries >= 0) {
                 console.log(`[foodspot-ai] Trying model: ${model} (retries left: ${retries})`);
@@ -113,7 +115,7 @@ serve(async (req) => {
 
                 // If 429 or 500+, wait with exponential backoff and retry
                 if (geminiRes.status === 429 || geminiRes.status >= 500) {
-                    const delay = (3 - retries) * 1500; // 1.5s, 3s, 4.5s
+                    const delay = (2 - retries) * 1000; // 1s, 2s
                     console.warn(`Gemini API ${geminiRes.status} on ${model}, waiting ${delay}ms...`);
                     await new Promise(r => setTimeout(r, delay));
                     retries--;
@@ -126,17 +128,23 @@ serve(async (req) => {
             if (geminiRes.ok) {
                 console.log(`[foodspot-ai] ✅ Success with model: ${model}`);
                 break;
+            } else if (geminiRes) {
+                errText = await geminiRes.text();
             }
 
             console.warn(`[foodspot-ai] Model ${model} failed with ${lastStatus}, trying next...`);
         }
 
         if (!geminiRes.ok) {
-            const errText = await geminiRes.text();
-            console.error("Gemini API error:", errText);
+            console.error("Gemini API error exhausted all models:", errText);
+            // Return 200 OK so Supabase client doesn't throw a generic exception,
+            // allowing the frontend to read the actual error payload.
             return new Response(
-                JSON.stringify({ error: "API_ERROR", detail: `Gemini responded with ${geminiRes.status}` }),
-                { status: geminiRes.status === 429 ? 429 : 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                JSON.stringify({
+                    error: lastStatus === 429 ? "RATE_LIMIT" : "API_ERROR",
+                    detail: lastStatus === 429 ? "Los servidores de IA están saturados. Esperá 30 segundos y probá de vuelta." : `Gemini responded with ${lastStatus}`
+                }),
+                { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 

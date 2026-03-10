@@ -316,13 +316,16 @@ ${salesContext}`
                         : `ℹ️ Info: ${error.message}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
                 }])
             } else if (data?.error) {
-                const isError500 = data.error === 'MISSING_SECRET' || data.error?.includes('500');
+                const isRateLimit = data.error === 'RATE_LIMIT';
+                const isMissingSecret = data.error === 'MISSING_SECRET';
 
                 setMessages([...newMessages, {
                     role: 'assistant',
-                    content: isError500
-                        ? `ℹ️ Info: ${data.detail || data.error}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
-                        : `ℹ️ Info: ${data.detail || data.error}.`
+                    content: isRateLimit
+                        ? `⏳ Sobrecarga: ${data.detail}`
+                        : isMissingSecret
+                            ? `ℹ️ Info: ${data.detail}. Asegurate de que GEMINI_API_KEY esté configurada en Supabase secrets.`
+                            : `ℹ️ Error Interno: ${data.detail || data.error}.`
                 }])
             } else {
                 let aiResponse = data.reply
