@@ -7,38 +7,44 @@ import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
-// ─── Native Preloader Image Component with Fallback Chain ───
+// ─── Native Preloader Image Component with Secure HF Proxy ───
 const LazyImage = ({ src, alt, style, className }) => {
     const [status, setStatus] = useState('loading') // 'loading', 'loaded', 'error'
     const [activeSrc, setActiveSrc] = useState(src)
-    const [triedFallback, setTriedFallback] = useState(false)
 
     useEffect(() => {
         setStatus('loading')
-        setActiveSrc(src)
-        setTriedFallback(false)
+
+        if (src && src.startsWith('PROXY://')) {
+            const promptStr = src.replace('PROXY://', '')
+
+            supabase.functions.invoke('foodspot-image', {
+                body: { prompt: promptStr }
+            }).then(({ data, error }) => {
+                if (error || !data?.image) {
+                    console.error('[LazyImage] HF Proxy Error:', error)
+                    // Zero-downtime stock fallback if HuggingFace is overwhelmed
+                    const keywords = decodeURIComponent(promptStr).replace(/_/g, ',').replace(/\s+/g, ',').split('?')[0]
+                    setActiveSrc(`https://loremflickr.com/800/1400/${keywords}`)
+                } else {
+                    setActiveSrc(data.image) // Set Base64 from Edge Function
+                }
+            }).catch(err => {
+                console.error('[LazyImage] Invoke Error:', err)
+                setStatus('error')
+            })
+        } else {
+            setActiveSrc(src)
+        }
     }, [src])
 
     useEffect(() => {
-        if (status !== 'loading') return
+        if (!activeSrc || activeSrc.startsWith('PROXY://')) return
         const img = new window.Image()
         img.src = activeSrc
         img.onload = () => setStatus('loaded')
-        img.onerror = () => {
-            if (!triedFallback && activeSrc.includes('pollinations.ai')) {
-                // Extract keywords from the Pollinations URL and try LoremFlickr
-                const promptPart = activeSrc.split('prompt/')[1]?.split('?')[0] || 'food'
-                const keywords = decodeURIComponent(promptPart).replace(/_/g, ',').replace(/\s+/g, ',')
-                const fallbackUrl = `https://loremflickr.com/800/1400/${keywords}`
-                console.log('[LazyImage] Pollinations failed, falling back to LoremFlickr:', fallbackUrl)
-                setTriedFallback(true)
-                setActiveSrc(fallbackUrl)
-                setStatus('loading') // retry with new URL
-            } else {
-                setStatus('error')
-            }
-        }
-    }, [activeSrc, status, triedFallback])
+        img.onerror = () => setStatus('error')
+    }, [activeSrc])
 
     return (
         <div className={className} style={{ position: 'relative', width: '100%', minHeight: '150px', background: '#F3F4F6', ...style, border: 'none' }}>
@@ -229,11 +235,12 @@ When creating a flyer or promo, output your friendly text FIRST, then on a new l
 EXAMPLE (copy this structure exactly):
 ¡Listo! Acá tenés tu promo. ¡Va a quedar increíble!
 
-||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Seafood Platter", "subtitle": "Fresh catches daily", "image": "https://image.pollinations.ai/prompt/luxury_seafood_platter_dark_moody?width=800&height=1400&nologo=true", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
+||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Seafood Platter", "subtitle": "Fresh catches daily", "image": "PROXY://luxury_seafood_platter_dark_moody", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
 
 RULES FOR THE IMAGE URL:
-- Use https://image.pollinations.ai/prompt/[KEYWORDS]?width=800&height=1400&nologo=true
+- ALWAYS use the exact format: PROXY://[KEYWORDS]
 - Keywords: MAX 8 words, ENGLISH ONLY, underscores between words, NO punctuation
+- Do NOT use http or https. Just PROXY:// followed by the keywords.
 - The image URL goes INSIDE the JSON "image" field, NEVER in the chat text
 
 VISION GUARD:
