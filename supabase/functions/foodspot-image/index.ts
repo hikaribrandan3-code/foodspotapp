@@ -29,7 +29,10 @@ serve(async (req) => {
             });
         }
 
-        console.log(`[foodspot-image] Generating image via HF SDXL. Prompt: "${prompt}"`);
+        console.log(`[foodspot-image] Generating image via HF SDXL. Original Prompt: "${prompt}"`);
+
+        // Anti-Creepy Shield v7.0
+        const finalPrompt = `Professional food photography, close up, gourmet lighting, blurred background, no people, no faces, no hands. ${prompt} --negative people, face, human, fingers, distorted, text, low quality`;
 
         const hfRes = await fetch("https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0", {
             headers: {
@@ -37,7 +40,12 @@ serve(async (req) => {
                 "Content-Type": "application/json",
             },
             method: "POST",
-            body: JSON.stringify({ inputs: prompt }),
+            body: JSON.stringify({
+                inputs: finalPrompt,
+                parameters: {
+                    negative_prompt: "people, face, human, fingers, distorted, text, low quality"
+                }
+            }),
         });
 
         if (!hfRes.ok) {

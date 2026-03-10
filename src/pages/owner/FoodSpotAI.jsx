@@ -100,36 +100,44 @@ const LazyImage = ({ src, alt, style, className }) => {
             const y = (canvas.height / 2) - (img.height / 2) * scale;
             ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
-            // 2. Draw Dark Gradient Overlay (Bottom 40%)
-            const grad = ctx.createLinearGradient(0, canvas.height * 0.6, 0, canvas.height);
-            grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(1, 'rgba(0,0,0,0.85)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // 2. Draw Dual Gradients (Top-Down 25% and Bottom-Up 35%)
+            // Top Gradient
+            const gradTop = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.25);
+            gradTop.addColorStop(0, 'rgba(0,0,0,0.85)');
+            gradTop.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gradTop;
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.25);
+
+            // Bottom Gradient
+            const gradBottom = ctx.createLinearGradient(0, canvas.height * 0.65, 0, canvas.height);
+            gradBottom.addColorStop(0, 'rgba(0,0,0,0)');
+            gradBottom.addColorStop(1, 'rgba(0,0,0,0.85)');
+            ctx.fillStyle = gradBottom;
+            ctx.fillRect(0, canvas.height * 0.65, canvas.width, canvas.height * 0.35);
 
             // 3. Stamping Typgraphy (San Francisco / Inter Style)
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
 
-            // Headline
+            // Headline (Top Area)
             if (parsedPayload.headline) {
-                ctx.font = '900 64px sans-serif';
+                ctx.font = '900 72px sans-serif';
                 ctx.shadowColor = 'rgba(0,0,0,0.5)';
                 ctx.shadowBlur = 10;
-                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, canvas.height - 220);
+                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, 120);
             }
 
-            // Price Tag
+            // Price Tag (Bottom Area)
             if (parsedPayload.price_tag) {
-                ctx.font = '800 96px sans-serif';
+                ctx.font = '800 120px sans-serif';
                 ctx.fillStyle = '#10B981'; // Emerald Green
                 ctx.shadowBlur = 15;
-                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 100);
+                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 140);
             }
 
             // Footer Text (Validity/Payment)
             if (parsedPayload.footer_text) {
-                ctx.font = '600 32px sans-serif';
+                ctx.font = '600 36px sans-serif';
                 ctx.fillStyle = '#E5E7EB'; // Clean Grey
                 ctx.shadowBlur = 4;
                 ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 40);
@@ -385,7 +393,9 @@ REGLAS:
    - You MUST ask the user for 3 things: Price, Validity Period, and Payment Terms.
    - DO NOT OUTPUT THE ||| JSON ||| BLOCK until the user provides all 3 variables. DO NOT hallucinate a price.
    - Example response: "¡Me encanta la idea! Para que salga perfecto, decime: ¿Qué precio le ponemos? ¿Hasta cuándo es válida? y pedimos efectivo o tarjetas?"
-4. Once you have all 3 variables from the user, you MUST use the Open Claw v4 protocol below.
+4. ANALYTICS TRIGGER (AUTONOMOUS MANAGER):
+   - Analyze the 'Sales Context.' If a product has low sales compared to the 'Top Items', proactively suggest: "Che, veo que las ventas de [Product] bajaron. ¿Querés que armemos un flyer de 2x1 para levantar hoy?"
+5. Once you have all 3 variables from the user, you MUST use the Open Claw v4 protocol below.
 
 OPEN CLAW PROTOCOL v4 (MANDATORY FOR FLYERS/PROMOS AFTER INTERVIEW):
 When creating a flyer or promo, output your friendly text FIRST, then on a new line output the JSON wrapped EXACTLY in triple pipes ||| like this:
@@ -396,7 +406,7 @@ EXAMPLE (copy this structure exactly):
 ||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Double Smash", "subtitle": "Con cheddar y bacon", "image": "PROXY://double_smash_burger_moody_lighting|2x1 FINDE|$5999|Válido Viernes y Sábado - Efectivo", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
 
 RULES FOR THE IMAGE URL (CRITICAL):
-- ALWAYS use the exact format: PROXY://[english_prompt]|[headline_in_caps]|[price]|[validity_and_terms]
+- ALWAYS use the exact format: PROXY://[english_prompt]|[HEADLINE_IN_CAPS]|[price]|[validity_and_terms]
 - You MUST use the "|" character to separate the 4 variables.
 - "image_prompt": English keywords, max 8 words, underscores. NO logos or text in the prompt. We focus on high fidelity food photography.
 - The image URL goes INSIDE the JSON "image" field, NEVER in the chat text.
