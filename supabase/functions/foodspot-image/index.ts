@@ -31,8 +31,8 @@ serve(async (req) => {
 
         console.log(`[foodspot-image] Generating image via HF SDXL. Original Prompt: "${prompt}"`);
 
-        // Anti-Creepy Shield v7.0
-        const finalPrompt = `Professional food photography, close up, gourmet lighting, blurred background, no people, no faces, no hands. ${prompt} --negative people, face, human, fingers, distorted, text, low quality`;
+        // Photorealism Strike v9.0
+        const finalPrompt = `Extreme close-up professional food photography, 85mm lens, f/1.8, shallow depth of field, cinematic rim lighting, steam, macro detail, 8k uhd, photorealistic. ${prompt}`;
 
         const hfRes = await fetch("https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0", {
             headers: {
@@ -43,7 +43,7 @@ serve(async (req) => {
             body: JSON.stringify({
                 inputs: finalPrompt,
                 parameters: {
-                    negative_prompt: "people, face, human, fingers, distorted, text, low quality"
+                    negative_prompt: "people, faces, man, woman, hands, cartoon, illustration, drawing, painting, pattern, multiple, repeating, low quality, distorted, text, logo, watermark"
                 }
             }),
         });

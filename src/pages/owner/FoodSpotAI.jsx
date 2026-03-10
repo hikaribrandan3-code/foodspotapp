@@ -26,7 +26,7 @@ const LazyImage = ({ src, alt, style, className }) => {
                 const parts = rawStr.split('|');
                 return {
                     image_prompt: parts[0] ? decodeURIComponent(parts[0]).trim() : '',
-                    headline: parts[1] ? decodeURIComponent(parts[1]).trim() : '',
+                    headline: parts[1] ? decodeURIComponent(parts[1]).trim().replace(/_/g, ' ') : '',
                     price_tag: parts[2] ? decodeURIComponent(parts[2]).trim() : '',
                     footer_text: parts[3] ? decodeURIComponent(parts[3]).trim() : ''
                 }
@@ -100,20 +100,20 @@ const LazyImage = ({ src, alt, style, className }) => {
             const y = (canvas.height / 2) - (img.height / 2) * scale;
             ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
-            // 2. Draw Dual Gradients (Top-Down 25% and Bottom-Up 35%)
+            // 2. Draw Dual Gradients (Top-Down 40% and Bottom-Up 40%)
             // Top Gradient
-            const gradTop = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.25);
+            const gradTop = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.40);
             gradTop.addColorStop(0, 'rgba(0,0,0,0.85)');
             gradTop.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = gradTop;
-            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.25);
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.40);
 
             // Bottom Gradient
-            const gradBottom = ctx.createLinearGradient(0, canvas.height * 0.65, 0, canvas.height);
+            const gradBottom = ctx.createLinearGradient(0, canvas.height * 0.60, 0, canvas.height);
             gradBottom.addColorStop(0, 'rgba(0,0,0,0)');
             gradBottom.addColorStop(1, 'rgba(0,0,0,0.85)');
             ctx.fillStyle = gradBottom;
-            ctx.fillRect(0, canvas.height * 0.65, canvas.width, canvas.height * 0.35);
+            ctx.fillRect(0, canvas.height * 0.60, canvas.width, canvas.height * 0.40);
 
             // 3. Stamping Typgraphy (San Francisco / Inter Style)
             ctx.textAlign = 'center';
@@ -121,7 +121,7 @@ const LazyImage = ({ src, alt, style, className }) => {
 
             // Headline (Top Area)
             if (parsedPayload.headline) {
-                ctx.font = '900 72px sans-serif';
+                ctx.font = '900 72px Inter, sans-serif';
                 ctx.shadowColor = 'rgba(0,0,0,0.5)';
                 ctx.shadowBlur = 10;
                 ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, 120);
@@ -129,16 +129,18 @@ const LazyImage = ({ src, alt, style, className }) => {
 
             // Price Tag (Bottom Area)
             if (parsedPayload.price_tag) {
-                ctx.font = '800 120px sans-serif';
-                ctx.fillStyle = '#10B981'; // Emerald Green
-                ctx.shadowBlur = 15;
+                ctx.font = '900 130px Inter, sans-serif';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 20;
                 ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 140);
             }
 
             // Footer Text (Validity/Payment)
             if (parsedPayload.footer_text) {
-                ctx.font = '600 36px sans-serif';
-                ctx.fillStyle = '#E5E7EB'; // Clean Grey
+                ctx.font = '600 32px sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
                 ctx.shadowBlur = 4;
                 ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 40);
             }
@@ -409,6 +411,7 @@ RULES FOR THE IMAGE URL (CRITICAL):
 - ALWAYS use the exact format: PROXY://[english_prompt]|[HEADLINE_IN_CAPS]|[price]|[validity_and_terms]
 - You MUST use the "|" character to separate the 4 variables.
 - "image_prompt": English keywords, max 8 words, underscores. NO logos or text in the prompt. We focus on high fidelity food photography.
+- "HEADLINE_IN_CAPS": The promo title. Send with SPACES, not underscores (e.g. "DOUBLE SMASH", not "DOUBLE_SMASH").
 - The image URL goes INSIDE the JSON "image" field, NEVER in the chat text.
 
 VISION GUARD:
