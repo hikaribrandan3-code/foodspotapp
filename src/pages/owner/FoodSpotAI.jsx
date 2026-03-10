@@ -145,17 +145,22 @@ GLOBAL IDENTITY PROTOCOL:
 
 IMAGE SYNTHESIS (UNIVERSAL):
 Regardless of user language, prompts for image generation MUST be in ENGLISH for maximum quality.
-URL: https://image.pollinations.ai/prompt/[DESCRIPTIVE_ENGLISH_PROMPT]?width=800&height=1400&nologo=true
+CRITICAL RULES FOR IMAGE PROMPT:
+- MAX 8 WORDS. Example: "juicy burger dark background food photography"
+- ZERO punctuation. No commas, periods, colons, quotes, hashtags, or dollar signs.
+- NO text overlay instructions. The image is ONLY a background photo.
+- Simple descriptive keywords separated by spaces ONLY.
+URL: https://image.pollinations.ai/prompt/[SHORT_ENGLISH_KEYWORDS]?width=800&height=1400&nologo=true
 
 OPEN CLAW ACTION:
 ||| { 
   "action": "SYNC_CONFIG", 
   "patch": { 
     "promos.items": {
-      "id": "gen-\${Date.now()}",
+      "id": "gen-${Date.now()}",
       "title": "PROMO TITLE",
       "subtitle": "SUBTITLE",
-      "image": "https://image.pollinations.ai/prompt/[ENGLISH_VISUAL_DESCRIPTION]?width=800&height=1400&nologo=true",
+      "image": "https://image.pollinations.ai/prompt/[SHORT ENGLISH KEYWORDS MAX 8 WORDS]?width=800&height=1400&nologo=true",
       "color": "#FFFFFF",
       "textShadow": "0 4px 15px rgba(0,0,0,1)"
     }
@@ -339,22 +344,27 @@ ${salesContext}`
                         else if (Array.isArray(items) && items[0]?.image) rawImage = items[0].image
 
                         if (rawImage) {
-                            // Pollinations API is highly sensitive to punctuation in the URL path.
-                            // We need to extract the prompt part, clean it, and reconstruct the URL.
+                            // Pollinations API is extremely sensitive to special characters.
+                            // Strip EVERYTHING except letters, numbers, and spaces, then truncate.
                             if (rawImage.includes('pollinations.ai/prompt/')) {
                                 const [baseUrl, queryParams] = rawImage.split('?')
                                 const promptPart = baseUrl.split('prompt/')[1] || ''
 
-                                // Clean punctuation from the prompt (commas, periods, exclamation marks)
-                                const cleanPrompt = promptPart.replace(/[,.!\n\r]/g, '').trim()
+                                // AGGRESSIVE: Only keep letters, numbers, and spaces
+                                const cleanPrompt = promptPart
+                                    .replace(/[^a-zA-Z0-9 ]/g, '')
+                                    .replace(/\s+/g, ' ')
+                                    .trim()
+                                    .slice(0, 200) // Truncate to 200 chars max
 
-                                // Reconstruct the URL with the cleaned, encoded prompt
+                                // Reconstruct with encodeURIComponent
                                 generatedImage = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}`
                                 if (queryParams) {
                                     generatedImage += `?${queryParams}`
                                 }
+
+                                console.log('[AI Preview] Sanitized image URL:', generatedImage)
                             } else {
-                                // Fallback for standard URLs
                                 generatedImage = encodeURI(rawImage)
                             }
                         }
