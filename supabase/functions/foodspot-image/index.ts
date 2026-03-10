@@ -31,7 +31,7 @@ serve(async (req) => {
 
         console.log(`[foodspot-image] Generating image via HF SDXL. Prompt: "${prompt}"`);
 
-        const hfRes = await fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0", {
+        const hfRes = await fetch("https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0", {
             headers: {
                 "Authorization": `Bearer ${hfToken}`,
                 "Content-Type": "application/json",

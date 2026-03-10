@@ -7,60 +7,162 @@ import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
-// ─── Native Preloader Image Component with Secure HF Proxy ───
+// ─── Creative Director OS: Composite Canvas Image ───
 const LazyImage = ({ src, alt, style, className }) => {
     const [status, setStatus] = useState('loading') // 'loading', 'loaded', 'error'
-    const [activeSrc, setActiveSrc] = useState(src)
+    const [activeSrc, setActiveSrc] = useState(null)
+    const [compositeDataUrl, setCompositeDataUrl] = useState(null)
+    const [downloading, setDownloading] = useState(false)
+    const canvasRef = useRef(null)
 
-    useEffect(() => {
-        setStatus('loading')
-
-        if (src && src.startsWith('PROXY://')) {
-            const promptStr = src.replace('PROXY://', '')
-
-            supabase.functions.invoke('foodspot-image', {
-                body: { prompt: promptStr }
-            }).then(({ data, error }) => {
-                if (error || !data?.image) {
-                    console.error('[LazyImage] HF Proxy Error:', error)
-                    // Zero-downtime stock fallback if HuggingFace is overwhelmed
-                    const keywords = decodeURIComponent(promptStr).replace(/_/g, ',').replace(/\s+/g, ',').split('?')[0]
-                    setActiveSrc(`https://loremflickr.com/800/1400/${keywords}`)
-                } else {
-                    setActiveSrc(data.image) // Set Base64 from Edge Function
-                }
-            }).catch(err => {
-                console.error('[LazyImage] Invoke Error:', err)
-                setStatus('error')
-            })
-        } else {
-            setActiveSrc(src)
+    // Parse Open Claw v4 payload from PROXY:// URI
+    const parsedPayload = useMemo(() => {
+        if (!src || !src.startsWith('PROXY://')) return null;
+        try {
+            const jsonStr = decodeURIComponent(src.replace('PROXY://', ''));
+            return JSON.parse(jsonStr);
+        } catch (e) {
+            console.error("[LazyImage] Failed to parse PROXY payload:", e);
+            // Fallback for older plaintext PROXY:// links
+            return { image_prompt: src.replace('PROXY://', '') };
         }
     }, [src])
 
     useEffect(() => {
-        if (!activeSrc || activeSrc.startsWith('PROXY://')) return
-        const img = new window.Image()
-        img.src = activeSrc
-        img.onload = () => setStatus('loaded')
-        img.onerror = () => setStatus('error')
-    }, [activeSrc])
+        if (!src) return;
+        setStatus('loading')
+
+        if (src.startsWith('PROXY://')) {
+            if (!parsedPayload) { setStatus('error'); return; }
+
+            supabase.functions.invoke('foodspot-image', {
+                body: { prompt: parsedPayload.image_prompt }
+            }).then(({ data, error }) => {
+                if (error || !data?.image) {
+                    console.error('[LazyImage] HF Proxy Error, falling back:', error)
+                    const keywords = parsedPayload.image_prompt.replace(/_/g, ',').replace(/\s+/g, ',').split('?')[0]
+                    setActiveSrc(`https://loremflickr.com/800/1400/${keywords}`)
+                } else {
+                    setActiveSrc(data.image) // Base64 from HF
+                }
+            }).catch(err => {
+                console.error('[LazyImage] Invoke Error:', err)
+                // Fallback to Pollinations or LoremFlickr
+                const keywords = parsedPayload.image_prompt.replace(/ /g, '_')
+                setActiveSrc(`https://image.pollinations.ai/prompt/${keywords}?width=800&height=1400&nologo=true`)
+            })
+        } else {
+            setActiveSrc(src)
+        }
+    }, [src, parsedPayload])
+
+    // ─── Composite Stencil Render ───
+    useEffect(() => {
+        if (!activeSrc) return;
+        setStatus('loading');
+
+        const img = new window.Image();
+        img.crossOrigin = "Anonymous"; // Required for canvas export
+        img.src = activeSrc;
+
+        img.onload = () => {
+            // If not a PROXY:// request with text overlays, just display raw
+            if (!parsedPayload?.headline && !parsedPayload?.price_tag) {
+                setCompositeDataUrl(activeSrc);
+                setStatus('loaded');
+                return;
+            }
+
+            // Draw to Canvas
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = 800;
+            canvas.height = 1000;
+
+            // 1. Draw Background
+            // Maintain aspect ratio cover
+            const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+            const x = (canvas.width / 2) - (img.width / 2) * scale;
+            const y = (canvas.height / 2) - (img.height / 2) * scale;
+            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+            // 2. Draw Dark Gradient Overlay (Bottom 40%)
+            const grad = ctx.createLinearGradient(0, canvas.height * 0.6, 0, canvas.height);
+            grad.addColorStop(0, 'rgba(0,0,0,0)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.85)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 3. Stamping Typgraphy (San Francisco / Inter Style)
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#FFFFFF';
+
+            // Headline
+            if (parsedPayload.headline) {
+                ctx.font = '900 64px sans-serif';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 10;
+                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, canvas.height - 180);
+            }
+
+            // Price Tag
+            if (parsedPayload.price_tag) {
+                ctx.font = '800 96px sans-serif';
+                ctx.fillStyle = '#FFD700'; // Gold accent
+                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 80);
+            }
+
+            // Footer Text (Validity/Payment)
+            if (parsedPayload.footer_text) {
+                ctx.font = '600 32px sans-serif';
+                ctx.fillStyle = '#E5E7EB';
+                ctx.shadowBlur = 4;
+                ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 30);
+            }
+
+            // Flatten
+            const dataUrl = canvas.toDataURL("image/png");
+            setCompositeDataUrl(dataUrl);
+            setStatus('loaded');
+        };
+
+        img.onerror = () => {
+            console.error("Image failed to load for canvas");
+            setStatus('error');
+        };
+    }, [activeSrc, parsedPayload]);
+
+    const handleDownload = () => {
+        if (!compositeDataUrl) return;
+        setDownloading(true);
+        const link = document.createElement('a');
+        link.download = `Promo_${Date.now()}.png`;
+        link.href = compositeDataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => setDownloading(false), 500);
+    };
 
     return (
-        <div className={className} style={{ position: 'relative', width: '100%', minHeight: '150px', background: '#F3F4F6', ...style, border: 'none' }}>
+        <div className={className} style={{ position: 'relative', width: '100%', minHeight: '150px', background: '#F3F4F6', ...style, border: 'none', borderRadius: 12, overflow: 'hidden' }}>
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+
             {status === 'loading' && (
                 <div style={{
                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     gap: 12, color: '#9CA3AF'
                 }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
-                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-                        <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin" style={{ animation: 'spin 1s linear infinite' }}>
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                     </svg>
-                    <span style={{ fontSize: 12, fontWeight: 500, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', textAlign: 'center' }}>
-                        Generando flyer visual...<br />(Puede tardar unos segundos)
+                    <span style={{ fontSize: 12, fontWeight: 500, textAlign: 'center' }}>
+                        Diseñando flyer visual...<br />(Puede tardar unos segundos)
                     </span>
+                    <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
                 </div>
             )}
 
@@ -70,7 +172,7 @@ const LazyImage = ({ src, alt, style, className }) => {
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     gap: 8, color: '#EF4444', textAlign: 'center', padding: 16
                 }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
                         <path d="M12 9v4" /><path d="M12 17h.01" />
                     </svg>
@@ -80,17 +182,40 @@ const LazyImage = ({ src, alt, style, className }) => {
                 </div>
             )}
 
-            {status === 'loaded' && (
-                <img
-                    src={activeSrc}
-                    alt={alt}
-                    style={{
-                        width: '100%',
-                        display: 'block',
-                        objectFit: 'cover',
-                        animation: 'fadeIn 0.4s ease-in'
-                    }}
-                />
+            {status === 'loaded' && compositeDataUrl && (
+                <div style={{ position: 'relative' }}>
+                    <img
+                        src={compositeDataUrl}
+                        alt={alt}
+                        style={{ width: '100%', display: 'block', objectFit: 'cover' }}
+                    />
+
+                    {/* Native Download Overlay */}
+                    <button
+                        onClick={handleDownload}
+                        disabled={downloading}
+                        style={{
+                            position: 'absolute', top: 12, right: 12,
+                            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                            border: 'none', borderRadius: '50%', width: 40, height: 40,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', color: 'white', transition: 'all 0.2s',
+                            opacity: downloading ? 0.5 : 1
+                        }}
+                    >
+                        {downloading ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        )}
+                    </button>
+                </div>
             )}
         </div>
     )
@@ -226,22 +351,26 @@ ${salesSummary.topItems.map((item, i) => `${i + 1}. ${item.name} — ${item.qty}
 
 REGLAS:
 1. DETECT user language (ES/EN/PT). Respond in that language.
-2. NO YAPPING: NEVER output URLs, JSON, technical terms, or code in the visible chat. The user sees ONLY natural language.
-3. When user asks for a flyer or promo, you MUST use the Open Claw protocol below.
+2. NO YAPPING: NEVER output URLs, technical terms, or code in the visible chat. The user sees ONLY natural language.
+3. STRICT INTERVIEW: If the user asks for a "flyer", "promo", or "image", you MUST NOT generate it immediately.
+   - You MUST ask the user for 3 things: Price, Validity Period, and Payment Terms.
+   - DO NOT OUTPUT THE ||| JSON ||| BLOCK until the user provides all 3 variables. DO NOT hallucinate a price.
+   - Example response: "¡Me encanta la idea! Para que salga perfecto, decime: ¿Qué precio le ponemos? ¿Hasta cuándo es válida? y pedimos efectivo o tarjetas?"
+4. Once you have all 3 variables from the user, you MUST use the Open Claw v4 protocol below.
 
-OPEN CLAW PROTOCOL (MANDATORY FOR FLYERS/PROMOS):
+OPEN CLAW PROTOCOL v4 (MANDATORY FOR FLYERS/PROMOS AFTER INTERVIEW):
 When creating a flyer or promo, output your friendly text FIRST, then on a new line output the JSON wrapped EXACTLY in triple pipes ||| like this:
 
 EXAMPLE (copy this structure exactly):
-¡Listo! Acá tenés tu promo. ¡Va a quedar increíble!
+¡Listo! Acá tenés tu flyer. ¡Va a quedar increíble!
 
-||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Seafood Platter", "subtitle": "Fresh catches daily", "image": "PROXY://luxury_seafood_platter_dark_moody", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
+||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Double Smash", "subtitle": "Con cheddar y bacon", "image": "PROXY://%7B%22image_prompt%22%3A%22double_smash_burger_moody_lighting%22%2C%22headline%22%3A%222x1%20FINDE%22%2C%22price_tag%22%3A%22%245999%22%2C%22footer_text%22%3A%22V%C3%A1lido%20Viernes%20y%20S%C3%A1bado%20-%20Efectivo%22%7D", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
 
-RULES FOR THE IMAGE URL:
-- ALWAYS use the exact format: PROXY://[KEYWORDS]
-- Keywords: MAX 8 words, ENGLISH ONLY, underscores between words, NO punctuation
-- Do NOT use http or https. Just PROXY:// followed by the keywords.
-- The image URL goes INSIDE the JSON "image" field, NEVER in the chat text
+RULES FOR THE IMAGE URL (CRITICAL):
+- ALWAYS use the exact format: PROXY://[URI_ENCODED_JSON_STRING]
+- The string after PROXY:// MUST be a URI-encoded JSON object with exactly: "image_prompt", "headline", "price_tag", "footer_text".
+- "image_prompt": English keywords, max 8 words, underscores. NO logos or text in the prompt. We focus on high fidelity food photography. 
+- The image URL goes INSIDE the JSON "image" field, NEVER in the chat text.
 
 VISION GUARD:
 If the user uploads an image, analyze it and create a promo using Open Claw.
