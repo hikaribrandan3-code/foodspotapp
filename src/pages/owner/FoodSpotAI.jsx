@@ -15,22 +15,27 @@ const LazyImage = ({ src, alt, style, className }) => {
     const [downloading, setDownloading] = useState(false)
     const canvasRef = useRef(null)
 
-    // Parse Open Claw v4 payload from PROXY:// URI
+    // Parse Open Claw v4 payload from PROXY:// URI (Pipe Format)
     const parsedPayload = useMemo(() => {
         if (!src || !src.startsWith('PROXY://')) return null;
         try {
             const rawStr = src.replace('PROXY://', '');
-            let jsonStr = rawStr;
-            try {
-                // Try decoding first (if AI URI-encoded it as requested)
-                jsonStr = decodeURIComponent(rawStr);
-            } catch (e) {
-                // Fallback if AI used a raw literal JSON string with a stray %
+
+            // PIPE PROTOCOL: prompt|headline|price|footer
+            if (rawStr.includes('|')) {
+                const parts = rawStr.split('|');
+                return {
+                    image_prompt: parts[0] ? decodeURIComponent(parts[0]).trim() : '',
+                    headline: parts[1] ? decodeURIComponent(parts[1]).trim() : '',
+                    price_tag: parts[2] ? decodeURIComponent(parts[2]).trim() : '',
+                    footer_text: parts[3] ? decodeURIComponent(parts[3]).trim() : ''
+                }
             }
-            return JSON.parse(jsonStr);
+
+            // Fallback for older plaintext PROXY:// links
+            return { image_prompt: decodeURIComponent(rawStr).trim() };
         } catch (e) {
             console.error("[LazyImage] Failed to parse PROXY payload:", e);
-            // Fallback for older plaintext PROXY:// links
             return { image_prompt: src.replace('PROXY://', '') };
         }
     }, [src])
@@ -86,7 +91,7 @@ const LazyImage = ({ src, alt, style, className }) => {
             const ctx = canvas.getContext('2d');
 
             canvas.width = 800;
-            canvas.height = 1000;
+            canvas.height = 1200; // IG Story aspect ratio
 
             // 1. Draw Background
             // Maintain aspect ratio cover
@@ -111,22 +116,23 @@ const LazyImage = ({ src, alt, style, className }) => {
                 ctx.font = '900 64px sans-serif';
                 ctx.shadowColor = 'rgba(0,0,0,0.5)';
                 ctx.shadowBlur = 10;
-                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, canvas.height - 180);
+                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, canvas.height - 220);
             }
 
             // Price Tag
             if (parsedPayload.price_tag) {
                 ctx.font = '800 96px sans-serif';
-                ctx.fillStyle = '#FFD700'; // Gold accent
-                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 80);
+                ctx.fillStyle = '#10B981'; // Emerald Green
+                ctx.shadowBlur = 15;
+                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 100);
             }
 
             // Footer Text (Validity/Payment)
             if (parsedPayload.footer_text) {
                 ctx.font = '600 32px sans-serif';
-                ctx.fillStyle = '#E5E7EB';
+                ctx.fillStyle = '#E5E7EB'; // Clean Grey
                 ctx.shadowBlur = 4;
-                ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 30);
+                ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 40);
             }
 
             // Flatten
@@ -387,12 +393,12 @@ When creating a flyer or promo, output your friendly text FIRST, then on a new l
 EXAMPLE (copy this structure exactly):
 ¡Listo! Acá tenés tu flyer. ¡Va a quedar increíble!
 
-||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Double Smash", "subtitle": "Con cheddar y bacon", "image": "PROXY://%7B%22image_prompt%22%3A%22double_smash_burger_moody_lighting%22%2C%22headline%22%3A%222x1%20FINDE%22%2C%22price_tag%22%3A%22%245999%22%2C%22footer_text%22%3A%22V%C3%A1lido%20Viernes%20y%20S%C3%A1bado%20-%20Efectivo%22%7D", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
+||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Double Smash", "subtitle": "Con cheddar y bacon", "image": "PROXY://double_smash_burger_moody_lighting|2x1 FINDE|$5999|Válido Viernes y Sábado - Efectivo", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
 
 RULES FOR THE IMAGE URL (CRITICAL):
-- ALWAYS use the exact format: PROXY://[URI_ENCODED_JSON_STRING]
-- The string after PROXY:// MUST be a URI-encoded JSON object with exactly: "image_prompt", "headline", "price_tag", "footer_text".
-- "image_prompt": English keywords, max 8 words, underscores. NO logos or text in the prompt. We focus on high fidelity food photography. 
+- ALWAYS use the exact format: PROXY://[english_prompt]|[headline_in_caps]|[price]|[validity_and_terms]
+- You MUST use the "|" character to separate the 4 variables.
+- "image_prompt": English keywords, max 8 words, underscores. NO logos or text in the prompt. We focus on high fidelity food photography.
 - The image URL goes INSIDE the JSON "image" field, NEVER in the chat text.
 
 VISION GUARD:
