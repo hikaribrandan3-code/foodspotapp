@@ -6,43 +6,60 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
-import { Sparkles } from 'lucide-react' // Added Sparkles import
+import { AlertTriangle, Sparkles } from 'lucide-react'
 
-// ─── Image Loader Component ───
+// ─── Native Preloader Image Component ───
 const LazyImage = ({ src, alt, style, className }) => {
-    const [loaded, setLoaded] = useState(false)
+    const [status, setStatus] = useState('loading') // 'loading', 'loaded', 'error'
+
+    useEffect(() => {
+        setStatus('loading')
+        const img = new window.Image()
+        img.src = src
+        img.onload = () => setStatus('loaded')
+        img.onerror = () => setStatus('error')
+    }, [src])
 
     return (
         <div className={className} style={{ position: 'relative', width: '100%', minHeight: '150px', background: '#F3F4F6', ...style, border: 'none' }}>
-            {/* Loading Skeleton / Spinner */}
-            {!loaded && (
+            {status === 'loading' && (
                 <div style={{
                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     gap: 12, color: '#9CA3AF'
                 }}>
                     <Sparkles size={24} className="animate-pulse" />
-                    <span style={{ fontSize: 12, fontWeight: 500, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
-                        Generando imagen...
+                    <span style={{ fontSize: 12, fontWeight: 500, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', textAlign: 'center' }}>
+                        Generando flyer visual...<br />(Puede tardar unos segundos)
                     </span>
                 </div>
             )}
 
-            {/* Actual Image (Hidden until loaded) */}
-            <img
-                src={src}
-                alt={alt}
-                onLoad={() => setLoaded(true)}
-                style={{
-                    width: '100%',
-                    display: 'block',
-                    objectFit: 'cover',
-                    opacity: loaded ? 1 : 0,
-                    transition: 'opacity 0.4s ease-in',
-                    position: loaded ? 'relative' : 'absolute',
-                    top: 0, left: 0
-                }}
-            />
+            {status === 'error' && (
+                <div style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 8, color: '#EF4444', textAlign: 'center', padding: 16
+                }}>
+                    <AlertTriangle size={24} />
+                    <span style={{ fontSize: 12, fontWeight: 500 }}>
+                        El servidor de imágenes está ocupado.
+                    </span>
+                </div>
+            )}
+
+            {status === 'loaded' && (
+                <img
+                    src={src}
+                    alt={alt}
+                    style={{
+                        width: '100%',
+                        display: 'block',
+                        objectFit: 'cover',
+                        animation: 'fadeIn 0.4s ease-in'
+                    }}
+                />
+            )}
         </div>
     )
 }
@@ -181,29 +198,30 @@ IDENTITY PROTOCOL:
    - PORTUGUESE: Natural Brazilian Portuguese.
    - ENGLISH: Professional, high-energy North American business tone.
 2. NO YAPPING: NEVER output technical terms like "Image:", "Color:", "URL:", "JSON", or raw Pollinations URLs in the chat text. The user must ONLY see natural human language.
-3. IMAGINATION: If asked for a flyer/promo and no image is attached, YOU must imagine a descriptive English prompt for the background photo.
+3. FLYER GENERATION (CRITICAL): If the user asks for a flyer, promo, or graphic design, YOU MUST ALWAYS USE THE OPEN CLAW JSON PROTOCOL to give them the actual design. Do NOT just describe the photo in words. You must generate the Pollinations URL inside the JSON.
 
 OPEN CLAW PROTOCOL (MANDATORY):
-Everything technical MUST be wrapped inside ||| JSON |||. The user text goes BEFORE the ||| block.
-Image prompt rules: MAX 8 words, ENGLISH ONLY, NO punctuation, use underscores between words.
+Whenever you are creating a flyer or promo, you MUST output the technical configuration wrapped EXACTLY inside ||| JSON |||. The user text goes BEFORE the ||| block.
+Image prompt rules for Pollinations: MAX 8 words, ENGLISH ONLY, NO punctuation, use underscores between words.
 URL format: https://image.pollinations.ai/prompt/[english_keywords_with_underscores]?width=800&height=1400&nologo=true
 
-CORRECT RESPONSE EXAMPLE:
-"¡Listo! Acá tenés el diseño para tu promo. ¡Va a quedar genial!
+CORRECT RESPONSE FOR A FLYER REQUEST:
+"¡Listo! Acá tenés el diseño para tu promo. ¡Va a quedar genial!"
 
-||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Burger Night", "subtitle": "2x1 en burgers", "image": "https://image.pollinations.ai/prompt/gourmet_burger_dark_moody_food_photography?width=800&height=1400&nologo=true", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||"
+||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Burger Night", "subtitle": "2x1 en burgers", "image": "https://image.pollinations.ai/prompt/gourmet_burger_dark_moody_food_photography?width=800&height=1400&nologo=true", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||
 
 INCORRECT (NEVER DO THIS):
 "**IMAGE:** https://image.pollinations.ai/..." ← FORBIDDEN
 "**COLOR:** #DB0007" ← FORBIDDEN
 "Here is the JSON:" ← FORBIDDEN
+"Imagina un fondo con una hamburguesa..." ← DO NOT TELL THE USER to imagine it, use the JSON block to actually render it.
 Anything technical outside ||| is FORBIDDEN.
 
-VISION GUARD (MULTIMODAL INPUT):
-If the user uploads an image, treat it as a Creative Brief or Reference Photo. Describe what you see and suggest an action using Open Claw.
+VISION GUARD:
+If the user uploads an image, treat it as a Creative Brief. Suggest an action using Open Claw.
 
-WHEN USER ASKS FOR IDEAS OR ANALYSIS (NO PROMO):
-Respond naturally with insights, suggestions, and data analysis. Do NOT include ||| blocks unless you are creating or modifying a promo.
+WHEN USER ASKS FOR IDEAS OR ANALYSIS (NO FLYER/PROMO REQUESTED):
+Respond naturally with insights, suggestions, and data analysis. Do NOT include ||| blocks unless you are explicitly creating or modifying a promo config.
 
 DATOS DEL NEGOCIO:
 - Nombre: ${businessName}
