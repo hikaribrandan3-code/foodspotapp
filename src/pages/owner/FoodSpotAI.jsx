@@ -135,40 +135,35 @@ ${salesSummary.topItems.map((item, i) => `${i + 1}. ${item.name} — ${item.qty}
 
         return `Sos FoodSpot AI, el socio estratégico de "${businessName}". 
 
-GLOBAL IDENTITY PROTOCOL:
-1. DETECT user language automatically (Spanish, English, or Portuguese).
-2. PIVOT response style:
-   - SPANISH: Use Rioplatense (vos, tenés) for South, Neutral for North.
-   - PORTUGUESE: Use natural Brazilian Portuguese.
-   - ENGLISH: Use professional, high-energy North American business tone.
-3. IMAGINATION: If asked for a flyer/promo, you are a Creative Director. If no image is provided, IMAGINE it.
+IDENTITY PROTOCOL:
+1. DETECT user language (ES/EN/PT).
+   - SPANISH: Rioplatense (vos, tenés) for South America, Neutral for North.
+   - PORTUGUESE: Natural Brazilian Portuguese.
+   - ENGLISH: Professional, high-energy North American business tone.
+2. NO YAPPING: NEVER output technical terms like "Image:", "Color:", "URL:", "JSON", or raw Pollinations URLs in the chat text. The user must ONLY see natural human language.
+3. IMAGINATION: If asked for a flyer/promo and no image is attached, YOU must imagine a descriptive English prompt for the background photo.
 
-IMAGE SYNTHESIS (UNIVERSAL):
-Regardless of user language, prompts for image generation MUST be in ENGLISH for maximum quality.
-CRITICAL RULES FOR IMAGE PROMPT:
-- MAX 8 WORDS. Example: "juicy burger dark background food photography"
-- ZERO punctuation. No commas, periods, colons, quotes, hashtags, or dollar signs.
-- NO text overlay instructions. The image is ONLY a background photo.
-- Simple descriptive keywords separated by spaces ONLY.
-URL: https://image.pollinations.ai/prompt/[SHORT_ENGLISH_KEYWORDS]?width=800&height=1400&nologo=true
+OPEN CLAW PROTOCOL (MANDATORY):
+Everything technical MUST be wrapped inside ||| JSON |||. The user text goes BEFORE the ||| block.
+Image prompt rules: MAX 8 words, ENGLISH ONLY, NO punctuation, use underscores between words.
+URL format: https://image.pollinations.ai/prompt/[english_keywords_with_underscores]?width=800&height=1400&nologo=true
 
-OPEN CLAW ACTION:
-||| { 
-  "action": "SYNC_CONFIG", 
-  "patch": { 
-    "promos.items": {
-      "id": "gen-${Date.now()}",
-      "title": "PROMO TITLE",
-      "subtitle": "SUBTITLE",
-      "image": "https://image.pollinations.ai/prompt/[SHORT ENGLISH KEYWORDS MAX 8 WORDS]?width=800&height=1400&nologo=true",
-      "color": "#FFFFFF",
-      "textShadow": "0 4px 15px rgba(0,0,0,1)"
-    }
-  } 
-} |||
+CORRECT RESPONSE EXAMPLE:
+"¡Listo! Acá tenés el diseño para tu promo. ¡Va a quedar genial!
+
+||| { "action": "SYNC_CONFIG", "patch": { "promos.items": { "id": "gen-${Date.now()}", "title": "Burger Night", "subtitle": "2x1 en burgers", "image": "https://image.pollinations.ai/prompt/gourmet_burger_dark_moody_food_photography?width=800&height=1400&nologo=true", "color": "#FFFFFF", "textShadow": "0 4px 15px rgba(0,0,0,1)" } } } |||"
+
+INCORRECT (NEVER DO THIS):
+"**IMAGE:** https://image.pollinations.ai/..." ← FORBIDDEN
+"**COLOR:** #DB0007" ← FORBIDDEN
+"Here is the JSON:" ← FORBIDDEN
+Anything technical outside ||| is FORBIDDEN.
 
 VISION GUARD (MULTIMODAL INPUT):
-If the user uploads an image, they are NOT reporting an IT problem. Treat the image as a "Creative Brief" or a "Reference Photo" to generate a promo, a flyer, or an insight. Describe what you see and suggest an action using Open Claw.
+If the user uploads an image, treat it as a Creative Brief or Reference Photo. Describe what you see and suggest an action using Open Claw.
+
+WHEN USER ASKS FOR IDEAS OR ANALYSIS (NO PROMO):
+Respond naturally with insights, suggestions, and data analysis. Do NOT include ||| blocks unless you are creating or modifying a promo.
 
 DATOS DEL NEGOCIO:
 - Nombre: ${businessName}
@@ -266,6 +261,28 @@ ${salesContext}`
         }
     }
 
+    // ─── Pollinations URL Sanitizer ───
+    const sanitizePollinationsUrl = (rawUrl) => {
+        if (rawUrl.includes('pollinations.ai/prompt/')) {
+            const [baseUrl, queryParams] = rawUrl.split('?')
+            const promptPart = baseUrl.split('prompt/')[1] || ''
+
+            // Strip everything except letters, numbers, spaces, and underscores
+            const cleanPrompt = promptPart
+                .replace(/[^a-zA-Z0-9 _]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 200)
+
+            let sanitized = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}`
+            if (queryParams) sanitized += `?${queryParams}`
+
+            console.log('[Sanitizer] Clean URL:', sanitized)
+            return sanitized
+        }
+        return encodeURI(rawUrl)
+    }
+
     // Send message
     const handleSend = async (text, hiddenSystemFeedback = null) => {
         const userText = text || input.trim()
@@ -330,7 +347,7 @@ ${salesContext}`
             } else {
                 let aiResponse = data.reply
 
-                // Open Claw Interceptor
+                // ─── Open Claw Interceptor ───
                 const clawMatch = aiResponse.match(/\|\|\|([\s\S]*?)\|\|\|/)
                 let generatedImage = null
 
@@ -338,7 +355,7 @@ ${salesContext}`
                     const clawJson = clawMatch[1].trim()
                     aiResponse = aiResponse.replace(clawMatch[0], '').trim() // Strip JSON from UI
 
-                    // Extract image preview
+                    // Extract image preview from JSON
                     try {
                         const parsed = JSON.parse(clawJson)
                         const items = parsed.patch?.['promos.items']
@@ -347,29 +364,7 @@ ${salesContext}`
                         else if (Array.isArray(items) && items[0]?.image) rawImage = items[0].image
 
                         if (rawImage) {
-                            // Pollinations API is extremely sensitive to special characters.
-                            // Strip EVERYTHING except letters, numbers, and spaces, then truncate.
-                            if (rawImage.includes('pollinations.ai/prompt/')) {
-                                const [baseUrl, queryParams] = rawImage.split('?')
-                                const promptPart = baseUrl.split('prompt/')[1] || ''
-
-                                // AGGRESSIVE: Only keep letters, numbers, and spaces
-                                const cleanPrompt = promptPart
-                                    .replace(/[^a-zA-Z0-9 ]/g, '')
-                                    .replace(/\s+/g, ' ')
-                                    .trim()
-                                    .slice(0, 200) // Truncate to 200 chars max
-
-                                // Reconstruct with encodeURIComponent
-                                generatedImage = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}`
-                                if (queryParams) {
-                                    generatedImage += `?${queryParams}`
-                                }
-
-                                console.log('[AI Preview] Sanitized image URL:', generatedImage)
-                            } else {
-                                generatedImage = encodeURI(rawImage)
-                            }
+                            generatedImage = sanitizePollinationsUrl(rawImage)
                         }
                     } catch (e) {
                         console.error('Failed to parse generated image:', e)
@@ -377,11 +372,32 @@ ${salesContext}`
 
                     const clawResult = await executeOpenClaw(clawJson)
                     if (clawJson.includes('READ_DATA') && clawResult && clawResult !== 'ERROR') {
-                        // Immediately feed data back to AI to continue thinking
                         setMessages([...newMessages, { role: 'assistant', content: aiResponse }])
                         return handleSend(null, clawResult)
                     }
                 }
+
+                // ─── UI SHIELD: Scavenger Regex ───
+                // If AI yapped a raw Pollinations URL outside JSON, catch it and render it
+                if (!generatedImage && aiResponse.includes('pollinations.ai')) {
+                    const urlMatch = aiResponse.match(/https:\/\/image\.pollinations\.ai\/prompt\/[^\s)"']*/)
+                    if (urlMatch) {
+                        generatedImage = sanitizePollinationsUrl(urlMatch[0])
+                        aiResponse = aiResponse.replace(urlMatch[0], '').trim()
+                        console.log('[UI Shield] Scavenged leaked URL:', generatedImage)
+                    }
+                }
+
+                // ─── UI SHIELD: Strip raw technical yapping ───
+                // Remove leftover markdown-style technical labels the AI might have leaked
+                aiResponse = aiResponse
+                    .replace(/\*\*IMAGE:\*\*[^\n]*/gi, '')
+                    .replace(/\*\*COLOR:\*\*[^\n]*/gi, '')
+                    .replace(/\*\*TEXT SHADOW:\*\*[^\n]*/gi, '')
+                    .replace(/\*\*OPEN CLAW ACTION:\*\*/gi, '')
+                    .replace(/\*\*Acción en Open Claw:\*\*/gi, '')
+                    .replace(/\n{3,}/g, '\n\n') // Collapse excess newlines
+                    .trim()
 
                 setMessages([...newMessages, { role: 'assistant', content: aiResponse, generatedImage }])
             }
