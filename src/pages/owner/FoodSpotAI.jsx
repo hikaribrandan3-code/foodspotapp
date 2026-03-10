@@ -401,12 +401,19 @@ ${salesContext}`
                 let aiResponse = data.reply
 
                 // ─── Open Claw Interceptor ───
-                const clawMatch = aiResponse.match(/\|\|\|([\s\S]*?)\|\|\|/)
+                // Strip markdown code blocks before parsing (Llama 3 sometimes wraps the JSON)
+                let cleanedAiResponse = aiResponse.replace(/```(json)?([\s\S]*?)```/gi, '$2').trim()
+                const clawMatch = cleanedAiResponse.match(/\|\|\|([\s\S]*?)\|\|\|/)
                 let generatedImage = null
 
                 if (clawMatch) {
                     const clawJson = clawMatch[1].trim()
-                    aiResponse = aiResponse.replace(clawMatch[0], '').trim() // Strip JSON from UI
+
+                    // Strip the JSON from the UI (handles both the raw text and the markdown wrapped version)
+                    aiResponse = aiResponse
+                        .replace(/```(json)?[\s\S]*?```/gi, '')
+                        .replace(/\|\|\|[\s\S]*?\|\|\|/g, '')
+                        .trim()
 
                     // Extract image preview from JSON
                     try {
@@ -433,10 +440,12 @@ ${salesContext}`
                 // ─── UI SHIELD: Scavenger Regex ───
                 // If AI yapped a raw Pollinations URL outside JSON, catch it and render it
                 if (!generatedImage && aiResponse.includes('pollinations.ai')) {
-                    const urlMatch = aiResponse.match(/https:\/\/image\.pollinations\.ai\/prompt\/[^\s)"']*/)
+                    // Match URLs even if they are wrapped in markdown asterisks **url**
+                    const urlMatch = aiResponse.match(/https:\/\/image\.pollinations\.ai\/prompt\/[^\s)"'*]*/)
                     if (urlMatch) {
                         generatedImage = sanitizePollinationsUrl(urlMatch[0])
-                        aiResponse = aiResponse.replace(urlMatch[0], '').trim()
+                        // Strip the matched URL, plus any surrounding asterisks from the UI text
+                        aiResponse = aiResponse.replace(/\*?https:\/\/image\.pollinations\.ai\/prompt\/[^\s)"'*]*\*/gi, '').trim()
                         console.log('[UI Shield] Scavenged leaked URL:', generatedImage)
                     }
                 }
