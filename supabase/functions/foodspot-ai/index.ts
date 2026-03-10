@@ -81,33 +81,54 @@ serve(async (req) => {
             },
         };
 
-        // Call Gemini API with Retry Logic
+        // Call Gemini API with Retry Logic + Model Fallback
+        const MODELS = [
+            "gemini-2.5-flash",
+            "gemini-2.0-flash-lite",
+        ];
+
         let geminiRes;
-        let retries = 1;
+        let lastStatus = 0;
 
-        while (retries >= 0) {
-            geminiRes = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-goog-api-key": GEMINI_API_KEY
-                    },
-                    body: JSON.stringify(geminiBody),
+        for (const model of MODELS) {
+            let retries = 2;
+
+            while (retries >= 0) {
+                console.log(`[foodspot-ai] Trying model: ${model} (retries left: ${retries})`);
+                geminiRes = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": GEMINI_API_KEY
+                        },
+                        body: JSON.stringify(geminiBody),
+                    }
+                );
+
+                lastStatus = geminiRes.status;
+
+                if (geminiRes.ok) break;
+
+                // If 429 or 500+, wait with exponential backoff and retry
+                if (geminiRes.status === 429 || geminiRes.status >= 500) {
+                    const delay = (3 - retries) * 1500; // 1.5s, 3s, 4.5s
+                    console.warn(`Gemini API ${geminiRes.status} on ${model}, waiting ${delay}ms...`);
+                    await new Promise(r => setTimeout(r, delay));
+                    retries--;
+                } else {
+                    break; // Don't retry 400s
                 }
-            );
-
-            if (geminiRes.ok || retries === 0) break;
-
-            // If 429 or 500, wait 1s and retry
-            if (geminiRes.status === 429 || geminiRes.status >= 500) {
-                console.warn(`Gemini API ${geminiRes.status}, retrying...`);
-                await new Promise(r => setTimeout(r, 1000));
-                retries--;
-            } else {
-                break; // Don't retry 400s
             }
+
+            // If we got a successful response, stop trying other models
+            if (geminiRes.ok) {
+                console.log(`[foodspot-ai] ✅ Success with model: ${model}`);
+                break;
+            }
+
+            console.warn(`[foodspot-ai] Model ${model} failed with ${lastStatus}, trying next...`);
         }
 
         if (!geminiRes.ok) {
