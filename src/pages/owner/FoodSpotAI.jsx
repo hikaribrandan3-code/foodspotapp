@@ -334,8 +334,30 @@ ${salesContext}`
                     try {
                         const parsed = JSON.parse(clawJson)
                         const items = parsed.patch?.['promos.items']
-                        if (items?.image) generatedImage = encodeURI(items.image)
-                        else if (Array.isArray(items) && items[0]?.image) generatedImage = encodeURI(items[0].image)
+                        let rawImage = null
+                        if (items?.image) rawImage = items.image
+                        else if (Array.isArray(items) && items[0]?.image) rawImage = items[0].image
+
+                        if (rawImage) {
+                            // Pollinations API is highly sensitive to punctuation in the URL path.
+                            // We need to extract the prompt part, clean it, and reconstruct the URL.
+                            if (rawImage.includes('pollinations.ai/prompt/')) {
+                                const [baseUrl, queryParams] = rawImage.split('?')
+                                const promptPart = baseUrl.split('prompt/')[1] || ''
+
+                                // Clean punctuation from the prompt (commas, periods, exclamation marks)
+                                const cleanPrompt = promptPart.replace(/[,.!\n\r]/g, '').trim()
+
+                                // Reconstruct the URL with the cleaned, encoded prompt
+                                generatedImage = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}`
+                                if (queryParams) {
+                                    generatedImage += `?${queryParams}`
+                                }
+                            } else {
+                                // Fallback for standard URLs
+                                generatedImage = encodeURI(rawImage)
+                            }
+                        }
                     } catch (e) {
                         console.error('Failed to parse generated image:', e)
                     }
