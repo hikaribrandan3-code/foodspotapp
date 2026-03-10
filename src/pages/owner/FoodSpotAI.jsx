@@ -5,7 +5,6 @@ import { formatPrice } from '../../config/menuData.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
-import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
 // ─── Native Preloader Image Component ───
