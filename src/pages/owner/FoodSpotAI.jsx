@@ -7,17 +7,38 @@ import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
-// ─── Native Preloader Image Component ───
+// ─── Native Preloader Image Component with Fallback Chain ───
 const LazyImage = ({ src, alt, style, className }) => {
     const [status, setStatus] = useState('loading') // 'loading', 'loaded', 'error'
+    const [activeSrc, setActiveSrc] = useState(src)
+    const [triedFallback, setTriedFallback] = useState(false)
 
     useEffect(() => {
         setStatus('loading')
-        const img = new window.Image()
-        img.src = src
-        img.onload = () => setStatus('loaded')
-        img.onerror = () => setStatus('error')
+        setActiveSrc(src)
+        setTriedFallback(false)
     }, [src])
+
+    useEffect(() => {
+        if (status !== 'loading') return
+        const img = new window.Image()
+        img.src = activeSrc
+        img.onload = () => setStatus('loaded')
+        img.onerror = () => {
+            if (!triedFallback && activeSrc.includes('pollinations.ai')) {
+                // Extract keywords from the Pollinations URL and try LoremFlickr
+                const promptPart = activeSrc.split('prompt/')[1]?.split('?')[0] || 'food'
+                const keywords = decodeURIComponent(promptPart).replace(/_/g, ',').replace(/\s+/g, ',')
+                const fallbackUrl = `https://loremflickr.com/800/1400/${keywords}`
+                console.log('[LazyImage] Pollinations failed, falling back to LoremFlickr:', fallbackUrl)
+                setTriedFallback(true)
+                setActiveSrc(fallbackUrl)
+                setStatus('loading') // retry with new URL
+            } else {
+                setStatus('error')
+            }
+        }
+    }, [activeSrc, status, triedFallback])
 
     return (
         <div className={className} style={{ position: 'relative', width: '100%', minHeight: '150px', background: '#F3F4F6', ...style, border: 'none' }}>
@@ -55,7 +76,7 @@ const LazyImage = ({ src, alt, style, className }) => {
 
             {status === 'loaded' && (
                 <img
-                    src={src}
+                    src={activeSrc}
                     alt={alt}
                     style={{
                         width: '100%',
