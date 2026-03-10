@@ -315,9 +315,21 @@ ${salesContext}`
 
                 // Open Claw Interceptor
                 const clawMatch = aiResponse.match(/\|\|\|([\s\S]*?)\|\|\|/)
+                let generatedImage = null
+
                 if (clawMatch) {
                     const clawJson = clawMatch[1].trim()
                     aiResponse = aiResponse.replace(clawMatch[0], '').trim() // Strip JSON from UI
+
+                    // Extract image preview
+                    try {
+                        const parsed = JSON.parse(clawJson)
+                        const items = parsed.patch?.['promos.items']
+                        if (items?.image) generatedImage = items.image
+                        else if (Array.isArray(items) && items[0]?.image) generatedImage = items[0].image
+                    } catch (e) {
+                        console.error('Failed to parse generated image:', e)
+                    }
 
                     const clawResult = await executeOpenClaw(clawJson)
                     if (clawJson.includes('READ_DATA') && clawResult && clawResult !== 'ERROR') {
@@ -327,7 +339,7 @@ ${salesContext}`
                     }
                 }
 
-                setMessages([...newMessages, { role: 'assistant', content: aiResponse }])
+                setMessages([...newMessages, { role: 'assistant', content: aiResponse, generatedImage }])
             }
         } catch (err) {
             console.error('AI Comms Error:', err)
@@ -481,6 +493,13 @@ ${salesContext}`
                             {msg.clientPreview && (
                                 <div style={{ marginTop: 8 }}>
                                     <img src={msg.clientPreview} alt="Attached" style={{ maxWidth: '100%', borderRadius: 8, maxHeight: 150, objectFit: 'cover' }} />
+                                </div>
+                            )}
+
+                            {/* AI Generated Flyer Preview */}
+                            {msg.generatedImage && (
+                                <div style={{ marginTop: 12, overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)' }}>
+                                    <img src={msg.generatedImage} alt="AI Generated Flyer" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
                                 </div>
                             )}
 
