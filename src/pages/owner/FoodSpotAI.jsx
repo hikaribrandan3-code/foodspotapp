@@ -334,8 +334,8 @@ ${salesContext}`
                     try {
                         const parsed = JSON.parse(clawJson)
                         const items = parsed.patch?.['promos.items']
-                        if (items?.image) generatedImage = items.image
-                        else if (Array.isArray(items) && items[0]?.image) generatedImage = items[0].image
+                        if (items?.image) generatedImage = encodeURI(items.image)
+                        else if (Array.isArray(items) && items[0]?.image) generatedImage = encodeURI(items[0].image)
                     } catch (e) {
                         console.error('Failed to parse generated image:', e)
                     }
