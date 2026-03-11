@@ -31,20 +31,20 @@ serve(async (req) => {
 
         console.log(`[foodspot-image] Generating image via HF SDXL. Original Prompt: "${prompt}"`);
 
-        // ─── Omni-Vibe Visual Switchboard v15.5 ───
+        // ─── Black Label Visual Switchboard v16.0 ───
         const lc = prompt.toLowerCase();
         let vibeFrame = "";
 
-        if (/burger|pizza|taco|fries|hot dog|wings|nugget|sandwich/i.test(lc)) {
-            vibeFrame = "Gourmet fast food, sizzling, steam, high contrast street lighting, extreme close-up, 8k raw photo, photorealistic.";
-        } else if (/sushi|steak|fancy|dine|wine|lobster|filet|truffle|risotto/i.test(lc)) {
+        if (/sushi|lobster|fancy|omakase|steak|dine|wine|filet|truffle|risotto/i.test(lc)) {
             vibeFrame = "Minimalist luxury plating, soft candlelight, expensive bokeh, fine dining, 85mm portrait lens, 8k raw photo, photorealistic.";
-        } else if (/techno|club|rave|dj|nightlife|neon|party/i.test(lc)) {
+        } else if (/anime|manga|comic|illustration|otaku|kawaii/i.test(lc)) {
+            vibeFrame = "Elite digital art, cinematic anime poster, vibrant colors, clean lines, professional illustration, studio quality.";
+        } else if (/techno|club|rave|reggaeton|dj|nightlife|neon|party/i.test(lc)) {
             vibeFrame = "Neon lasers, nightclub haze, crowd silhouettes, deep purple and blue lighting, cinematic wide angle, 8k.";
-        } else if (/anime|manga|otaku|kawaii/i.test(lc)) {
-            vibeFrame = "Cinematic anime poster art, vibrant colors, clean lines, professional illustration, studio quality.";
-        } else if (/beach|pool|girls|bar|summer|tropical|cocktail/i.test(lc)) {
+        } else if (/beach|pool|sunset|girls|bar|summer|tropical|cocktail/i.test(lc)) {
             vibeFrame = "Golden hour photography, sun-kissed, refreshing atmosphere, summer vibe, warm tones, bokeh depth, 8k raw photo.";
+        } else if (/burger|taco|street|pizza|fries|hot dog|wings|nugget|sandwich/i.test(lc)) {
+            vibeFrame = "Gourmet fast food, sizzling, steam, high contrast street lighting, extreme close-up, 8k raw photo, photorealistic.";
         } else if (/rock|concert|festival|stage|band|metal/i.test(lc)) {
             vibeFrame = "Massive stage lighting, atmospheric smoke, epic crowd silhouettes, dramatic wide angle, concert photography, 8k.";
         } else {

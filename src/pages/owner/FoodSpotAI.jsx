@@ -115,16 +115,16 @@ const LazyImage = ({ src, alt, style, className }) => {
             ctx.fillStyle = gradBottom;
             ctx.fillRect(0, canvas.height * 0.50, canvas.width, canvas.height * 0.50);
 
-            // 3. Stamping Typography (Omni-Vibe v15.5 / Inter Style)
+            // 3. Stamping Typography (Black Label v16.0 / Inter Style)
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
 
-            // Headline (Top Safe Zone)
+            // Headline (Gutter Safe Zone)
             if (parsedPayload.headline) {
-                ctx.font = '900 70px Inter, sans-serif';
+                ctx.font = '900 64px Inter, sans-serif';
                 ctx.shadowColor = 'rgba(0,0,0,0.7)';
                 ctx.shadowBlur = 15;
-                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, 160);
+                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, 220);
             }
 
             // Price Tag (Bottom Safe Zone)
