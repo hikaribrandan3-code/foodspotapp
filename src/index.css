@@ -1519,6 +1519,10 @@ body {
 }
 
 /* Kill any invisible divs with full-viewport coverage */
-div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.camera-layer):not(.camera-fullscreen-portal) {
+div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.camera-fullscreen-wrapper) {
   pointer-events: none !important;
+}
+
+.camera-fullscreen-wrapper {
+  pointer-events: auto !important;
 }
