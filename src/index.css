@@ -1519,7 +1519,7 @@ body {
 }
 
 /* Kill any invisible divs with full-viewport coverage */
-div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.camera-fullscreen-wrapper) {
+div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.camera-fullscreen-wrapper):not(.sticker-drawer-overlay):not(.emoji-picker-overlay):not(.settings-overlay):not(.text-editor-overlay):not(.draw-canvas-overlay) {
   pointer-events: none !important;
 }
 
