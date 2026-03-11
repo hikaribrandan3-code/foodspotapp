@@ -189,8 +189,6 @@ function burnBranding(ctx, width, height, branding) {
     // Clamp radius so arcTo doesn't fail on iOS Safari
     const safeRadius = Math.min(pillRadius, pillH / 2, pillW / 2)
 
-    if (window.addFsLog) window.addFsLog(`Burning: "${businessName}" sz:${fontSize}px @ ${pillX},${pillY} on ${width}x${height}`);
-
     // --- Drop shadow ---
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
     ctx.shadowBlur = 8 * scale
