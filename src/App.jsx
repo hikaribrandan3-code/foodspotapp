@@ -126,6 +126,13 @@ function App() {
     const [orders, setOrders] = useState(() => getOrders());
     const [isCameraActive, setIsCameraActive] = useState(false);
 
+    // 🔍 SYNC: Close Camera Portal when URL changes (matches Camera's internal navigate(-1))
+    useEffect(() => {
+        if (isCameraActive) {
+            setIsCameraActive(false);
+        }
+    }, [location.pathname]);
+
     // 🔥 HYDRATION V5: MASTER MERGE - Full app_config restoration
     // This merges the ENTIRE app_config blob from Cloud, not just specific fields
     useEffect(() => {
