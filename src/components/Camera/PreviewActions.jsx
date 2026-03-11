@@ -7,9 +7,34 @@ import React from 'react';
  */
 export const PreviewActions = ({ capturedImg, onDone }) => {
 
-    // 💾 SAVE TO GALLERY — programmatic download
+    // 💾 SAVE TO GALLERY — iOS-compatible
     const handleSaveToGallery = async () => {
         try {
+            let blob;
+            if (typeof capturedImg === 'string' && capturedImg.startsWith('data:')) {
+                const res = await fetch(capturedImg);
+                blob = await res.blob();
+            } else if (capturedImg instanceof Blob) {
+                blob = capturedImg;
+            }
+
+            // iOS: use share API (gives "Save Image" option in share sheet)
+            if (blob && navigator.canShare) {
+                const file = new File([blob], `foodspot-${Date.now()}.jpg`, { type: 'image/jpeg' });
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Save Image' });
+                    return;
+                }
+            }
+
+            // Fallback: open blob in new tab (long-press to save)
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                return;
+            }
+
+            // Last resort: anchor download (works on desktop / Chrome Android)
             const link = document.createElement('a');
             link.download = `foodspot-${Date.now()}.jpg`;
             link.href = capturedImg;
@@ -17,7 +42,9 @@ export const PreviewActions = ({ capturedImg, onDone }) => {
             link.click();
             document.body.removeChild(link);
         } catch (err) {
-            console.error('Save to gallery failed', err);
+            if (err.name !== 'AbortError') {
+                console.error('Save to gallery failed', err);
+            }
         }
     };
 

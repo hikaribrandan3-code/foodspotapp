@@ -53,6 +53,9 @@ const styles = {
         inset: 0,
         zIndex: 9999,
         background: '#000',
+        touchAction: 'manipulation',
+        WebkitTouchCallout: 'default',
+        userSelect: 'none',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     },
     immersiveImage: {

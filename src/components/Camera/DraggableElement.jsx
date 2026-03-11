@@ -217,7 +217,9 @@ function DraggableElement({ element, onUpdate, onRemove, onTap, disabled }) {
                 ref={elementRef}
                 className={`draggable-element ${isDragging ? 'dragging' : ''} ${isScaling ? 'scaling' : ''} ${isOverDelete ? 'over-delete' : ''}`}
                 style={{
-                    transform: `translate(${element.x}px, ${element.y}px) scale(${element.scale}) rotate(${element.rotation}deg)`,
+                    left: `${element.x}px`,
+                    top: `${element.y}px`,
+                    transform: `translate(-50%, -50%) scale(${element.scale}) rotate(${element.rotation}deg)`,
                     transformOrigin: 'center center',
                     // Invisible padding for larger touch hit area
                     padding: '24px',
