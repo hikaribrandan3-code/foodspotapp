@@ -595,6 +595,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             {showDualPost && dualPostData && (
                 <DualPostScreen
                     previewDataURL={dualPostData.dataURL}
+                    previewBlob={dualPostData.blob}
                     onClose={() => setShowDualPost(false)}
                     onComplete={onDone}
                 />

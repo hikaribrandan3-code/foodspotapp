@@ -8,7 +8,11 @@ import React from 'react';
 export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
 
     // 💾 SAVE TO GALLERY — iOS-compatible
-    const handleSaveToGallery = async () => {
+    const handleSaveToGallery = async (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         try {
             let blob = capturedBlob;
             if (!blob) {
@@ -51,7 +55,11 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     };
 
     // 🚀 SHARE TO SOCIALS — navigator.share with image blob (SYNCHRONOUS FOR SAFARI)
-    const handleShare = async () => {
+    const handleShare = async (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         try {
             let file;
             if (capturedBlob) {
