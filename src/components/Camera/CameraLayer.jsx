@@ -195,8 +195,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#fff',
-                    zIndex: 200,
-                    pointerEvents: 'auto'
+                    zIndex: 200
                 }}
             >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -236,7 +235,6 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 className="settings-button"
                 onClick={handleSettingsClick}
                 aria-label="Settings"
-                style={{ pointerEvents: 'auto' }}
             >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="3" />
@@ -245,7 +243,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
             </button>
 
             {/* Right toolbar */}
-            <div className={`toolbar toolbar-${toolPosition === 'left' ? 'right' : 'left'}-side`} style={{ pointerEvents: 'auto' }}>
+            <div className={`toolbar toolbar-${toolPosition === 'left' ? 'right' : 'left'}-side`}>
                 {/* Flip camera - functional */}
                 <button className="toolbar-button" onClick={handleFlip} aria-label="Flip Camera">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -279,8 +277,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 justifyContent: 'center',
                 gap: '40px',
                 zIndex: 100,
-                padding: '0 24px',
-                pointerEvents: 'auto'
+                padding: '0 24px'
             }}>
                 {/* Left spacer (for gallery in future) */}
                 <div style={{ width: '48px' }} />

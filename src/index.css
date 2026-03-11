@@ -1519,11 +1519,6 @@ body {
 }
 
 /* Kill any invisible divs with full-viewport coverage */
-div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.camera-fullscreen-portal) {
+div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard) {
   pointer-events: none !important;
-}
-
-.camera-fullscreen-portal {
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: auto !important;
 }

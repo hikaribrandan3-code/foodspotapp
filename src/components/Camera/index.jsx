@@ -60,11 +60,10 @@ function Camera({ neonContext = null, branding = null }) {
             position: 'fixed',
             top: 0,
             left: 0,
-            width: '100%',
-            height: '100%',
+            right: 0,
+            bottom: 0,
             background: '#000',
-            zIndex: 1000,
-            pointerEvents: 'auto'
+            zIndex: 1000
         }}>
             {mode === 'CAMERA' && (
                 <CameraLayer

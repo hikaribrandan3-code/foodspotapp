@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
-import { createPortal } from 'react-dom'
+
 import { getConfig, normalizeConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
 import { incrementVisit, updateOrder, getOrders } from './utils/storage.js'
 import { sanitizeForAdmin } from './utils/adminSanitize.js'
@@ -124,14 +124,7 @@ function App() {
         return normalizeConfig({})
     });
     const [orders, setOrders] = useState(() => getOrders());
-    const [isCameraActive, setIsCameraActive] = useState(false);
 
-    // 🔍 SYNC: Close Camera Portal when URL changes (matches Camera's internal navigate(-1))
-    useEffect(() => {
-        if (isCameraActive) {
-            setIsCameraActive(false);
-        }
-    }, [location.pathname]);
 
     // 🔥 HYDRATION V5: MASTER MERGE - Full app_config restoration
     // This merges the ENTIRE app_config blob from Cloud, not just specific fields
@@ -604,6 +597,7 @@ function App() {
                         <Route path="/login/staff" element={<StaffLogin />} />
                         <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                         <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
+                        <Route path="/camera" element={<Camera />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                     {location.pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
@@ -675,20 +669,8 @@ function App() {
                             );
                         }
 
-                        return (
-                            <div style={{ display: isCameraActive ? 'none' : 'block' }}>
-                                <BottomNav config={safeConfig} onCameraTap={() => setIsCameraActive(true)} />
-                            </div>
-                        );
+                        return <BottomNav config={safeConfig} />;
                     })()}
-
-                    {/* 🚀 THE MISSION PORTAL: Injected at Body-Root to cover everything */}
-                    {isCameraActive && createPortal(
-                        <div className="camera-fullscreen-portal" style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
-                            <Camera onClose={() => setIsCameraActive(false)} />
-                        </div>,
-                        document.body
-                    )}
                 </div>
             </CartProvider>
         </AdminIntentProvider>
