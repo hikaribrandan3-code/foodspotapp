@@ -300,38 +300,79 @@ function drawText(ctx, element, scale = 1) {
     ctx.textAlign = style.textAlign || 'center'
     ctx.textBaseline = 'middle'
 
-    const metrics = ctx.measureText(text)
-    const textWidth = metrics.width
-    const textHeight = fontSize * 1.2
+    // Instagram-style wrapping limit logic (matches the 280px CSS max-width)
+    const maxWidth = 280 * element.scale * scale
+    const paragraphs = text.split('\n')
+    const lines = []
 
-    if (style.styleMode === 'stroke') {
-        ctx.strokeStyle = color
-        ctx.lineWidth = 2 * scale
-        ctx.strokeText(text, 0, 0)
-    } else if (style.styleMode === 'background') {
+    // Wrap words within boundary
+    paragraphs.forEach(paragraph => {
+        const words = paragraph.split(' ')
+        let currentLine = words[0] || ''
+
+        for (let i = 1; i < words.length; i++) {
+            const word = words[i]
+            const testLine = currentLine + ' ' + word
+            const metrics = ctx.measureText(testLine)
+
+            if (metrics.width > maxWidth && currentLine.length > 0) {
+                lines.push(currentLine)
+                currentLine = word
+            } else {
+                currentLine = testLine
+            }
+        }
+        lines.push(currentLine)
+    })
+
+    const lineHeight = fontSize * 1.2
+    const totalHeight = lines.length * lineHeight
+
+    // Find the maximum width among all generated lines for the bounding box
+    let maxLineWidth = 0
+    lines.forEach(line => {
+        maxLineWidth = Math.max(maxLineWidth, ctx.measureText(line).width)
+    })
+
+    // Draw background blocks if needed
+    if (style.styleMode === 'background') {
         const padding = 8 * scale
         ctx.fillStyle = color
         ctx.beginPath()
-        ctx.roundRect(-textWidth / 2 - padding, -textHeight / 2, textWidth + padding * 2, textHeight, 4 * scale)
+        ctx.roundRect(-maxLineWidth / 2 - padding, -totalHeight / 2, maxLineWidth + padding * 2, totalHeight, 4 * scale)
         ctx.fill()
-        ctx.fillStyle = (color === '#FFFFFF' || color === '#FFCC00') ? '#000' : '#FFF'
-        ctx.fillText(text, 0, 0)
     } else if (style.styleMode === 'highlight') {
         const padding = 12 * scale
         ctx.fillStyle = color
         ctx.beginPath()
-        ctx.roundRect(-textWidth / 2 - padding, -textHeight / 2 - padding / 2, textWidth + padding * 2, textHeight + padding, 8 * scale)
+        ctx.roundRect(-maxLineWidth / 2 - padding, -totalHeight / 2 - padding / 2, maxLineWidth + padding * 2, totalHeight + padding, 8 * scale)
         ctx.fill()
-        ctx.fillStyle = (color === '#FFFFFF' || color === '#FFCC00') ? '#000' : '#FFF'
-        ctx.fillText(text, 0, 0)
-    } else {
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
-        ctx.shadowBlur = 3 * scale
-        ctx.shadowOffsetX = 0
-        ctx.shadowOffsetY = 1 * scale
-        ctx.fillStyle = color
-        ctx.fillText(text, 0, 0)
     }
+
+    // Vertical centering offset
+    const startY = -totalHeight / 2 + lineHeight / 2
+
+    // Stroke/draw the text line by line
+    lines.forEach((line, index) => {
+        const lineY = startY + index * lineHeight
+
+        if (style.styleMode === 'stroke') {
+            ctx.strokeStyle = color
+            ctx.lineWidth = 2 * scale
+            ctx.strokeText(line, 0, lineY)
+        } else if (style.styleMode === 'background' || style.styleMode === 'highlight') {
+            ctx.fillStyle = (color === '#FFFFFF' || color === '#FFCC00') ? '#000' : '#FFF'
+            ctx.fillText(line, 0, lineY)
+        } else {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
+            ctx.shadowBlur = 3 * scale
+            ctx.shadowOffsetX = 0
+            ctx.shadowOffsetY = 1 * scale
+            ctx.fillStyle = color
+            ctx.fillText(line, 0, lineY)
+        }
+    })
+
     ctx.restore()
 }
 
