@@ -49,7 +49,7 @@ const FLASH_ICONS = {
     )
 }
 
-export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }) {
+export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition, businessName, primaryColor }) {
     const {
         videoRef,
         canvasRef,
