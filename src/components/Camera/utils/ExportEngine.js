@@ -186,6 +186,8 @@ function burnBranding(ctx, width, height, branding) {
     const pillX = leftOffset
     const pillY = height - bottomOffset - pillH
 
+    if (window.addFsLog) window.addFsLog(`Burning: "${businessName}" @ ${pillX},${pillY} on ${width}x${height} canvas`);
+
     // --- Drop shadow ---
     ctx.shadowColor = 'rgba(0, 0, 0, 0.25)'
     ctx.shadowBlur = 12 * scale
@@ -195,7 +197,18 @@ function burnBranding(ctx, width, height, branding) {
     // --- Pill background (white, 0.9 alpha) ---
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
     ctx.beginPath()
-    ctx.roundRect(pillX, pillY, pillW, pillH, pillRadius)
+    // Fallback for ctx.roundRect (iOS 16+) using manual path
+    const r = pillRadius
+    const x = pillX
+    const y = pillY
+    const w = pillW
+    const h = pillH
+    ctx.moveTo(x + r, y)
+    ctx.arcTo(x + w, y, x + w, y + h, r)
+    ctx.arcTo(x + w, y + h, x, y + h, r)
+    ctx.arcTo(x, y + h, x, y, r)
+    ctx.arcTo(x, y, x + w, y, r)
+    ctx.closePath()
     ctx.fill()
 
     // Reset shadow for content

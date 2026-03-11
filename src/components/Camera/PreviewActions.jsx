@@ -15,6 +15,12 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         console.log(`[PreviewActions] ${msg}`);
     }, []);
 
+    // Expose addLog to window for utility file logging
+    React.useEffect(() => {
+        window.addFsLog = (msg) => addLog(msg);
+        return () => { delete window.addFsLog; };
+    }, [addLog]);
+
     // Pre-compute the file for Safari synchronous requirements
     const shareFile = React.useMemo(() => {
         if (capturedBlob) {
