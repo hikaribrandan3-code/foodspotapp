@@ -162,35 +162,34 @@ function burnBranding(ctx, width, height, branding) {
     const { businessName } = branding
     const scale = width / 1080
 
-    // --- Measure text to size the pill ---
-    const fontSize = Math.round(16 * scale)
-    const pinSize = Math.round(18 * scale)
-    const pillPaddingH = Math.round(20 * scale)  // horizontal padding
-    const pillPaddingV = Math.round(12 * scale)   // vertical padding
-    const pinTextGap = Math.round(8 * scale)      // gap between pin and text
-    const pillRadius = Math.round(24 * scale)     // capsule corner radius
+    // --- Crisp, large pill sizes (designed for 1080x1920 story ratio) ---
+    const fontSize = Math.round(28 * scale)
+    const pinSize = Math.round(28 * scale)
+    const pillPaddingH = Math.round(28 * scale)
+    const pillPaddingV = Math.round(16 * scale)
+    const pinTextGap = Math.round(12 * scale)
+    const pillRadius = Math.round(40 * scale)
 
     ctx.save()
     ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
-    const textMetrics = ctx.measureText(businessName)
+    const textMetrics = ctx.measureText(businessName.toUpperCase())
     const textW = textMetrics.width
 
     // Total pill dimensions
     const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
 
-    // Position at bottom-left (matching original DualPostScreen HTML layout)
-    const leftOffset = Math.round(16 * scale)
-    const bottomOffset = Math.round(220 * scale)
+    // Position: bottom-left, 12px above where a shutter button would sit (~80px zone)
+    const leftOffset = Math.round(24 * scale)
+    const bottomOffset = Math.round(92 * scale)
 
     const pillX = leftOffset
     const pillY = height - bottomOffset - pillH
 
-    // CRITICAL FIX: The radius cannot be larger than half the height or width!
-    // This was causing arcTo to fail silently on iOS Safari.
+    // Clamp radius so arcTo doesn't fail on iOS Safari
     const safeRadius = Math.min(pillRadius, pillH / 2, pillW / 2)
 
-    if (window.addFsLog) window.addFsLog(`Burning: "${businessName}" @ ${pillX},${pillY} on ${width}x${height} canvas`);
+    if (window.addFsLog) window.addFsLog(`Burning: "${businessName}" sz:${fontSize}px @ ${pillX},${pillY} on ${width}x${height}`);
 
     // --- Drop shadow ---
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
