@@ -873,7 +873,7 @@ ${salesContext}`
                                     fontSize: 12, fontWeight: 600, color: '#60A5FA', display: 'flex', alignItems: 'center', gap: 6
                                 }}>
                                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                                    {summaryLoading ? 'Analizando...' : (briefLoading ? 'Calculando Estrategia...' : 'Oracle Activo')}
+                                    {summaryLoading ? 'Analizando...' : (briefLoading ? 'Calculando Estrategia...' : 'Listo')}
                                 </div>
                             </div>
 
@@ -904,7 +904,7 @@ ${salesContext}`
                                         Sintetizando {salesSummary?.orderCount || 0} pedidos para generar estrategia autonoma...
                                     </div>
                                 ) : (
-                                    <div style={{ color: '#E2E8F0', fontSize: 15, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                                    <div style={{ color: '#FFFFFF', fontSize: 15, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                                         {morningBrief || "Todo bajo control. ¿Con qué arrancamos hoy?"}
                                     </div>
                                 )}
