@@ -322,6 +322,11 @@ export default function FoodSpotAI() {
     const chatEndRef = useRef(null)
     const inputRef = useRef(null)
 
+    // Proactive Oracle State
+    const [morningBrief, setMorningBrief] = useState(null)
+    const [briefLoading, setBriefLoading] = useState(false)
+    const briefFiredRef = useRef(false)
+
     // Scroll to bottom on new messages
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -395,6 +400,40 @@ export default function FoodSpotAI() {
         fetchSalesSummary()
         return () => { cancelled = true }
     }, [businessId])
+
+    // CMO Oracle Engine: Generate Proactive Strategy directly after sales load
+    useEffect(() => {
+        if (!salesSummary || briefFiredRef.current || messages.length > 0) return;
+
+        let cancelled = false;
+        briefFiredRef.current = true;
+
+        const fetchBrief = async () => {
+            if (!cancelled) setBriefLoading(true);
+            try {
+                const topItemStr = salesSummary.topItems[0]?.name || 'productos';
+                const briefPrompt = `Sos el CMO de mi local. Revisá mis ventas rápido. Decime en MAX 4 lineas qué ves (observación breve de ventas mías del mes), a qué producto ponerle atención (una accion especifica con ${topItemStr}), y proyectá qué pasa si armamos una promo hoy. NO USES ||| JSON ||| PERO DECIME IDEA PUNTUAL. No saludes. Directo al grano.`;
+
+                const { data, error } = await supabase.functions.invoke('foodspot-ai', {
+                    body: {
+                        systemPrompt: systemPrompt,
+                        messages: [{ role: 'user', content: briefPrompt }]
+                    }
+                });
+
+                if (error) throw error;
+                if (!cancelled && data && data.reply) {
+                    setMorningBrief(data.reply);
+                }
+            } catch (err) {
+                console.error("Failed to load morning brief", err);
+            } finally {
+                if (!cancelled) setBriefLoading(false);
+            }
+        };
+        fetchBrief();
+        return () => { cancelled = true; };
+    }, [salesSummary, messages.length, systemPrompt]);
 
     // Build system prompt with real data
     const systemPrompt = useMemo(() => {
@@ -745,6 +784,29 @@ ${salesContext}`
 
     return (
         <div style={containerStyle}>
+            <style>
+                {`
+                    @keyframes oraclePulse {
+                        0% { opacity: 0.6; }
+                        50% { opacity: 1; text-shadow: 0 0 10px rgba(59,130,246,0.6); }
+                        100% { opacity: 0.6; }
+                    }
+                    .pulse-badge {
+                        animation: oraclePulse 2s infinite;
+                    }
+                    @keyframes shimmer {
+                        0% { background-position: -1000px 0; }
+                        100% { background-position: 1000px 0; }
+                    }
+                    .shimmer-text {
+                        background: linear-gradient(to right, #475569 4%, #94A3B8 25%, #475569 36%);
+                        background-size: 1000px 100%;
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        animation: shimmer 2s infinite linear;
+                    }
+                `}
+            </style>
             {toastMsg && (
                 <div style={{
                     position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
@@ -776,58 +838,93 @@ ${salesContext}`
                 padding: '16px 16px 160px',
                 display: 'flex', flexDirection: 'column', gap: 12
             }}>
-                {/* Welcome Card */}
+                {/* Morning Brief Card (CMO Oracle v19) */}
                 {messages.length === 0 && (
                     <div style={{
-                        textAlign: 'center', padding: '40px 20px',
-                        background: '#FFFFFF', borderRadius: 20,
-                        border: '1px solid #E5E7EB',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        padding: '32px 24px',
+                        background: '#0F172A', // Dark mode premium surface
+                        borderRadius: 24,
+                        color: '#FFFFFF',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: '0 20px 40px rgba(15,23,42,0.4)',
+                        marginBottom: 20
                     }}>
-                        <div style={{ fontSize: 48, marginBottom: 12 }}>🧠</div>
-                        <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: '#111827' }}>
-                            Hola, {businessName}
-                        </h2>
-                        <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6B7280', lineHeight: 1.5 }}>
-                            Soy tu socio estratégico. Preguntame sobre ventas, pedí ideas de promos, o diseñemos un flyer juntos.
-                        </p>
-
-                        {/* Status pill */}
+                        {/* Ambient radial glow */}
                         <div style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 6,
-                            padding: '6px 14px', borderRadius: 20,
-                            background: summaryLoading ? '#FEF3C7' : '#D1FAE5',
-                            fontSize: 12, fontWeight: 600,
-                            color: summaryLoading ? '#92400E' : '#065F46'
-                        }}>
-                            <div style={{
-                                width: 6, height: 6, borderRadius: '50%',
-                                background: summaryLoading ? '#F59E0B' : '#10B981'
-                            }} />
-                            {summaryLoading ? 'Cargando datos...' : `${salesSummary?.orderCount || 0} pedidos analizados`}
-                        </div>
+                            position: 'absolute', top: -100, right: -100, width: 300, height: 300,
+                            background: 'radial-gradient(circle, rgba(37,99,235,0.4) 0%, rgba(15,23,42,0) 70%)',
+                            borderRadius: '50%', pointerEvents: 'none'
+                        }} />
 
-                        {/* Suggestion chips */}
-                        <div style={{
-                            display: 'flex', flexWrap: 'wrap', gap: 8,
-                            justifyContent: 'center', marginTop: 20
-                        }}>
-                            {SUGGESTIONS.map(s => (
-                                <button
-                                    key={s.label}
-                                    onClick={() => handleSend(s.prompt)}
-                                    disabled={isLoading || summaryLoading}
-                                    style={{
-                                        padding: '10px 16px', borderRadius: 20,
-                                        border: '1px solid #E5E7EB', background: '#FFFFFF',
-                                        fontSize: 13, fontWeight: 500, color: '#374151',
-                                        cursor: 'pointer', transition: 'all 0.2s',
-                                        opacity: (isLoading || summaryLoading) ? 0.5 : 1
-                                    }}
-                                >
-                                    {s.label}
-                                </button>
-                            ))}
+                        <div style={{ position: 'relative', zIndex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                                <div>
+                                    <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>
+                                        Morning Brief
+                                    </h2>
+                                    <p style={{ margin: 0, fontSize: 13, color: '#94A3B8' }}>
+                                        Autónomo • {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                    </p>
+                                </div>
+                                <div className={(briefLoading || summaryLoading) ? 'pulse-badge' : ''} style={{
+                                    padding: '6px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.1)',
+                                    fontSize: 12, fontWeight: 600, color: '#60A5FA', display: 'flex', alignItems: 'center', gap: 6
+                                }}>
+                                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
+                                    {summaryLoading ? 'Analizando...' : (briefLoading ? 'Calculando Estrategia...' : 'Oracle Activo')}
+                                </div>
+                            </div>
+
+                            {/* 3-Column Stats Grid */}
+                            {!summaryLoading && salesSummary && (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px 12px', borderRadius: 16 }}>
+                                        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total</div>
+                                        <div style={{ fontSize: 18, fontWeight: 700 }}>${(salesSummary.totalRevenue / 1000).toFixed(1)}k</div>
+                                    </div>
+                                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px 12px', borderRadius: 16 }}>
+                                        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ticket Prom.</div>
+                                        <div style={{ fontSize: 18, fontWeight: 700 }}>${Math.round(salesSummary.avgTicket)}</div>
+                                    </div>
+                                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px 12px', borderRadius: 16 }}>
+                                        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vs Anterior</div>
+                                        <div style={{ fontSize: 18, fontWeight: 700, color: salesSummary.thisWeekRevenue >= salesSummary.lastWeekRevenue ? '#10B981' : '#F43F5E' }}>
+                                            {salesSummary.lastWeekRevenue ? Math.round(((salesSummary.thisWeekRevenue - salesSummary.lastWeekRevenue) / salesSummary.lastWeekRevenue) * 100) : 0}%
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* The Oracle Insight */}
+                            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20, marginBottom: 24, minHeight: 100 }}>
+                                {briefLoading || summaryLoading ? (
+                                    <div className="shimmer-text" style={{ color: '#475569', fontSize: 14 }}>
+                                        Sintetizando {salesSummary?.orderCount || 0} pedidos para generar estrategia autonoma...
+                                    </div>
+                                ) : (
+                                    <div style={{ color: '#E2E8F0', fontSize: 15, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                                        {morningBrief || "Todo bajo control. ¿Con qué arrancamos hoy?"}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Trigger */}
+                            <button
+                                onClick={() => handleSend("Generame un flyer con esta idea: " + morningBrief)}
+                                disabled={briefLoading || summaryLoading || !morningBrief}
+                                style={{
+                                    width: '100%', padding: '16px', borderRadius: 12,
+                                    background: adminBlue, color: '#FFF', border: 'none',
+                                    fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                    boxShadow: '0 4px 15px rgba(37,99,235,0.4)',
+                                    opacity: (briefLoading || summaryLoading || !morningBrief) ? 0.5 : 1
+                                }}
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                Ejecutar Estrategia
+                            </button>
                         </div>
                     </div>
                 )}

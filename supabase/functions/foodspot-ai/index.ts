@@ -92,7 +92,7 @@ async function callGemini(messages: any[], systemPrompt: string, apiKey: string)
 
     const geminiBody = {
         contents,
-        system_instruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+        systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
         generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 4096,
