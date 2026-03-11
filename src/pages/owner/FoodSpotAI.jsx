@@ -100,48 +100,48 @@ const LazyImage = ({ src, alt, style, className }) => {
             const y = (canvas.height / 2) - (img.height / 2) * scale;
             ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
-            // 2. Draw Dual Gradients (Top-Down 40% and Bottom-Up 40%)
+            // 2. Draw Dual Gradients (Top-Down 50% and Bottom-Up 50%)
             // Top Gradient
-            const gradTop = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.40);
+            const gradTop = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.50);
             gradTop.addColorStop(0, 'rgba(0,0,0,0.85)');
             gradTop.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = gradTop;
-            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.40);
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.50);
 
             // Bottom Gradient
-            const gradBottom = ctx.createLinearGradient(0, canvas.height * 0.60, 0, canvas.height);
+            const gradBottom = ctx.createLinearGradient(0, canvas.height * 0.50, 0, canvas.height);
             gradBottom.addColorStop(0, 'rgba(0,0,0,0)');
             gradBottom.addColorStop(1, 'rgba(0,0,0,0.85)');
             ctx.fillStyle = gradBottom;
-            ctx.fillRect(0, canvas.height * 0.60, canvas.width, canvas.height * 0.40);
+            ctx.fillRect(0, canvas.height * 0.50, canvas.width, canvas.height * 0.50);
 
-            // 3. Stamping Typgraphy (San Francisco / Inter Style)
+            // 3. Stamping Typography (Black Label v13 / Inter Style)
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
 
             // Headline (Top Area)
             if (parsedPayload.headline) {
-                ctx.font = '900 72px Inter, sans-serif';
-                ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                ctx.shadowBlur = 10;
+                ctx.font = '900 80px Inter, sans-serif';
+                ctx.shadowColor = 'rgba(0,0,0,0.7)';
+                ctx.shadowBlur = 15;
                 ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, 120);
             }
 
-            // Price Tag (Bottom Area)
+            // Price Tag (Center-Bottom Area)
             if (parsedPayload.price_tag) {
-                ctx.font = '900 130px Inter, sans-serif';
+                ctx.font = '900 150px Inter, sans-serif';
                 ctx.fillStyle = '#FFFFFF';
-                ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(0,0,0,1)';
+                ctx.shadowBlur = 30;
                 ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 140);
             }
 
             // Footer Text (Validity/Payment)
             if (parsedPayload.footer_text) {
-                ctx.font = '600 32px sans-serif';
-                ctx.fillStyle = 'rgba(255,255,255,0.7)';
-                ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                ctx.shadowBlur = 4;
+                ctx.font = '700 36px sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                ctx.shadowBlur = 6;
                 ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 40);
             }
 
@@ -395,8 +395,10 @@ REGLAS:
    - You MUST ask the user for 3 things: Price, Validity Period, and Payment Terms.
    - DO NOT OUTPUT THE ||| JSON ||| BLOCK until the user provides all 3 variables. DO NOT hallucinate a price.
    - Example response: "¡Me encanta la idea! Para que salga perfecto, decime: ¿Qué precio le ponemos? ¿Hasta cuándo es válida? y pedimos efectivo o tarjetas?"
-4. ANALYTICS TRIGGER (AUTONOMOUS MANAGER):
-   - Analyze the 'Sales Context.' If a product has low sales compared to the 'Top Items', proactively suggest: "Che, veo que las ventas de [Product] bajaron. ¿Querés que armemos un flyer de 2x1 para levantar hoy?"
+4. AUTONOMOUS REVENUE MANAGER:
+   - Analyze the 'Sales Context' deeply. Look for patterns:
+     a) If a product has low sales compared to the 'Top Items', proactively suggest: "Che, veo que las ventas de [Product] bajaron. ¿Querés que armemos un flyer de 2x1 para levantar hoy?"
+     b) If the current day is historically slow (e.g. Monday/Tuesday), suggest a "Flash Promo" to drive traffic: "Hoy suele ser un día tranquilo. ¿Armamos una promo flash para mover el local?"
 5. Once you have all 3 variables from the user, you MUST use the Open Claw v4 protocol below.
 
 OPEN CLAW PROTOCOL v4 (MANDATORY FOR FLYERS/PROMOS AFTER INTERVIEW):

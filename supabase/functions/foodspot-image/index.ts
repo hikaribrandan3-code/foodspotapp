@@ -31,8 +31,8 @@ serve(async (req) => {
 
         console.log(`[foodspot-image] Generating image via HF SDXL. Original Prompt: "${prompt}"`);
 
-        // Photorealism Strike v9.0
-        const finalPrompt = `Extreme close-up professional food photography, 85mm lens, f/1.8, shallow depth of field, cinematic rim lighting, steam, macro detail, 8k uhd, photorealistic. ${prompt}`;
+        // Black Label v13.0
+        const finalPrompt = `Extreme macro food photography, center-weighted composition, 85mm portrait lens, f/1.8, dramatic cinematic lighting, rim light highlights, glistening textures, steam, bokeh depth, 8k raw photo, photorealistic. ${prompt}`;
 
         const hfRes = await fetch("https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0", {
             headers: {
@@ -43,7 +43,7 @@ serve(async (req) => {
             body: JSON.stringify({
                 inputs: finalPrompt,
                 parameters: {
-                    negative_prompt: "people, faces, man, woman, hands, cartoon, illustration, drawing, painting, pattern, multiple, repeating, low quality, distorted, text, logo, watermark"
+                    negative_prompt: "people, faces, human, hands, pattern, tiled, multiple items, collage, repeating, wallpaper, illustration, drawing, painting, cartoon, clipart, text, watermark, signature, blurry, low-res"
                 }
             }),
         });
