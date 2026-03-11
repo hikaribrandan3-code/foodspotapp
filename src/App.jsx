@@ -597,7 +597,6 @@ function App() {
                         <Route path="/login/staff" element={<StaffLogin />} />
                         <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                         <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
-                        <Route path="/camera" element={<Camera />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                     {location.pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
@@ -615,6 +614,7 @@ function App() {
                         <Routes>
                             <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
                             <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
+                            <Route path="/:tenantSlug/camera" element={<Camera />} />
                             <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
                             <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
                             <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />

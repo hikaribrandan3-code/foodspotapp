@@ -136,7 +136,7 @@ function BottomNav({ config: configProp }) {
         menu: `/${tenantSlug}/menu${searchParams}`,
         status: `/${tenantSlug}/status${searchParams}`,
         info: `/${tenantSlug}/info${searchParams}`,
-        camera: '/camera' // Camera is global, not tenant-scoped
+        camera: `/${tenantSlug}/camera${searchParams}`
     }
 
     return (
