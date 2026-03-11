@@ -100,7 +100,17 @@ const LazyImage = ({ src, alt, style, className }) => {
             const y = (canvas.height / 2) - (img.height / 2) * scale;
             ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
-            // 2. Draw Dual Gradients (Top-Down 50% and Bottom-Up 50%)
+            // 2. Cinematic Spotlight Vignette (BAM OS v18.0)
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.max(canvas.width, canvas.height) / 1.5;
+            const vignette = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+            vignette.addColorStop(0, 'transparent');
+            vignette.addColorStop(1, 'rgba(0,0,0,0.4)');
+            ctx.fillStyle = vignette;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Keep Dual Gradients for Edge Legibility
             // Top Gradient
             const gradTop = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.50);
             gradTop.addColorStop(0, 'rgba(0,0,0,0.85)');
@@ -115,24 +125,45 @@ const LazyImage = ({ src, alt, style, className }) => {
             ctx.fillStyle = gradBottom;
             ctx.fillRect(0, canvas.height * 0.50, canvas.width, canvas.height * 0.50);
 
-            // 3. Stamping Typography (Black Label v16.0 / Inter Style)
+            // 3. Cinematic Typography (BAM OS v18.0)
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
 
-            // Headline (Gutter Safe Zone)
+            // Headline (Luxury Kerning)
             if (parsedPayload.headline) {
-                ctx.font = '900 64px Inter, sans-serif';
+                ctx.font = '900 60px Inter, sans-serif';
                 ctx.shadowColor = 'rgba(0,0,0,0.7)';
                 ctx.shadowBlur = 15;
-                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, 220);
+                const text = parsedPayload.headline.toUpperCase();
+                const letterSpacing = 14;
+
+                let totalWidth = 0;
+                for (let i = 0; i < text.length; i++) {
+                    totalWidth += ctx.measureText(text[i]).width;
+                    if (i < text.length - 1) totalWidth += letterSpacing;
+                }
+
+                let startX = (canvas.width / 2) - (totalWidth / 2);
+                for (let i = 0; i < text.length; i++) {
+                    const charWidth = ctx.measureText(text[i]).width;
+                    ctx.fillText(text[i], startX + (charWidth / 2), 220);
+                    startX += charWidth + letterSpacing;
+                }
             }
 
-            // Price Tag (Bottom Safe Zone)
+            // Price Tag (Heavy-Weight Layered Shadow)
             if (parsedPayload.price_tag) {
                 ctx.font = '900 150px Inter, sans-serif';
                 ctx.fillStyle = '#FFFFFF';
-                ctx.shadowColor = 'rgba(0,0,0,1)';
-                ctx.shadowBlur = 35;
+
+                // Shadow Layer 1 (Wide glow)
+                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                ctx.shadowBlur = 45;
+                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 180);
+
+                // Shadow Layer 2 (Sharp core drop)
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowBlur = 5;
                 ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 180);
             }
 
