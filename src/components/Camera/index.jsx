@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CameraLayer } from './CameraLayer.jsx'
+import CameraLayer from './CameraLayer.jsx'
 import EditorLayer from './EditorLayer.jsx'
 import SettingsSheet from './SettingsSheet.jsx'
 import './CameraLayer.css'
@@ -13,7 +13,7 @@ import './EditorLayer.css'
  */
 export const VERSION = 'CamTech v1.8'
 
-function Camera({ neonContext = null, branding = null, onClose = null, businessName = '', primaryColor = '' }) {
+function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
 
     const [mode, setMode] = useState('CAMERA')
@@ -38,13 +38,9 @@ function Camera({ neonContext = null, branding = null, onClose = null, businessN
         setMode('CAMERA')
     }
 
-    // Handle Close - navigate back (preserves existing behavior) or trigger callback
+    // Handle Close - navigate back (preserves existing behavior)
     const handleClose = () => {
-        if (onClose) {
-            onClose()
-        } else {
-            navigate(-1)
-        }
+        navigate(-1)
     }
 
     const handleOpenSettings = () => {
@@ -75,8 +71,6 @@ function Camera({ neonContext = null, branding = null, onClose = null, businessN
                     onOpenSettings={handleOpenSettings}
                     onClose={handleClose}
                     toolPosition={toolPosition}
-                    businessName={businessName}
-                    primaryColor={primaryColor}
                 />
             )}
 

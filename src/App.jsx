@@ -678,11 +678,7 @@ function App() {
                     {/* 🚀 THE MISSION PORTAL: Injected at Body-Root to cover everything */}
                     {isCameraActive && createPortal(
                         <div className="camera-fullscreen-portal" style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
-                            <Camera
-                                onClose={() => setIsCameraActive(false)}
-                                businessName={tenantData?.business_name}
-                                primaryColor={safeConfig?.branding?.primaryColor || tenantData?.primary_color}
-                            />
+                            <Camera onClose={() => setIsCameraActive(false)} />
                         </div>,
                         document.body
                     )}
