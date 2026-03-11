@@ -203,7 +203,7 @@ function DraggableElement({ element, onUpdate, onRemove, onTap, disabled }) {
             case 'emoji':
                 return (
                     <div className="draggable-emoji">
-                        {element.data?.emoji || '😊'}
+                        {element.data?.emojiChar || '😊'}
                     </div>
                 )
             default:

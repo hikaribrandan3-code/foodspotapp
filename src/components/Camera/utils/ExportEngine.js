@@ -252,20 +252,14 @@ function drawStrokes(ctx, strokes, scale = 1) {
 function drawSticker(ctx, element, scale = 1) {
     const x = element.x * scale
     const y = element.y * scale
-    const size = 80 * element.scale * scale
+    const fontSize = 48 * element.scale * scale
     ctx.save()
     ctx.translate(x, y)
     ctx.rotate((element.rotation * Math.PI) / 180)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
-    ctx.fillRect(-size / 2, -size / 2, size, size)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
-    ctx.lineWidth = 2 * scale
-    ctx.strokeRect(-size / 2, -size / 2, size, size)
-    ctx.fillStyle = '#fff'
-    ctx.font = `${12 * scale}px -apple-system, sans-serif`
+    ctx.font = `${fontSize}px -apple-system, sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(element.data?.stickerId || 'sticker', 0, 0)
+    ctx.fillText(element.data?.content || '📷', 0, 0)
     ctx.restore()
 }
 
