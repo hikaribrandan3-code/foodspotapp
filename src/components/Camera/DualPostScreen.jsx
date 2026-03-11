@@ -1,9 +1,14 @@
+import { createPortal } from 'react-dom'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import PreviewActions from './PreviewActions.jsx'
 
 /**
  * DualPostScreen — Immersive Preview Layer
  * Edge-to-edge image, location pill, glassmorphism action bar.
+ * 
+ * CRITICAL: Rendered via React Portal into document.body to escape
+ * the parent EditorLayer's `touch-action: none` CSS inheritance,
+ * which prevents ALL button taps on iOS Safari.
  *
  * Props:
  *   previewDataURL - The flattened JPEG data URL
@@ -14,7 +19,7 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
     const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
-    return (
+    return createPortal(
         <div style={styles.container}>
 
             {/* ── Immersive Background ── */}
@@ -54,7 +59,8 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
                     onDone={onComplete}
                 />
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
 

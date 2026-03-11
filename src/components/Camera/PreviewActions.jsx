@@ -148,7 +148,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             <button
                 onTouchEnd={(e) => { addLog("Share onTouchEnd"); handleShare(e); }}
                 onClick={(e) => { addLog("Share onClick"); handleShare(e); }}
-                style={{ ...styles.primaryButton, border: '2px solid red' }}
+                style={styles.primaryButton}
             >
                 {/* Share icon */}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -163,7 +163,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             <button
                 onTouchEnd={(e) => { addLog("Save onTouchEnd"); handleSaveToGallery(e); }}
                 onClick={(e) => { addLog("Save onClick"); handleSaveToGallery(e); }}
-                style={{ ...styles.secondaryButton, border: '2px solid blue' }}
+                style={styles.secondaryButton}
             >
                 {/* Download icon */}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
