@@ -80,6 +80,10 @@ export default function TextEditor({
                     inputRef.current.focus()
                     const len = inputRef.current.value.length
                     inputRef.current.setSelectionRange(len, len)
+
+                    // Auto-resize on mount to prevent clipping previously typed multiline text
+                    inputRef.current.style.height = 'auto'
+                    inputRef.current.style.height = inputRef.current.scrollHeight + 'px'
                 }
             })
         }
@@ -178,7 +182,6 @@ export default function TextEditor({
                     className="text-input"
                     style={getTextStyle()}
                     rows={1}
-                    cols={16}
                     onInput={(e) => {
                         // Auto-resize height
                         e.target.style.height = 'auto'

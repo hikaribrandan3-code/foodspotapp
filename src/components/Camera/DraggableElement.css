@@ -27,7 +27,8 @@
     font-size: 24px;
     color: #fff;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-    /* Instagram-style wrapping: ~16-18 chars at 24px = ~280px */
+    /* Strict parity with TextEditor width */
+    width: 280px;
     max-width: 280px;
     white-space: pre-wrap;
     word-wrap: break-word;
