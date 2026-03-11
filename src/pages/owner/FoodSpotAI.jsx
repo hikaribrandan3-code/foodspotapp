@@ -389,17 +389,18 @@ ${salesSummary.topItems.map((item, i) => `${i + 1}. ${item.name} — ${item.qty}
         return `Sos FoodSpot AI, el socio estratégico de "${businessName}".
 
 REGLAS:
-1. DETECT user language (ES/EN/PT). Respond in that language.
+REGLAS:
+1. THE POLYGLOT MIRROR: You are a linguistic mirror. Detect the user's input language. If input is [ENGLISH], response MUST be [ENGLISH]. If input is [SPANISH], response MUST be [SPANISH]. NEVER use Spanish labels (📊 Idea de promo) in an English conversation. Instantly adapt.
 2. NO YAPPING: NEVER output URLs, technical terms, or code in the visible chat. The user sees ONLY natural language.
 3. STRICT INTERVIEW: If the user asks for a "flyer", "promo", or "image", you MUST NOT generate it immediately.
    - You MUST ask the user for 3 things: Price, Validity Period, and Payment Terms.
    - DO NOT OUTPUT THE ||| JSON ||| BLOCK until the user provides all 3 variables. DO NOT hallucinate a price.
    - Example response: "¡Me encanta la idea! Para que salga perfecto, decime: ¿Qué precio le ponemos? ¿Hasta cuándo es válida? y pedimos efectivo o tarjetas?"
-4. AUTONOMOUS REVENUE MANAGER:
-   - Analyze the 'Sales Context' deeply. Look for patterns:
-     a) If a product has low sales compared to the 'Top Items', proactively suggest: "Che, veo que las ventas de [Product] bajaron. ¿Querés que armemos un flyer de 2x1 para levantar hoy?"
-     b) If the current day is historically slow (e.g. Monday/Tuesday), suggest a "Flash Promo" to drive traffic: "Hoy suele ser un día tranquilo. ¿Armamos una promo flash para mover el local?"
-     c) If a specific genre of food (e.g., sushi, burgers, pizza) is underperforming, match your flyer suggestion to that genre's visual style.
+4. THE REVENUE ORACLE (AUTONOMOUS MANAGER):
+   - AI oracle training is engaged. Use 'Sales Context' to calculate predictive trends.
+   - If sales for a specific product are down, proactively suggest: "Che, veo que las ventas de [Product] bajaron. ¿Querés que armemos un flyer de 2x1 para levantar hoy?"
+   - If the current day is historically slow (e.g. Monday/Tuesday), suggest a "Flash Promo" to drive traffic: "Hoy suele ser un día tranquilo. ¿Armamos una promo flash para mover el local?"
+   - If a specific genre of food (e.g., sushi, burgers, pizza) is underperforming, match your flyer suggestion to that genre's visual style.
 5. Once you have all 3 variables from the user, you MUST use the Open Claw v4 protocol below.
 
 OPEN CLAW PROTOCOL v4 (MANDATORY FOR FLYERS/PROMOS AFTER INTERVIEW):
@@ -556,11 +557,13 @@ ${salesContext}`
         let newMessages = [...messages]
 
         let msgPayload = { role: 'user', content: userText }
+        /* VAULTED MULTIMODAL FEATURE
         if (attachment && !hiddenSystemFeedback) {
             msgPayload.image = { mimeType: attachment.mimeType, data: attachment.data }
             // UI only needs preview
             msgPayload.clientPreview = attachment.preview
         }
+        */
 
         if (hiddenSystemFeedback) {
             newMessages = [...messages, { role: 'user', content: `[DATA RETURNED FROM READ_DATA QUERY]: ${hiddenSystemFeedback}` }]
@@ -939,7 +942,7 @@ ${salesContext}`
                     )}
 
                     <div style={{ display: 'flex', gap: 8, width: '100%', alignItems: 'flex-end' }}>
-                        {/* 📎 Attachment Button */}
+                        {/* VAULTED MULTIMODAL UPLOAD BUTTON
                         <button
                             onClick={() => fileInputRef.current?.click()}
                             style={{
@@ -962,6 +965,7 @@ ${salesContext}`
                             onChange={handleFileChange}
                             style={{ display: 'none' }}
                         />
+                        */}
 
                         <textarea
                             ref={inputRef}
