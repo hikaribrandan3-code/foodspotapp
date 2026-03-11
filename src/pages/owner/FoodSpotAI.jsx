@@ -800,7 +800,7 @@ ${salesContext}`
                         100% { background-position: 1000px 0; }
                     }
                     .shimmer-text {
-                        background: linear-gradient(to right, #475569 4%, #94A3B8 25%, #475569 36%);
+                        background: linear-gradient(to right, rgba(255,255,255,0.3) 4%, rgba(255,255,255,0.8) 25%, rgba(255,255,255,0.3) 36%);
                         background-size: 1000px 100%;
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
