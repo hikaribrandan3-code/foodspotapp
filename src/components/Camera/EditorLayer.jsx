@@ -142,6 +142,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Handle tap on canvas area (for text creation) with gesture guards
     const handleCanvasTap = useCallback((e) => {
+        // CRITICAL: block ALL canvas taps while Preview is showing
+        if (showDualPost) return
         // Gesture guards: don't create text if any modal is open or in draw mode
         if (isEditingText) return
         if (isDrawMode) return
@@ -166,7 +168,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         setInitialTextStyle(null)
         setActiveTextId(null)
         setIsEditingText(true)
-    }, [isEditingText, isDrawMode, isStickerDrawerOpen, isEmojiPickerOpen, activeTool])
+    }, [showDualPost, isEditingText, isDrawMode, isStickerDrawerOpen, isEmojiPickerOpen, activeTool])
 
     // Handle tap on existing text element (re-edit)
     const handleTextElementTap = useCallback((element) => {
@@ -310,8 +312,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         setIsExporting(true)
 
         try {
-            // [NEW] explicit blur to prevent iOS Safari keyboard popping in Preview
-            if (document.activeElement && document.activeElement.blur) {
+            // [FIX] Force-close text editor and blur before showing Preview
+            setIsEditingText(false)
+            setActiveTextId(null)
+            if (document.activeElement && document.activeElement !== document.body) {
                 document.activeElement.blur()
             }
 
@@ -337,38 +341,42 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     return (
         <div className="editor-layer" ref={containerRef}>
             {/* Close (X) button - top left, always above keyboard */}
-            <button
-                onClick={onRetake}
-                aria-label="Close"
-                style={{
-                    position: 'fixed',
-                    top: '16px',
-                    left: '16px',
-                    width: '44px',
-                    height: '44px',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    zIndex: 1000
-                }}
-            >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-            </button>
+            {!showDualPost && (
+                <button
+                    onClick={onRetake}
+                    aria-label="Close"
+                    style={{
+                        position: 'fixed',
+                        top: '16px',
+                        left: '16px',
+                        width: '44px',
+                        height: '44px',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        zIndex: 1000
+                    }}
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            )}
 
             {/* Canvas container - tap to add text */}
+            {/* CRITICAL: pointer-events disabled when Preview (DualPostScreen) is showing */}
             <div
                 className="canvas-container"
                 ref={canvasContainerRef}
                 onClick={handleCanvasTap}
+                style={showDualPost ? { pointerEvents: 'none' } : undefined}
             >
                 {/* Layer 1: Base Canvas - Frozen Frame */}
                 <canvas
@@ -408,18 +416,20 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 </div>
             </div>
 
-            {/* Text Editor Overlay (IG-style) */}
-            <TextEditor
-                isActive={isEditingText}
-                initialText={initialTextValue}
-                initialStyle={initialTextStyle}
-                position={textInputPosition}
-                onSave={handleTextSave}
-                onCancel={handleTextCancel}
-            />
+            {/* Text Editor Overlay (IG-style) — UNMOUNTED when Preview is open */}
+            {!showDualPost && (
+                <TextEditor
+                    isActive={isEditingText}
+                    initialText={initialTextValue}
+                    initialStyle={initialTextStyle}
+                    position={textInputPosition}
+                    onSave={handleTextSave}
+                    onCancel={handleTextCancel}
+                />
+            )}
 
-            {/* Layer 4: UI Layer - Right Action Bar (hidden in draw mode) */}
-            {!isDrawMode && (
+            {/* Layer 4: UI Layer - Right Action Bar (hidden in draw mode AND preview) */}
+            {!isDrawMode && !showDualPost && (
                 <div style={{
                     position: 'absolute',
                     top: '100px',
@@ -547,35 +557,37 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 </div>
             )}
 
-            {/* ── Location Pill (Global) ── */}
-            <div style={{
-                position: 'absolute',
-                bottom: 'calc(220px + env(safe-area-inset-bottom, 0px))',
-                left: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '6px 12px',
-                background: 'rgba(255, 255, 255, 0.22)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                borderRadius: '20px',
-                color: '#fff',
-                zIndex: 10,
-            }}>
-                {/* Map Pin Icon */}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
-                </svg>
-                <span style={{
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    letterSpacing: '0.08em',
-                    lineHeight: 1,
+            {/* ── Location Pill (Global — hidden when Preview is open) ── */}
+            {!showDualPost && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: 'calc(220px + env(safe-area-inset-bottom, 0px))',
+                    left: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '6px 12px',
+                    background: 'rgba(255, 255, 255, 0.22)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    borderRadius: '20px',
+                    color: '#fff',
+                    zIndex: 10,
                 }}>
-                    {businessName.toUpperCase()}
-                </span>
-            </div>
+                    {/* Map Pin Icon */}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                    </svg>
+                    <span style={{
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        letterSpacing: '0.08em',
+                        lineHeight: 1,
+                    }}>
+                        {businessName.toUpperCase()}
+                    </span>
+                </div>
+            )}
 
             {/* Sticker Drawer */}
             <StickerDrawer
