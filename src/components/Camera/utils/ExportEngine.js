@@ -193,13 +193,13 @@ function burnBranding(ctx, width, height, branding) {
     if (window.addFsLog) window.addFsLog(`Burning: "${businessName}" @ ${pillX},${pillY} on ${width}x${height} canvas`);
 
     // --- Drop shadow ---
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.25)'
-    ctx.shadowBlur = 12 * scale
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
+    ctx.shadowBlur = 8 * scale
     ctx.shadowOffsetX = 0
-    ctx.shadowOffsetY = 4 * scale
+    ctx.shadowOffsetY = 2 * scale
 
-    // --- Pill background (white, 0.9 alpha) ---
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+    // --- Pill background (translucent dark — matches editor/preview style) ---
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)'
     ctx.beginPath()
     const r = safeRadius
     const x = pillX
@@ -220,27 +220,21 @@ function burnBranding(ctx, width, height, branding) {
     ctx.shadowOffsetX = 0
     ctx.shadowOffsetY = 0
 
-    // --- Red Map Pin Icon ---
+    // --- White Map Pin Icon (matches editor style) ---
     const pinX = pillX + pillPaddingH
     const pinCenterY = pillY + pillH / 2
 
-    // Pin body (teardrop shape using arc + triangle)
+    // Pin body (teardrop shape)
     const pinR = pinSize * 0.35
-    ctx.fillStyle = '#EF4444'
+    ctx.fillStyle = '#FFFFFF'
     ctx.beginPath()
     ctx.arc(pinX + pinSize / 2, pinCenterY - pinR * 0.3, pinR, Math.PI, 0, false)
     ctx.lineTo(pinX + pinSize / 2, pinCenterY + pinR * 1.4)
     ctx.closePath()
     ctx.fill()
 
-    // Pin dot (white center)
+    // --- Business Name (bold, white — matches editor style) ---
     ctx.fillStyle = '#FFFFFF'
-    ctx.beginPath()
-    ctx.arc(pinX + pinSize / 2, pinCenterY - pinR * 0.3, pinR * 0.35, 0, Math.PI * 2)
-    ctx.fill()
-
-    // --- Business Name (bold, black) ---
-    ctx.fillStyle = '#111827'
     ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'left'
