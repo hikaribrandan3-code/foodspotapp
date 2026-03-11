@@ -401,41 +401,7 @@ export default function FoodSpotAI() {
         return () => { cancelled = true }
     }, [businessId])
 
-    // CMO Oracle Engine: Generate Proactive Strategy directly after sales load
-    useEffect(() => {
-        if (!salesSummary || briefFiredRef.current || messages.length > 0) return;
-
-        let cancelled = false;
-        briefFiredRef.current = true;
-
-        const fetchBrief = async () => {
-            if (!cancelled) setBriefLoading(true);
-            try {
-                const topItemStr = salesSummary.topItems[0]?.name || 'productos';
-                const briefPrompt = `Sos el CMO de mi local. Revisá mis ventas rápido. Decime en MAX 4 lineas qué ves (observación breve de ventas mías del mes), a qué producto ponerle atención (una accion especifica con ${topItemStr}), y proyectá qué pasa si armamos una promo hoy. NO USES ||| JSON ||| PERO DECIME IDEA PUNTUAL. No saludes. Directo al grano.`;
-
-                const { data, error } = await supabase.functions.invoke('foodspot-ai', {
-                    body: {
-                        systemPrompt: systemPrompt,
-                        messages: [{ role: 'user', content: briefPrompt }]
-                    }
-                });
-
-                if (error) throw error;
-                if (!cancelled && data && data.reply) {
-                    setMorningBrief(data.reply);
-                }
-            } catch (err) {
-                console.error("Failed to load morning brief", err);
-            } finally {
-                if (!cancelled) setBriefLoading(false);
-            }
-        };
-        fetchBrief();
-        return () => { cancelled = true; };
-    }, [salesSummary, messages.length, systemPrompt]);
-
-    // Build system prompt with real data
+    // Build system prompt with real data (HOISTED before use effects)
     const systemPrompt = useMemo(() => {
         const menuCategories = tenantData?.menu_data?.categories?.map(c =>
             `${c.name}: ${c.items?.map(i => `${i.name} ($${i.price})`).join(', ') || 'sin items'}`
@@ -458,7 +424,6 @@ ${salesSummary.topItems.map((item, i) => `${i + 1}. ${item.name} — ${item.qty}
 
         return `Sos FoodSpot AI, el socio estratégico de "${businessName}".
 
-REGLAS:
 REGLAS:
 1. THE POLYGLOT MIRROR: You are a linguistic mirror. Detect the user's input language. If input is [ENGLISH], response MUST be [ENGLISH]. If input is [SPANISH], response MUST be [SPANISH]. NEVER use Spanish labels (📊 Idea de promo) in an English conversation. Instantly adapt.
 2. NO YAPPING: NEVER output URLs, technical terms, or code in the visible chat. The user sees ONLY natural language.
@@ -505,6 +470,42 @@ ${menuCategories}
 
 ${salesContext}`
     }, [tenantData, salesSummary, businessName])
+
+    // CMO Oracle Engine: Generate Proactive Strategy directly after sales load
+    useEffect(() => {
+        if (!salesSummary || briefFiredRef.current || messages.length > 0) return;
+
+        let cancelled = false;
+        briefFiredRef.current = true;
+
+        const fetchBrief = async () => {
+            if (!cancelled) setBriefLoading(true);
+            try {
+                const topItemStr = salesSummary.topItems[0]?.name || 'productos';
+                const briefPrompt = `Sos el CMO de mi local. Revisá mis ventas rápido. Decime en MAX 4 lineas qué ves (observación breve de ventas mías del mes), a qué producto ponerle atención (una accion especifica con ${topItemStr}), y proyectá qué pasa si armamos una promo hoy. NO USES ||| JSON ||| PERO DECIME IDEA PUNTUAL. No saludes. Directo al grano.`;
+
+                const { data, error } = await supabase.functions.invoke('foodspot-ai', {
+                    body: {
+                        systemPrompt: systemPrompt,
+                        messages: [{ role: 'user', content: briefPrompt }]
+                    }
+                });
+
+                if (error) throw error;
+                if (!cancelled && data && data.reply) {
+                    setMorningBrief(data.reply);
+                }
+            } catch (err) {
+                console.error("Failed to load morning brief", err);
+            } finally {
+                if (!cancelled) setBriefLoading(false);
+            }
+        };
+        fetchBrief();
+        return () => { cancelled = true; };
+    }, [salesSummary, messages.length, systemPrompt]);
+
+
 
     // State for Image Attachments
     const [attachment, setAttachment] = useState(null)
