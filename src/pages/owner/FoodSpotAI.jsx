@@ -90,8 +90,8 @@ const LazyImage = ({ src, alt, style, className }) => {
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
 
-            canvas.width = 800;
-            canvas.height = 1200; // IG Story aspect ratio
+            canvas.width = 1080;
+            canvas.height = 1080; // Universal 1:1 Aspect Ratio (No cropping on IG Grids)
 
             // 1. Draw Background
             // Maintain aspect ratio cover
@@ -131,11 +131,11 @@ const LazyImage = ({ src, alt, style, className }) => {
 
             // Headline (Luxury Kerning)
             if (parsedPayload.headline) {
-                ctx.font = '900 60px Inter, sans-serif';
+                ctx.font = '900 72px Inter, sans-serif';
                 ctx.shadowColor = 'rgba(0,0,0,0.7)';
                 ctx.shadowBlur = 15;
                 const text = parsedPayload.headline.toUpperCase();
-                const letterSpacing = 14;
+                const letterSpacing = 16;
 
                 let totalWidth = 0;
                 for (let i = 0; i < text.length; i++) {
@@ -146,34 +146,34 @@ const LazyImage = ({ src, alt, style, className }) => {
                 let startX = (canvas.width / 2) - (totalWidth / 2);
                 for (let i = 0; i < text.length; i++) {
                     const charWidth = ctx.measureText(text[i]).width;
-                    ctx.fillText(text[i], startX + (charWidth / 2), 220);
+                    ctx.fillText(text[i], startX + (charWidth / 2), 160);
                     startX += charWidth + letterSpacing;
                 }
             }
 
             // Price Tag (Heavy-Weight Layered Shadow)
             if (parsedPayload.price_tag) {
-                ctx.font = '900 150px Inter, sans-serif';
+                ctx.font = '900 180px Inter, sans-serif';
                 ctx.fillStyle = '#FFFFFF';
 
                 // Shadow Layer 1 (Wide glow)
                 ctx.shadowColor = 'rgba(0,0,0,0.6)';
                 ctx.shadowBlur = 45;
-                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 180);
+                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 160);
 
                 // Shadow Layer 2 (Sharp core drop)
                 ctx.shadowColor = 'rgba(0,0,0,0.9)';
                 ctx.shadowBlur = 5;
-                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 180);
+                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 160);
             }
 
             // Footer Text (Validity/Payment)
             if (parsedPayload.footer_text) {
-                ctx.font = '700 36px sans-serif';
+                ctx.font = '700 42px sans-serif'; // Scaled for 1080px
                 ctx.fillStyle = 'rgba(255,255,255,0.8)';
                 ctx.shadowColor = 'rgba(0,0,0,0.6)';
                 ctx.shadowBlur = 6;
-                ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 50);
+                ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 40);
             }
 
             // Flatten
