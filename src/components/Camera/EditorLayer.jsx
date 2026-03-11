@@ -561,8 +561,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             {!showDualPost && (
                 <div style={{
                     position: 'absolute',
-                    bottom: 'calc(220px + env(safe-area-inset-bottom, 0px))',
-                    left: '16px',
+                    bottom: 'calc(92px + env(safe-area-inset-bottom, 0px))',
+                    left: '20px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '5px',

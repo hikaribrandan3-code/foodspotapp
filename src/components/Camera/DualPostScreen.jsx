@@ -100,8 +100,8 @@ const styles = {
     },
     locationPill: {
         position: 'absolute',
-        bottom: 'calc(160px + env(safe-area-inset-bottom, 0px))',
-        left: '16px',
+        bottom: 'calc(92px + env(safe-area-inset-bottom, 0px))',
+        left: '20px',
         display: 'flex',
         alignItems: 'center',
         gap: '5px',

@@ -179,8 +179,8 @@ function burnBranding(ctx, width, height, branding) {
     const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
 
-    // Position: bottom-left, 12px above where a shutter button would sit (~80px zone)
-    const leftOffset = Math.round(24 * scale)
+    // Position: bottom-left, universal 20px padding
+    const leftOffset = Math.round(20 * scale)
     const bottomOffset = Math.round(92 * scale)
 
     const pillX = leftOffset
