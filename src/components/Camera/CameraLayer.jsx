@@ -235,6 +235,7 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }
                 className="settings-button"
                 onClick={handleSettingsClick}
                 aria-label="Settings"
+                style={{ zIndex: 9999, pointerEvents: 'auto' }}
             >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="3" />
@@ -243,9 +244,9 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }
             </button>
 
             {/* Right toolbar */}
-            <div className={`toolbar toolbar-${toolPosition === 'left' ? 'right' : 'left'}-side`}>
+            <div className={`toolbar toolbar-${toolPosition === 'left' ? 'right' : 'left'}-side`} style={{ zIndex: 9999, pointerEvents: 'auto' }}>
                 {/* Flip camera - functional */}
-                <button className="toolbar-button" onClick={handleFlip} aria-label="Flip Camera">
+                <button className="toolbar-button" onClick={handleFlip} aria-label="Flip Camera" style={{ pointerEvents: 'auto' }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
                         <path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5" />
@@ -260,6 +261,7 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }
                     onClick={handleFlashCycle}
                     aria-label={`Flash: ${flashMode}`}
                     title={flashSupported ? `Flash: ${flashMode}` : 'Flash not supported'}
+                    style={{ pointerEvents: 'auto' }}
                 >
                     {FLASH_ICONS[flashMode]}
                 </button>
@@ -276,8 +278,9 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '40px',
-                zIndex: 100,
-                padding: '0 24px'
+                zIndex: 9999,
+                padding: '0 24px',
+                pointerEvents: 'auto'
             }}>
                 {/* Left spacer (for gallery in future) */}
                 <div style={{ width: '48px' }} />
@@ -296,7 +299,8 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }
                         padding: '4px',
                         cursor: 'pointer',
                         opacity: isReady ? 1 : 0.5,
-                        boxShadow: '0 4px 20px rgba(255, 255, 255, 0.25)'
+                        boxShadow: '0 4px 20px rgba(255, 255, 255, 0.25)',
+                        pointerEvents: 'auto'
                     }}
                 >
                     <div style={{
@@ -334,7 +338,8 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#fff'
+                        color: '#fff',
+                        pointerEvents: 'auto'
                     }}
                 >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
