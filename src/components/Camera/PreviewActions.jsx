@@ -135,7 +135,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
 
             {/* DEBUG LOGGER (VISIBLE ON DEVICE) */}
             {debugLogs.length > 0 && (
-                <div style={styles.debugPanel}>
+                <div style={{ ...styles.debugPanel, pointerEvents: 'auto' }} onClick={() => addLog("Debug panel tapped")}>
                     {debugLogs.map((log, i) => (
                         <div key={i} style={{ color: log.isError ? '#ff4b4b' : '#00ff88', marginBottom: '2px' }}>
                             <span style={{ opacity: 0.5, fontSize: '9px' }}>{log.time}</span> {log.msg}
@@ -145,7 +145,11 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             )}
 
             {/* ── PRIMARY: SHARE TO SOCIALS ── */}
-            <button onTouchEnd={handleShare} onClick={handleShare} style={styles.primaryButton}>
+            <button
+                onTouchEnd={(e) => { addLog("Share onTouchEnd"); handleShare(e); }}
+                onClick={(e) => { addLog("Share onClick"); handleShare(e); }}
+                style={{ ...styles.primaryButton, border: '2px solid red' }}
+            >
                 {/* Share icon */}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
@@ -156,7 +160,11 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             </button>
 
             {/* ── SECONDARY: SAVE TO GALLERY ── */}
-            <button onTouchEnd={handleSaveToGallery} onClick={handleSaveToGallery} style={styles.secondaryButton}>
+            <button
+                onTouchEnd={(e) => { addLog("Save onTouchEnd"); handleSaveToGallery(e); }}
+                onClick={(e) => { addLog("Save onClick"); handleSaveToGallery(e); }}
+                style={{ ...styles.secondaryButton, border: '2px solid blue' }}
+            >
                 {/* Download icon */}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -194,6 +202,9 @@ const styles = {
         letterSpacing: '0.04em',
         cursor: 'pointer',
         transition: 'transform 120ms ease, opacity 120ms ease',
+        position: 'relative',
+        zIndex: 99999,
+        touchAction: 'manipulation'
     },
     secondaryButton: {
         width: '100%',
@@ -211,6 +222,9 @@ const styles = {
         letterSpacing: '0.04em',
         cursor: 'pointer',
         transition: 'transform 120ms ease, opacity 120ms ease',
+        position: 'relative',
+        zIndex: 99999,
+        touchAction: 'manipulation'
     },
 };
 

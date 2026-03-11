@@ -15,7 +15,7 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
     const businessName = tenantData?.business_name || 'FoodSpot'
 
     return (
-        <div style={styles.container} onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
+        <div style={styles.container}>
 
             {/* ── Immersive Background ── */}
             <img
