@@ -7,36 +7,32 @@ import React from 'react';
  */
 export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     const [debugLogs, setDebugLogs] = React.useState([]);
+    const shareBtnRef = React.useRef(null);
+    const saveBtnRef = React.useRef(null);
 
-    const addLog = (msg, isError = false) => {
+    const addLog = React.useCallback((msg, isError = false) => {
         setDebugLogs(prev => [...prev, { msg, isError, time: new Date().toLocaleTimeString() }].slice(-5));
         console.log(`[PreviewActions] ${msg}`);
-    };
+    }, []);
 
     // Pre-compute the file for Safari synchronous requirements
     const shareFile = React.useMemo(() => {
         if (capturedBlob) {
-            addLog("Memoized new shareFile from capturedBlob");
             return new File([capturedBlob], `foodspot-${Date.now()}.jpg`, { type: 'image/jpeg' });
         }
-        addLog("No capturedBlob provided to memoize");
         return null;
     }, [capturedBlob]);
 
-    // 💾 SAVE TO GALLERY — iOS-compatible
-    const handleSaveToGallery = async (e) => {
-        if (e) e.stopPropagation();
-        addLog("Save button tapped");
+    // 💾 SAVE TO GALLERY 
+    const handleSaveToGallery = React.useCallback(async (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        addLog("Save executed");
 
         try {
-            // iOS: use share API (gives "Save Image" option in share sheet)
             if (shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
-                addLog("Attempting navigator.share for Gallery...");
                 await navigator.share({ files: [shareFile], title: 'Save Image' });
-                addLog("Share API success");
                 return;
             }
-            addLog("canShare failed or no shareFile. Falling back.");
 
             let blob = capturedBlob;
             if (!blob && typeof capturedImg === 'string' && capturedImg.startsWith('data:')) {
@@ -46,61 +42,37 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                 blob = capturedImg;
             }
 
-            // Fallback: open blob in new tab (long-press to save)
             if (blob) {
-                addLog("Object URL fallback triggered");
                 const url = URL.createObjectURL(blob);
                 const newWindow = window.open();
                 if (newWindow) {
                     newWindow.document.write('<html><head><title>Save Image</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;color:#fff;font-family:sans-serif;flex-direction:column;"><img src="' + url + '" style="max-width:100%;max-height:90vh;"/><p style="margin-top:20px;">Mantén presionado la imagen para guardarla en Fotos.</p></body></html>');
                     newWindow.document.close();
                 } else {
-                    addLog("Popup blocked, redirecting...");
-                    window.location.href = url; // Hard fallback if popup blocked
+                    window.location.href = url;
                 }
                 return;
             }
-            addLog("No blob to open. Anchor fallback triggered.");
-
-            // Last resort: anchor download (works on desktop / Chrome Android)
-            const link = document.createElement('a');
-            link.download = `foodspot-${Date.now()}.jpg`;
-            link.href = capturedImg;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         } catch (err) {
-            if (err.name !== 'AbortError') {
-                addLog(`Save err: ${err.message}`, true);
-            } else {
-                addLog("Save aborted by user");
-            }
+            if (err.name !== 'AbortError') addLog(`Save err: ${err.message}`, true);
         }
-    };
+    }, [shareFile, capturedBlob, capturedImg, addLog]);
 
-    // 🚀 SHARE TO SOCIALS — navigator.share with image blob (SYNCHRONOUS FOR SAFARI)
-    const handleShare = async (e) => {
-        if (e) {
-            e.stopPropagation();
-            if (e.cancelable) e.preventDefault(); // ONLY prevent default on touchEnd
-        }
-        addLog("Share button tapped");
+    // 🚀 SHARE TO SOCIALS 
+    const handleShare = React.useCallback(async (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        addLog("Share executed");
 
         try {
-            // Fast path for Safari: pre-computed file
             if (shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
-                addLog("Attempting navigator.share...");
                 await navigator.share({
                     files: [shareFile],
                     title: 'Check out my FoodSpot moment!',
                     text: 'Shared via FoodSpot',
                 });
-                addLog("Share API success");
                 return;
             }
-            addLog("canShare failed or no shareFile. Falling back.");
 
-            // Fallback if capturedBlob was missing but we have a data URL
             let file = shareFile;
             if (!file && typeof capturedImg === 'string' && capturedImg.startsWith('data:')) {
                 const res = await fetch(capturedImg);
@@ -111,31 +83,45 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             }
 
             if (navigator.share && file) {
-                addLog("Attempting fallback share...");
                 await navigator.share({
                     files: [file],
                     title: 'Check out my FoodSpot moment!',
                     text: 'Shared via FoodSpot',
                 });
             } else {
-                addLog("Sharing not supported in fallback.", true);
                 alert("Sharing is not supported on this browser or device. Try saving to gallery instead.");
             }
         } catch (err) {
-            if (err.name !== 'AbortError') {
-                addLog(`Share err: ${err.message}`, true);
-            } else {
-                addLog("Share aborted by user");
-            }
+            if (err.name !== 'AbortError') addLog(`Share err: ${err.message}`, true);
         }
-    };
+    }, [shareFile, capturedImg, addLog]);
+
+    // CRITICAL: Manually bind native DOM events to bypass React SyntheticEvents
+    React.useEffect(() => {
+        const shareBtn = shareBtnRef.current;
+        const saveBtn = saveBtnRef.current;
+
+        if (shareBtn) {
+            shareBtn.onclick = handleShare;
+            shareBtn.ontouchend = (e) => { e.preventDefault(); handleShare(); };
+        }
+        if (saveBtn) {
+            saveBtn.onclick = handleSaveToGallery;
+            saveBtn.ontouchend = (e) => { e.preventDefault(); handleSaveToGallery(); };
+        }
+
+        return () => {
+            if (shareBtn) { shareBtn.onclick = null; shareBtn.ontouchend = null; }
+            if (saveBtn) { saveBtn.onclick = null; saveBtn.ontouchend = null; }
+        };
+    }, [handleShare, handleSaveToGallery]);
 
     return (
         <div style={styles.wrapper}>
 
             {/* DEBUG LOGGER (VISIBLE ON DEVICE) */}
             {debugLogs.length > 0 && (
-                <div style={{ ...styles.debugPanel, pointerEvents: 'auto' }} onClick={() => addLog("Debug panel tapped")}>
+                <div style={{ ...styles.debugPanel, pointerEvents: 'auto' }} onClick={() => addLog("Panel tapped")}>
                     {debugLogs.map((log, i) => (
                         <div key={i} style={{ color: log.isError ? '#ff4b4b' : '#00ff88', marginBottom: '2px' }}>
                             <span style={{ opacity: 0.5, fontSize: '9px' }}>{log.time}</span> {log.msg}
@@ -145,12 +131,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             )}
 
             {/* ── PRIMARY: SHARE TO SOCIALS ── */}
-            <button
-                onTouchEnd={(e) => { addLog("Share onTouchEnd"); handleShare(e); }}
-                onClick={(e) => { addLog("Share onClick"); handleShare(e); }}
-                style={styles.primaryButton}
-            >
-                {/* Share icon */}
+            <button ref={shareBtnRef} style={styles.primaryButton}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
                     <polyline points="16 6 12 2 8 6" />
@@ -160,12 +141,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             </button>
 
             {/* ── SECONDARY: SAVE TO GALLERY ── */}
-            <button
-                onTouchEnd={(e) => { addLog("Save onTouchEnd"); handleSaveToGallery(e); }}
-                onClick={(e) => { addLog("Save onClick"); handleSaveToGallery(e); }}
-                style={styles.secondaryButton}
-            >
-                {/* Download icon */}
+            <button ref={saveBtnRef} style={styles.secondaryButton}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
