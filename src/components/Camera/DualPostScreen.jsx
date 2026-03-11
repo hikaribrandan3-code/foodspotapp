@@ -10,7 +10,7 @@ import PreviewActions from './PreviewActions.jsx'
  *   onClose        - Go back to editor
  *   onComplete     - Exit entire camera flow
  */
-export default function DualPostScreen({ previewDataURL, onClose, onComplete }) {
+export default function DualPostScreen({ previewDataURL, previewBlob, onClose, onComplete }) {
     const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
@@ -39,6 +39,7 @@ export default function DualPostScreen({ previewDataURL, onClose, onComplete }) 
             <div style={styles.actionBar}>
                 <PreviewActions
                     capturedImg={previewDataURL}
+                    capturedBlob={previewBlob}
                     onDone={onComplete}
                 />
             </div>

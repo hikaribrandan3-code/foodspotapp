@@ -87,18 +87,28 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             const containerAspect = containerWidth / containerHeight
 
             let renderWidth, renderHeight
+            let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height
 
+            // object-fit: cover logic
             if (imgAspect > containerAspect) {
-                // Image is wider - fit to width
-                renderWidth = containerWidth
-                renderHeight = containerWidth / imgAspect
-            } else {
-                // Image is taller - fit to height
+                // Image is wider - fit to height, crop sides
                 renderHeight = containerHeight
-                renderWidth = containerHeight * imgAspect
+                renderWidth = containerWidth
+
+                sHeight = img.height
+                sWidth = img.height * containerAspect
+                sx = (img.width - sWidth) / 2
+            } else {
+                // Image is taller - fit to width, crop top/bottom
+                renderWidth = containerWidth
+                renderHeight = containerHeight
+
+                sWidth = img.width
+                sHeight = img.width / containerAspect
+                sy = (img.height - sHeight) / 2
             }
 
-            // Set canvas to calculated dimensions
+            // Set canvas to calculated dimensions (matches screen exactly)
             canvas.width = renderWidth
             canvas.height = renderHeight
 
@@ -120,8 +130,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 })
             }
 
-            // Draw image maintaining aspect ratio
-            ctx.drawImage(img, 0, 0, renderWidth, renderHeight)
+            // Draw image using cover logic (cropped to fill)
+            ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, renderWidth, renderHeight)
         }
         img.src = imageData
     }, [imageData])

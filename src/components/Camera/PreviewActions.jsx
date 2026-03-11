@@ -5,17 +5,19 @@ import React from 'react';
  * Electric Green primary + Pure White secondary + Discard link.
  * Renders inside the glassmorphism action bar (no self-positioning).
  */
-export const PreviewActions = ({ capturedImg, onDone }) => {
+export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
 
     // 💾 SAVE TO GALLERY — iOS-compatible
     const handleSaveToGallery = async () => {
         try {
-            let blob;
-            if (typeof capturedImg === 'string' && capturedImg.startsWith('data:')) {
-                const res = await fetch(capturedImg);
-                blob = await res.blob();
-            } else if (capturedImg instanceof Blob) {
-                blob = capturedImg;
+            let blob = capturedBlob;
+            if (!blob) {
+                if (typeof capturedImg === 'string' && capturedImg.startsWith('data:')) {
+                    const res = await fetch(capturedImg);
+                    blob = await res.blob();
+                } else if (capturedImg instanceof Blob) {
+                    blob = capturedImg;
+                }
             }
 
             // iOS: use share API (gives "Save Image" option in share sheet)
@@ -48,11 +50,14 @@ export const PreviewActions = ({ capturedImg, onDone }) => {
         }
     };
 
-    // 🚀 SHARE TO SOCIALS — navigator.share with image blob
+    // 🚀 SHARE TO SOCIALS — navigator.share with image blob (SYNCHRONOUS FOR SAFARI)
     const handleShare = async () => {
         try {
             let file;
-            if (typeof capturedImg === 'string' && capturedImg.startsWith('data:')) {
+            if (capturedBlob) {
+                // Synchronous file creation - CRITICAL for Safari security policy
+                file = new File([capturedBlob], `foodspot-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            } else if (typeof capturedImg === 'string' && capturedImg.startsWith('data:')) {
                 const res = await fetch(capturedImg);
                 const blob = await res.blob();
                 file = new File([blob], `foodspot-${Date.now()}.jpg`, { type: 'image/jpeg' });
