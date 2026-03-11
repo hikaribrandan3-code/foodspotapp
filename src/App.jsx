@@ -68,7 +68,7 @@ const LazyFallback = () => (
 )
 
 // Camera Suite
-import { CameraLayer } from './components/Camera/CameraLayer.jsx'
+import Camera from './components/Camera/index.jsx'
 
 function RouteAreaWrapper({ children }) {
     const location = useLocation()
@@ -678,7 +678,7 @@ function App() {
                     {/* 🚀 THE MISSION PORTAL: Injected at Body-Root to cover everything */}
                     {isCameraActive && createPortal(
                         <div className="camera-fullscreen-portal" style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
-                            <CameraLayer
+                            <Camera
                                 onClose={() => setIsCameraActive(false)}
                                 businessName={tenantData?.business_name}
                                 primaryColor={safeConfig?.branding?.primaryColor || tenantData?.primary_color}

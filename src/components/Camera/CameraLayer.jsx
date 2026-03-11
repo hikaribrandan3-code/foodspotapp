@@ -176,6 +176,16 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }
 
     return (
         <div className="camera-layer">
+            {/* YC-SPEC AURA TAG */}
+            {businessName && (
+                <div className="aura-tag-wrapper">
+                    <div className="aura-tag">
+                        <div className="aura-dot" style={{ '--brand': primaryColor || '#FF3366' }} />
+                        <span className="aura-text">{businessName}</span>
+                    </div>
+                </div>
+            )}
+
             {/* Close (X) button - top left, always visible */}
             <button
                 onClick={onClose}
