@@ -24,6 +24,17 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
                 style={styles.immersiveImage}
             />
 
+            {/* ── Close (X) button - top left, returns to editor ── */}
+            <button
+                onClick={onClose}
+                aria-label="Back to Editor"
+                style={styles.closeButton}
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+
             {/* ── Location Pill (bottom-left, above action bar) ── */}
             <div style={styles.locationPill}>
                 {/* Map Pin Icon */}
@@ -58,6 +69,24 @@ const styles = {
         WebkitTouchCallout: 'default',
         userSelect: 'none',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: '16px',
+        left: '16px',
+        width: '44px',
+        height: '44px',
+        background: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: 'none',
+        borderRadius: '50%',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#fff',
+        zIndex: 1000,
     },
     immersiveImage: {
         position: 'absolute',

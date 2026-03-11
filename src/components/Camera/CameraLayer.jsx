@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useCamera, FILTER_STYLES } from './hooks/useCamera.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import './CameraLayer.css'
 
 /**
@@ -68,6 +69,9 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
         setZoom,
         zoomSupported
     } = useCamera()
+
+    const { tenantData } = useTenant()
+    const businessName = tenantData?.business_name || 'FoodSpot'
 
     // Filter toast state
     const [showFilterToast, setShowFilterToast] = useState(false)
@@ -229,6 +233,36 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                     <p className="camera-error-detail">{error}</p>
                 </div>
             )}
+
+            {/* ── Location Pill (Global) ── */}
+            <div style={{
+                position: 'absolute',
+                bottom: 'calc(220px + env(safe-area-inset-bottom, 0px))',
+                left: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '6px 12px',
+                background: 'rgba(255, 255, 255, 0.22)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                borderRadius: '20px',
+                color: '#fff',
+                zIndex: 10,
+            }}>
+                {/* Map Pin Icon */}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                </svg>
+                <span style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.08em',
+                    lineHeight: 1,
+                }}>
+                    {businessName.toUpperCase()}
+                </span>
+            </div>
 
             {/* Settings gear - temporarily hidden per user request */}
             <button

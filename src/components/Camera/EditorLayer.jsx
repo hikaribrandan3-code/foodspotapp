@@ -6,6 +6,7 @@ import EmojiPicker from './EmojiPicker.jsx'
 import DrawTool from './DrawTool.jsx'
 import { exportPreview } from './utils/ExportEngine.js'
 import DualPostScreen from './DualPostScreen.jsx'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import './EditorLayer.css'
 
 /**
@@ -15,6 +16,9 @@ import './EditorLayer.css'
  * + Instagram-style text wrapping (~16-18 chars)
  */
 export default function EditorLayer({ imageData, onRetake, onDone, toolPosition, neonContext = null, branding = null }) {
+    const { tenantData } = useTenant()
+    const businessName = tenantData?.business_name || 'FoodSpot'
+
     // Canvas refs for layer architecture
     const containerRef = useRef(null)
     const baseCanvasRef = useRef(null)
@@ -306,6 +310,11 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         setIsExporting(true)
 
         try {
+            // [NEW] explicit blur to prevent iOS Safari keyboard popping in Preview
+            if (document.activeElement && document.activeElement.blur) {
+                document.activeElement.blur()
+            }
+
             const { dataURL, blob } = await exportPreview({
                 baseCanvas: baseCanvasRef.current,
                 strokes,
@@ -537,6 +546,36 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                     </button>
                 </div>
             )}
+
+            {/* ── Location Pill (Global) ── */}
+            <div style={{
+                position: 'absolute',
+                bottom: 'calc(220px + env(safe-area-inset-bottom, 0px))',
+                left: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '6px 12px',
+                background: 'rgba(255, 255, 255, 0.22)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                borderRadius: '20px',
+                color: '#fff',
+                zIndex: 10,
+            }}>
+                {/* Map Pin Icon */}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                </svg>
+                <span style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.08em',
+                    lineHeight: 1,
+                }}>
+                    {businessName.toUpperCase()}
+                </span>
+            </div>
 
             {/* Sticker Drawer */}
             <StickerDrawer

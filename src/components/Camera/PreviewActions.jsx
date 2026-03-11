@@ -106,10 +106,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                 <span>SAVE TO GALLERY</span>
             </button>
 
-            {/* ── DISCARD ── */}
-            <button onClick={onDone} style={styles.discardLink}>
-                Dismiss
-            </button>
         </div>
     );
 };
@@ -155,16 +151,6 @@ const styles = {
         letterSpacing: '0.04em',
         cursor: 'pointer',
         transition: 'transform 120ms ease, opacity 120ms ease',
-    },
-    discardLink: {
-        background: 'none',
-        border: 'none',
-        color: 'rgba(255, 255, 255, 0.45)',
-        fontSize: '13px',
-        fontWeight: 500,
-        cursor: 'pointer',
-        padding: '8px 16px',
-        letterSpacing: '0.02em',
     },
 };
 
