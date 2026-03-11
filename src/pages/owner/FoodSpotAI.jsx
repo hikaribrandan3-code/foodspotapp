@@ -861,7 +861,7 @@ ${salesContext}`
                         <div style={{ position: 'relative', zIndex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                                 <div>
-                                    <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>
+                                    <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#FFFFFF' }}>
                                         ¡Buen día!
                                     </h2>
                                     <p style={{ margin: 0, fontSize: 13, color: '#94A3B8' }}>
