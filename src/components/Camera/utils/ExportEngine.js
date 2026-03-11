@@ -169,7 +169,6 @@ function burnBranding(ctx, width, height, branding) {
     const pillPaddingV = Math.round(12 * scale)   // vertical padding
     const pinTextGap = Math.round(8 * scale)      // gap between pin and text
     const pillRadius = Math.round(24 * scale)     // capsule corner radius
-    const bottomOffset = Math.round(80 * scale)   // above IG interface zone
 
     ctx.save()
     ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
@@ -179,7 +178,12 @@ function burnBranding(ctx, width, height, branding) {
     // Total pill dimensions
     const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
-    const pillX = (width - pillW) / 2
+
+    // Position at bottom-left (matching original DualPostScreen HTML layout)
+    const leftOffset = Math.round(16 * scale)
+    const bottomOffset = Math.round(220 * scale)
+
+    const pillX = leftOffset
     const pillY = height - bottomOffset - pillH
 
     // --- Drop shadow ---

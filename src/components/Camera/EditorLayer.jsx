@@ -326,7 +326,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 displayWidth: canvasDimensions.width,
                 displayHeight: canvasDimensions.height,
                 neonContext,
-                branding
+                branding: branding || { businessName }
             })
 
             setDualPostData({ dataURL, blob })
