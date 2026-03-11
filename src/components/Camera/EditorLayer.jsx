@@ -70,8 +70,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // PATCH 15: Determine if draggable elements should be interactive
     const elementsInteractive = useMemo(() =>
-        !isDrawMode && !isAnyModalOpen && !isExporting,
-        [isDrawMode, isAnyModalOpen, isExporting]
+        !isDrawMode && !isAnyModalOpen && !isExporting && !showDualPost,
+        [isDrawMode, isAnyModalOpen, isExporting, showDualPost]
     )
 
     // Render frozen frame to base canvas - <50ms mount

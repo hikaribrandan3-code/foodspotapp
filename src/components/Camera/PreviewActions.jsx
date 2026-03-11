@@ -10,7 +10,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     // 💾 SAVE TO GALLERY — iOS-compatible
     const handleSaveToGallery = async (e) => {
         if (e) {
-            e.preventDefault();
             e.stopPropagation();
         }
         try {
@@ -37,6 +36,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             if (blob) {
                 const url = URL.createObjectURL(blob);
                 window.open(url, '_blank');
+                alert('La imagen se abrió en una pestaña segura. Mantené presionado para guardarla en Fotos.');
                 return;
             }
 
@@ -57,7 +57,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     // 🚀 SHARE TO SOCIALS — navigator.share with image blob (SYNCHRONOUS FOR SAFARI)
     const handleShare = async (e) => {
         if (e) {
-            e.preventDefault();
             e.stopPropagation();
         }
         try {
