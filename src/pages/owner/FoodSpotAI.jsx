@@ -912,7 +912,11 @@ ${salesContext}`
 
                             {/* Trigger */}
                             <button
-                                onClick={() => handleSend("Generame un flyer con esta idea: " + morningBrief)}
+                                onClick={() => {
+                                    setBriefLoading(true); // Visually indicate execution is starting
+                                    handleSend("Generame un flyer con esta idea: " + morningBrief)
+                                        .finally(() => setBriefLoading(false)); // Release the lock
+                                }}
                                 disabled={briefLoading || summaryLoading || !morningBrief}
                                 style={{
                                     width: '100%', padding: '16px', borderRadius: 12,

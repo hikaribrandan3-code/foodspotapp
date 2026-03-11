@@ -92,7 +92,7 @@ async function callGemini(messages: any[], systemPrompt: string, apiKey: string)
 
     const geminiBody = {
         contents,
-        systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+        system_instruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
         generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 4096,
@@ -114,7 +114,7 @@ async function callGemini(messages: any[], systemPrompt: string, apiKey: string)
 
         while (retries >= 0) {
             console.log(`[Gemini] Trying model: ${model} (retries left: ${retries})`);
-            const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
             geminiRes = await fetch(
                 url,
                 {
