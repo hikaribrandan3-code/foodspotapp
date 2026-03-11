@@ -871,38 +871,7 @@ ${salesContext}`
                                 </div>
                             )}
 
-                            {/* Action buttons for AI responses (disabled since Open Claw automates this now, but leaving UI hooks for future) */}
-                            {msg.role === 'assistant' && (msg.content || '').toLowerCase().includes('flyer') && (
-                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
-                                    <button
-                                        onClick={() => navigate(`/${tenantSlug}/owner/branding`)}
-                                        style={{
-                                            padding: '8px 16px', borderRadius: 12,
-                                            background: adminBlue, color: '#FFF',
-                                            border: 'none', fontSize: 12, fontWeight: 700,
-                                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-                                        }}
-                                    >
-                                        📝 Ver en Branding
-                                    </button>
-                                </div>
-                            )}
-
-                            {msg.role === 'assistant' && ((msg.content || '').toLowerCase().includes('promo') || (msg.content || '').toLowerCase().includes('promoción')) && !(msg.content || '').toLowerCase().includes('flyer') && (
-                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
-                                    <button
-                                        onClick={() => navigate(`/${tenantSlug}/owner/branding`)}
-                                        style={{
-                                            padding: '8px 16px', borderRadius: 12,
-                                            background: '#10B981', color: '#FFF',
-                                            border: 'none', fontSize: 12, fontWeight: 700,
-                                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-                                        }}
-                                    >
-                                        ⚡ Configurar Promo
-                                    </button>
-                                </div>
-                            )}
+                            {/* Action buttons for AI responses (removed as Open Claw automates syncing now) */}
                         </div>
                     </div>
                 ))}
