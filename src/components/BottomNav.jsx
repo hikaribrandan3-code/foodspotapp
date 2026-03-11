@@ -36,7 +36,7 @@ const InfoIcon = () => (
 // CAMERA ICON: Removed - now imported from CameraIcons.jsx
 
 // INVARIANT: config must come from prop (App.jsx safeConfig)
-function BottomNav({ config: configProp }) {
+function BottomNav({ config: configProp, onCameraTap }) {
     // 🛡️ NULL GUARD: Ensure config is always an object (prevents f[b] crash)
     const initialConfig = configProp || {};
 
@@ -163,12 +163,19 @@ function BottomNav({ config: configProp }) {
                 <span className="nav-label">Menú</span>
             </NavLink>
 
-            {/* CENTER CAMERA BUTTON - Customizable icon and color */}
-            <NavLink to={routes.camera} className="camera-button">
+            <button
+                onClick={(e) => {
+                    e.preventDefault();
+                    if (onCameraTap) onCameraTap();
+                }}
+                className="camera-button"
+                aria-label="Open Camera"
+                style={{ border: 'none', cursor: 'pointer', padding: 0 }}
+            >
                 <div className="camera-inner" style={{ backgroundColor: cameraBgColor, transition: 'background-color 0.2s ease' }}>
                     <CameraIconComponent style={{ color: cameraIconColor }} />
                 </div>
-            </NavLink>
+            </button>
 
             <NavLink
                 to={routes.status}

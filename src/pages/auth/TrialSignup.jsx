@@ -365,7 +365,7 @@ const TrialSignup = () => {
                     justifyContent: 'space-between', padding: '0 24px',
                     paddingTop: 'calc(env(safe-area-inset-top, 20px) + 40px)',
                     paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 32px)',
-                    minHeight: '100vh', minHeight: '100dvh'
+                    minHeight: '100dvh'
                 }}>
                     {/* TOP: BRANDING */}
                     <div style={{ textAlign: 'center' }}>
