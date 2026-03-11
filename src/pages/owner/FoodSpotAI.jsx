@@ -115,25 +115,25 @@ const LazyImage = ({ src, alt, style, className }) => {
             ctx.fillStyle = gradBottom;
             ctx.fillRect(0, canvas.height * 0.50, canvas.width, canvas.height * 0.50);
 
-            // 3. Stamping Typography (Black Label v13 / Inter Style)
+            // 3. Stamping Typography (Omni-Vibe v15.5 / Inter Style)
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
 
-            // Headline (Top Area)
+            // Headline (Top Safe Zone)
             if (parsedPayload.headline) {
-                ctx.font = '900 80px Inter, sans-serif';
+                ctx.font = '900 70px Inter, sans-serif';
                 ctx.shadowColor = 'rgba(0,0,0,0.7)';
                 ctx.shadowBlur = 15;
-                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, 120);
+                ctx.fillText(parsedPayload.headline.toUpperCase(), canvas.width / 2, 160);
             }
 
-            // Price Tag (Center-Bottom Area)
+            // Price Tag (Bottom Safe Zone)
             if (parsedPayload.price_tag) {
                 ctx.font = '900 150px Inter, sans-serif';
                 ctx.fillStyle = '#FFFFFF';
                 ctx.shadowColor = 'rgba(0,0,0,1)';
-                ctx.shadowBlur = 30;
-                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 140);
+                ctx.shadowBlur = 35;
+                ctx.fillText(parsedPayload.price_tag, canvas.width / 2, canvas.height - 180);
             }
 
             // Footer Text (Validity/Payment)
@@ -142,7 +142,7 @@ const LazyImage = ({ src, alt, style, className }) => {
                 ctx.fillStyle = 'rgba(255,255,255,0.8)';
                 ctx.shadowColor = 'rgba(0,0,0,0.6)';
                 ctx.shadowBlur = 6;
-                ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 40);
+                ctx.fillText(parsedPayload.footer_text, canvas.width / 2, canvas.height - 50);
             }
 
             // Flatten
@@ -399,6 +399,7 @@ REGLAS:
    - Analyze the 'Sales Context' deeply. Look for patterns:
      a) If a product has low sales compared to the 'Top Items', proactively suggest: "Che, veo que las ventas de [Product] bajaron. ¿Querés que armemos un flyer de 2x1 para levantar hoy?"
      b) If the current day is historically slow (e.g. Monday/Tuesday), suggest a "Flash Promo" to drive traffic: "Hoy suele ser un día tranquilo. ¿Armamos una promo flash para mover el local?"
+     c) If a specific genre of food (e.g., sushi, burgers, pizza) is underperforming, match your flyer suggestion to that genre's visual style.
 5. Once you have all 3 variables from the user, you MUST use the Open Claw v4 protocol below.
 
 OPEN CLAW PROTOCOL v4 (MANDATORY FOR FLYERS/PROMOS AFTER INTERVIEW):
