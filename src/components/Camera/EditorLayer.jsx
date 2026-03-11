@@ -397,55 +397,27 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             {!isDrawMode && (
                 <div style={{
                     position: 'absolute',
-                    top: '100px',
+                    top: '15%',
                     right: '16px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '8px',
-                    padding: '12px 8px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    borderRadius: '24px',
-                    zIndex: 100
+                    gap: '24px',
+                    zIndex: 500,
+                    pointerEvents: 'auto'
                 }}>
                     {/* Text */}
                     <button
+                        className="editor-tool-btn"
                         onClick={() => handleToolPress('text')}
                         aria-label="Add Text"
-                        style={{
-                            width: '44px',
-                            height: '44px',
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            color: '#fff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '18px',
-                            fontWeight: '600'
-                        }}
                     >Aa</button>
 
                     {/* Stickers */}
                     <button
+                        className="editor-tool-btn"
                         onClick={() => handleToolPress('stickers')}
                         aria-label="Add Stickers"
-                        style={{
-                            width: '44px',
-                            height: '44px',
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            color: '#fff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
@@ -454,20 +426,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
                     {/* Draw */}
                     <button
+                        className="editor-tool-btn"
                         onClick={() => handleToolPress('draw')}
                         aria-label="Draw"
-                        style={{
-                            width: '44px',
-                            height: '44px',
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            color: '#fff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a.996.996 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96a.996.996 0 0 0 0-1.41z" />
@@ -476,20 +437,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
                     {/* Retake */}
                     <button
+                        className="editor-tool-btn"
                         onClick={onRetake}
                         aria-label="Retake"
-                        style={{
-                            width: '44px',
-                            height: '44px',
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            color: '#fff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
@@ -498,24 +448,16 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
                     {/* Done */}
                     <button
+                        className="editor-tool-btn"
                         onClick={handleDone}
                         disabled={isExporting}
                         aria-label="Done"
                         style={{
-                            width: '44px',
-                            height: '44px',
-                            background: isExporting ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.15)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            cursor: isExporting ? 'wait' : 'pointer',
-                            color: '#fff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            opacity: isExporting ? 0.5 : 1
+                            opacity: isExporting ? 0.5 : 1,
+                            cursor: isExporting ? 'wait' : 'pointer'
                         }}
                     >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="white" strokeWidth="1">
                             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                         </svg>
                     </button>

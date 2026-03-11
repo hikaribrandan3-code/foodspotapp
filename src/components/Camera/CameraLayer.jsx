@@ -176,15 +176,42 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition, 
 
     return (
         <div className="camera-layer">
-            {/* YC-SPEC AURA TAG */}
-            {businessName && (
-                <div className="aura-tag-wrapper">
-                    <div className="aura-tag">
-                        <div className="aura-dot" style={{ '--brand': primaryColor || '#FF3366' }} />
-                        <span className="aura-text">{businessName}</span>
-                    </div>
+            {/* REVERTED BRANDING (Mini Map Pill - Snapchat Style) */}
+            <div className="absolute bottom-32 left-0 right-0 flex justify-center pointer-events-none z-[400]" style={{
+                position: 'absolute',
+                bottom: '120px',
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 400
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    backdropFilter: 'blur(12px)',
+                    padding: '6px 16px',
+                    borderRadius: '50px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="white" style={{ opacity: 0.8 }}>
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                    </svg>
+                    <span style={{
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.2em',
+                        textTransform: 'uppercase'
+                    }}>
+                        {businessName || 'FOODSPOT'}
+                    </span>
+                    <div style={{ width: '30px', height: '1px', background: 'rgba(255, 255, 255, 0.3)', marginLeft: '4px' }}></div>
                 </div>
-            )}
+            </div>
 
             {/* Close (X) button - top left, always visible */}
             <button
@@ -241,17 +268,30 @@ export function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition, 
             )}
 
             {/* Settings gear - top right per Gemini mock */}
-            <button
-                className="settings-button"
-                onClick={handleSettingsClick}
-                aria-label="Settings"
-                style={{ zIndex: 9999, pointerEvents: 'auto' }}
-            >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-            </button>
+            <div style={{
+                position: 'absolute',
+                top: '24px',
+                right: '24px',
+                zIndex: 500,
+                pointerEvents: 'auto'
+            }}>
+                <button
+                    className="settings-button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        // Close any toasts that might block
+                        setShowFilterToast(false);
+                        handleSettingsClick();
+                    }}
+                    aria-label="Settings"
+                    style={{ position: 'relative', top: 'auto', right: 'auto' }}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                </button>
+            </div>
 
             {/* Right toolbar */}
             <div className={`toolbar toolbar-${toolPosition === 'left' ? 'right' : 'left'}-side`} style={{ zIndex: 9999, pointerEvents: 'auto' }}>
