@@ -186,6 +186,10 @@ function burnBranding(ctx, width, height, branding) {
     const pillX = leftOffset
     const pillY = height - bottomOffset - pillH
 
+    // CRITICAL FIX: The radius cannot be larger than half the height or width!
+    // This was causing arcTo to fail silently on iOS Safari.
+    const safeRadius = Math.min(pillRadius, pillH / 2, pillW / 2)
+
     if (window.addFsLog) window.addFsLog(`Burning: "${businessName}" @ ${pillX},${pillY} on ${width}x${height} canvas`);
 
     // --- Drop shadow ---
@@ -197,8 +201,7 @@ function burnBranding(ctx, width, height, branding) {
     // --- Pill background (white, 0.9 alpha) ---
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
     ctx.beginPath()
-    // Fallback for ctx.roundRect (iOS 16+) using manual path
-    const r = pillRadius
+    const r = safeRadius
     const x = pillX
     const y = pillY
     const w = pillW
@@ -241,7 +244,7 @@ function burnBranding(ctx, width, height, branding) {
     ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'left'
-    ctx.fillText(businessName, pinX + pinSize + pinTextGap, pinCenterY)
+    ctx.fillText(businessName.toUpperCase(), pinX + pinSize + pinTextGap, pinCenterY)
 
     ctx.restore()
 }
