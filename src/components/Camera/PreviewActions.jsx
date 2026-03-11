@@ -180,7 +180,8 @@ const styles = {
         transition: 'transform 120ms ease, opacity 120ms ease',
         position: 'relative',
         zIndex: 99999,
-        touchAction: 'manipulation'
+        touchAction: 'manipulation',
+        pointerEvents: 'auto',
     },
     secondaryButton: {
         width: '100%',
@@ -200,7 +201,8 @@ const styles = {
         transition: 'transform 120ms ease, opacity 120ms ease',
         position: 'relative',
         zIndex: 99999,
-        touchAction: 'manipulation'
+        touchAction: 'manipulation',
+        pointerEvents: 'auto',
     },
 };
 

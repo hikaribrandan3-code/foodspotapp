@@ -1,14 +1,9 @@
-import { createPortal } from 'react-dom'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import PreviewActions from './PreviewActions.jsx'
 
 /**
  * DualPostScreen — Immersive Preview Layer
  * Edge-to-edge image, location pill, glassmorphism action bar.
- * 
- * CRITICAL: Rendered via React Portal into document.body to escape
- * the parent EditorLayer's `touch-action: none` CSS inheritance,
- * which prevents ALL button taps on iOS Safari.
  *
  * Props:
  *   previewDataURL - The flattened JPEG data URL
@@ -19,7 +14,7 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
     const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
-    return createPortal(
+    return (
         <div style={styles.container}>
 
             {/* ── Immersive Background ── */}
@@ -59,8 +54,7 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
                     onDone={onComplete}
                 />
             </div>
-        </div>,
-        document.body
+        </div>
     )
 }
 
@@ -71,7 +65,8 @@ const styles = {
         inset: 0,
         zIndex: 9999,
         background: '#000',
-        touchAction: 'manipulation',
+        touchAction: 'auto',
+        pointerEvents: 'auto',
         WebkitTouchCallout: 'default',
         userSelect: 'none',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -93,6 +88,8 @@ const styles = {
         justifyContent: 'center',
         color: '#fff',
         zIndex: 1000,
+        pointerEvents: 'auto',
+        touchAction: 'auto',
     },
     immersiveImage: {
         position: 'absolute',
@@ -135,5 +132,6 @@ const styles = {
         padding: '20px 20px',
         paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
         zIndex: 10,
+        pointerEvents: 'auto',
     },
 }
