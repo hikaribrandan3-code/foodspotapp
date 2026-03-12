@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CameraLayer from './CameraLayer.jsx'
 import EditorLayer from './EditorLayer.jsx'
@@ -7,11 +7,11 @@ import './CameraLayer.css'
 import './EditorLayer.css'
 
 /**
- * CamTech v1.8 - Camera Component
- * Drop-in replacement for existing camera
- * Preserves route and navigation behavior
+ * CamTech v2.2 - Camera Component
+ * God-Tier Memory Revolution: Blob Architecture Bridge
+ * Managed ObjectURL lifecycle to prevent RAM leaks.
  */
-export const VERSION = 'CamTech v1.8'
+export const VERSION = 'CamTech v2.2'
 
 function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
@@ -21,9 +21,31 @@ function Camera({ neonContext = null, branding = null }) {
     const [showSettings, setShowSettings] = useState(false)
     const [toolPosition, setToolPosition] = useState('right')
 
-    const handleCapture = (imageData) => {
-        if (!imageData) return
-        setCapturedImage(imageData)
+    // --- MEMORY REVOLUTION: ObjectURL Lifecycle Management ---
+    const lastObjectURLRef = useRef(null)
+
+    useEffect(() => {
+        // Cleanup on unmount or when capturedImage changes
+        if (capturedImage?.objectURL && capturedImage.objectURL !== lastObjectURLRef.current) {
+            // If we have a new objectURL, we should revoke the OLD one if it exists
+            if (lastObjectURLRef.current) {
+                URL.revokeObjectURL(lastObjectURLRef.current)
+            }
+            lastObjectURLRef.current = capturedImage.objectURL
+        }
+
+        return () => {
+            // Final cleanup on unmount
+            if (lastObjectURLRef.current) {
+                URL.revokeObjectURL(lastObjectURLRef.current)
+                lastObjectURLRef.current = null
+            }
+        }
+    }, [capturedImage])
+
+    const handleCapture = (captureResult) => {
+        if (!captureResult) return
+        setCapturedImage(captureResult)
         setMode('EDITOR')
     }
 
@@ -32,13 +54,11 @@ function Camera({ neonContext = null, branding = null }) {
         setMode('CAMERA')
     }
 
-    // Handle Done - return to camera after share
     const handleDone = () => {
         setCapturedImage(null)
         setMode('CAMERA')
     }
 
-    // Handle Close - navigate back (preserves existing behavior)
     const handleClose = () => {
         navigate(-1)
     }

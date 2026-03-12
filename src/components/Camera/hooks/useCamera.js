@@ -273,9 +273,23 @@ export function useCamera() {
             }
         }
 
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
         if (flashMode === 'on' || flashMode === 'auto') setTimeout(() => applyFlash('off'), 100)
-        return dataUrl
+
+        // Step 4: Convert to Blob (100% Memory Revolution)
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve({
+                        blob,
+                        objectURL: URL.createObjectURL(blob),
+                        width: canvas.width,
+                        height: canvas.height
+                    })
+                } else {
+                    reject(new Error('Failed to create image blob'))
+                }
+            }, 'image/jpeg', 0.92)
+        })
     }, [flashMode, applyFlash, facingMode, selectedFilter, applyPixelFilter])
 
     const stopCamera = useCallback(() => {

@@ -137,7 +137,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             // Draw image using cover logic (cropped to fill)
             ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, renderWidth, renderHeight)
         }
-        img.src = imageData
+        img.src = imageData?.objectURL || imageData // Support both old string and new object
     }, [imageData])
 
     // Handle tap on canvas area (for text creation) with gesture guards
@@ -319,7 +319,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 document.activeElement.blur()
             }
 
-            const { dataURL, blob } = await exportPreview({
+            const { objectURL, blob } = await exportPreview({
                 baseCanvas: baseCanvasRef.current,
                 strokes,
                 elements: placedElements,
@@ -329,7 +329,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 branding: { ...branding, businessName }
             })
 
-            setDualPostData({ dataURL, blob })
+            // Store preview result (index.jsx will handle objectURL revocation)
+            setDualPostData({ objectURL, blob })
             setShowDualPost(true)
         } catch (error) {
             console.error('Export failed:', error)
@@ -606,7 +607,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             {/* DualPost Decision Screen overlay */}
             {showDualPost && dualPostData && (
                 <DualPostScreen
-                    previewDataURL={dualPostData.dataURL}
+                    previewDataURL={dualPostData.objectURL}
                     previewBlob={dualPostData.blob}
                     onClose={() => setShowDualPost(false)}
                     onComplete={onDone}
