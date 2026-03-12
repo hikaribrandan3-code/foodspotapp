@@ -150,26 +150,26 @@ function burnBranding(ctx, width, height, branding) {
 // DRAWING FUNCTIONS (Strokes, Stickers, Text)
 // ============================================
 
-function drawStrokes(ctx, strokes, scale = 1) {
+function drawStrokes(ctx, strokes, xScale, yScale, sizeScale) {
     strokes.forEach(stroke => {
         if (stroke.points.length < 2) return
         ctx.beginPath()
         ctx.strokeStyle = stroke.color
-        ctx.lineWidth = (BRUSH_SIZES[stroke.size] || BRUSH_SIZES.small) * scale
+        ctx.lineWidth = (BRUSH_SIZES[stroke.size] || BRUSH_SIZES.small) * sizeScale
         ctx.lineCap = 'round'
         ctx.lineJoin = 'round'
-        ctx.moveTo(stroke.points[0].x * scale, stroke.points[0].y * scale)
+        ctx.moveTo(stroke.points[0].x * xScale, stroke.points[0].y * yScale)
         for (let i = 1; i < stroke.points.length; i++) {
-            ctx.lineTo(stroke.points[i].x * scale, stroke.points[i].y * scale)
+            ctx.lineTo(stroke.points[i].x * xScale, stroke.points[i].y * yScale)
         }
         ctx.stroke()
     })
 }
 
-function drawSticker(ctx, element, scale = 1) {
-    const fontSize = 48 * element.scale * scale
+function drawSticker(ctx, element, xScale, yScale, sizeScale) {
+    const fontSize = 48 * element.scale * sizeScale
     ctx.save()
-    ctx.translate(element.x * scale, element.y * scale)
+    ctx.translate(element.x * xScale, element.y * yScale)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontSize}px -apple-system, sans-serif`
     ctx.textAlign = 'center'
@@ -178,10 +178,10 @@ function drawSticker(ctx, element, scale = 1) {
     ctx.restore()
 }
 
-function drawEmoji(ctx, element, scale = 1) {
-    const fontSize = 48 * element.scale * scale
+function drawEmoji(ctx, element, xScale, yScale, sizeScale) {
+    const fontSize = 48 * element.scale * sizeScale
     ctx.save()
-    ctx.translate(element.x * scale, element.y * scale)
+    ctx.translate(element.x * xScale, element.y * yScale)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontSize}px -apple-system, sans-serif`
     ctx.textAlign = 'center'
@@ -190,22 +190,22 @@ function drawEmoji(ctx, element, scale = 1) {
     ctx.restore()
 }
 
-function drawText(ctx, element, scale = 1) {
+function drawText(ctx, element, xScale, yScale, sizeScale) {
     const style = element.data?.style || {}
     const text = element.data?.text || ''
     const fontFamily = FONTS[style.fontId] || FONTS.classic
     const fontWeight = style.fontId === 'bold' ? '700' : '400'
-    const fontSize = 24 * element.scale * scale
+    const fontSize = 24 * element.scale * sizeScale
     const color = style.color || '#fff'
 
     ctx.save()
-    ctx.translate(element.x * scale, element.y * scale)
+    ctx.translate(element.x * xScale, element.y * yScale)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
     ctx.textAlign = style.textAlign || 'center'
     ctx.textBaseline = 'middle'
 
-    const maxWidth = 280 * element.scale * scale
+    const maxWidth = 280 * element.scale * sizeScale
     const paragraphs = text.split('\n')
     const lines = []
     paragraphs.forEach(p => {
@@ -225,14 +225,14 @@ function drawText(ctx, element, scale = 1) {
     lines.forEach(l => maxLW = Math.max(maxLW, ctx.measureText(l).width))
 
     if (style.styleMode === 'background') {
-        const pad = 8 * scale
+        const pad = 8 * sizeScale
         ctx.fillStyle = color
-        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2, maxLW + pad * 2, totalHeight, 4 * scale)
+        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2, maxLW + pad * 2, totalHeight, 4 * sizeScale)
         ctx.fill()
     } else if (style.styleMode === 'highlight') {
-        const pad = 12 * scale
+        const pad = 12 * sizeScale
         ctx.fillStyle = color
-        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2 - pad / 2, maxLW + pad * 2, totalHeight + pad, 8 * scale)
+        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2 - pad / 2, maxLW + pad * 2, totalHeight + pad, 8 * sizeScale)
         ctx.fill()
     }
 
@@ -240,12 +240,12 @@ function drawText(ctx, element, scale = 1) {
     lines.forEach((line, i) => {
         const ly = startY + i * lineHeight
         if (style.styleMode === 'stroke') {
-            ctx.strokeStyle = color; ctx.lineWidth = 2 * scale; ctx.strokeText(line, 0, ly)
+            ctx.strokeStyle = color; ctx.lineWidth = 2 * sizeScale; ctx.strokeText(line, 0, ly)
         } else if (style.styleMode === 'background' || style.styleMode === 'highlight') {
             ctx.fillStyle = (color === '#FFFFFF' || color === '#FFCC00') ? '#000' : '#FFF'
             ctx.fillText(line, 0, ly)
         } else {
-            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3 * scale; ctx.fillStyle = color
+            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3 * sizeScale; ctx.fillStyle = color
             ctx.fillText(line, 0, ly)
         }
     })
@@ -281,7 +281,11 @@ export async function exportImage({
     exportCanvas.width = exportWidth
     exportCanvas.height = exportHeight
     const ctx = exportCanvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
-    const scale = exportWidth / displayWidth || 1
+
+    // --- GOD-TIER COORDINATE NORMALIZATION ---
+    const xScale = exportWidth / displayWidth || 1
+    const yScale = exportHeight / displayHeight || 1
+    const sizeScale = xScale // Maintain uniform sizing based on width
 
     // 1. Draw raw frame
     ctx.drawImage(baseCanvas, 0, 0, exportWidth, exportHeight)
@@ -293,15 +297,15 @@ export async function exportImage({
     if (branding) burnBranding(ctx, exportWidth, exportHeight, branding)
 
     // 4. Draw elements
-    if (strokes.length > 0) drawStrokes(ctx, strokes, scale)
+    if (strokes.length > 0) drawStrokes(ctx, strokes, xScale, yScale, sizeScale)
     const sorted = [...elements].sort((a, b) => {
         const o = { sticker: 0, emoji: 1, text: 2 }
         return (o[a.type] || 0) - (o[b.type] || 0)
     })
     sorted.forEach(el => {
-        if (el.type === 'sticker') drawSticker(ctx, el, scale)
-        else if (el.type === 'emoji') drawEmoji(ctx, el, scale)
-        else if (el.type === 'text') drawText(ctx, el, scale)
+        if (el.type === 'sticker') drawSticker(ctx, el, xScale, yScale, sizeScale)
+        else if (el.type === 'emoji') drawEmoji(ctx, el, xScale, yScale, sizeScale)
+        else if (el.type === 'text') drawText(ctx, el, xScale, yScale, sizeScale)
     })
 
     // Phase 2: Memory Revolution (Blob Engine)

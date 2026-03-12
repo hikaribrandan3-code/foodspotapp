@@ -53,6 +53,7 @@ export function useCamera() {
             const highResConstraints = {
                 video: {
                     facingMode: facingMode,
+                    aspectRatio: { ideal: 9 / 16 },
                     width: { min: 1080, ideal: 1920, max: 3840 },
                     height: { min: 1920, ideal: 3840, max: 2160 }
                 },
@@ -69,6 +70,7 @@ export function useCamera() {
                 const fallbackConstraints = {
                     video: {
                         facingMode: facingMode,
+                        aspectRatio: { ideal: 9 / 16 },
                         width: { ideal: 1280 },
                         height: { ideal: 720 }
                     },
@@ -288,7 +290,7 @@ export function useCamera() {
                 } else {
                     reject(new Error('Failed to create image blob'))
                 }
-            }, 'image/jpeg', 0.92)
+            }, 'image/jpeg', 0.95)
         })
     }, [flashMode, applyFlash, facingMode, selectedFilter, applyPixelFilter])
 
