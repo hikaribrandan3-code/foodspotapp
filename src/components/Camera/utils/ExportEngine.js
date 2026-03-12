@@ -265,13 +265,13 @@ export async function exportImage({
     baseCanvas, strokes, elements, displayWidth, displayHeight,
     neonContext = null, branding = null
 }) {
-    // Phase 1: Force 9:16 Aspect Ratio with Even Dimensions
-    const targetAspect = 9 / 16
+    // Phase 1: Dynamic Aspect Ratio with Even Dimensions
+    const targetAspect = displayWidth / displayHeight || (9 / 16)
     let exportWidth = baseCanvas.width
     let exportHeight = baseCanvas.height
 
-    // Calculate dimensions based on original but forced to 9:16
-    // We favor the original width and adjust height to hit 1920+
+    // Calculate dimensions based on original but forced to match display aspect
+    // We favor the original width and adjust height to hit the target ratio
     exportWidth = Math.max(1080, exportWidth)
     exportHeight = Math.round(exportWidth / targetAspect)
 
@@ -292,12 +292,13 @@ export async function exportImage({
 
     // --- OBJECT-FIT: COVER MATH (Center-Crop) ---
     const imgAspect = baseCanvas.width / baseCanvas.height
-    const targetRatio = exportWidth / exportHeight
+    // Re-calculate precise ratio for the crop math
+    const cropTargetRatio = exportWidth / exportHeight
     let sx = 0, sy = 0, sWidth = baseCanvas.width, sHeight = baseCanvas.height
 
-    if (imgAspect > targetRatio) {
+    if (imgAspect > cropTargetRatio) {
         // Image is wider - fit to height, crop sides
-        sWidth = baseCanvas.height * targetRatio
+        sWidth = baseCanvas.height * cropTargetRatio
         sx = (baseCanvas.width - sWidth) / 2
     } else {
         // Image is taller - fit to width, crop top/bottom
