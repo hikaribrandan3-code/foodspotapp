@@ -7,7 +7,10 @@
 const MAX_EXPORT_WIDTH = 4096
 const MAX_EXPORT_HEIGHT = 4096
 
-const BRUSH_SIZES = { small: 4, medium: 8 }
+const BRUSH_SIZES = {
+    small: 4,
+    medium: 16
+}
 
 const FONTS = {
     classic: '-apple-system, BlinkMacSystemFont, sans-serif',
