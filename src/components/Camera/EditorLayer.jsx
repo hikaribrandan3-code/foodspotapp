@@ -84,9 +84,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
         const img = new Image()
         img.onload = () => {
-            // Calculate dimensions maintaining aspect ratio - edge-to-edge
-            const containerWidth = container.clientWidth
-            const containerHeight = container.clientHeight
+            // TRUE RECT: Get actual container dimensions (unifies measurement logic)
+            const rect = container.getBoundingClientRect()
+            const containerWidth = rect.width
+            const containerHeight = rect.height
             const imgAspect = img.width / img.height
             const containerAspect = containerWidth / containerHeight
 
@@ -159,11 +160,11 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         const rect = canvasContainerRef.current?.getBoundingClientRect()
         if (!rect) return
 
-        const tapX = e.clientX || (e.touches && e.touches[0]?.clientX) || rect.width / 2
-        const tapY = e.clientY || (e.touches && e.touches[0]?.clientY) || rect.height / 2
+        const clientX = e.clientX || (e.touches && e.touches[0]?.clientX) || 0
+        const clientY = e.clientY || (e.touches && e.touches[0]?.clientY) || 0
 
-        // Start new text input at tap position
-        setTextInputPosition({ x: tapX, y: tapY })
+        // TextEditor is a fixed overlay, so it needs screen coordinates
+        setTextInputPosition({ x: clientX, y: clientY })
         setInitialTextValue('')
         setInitialTextStyle(null)
         setActiveTextId(null)

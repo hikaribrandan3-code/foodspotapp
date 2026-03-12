@@ -169,7 +169,8 @@ function DraggableElement({ element, onUpdate, onRemove, onTap, disabled }) {
                     fontFamily: fonts[style.fontId] || fonts.classic,
                     fontWeight: style.fontId === 'bold' ? '700' : '400',
                     color: style.color || '#fff',
-                    textAlign: style.textAlign || 'center'
+                    textAlign: style.textAlign || 'center',
+                    lineHeight: '1.2' // Matches ExportEngine.js logic exactly
                 }
 
                 // Apply style mode
