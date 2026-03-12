@@ -128,10 +128,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
             // Calculate canvas position offset
             if (canvasContainerRef.current) {
-                const rect = canvasContainerRef.current.getBoundingClientRect()
                 setCanvasOffset({
-                    x: rect.left + (rect.width - renderWidth) / 2,
-                    y: rect.top + (rect.height - renderHeight) / 2
+                    x: (containerWidth - renderWidth) / 2,
+                    y: (containerHeight - renderHeight) / 2
                 })
             }
 
@@ -408,7 +407,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                     WebkitBackdropFilter: 'blur(8px)',
                     borderRadius: '20px',
                     color: '#fff',
-                    zIndex: 10,
+                    zIndex: 200,
                 }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
