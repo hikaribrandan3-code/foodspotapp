@@ -1,10 +1,11 @@
 /**
- * ExportEngine.js - CamTech v2.2 (God-Tier Memory Revolution)
+ * ExportEngine.js - CamTech v2.5 (Object-Fit Parity)
  * Full layer compositing + Nano Banana Filters + Aura Tag Branding
  * 
  * Pipeline: photo → NanoBanana filter → Aura Tag → strokes → stickers → emojis → text → JPEG Blob
  * 
- * Capped at 1080x1920 (Story ratio) to prevent VRAM crashes.
+ * Capped at 4096x4096x to prevent VRAM crashes.
+ * FORCED 9:16 PORTRAIT RATIO with center-crop (Object-Fit: Cover)
  * FORCE EVEN DIMENSIONS for hardware encoder compatibility.
  */
 
@@ -150,26 +151,26 @@ function burnBranding(ctx, width, height, branding) {
 // DRAWING FUNCTIONS (Strokes, Stickers, Text)
 // ============================================
 
-function drawStrokes(ctx, strokes, xScale, yScale, sizeScale) {
+function drawStrokes(ctx, strokes, scale = 1) {
     strokes.forEach(stroke => {
         if (stroke.points.length < 2) return
         ctx.beginPath()
         ctx.strokeStyle = stroke.color
-        ctx.lineWidth = (BRUSH_SIZES[stroke.size] || BRUSH_SIZES.small) * sizeScale
+        ctx.lineWidth = (BRUSH_SIZES[stroke.size] || BRUSH_SIZES.small) * scale
         ctx.lineCap = 'round'
         ctx.lineJoin = 'round'
-        ctx.moveTo(stroke.points[0].x * xScale, stroke.points[0].y * yScale)
+        ctx.moveTo(stroke.points[0].x * scale, stroke.points[0].y * scale)
         for (let i = 1; i < stroke.points.length; i++) {
-            ctx.lineTo(stroke.points[i].x * xScale, stroke.points[i].y * yScale)
+            ctx.lineTo(stroke.points[i].x * scale, stroke.points[i].y * scale)
         }
         ctx.stroke()
     })
 }
 
-function drawSticker(ctx, element, xScale, yScale, sizeScale) {
-    const fontSize = 48 * element.scale * sizeScale
+function drawSticker(ctx, element, scale = 1) {
+    const fontSize = 48 * element.scale * scale
     ctx.save()
-    ctx.translate(element.x * xScale, element.y * yScale)
+    ctx.translate(element.x * scale, element.y * scale)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontSize}px -apple-system, sans-serif`
     ctx.textAlign = 'center'
@@ -178,10 +179,10 @@ function drawSticker(ctx, element, xScale, yScale, sizeScale) {
     ctx.restore()
 }
 
-function drawEmoji(ctx, element, xScale, yScale, sizeScale) {
-    const fontSize = 48 * element.scale * sizeScale
+function drawEmoji(ctx, element, scale = 1) {
+    const fontSize = 48 * element.scale * scale
     ctx.save()
-    ctx.translate(element.x * xScale, element.y * yScale)
+    ctx.translate(element.x * scale, element.y * scale)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontSize}px -apple-system, sans-serif`
     ctx.textAlign = 'center'
@@ -190,22 +191,22 @@ function drawEmoji(ctx, element, xScale, yScale, sizeScale) {
     ctx.restore()
 }
 
-function drawText(ctx, element, xScale, yScale, sizeScale) {
+function drawText(ctx, element, scale = 1) {
     const style = element.data?.style || {}
     const text = element.data?.text || ''
     const fontFamily = FONTS[style.fontId] || FONTS.classic
     const fontWeight = style.fontId === 'bold' ? '700' : '400'
-    const fontSize = 24 * element.scale * sizeScale
+    const fontSize = 24 * element.scale * scale
     const color = style.color || '#fff'
 
     ctx.save()
-    ctx.translate(element.x * xScale, element.y * yScale)
+    ctx.translate(element.x * scale, element.y * scale)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
     ctx.textAlign = style.textAlign || 'center'
     ctx.textBaseline = 'middle'
 
-    const maxWidth = 280 * element.scale * sizeScale
+    const maxWidth = 280 * element.scale * scale
     const paragraphs = text.split('\n')
     const lines = []
     paragraphs.forEach(p => {
@@ -225,14 +226,14 @@ function drawText(ctx, element, xScale, yScale, sizeScale) {
     lines.forEach(l => maxLW = Math.max(maxLW, ctx.measureText(l).width))
 
     if (style.styleMode === 'background') {
-        const pad = 8 * sizeScale
+        const pad = 8 * scale
         ctx.fillStyle = color
-        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2, maxLW + pad * 2, totalHeight, 4 * sizeScale)
+        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2, maxLW + pad * 2, totalHeight, 4 * scale)
         ctx.fill()
     } else if (style.styleMode === 'highlight') {
-        const pad = 12 * sizeScale
+        const pad = 12 * scale
         ctx.fillStyle = color
-        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2 - pad / 2, maxLW + pad * 2, totalHeight + pad, 8 * sizeScale)
+        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2 - pad / 2, maxLW + pad * 2, totalHeight + pad, 8 * scale)
         ctx.fill()
     }
 
@@ -240,12 +241,12 @@ function drawText(ctx, element, xScale, yScale, sizeScale) {
     lines.forEach((line, i) => {
         const ly = startY + i * lineHeight
         if (style.styleMode === 'stroke') {
-            ctx.strokeStyle = color; ctx.lineWidth = 2 * sizeScale; ctx.strokeText(line, 0, ly)
+            ctx.strokeStyle = color; ctx.lineWidth = 2 * scale; ctx.strokeText(line, 0, ly)
         } else if (style.styleMode === 'background' || style.styleMode === 'highlight') {
             ctx.fillStyle = (color === '#FFFFFF' || color === '#FFCC00') ? '#000' : '#FFF'
             ctx.fillText(line, 0, ly)
         } else {
-            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3 * sizeScale; ctx.fillStyle = color
+            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3 * scale; ctx.fillStyle = color
             ctx.fillText(line, 0, ly)
         }
     })
@@ -264,16 +265,23 @@ export async function exportImage({
     baseCanvas, strokes, elements, displayWidth, displayHeight,
     neonContext = null, branding = null
 }) {
-    // Phase 1: Force Even Dimensions
+    // Phase 1: Force 9:16 Aspect Ratio with Even Dimensions
+    const targetAspect = 9 / 16
     let exportWidth = baseCanvas.width
     let exportHeight = baseCanvas.height
-    if (exportWidth > MAX_EXPORT_WIDTH || exportHeight > MAX_EXPORT_HEIGHT) {
-        const ratio = Math.min(MAX_EXPORT_WIDTH / exportWidth, MAX_EXPORT_HEIGHT / exportHeight)
-        exportWidth = Math.round(exportWidth * ratio)
-        exportHeight = Math.round(exportHeight * ratio)
+
+    // Calculate dimensions based on original but forced to 9:16
+    // We favor the original width and adjust height to hit 1920+
+    exportWidth = Math.max(1080, exportWidth)
+    exportHeight = Math.round(exportWidth / targetAspect)
+
+    // Clip to MAX limits while maintaining ratio
+    if (exportHeight > MAX_EXPORT_HEIGHT) {
+        exportHeight = MAX_EXPORT_HEIGHT
+        exportWidth = Math.round(exportHeight * targetAspect)
     }
 
-    // EVEN DIMENSION RULE
+    // EVEN DIMENSION RULE (Hardware Encoder Safety)
     exportWidth = Math.floor(exportWidth / 2) * 2
     exportHeight = Math.floor(exportHeight / 2) * 2
 
@@ -282,13 +290,23 @@ export async function exportImage({
     exportCanvas.height = exportHeight
     const ctx = exportCanvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
 
-    // --- GOD-TIER COORDINATE NORMALIZATION ---
-    const xScale = exportWidth / displayWidth || 1
-    const yScale = exportHeight / displayHeight || 1
-    const sizeScale = xScale // Maintain uniform sizing based on width
+    // --- OBJECT-FIT: COVER MATH (Center-Crop) ---
+    const imgAspect = baseCanvas.width / baseCanvas.height
+    const targetRatio = exportWidth / exportHeight
+    let sx = 0, sy = 0, sWidth = baseCanvas.width, sHeight = baseCanvas.height
 
-    // 1. Draw raw frame
-    ctx.drawImage(baseCanvas, 0, 0, exportWidth, exportHeight)
+    if (imgAspect > targetRatio) {
+        // Image is wider - fit to height, crop sides
+        sWidth = baseCanvas.height * targetRatio
+        sx = (baseCanvas.width - sWidth) / 2
+    } else {
+        // Image is taller - fit to width, crop top/bottom
+        sHeight = baseCanvas.width / targetRatio
+        sy = (baseCanvas.height - sHeight) / 2
+    }
+
+    // 1. Draw center-cropped raw frame
+    ctx.drawImage(baseCanvas, sx, sy, sWidth, sHeight, 0, 0, exportWidth, exportHeight)
 
     // 2. Apply Nano Banana filters
     if (neonContext) applyNanoBanana(ctx, exportWidth, exportHeight, neonContext)
@@ -296,16 +314,18 @@ export async function exportImage({
     // 3. Draw Aura Tag branding (AFTER filters for accuracy)
     if (branding) burnBranding(ctx, exportWidth, exportHeight, branding)
 
-    // 4. Draw elements
-    if (strokes.length > 0) drawStrokes(ctx, strokes, xScale, yScale, sizeScale)
+    // 4. Draw elements (Uniform Scaling for 1:1 Parity)
+    const scale = exportWidth / displayWidth || 1
+
+    if (strokes.length > 0) drawStrokes(ctx, strokes, scale)
     const sorted = [...elements].sort((a, b) => {
         const o = { sticker: 0, emoji: 1, text: 2 }
         return (o[a.type] || 0) - (o[b.type] || 0)
     })
     sorted.forEach(el => {
-        if (el.type === 'sticker') drawSticker(ctx, el, xScale, yScale, sizeScale)
-        else if (el.type === 'emoji') drawEmoji(ctx, el, xScale, yScale, sizeScale)
-        else if (el.type === 'text') drawText(ctx, el, xScale, yScale, sizeScale)
+        if (el.type === 'sticker') drawSticker(ctx, el, scale)
+        else if (el.type === 'emoji') drawEmoji(ctx, el, scale)
+        else if (el.type === 'text') drawText(ctx, el, scale)
     })
 
     // Phase 2: Memory Revolution (Blob Engine)
