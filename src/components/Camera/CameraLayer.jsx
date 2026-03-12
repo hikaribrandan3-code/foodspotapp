@@ -4,12 +4,11 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import './CameraLayer.css'
 
 /**
- * CameraLayer Component - CamTech v1.8
- * Fullscreen camera with filters, flip, flash, shutter
- * + Persistent Close (X) button in top-left
+ * CameraLayer Component - CamTech v1.9
+ * Fullscreen camera with "Airy" UI — pill moved to top-left
+ * Synchronized branding with ExportEngine
  */
 
-// 10 filter definitions
 const FILTERS = [
     { id: 'original', label: 'Original', color: '#888' },
     { id: 'warm', label: 'Warm', color: '#e8a87c' },
@@ -23,7 +22,6 @@ const FILTERS = [
     { id: 'fade', label: 'Fade', color: '#a8a0b4' }
 ]
 
-// Flash icon states
 const FLASH_ICONS = {
     off: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -73,26 +71,20 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
     const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
-    // Filter toast state
     const [showFilterToast, setShowFilterToast] = useState(false)
     const [filterToastName, setFilterToastName] = useState('')
     const toastTimeoutRef = useRef(null)
-
-    // Capture state
     const [isCapturing, setIsCapturing] = useState(false)
 
-    // Pinch-to-zoom state
     const initialPinchDistanceRef = useRef(0)
     const initialZoomRef = useRef(1)
 
-    // Calculate distance between two touch points
     const getTouchDistance = (touches) => {
         const dx = touches[0].clientX - touches[1].clientX
         const dy = touches[0].clientY - touches[1].clientY
         return Math.sqrt(dx * dx + dy * dy)
     }
 
-    // Handle pinch start on video
     const handlePinchStart = (e) => {
         if (e.touches && e.touches.length === 2 && zoomSupported) {
             e.preventDefault()
@@ -101,7 +93,6 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
         }
     }
 
-    // Handle pinch move on video
     const handlePinchMove = (e) => {
         if (e.touches && e.touches.length === 2 && zoomSupported && initialPinchDistanceRef.current > 0) {
             e.preventDefault()
@@ -112,12 +103,10 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
         }
     }
 
-    // Handle pinch end
     const handlePinchEnd = () => {
         initialPinchDistanceRef.current = 0
     }
 
-    // Handle shutter press - capture and transition to editor
     const handleShutter = async () => {
         if (isCapturing) return
         setIsCapturing(true)
@@ -133,84 +122,40 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
         }
     }
 
-    // Placeholder shutter sound
     const playShutterSound = () => {
-        // Create oscillator for click sound
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
             const oscillator = audioCtx.createOscillator()
             const gainNode = audioCtx.createGain()
-
             oscillator.connect(gainNode)
             gainNode.connect(audioCtx.destination)
-
             oscillator.frequency.value = 1000
             oscillator.type = 'sine'
             gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime)
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1)
-
             oscillator.start(audioCtx.currentTime)
             oscillator.stop(audioCtx.currentTime + 0.1)
-        } catch (e) {
-            // Audio not supported - silent capture
-        }
+        } catch (e) { }
     }
 
-    // Handle settings gear tap
     const handleSettingsClick = () => {
-        if (onOpenSettings) {
-            onOpenSettings()
-        }
+        if (onOpenSettings) onOpenSettings()
     }
 
-    // Handle filter selection
     const handleFilterSelect = (filterId) => {
         setFilter(filterId)
     }
 
-    // Handle flip camera
-    const handleFlip = () => {
-        flipCamera()
-    }
+    const handleFlip = () => flipCamera()
 
-    // Handle flash cycle
-    const handleFlashCycle = () => {
-        cycleFlash()
-    }
+    const handleFlashCycle = () => cycleFlash()
 
     return (
         <div className="camera-layer">
-            {/* Close (X) button - top left, always visible */}
-            <button
-                onClick={onClose}
-                aria-label="Close"
-                style={{
-                    position: 'absolute',
-                    top: '16px',
-                    left: '16px',
-                    width: '44px',
-                    height: '44px',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    backdropFilter: 'blur(10px)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    zIndex: 200
-                }}
-            >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-            </button>
-
             {/* Hidden canvas for capture */}
             <canvas ref={canvasRef} className="capture-canvas" />
 
-            {/* Live camera preview with filter applied */}
+            {/* Live camera preview */}
             <video
                 ref={videoRef}
                 className="camera-preview"
@@ -234,11 +179,40 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 </div>
             )}
 
-            {/* ── Location Pill (Global) ── */}
+            {/* ── TOP LEFT: Close Button ── */}
+            <button
+                onClick={onClose}
+                aria-label="Close"
+                style={{
+                    position: 'absolute',
+                    top: '16px',
+                    left: '16px',
+                    width: '44px',
+                    height: '44px',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    zIndex: 200
+                }}
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+
+            {/* ── TOP LEFT: Location Pill (Below Close) ── */}
+            {/* AIRY UI: 72px from top (16 + 44 + 12 gap), clear of all buttons */}
             <div style={{
                 position: 'absolute',
-                bottom: 'calc(92px + env(safe-area-inset-bottom, 0px))',
-                left: '20px',
+                top: '72px',
+                left: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
@@ -250,7 +224,6 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 color: '#fff',
                 zIndex: 10,
             }}>
-                {/* Map Pin Icon */}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
                 </svg>
@@ -264,7 +237,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 </span>
             </div>
 
-            {/* Settings gear - temporarily hidden per user request */}
+            {/* Settings gear — hidden */}
             <button
                 className="settings-button"
                 onClick={handleSettingsClick}
@@ -279,7 +252,6 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
 
             {/* Right toolbar */}
             <div className={`toolbar toolbar-${toolPosition === 'left' ? 'right' : 'left'}-side`}>
-                {/* Flip camera - functional */}
                 <button className="toolbar-button" onClick={handleFlip} aria-label="Flip Camera">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
@@ -289,7 +261,6 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                         <path d="m6 2 3 3-3 3" />
                     </svg>
                 </button>
-                {/* Flash - cycles through modes */}
                 <button
                     className={`toolbar-button ${flashMode !== 'off' ? 'toolbar-button-active' : ''}`}
                     onClick={handleFlashCycle}
@@ -298,10 +269,9 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 >
                     {FLASH_ICONS[flashMode]}
                 </button>
-
             </div>
 
-            {/* Bottom Control Bar - Instagram style */}
+            {/* Bottom Control Bar */}
             <div style={{
                 position: 'absolute',
                 bottom: '60px',
@@ -314,10 +284,8 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 zIndex: 100,
                 padding: '0 24px'
             }}>
-                {/* Left spacer (for gallery in future) */}
                 <div style={{ width: '48px' }} />
 
-                {/* Shutter button - CENTER - PRIMARY */}
                 <button
                     onClick={handleShutter}
                     disabled={!isReady}
@@ -342,16 +310,12 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                     }} />
                 </button>
 
-                {/* Filter button - RIGHT - SECONDARY */}
                 <button
                     onClick={() => {
-                        // Cycle through filters
                         const currentIndex = FILTERS.findIndex(f => f.id === selectedFilter)
                         const nextIndex = (currentIndex + 1) % FILTERS.length
                         const nextFilter = FILTERS[nextIndex]
                         handleFilterSelect(nextFilter.id)
-
-                        // Show filter name toast
                         setFilterToastName(nextFilter.label)
                         setShowFilterToast(true)
                         if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
@@ -379,7 +343,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 </button>
             </div>
 
-            {/* Filter name toast */}
+            {/* Filter toast */}
             {showFilterToast && (
                 <div style={{
                     position: 'absolute',

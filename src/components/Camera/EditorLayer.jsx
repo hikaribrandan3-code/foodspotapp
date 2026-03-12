@@ -308,46 +308,49 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     // Handle Done button - export preview and show DualPostScreen
     const handleDone = useCallback(async () => {
         if (!baseCanvasRef.current || !imageData) return
-
         setIsExporting(true)
 
         try {
-            // [FIX] Force-close text editor and blur before showing Preview
             setIsEditingText(false)
             setActiveTextId(null)
             if (document.activeElement && document.activeElement !== document.body) {
                 document.activeElement.blur()
             }
 
-            // --- GOD-TIER HIGH-RES RECONSTRUCTION ---
-            // We must reconstruct the original high-res frame to avoid the screen-resized bottleneck
+            // TRUE RECT: Get actual container dimensions
+            const containerRect = canvasContainerRef.current.getBoundingClientRect()
+
+            // High-res reconstruction
             const highResCanvas = document.createElement('canvas')
-            const highResCtx = highResCanvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
+            const highResCtx = highResCanvas.getContext('2d', {
+                colorSpace: 'display-p3',
+                willReadFrequently: true
+            })
 
             const img = new Image()
-            const imgP = new Promise((resolve, reject) => {
-                img.onload = () => resolve()
+            await new Promise((resolve, reject) => {
+                img.onload = resolve
                 img.onerror = reject
+                img.src = imageData.objectURL || imageData
             })
-            img.src = imageData.objectURL || imageData
-            await imgP
 
-            // Set to original hardware resolution
             highResCanvas.width = img.width
             highResCanvas.height = img.height
             highResCtx.drawImage(img, 0, 0)
 
+            // Pass TRUE container rect, not display dimensions
             const { objectURL, blob } = await exportPreview({
-                baseCanvas: highResCanvas, // Pass the 4K source, not the screen preview
+                baseCanvas: highResCanvas,
                 strokes,
                 elements: placedElements,
-                displayWidth: canvasDimensions.width,
-                displayHeight: canvasDimensions.height,
+                containerRect: { // TRUE RECT passed here
+                    width: containerRect.width,
+                    height: containerRect.height
+                },
                 neonContext,
                 branding: { ...branding, businessName }
             })
 
-            // Store preview result (index.jsx will handle objectURL revocation)
             setDualPostData({ objectURL, blob })
             setShowDualPost(true)
         } catch (error) {
@@ -355,7 +358,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         } finally {
             setIsExporting(false)
         }
-    }, [imageData, strokes, placedElements, canvasDimensions, neonContext, branding, businessName])
+    }, [imageData, strokes, placedElements, neonContext, branding, businessName])
 
     return (
         <div className="editor-layer" ref={containerRef}>

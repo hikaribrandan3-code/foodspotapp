@@ -1,25 +1,13 @@
 /**
- * ExportEngine.js - CamTech v2.5 (Object-Fit Parity)
- * Full layer compositing + Nano Banana Filters + Aura Tag Branding
- * 
- * Pipeline: photo → NanoBanana filter → Aura Tag → strokes → stickers → emojis → text → JPEG Blob
- * 
- * Capped at 4096x4096x to prevent VRAM crashes.
- * FORCED 9:16 PORTRAIT RATIO with center-crop (Object-Fit: Cover)
- * FORCE EVEN DIMENSIONS for hardware encoder compatibility.
+ * ExportEngine.js - CamTech v2.6 (True Rect Fix)
+ * Eliminates 5% vertical drift by using container-derived aspect ratios
+ * Synchronized 9:16 center-crop with UI layer
  */
-
-// ============================================
-// CONSTANTS
-// ============================================
 
 const MAX_EXPORT_WIDTH = 4096
 const MAX_EXPORT_HEIGHT = 4096
 
-const BRUSH_SIZES = {
-    small: 4,
-    medium: 8
-}
+const BRUSH_SIZES = { small: 4, medium: 8 }
 
 const FONTS = {
     classic: '-apple-system, BlinkMacSystemFont, sans-serif',
@@ -29,10 +17,6 @@ const FONTS = {
     condensed: 'Arial Narrow, sans-serif',
     script: 'Snell Roundhand, cursive'
 }
-
-// ============================================
-// 🍌 NANO BANANA FILTERS (Pixel-Level)
-// ============================================
 
 function clamp(val) {
     return Math.max(0, Math.min(255, Math.round(val)))
@@ -58,7 +42,9 @@ function applyFoodPornFilter(ctx, width, height) {
         const py = Math.floor((i / 4) / width)
         const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2)
         const vignette = 1 - (dist / maxDist) * 0.35
-        data[i] = clamp(r * vignette); data[i + 1] = clamp(g * vignette); data[i + 2] = clamp(b * vignette)
+        data[i] = clamp(r * vignette)
+        data[i + 1] = clamp(g * vignette)
+        data[i + 2] = clamp(b * vignette)
     }
     ctx.putImageData(imageData, 0, 0)
 }
@@ -72,12 +58,16 @@ function applyNeonGlowFilter(ctx, width, height) {
         g = clamp(((g / 255 - 0.5) * 1.30 + 0.5) * 255)
         b = clamp(((b / 255 - 0.5) * 1.30 + 0.5) * 255)
         const lum = 0.299 * r + 0.587 * g + 0.114 * b
-        r = clamp(lum + (r - lum) * 1.40); g = clamp(lum + (g - lum) * 1.40); b = clamp(lum + (b - lum) * 1.40)
+        r = clamp(lum + (r - lum) * 1.40)
+        g = clamp(lum + (g - lum) * 1.40)
+        b = clamp(lum + (b - lum) * 1.40)
         const cos = Math.cos(15 * Math.PI / 180), sin = Math.sin(15 * Math.PI / 180)
         const rr = clamp(r * (0.213 + cos * 0.787 - sin * 0.213) + g * (0.715 - cos * 0.715 - sin * 0.715) + b * (0.072 - cos * 0.072 + sin * 0.928))
         const gg = clamp(r * (0.213 - cos * 0.213 + sin * 0.143) + g * (0.715 + cos * 0.285 + sin * 0.140) + b * (0.072 - cos * 0.072 - sin * 0.283))
         const bb = clamp(r * (0.213 - cos * 0.213 - sin * 0.787) + g * (0.715 - cos * 0.715 + sin * 0.715) + b * (0.072 + cos * 0.928 + sin * 0.072))
-        data[i] = clamp(rr * 0.95 + 8); data[i + 1] = clamp(gg * 0.95 + 5); data[i + 2] = clamp(bb * 0.95 + 12)
+        data[i] = clamp(rr * 0.95 + 8)
+        data[i + 1] = clamp(gg * 0.95 + 5)
+        data[i + 2] = clamp(bb * 0.95 + 12)
     }
     ctx.putImageData(imageData, 0, 0)
     const grainData = ctx.createImageData(width, height)
@@ -87,7 +77,8 @@ function applyNeonGlowFilter(ctx, width, height) {
         grainData.data[i + 3] = 10
     }
     const tempCanvas = document.createElement('canvas')
-    tempCanvas.width = width; tempCanvas.height = height
+    tempCanvas.width = width
+    tempCanvas.height = height
     tempCanvas.getContext('2d').putImageData(grainData, 0, 0)
     ctx.drawImage(tempCanvas, 0, 0)
 }
@@ -97,42 +88,55 @@ export function applyNanoBanana(ctx, width, height, context) {
     else if (context === 'event') applyNeonGlowFilter(ctx, width, height)
 }
 
-// ============================================
-// 🏷️ AURA TAG BRANDING (Fixed Color Accuracy)
-// ============================================
-
+/**
+ * Aura Tag Branding — EXACT MATCH to CameraLayer UI
+ * Uses identical positioning and styling for consistency
+ */
 function burnBranding(ctx, width, height, branding) {
     if (!branding?.businessName) return
+
     const { businessName } = branding
     const scale = width / 1080
-    const fontSize = Math.round(28 * scale)
-    const pinSize = Math.round(28 * scale)
-    const pillPaddingH = Math.round(28 * scale)
-    const pillPaddingV = Math.round(16 * scale)
-    const pinTextGap = Math.round(12 * scale)
-    const pillRadius = Math.round(40 * scale)
+
+    // EXACT MATCH to CameraLayer.jsx styling
+    const fontSize = Math.round(11 * scale) // 11px base
+    const pinSize = Math.round(12 * scale)  // 12px svg
+    const pillPaddingH = Math.round(12 * scale) // 6px * 2
+    const pillPaddingV = Math.round(6 * scale)  // matches padding
+    const pinTextGap = Math.round(5 * scale)    // 5px gap
 
     ctx.save()
-    ctx.font = `700 ${fontSize}px -apple-system, sans-serif`
+    ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
+
     const textW = ctx.measureText(businessName.toUpperCase()).width
     const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
-    const pillX = Math.round(20 * scale)
-    const pillY = height - Math.round(92 * scale) - pillH
 
+    // EXACT position match: top-left under close button
+    const leftOffset = Math.round(20 * scale)
+    const topOffset = Math.round(72 * scale) // 16px + 44px button + 12px gap
+
+    const pillX = leftOffset
+    const pillY = topOffset
+
+    // Glassmorphism pill background
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
     ctx.shadowBlur = 8 * scale
     ctx.shadowOffsetY = 2 * scale
     ctx.fillStyle = 'rgba(255, 255, 255, 0.22)'
+
+    const r = Math.min(20 * scale, pillH / 2) // 20px border radius
     ctx.beginPath()
-    const r = Math.min(pillRadius, pillH / 2, pillW / 2)
     ctx.roundRect(pillX, pillY, pillW, pillH, r)
     ctx.fill()
 
     ctx.shadowColor = 'transparent'
+
+    // Map pin icon (white)
     const pinX = pillX + pillPaddingH
     const pinCenterY = pillY + pillH / 2
     const pinR = pinSize * 0.35
+
     ctx.fillStyle = '#FFFFFF'
     ctx.beginPath()
     ctx.arc(pinX + pinSize / 2, pinCenterY - pinR * 0.3, pinR, Math.PI, 0, false)
@@ -140,16 +144,15 @@ function burnBranding(ctx, width, height, branding) {
     ctx.closePath()
     ctx.fill()
 
-    ctx.font = `700 ${fontSize}px -apple-system, sans-serif`
+    // Text
+    ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'left'
+    ctx.fillStyle = '#FFFFFF'
     ctx.fillText(businessName.toUpperCase(), pinX + pinSize + pinTextGap, pinCenterY)
+
     ctx.restore()
 }
-
-// ============================================
-// DRAWING FUNCTIONS (Strokes, Stickers, Text)
-// ============================================
 
 function drawStrokes(ctx, strokes, scale = 1) {
     strokes.forEach(stroke => {
@@ -215,13 +218,15 @@ function drawText(ctx, element, scale = 1) {
         for (let i = 1; i < words.length; i++) {
             const testLine = currentLine + ' ' + words[i]
             if (ctx.measureText(testLine).width > maxWidth) {
-                lines.push(currentLine); currentLine = words[i]
+                lines.push(currentLine)
+                currentLine = words[i]
             } else currentLine = testLine
         }
         lines.push(currentLine)
     })
 
-    const lineHeight = fontSize * 1.2, totalHeight = lines.length * lineHeight
+    const lineHeight = fontSize * 1.2
+    const totalHeight = lines.length * lineHeight
     let maxLW = 0
     lines.forEach(l => maxLW = Math.max(maxLW, ctx.measureText(l).width))
 
@@ -241,95 +246,104 @@ function drawText(ctx, element, scale = 1) {
     lines.forEach((line, i) => {
         const ly = startY + i * lineHeight
         if (style.styleMode === 'stroke') {
-            ctx.strokeStyle = color; ctx.lineWidth = 2 * scale; ctx.strokeText(line, 0, ly)
+            ctx.strokeStyle = color
+            ctx.lineWidth = 2 * scale
+            ctx.strokeText(line, 0, ly)
         } else if (style.styleMode === 'background' || style.styleMode === 'highlight') {
             ctx.fillStyle = (color === '#FFFFFF' || color === '#FFCC00') ? '#000' : '#FFF'
             ctx.fillText(line, 0, ly)
         } else {
-            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3 * scale; ctx.fillStyle = color
+            ctx.shadowColor = 'rgba(0,0,0,0.5)'
+            ctx.shadowBlur = 3 * scale
+            ctx.fillStyle = color
             ctx.fillText(line, 0, ly)
         }
     })
     ctx.restore()
 }
 
-// ============================================
-// 📦 MAIN EXPORT PIPELINE (Memory Revolution)
-// ============================================
-
 /**
- * Composites layers into final image Blob.
- * Pipeline: Frame → NanoBanana → Aura Tag → Strokes → Stickers → Emojis → Text
+ * TRUE RECT EXPORT — Eliminates 5% drift
+ * Uses container-derived aspect ratio, not window dimensions
  */
 export async function exportImage({
-    baseCanvas, strokes, elements, displayWidth, displayHeight,
-    neonContext = null, branding = null
+    baseCanvas,
+    strokes,
+    elements,
+    containerRect, // NEW: Pass actual bounding client rect
+    neonContext = null,
+    branding = null
 }) {
-    // Phase 1: Dynamic Aspect Ratio with Even Dimensions
-    const targetAspect = displayWidth / displayHeight || (9 / 16)
+    // TRUE RECT: Use container dimensions, not display/window
+    const targetAspect = containerRect.width / containerRect.height
+
     let exportWidth = baseCanvas.width
     let exportHeight = baseCanvas.height
 
-    // Calculate dimensions based on original but forced to match display aspect
-    // We favor the original width and adjust height to hit the target ratio
+    // Scale to minimum 1080 width while maintaining aspect
     exportWidth = Math.max(1080, exportWidth)
     exportHeight = Math.round(exportWidth / targetAspect)
 
-    // Clip to MAX limits while maintaining ratio
+    // Clip to MAX limits
     if (exportHeight > MAX_EXPORT_HEIGHT) {
         exportHeight = MAX_EXPORT_HEIGHT
         exportWidth = Math.round(exportHeight * targetAspect)
     }
 
-    // EVEN DIMENSION RULE (Hardware Encoder Safety)
+    // EVEN DIMENSIONS (Hardware encoder safety)
     exportWidth = Math.floor(exportWidth / 2) * 2
     exportHeight = Math.floor(exportHeight / 2) * 2
 
     const exportCanvas = document.createElement('canvas')
     exportCanvas.width = exportWidth
     exportCanvas.height = exportHeight
-    const ctx = exportCanvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
 
-    // --- OBJECT-FIT: COVER MATH (Center-Crop) ---
+    const ctx = exportCanvas.getContext('2d', {
+        colorSpace: 'display-p3',
+        willReadFrequently: true
+    })
+
+    // SYNCED 9:16 CENTER-CROP (Matches UI object-fit: cover exactly)
     const imgAspect = baseCanvas.width / baseCanvas.height
-    // Re-calculate precise ratio for the crop math
-    const cropTargetRatio = exportWidth / exportHeight
+
     let sx = 0, sy = 0, sWidth = baseCanvas.width, sHeight = baseCanvas.height
 
-    if (imgAspect > cropTargetRatio) {
-        // Image is wider - fit to height, crop sides
-        sWidth = baseCanvas.height * cropTargetRatio
+    if (imgAspect > targetAspect) {
+        // Image is wider — fit to height, crop sides
+        sWidth = baseCanvas.height * targetAspect
         sx = (baseCanvas.width - sWidth) / 2
     } else {
-        // Image is taller - fit to width, crop top/bottom
-        sHeight = baseCanvas.width / targetRatio
+        // Image is taller — fit to width, crop top/bottom
+        sHeight = baseCanvas.width / targetAspect
         sy = (baseCanvas.height - sHeight) / 2
     }
 
-    // 1. Draw center-cropped raw frame
+    // Draw center-cropped frame
     ctx.drawImage(baseCanvas, sx, sy, sWidth, sHeight, 0, 0, exportWidth, exportHeight)
 
-    // 2. Apply Nano Banana filters
+    // Apply filter
     if (neonContext) applyNanoBanana(ctx, exportWidth, exportHeight, neonContext)
 
-    // 3. Draw Aura Tag branding (AFTER filters for accuracy)
+    // Burn branding (top-left, matches UI)
     if (branding) burnBranding(ctx, exportWidth, exportHeight, branding)
 
-    // 4. Draw elements (Uniform Scaling for 1:1 Parity)
-    const scale = exportWidth / displayWidth || 1
+    // Draw elements with TRUE scale
+    const scale = exportWidth / containerRect.width
 
     if (strokes.length > 0) drawStrokes(ctx, strokes, scale)
+
     const sorted = [...elements].sort((a, b) => {
         const o = { sticker: 0, emoji: 1, text: 2 }
         return (o[a.type] || 0) - (o[b.type] || 0)
     })
+
     sorted.forEach(el => {
         if (el.type === 'sticker') drawSticker(ctx, el, scale)
         else if (el.type === 'emoji') drawEmoji(ctx, el, scale)
         else if (el.type === 'text') drawText(ctx, el, scale)
     })
 
-    // Phase 2: Memory Revolution (Blob Engine)
+    // Return Blob + ObjectURL (no DataURL)
     return new Promise((resolve, reject) => {
         exportCanvas.toBlob((blob) => {
             if (blob) {
@@ -344,9 +358,6 @@ export async function exportImage({
     })
 }
 
-/**
- * Share the exported image
- */
 export async function shareImage(blob) {
     if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'image.jpg', { type: 'image/jpeg' })] })) {
         try {
