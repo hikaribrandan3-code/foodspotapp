@@ -444,13 +444,14 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
                 {/* Layer 3: Elements Layer - Draggable items */}
                 {/* PATCH 15: Uses elementsInteractive for complete gesture isolation */}
-                <div
-                    className={`elements-layer ${!elementsInteractive ? 'elements-disabled' : ''}`}
-                    style={{
-                        width: canvasDimensions.width || '100%',
-                        height: canvasDimensions.height || '100%',
-                    }}
-                >
+                <div className={`elements-layer ${!elementsInteractive ? 'elements-disabled' : ''}`} style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: !elementsInteractive ? 'none' : 'auto'
+                }}>
                     {placedElements.map((element) => (
                         <DraggableElement
                             key={element.id}

@@ -218,14 +218,11 @@ function DraggableElement({ element, canvasWidth, canvasHeight, onUpdate, onRemo
                 ref={elementRef}
                 className={`draggable-element ${isDragging ? 'dragging' : ''} ${isScaling ? 'scaling' : ''} ${isOverDelete ? 'over-delete' : ''}`}
                 style={{
+                    position: 'absolute',
                     left: `${element.x * 100}%`,
                     top: `${element.y * 100}%`,
-                    transform: `translate(-50%, -50%) scale(${element.scale}) rotate(${element.rotation}deg)`,
-                    transformOrigin: 'center center',
-                    // Invisible padding for larger touch hit area
-                    padding: '24px',
-                    margin: '-24px',
-                    boxSizing: 'content-box'
+                    transform: `translate(-50%, -50%) rotate(${element.rotation}deg) scale(${element.scale})`,
+                    transformOrigin: 'center center'
                 }}
                 onMouseDown={handleDragStart}
                 onTouchStart={handleDragStart}
