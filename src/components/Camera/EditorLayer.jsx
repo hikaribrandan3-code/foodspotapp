@@ -76,11 +76,11 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Render frozen frame to base canvas - <50ms mount
     useEffect(() => {
-        if (!imageData || !baseCanvasRef.current || !containerRef.current) return
+        if (!imageData || !baseCanvasRef.current || !canvasContainerRef.current) return
 
         const canvas = baseCanvasRef.current
         const ctx = canvas.getContext('2d')
-        const container = containerRef.current
+        const container = canvasContainerRef.current
 
         const img = new Image()
         img.onload = () => {
@@ -390,6 +390,32 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                 </button>
+            )}
+
+            {/* ── TOP LEFT: Location Pill (Restored for Editor Parity) ── */}
+            {!showDualPost && (
+                <div style={{
+                    position: 'absolute',
+                    top: '72px',
+                    left: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '6px 12px',
+                    background: 'rgba(255, 255, 255, 0.22)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    borderRadius: '20px',
+                    color: '#fff',
+                    zIndex: 10,
+                }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                    </svg>
+                    <span style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', lineHeight: 1 }}>
+                        {businessName.toUpperCase()}
+                    </span>
+                </div>
             )}
 
             {/* Canvas container - tap to add text */}

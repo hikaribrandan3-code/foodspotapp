@@ -92,11 +92,11 @@ export function applyNanoBanana(ctx, width, height, context) {
  * Aura Tag Branding — EXACT MATCH to CameraLayer UI
  * Uses identical positioning and styling for consistency
  */
-function burnBranding(ctx, width, height, branding) {
+function burnBranding(ctx, width, height, branding, trueScale) {
     if (!branding?.businessName) return
 
     const { businessName } = branding
-    const scale = width / 1080
+    const scale = trueScale || (width / 1080)
 
     // EXACT MATCH to CameraLayer.jsx styling
     const fontSize = Math.round(11 * scale) // 11px base
@@ -324,11 +324,11 @@ export async function exportImage({
     // Apply filter
     if (neonContext) applyNanoBanana(ctx, exportWidth, exportHeight, neonContext)
 
-    // Burn branding (top-left, matches UI)
-    if (branding) burnBranding(ctx, exportWidth, exportHeight, branding)
-
     // Draw elements with TRUE scale
     const scale = exportWidth / containerRect.width
+
+    // Burn branding with TRUE UI scale
+    if (branding) burnBranding(ctx, exportWidth, exportHeight, branding, scale)
 
     if (strokes.length > 0) drawStrokes(ctx, strokes, scale)
 
