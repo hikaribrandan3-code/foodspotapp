@@ -63,7 +63,7 @@ const LazyImage = ({ src, alt, style, className, category = '' }) => {
                         .replace(/[^a-zA-Z0-9 _]/g, '')
                         .replace(/\s+/g, '_')
 
-                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${prefix}${cleanPrompt}?width=1080&height=1080&nologo=true`
+                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${prefix}${cleanPrompt}?width=1080&height=1920&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`
                     setActiveSrc(pollinationsUrl)
                 } else {
                     setActiveSrc(data.image) // Base64 from HF
@@ -72,7 +72,8 @@ const LazyImage = ({ src, alt, style, className, category = '' }) => {
                 console.error('[LazyImage] Invoke Error (Tier 1 Crash):', err)
                 // Emergency Fallback to Tier 2
                 const cleanPrompt = parsedPayload.image_prompt.replace(/\s+/g, '_')
-                setActiveSrc(`https://image.pollinations.ai/prompt/gourmet_food_photography_${cleanPrompt}?width=1080&height=1080&nologo=true`)
+                const seed = Math.floor(Math.random() * 1000000)
+                setActiveSrc(`https://image.pollinations.ai/prompt/gourmet_food_photography_${cleanPrompt}?width=1080&height=1920&nologo=true&seed=${seed}`)
             })
         } else {
             setActiveSrc(src)
@@ -102,7 +103,7 @@ const LazyImage = ({ src, alt, style, className, category = '' }) => {
             const ctx = canvas.getContext('2d');
 
             canvas.width = 1080;
-            canvas.height = 1080; // Universal 1:1 Aspect Ratio (No cropping on IG Grids)
+            canvas.height = 1920; // 9:16 Vertical Ratio (Social Ready)
 
             // 1. Draw Background
             // Maintain aspect ratio cover
@@ -140,26 +141,43 @@ const LazyImage = ({ src, alt, style, className, category = '' }) => {
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
 
-            // Headline (Luxury Kerning)
+            // Headline (Stacked Typography Support)
             if (parsedPayload.headline) {
-                ctx.font = '900 72px Inter, sans-serif';
-                ctx.shadowColor = 'rgba(0,0,0,0.7)';
-                ctx.shadowBlur = 15;
                 const text = parsedPayload.headline.toUpperCase();
-                const letterSpacing = 16;
+                ctx.font = '900 110px Inter, sans-serif'; // Larger font for vertical space
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 25;
 
-                let totalWidth = 0;
-                for (let i = 0; i < text.length; i++) {
-                    totalWidth += ctx.measureText(text[i]).width;
-                    if (i < text.length - 1) totalWidth += letterSpacing;
+                const letterSpacing = 8;
+                const words = text.split(' ');
+                let currentLine = 0;
+                const lineHeight = 130;
+
+                // Simple auto-stack: If word count > 2, or word length > 8, stack some words
+                const chunks = [];
+                if (words.length > 2) {
+                    // Stack them
+                    for (let i = 0; i < words.length; i += 2) {
+                        chunks.push(words.slice(i, i + 2).join(' '));
+                    }
+                } else {
+                    chunks.push(text);
                 }
 
-                let startX = (canvas.width / 2) - (totalWidth / 2);
-                for (let i = 0; i < text.length; i++) {
-                    const charWidth = ctx.measureText(text[i]).width;
-                    ctx.fillText(text[i], startX + (charWidth / 2), 160);
-                    startX += charWidth + letterSpacing;
-                }
+                chunks.forEach((chunk, index) => {
+                    let totalWidth = 0;
+                    for (let i = 0; i < chunk.length; i++) {
+                        totalWidth += ctx.measureText(chunk[i]).width;
+                        if (i < chunk.length - 1) totalWidth += letterSpacing;
+                    }
+
+                    let startX = (canvas.width / 2) - (totalWidth / 2);
+                    for (let i = 0; i < chunk.length; i++) {
+                        const charWidth = ctx.measureText(chunk[i]).width;
+                        ctx.fillText(chunk[i], startX + (charWidth / 2), 240 + (index * lineHeight));
+                        startX += charWidth + letterSpacing;
+                    }
+                });
             }
 
             // Price Tag (Heavy-Weight Layered Shadow)
@@ -232,7 +250,16 @@ const LazyImage = ({ src, alt, style, className, category = '' }) => {
     };
 
     return (
-        <div className={className} style={{ position: 'relative', width: '100%', minHeight: '150px', background: '#F3F4F6', ...style, border: 'none', borderRadius: 12, overflow: 'hidden' }}>
+        <div className={className} style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '9/16',
+            background: '#F3F4F6',
+            ...style,
+            border: 'none',
+            borderRadius: 12,
+            overflow: 'hidden'
+        }}>
             <canvas ref={canvasRef} style={{ display: 'none' }} />
 
             {status === 'loading' && (
@@ -272,7 +299,14 @@ const LazyImage = ({ src, alt, style, className, category = '' }) => {
                     <img
                         src={compositeDataUrl}
                         alt={alt}
-                        style={{ width: '100%', display: 'block', objectFit: 'cover' }}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'block',
+                            objectFit: 'cover',
+                            position: 'relative',
+                            zIndex: 1
+                        }}
                     />
 
                     {/* Native Download Overlay */}
@@ -285,7 +319,8 @@ const LazyImage = ({ src, alt, style, className, category = '' }) => {
                             border: 'none', borderRadius: '50%', width: 40, height: 40,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             cursor: 'pointer', color: 'white', transition: 'all 0.2s',
-                            opacity: downloading ? 0.5 : 1
+                            opacity: downloading ? 0.5 : 1,
+                            zIndex: 10 // Ensure download icon is on top
                         }}
                     >
                         {downloading ? (
