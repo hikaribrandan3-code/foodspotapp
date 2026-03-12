@@ -94,22 +94,27 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             let renderWidth, renderHeight
             let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height
 
-            // object-fit: cover logic
-            if (imgAspect > containerAspect) {
-                // Image is wider - fit to height, crop sides
-                renderHeight = containerHeight
-                renderWidth = containerWidth
+            // MASTER NEGATIVE: Enforce 9:16 Viewport Math
+            // Regardless of source aspect (3:4 or 4:3), we center-crop to 9:16
+            const targetAspect = 9 / 16
+            renderWidth = containerWidth
+            renderHeight = containerWidth / targetAspect
 
+            if (renderHeight > containerHeight) {
+                renderHeight = containerHeight
+                renderWidth = containerHeight * targetAspect
+            }
+
+            // Calculate source crop (center-crop from master image to 9:16)
+            if (imgAspect > targetAspect) {
+                // Image is wider than 9:16 - crop sides
                 sHeight = img.height
-                sWidth = img.height * containerAspect
+                sWidth = img.height * targetAspect
                 sx = (img.width - sWidth) / 2
             } else {
-                // Image is taller - fit to width, crop top/bottom
-                renderWidth = containerWidth
-                renderHeight = containerHeight
-
+                // Image is taller than 9:16 - crop top/bottom
                 sWidth = img.width
-                sHeight = img.width / containerAspect
+                sHeight = img.width / targetAspect
                 sy = (img.height - sHeight) / 2
             }
 
@@ -353,6 +358,12 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
             setDualPostData({ objectURL, blob })
             setShowDualPost(true)
+
+            // MASTER NEGATIVE: Performance Polish
+            // Revoke the master negative URL now that we've generated the high-res 9:16 export
+            if (imageData?.objectURL) {
+                URL.revokeObjectURL(imageData.objectURL)
+            }
         } catch (error) {
             console.error('Export failed:', error)
         } finally {
@@ -424,7 +435,16 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 className="canvas-container"
                 ref={canvasContainerRef}
                 onClick={handleCanvasTap}
-                style={showDualPost ? { pointerEvents: 'none' } : undefined}
+                style={{
+                    ...(showDualPost ? { pointerEvents: 'none' } : {}),
+                    aspectRatio: '9/16',
+                    width: '100%',
+                    maxWidth: '100vw',
+                    maxHeight: 'calc(100vw * 16/9)',
+                    margin: 'auto',
+                    overflow: 'hidden',
+                    position: 'relative'
+                }}
             >
                 {/* Layer 1: Base Canvas - Frozen Frame */}
                 <canvas
@@ -628,7 +648,11 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 <DualPostScreen
                     previewDataURL={dualPostData.objectURL}
                     previewBlob={dualPostData.blob}
-                    onClose={() => setShowDualPost(false)}
+                    onClose={() => {
+                        // MASTER NEGATIVE: Final cleanup
+                        if (dualPostData.objectURL) URL.revokeObjectURL(dualPostData.objectURL)
+                        setShowDualPost(false)
+                    }}
                     onComplete={onDone}
                 />
             )}

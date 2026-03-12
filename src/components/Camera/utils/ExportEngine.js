@@ -277,17 +277,13 @@ export async function exportImage({
     neonContext = null,
     branding = null
 }) {
-    // TRUE RECT: Use container dimensions, not display/window
-    const targetAspect = containerRect.width / containerRect.height
+    // MASTER NEGATIVE: Enforce strict 9:16 export aspect
+    const targetAspect = 9 / 16
 
     let exportWidth = baseCanvas.width
-    let exportHeight = baseCanvas.height
+    let exportHeight = Math.round(exportWidth / targetAspect)
 
-    // Scale to minimum 1080 width while maintaining aspect
-    exportWidth = Math.max(1080, exportWidth)
-    exportHeight = Math.round(exportWidth / targetAspect)
-
-    // Clip to MAX limits
+    // Clip to MAX limits (8MP/4K strategy)
     if (exportHeight > MAX_EXPORT_HEIGHT) {
         exportHeight = MAX_EXPORT_HEIGHT
         exportWidth = Math.round(exportHeight * targetAspect)
@@ -306,17 +302,16 @@ export async function exportImage({
         willReadFrequently: true
     })
 
-    // SYNCED 9:16 CENTER-CROP (Matches UI object-fit: cover exactly)
+    // SYNCED 9:16 CENTER-CROP (Matches Editor Viewport Parity)
     const imgAspect = baseCanvas.width / baseCanvas.height
-
     let sx = 0, sy = 0, sWidth = baseCanvas.width, sHeight = baseCanvas.height
 
     if (imgAspect > targetAspect) {
-        // Image is wider — fit to height, crop sides
+        // Master is wider than 9:16 (usual 4:3) - crop sides
         sWidth = baseCanvas.height * targetAspect
         sx = (baseCanvas.width - sWidth) / 2
     } else {
-        // Image is taller — fit to width, crop top/bottom
+        // Master is taller than 9:16 - crop top/bottom
         sHeight = baseCanvas.width / targetAspect
         sy = (baseCanvas.height - sHeight) / 2
     }

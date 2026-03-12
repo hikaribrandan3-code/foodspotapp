@@ -277,7 +277,7 @@ export function useCamera() {
 
         if (flashMode === 'on' || flashMode === 'auto') setTimeout(() => applyFlash('off'), 100)
 
-        // Step 4: Convert to Blob (100% Memory Revolution)
+        // Step 4: Convert to Blob (Master Negative: Full Sensor Data)
         return new Promise((resolve, reject) => {
             canvas.toBlob((blob) => {
                 if (blob) {
@@ -285,7 +285,8 @@ export function useCamera() {
                         blob,
                         objectURL: URL.createObjectURL(blob),
                         width: canvas.width,
-                        height: canvas.height
+                        height: canvas.height,
+                        aspectRatio: canvas.width / canvas.height // Store native aspect
                     })
                 } else {
                     reject(new Error('Failed to create image blob'))

@@ -171,6 +171,48 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 onTouchEnd={handlePinchEnd}
             />
 
+            {/* ── CINEMA MASK: 9:16 Safe Zone Guides ── */}
+            <div className="cinema-mask-overlay" style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                pointerEvents: 'none',
+                zIndex: 5,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    width: '100%',
+                    height: 'calc((100% - (100vw * 16/9)) / 2)',
+                    background: 'rgba(0,0,0,0.4)',
+                    backdropFilter: 'blur(4px)',
+                    display: facingMode === 'environment' ? 'block' : 'none' // Only show if height > width
+                }} />
+                <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    width: '100%',
+                    height: 'calc((100% - (100vw * 16/9)) / 2)',
+                    background: 'rgba(0,0,0,0.4)',
+                    backdropFilter: 'blur(4px)',
+                    display: facingMode === 'environment' ? 'block' : 'none'
+                }} />
+
+                {/* 9:16 Frame Border (Subtle) */}
+                <div style={{
+                    width: '100vw',
+                    height: 'calc(100vw * 16/9)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    boxSizing: 'border-box'
+                }} />
+            </div>
+
             {/* Error state */}
             {error && (
                 <div className="camera-error">

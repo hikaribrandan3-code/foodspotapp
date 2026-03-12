@@ -8,7 +8,7 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 
 // ─── Creative Director OS: Composite Canvas Image ───
-const LazyImage = ({ src, alt, style, className }) => {
+const LazyImage = ({ src, alt, style, className, category = '' }) => {
     const [status, setStatus] = useState('loading') // 'loading', 'loaded', 'error'
     const [activeSrc, setActiveSrc] = useState(null)
     const [compositeDataUrl, setCompositeDataUrl] = useState(null)
@@ -51,17 +51,28 @@ const LazyImage = ({ src, alt, style, className }) => {
                 body: { prompt: parsedPayload.image_prompt }
             }).then(({ data, error }) => {
                 if (error || !data?.image) {
-                    console.error('[LazyImage] HF Proxy Error, falling back:', error)
-                    const keywords = parsedPayload.image_prompt.replace(/_/g, ',').replace(/\s+/g, ',').split('?')[0]
-                    setActiveSrc(`https://loremflickr.com/800/1400/${keywords}`)
+                    console.error('[LazyImage] Tier 1 (HF) Failed, routing to Tier 2 (Pollinations):', error)
+
+                    // TIER 2: Fast AI (Pollinations) with Context Injection
+                    const cat = (category || '').toLowerCase()
+                    const prefix = (cat.includes('club') || cat.includes('disco') || cat.includes('bar') || cat.includes('noche'))
+                        ? 'luxury_cocktail_nightlife_photography_'
+                        : 'gourmet_food_photography_professional_'
+
+                    const cleanPrompt = parsedPayload.image_prompt
+                        .replace(/[^a-zA-Z0-9 _]/g, '')
+                        .replace(/\s+/g, '_')
+
+                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${prefix}${cleanPrompt}?width=1080&height=1080&nologo=true`
+                    setActiveSrc(pollinationsUrl)
                 } else {
                     setActiveSrc(data.image) // Base64 from HF
                 }
             }).catch(err => {
-                console.error('[LazyImage] Invoke Error:', err)
-                // Fallback to Pollinations or LoremFlickr
-                const keywords = parsedPayload.image_prompt.replace(/ /g, '_')
-                setActiveSrc(`https://image.pollinations.ai/prompt/${keywords}?width=800&height=1400&nologo=true`)
+                console.error('[LazyImage] Invoke Error (Tier 1 Crash):', err)
+                // Emergency Fallback to Tier 2
+                const cleanPrompt = parsedPayload.image_prompt.replace(/\s+/g, '_')
+                setActiveSrc(`https://image.pollinations.ai/prompt/gourmet_food_photography_${cleanPrompt}?width=1080&height=1080&nologo=true`)
             })
         } else {
             setActiveSrc(src)
@@ -183,8 +194,12 @@ const LazyImage = ({ src, alt, style, className }) => {
         };
 
         img.onerror = () => {
-            console.error("Image failed to load for canvas");
-            setStatus('error');
+            console.error("Image failed to load (Tier 2 Failed) - Routing to Tier 3 (Rescue Hero)");
+            // TIER 3: The Ultimate Fail-safe
+            // High-quality static asset to prevent "Broken/Cat" UI
+            const rescueHero = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1080&q=80"
+            setCompositeDataUrl(rescueHero);
+            setStatus('loaded');
         };
     }, [activeSrc, parsedPayload]);
 
@@ -964,13 +979,12 @@ ${salesContext}`
 
                             {/* AI Generated Flyer Preview */}
                             {msg.generatedImage && (
-                                <div style={{ marginTop: 12, overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)' }}>
-                                    <LazyImage
-                                        src={msg.generatedImage}
-                                        alt="AI Generated Flyer"
-                                        style={{ width: '100%', minHeight: '200px' }}
-                                    />
-                                </div>
+                                <LazyImage
+                                    src={msg.generatedImage}
+                                    category={tenantData?.business_category}
+                                    alt="Generated Design"
+                                    style={{ marginTop: 12 }}
+                                />
                             )}
 
                             {/* Action buttons for AI responses (removed as Open Claw automates syncing now) */}
