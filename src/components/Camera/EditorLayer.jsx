@@ -307,7 +307,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Handle Done button - export preview and show DualPostScreen
     const handleDone = useCallback(async () => {
-        if (!baseCanvasRef.current) return
+        if (!baseCanvasRef.current || !imageData) return
 
         setIsExporting(true)
 
@@ -319,8 +319,26 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 document.activeElement.blur()
             }
 
+            // --- GOD-TIER HIGH-RES RECONSTRUCTION ---
+            // We must reconstruct the original high-res frame to avoid the screen-resized bottleneck
+            const highResCanvas = document.createElement('canvas')
+            const highResCtx = highResCanvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
+
+            const img = new Image()
+            const imgP = new Promise((resolve, reject) => {
+                img.onload = () => resolve()
+                img.onerror = reject
+            })
+            img.src = imageData.objectURL || imageData
+            await imgP
+
+            // Set to original hardware resolution
+            highResCanvas.width = img.width
+            highResCanvas.height = img.height
+            highResCtx.drawImage(img, 0, 0)
+
             const { objectURL, blob } = await exportPreview({
-                baseCanvas: baseCanvasRef.current,
+                baseCanvas: highResCanvas, // Pass the 4K source, not the screen preview
                 strokes,
                 elements: placedElements,
                 displayWidth: canvasDimensions.width,
@@ -337,7 +355,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         } finally {
             setIsExporting(false)
         }
-    }, [strokes, placedElements, canvasDimensions, neonContext, branding])
+    }, [imageData, strokes, placedElements, canvasDimensions, neonContext, branding, businessName])
 
     return (
         <div className="editor-layer" ref={containerRef}>
