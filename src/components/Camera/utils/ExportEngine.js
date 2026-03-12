@@ -170,10 +170,10 @@ function drawStrokes(ctx, strokes, scale = 1) {
     })
 }
 
-function drawSticker(ctx, element, scale = 1) {
+function drawSticker(ctx, element, exportWidth, exportHeight, scale = 1) {
     const fontSize = 48 * element.scale * scale
     ctx.save()
-    ctx.translate(element.x * scale, element.y * scale)
+    ctx.translate(element.x * exportWidth, element.y * exportHeight)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontSize}px -apple-system, sans-serif`
     ctx.textAlign = 'center'
@@ -182,10 +182,10 @@ function drawSticker(ctx, element, scale = 1) {
     ctx.restore()
 }
 
-function drawEmoji(ctx, element, scale = 1) {
+function drawEmoji(ctx, element, exportWidth, exportHeight, scale = 1) {
     const fontSize = 48 * element.scale * scale
     ctx.save()
-    ctx.translate(element.x * scale, element.y * scale)
+    ctx.translate(element.x * exportWidth, element.y * exportHeight)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontSize}px -apple-system, sans-serif`
     ctx.textAlign = 'center'
@@ -194,7 +194,7 @@ function drawEmoji(ctx, element, scale = 1) {
     ctx.restore()
 }
 
-function drawText(ctx, element, scale = 1) {
+function drawText(ctx, element, exportWidth, exportHeight, scale = 1) {
     const style = element.data?.style || {}
     const text = element.data?.text || ''
     const fontFamily = FONTS[style.fontId] || FONTS.classic
@@ -203,7 +203,7 @@ function drawText(ctx, element, scale = 1) {
     const color = style.color || '#fff'
 
     ctx.save()
-    ctx.translate(element.x * scale, element.y * scale)
+    ctx.translate(element.x * exportWidth, element.y * exportHeight)
     ctx.rotate((element.rotation * Math.PI) / 180)
     ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
     ctx.textAlign = style.textAlign || 'center'
@@ -338,9 +338,9 @@ export async function exportImage({
     })
 
     sorted.forEach(el => {
-        if (el.type === 'sticker') drawSticker(ctx, el, scale)
-        else if (el.type === 'emoji') drawEmoji(ctx, el, scale)
-        else if (el.type === 'text') drawText(ctx, el, scale)
+        if (el.type === 'sticker') drawSticker(ctx, el, exportWidth, exportHeight, scale)
+        else if (el.type === 'emoji') drawEmoji(ctx, el, exportWidth, exportHeight, scale)
+        else if (el.type === 'text') drawText(ctx, el, exportWidth, exportHeight, scale)
     })
 
     // Return Blob + ObjectURL (no DataURL)

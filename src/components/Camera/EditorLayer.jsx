@@ -172,10 +172,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Handle tap on existing text element (re-edit)
     const handleTextElementTap = useCallback((element) => {
-        // Open editor with existing text
+        // Open editor with existing text - convert normalized back to screen pixels
         setTextInputPosition({
-            x: canvasOffset.x + element.x,
-            y: canvasOffset.y + element.y
+            x: canvasOffset.x + element.x * canvasDimensions.width,
+            y: canvasOffset.y + element.y * canvasDimensions.height
         })
         setInitialTextValue(element.data?.text || '')
         setInitialTextStyle(element.data?.style || null)
@@ -197,8 +197,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             const newElement = {
                 id: `text-${Date.now()}`,
                 type: 'text',
-                x: canvasDimensions.width / 2,
-                y: canvasDimensions.height / 2,
+                x: 0.5, // Normalized Center (Atomic Origin)
+                y: 0.5,
                 scale: 1,
                 rotation: 0,
                 data: { text, style }
@@ -282,8 +282,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         const newElement = {
             id: `sticker-${Date.now()}`,
             type: 'sticker',
-            x: canvasDimensions.width / 2,
-            y: canvasDimensions.height / 2,
+            x: 0.5, // Normalized Center (Atomic Origin)
+            y: 0.5,
             scale: 1,
             rotation: 0,
             data: { stickerId: sticker.id, content: sticker.icon }
@@ -296,8 +296,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         const newElement = {
             id: `emoji-${Date.now()}`,
             type: 'emoji',
-            x: canvasDimensions.width / 2,
-            y: canvasDimensions.height / 2,
+            x: 0.5, // Normalized Center (Atomic Origin)
+            y: 0.5,
             scale: 1,
             rotation: 0,
             data: { emojiChar }
@@ -455,6 +455,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                         <DraggableElement
                             key={element.id}
                             element={element}
+                            canvasWidth={canvasDimensions.width}
+                            canvasHeight={canvasDimensions.height}
                             onUpdate={(updates) => updateElement(element.id, updates)}
                             onRemove={() => removeElement(element.id)}
                             onTap={element.type === 'text' ? () => handleTextElementTap(element) : undefined}

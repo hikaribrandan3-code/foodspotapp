@@ -6,7 +6,7 @@ import './DraggableElement.css'
  * Handles drag, pinch-to-scale, and rotation for text, stickers, emoji
  * Memoized for performance per PATCH 12
  */
-function DraggableElement({ element, onUpdate, onRemove, onTap, disabled }) {
+function DraggableElement({ element, canvasWidth, canvasHeight, onUpdate, onRemove, onTap, disabled }) {
     // Hook declarations must come before any conditional returns (React rules)
     const elementRef = useRef(null)
     const [isDragging, setIsDragging] = useState(false)
@@ -98,8 +98,8 @@ function DraggableElement({ element, onUpdate, onRemove, onTap, disabled }) {
             hasDraggedRef.current = true
         }
 
-        const newX = elementStartRef.current.x + deltaX
-        const newY = elementStartRef.current.y + deltaY
+        const newX = elementStartRef.current.x + (deltaX / canvasWidth)
+        const newY = elementStartRef.current.y + (deltaY / canvasHeight)
 
         onUpdate({ x: newX, y: newY })
 
@@ -218,8 +218,8 @@ function DraggableElement({ element, onUpdate, onRemove, onTap, disabled }) {
                 ref={elementRef}
                 className={`draggable-element ${isDragging ? 'dragging' : ''} ${isScaling ? 'scaling' : ''} ${isOverDelete ? 'over-delete' : ''}`}
                 style={{
-                    left: `${element.x}px`,
-                    top: `${element.y}px`,
+                    left: `${element.x * 100}%`,
+                    top: `${element.y * 100}%`,
                     transform: `translate(-50%, -50%) scale(${element.scale}) rotate(${element.rotation}deg)`,
                     transformOrigin: 'center center',
                     // Invisible padding for larger touch hit area
