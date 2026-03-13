@@ -323,7 +323,7 @@ export default function FoodSpotAI() {
                    Respond ONLY with the text data in JSON format wrapped in ||| pipes.
                    Example: ||| { "type": "EVENT_DRAFT", "data": { "title": "Reggaeton Night", "price": 15000, "capacity": 100 } } |||`
                 : `## CORE IDENTITY
-You are the venue's Strategic COO. You are a high-level business strategist who analyzes ROI, traffic patterns, and brand alignment. You stop at nothing to make the venue profitable.
+You are the venue's Strategy Assistant. You are a high-level business partner who focus on reducing stress and increasing sales. You analyze ROI, traffic patterns, and brand alignment to make the venue profitable.
 
 THE STRATEGIC PROTOCOL
 1. STOP generating image prompts. Do not use PROXY:// anymore.
@@ -393,7 +393,7 @@ Rules:
                                 {getTimeGreeting()}, {businessName}
                             </div>
                             <div style={{ fontSize: 18, color: '#6b7280', maxWidth: '400px', lineHeight: 1.5 }}>
-                                Soy tu COO Estratégico. ¿En qué objetivo de negocio nos enfocamos hoy?
+                                Menos estrés, más ventas. Soy tu Asistente de Estrategia. ¿Qué desafío resolvemos hoy?
                             </div>
                         </div>
                     )}
