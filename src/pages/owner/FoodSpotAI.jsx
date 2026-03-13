@@ -360,14 +360,15 @@ Never let a user ship bad creative without a warning.`
             if (data?.reply) {
                 let aiResponse = data.reply
                 let generatedImage = null
-                const clawMatch = aiResponse.match(/\|\|\|([\s\S]*?)\|\|\|/)
-                if (clawMatch) {
-                    try {
-                        const parsed = JSON.parse(clawMatch[1].trim())
-                        generatedImage = parsed.patch?.['promos.items']?.image
-                        aiResponse = aiResponse.replace(/\|\|\|[\s\S]*?\|\|\|/g, '').trim()
-                    } catch (e) { console.error(e) }
+
+                // NEW: Scan for the PROXY:// protocol line directly
+                const proxyMatch = aiResponse.match(/(PROXY:\/\/.*)/)
+                if (proxyMatch) {
+                    generatedImage = proxyMatch[1].trim()
+                    // Remove the raw PROXY:// line from the text chat for clean UI
+                    aiResponse = aiResponse.replace(proxyMatch[1], '').trim()
                 }
+
                 setMessages([...newMessages, { role: 'assistant', content: aiResponse, generatedImage }])
             }
         } catch (e) {
