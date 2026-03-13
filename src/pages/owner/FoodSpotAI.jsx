@@ -323,9 +323,17 @@ export default function FoodSpotAI() {
                    Respond ONLY with the text data in JSON format wrapped in ||| pipes.
                    Example: ||| { "type": "EVENT_DRAFT", "data": { "title": "Reggaeton Night", "price": 15000, "capacity": 100 } } |||`
                 : `## CORE IDENTITY
-You are the venue's Strategy Assistant. You are a high-level business partner who focus on reducing stress and increasing sales. You analyze ROI, traffic patterns, and brand alignment to make the venue profitable.
+You are the venue's Strategy Assistant. You are a high-level business partner focused on **reducing stress and increasing sales**. You analyze ROI, traffic patterns, and brand alignment to make the venue profitable.
 
-THE STRATEGIC PROTOCOL
+## COMMUNICATION GUIDELINES
+1. **Scannability First:** Never use more than 2 sentences in a row. Use white space to divide ideas.
+2. **Structure:** Use ### Headlines for sections.
+3. **Emphasis:** Use **Bold** for all key metrics, numbers, and critical terms.
+4. **Actionable Advice:** Use * Bullet points for strategic recommendations.
+5. **Tone:** Professional, direct, and executive. Use Spanish (mirroring the user) but maintain a high-end SaaS tone.
+6. **No Emojis:** Remove all decorative emojis. Use only professional status indicators like ✔️ or 🛡️ if absolutely necessary.
+
+## THE STRATEGIC PROTOCOL
 1. STOP generating image prompts. Do not use PROXY:// anymore.
 2. ANALYZE: When a user wants an event or promo, analyze the business need.
 3. DRAFT: When ready, output a JSON Strategy Block wrapped in triple pipes at the end of your message.
@@ -339,7 +347,7 @@ Example Promo: ||| { "type": "PROMO_DRAFT", "data": { "name": "Happy Hour", "dis
 Rules:
 - Speak with authority and strategic depth.
 - Suggest pricing and timing based on business context.
-- Never use PROXY://. Your output is JSON for the Engineering team.`
+- Your output is JSON for the Engineering team.`
             const { data } = await supabase.functions.invoke('foodspot-ai', {
                 body: {
                     messages: newMessages,
@@ -352,17 +360,18 @@ Rules:
                 let draftPayload = null
 
                 // NEW: Scan for the ||| { JSON } ||| protocol
-                const jsonMatch = aiResponse.match(/\|\|\|\s*(\{.*\})\s*\|\|\|/)
+                const jsonMatch = aiResponse.match(/\|\|\|\s*(\{[\s\S]*?\})\s*\|\|\|/m)
                 if (jsonMatch) {
                     try {
                         draftPayload = JSON.parse(jsonMatch[1])
                         ingestAIDraft(draftPayload)
-                        // Remove the raw JSON block from the text chat
-                        aiResponse = aiResponse.replace(jsonMatch[0], '').trim()
                     } catch (err) {
                         console.error('Failed to parse AI Strategy block:', err)
                     }
                 }
+
+                // Global strip to ensure NO JSON text remains visible
+                aiResponse = aiResponse.replace(/\|\|\|\s*\{[\s\S]*?\}\s*\|\|\|/g, '').trim()
 
                 setMessages([...newMessages, { role: 'assistant', content: aiResponse, draftPayload }])
             }
@@ -424,42 +433,43 @@ Rules:
                                     {msg.draftPayload && (
                                         <div style={{
                                             marginTop: 16,
-                                            padding: 16,
+                                            padding: '20px 16px',
                                             background: '#fff',
                                             borderRadius: 16,
                                             border: '1px solid #e5e7eb',
                                             display: 'flex',
                                             flexDirection: 'column',
-                                            gap: 12,
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                                            gap: 16,
+                                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
                                         }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                <span style={{ fontSize: 20 }}>🚀</span>
-                                                <div style={{ fontWeight: 700, fontSize: 14, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    {msg.draftPayload.type === 'EVENT_DRAFT' ? 'Draft de Evento Listo' : 'Draft de Promo Listo'}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#111827' }} />
+                                                <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                    {msg.draftPayload.type === 'EVENT_DRAFT' ? 'Estrategia de Evento' : 'Estrategia de Promo'}
                                                 </div>
                                             </div>
                                             <button
                                                 onClick={() => launchStudio()}
                                                 style={{
                                                     width: '100%',
-                                                    padding: '12px',
+                                                    padding: '16px',
                                                     background: '#111827',
                                                     color: '#fff',
                                                     border: 'none',
                                                     borderRadius: 12,
-                                                    fontWeight: 600,
+                                                    fontWeight: 700,
+                                                    fontSize: 14,
                                                     cursor: 'pointer',
                                                     transition: 'all 0.2s',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    gap: 8
+                                                    letterSpacing: '0.02em'
                                                 }}
                                                 onMouseOver={(e) => e.target.style.background = '#000'}
                                                 onMouseOut={(e) => e.target.style.background = '#111827'}
                                             >
-                                                Lanzar Studio de Diseño
+                                                CONFIGURAR ESTRATEGIA
                                             </button>
                                         </div>
                                     )}
