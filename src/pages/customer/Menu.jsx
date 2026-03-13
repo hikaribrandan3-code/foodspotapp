@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import { useCart } from '../../contexts/CartContext'
 import { MenuSkeleton } from '../../components/Shimmers.jsx'
 import HeaderClamp from '../../components/HeaderClamp'
@@ -118,6 +119,7 @@ const SEED_MENU = {
 
 export default function Menu({ config: configProp }) {
     const { businessId, tenantData, isLoaded: tenantLoaded, loading: tenantLoading, refreshTenantData } = useTenant()
+    const { t } = useLanguage()
     const { addToCart, removeFromCart, cart, cartTotal } = useCart()
     const navigate = useNavigate()
 
@@ -583,8 +585,8 @@ export default function Menu({ config: configProp }) {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     background: 'white', padding: '8px 16px', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                 }}>
-                    <span style={{ color: '#F59E0B', fontWeight: 600 }}>✏️ Modo Edición</span>
-                    <button onClick={() => setIsEditMode(false)} style={{ background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600 }}>Done</button>
+                    <span style={{ color: '#F59E0B', fontWeight: 600 }}>✏️ {t('edit_mode')}</span>
+                    <button onClick={() => setIsEditMode(false)} style={{ background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600 }}>{t('done')}</button>
                 </div>
             )}
 
@@ -613,7 +615,7 @@ export default function Menu({ config: configProp }) {
                         borderRight: '1px solid #374151',
                         whiteSpace: 'nowrap'
                     }}>
-                        Cambios sin guardar
+                        {t('unsaved_changes')}
                     </span>
 
                     <button
@@ -633,7 +635,7 @@ export default function Menu({ config: configProp }) {
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
+                        {isSaving ? t('saving').toUpperCase() : t('save').toUpperCase()}
                     </button>
                     <style>{`
                         @keyframes slideUp {
@@ -727,7 +729,7 @@ export default function Menu({ config: configProp }) {
                 }}>
                     {/* Header */}
                     <div style={{ fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10, textAlign: 'center' }}>
-                        Tu pedido
+                        {t('your_order')}
                     </div>
 
                     {/* Order Items List */}
@@ -750,7 +752,7 @@ export default function Menu({ config: configProp }) {
 
                     {/* Total & Action */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, paddingTop: 10, borderTop: '1px solid #E0DDD7' }}>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>Total</span>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>{t('total')}</span>
                         <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>{formatPrice(cartTotal)}</span>
                     </div>
 
@@ -761,7 +763,7 @@ export default function Menu({ config: configProp }) {
                             color: 'white', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', letterSpacing: '-0.01em'
                         }}
                     >
-                        Confirmar Pedido
+                        {t('total_order')}
                     </button>
                 </div>
             )}
@@ -774,7 +776,7 @@ export default function Menu({ config: configProp }) {
                         position: 'fixed', bottom: 100, right: 24, zIndex: 9999, background: '#22C55E', color: 'white', padding: '12px 20px',
                         borderRadius: 50, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontWeight: 700, fontSize: 14, display: 'flex',
                         alignItems: 'center', gap: 8, cursor: 'pointer'
-                    }}><span>⚡ Modo Dueño</span></button>
+                    }}><span>⚡ {t('owner_mode')}</span></button>
                 ) : null;
             })()}
 

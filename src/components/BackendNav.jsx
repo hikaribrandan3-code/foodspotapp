@@ -26,8 +26,9 @@
  * - Visibility only, not access control
  */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
+import { useLanguage } from '../contexts/LanguageContext'
 
 // ============================================
 // TAB CONFIGURATIONS BY ROLE
@@ -192,6 +193,7 @@ function BackendNav({
     badges = {}
 }) {
     const navigate = useNavigate()
+    const { t } = useLanguage()
     const location = useLocation()
     const params = useParams()
     const lastTapRef = useRef(0)
@@ -382,10 +384,14 @@ function BackendNav({
         justifyContent: 'center',
         lineHeight: 1
     }
+    const localizedTabs = useMemo(() => tabs.map(tab => ({
+        ...tab,
+        label: t(tab.id) || tab.label
+    })), [tabs, t])
 
     return (
         <nav style={navContainerStyle} role="navigation" aria-label="Backend navigation">
-            {tabs.map(tab => {
+            {localizedTabs.map(tab => {
                 const isActive = currentTab === tab.id
                 const badgeCount = tab.hasBadge && badges[tab.id]
 

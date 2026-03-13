@@ -10,6 +10,7 @@ const isInDemoMode = () => false; // STUB: Demo mode disabled for now
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { useTenant } from '../../contexts/TenantContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
@@ -17,10 +18,10 @@ const LONG_PRESS_DURATION = 1800
 // Action definitions (using shared HeroIcons)
 // 🛡️ SILO-AWARE: Paths are now relative, tenantSlug is prepended at runtime
 const ACTION_DEFINITIONS = {
-    menu: { icon: MenuIcon, label: 'Menu', path: 'menu' },
-    envios: { icon: DeliveryIcon, label: 'Envíos', path: 'envios' },
-    promos: { icon: PromosIcon, label: 'Promos', path: 'promos' },
-    game: { icon: GameIcon, label: 'Mini Game', path: 'arcade' }
+    menu: { icon: MenuIcon, label: 'menu', path: 'menu' },
+    envios: { icon: DeliveryIcon, label: 'delivery', path: 'envios' },
+    promos: { icon: PromosIcon, label: 'promos', path: 'promos' },
+    game: { icon: GameIcon, label: 'arcade', path: 'arcade' }
 }
 
 // --- MAIN COMPONENT ---
@@ -32,6 +33,7 @@ function Home({ config: configProp }) {
 
     // 🌉 THE DATA BRIDGE: Connect TenantContext to existing config-based logic
     const { branding, tenantData, loading, slug: tenantSlug, businessId, refreshTenant } = useTenant()
+    const { lang, t } = useLanguage()
 
     // 🛡️ SAFETY GUARD: Prevent white screen during tenant resolution
     if (loading || !tenantData) {
@@ -46,7 +48,7 @@ function Home({ config: configProp }) {
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 32, marginBottom: 16 }}>🍽️</div>
-                    <p style={{ color: '#7A6F65', fontSize: 14 }}>Cargando...</p>
+                    <p style={{ color: '#7A6F65', fontSize: 14 }}>{t('loading')}</p>
                 </div>
             </div>
         )
@@ -581,7 +583,7 @@ function Home({ config: configProp }) {
 
         } catch (err) {
             console.error('[PLATFORM SAVE] Critical Failure:', err)
-            alert('Error al guardar cambios: ' + err.message)
+            alert(t('error_saving') || 'Error al guardar cambios: ' + err.message)
         } finally {
             setIsSaving(false)
         }
@@ -673,7 +675,7 @@ function Home({ config: configProp }) {
                     const tileContent = (
                         <>
                             <span style={{ color: getHeroIcon(actionId) }}><Icon /></span>
-                            <span style={getTileTextStyle(actionId)}>{action.label}</span>
+                            <span style={getTileTextStyle(actionId)}>{t(action.label)}</span>
                         </>
                     )
 
@@ -806,7 +808,7 @@ function Home({ config: configProp }) {
                     margin: 0,
                     textWrap: 'balance'
                 }}>
-                    Productos Destacados
+                    {t('featured_products')}
                 </h2>
                 {/* Section Anchor: The Line */}
                 <div style={{
@@ -867,7 +869,7 @@ function Home({ config: configProp }) {
                                     color: '#22C55E',
                                     fontWeight: 600
                                 }}>
-                                    ${item.price?.toLocaleString('es-AR')}
+                                    ${item.price?.toLocaleString(lang === 'en' ? 'en-US' : (lang === 'pt' ? 'pt-BR' : 'es-AR'))}
                                 </div>
                             </div>
                         </>

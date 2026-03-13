@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { formatPrice } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 
 /**
  * OwnerSummary - Summary dashboard for Owner
@@ -16,6 +17,7 @@ function OwnerSummary() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData, refreshTenantData } = useTenant()
+    const { lang, t, changeLanguage } = useLanguage()
     const appConfig = tenantData?.app_config || {}
     const [showAuditor, setShowAuditor] = useState(false)
 
@@ -157,7 +159,7 @@ function OwnerSummary() {
                         gap: 8
                     }}
                 >
-                    🔄 Actualizar
+                    🔄 {t('update')}
                 </button>
                 <button
                     onClick={() => setShowAuditor(true)}
@@ -176,7 +178,7 @@ function OwnerSummary() {
                         gap: 8
                     }}
                 >
-                    📊 Backend Auditor
+                    📊 {t('auditor')}
                 </button>
             </div>
 
@@ -184,61 +186,61 @@ function OwnerSummary() {
             <div style={{ padding: 16, paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
 
                 {/* ==================== PAGOS DEL DÍA ==================== */}
-                <h3 style={labelStyle}>💳 PAGOS DEL DÍA</h3>
+                <h3 style={labelStyle}>💳 {t('daily_payments')}</h3>
                 <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 32, height: 32, borderRadius: 10, background: '#E0F2F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💳</div>
-                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.mpOrders.length} pedidos</p></div>
+                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.mpOrders.length} {t('orders_count')}</p></div>
                         </div>
                         <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>{formatPrice(stats.mpTotal)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 32, height: 32, borderRadius: 10, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💵</div>
-                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Efectivo</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.cashOrders.length} pedidos</p></div>
+                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>{t('cash')}</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.cashOrders.length} {t('orders_count')}</p></div>
                         </div>
                         <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>{formatPrice(stats.cashTotal)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                        <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>Total del día</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.todayOrders.length} pedidos</p></div>
+                        <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>{t('total_day')}</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.todayOrders.length} {t('orders_count')}</p></div>
                         <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>{formatPrice(stats.totalToday)}</span>
                     </div>
                 </div>
 
                 {/* ==================== SESIONES ==================== */}
-                <h3 style={labelStyle}>SESIONES</h3>
+                <h3 style={labelStyle}>{t('sessions')}</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.weekCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Esta semana</p></div>
-                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.monthCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>Este mes</p></div>
+                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.weekCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>{t('this_week')}</p></div>
+                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.monthCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>{t('this_month')}</p></div>
                 </div>
 
                 {/* ==================== INFORMACIÓN DEL LOCAL ==================== */}
-                <h3 style={labelStyle}>📍 INFORMACIÓN DEL LOCAL</h3>
+                <h3 style={labelStyle}>📍 {t('venue_info')}</h3>
                 <div style={cardStyle}>
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>WhatsApp (contacto principal)</label>
+                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('whatsapp_contact')}</label>
                     <input type="text" placeholder="+54 11 1234-5678" value={appConfig?.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
 
                     {/* 📍 HYBRID LOCATION GROUP */}
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
-                        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 12 }}>📍 Localización (Unificada)</label>
+                        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 12 }}>📍 {t('location_label')}</label>
 
-                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>Dirección (Etiqueta)</label>
+                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>{t('address_label')}</label>
                         <input type="text" placeholder="Av. Corrientes 1234" value={appConfig?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} />
 
-                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>Google Maps Link (Acción)</label>
+                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>{t('maps_link')}</label>
                         <input type="text" placeholder="https://maps.google.com/..." value={appConfig?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={{ ...inputStyle, marginBottom: 8 }} />
                         <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
-                            ℹ️ Si ambos están presentes, se mostrará un botón con la dirección que abre el mapa.
+                            ℹ️ {t('maps_info')}
                         </p>
                     </div>
 
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Indicaciones / Notas</label>
+                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('notes')}</label>
                     <input type="text" placeholder="Timbre 2A, subir escaleras" value={appConfig?.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
                 </div>
 
                 {/* ==================== LINKS EXTERNOS ==================== */}
-                <h3 style={labelStyle}>🔗 LINKS EXTERNOS</h3>
+                <h3 style={labelStyle}>🔗 {t('external_links')}</h3>
                 <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
@@ -262,8 +264,39 @@ function OwnerSummary() {
                             onChange={(e) => updatePayments({ mercadoPagoAlias: e.target.value })}
                             style={inputStyle}
                         />
-                        <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Si está vacío, no aparece en Info</p>
+                        <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>{t('empty_info')}</p>
                     </div>
+                </div>
+
+                {/* 🌎 LANGUAGE TOGGLE (High-End SaaS Style) */}
+                <div style={{
+                    marginTop: 32,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 24,
+                    padding: '16px 0',
+                    borderTop: '1px solid #E5E7EB'
+                }}>
+                    {['EN', 'ES', 'PT'].map((l) => (
+                        <button
+                            key={l}
+                            onClick={() => changeLanguage(l.toLowerCase())}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: lang === l.toLowerCase() ? '#111827' : '#9CA3AF',
+                                fontWeight: lang === l.toLowerCase() ? 700 : 500,
+                                fontSize: 13,
+                                letterSpacing: '0.1em',
+                                cursor: 'pointer',
+                                padding: '4px 8px',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {l}
+                        </button>
+                    ))}
                 </div>
 
             </div>

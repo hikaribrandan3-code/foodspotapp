@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, NavLink } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 import { getCameraIcon } from './CameraIcons.jsx'
 
 // Icons as SVG components for crisp rendering
@@ -39,6 +40,7 @@ const InfoIcon = () => (
 function BottomNav({ config: configProp }) {
     // 🛡️ NULL GUARD: Ensure config is always an object (prevents f[b] crash)
     const initialConfig = configProp || {};
+    const { t } = useLanguage();
 
     // ⚡ REAL-TIME SYNC STATE: Listen for instant updates
     const [dynamicConfig, setDynamicConfig] = useState(initialConfig);
@@ -151,7 +153,7 @@ function BottomNav({ config: configProp }) {
                 end
             >
                 <HomeIcon />
-                <span className="nav-label">Home</span>
+                <span className="nav-label">{t('home')}</span>
             </NavLink>
 
             <NavLink
@@ -160,7 +162,7 @@ function BottomNav({ config: configProp }) {
                 style={{ color: navIconColor }}
             >
                 <MenuIcon />
-                <span className="nav-label">Menú</span>
+                <span className="nav-label">{t('menu')}</span>
             </NavLink>
 
             {/* CENTER CAMERA BUTTON - Customizable icon and color */}
@@ -176,7 +178,7 @@ function BottomNav({ config: configProp }) {
                 style={{ color: navIconColor }}
             >
                 <StatusIcon />
-                <span className="nav-label">Estado</span>
+                <span className="nav-label">{t('status')}</span>
             </NavLink>
 
             <NavLink
@@ -185,7 +187,7 @@ function BottomNav({ config: configProp }) {
                 style={{ color: navIconColor }}
             >
                 <InfoIcon />
-                <span className="nav-label">Info</span>
+                <span className="nav-label">{t('info')}</span>
             </NavLink>
         </nav>
     )

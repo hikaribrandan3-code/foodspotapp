@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTenant } from '../../contexts/TenantContext'
-import { useStrategyDraft } from '../../contexts/StrategyDraftContext'
+import { useStrategyDraft } from '../../contexts/StrategyDraftContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { supabase } from '../../lib/supabaseClient'
 import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
@@ -295,6 +296,7 @@ export default function FoodSpotAI() {
     const fileInputRef = useRef(null)
     const chatEndRef = useRef(null)
     const { ingestAIDraft, launchStudio } = useStrategyDraft()
+    const { lang, t } = useLanguage()
     const businessName = tenantData?.business_name || 'tu negocio'
 
     useEffect(() => {
@@ -321,6 +323,8 @@ export default function FoodSpotAI() {
                    Do not invent an image prompt. 
                    Your goal is to provide the CREATIVE TEXT (Headline, Price, Footer) to overlay on this image.
                    Respond ONLY with the text data in JSON format wrapped in ||| pipes.
+                   Respond in the user's language unless specified otherwise.
+                   Default Language for business reports: ${lang}.
                    Example: ||| { "type": "EVENT_DRAFT", "data": { "title": "Reggaeton Night", "price": 15000, "capacity": 100 } } |||`
                 : `## CORE IDENTITY
 You are the venue's Strategy Assistant. You are a high-level business partner focused on **reducing stress and increasing sales**. You analyze ROI, traffic patterns, and brand alignment to make the venue profitable.
@@ -330,13 +334,14 @@ You are the venue's Strategy Assistant. You are a high-level business partner fo
 2. **Structure:** Use ### Headlines for sections.
 3. **Emphasis:** Use **Bold** for all key metrics, numbers, and critical terms.
 4. **Actionable Advice:** Use * Bullet points for strategic recommendations.
-5. **Tone:** Professional, direct, and executive. Use Spanish (mirroring the user) but maintain a high-end SaaS tone.
+5. **Tone:** Professional, direct, and executive. Use the user's language (mirroring their input naturally).
 6. **No Emojis:** Remove all decorative emojis. Use only professional status indicators like ✔️ or 🛡️ if absolutely necessary.
 
 ## THE STRATEGIC PROTOCOL
 1. STOP generating image prompts. Do not use PROXY:// anymore.
 2. ANALYZE: When a user wants an event or promo, analyze the business need.
 3. DRAFT: When ready, output a JSON Strategy Block wrapped in triple pipes at the end of your message.
+4. LANGUAGE: The business operates in ${lang.toUpperCase()}. Use this for all JSON drafts and strategic reports.
 
 JSON STRUCTURE:
 ||| { "type": "EVENT_DRAFT" | "PROMO_DRAFT", "data": { ...Fields } } |||
@@ -384,14 +389,14 @@ Rules:
 
     const getTimeGreeting = () => {
         const hour = new Date().getHours()
-        if (hour < 12) return 'Buenos días'
-        if (hour < 18) return 'Buenas tardes'
-        return 'Buenas noches'
+        if (hour < 12) return t('good_morning') || 'Buenos días'
+        if (hour < 18) return t('good_afternoon') || 'Buenas tardes'
+        return t('good_evening') || 'Buenas noches'
     }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff', color: '#111827', position: 'relative' }}>
-            <BackendHeader title="FoodSpot AI" />
+            <BackendHeader title={t('ai_header') || "FoodSpot AI"} />
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 0 180px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ width: '100%', maxWidth: '800px', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -402,7 +407,7 @@ Rules:
                                 {getTimeGreeting()}, {businessName}
                             </div>
                             <div style={{ fontSize: 18, color: '#6b7280', maxWidth: '400px', lineHeight: 1.5 }}>
-                                Menos estrés, más ventas. Soy tu Asistente de Estrategia. ¿Qué desafío resolvemos hoy?
+                                {t('ai_vision')} {t('strategy_assistant')}. {t('ai_challenge')}
                             </div>
                         </div>
                     )}
@@ -445,7 +450,7 @@ Rules:
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#111827' }} />
                                                 <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                    {msg.draftPayload.type === 'EVENT_DRAFT' ? 'Estrategia de Evento' : 'Estrategia de Promo'}
+                                                    {msg.draftPayload.type === 'EVENT_DRAFT' ? t('event_strategy') : t('promo_strategy')}
                                                 </div>
                                             </div>
                                             <button

@@ -14,6 +14,7 @@
  * - Header stays in normal document flow
  * - Config MUST be passed as prop, DO NOT call getConfig()
  */
+import { useLanguage } from '../contexts/LanguageContext'
 
 // Cover heights by breakpoint
 const COVER_HEIGHTS = {
@@ -28,6 +29,7 @@ function getBreakpoint() {
 
 // INVARIANT: config must come from prop, not getConfig()
 function AppHeader({ config: configProp }) {
+    const { t } = useLanguage()
     const config = configProp || {};
     const canvasMode = config?.canvasMode || 'light'
     const businessName = config?.businessName || 'FoodSpot'
@@ -60,7 +62,6 @@ function AppHeader({ config: configProp }) {
                 transform: `translate(${offsetX}px, ${offsetY}px)`
             }} />
         )
-
         const placeholder = (
             <div className="cover-content" style={{
                 height: '100%',
@@ -69,7 +70,7 @@ function AppHeader({ config: configProp }) {
                 justifyContent: 'center'
             }}>
                 <span style={{ color: 'var(--canvas-text)', opacity: 0.5, fontSize: 12 }}>
-                    No cover image
+                    {t('no_cover')}
                 </span>
             </div>
         )
@@ -123,7 +124,7 @@ function AppHeader({ config: configProp }) {
                     />
                 ) : (
                     <span style={{ color: 'var(--canvas-text)', opacity: 0.5, fontSize: 12 }}>
-                        No logo configured
+                        {t('no_logo')}
                     </span>
                 )}
             </div>
