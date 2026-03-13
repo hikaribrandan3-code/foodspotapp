@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { supabase } from '../../lib/supabaseClient.js'
-import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useTenant } from '../../contexts/TenantContext'
+import { useStrategyDraft } from '../../contexts/StrategyDraftContext'
+import { supabase } from '../../lib/supabaseClient'
 import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
@@ -293,8 +294,8 @@ export default function FoodSpotAI() {
     const [previewUrl, setPreviewUrl] = useState(null)
     const fileInputRef = useRef(null)
     const chatEndRef = useRef(null)
-
-    const businessName = tenantData?.business_name || 'Tu Negocio'
+    const { ingestAIDraft, launchStudio } = useStrategyDraft()
+    const businessName = tenantData?.business_name || 'tu negocio'
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -319,57 +320,26 @@ export default function FoodSpotAI() {
                 ? `## USER HAS PROVIDED THE IMAGE. 
                    Do not invent an image prompt. 
                    Your goal is to provide the CREATIVE TEXT (Headline, Price, Footer) to overlay on this image.
-                   Respond ONLY with the text data in PROXY:// format using a placeholder image string.
-                   Format: PROXY://user_provided_image|[HEADLINE]|[PRICE]|[footer]`
+                   Respond ONLY with the text data in JSON format wrapped in ||| pipes.
+                   Example: ||| { "type": "EVENT_DRAFT", "data": { "title": "Reggaeton Night", "price": 15000, "capacity": 100 } } |||`
                 : `## CORE IDENTITY
-You are the Creative Director of FoodSpot AI (Nano Banana Lite), a premium marketing studio. You are a brilliant, highly-paid advertising strategist. You speak with the rhythm of a high-end agency: short, punchy, and decisive. You use white space as a weapon. You never use excessive exclamation points. Your energy is: 'I know exactly what your brand needs.'
+You are the venue's Strategic COO. You are a high-level business strategist who analyzes ROI, traffic patterns, and brand alignment. You stop at nothing to make the venue profitable.
 
-THE 4 LAWS OF NANO BANANA
-THE LAW OF IMPACT: Users write paragraphs; you write lightning. Distill 50 words into 3. Power words only: ROYALE, RITUAL, GOLD, SHADOW, VELVET.
+THE STRATEGIC PROTOCOL
+1. STOP generating image prompts. Do not use PROXY:// anymore.
+2. ANALYZE: When a user wants an event or promo, analyze the business need.
+3. DRAFT: When ready, output a JSON Strategy Block wrapped in triple pipes at the end of your message.
 
-THE RULE OF THREE: Always present 3 creative angles (The Classic, The Edge, The Crown Jewel) unless the brief is surgically precise.
+JSON STRUCTURE:
+||| { "type": "EVENT_DRAFT" | "PROMO_DRAFT", "data": { ...Fields } } |||
 
-RADICAL CANDOR: You are not a 'Yes Man.' If an idea is tacky (like a clown for a VIP club), reject it politely, explain why it kills the brand, and pivot to a premium alternative.
-
-NATURAL MIRRORING: Mirror the user's language (English, Spanish, Portuguese) and regional slang perfectly without announcing it. If they are in Buenos Aires, speak like a Porteño; if Miami, speak with downtown sophistication.
-
-SMART CONTEXT INJECTION (INVISIBLE)
-Silently prepend these to the image_prompt:
-
-FOOD: 'Gourmet professional food photography, 85mm lens, shallow depth of field, dramatic side lighting, dark rustic background, steam, 8k detail'
-
-NIGHTLIFE: 'Luxury nightlife photography, cinematic neon lighting, high contrast shadows, editorial fashion, velvet atmosphere, after-dark mystery'
-
-PROACTIVE SAAS INTEGRATION
-You are a copilot for the entire SaaS. Proactively suggest app actions:
-
-'I've built the flyer. Should we turn this into a "Limited Time Strategy" in your dashboard?'
-
-'This flyer is ready. Use our 4K Master Camera tomorrow to get a real shot of this dish—it'll make this promo 2x more effective.'
-
-OPEN CLAW v4 PROTOCOL (STRICT FORMAT)
-When the user approves a direction, output the final data at the VERY END of your message using this exact syntax (NO SPACES AROUND PIPES):
-
-PROXY://[image_prompt]|[HEADLINE]|[PRICE]|[footer]
+Example Event: ||| { "type": "EVENT_DRAFT", "data": { "title": "Main Event", "price": 10000, "description": "Big night." } } |||
+Example Promo: ||| { "type": "PROMO_DRAFT", "data": { "name": "Happy Hour", "discount": "2x1" } } |||
 
 Rules:
-
-image_prompt: Underscore_separated, no spaces.
-
-HEADLINE: ALL CAPS, 2-3 words max.
-
-PRICE: Clean format ($15, $1.500, etc).
-
-footer: Max 4 words (Venue name or Tagline).
-
-Example: PROXY://gourmet_juicy_burger_dark_rustic|MONSTER BURGER|$12|Tuesday Only
-
-FORBIDDEN BEHAVIORS
-Never use generic phrases like 'amazing atmosphere.'
-
-Never break the PROXY pipe format.
-
-Never let a user ship bad creative without a warning.`
+- Speak with authority and strategic depth.
+- Suggest pricing and timing based on business context.
+- Never use PROXY://. Your output is JSON for the Engineering team.`
             const { data } = await supabase.functions.invoke('foodspot-ai', {
                 body: {
                     messages: newMessages,
@@ -379,17 +349,22 @@ Never let a user ship bad creative without a warning.`
             })
             if (data?.reply) {
                 let aiResponse = data.reply
-                let generatedImage = null
+                let draftPayload = null
 
-                // NEW: Scan for the PROXY:// protocol line directly
-                const proxyMatch = aiResponse.match(/(PROXY:\/\/.*)/)
-                if (proxyMatch) {
-                    generatedImage = proxyMatch[1].trim()
-                    // Remove the raw PROXY:// line from the text chat for clean UI
-                    aiResponse = aiResponse.replace(proxyMatch[1], '').trim()
+                // NEW: Scan for the ||| { JSON } ||| protocol
+                const jsonMatch = aiResponse.match(/\|\|\|\s*(\{.*\})\s*\|\|\|/)
+                if (jsonMatch) {
+                    try {
+                        draftPayload = JSON.parse(jsonMatch[1])
+                        ingestAIDraft(draftPayload)
+                        // Remove the raw JSON block from the text chat
+                        aiResponse = aiResponse.replace(jsonMatch[0], '').trim()
+                    } catch (err) {
+                        console.error('Failed to parse AI Strategy block:', err)
+                    }
                 }
 
-                setMessages([...newMessages, { role: 'assistant', content: aiResponse, generatedImage }])
+                setMessages([...newMessages, { role: 'assistant', content: aiResponse, draftPayload }])
             }
         } catch (e) {
             setMessages([...newMessages, { role: 'assistant', content: 'Ups, se quemó la cocina. ¿Intentamos de nuevo?' }])
@@ -418,7 +393,7 @@ Never let a user ship bad creative without a warning.`
                                 {getTimeGreeting()}, {businessName}
                             </div>
                             <div style={{ fontSize: 18, color: '#6b7280', maxWidth: '400px', lineHeight: 1.5 }}>
-                                Soy tu Director Creativo. ¿Qué historia vamos a contar hoy a través de tus flyers?
+                                Soy tu COO Estratégico. ¿En qué objetivo de negocio nos enfocamos hoy?
                             </div>
                         </div>
                     )}
@@ -446,21 +421,46 @@ Never let a user ship bad creative without a warning.`
                                             <img src={msg.attachedImage} style={{ width: '100%', maxHeight: 300, objectFit: 'cover' }} alt="User upload" />
                                         </div>
                                     )}
-                                    {msg.generatedImage && (
+                                    {msg.draftPayload && (
                                         <div style={{
-                                            padding: 12,
-                                            background: '#f3f4f6',
-                                            borderRadius: 24,
-                                            marginTop: 8,
-                                            maxHeight: '420px',
-                                            overflow: 'hidden'
+                                            marginTop: 16,
+                                            padding: 16,
+                                            background: '#fff',
+                                            borderRadius: 16,
+                                            border: '1px solid #e5e7eb',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: 12,
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                                         }}>
-                                            <LazyImage
-                                                src={msg.generatedImage}
-                                                category={tenantData?.category}
-                                                businessName={businessName}
-                                                style={{ objectFit: 'contain', height: '100%' }}
-                                            />
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <span style={{ fontSize: 20 }}>🚀</span>
+                                                <div style={{ fontWeight: 700, fontSize: 14, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    {msg.draftPayload.type === 'EVENT_DRAFT' ? 'Draft de Evento Listo' : 'Draft de Promo Listo'}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => launchStudio()}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    background: '#111827',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: 12,
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: 8
+                                                }}
+                                                onMouseOver={(e) => e.target.style.background = '#000'}
+                                                onMouseOut={(e) => e.target.style.background = '#111827'}
+                                            >
+                                                Lanzar Studio de Diseño
+                                            </button>
                                         </div>
                                     )}
                                 </div>
