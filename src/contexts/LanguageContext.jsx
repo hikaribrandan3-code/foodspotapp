@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useTenant } from './TenantContext';
 import { translations } from '../utils/translations';
@@ -7,6 +7,8 @@ const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
     const { tenantData, businessId, refreshTenantData } = useTenant();
+    const isLocked = useRef(false);
+    const lockTimer = useRef(null);
 
     // Default to 'es' if not set, prioritize tenantData value (prevents mount flicker)
     const [lang, setLang] = useState(() => {
@@ -16,7 +18,14 @@ export const LanguageProvider = ({ children }) => {
     });
 
     useEffect(() => {
+        // Trace logging as requested
+        console.log(`[LanguageContext] 🔍 State Fight: Current Lang: ${lang} | DB Lang: ${tenantData?.language || 'es'}`);
+
         if (tenantData?.language && tenantData.language !== lang) {
+            if (isLocked.current) {
+                console.log(`[LanguageContext] 🛡️ Revert Prevented: Context is LOCKED during manual toggle.`);
+                return;
+            }
             console.log(`[LanguageContext] 🔄 System Sync: Reverting from ${lang} to ${tenantData.language}`);
             setLang(tenantData.language);
         }
@@ -33,8 +42,14 @@ export const LanguageProvider = ({ children }) => {
     const changeLanguage = async (newLang) => {
         if (!businessId) return;
 
-        // Optimistic update
+        console.log(`[LanguageContext] ⚡ MANUAL TOGGLE: Setting to ${newLang}. Locking context...`);
+
+        // Optimistic update + LOCK
+        isLocked.current = true;
         setLang(newLang);
+
+        // Clear existing timer if any
+        if (lockTimer.current) clearTimeout(lockTimer.current);
 
         try {
             // Update the tenants table as requested
@@ -44,15 +59,21 @@ export const LanguageProvider = ({ children }) => {
                 .eq('business_id', businessId);
 
             if (error) {
-                // Try branding table if tenants fails, or if they are synced
-                // Just in case, user said 'tenants'
                 console.error('Error updating language in tenants table:', error);
             }
 
             // Refresh tenant data to sync across app
             await refreshTenantData();
+
+            // Unlock after a short delay to allow background sync to settle
+            lockTimer.current = setTimeout(() => {
+                isLocked.current = false;
+                console.log(`[LanguageContext] 🔓 Context UNLOCKED.`);
+            }, 2500);
+
         } catch (err) {
             console.error('Failed to change language:', err);
+            isLocked.current = false;
         }
     };
 

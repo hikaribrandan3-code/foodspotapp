@@ -485,9 +485,8 @@ function App() {
     const path = location.pathname;
     const isGlobalPath = GLOBAL_PATHS.includes(path) || path.startsWith('/admin');
     // 🛡️ FIX 2 (Simplified): Single Source of Truth Hydration Guard
-    // We rely on TenantContext to handle the timeouts (Risk 1 Fix).
-    // This local timer is just a visual fallback for the "Retry" button.
     const [showRetry, setShowRetry] = useState(false);
+    const [hasBooted, setHasBooted] = useState(false);
 
     useEffect(() => {
         let timer;
@@ -500,7 +499,14 @@ function App() {
     // 🛡️ RE-LOCKED HYDRATION GUARD: Don't render dashboard until resolved
     const isHydrated = tenant?.isLoaded && (tenant?.tenantData || tenant?.error || isGlobalPath);
 
-    if (!isHydrated && !isGlobalPath) {
+    useEffect(() => {
+        if (isHydrated && !hasBooted) {
+            setHasBooted(true);
+        }
+    }, [isHydrated, hasBooted]);
+
+    // One-way gate: Once booted, we stay booted.
+    if (!hasBooted && !isGlobalPath) {
         return (
             <div className="flex h-screen items-center justify-center bg-[#1a1a2e] flex-col gap-6 px-4 text-center font-sans">
                 {showRetry ? (
