@@ -15,7 +15,7 @@ export const LanguageProvider = ({ children }) => {
         if (tenantData?.language) {
             setLang(tenantData.language);
         }
-    }, [tenantData]);
+    }, [tenantData?.language]);
 
     const t = (key) => {
         if (!translations[key]) {

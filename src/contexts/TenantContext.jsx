@@ -114,7 +114,7 @@ export function TenantProvider({ children }) {
                 // 📡 DOUBLE-FETCH: Get language from tenants table
                 const { data: tenantRow } = await supabase
                     .from('tenants')
-                    .select('language')
+                    .select('language, business_id')
                     .eq('business_id', brandingData.business_id)
                     .single()
 
@@ -164,7 +164,7 @@ export function TenantProvider({ children }) {
                 // 📡 DOUBLE-FETCH: Get language from tenants table
                 const { data: tenantRow } = await supabase
                     .from('tenants')
-                    .select('language')
+                    .select('language, business_id')
                     .eq('business_id', businessId)
                     .single()
 

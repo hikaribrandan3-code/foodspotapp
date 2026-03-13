@@ -336,7 +336,7 @@ export default function FoodSpotAI() {
    * [Bullet explaining WHY - focus on metrics/ROI]
    ### The Execution
    * [Bullet explaining HOW - focus on actionable steps]
-4. **JSON DRAFT:** Always include the draft at the very end wrapped in triple pipes |||.
+4. **JSON DRAFT:** **ONLY** include a JSON draft (wrapped in |||) if the user requests a formal plan, strategy, or creation. Do **NOT** include JSON for general chat or advice.
 5. **LANGUAGE:** Business operates in ${lang.toUpperCase()}. Use this for all content.`
             const { data } = await supabase.functions.invoke('foodspot-ai', {
                 body: {
@@ -399,7 +399,7 @@ export default function FoodSpotAI() {
 
                     {messages.map((msg, i) => {
                         const isAssistant = msg.role === 'assistant'
-                        const isStrategyCard = msg.content && msg.content.includes('Estrategia')
+                        const isStrategyCard = msg.draftPayload // Strictly based on data, not content string
 
                         return (
                             <div key={i} style={{ display: 'flex', justifyContent: isAssistant ? 'flex-start' : 'flex-end', animation: 'fadeIn 0.3s ease' }}>
@@ -428,7 +428,7 @@ export default function FoodSpotAI() {
                                             <img src={msg.attachedImage} style={{ width: '100%', maxHeight: 300, objectFit: 'cover' }} alt="User upload" />
                                         </div>
                                     )}
-                                    {msg.draftPayload && (
+                                    {msg.draftPayload && Object.keys(msg.draftPayload).length > 0 && (
                                         <div style={{
                                             marginTop: 16,
                                             padding: '20px 16px',
