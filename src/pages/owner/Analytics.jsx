@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { formatPrice } from '../../config/menuData.js'
 import { logout } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
@@ -11,11 +12,11 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 // 📊 ANALYTICS — REAL SUPABASE DATA (P0 #9)
 // ============================================
 
-const DATE_RANGES = [
-    { id: 'today', label: 'Hoy' },
-    { id: 'week', label: '7 días' },
-    { id: 'month', label: '30 días' },
-    { id: 'all', label: 'Todo' }
+const DATE_RANGES = (t) => [
+    { id: 'today', label: t('analytics_today') },
+    { id: 'week', label: t('days_7') },
+    { id: 'month', label: t('days_30') },
+    { id: 'all', label: t('all_time') }
 ]
 
 function getDateCutoff(rangeId) {
@@ -45,6 +46,7 @@ const Analytics = () => {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData } = useTenant()
+    const { t } = useLanguage()
     const primaryColor = tenantData?.primary_color || '#C4856A'
 
     const handleBack = () => navigate(`/${tenantSlug}/owner/summary`)
@@ -105,7 +107,7 @@ const Analytics = () => {
         const itemMap = {}
         completed.forEach(o => {
             (o.items || []).forEach(item => {
-                const key = item.name || 'Desconocido'
+                const key = item.name || t('unknown')
                 if (!itemMap[key]) itemMap[key] = { name: key, qty: 0, revenue: 0 }
                 itemMap[key].qty += item.quantity || 1
                 itemMap[key].revenue += (item.price || 0) * (item.quantity || 1)
@@ -134,7 +136,7 @@ const Analytics = () => {
     return (
         <div className="page backend-surface" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))', background: '#F9FAFB', minHeight: '100vh' }}>
             <BackendHeader
-                title="Analytics"
+                title={t('analytics')}
                 onLogout={handleLogout}
                 showDateSelector={false}
                 extraActions={
@@ -142,7 +144,7 @@ const Analytics = () => {
                         onClick={handleBack}
                         style={{ background: '#F3F4F6', border: 'none', padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: 12, color: '#374151' }}
                     >
-                        ← Volver
+                        ← {t('back')}
                     </button>
                 }
             />
@@ -150,7 +152,7 @@ const Analytics = () => {
             <div style={{ padding: 16 }}>
                 {/* DATE RANGE TABS */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
-                    {DATE_RANGES.map(range => (
+                    {DATE_RANGES(t).map(range => (
                         <button
                             key={range.id}
                             onClick={() => setDateRange(range.id)}
@@ -171,42 +173,42 @@ const Analytics = () => {
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF' }}>
                         <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
-                        <p>Cargando datos...</p>
+                        <p>{t('loading')}</p>
                     </div>
                 ) : (
                     <>
                         {/* KPI GRID */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
                             <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
-                                <span style={labelStyle}>Ingresos Totales</span>
+                                <span style={labelStyle}>{t('revenue_total')}</span>
                                 <h3 style={{ ...valueStyle, color: primaryColor }}>{formatPrice(stats.totalRevenue)}</h3>
                             </div>
                             <div style={cardStyle}>
-                                <span style={labelStyle}>Pedidos</span>
+                                <span style={labelStyle}>{t('orders')}</span>
                                 <h3 style={valueStyle}>{stats.orderCount}</h3>
                             </div>
                             <div style={cardStyle}>
-                                <span style={labelStyle}>Ticket Promedio</span>
+                                <span style={labelStyle}>{t('avg_ticket')}</span>
                                 <h3 style={valueStyle}>{formatPrice(stats.avgTicket)}</h3>
                             </div>
                             <div style={cardStyle}>
-                                <span style={labelStyle}>Entregados</span>
+                                <span style={labelStyle}>{t('delivered')}</span>
                                 <h3 style={valueStyle}>{stats.deliveredCount}</h3>
                             </div>
                         </div>
 
                         {/* ORDER TYPE BREAKDOWN */}
                         <div style={{ ...cardStyle, marginBottom: 20 }}>
-                            <span style={{ ...labelStyle, marginBottom: 16 }}>Por Tipo de Pedido</span>
+                            <span style={{ ...labelStyle, marginBottom: 16 }}>{t('by_order_type')}</span>
                             <div style={{ display: 'flex', gap: 12 }}>
                                 {[
-                                    { label: 'Delivery', count: stats.deliveryCount, color: '#3B82F6' },
-                                    { label: 'Pickup', count: stats.pickupCount, color: '#10B981' },
-                                    { label: 'Mesa', count: stats.dineInCount, color: '#8B5CF6' }
-                                ].map(t => (
-                                    <div key={t.label} style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#F9FAFB', borderRadius: 12 }}>
-                                        <div style={{ fontSize: 20, fontWeight: 800, color: t.color }}>{t.count}</div>
-                                        <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 500 }}>{t.label}</div>
+                                    { label: t('delivery'), count: stats.deliveryCount, color: '#3B82F6' },
+                                    { label: t('pickup'), count: stats.pickupCount, color: '#10B981' },
+                                    { label: t('dine_in'), count: stats.dineInCount, color: '#8B5CF6' }
+                                ].map(type => (
+                                    <div key={type.label} style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#F9FAFB', borderRadius: 12 }}>
+                                        <div style={{ fontSize: 20, fontWeight: 800, color: type.color }}>{type.count}</div>
+                                        <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 500 }}>{type.label}</div>
                                     </div>
                                 ))}
                             </div>
@@ -214,7 +216,7 @@ const Analytics = () => {
 
                         {/* PAYMENT METHOD SPLIT */}
                         <div style={{ ...cardStyle, marginBottom: 20 }}>
-                            <span style={{ ...labelStyle, marginBottom: 16 }}>Medio de Pago</span>
+                            <span style={{ ...labelStyle, marginBottom: 16 }}>{t('payment_methods')}</span>
                             <div style={{ display: 'flex', gap: 12 }}>
                                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#EFF6FF', borderRadius: 12 }}>
                                     <div style={{ fontSize: 18 }}>💳</div>
@@ -235,9 +237,9 @@ const Analytics = () => {
 
                         {/* TOP ITEMS */}
                         <div style={cardStyle}>
-                            <span style={{ ...labelStyle, marginBottom: 16 }}>Top 5 Productos</span>
+                            <span style={{ ...labelStyle, marginBottom: 16 }}>{t('top_products')}</span>
                             {stats.topItems.length === 0 ? (
-                                <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 }}>Sin datos aún</p>
+                                <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 }}>{t('no_data')}</p>
                             ) : (
                                 stats.topItems.map((item, i) => (
                                     <div key={item.name} style={{
@@ -254,7 +256,7 @@ const Analytics = () => {
                                         </div>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{item.name}</div>
-                                            <div style={{ fontSize: 12, color: '#6B7280' }}>{item.qty} vendidos</div>
+                                            <div style={{ fontSize: 12, color: '#6B7280' }}>{item.qty} {t('sold_count')}</div>
                                         </div>
                                         <div style={{ fontSize: 14, fontWeight: 700, color: primaryColor }}>
                                             {formatPrice(item.revenue)}

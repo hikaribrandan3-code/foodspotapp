@@ -126,7 +126,7 @@ function OwnerSummary() {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             <BackendHeader
-                title="Summary"
+                title={t('summary')}
                 onLogout={handleLogout}
                 showDateSelector={false}
                 showNotifications={false}
@@ -219,24 +219,24 @@ function OwnerSummary() {
                 <h3 style={labelStyle}>📍 {t('venue_info')}</h3>
                 <div style={cardStyle}>
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('whatsapp_contact')}</label>
-                    <input type="text" placeholder="+54 11 1234-5678" value={appConfig?.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
+                    <input type="text" placeholder={t('phone_placeholder')} value={appConfig?.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
 
                     {/* 📍 HYBRID LOCATION GROUP */}
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
                         <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 12 }}>📍 {t('location_label')}</label>
 
                         <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>{t('address_label')}</label>
-                        <input type="text" placeholder="Av. Corrientes 1234" value={appConfig?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} />
+                        <input type="text" placeholder={t('address_placeholder')} value={appConfig?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} />
 
                         <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>{t('maps_link')}</label>
-                        <input type="text" placeholder="https://maps.google.com/..." value={appConfig?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={{ ...inputStyle, marginBottom: 8 }} />
+                        <input type="text" placeholder={t('maps_placeholder')} value={appConfig?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={{ ...inputStyle, marginBottom: 8 }} />
                         <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
                             ℹ️ {t('maps_info')}
                         </p>
                     </div>
 
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('notes')}</label>
-                    <input type="text" placeholder="Timbre 2A, subir escaleras" value={appConfig?.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
+                    <input type="text" placeholder={t('notes_placeholder')} value={appConfig?.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
                 </div>
 
                 {/* ==================== LINKS EXTERNOS ==================== */}
@@ -246,20 +246,20 @@ function OwnerSummary() {
                         <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
                         <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.rappiEnabled ?? false} onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })} /><span className="toggle-slider"></span></label>
                     </div>
-                    <input type="text" placeholder="Link de Rappi" value={appConfig?.externalOrdering?.rappiUrl || ''} onChange={(e) => updateExternalOrdering({ rappiUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
+                    <input type="text" placeholder={t('rappi_placeholder')} value={appConfig?.externalOrdering?.rappiUrl || ''} onChange={(e) => updateExternalOrdering({ rappiUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
                         <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })} /><span className="toggle-slider"></span></label>
                     </div>
-                    <input type="text" placeholder="Link de PedidosYa" value={appConfig?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
+                    <input type="text" placeholder={t('pedidosya_placeholder')} value={appConfig?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
 
                     {/* Mercado Pago Alias */}
                     <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                        <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago (Alias)</span>
+                        <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 {t('mp_alias_label')}</span>
                         <input
                             type="text"
-                            placeholder="ej: grubclub.mp"
+                            placeholder={t('mp_alias_placeholder')}
                             value={appConfig?.payments?.mercadoPagoAlias || ''}
                             onChange={(e) => updatePayments({ mercadoPagoAlias: e.target.value })}
                             style={inputStyle}
@@ -322,7 +322,7 @@ function OwnerSummary() {
                             gap: 8
                         }}
                     >
-                        🔧 System Admin
+                        {t('system_admin')}
                     </button>
                 </div>
             )}
@@ -373,7 +373,7 @@ function OwnerSummary() {
                             position: 'relative',
                             zIndex: 10001
                         }}>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>📊 Cloud Vault</span>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>📊 {t('cloud_vault')}</span>
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -394,7 +394,7 @@ function OwnerSummary() {
                                     right: 12
                                 }}
                             >
-                                ✕ Close
+                                ✕ {t('close')}
                             </button>
                         </div>
                         <div style={{

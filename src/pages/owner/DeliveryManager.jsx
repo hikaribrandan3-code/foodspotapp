@@ -7,6 +7,7 @@ import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.v2.js'
 import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 
 /**
  * DELIVERY MANAGER
@@ -18,6 +19,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
+    const { t } = useLanguage()
     const [orders, setOrders] = useState(() => getOrders())
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
@@ -43,12 +45,12 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     // Helper for status info (reusing Staff logic)
     const getDeliveryStatusInfo = (status) => {
         const statusConfig = {
-            pendiente: { label: 'Pendiente', next: 'confirmado', nextLabel: 'Confirmar →', class: 'pending', bg: '#FEF3C7', color: '#B45309' },
-            confirmado: { label: 'Confirmado', next: 'preparacion', nextLabel: 'A cocina →', class: 'confirmed', bg: '#DBEAFE', color: '#1D4ED8' },
-            preparacion: { label: 'Preparando', next: 'listo', nextLabel: 'Listo →', class: 'preparing', bg: '#EDE9FE', color: '#7C3AED' },
-            listo: { label: 'Listo', next: 'en_camino', nextLabel: 'Despachar →', class: 'ready', bg: '#DCFCE7', color: '#15803D' },
-            en_camino: { label: 'En camino', next: 'entregado', nextLabel: 'Entregado', class: 'on-way', bg: '#FFEDD5', color: '#9A3412' },
-            entregado: { label: 'Entregado', bg: '#F1F5F9', color: '#64748B' }
+            pendiente: { label: t('pendent_status'), next: 'confirmado', nextLabel: t('confirm_action'), class: 'pending', bg: '#FEF3C7', color: '#B45309' },
+            confirmado: { label: t('confirmed_status'), next: 'preparacion', nextLabel: t('to_kitchen_action'), class: 'confirmed', bg: '#DBEAFE', color: '#1D4ED8' },
+            preparacion: { label: t('preparing_status'), next: 'listo', nextLabel: t('ready_action'), class: 'preparing', bg: '#EDE9FE', color: '#7C3AED' },
+            listo: { label: t('ready_status'), next: 'en_camino', nextLabel: t('dispatch_action'), class: 'ready', bg: '#DCFCE7', color: '#15803D' },
+            en_camino: { label: t('on_way_status'), next: 'entregado', nextLabel: t('delivered_action'), class: 'on-way', bg: '#FFEDD5', color: '#9A3412' },
+            entregado: { label: t('delivered_status'), bg: '#F1F5F9', color: '#64748B' }
         }
         return statusConfig[status] || { label: status, next: null, nextLabel: null, class: '', bg: '#F3F4F6', color: '#6B7280' }
     }
@@ -130,7 +132,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F9FAFB' }}>
             <BackendHeader
-                title={demoMode ? "Demo Orders" : "Envíos"}
+                title={demoMode ? t('demo_orders') : t('deliveries')}
                 onLogout={handleLogout}
             />
 
@@ -144,10 +146,10 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                     marginBottom: 20,
                     fontSize: 13
                 }}>
-                    <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ Recordatorios importantes:</p>
+                    <p style={{ fontWeight: 600, color: '#92400E', marginBottom: 4 }}>⚠️ {t('important_reminders')}</p>
                     <ul style={{ margin: 0, paddingLeft: 16, color: '#92400E' }}>
-                        <li>FoodSpot no provee repartidores ni seguros.</li>
-                        <li>Los cobros en efectivo deben asegurar el pago antes de salir de cocina.</li>
+                        <li>{t('delivery_disclaimer_1')}</li>
+                        <li>{t('delivery_disclaimer_2')}</li>
                     </ul>
                 </div>
 
@@ -160,7 +162,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                         textAlign: 'center'
                     }}>
                         <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
-                        <p style={{ color: '#6B7280', margin: 0, fontSize: 14 }}>No hay envíos activos en este momento</p>
+                        <p style={{ color: '#6B7280', margin: 0, fontSize: 14 }}>{t('no_active_deliveries')}</p>
                     </div>
                 ) : (
                     deliveryOrders.map(order => {
@@ -194,7 +196,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                         <div style={{ fontSize: 13, color: '#4B5563', marginBottom: 12, background: '#F9FAFB', padding: 12, borderRadius: 10 }}>
                                             <p style={{ margin: 0, fontWeight: 600, color: '#374151' }}>📍 {order.customerInfo.name}</p>
                                             <p style={{ margin: '4px 0 0' }}>{order.customerInfo.address}</p>
-                                            <p style={{ margin: '4px 0 0', color: '#6B7280' }}>Tel: ***{getPhoneLast4(order.customerInfo.phone)}</p>
+                                            <p style={{ margin: '4px 0 0', color: '#6B7280' }}>{t('tel_label')}***{getPhoneLast4(order.customerInfo.phone)}</p>
                                         </div>
                                     )}
 
@@ -242,8 +244,8 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                         minWidth: 110
                                                     }}
                                                 >
-                                                    <option value="cash">💵 Efec.</option>
-                                                    <option value="mercado_pago">📱 MP</option>
+                                                    <option value="cash">💵 {t('cash_short')}.</option>
+                                                    <option value="mercado_pago">📱 {t('mp_short')}</option>
                                                 </select>
                                             )}
                                             <button
@@ -259,7 +261,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                     fontSize: 13
                                                 }}
                                             >
-                                                {order.paymentConfirmed ? `✅ Pagado (${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efe'})` : '💳 Confirmar Pago'}
+                                                {order.paymentConfirmed ? `${t('paid_label')} (${order.paymentMethod === 'mercado_pago' ? t('mp_short') : t('cash_short')})` : t('confirm_payment')}
                                             </button>
                                         </div>
 
@@ -267,7 +269,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                         {order.status === 'en_camino' && order.customerInfo && (
                                             <div>
                                                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>
-                                                    Código de entrega (últimos 4 dígitos del tel)
+                                                    {t('delivery_code_label')}
                                                 </label>
                                                 <input
                                                     type="text"
@@ -297,7 +299,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                     if (statusInfo.next === 'entregado' && order.customerInfo) {
                                                         const code = deliveryConfirmCode[order.id] || ''
                                                         if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
-                                                            alert('❌ Código incorrecto. Pedile al cliente los últimos 4 dígitos de su teléfono.')
+                                                            alert(t('wrong_code'))
                                                             return
                                                         }
                                                         updateOrder(order.id, { deliveryConfirmedAt: new Date().toISOString() })
@@ -331,7 +333,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                 {demoMode && completedOrders.length > 0 && (
                     <div style={{ marginTop: 32 }}>
                         <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 12, textTransform: 'uppercase' }}>
-                            Historial de Hoy (Demo)
+                            {t('today_history_demo')}
                         </h3>
                         {completedOrders.map(order => (
                             <div key={order.id} style={{
@@ -359,7 +361,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                         padding: '2px 8px',
                                         borderRadius: 12
                                     }}>
-                                        Entregado
+                                        {t('delivered_status')}
                                     </span>
                                 </div>
                             </div>
@@ -369,7 +371,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
                 {/* Today's delivery summary */}
                 <div style={{ textAlign: 'center', marginTop: 24, color: '#9CA3AF', fontSize: 13 }}>
-                    <p>Envíos procesados hoy: <strong style={{ color: '#F97316' }}>{todayDeliveries}</strong></p>
+                    <p>{t('processed_today')}<strong style={{ color: '#F97316' }}>{todayDeliveries}</strong></p>
                 </div>
             </div>
 

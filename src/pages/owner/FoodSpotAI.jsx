@@ -267,7 +267,7 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
             {status === 'loading' && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', color: '#fff', gap: 16 }}>
                     <div style={{ width: 48, height: 48, border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid #fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                    <span style={{ fontSize: 14, opacity: 0.8, fontWeight: 500 }}>Cooking atmosphere...</span>
+                    <span style={{ fontSize: 14, opacity: 0.8, fontWeight: 500 }}>{t('cooking_atmosphere')}</span>
                     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
             )}
@@ -381,11 +381,11 @@ Rules:
                 setMessages([...newMessages, { role: 'assistant', content: aiResponse, draftPayload }])
             }
         } catch (e) {
-            setMessages([...newMessages, { role: 'assistant', content: 'Ups, se quemó la cocina. ¿Intentamos de nuevo?' }])
+            setMessages([...newMessages, { role: 'assistant', content: t('ai_error_reply') }])
         } finally { setIsLoading(false) }
     }
 
-    const quickPrompts = ['2x1 en hamburguesas $1500', 'Noche de cocktails 20% off', 'Pizza familiar + cerveza $2800']
+    const quickPrompts = [t('quick_prompt_1'), t('quick_prompt_2'), t('quick_prompt_3')]
 
     const getTimeGreeting = () => {
         const hour = new Date().getHours()
@@ -474,7 +474,7 @@ Rules:
                                                 onMouseOver={(e) => e.target.style.background = '#000'}
                                                 onMouseOut={(e) => e.target.style.background = '#111827'}
                                             >
-                                                CONFIGURAR ESTRATEGIA
+                                                {t('configure_strategy_btn')}
                                             </button>
                                         </div>
                                     )}
@@ -547,7 +547,7 @@ Rules:
                                     <img src={previewUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     <button onClick={() => { setPendingImage(null); setPreviewUrl(null); }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, fontSize: 12, cursor: 'pointer' }}>×</button>
                                 </div>
-                                <span style={{ fontSize: 13, color: '#6b7280' }}>Foto seleccionada lista...</span>
+                                <span style={{ fontSize: 13, color: '#6b7280' }}>{t('photo_selected_ready')}</span>
                             </div>
                         )}
                         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, padding: '8px 8px 8px 20px' }}>
@@ -586,7 +586,7 @@ Rules:
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                                placeholder="Describí tu promo..."
+                                placeholder={t('describe_promo_placeholder')}
                                 style={{
                                     flex: 1,
                                     background: 'transparent',

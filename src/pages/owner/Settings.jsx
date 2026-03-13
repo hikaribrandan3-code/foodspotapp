@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
@@ -47,15 +48,16 @@ const NavInfoIcon = () => (
 )
 
 // Hero icon definitions for the interactive grid
-const HERO_ICON_DEFS = [
-    { id: 'menu', label: 'Menú', Icon: MenuIcon },
-    { id: 'delivery', label: 'Envíos', Icon: DeliveryIcon },
-    { id: 'promos', label: 'Promos', Icon: PromosIcon },
-    { id: 'game', label: 'Juego', Icon: GameIcon }
+const HERO_ICON_DEFS = (t) => [
+    { id: 'menu', label: t('menu'), Icon: MenuIcon },
+    { id: 'delivery', label: t('delivery'), Icon: DeliveryIcon },
+    { id: 'promos', label: t('promos'), Icon: PromosIcon },
+    { id: 'game', label: t('game'), Icon: GameIcon }
 ];
 
 const Settings = () => {
     const { tenantData: tenant, businessId, refreshTenantData } = useTenant();
+    const { t } = useLanguage();
     const [isSaving, setIsSaving] = useState(false);
     // 🛡️ ATOMIC SAVE STATE (Manual Persistence v5.0)
     const [hasChanges, setHasChanges] = useState(
@@ -380,12 +382,12 @@ const Settings = () => {
             // 4. Success State
             setHasChanges(false);
             sessionStorage.removeItem(`dirty_branding_${businessId}`);
-            setSaveStatus({ message: '✓ Marca Guardada' });
+            setSaveStatus({ message: t('branding_saved') });
             setTimeout(() => setSaveStatus(null), 3000);
 
         } catch (error) {
             console.error("Save failed:", error);
-            setSaveStatus({ error: true, message: 'Error al guardar' });
+            setSaveStatus({ error: true, message: t('save_error') });
         } finally {
             setIsSaving(false);
         }
@@ -399,7 +401,6 @@ const Settings = () => {
             '0, 0, 0';
     };
 
-    // Color Pillar Component - USES ColorPickerModal (no native input)
     const ColorPillar = ({ label, keyName, cssVar, defaultValue }) => {
         const currentColor = tenant?.[keyName] || defaultValue;
         return (
@@ -422,7 +423,7 @@ const Settings = () => {
         );
     };
 
-    if (!tenant) return <div className="p-4 text-center text-gray-500">Loading Vault...</div>;
+    if (!tenant) return <div className="p-4 text-center text-gray-500">{t('loading_vault')}</div>;
 
     const heroIconMode = tenant?.hero_icon_mode || 'black';
     const navIconMode = tenant?.nav_icon_mode || 'white';
@@ -430,12 +431,12 @@ const Settings = () => {
 
     return (
         <div className="bg-[#F8FAFC] min-h-screen">
-            <BackendHeader title="Configuración" onLogout={handleLogout} />
+            <BackendHeader title={t('settings_title')} onLogout={handleLogout} />
 
             <div className="settings-vault">
                 {/* ========== 1. IDENTITY & TYPOGRAPHY ========== */}
                 <section className="branding-card">
-                    <h3>1. Identidad y Texto</h3>
+                    <h3>1. {t('identity_typography')}</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <input
                             type="text"
@@ -443,7 +444,7 @@ const Settings = () => {
                             value={localIdentity.business_name}
                             onChange={handleNameChange}
                             onBlur={handleNameBlur}
-                            placeholder="Nombre del Negocio"
+                            placeholder={t('business_name_placeholder')}
                         />
                         <div className="typo-grid">
                             {/* Font Family Dropdown */}
@@ -481,22 +482,22 @@ const Settings = () => {
                                     onClick={() => setIsWeightMenuOpen(!isWeightMenuOpen)}
                                 >
                                     <span>
-                                        {localIdentity.font_weight === '400' ? 'Normal' :
-                                            localIdentity.font_weight === '500' ? 'Medium' :
-                                                localIdentity.font_weight === '600' ? 'Semi-Bold' :
-                                                    localIdentity.font_weight === '700' ? 'Bold' :
-                                                        localIdentity.font_weight === '800' ? 'Extra Bold' : 'Semi-Bold'}
+                                        {localIdentity.font_weight === '400' ? t('font_weight_400') :
+                                            localIdentity.font_weight === '500' ? t('font_weight_500') :
+                                                localIdentity.font_weight === '600' ? t('font_weight_600') :
+                                                    localIdentity.font_weight === '700' ? t('font_weight_700') :
+                                                        localIdentity.font_weight === '800' ? t('font_weight_800') : t('font_weight_600')}
                                     </span>
                                     <span className="dropdown-arrow">▼</span>
                                 </button>
                                 {isWeightMenuOpen && (
                                     <div className="dropdown-menu">
                                         {[
-                                            { value: '400', label: 'Normal' },
-                                            { value: '500', label: 'Medium' },
-                                            { value: '600', label: 'Semi-Bold' },
-                                            { value: '700', label: 'Bold' },
-                                            { value: '800', label: 'Extra Bold' }
+                                            { value: '400', label: t('font_weight_400') },
+                                            { value: '500', label: t('font_weight_500') },
+                                            { value: '600', label: t('font_weight_600') },
+                                            { value: '700', label: t('font_weight_700') },
+                                            { value: '800', label: t('font_weight_800') }
                                         ].map((option) => (
                                             <div
                                                 key={option.value}
@@ -518,19 +519,19 @@ const Settings = () => {
                 {/* ========== 2. HERO COVER ========== */}
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>2. Hero Cover</h3>
+                        <h3>2. {t('hero_cover')}</h3>
                         <div className="mode-toggle">
                             <button
                                 onClick={() => handleFieldUpdate('hero_mode', 'text')}
                                 className={tenant?.hero_mode === 'text' ? 'active' : ''}
                             >
-                                Texto
+                                {t('text_mode')}
                             </button>
                             <button
                                 onClick={() => handleFieldUpdate('hero_mode', 'image')}
                                 className={tenant?.hero_mode === 'image' ? 'active' : ''}
                             >
-                                Imagen
+                                {t('image_mode')}
                             </button>
                         </div>
                     </div>
@@ -541,12 +542,12 @@ const Settings = () => {
                                 <>
                                     <div className="editor-crosshair">+</div>
                                     <img src={tenant.hero_url} className="preview-img" alt="Hero" />
-                                    <div className="edit-overlay"><span>✎ Editar Imagen</span></div>
+                                    <div className="edit-overlay"><span>{t('edit_image')}</span></div>
                                 </>
                             ) : (
                                 <div className="empty-state">
                                     <span className="plus-icon">+</span>
-                                    <span>Subir Logo/Cover</span>
+                                    <span>{t('upload_logo_cover')}</span>
                                 </div>
                             )}
                         </div>
@@ -597,23 +598,23 @@ const Settings = () => {
                 {/* ========== 3. HERO ICONS (NEW - WYSIWYG) ========== */}
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>3. Hero Icons</h3>
+                        <h3>3. {t('hero_icons_label')}</h3>
                         <div className="mode-toggle">
                             <button
                                 onClick={() => handleFieldUpdate('hero_icon_mode', 'white')}
                                 className={heroIconMode === 'white' ? 'active' : ''}
                             >
-                                Blanco
+                                {t('white_mode')}
                             </button>
                             <button
                                 onClick={() => handleFieldUpdate('hero_icon_mode', 'black')}
                                 className={heroIconMode === 'black' ? 'active' : ''}
                             >
-                                Oscuro
+                                {t('dark_mode')}
                             </button>
                         </div>
                     </div>
-                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Toca un icono para cambiar su color de fondo.</p>
+                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('hero_icons_desc')}</p>
 
                     {/* 2x2 Hero Icons Grid */}
                     <div style={{
@@ -623,7 +624,7 @@ const Settings = () => {
                         maxWidth: 280,
                         margin: '0 auto'
                     }}>
-                        {HERO_ICON_DEFS.map(({ id, label, Icon }) => {
+                        {HERO_ICON_DEFS(t).map(({ id, label, Icon }) => {
                             const bgColor = heroIconColors[id] || '#FFFFFF';
                             const iconColor = heroIconMode === 'white' ? '#FFFFFF' : '#4A4036';
 
@@ -676,27 +677,27 @@ const Settings = () => {
                 {/* ========== 4. NAVBAR STYLE (MiniNav Preview) ========== */}
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>4. Estilo de Barra</h3>
+                        <h3>4. {t('bar_style')}</h3>
                         <div className="mode-toggle">
                             <button
                                 onClick={() => handleFieldUpdate('nav_icon_mode', 'white')}
                                 className={navIconMode === 'white' ? 'active' : ''}
                             >
-                                Blanco
+                                {t('white_mode')}
                             </button>
                             <button
                                 onClick={() => handleFieldUpdate('nav_icon_mode', 'black')}
                                 className={navIconMode === 'black' ? 'active' : ''}
                             >
-                                Oscuro
+                                {t('dark_mode')}
                             </button>
                         </div>
                     </div>
-                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Toca la barra para cambiar el color de fondo.</p>
+                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('bar_color_desc')}</p>
 
                     {/* MiniNav Preview */}
                     <div
-                        onClick={() => openColorPicker('Color de Barra', 'navbar_color', '--color-navbar-bg', '#1F2937')}
+                        onClick={() => openColorPicker(t('bar_color_title'), 'navbar_color', '--color-navbar-bg', '#1F2937')}
                         style={{
                             background: navbarColor,
                             borderRadius: 16,
@@ -730,12 +731,12 @@ const Settings = () => {
 
                 {/* ========== 5. THEME COLORS ========== */}
                 <section className="branding-card">
-                    <h3>5. Colores de Tema</h3>
+                    <h3>5. {t('theme_colors')}</h3>
                     <div className="color-grid">
-                        <ColorPillar label="Primario" keyName="primary_color" cssVar="--color-primary" defaultValue="#B8956A" />
-                        <ColorPillar label="Secundario" keyName="secondary_color" cssVar="--color-secondary" defaultValue="#A89070" />
-                        <ColorPillar label="Confirmación" keyName="confirmation_color" cssVar="--color-confirm" defaultValue="#22C55E" />
-                        <ColorPillar label="Powered By" keyName="powered_by_color" cssVar="--color-powered" defaultValue="#C4856A" />
+                        <ColorPillar label={t('primary')} keyName="primary_color" cssVar="--color-primary" defaultValue="#B8956A" />
+                        <ColorPillar label={t('secondary')} keyName="secondary_color" cssVar="--color-secondary" defaultValue="#A89070" />
+                        <ColorPillar label={t('confirmation')} keyName="confirmation_color" cssVar="--color-confirm" defaultValue="#22C55E" />
+                        <ColorPillar label={t('powered_by')} keyName="powered_by_color" cssVar="--color-powered" defaultValue="#C4856A" />
                     </div>
                 </section>
 
@@ -743,7 +744,7 @@ const Settings = () => {
                 {/* ========== 6. INFO PILLS ========== */}
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>6. Botones Info (Pills)</h3>
+                        <h3>6. {t('info_pills')}</h3>
                         <div className="mode-toggle">
                             <button
                                 onClick={() => {
@@ -752,7 +753,7 @@ const Settings = () => {
                                 }}
                                 className={tenant?.info_pills?.pill_icon_mode === 'white' || !tenant?.info_pills?.pill_icon_mode ? 'active' : ''}
                             >
-                                Blanco
+                                {t('white_mode')}
                             </button>
                             <button
                                 onClick={() => {
@@ -761,11 +762,11 @@ const Settings = () => {
                                 }}
                                 className={tenant?.info_pills?.pill_icon_mode === 'dark' ? 'active' : ''}
                             >
-                                Oscuro
+                                {t('dark_mode')}
                             </button>
                         </div>
                     </div>
-                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Configura colores, enlaces y visibilidad.</p>
+                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('info_pills_desc')}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         {['whatsapp', 'rappi', 'mercadoPago', 'pedidosYa', 'adminAccess'].map(pillId => {
                             const pills = tenant?.info_pills || {};
@@ -813,7 +814,7 @@ const Settings = () => {
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{labels[pillId]}</span>
                                             <label className="switch-label">
                                                 <span style={{ color: isActive ? '#22C55E' : '#94A3B8' }}>
-                                                    {isActive ? 'Visible' : 'Oculto'}
+                                                    {isActive ? t('visible') : t('hidden')}
                                                 </span>
                                                 <input
                                                     type="checkbox"
@@ -900,7 +901,7 @@ const Settings = () => {
                         zIndex: 10000, animation: 'slideUp 0.3s ease-out',
                         border: '1px solid rgba(255,255,255,0.1)'
                     }}>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{t('unsaved_changes_warning')}</div>
                         <button
                             onClick={handlePlatformSave}
                             disabled={isSaving}
@@ -911,7 +912,7 @@ const Settings = () => {
                                 opacity: isSaving ? 0.7 : 1
                             }}
                         >
-                            {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
+                            {isSaving ? t('saving_btn') : t('save')}
                         </button>
                     </div>
                 )

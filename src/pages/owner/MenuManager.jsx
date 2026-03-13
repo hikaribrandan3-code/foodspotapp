@@ -8,6 +8,7 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
@@ -48,6 +49,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
     const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded, refreshTenantData } = useTenant()
+    const { t } = useLanguage()
     // 🛡️ RESOLVED ID: Handles Simulation + Fallback for Dev
     const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
@@ -359,7 +361,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const addCategory = () => {
         const newCat = {
             id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-            name: 'Nueva Categoría',
+            name: t('new_category'),
             items: [],
             icon: '',
             enabled: true
@@ -370,7 +372,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🗑️ THE DELETER (Category Purge): Removes category from local state
     const handleDeleteCategory = (catId) => {
-        if (!confirm('¿Eliminar categoría y todos sus ítems?')) return
+        if (!confirm(t('confirm_delete_category'))) return
         setMenu(prev => ({ ...prev, categories: prev.categories.filter(c => c.id !== catId) }))
         setHasChanges(true)
     }
@@ -378,7 +380,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // 💾 THE ATOMIC SAVE (BATCH EDITION) - Strike 7
     const handlePlatformSave = async () => {
         if (Object.keys(stagedChanges).length === 0 && !hasChanges) {
-            alert('No hay cambios pendientes.')
+            alert(t('no_pending_changes'))
             return
         }
 
@@ -496,12 +498,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
             ignoreCloudUpdateRef.current = false
             await refreshTenantData()
 
-            setSaveStatus({ message: '✓ Menú Publicado con Éxito' })
+            setSaveStatus({ message: t('menu_published_success') })
             setTimeout(() => setSaveStatus(null), 3000)
 
         } catch (error) {
             console.error('❌ BATCH SAVE ERROR:', error)
-            alert('Error guardando cambios: ' + error.message)
+            alert(t('save_error_prefix') + error.message)
         } finally {
             setIsBatchSaving(false)
         }
@@ -541,7 +543,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 const newFeatured = [...(prev.featuredPhotos || [])]
                 while (newFeatured.length <= targetSlot) newFeatured.push(null)
                 newFeatured[targetSlot] = {
-                    ...(newFeatured[targetSlot] || { name: 'Cargando...', price: 0 }),
+                    ...(newFeatured[targetSlot] || { name: t('loading'), price: 0 }),
                     image: previewUrl
                 }
                 return { ...prev, featuredPhotos: newFeatured }
@@ -572,7 +574,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 setLocalConfig(prevConfig => {
                     const currentFeatured = [...(prevConfig.featuredPhotos || [])]
                     currentFeatured[targetSlot] = {
-                        ...(currentFeatured[targetSlot] || { name: 'Destacado', price: 0 }), // Preserve edit
+                        ...(currentFeatured[targetSlot] || { name: t('featured'), price: 0 }), // Preserve edit
                         image: result.publicUrl
                     }
                     const newConfig = { ...prevConfig, featuredPhotos: currentFeatured }
@@ -583,7 +585,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 })
                 // 🛡️ FIX: Sync Modal with Final URL
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
-                setUploadStatus({ success: true, message: '✔ Guardado' })
+                setUploadStatus({ success: true, message: t('saved_check') })
             } else if (targetItem) {
                 const finalMenu = await new Promise(resolve => {
                     setMenu(prevMenu => {
@@ -607,15 +609,15 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                 setHasChanges(true)
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
-                setUploadStatus({ success: true, message: '✔ Guardado' })
+                setUploadStatus({ success: true, message: t('saved_check') })
             } else {
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
-                setUploadStatus({ success: true, message: '✔ Listo' })
+                setUploadStatus({ success: true, message: t('ready_check') })
             }
 
         } catch (error) {
             console.error('Upload failed:', error)
-            setUploadStatus({ success: false, message: 'Error de subida' })
+            setUploadStatus({ success: false, message: t('upload_error') })
             // Revert omitted for brevity, user wants aggressive sync
         } finally {
             setIsUploading(false)
@@ -646,7 +648,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             setHasChanges(true)
 
             setEditingItem(null)
-            setSaveStatus({ message: 'Destacado actualizado' })
+            setSaveStatus({ message: t('featured_updated') })
             setTimeout(() => setSaveStatus(null), 2000)
             setUploadStatus(null)
             return
@@ -676,7 +678,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                 setMenu(updatedMenu)
                 setHasChanges(true)
-                setSaveStatus({ message: 'Cambio estagedo (Guardar para aplicar)' })
+                setSaveStatus({ message: t('change_staged_save_to_apply') })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
@@ -765,7 +767,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 }))
 
                 setHasChanges(true)
-                setSaveStatus({ message: 'Precio estagedo' })
+                setSaveStatus({ message: t('price_staged') })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
@@ -791,14 +793,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 }))
 
                 setHasChanges(true)
-                setSaveStatus({ message: 'Nombre estagedo' })
+                setSaveStatus({ message: t('name_staged') })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
     }
 
     const handleRemoveItem = (categoryId, item) => {
-        if (confirm(`¿Eliminar ítem "${item.name}"?`)) {
+        if (confirm(t('confirm_delete_item', { name: item.name }).replace('{name}', item.name))) {
             const updatedMenu = { ...menu }
             const category = updatedMenu.categories.find(c => c.id === categoryId)
             if (category) {
@@ -815,7 +817,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
         if (category) {
             const newItem = {
                 id: generateId('item'),
-                name: 'Nuevo ítem',
+                name: t('new_item'),
                 price: 0,
                 available: true,
                 featured: false,
@@ -852,7 +854,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     image: item.image
                 })
             } else {
-                alert('Máximo 4 destacados. Elimina uno para agregar otro.')
+                alert(t('max_featured_reached'))
                 return
             }
         }
@@ -908,7 +910,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    content: `🖨️ **Menú Impreso**\nNegocio: \`${tenantData?.business_name || 'Desconocido'}\`\nID: \`${targetBusinessId}\`\nFecha: ${new Date().toLocaleString('es-AR')}`
+                    content: `🖨️ **${t('printed_menu_msg')}**\nNegocio: \`${tenantData?.business_name || t('unknown')}\`\nID: \`${targetBusinessId}\`\nFecha: ${new Date().toLocaleString('es-AR')}`
                 })
             })
         } catch (e) {
@@ -936,7 +938,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 gap: 12
             }}>
                 <div style={{ fontSize: 32 }}>☁️</div>
-                <div style={{ color: '#64748B', fontWeight: 500 }}>Sincronizando con la Nube...</div>
+                <div style={{ color: '#64748B', fontWeight: 500 }}>{t('syncing_cloud')}</div>
             </div>
         )
     }
@@ -947,7 +949,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
 
                 <BackendHeader
-                    title={demoMode ? "Demo Menú" : "Menú"}
+                    title={demoMode ? t('demo_menu') : t('menu')}
                     onLogout={handleLogout}
                 />
 
@@ -958,8 +960,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
-                                    <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ Pausar pedidos</p>
-                                    <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Desactiva temporalmente los pedidos</p>
+                                    <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ {t('pause_orders')}</p>
+                                    <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>{t('pause_orders_desc')}</p>
                                 </div>
                                 <label className="toggle">
                                     <input
@@ -977,7 +979,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             {/* Pause Message */}
                             {localConfig.pauseOrders && (
                                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
-                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Mensaje para clientes</label>
+                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>{t('pause_message_label')}</label>
                                     <input
                                         type="text"
                                         value={pauseMessage}
@@ -988,7 +990,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         onBlur={() => {
                                             setLocalConfig(prev => ({ ...prev, pauseOrdersMessage: pauseMessage }))
                                         }}
-                                        placeholder="Ej: Estamos con muchos pedidos"
+                                        placeholder={t('pause_message_placeholder')}
                                         style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
                                     />
                                 </div>
@@ -997,7 +999,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                         {/* Archive Info */}
                         <div style={{ background: '#F0FDF4', borderRadius: 12, border: '1px solid #BBF7D0', padding: 12, marginBottom: 12 }}>
-                            <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
+                            <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>{t('archive_info_msg')}</p>
                         </div>
 
                         {/* ==================== FOODSPOT EDITOR ==================== */}
@@ -1009,7 +1011,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         <p style={{ fontWeight: 700, fontSize: 15, color: '#FFFFFF', margin: 0 }}>FoodSpot Editor</p>
                                     </div>
                                     <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, maxWidth: '260px', lineHeight: 1.4 }}>
-                                        {'Diseñá tu menú con temas, colores, y tipografías. Exportá en PDF A4 profesional.'}
+                                        {t('editor_desc')}
                                     </p>
                                 </div>
                                 <button
@@ -1022,7 +1024,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         transition: 'all 0.15s ease'
                                     }}
                                 >
-                                    Abrir Editor
+                                    {t('open_editor')}
                                 </button>
                             </div>
 
@@ -1032,8 +1034,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     <span style={{ fontSize: 14 }}>{'⚠️'}</span>
                                     <p style={{ margin: 0, fontSize: 11, color: '#FCA5A5', lineHeight: 1.4 }}>
                                         {hasChanges
-                                            ? 'Cambios sin guardar. Guardá antes de imprimir.'
-                                            : 'El menú digital fue modificado. Volvé a imprimir.'}
+                                            ? t('unsaved_changes_print_warning')
+                                            : t('menu_modified_reprint_warning')}
                                     </p>
                                 </div>
                             )}
@@ -1041,13 +1043,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                         {/* OPERATIONAL COMMAND CENTER (Strike 9) */}
                         <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
-                            <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>⚙️ Configuración de Operación</p>
+                            <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>⚙️ {t('operation_config')}</p>
 
                             {/* Dine-In Toggle */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                                 <div>
-                                    <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🍽️ Comer en Local</p>
-                                    <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>Habilita mesas y mozos</p>
+                                    <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🍽️ {t('dine_in')}</p>
+                                    <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>{t('dine_in_desc')}</p>
                                 </div>
                                 <label className="toggle">
                                     <input
@@ -1068,7 +1070,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             {/* Dine-In Payment Logic (Conditional) */}
                             {(localConfig.service_modes?.dineIn ?? true) && (
                                 <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Momento de Pago</label>
+                                    <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>{t('payment_moment')}</label>
                                     <div style={{ display: 'flex', gap: 8 }}>
                                         <button
                                             onClick={() => {
@@ -1084,7 +1086,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 color: localConfig.service_modes?.dineInPayment === 'before' ? '#1D4ED8' : '#64748B'
                                             }}
                                         >
-                                            Antes de comer
+                                            {t('pay_before')}
                                         </button>
                                         <button
                                             onClick={() => {
@@ -1100,7 +1102,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 color: localConfig.service_modes?.dineInPayment === 'after' ? '#1D4ED8' : '#64748B'
                                             }}
                                         >
-                                            Después (Mesa)
+                                            {t('pay_after')}
                                         </button>
                                     </div>
                                 </div>
@@ -1109,8 +1111,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             {/* Delivery Toggle */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
-                                    <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🛵 Envíos</p>
-                                    <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>Habilita delivery y zonas</p>
+                                    <p style={{ fontWeight: 500, fontSize: 14, color: '#334155', margin: 0 }}>🛵 {t('delivery_toggle_label')}</p>
+                                    <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>{t('delivery_toggle_desc')}</p>
                                 </div>
                                 <label className="toggle">
                                     <input
@@ -1133,7 +1135,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         {
                             (localConfig.service_modes?.delivery ?? true) && (
                                 <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
-                                    <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
+                                    <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 {t('delivery_config_title')}</p>
 
                                     <div style={{ marginBottom: 12 }}>
                                         {/* SaaS-Scale Static Map & Radius Visualizer */}
@@ -1178,7 +1180,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             }} />
                                         </div>
 
-                                        <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
+                                        <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>{t('delivery_radius_label').replace('{radius}', localConfig.delivery?.radiusKm || 5)}</label>
                                         <input
                                             type="range"
                                             min="1"
@@ -1204,7 +1206,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                                         <div>
-                                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
+                                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>{t('flat_fee_label')}</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -1222,7 +1224,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             />
                                         </div>
                                         <div>
-                                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
+                                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>{t('free_delivery_from_label')}</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -1256,7 +1258,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     < hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }
                     } />
                     < h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Estilo de Menú(Píldora)
+                        {t('pill_style')}
                     </h3 >
                     <div style={{ background: 'white', padding: '20px', borderRadius: 16, border: '1px solid #E2E8F0', marginBottom: 24 }}>
                         {/* Visual Preset Picker - iPhone Wallpaper Style */}
@@ -1367,7 +1369,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
                     {/* 1. FEATURED SECTION (TOP 4) */}
                     <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Destaques de Inicio (Top 4)
+                        {t('home_highlights_top4')}
                     </h3>
 
                     <div style={{
@@ -1460,7 +1462,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
 
                     <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Menú Principal
+                        {t('main_menu')}
                     </h3>
 
                     {/* Add Category Button / Form */}
@@ -1485,7 +1487,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     gap: 6
                                 }}
                             >
-                                ➕ Agregar Categoría
+                                ➕ {t('add_category')}
                             </button>
                         ) : (
                             <div style={{
@@ -1498,7 +1500,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
                                     <input
                                         type="text"
-                                        placeholder="Nombre de categoría"
+                                        placeholder={t('category_name_placeholder')}
                                         value={newCategoryName}
                                         onChange={(e) => setNewCategoryName(e.target.value)}
                                         autoFocus
@@ -1544,7 +1546,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        Crear
+                                        {t('create')}
                                     </button>
                                     <button
                                         onClick={() => {
@@ -1562,7 +1564,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        Cancelar
+                                        {t('cancel')}
                                     </button>
                                 </div>
                             </div>
@@ -1616,7 +1618,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                         alignItems: 'center',
                                                         gap: 8
                                                     }}
-                                                    title="Clic para renombrar"
+                                                    title={t('click_to_rename')}
                                                 >
                                                     {category.name}
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1626,7 +1628,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                     {/* 🗑️ DELETE CATEGORY BUTTON */}
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id) }}
-                                                        title="Eliminar Categoría"
+                                                        title={t('delete_category')}
                                                         style={{
                                                             background: 'none',
                                                             border: 'none',
@@ -1642,7 +1644,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                                         </svg>
                                                     </button>
-                                                    {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
+                                                    {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>{t('hidden_indicator')}</span>}
                                                 </h3>
                                             )}
                                         </div>
@@ -1691,7 +1693,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                         {item.image ? (
                                                             <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                                                         ) : (
-                                                            <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
+                                                            <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>{t('empty')}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1751,7 +1753,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                         </div>
                                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
                                                             <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
-                                                                Agotado
+                                                                {t('out_of_stock')}
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={!item.available}
@@ -1760,7 +1762,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                                 />
                                                             </label>
                                                             <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
-                                                                Promo
+                                                                {t('promo')}
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={isFeatured(item)}
@@ -1787,7 +1789,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                         alignSelf: 'flex-start',
                                                         marginLeft: 8
                                                     }}
-                                                    title="Eliminar ítem"
+                                                    title={t('delete_item')}
                                                 >
                                                     ×
                                                 </button>
@@ -1807,7 +1809,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                                             }}
                                         >
-                                            ➕ Agregar Ítem
+                                            ➕ {t('add_item')}
                                         </div>
                                     </div>
                                 </div>
@@ -1821,10 +1823,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     editingItem && (
                         <div className="modal-overlay" onClick={() => setEditingItem(null)}>
                             <div className="modal" onClick={e => e.stopPropagation()}>
-                                <h2 className="modal-title">Editar item</h2>
+                                <h2 className="modal-title">{t('edit_item')}</h2>
 
                                 <div className="form-group">
-                                    <label className="form-label">Nombre</label>
+                                    <label className="form-label">{t('name_label')}</label>
                                     <input
                                         type="text"
                                         className="form-input"
@@ -1834,7 +1836,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Precio (ARS)</label>
+                                    <label className="form-label">{t('price_label_ars')}</label>
                                     <input
                                         type="number"
                                         className="form-input"
@@ -1844,7 +1846,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Imagen (JPG/PNG)</label>
+                                    <label className="form-label">{t('image_label')}</label>
                                     {editForm.image && (
                                         <div style={{ marginBottom: 8 }}>
                                             <img
@@ -1866,7 +1868,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                     borderRadius: 10,
                                                     cursor: 'pointer' // Hand cursor for interactivity
                                                 }}
-                                                title="Clic para cambiar imagen"
+                                                title={t('click_to_change_image')}
                                             />
                                         </div>
                                     )}
@@ -1883,7 +1885,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         }}
                                         disabled={isUploading}
                                     >
-                                        {isUploading ? 'Optimizando...' : (editForm.image ? 'Cambiar imagen' : 'Subir imagen')}
+                                        {isUploading ? t('optimizing') : (editForm.image ? t('change_image') : t('upload_image'))}
                                     </button>
                                     {uploadStatus && (
                                         <p style={{
@@ -1900,14 +1902,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     className="btn btn-primary btn-block"
                                     onClick={handleSave}
                                 >
-                                    Guardar
+                                    {t('save')}
                                 </button>
                                 <button
                                     className="btn btn-secondary btn-block"
                                     style={{ marginTop: 8 }}
                                     onClick={() => setEditingItem(null)}
                                 >
-                                    Cancelar
+                                    {t('cancel')}
                                 </button>
                             </div>
                         </div>
@@ -1981,7 +1983,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             zIndex: 10000, animation: 'slideUp 0.3s ease-out',
                             border: '1px solid rgba(255,255,255,0.1)'
                         }}>
-                            <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
+<div style={{ fontSize: 13, fontWeight: 600 }}>{t('unsaved_changes_warning')}</div>
                             <button
                                 onClick={handlePlatformSave}
                                 disabled={isBatchSaving}
@@ -1991,7 +1993,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     fontSize: 14, cursor: 'pointer', opacity: isBatchSaving ? 0.5 : 1
                                 }}
                             >
-                                {isBatchSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+                                {isBatchSaving ? t('saving_btn') : t('save_changes')}
                             </button>
                         </div>
                     )

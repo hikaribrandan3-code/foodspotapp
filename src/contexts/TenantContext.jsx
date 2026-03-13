@@ -102,15 +102,23 @@ export function TenantProvider({ children }) {
         }
 
         const revalidate = async (slug) => {
-            const { data, error } = await supabase
+            const { data: brandingData, error: brandingError } = await supabase
                 .from('branding')
                 .select('*')
                 .eq('slug', slug)
                 .single()
 
-            if (error) throw error
+            if (brandingError) throw brandingError
 
-            if (data) {
+            if (brandingData) {
+                // 📡 DOUBLE-FETCH: Get language from tenants table
+                const { data: tenantRow } = await supabase
+                    .from('tenants')
+                    .select('language')
+                    .eq('business_id', brandingData.business_id)
+                    .single()
+
+                const data = { ...brandingData, language: tenantRow?.language || 'es' }
                 // UPDATE STATE
                 if (mounted) {
                     setTenantData(data)
@@ -146,13 +154,21 @@ export function TenantProvider({ children }) {
         console.log('🔄 FORCING GLOBAL REFRESH...')
 
         try {
-            const { data, error } = await supabase
+            const { data: brandingData, error: brandingError } = await supabase
                 .from('branding')
                 .select('*')
                 .eq('business_id', businessId)
                 .single()
 
-            if (!error && data) {
+            if (!brandingError && brandingData) {
+                // 📡 DOUBLE-FETCH: Get language from tenants table
+                const { data: tenantRow } = await supabase
+                    .from('tenants')
+                    .select('language')
+                    .eq('business_id', businessId)
+                    .single()
+
+                const data = { ...brandingData, language: tenantRow?.language || 'es' }
                 setTenantData(data)
                 applyTheme(data)
 
