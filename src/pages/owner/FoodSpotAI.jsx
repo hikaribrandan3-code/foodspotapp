@@ -5,6 +5,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+
 // ─── CONFIG ───
 const CANVAS_W = 1080
 const CANVAS_H = 1920
@@ -53,9 +54,8 @@ const stackText = (text, maxCharsPerLine = 14) => {
         lines[lines.length - 1] = truncated
     }
     return lines
-
-
 }
+
 const calculateFontSize = (lines, ctx) => {
     const longestLine = lines.reduce((a, b) => a.length > b.length ? a : b, '')
     const maxWidth = CANVAS_W * 0.85
@@ -103,6 +103,7 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
             return { image_prompt: src.replace('PROXY://', '') }
         }
     }, [src, businessName])
+
     useEffect(() => {
         if (!src) return
         setStatus('loading')
@@ -148,6 +149,7 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
             setImageSrc(src)
         }
     }, [src, parsedPayload, category])
+
     useEffect(() => {
         if (!imageSrc) return
         setStatus('loading')
@@ -234,6 +236,7 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
             setStatus('loaded')
         }
     }, [imageSrc, parsedPayload])
+
     const handleDownload = async () => {
         if (!compositeDataUrl) return
         setDownloading(true)
@@ -252,6 +255,7 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
         } catch (error) { console.error(error) }
         finally { setDownloading(false) }
     }
+
     return (
         <div className={className} style={{ position: 'relative', width: '100%', aspectRatio: '9/16', background: '#0a0a0a', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', ...style }}>
             <canvas ref={canvasRef} style={{ display: 'none' }} />
@@ -279,15 +283,17 @@ export default function FoodSpotAI() {
     const { tenantSlug } = useParams()
     const { businessId, tenantData } = useTenant()
 
-    const [messages, setMessages] = useState([
-        { role: 'assistant', content: '¿Qué promoción querés crear hoy? Decime algo como "2x1 en hamburguesas $1500" o "Noche de cocktails 20% off"' }
-    ])
+    const [messages, setMessages] = useState([])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const chatEndRef = useRef(null)
+
+    const businessName = tenantData?.business_name || 'Tu Negocio'
+
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
+
     const handleSend = async (text) => {
         const userText = text || input.trim()
         if (!userText || isLoading) return
@@ -295,7 +301,7 @@ export default function FoodSpotAI() {
         setMessages(newMessages)
         setInput(''); setIsLoading(true)
         try {
-            const businessContext = { name: tenantData?.business_name || 'Tu Negocio', category: tenantData?.category || 'restaurant' }
+            const businessContext = { name: businessName, category: tenantData?.category || 'restaurant' }
             const { data } = await supabase.functions.invoke('foodspot-ai', {
                 body: {
                     messages: newMessages,
@@ -368,58 +374,172 @@ Never let a user ship bad creative without a warning.`
             setMessages([...newMessages, { role: 'assistant', content: 'Ups, se quemó la cocina. ¿Intentamos de nuevo?' }])
         } finally { setIsLoading(false) }
     }
+
     const quickPrompts = ['2x1 en hamburguesas $1500', 'Noche de cocktails 20% off', 'Pizza familiar + cerveza $2800']
+
+    const getTimeGreeting = () => {
+        const hour = new Date().getHours()
+        if (hour < 12) return 'Buenos días'
+        if (hour < 18) return 'Buenas tardes'
+        return 'Buenas noches'
+    }
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0a0a0a', color: '#fff' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff', color: '#111827', position: 'relative' }}>
             <BackendHeader title="FoodSpot AI" />
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px 200px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {messages.map((msg, i) => {
-                    // Update Strategy Card Styling for Dark Mode
-                    const isStrategyCard = msg.content && msg.content.includes('Estrategia');
-                    return (
-                        <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease' }}>
-                            <div style={{
-                                maxWidth: msg.generatedImage ? '100%' : '85%',
-                                padding: msg.generatedImage ? 0 : '14px 18px',
-                                borderRadius: 20,
-                                background: msg.role === 'user' ? '#2563EB' : '#1f1f1f',
-                                color: isStrategyCard ? '#E0E7FF' : '#fff', // White/Light Blue text for strategy cards
-                                border: msg.role === 'assistant' ? '1px solid rgba(255,255,255,0.1)' : 'none'
-                            }}>
-                                {msg.content}
-                                {msg.generatedImage && (
-                                    <LazyImage src={msg.generatedImage} category={tenantData?.category} businessName={tenantData?.business_name} style={{ marginTop: 12 }} />
-                                )}
+
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 0 180px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: '100%', maxWidth: '800px', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                    {messages.length === 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', textAlign: 'center', animation: 'fadeIn 0.8s ease' }}>
+                            <div style={{ fontSize: 42, fontWeight: 800, color: '#111827', marginBottom: 8, letterSpacing: '-0.02em' }}>
+                                {getTimeGreeting()}, {businessName}
+                            </div>
+                            <div style={{ fontSize: 18, color: '#6b7280', maxWidth: '400px', lineHeight: 1.5 }}>
+                                Soy tu Director Creativo. ¿Qué historia vamos a contar hoy a través de tus flyers?
                             </div>
                         </div>
-                    )
-                })}
-                {isLoading && (
-                    <div style={{ display: 'flex', gap: 8, padding: '12px 18px', width: 'fit-content', background: '#1f1f1f', borderRadius: 20 }}>
-                        <span style={{ animation: 'bounce 0.6s infinite', animationDelay: '0ms' }}>.</span>
-                        <span style={{ animation: 'bounce 0.6s infinite', animationDelay: '150ms' }}>.</span>
-                        <span style={{ animation: 'bounce 0.6s infinite', animationDelay: '300ms' }}>.</span>
-                    </div>
-                )}
-                <div ref={chatEndRef} />
-            </div>
+                    )}
 
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '16px 20px 32px', background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.1)', zIndex: 100 }}>
-                {messages.length < 3 && (
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 8, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-                        {quickPrompts.map((prompt, i) => (
-                            <button key={i} onClick={() => handleSend(prompt)} style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, color: '#aaa', fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer' }}>
-                                {prompt}
-                            </button>
-                        ))}
-                    </div>
-                )}
-                <div style={{ display: 'flex', gap: 12 }}>
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describí tu promo..." style={{ flex: 1, borderRadius: 24, padding: '14px 20px', background: '#1f1f1f', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 16, resize: 'none', outline: 'none', minHeight: 52, maxHeight: 120 }} rows={1} />
-                    <button onClick={() => handleSend()} disabled={!input.trim() || isLoading} style={{ width: 52, height: 52, borderRadius: '50%', background: input.trim() ? '#2563EB' : '#333', border: 'none', color: '#fff', fontSize: 20, cursor: input.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>↑</button>
+                    {messages.map((msg, i) => {
+                        const isAssistant = msg.role === 'assistant'
+                        const isStrategyCard = msg.content && msg.content.includes('Estrategia')
+
+                        return (
+                            <div key={i} style={{ display: 'flex', justifyContent: isAssistant ? 'flex-start' : 'flex-end', animation: 'fadeIn 0.3s ease' }}>
+                                <div style={{
+                                    maxWidth: msg.generatedImage ? '100%' : '85%',
+                                    padding: msg.generatedImage ? 0 : '16px 20px',
+                                    borderRadius: 24,
+                                    background: isAssistant ? '#f3f4f6' : '#2563EB',
+                                    color: isAssistant ? (isStrategyCard ? '#1e3a8a' : '#111827') : '#fff',
+                                    fontSize: 16,
+                                    lineHeight: 1.5,
+                                    border: isAssistant ? '1px solid #e5e7eb' : 'none',
+                                    boxShadow: isAssistant ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.2)'
+                                }}>
+                                    {msg.content}
+                                    {msg.generatedImage && (
+                                        <div style={{ padding: 12, background: '#f3f4f6', borderRadius: 24, marginTop: 8 }}>
+                                            <LazyImage src={msg.generatedImage} category={tenantData?.category} businessName={businessName} />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })}
+
+                    {isLoading && (
+                        <div style={{ display: 'flex', gap: 8, padding: '16px 24px', width: 'fit-content', background: '#f3f4f6', borderRadius: 24, border: '1px solid #e5e7eb' }}>
+                            <div className="dot" style={{ width: 8, height: 8, background: '#9ca3af', borderRadius: '50%', animation: 'pulse 1s infinite' }} />
+                            <div className="dot" style={{ width: 8, height: 8, background: '#9ca3af', borderRadius: '50%', animation: 'pulse 1s infinite 0.2s' }} />
+                            <div className="dot" style={{ width: 8, height: 8, background: '#9ca3af', borderRadius: '50%', animation: 'pulse 1s infinite 0.4s' }} />
+                        </div>
+                    )}
+                    <div ref={chatEndRef} />
                 </div>
             </div>
-            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }`}</style>
+
+            {/* Floating Centered Chatbox Container */}
+            <div style={{
+                position: 'fixed',
+                bottom: 100, // Elevated to avoid mobile nav cutting
+                left: 0,
+                right: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                zIndex: 1000,
+                padding: '0 16px'
+            }}>
+                <div style={{ width: '100%', maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                    {/* Quick Prompts as Pills */}
+                    {messages.length < 5 && (
+                        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+                            {quickPrompts.map((prompt, i) => (
+                                <button key={i} onClick={() => handleSend(prompt)} style={{
+                                    padding: '10px 18px',
+                                    background: '#ffffff',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: 100,
+                                    color: '#4b5563',
+                                    fontSize: 14,
+                                    whiteSpace: 'nowrap',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                                    transition: 'all 0.2s'
+                                }}>
+                                    {prompt}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Main Input Field (Claude/Gemini Style) */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        gap: 12,
+                        background: '#ffffff',
+                        padding: '8px 8px 8px 20px',
+                        borderRadius: 32,
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                        width: '100%'
+                    }}>
+                        <textarea
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                            placeholder="Describí tu promo..."
+                            style={{
+                                flex: 1,
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#111827',
+                                fontSize: 16,
+                                resize: 'none',
+                                outline: 'none',
+                                minHeight: 44,
+                                maxHeight: 150,
+                                padding: '10px 0',
+                                fontFamily: 'inherit'
+                            }}
+                            rows={1}
+                        />
+                        <button
+                            onClick={() => handleSend()}
+                            disabled={!input.trim() || isLoading}
+                            style={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: '50%',
+                                background: input.trim() ? '#2563EB' : '#f3f4f6',
+                                border: 'none',
+                                color: input.trim() ? '#fff' : '#9ca3af',
+                                fontSize: 20,
+                                cursor: input.trim() ? 'pointer' : 'not-allowed',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            ↑
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <style>{`
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } 
+                @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+                ::-webkit-scrollbar { width: 6px; }
+                ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+            `}</style>
         </div>
     )
 }
