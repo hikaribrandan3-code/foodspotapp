@@ -556,15 +556,16 @@ Rules:
                                     height: 44,
                                     background: 'transparent',
                                     border: 'none',
-                                    fontSize: 22,
+                                    fontSize: 28,
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    opacity: 0.7
+                                    color: '#6b7280',
+                                    opacity: 0.8
                                 }}
                             >
-                                📷
+                                +
                             </button>
                             <textarea
                                 value={input}
@@ -581,7 +582,7 @@ Rules:
                                     outline: 'none',
                                     minHeight: 44,
                                     maxHeight: 150,
-                                    padding: '10px 0',
+                                    padding: '12px 10px',
                                     fontFamily: 'inherit'
                                 }}
                                 rows={1}
