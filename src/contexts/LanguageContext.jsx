@@ -8,8 +8,8 @@ const LanguageContext = createContext();
 export const LanguageProvider = ({ children }) => {
     const { tenantData, businessId, refreshTenantData } = useTenant();
 
-    // Default to 'es' if not set, prioritize tenantData value
-    const [lang, setLang] = useState('es');
+    // Default to 'es' if not set, prioritize tenantData value (prevents mount flicker)
+    const [lang, setLang] = useState(() => tenantData?.language || 'es');
 
     useEffect(() => {
         if (tenantData?.language) {
