@@ -7,6 +7,7 @@ export const translations = {
     analytics: { es: "Métricas", en: "Analytics", pt: "Métricas" },
     settings: { es: "Ajustes", en: "Settings", pt: "Ajustes" },
     settings_title: { es: "Configuración", en: "Settings", pt: "Configurações" },
+    ai_header: { es: "Asistente AI", en: "AI Assistant", pt: "Assistente de IA" },
     ai_error_reply: { es: "Ups, se quemó la cocina. ¿Intentamos de nuevo?", en: "Oops, the kitchen burned down. Shall we try again?", pt: "Ops, a cozinha queimou. Vamos tentar de novo?" },
     cooking_atmosphere: { es: "Cocinando atmósfera...", en: "Cooking atmosphere...", pt: "Cozinhando atmosfera..." },
     describe_promo_placeholder: { es: "Describí tu promo...", en: "Describe your promo...", pt: "Descreva sua promo..." },

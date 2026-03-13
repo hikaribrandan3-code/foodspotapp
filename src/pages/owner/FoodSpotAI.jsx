@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { logout } from '../../utils/auth.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import Markdown from 'react-markdown'
 
 // ─── CONFIG ───
 const CANVAS_W = 1080
@@ -326,33 +327,17 @@ export default function FoodSpotAI() {
                    Respond in the user's language unless specified otherwise.
                    Default Language for business reports: ${lang}.
                    Example: ||| { "type": "EVENT_DRAFT", "data": { "title": "Reggaeton Night", "price": 15000, "capacity": 100 } } |||`
-                : `## CORE IDENTITY
-You are the venue's Strategy Assistant. You are a high-level business partner focused on **reducing stress and increasing sales**. You analyze ROI, traffic patterns, and brand alignment to make the venue profitable.
-
-## COMMUNICATION GUIDELINES
-1. **Scannability First:** Never use more than 2 sentences in a row. Use white space to divide ideas.
-2. **Structure:** Use ### Headlines for sections.
-3. **Emphasis:** Use **Bold** for all key metrics, numbers, and critical terms.
-4. **Actionable Advice:** Use * Bullet points for strategic recommendations.
-5. **Tone:** Professional, direct, and executive. Use the user's language (mirroring their input naturally).
-6. **No Emojis:** Remove all decorative emojis. Use only professional status indicators like ✔️ or 🛡️ if absolutely necessary.
-
-## THE STRATEGIC PROTOCOL
-1. STOP generating image prompts. Do not use PROXY:// anymore.
-2. ANALYZE: When a user wants an event or promo, analyze the business need.
-3. DRAFT: When ready, output a JSON Strategy Block wrapped in triple pipes at the end of your message.
-4. LANGUAGE: The business operates in ${lang.toUpperCase()}. Use this for all JSON drafts and strategic reports.
-
-JSON STRUCTURE:
-||| { "type": "EVENT_DRAFT" | "PROMO_DRAFT", "data": { ...Fields } } |||
-
-Example Event: ||| { "type": "EVENT_DRAFT", "data": { "title": "Main Event", "price": 10000, "description": "Big night." } } |||
-Example Promo: ||| { "type": "PROMO_DRAFT", "data": { "name": "Happy Hour", "discount": "2x1" } } |||
-
-Rules:
-- Speak with authority and strategic depth.
-- Suggest pricing and timing based on business context.
-- Your output is JSON for the Engineering team.`
+                : `## THE EXECUTIVE PROTOCOL
+1. **NO INTRODUCTIONS:** Never start with conversational fluff (e.g., "I've analyzed...", "Here is..."). 
+2. **START IMMEDIATELY:** The first line of your response must be an ### Headline.
+3. **MANDATORY HIERARCHY:**
+   ### [Strategy Name]
+   ### The Logic
+   * [Bullet explaining WHY - focus on metrics/ROI]
+   ### The Execution
+   * [Bullet explaining HOW - focus on actionable steps]
+4. **JSON DRAFT:** Always include the draft at the very end wrapped in triple pipes |||.
+5. **LANGUAGE:** Business operates in ${lang.toUpperCase()}. Use this for all content.`
             const { data } = await supabase.functions.invoke('foodspot-ai', {
                 body: {
                     messages: newMessages,
@@ -429,7 +414,15 @@ Rules:
                                     border: isAssistant ? '1px solid #e5e7eb' : 'none',
                                     boxShadow: isAssistant ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.2)'
                                 }}>
-                                    {msg.content}
+                                    <Markdown components={{
+                                        h3: ({ node, ...props }) => <h3 style={{ fontSize: 22, fontWeight: 800, color: isAssistant ? '#111827' : '#fff', marginTop: 16, marginBottom: 8, letterSpacing: '-0.02em' }} {...props} />,
+                                        p: ({ node, ...props }) => <p style={{ marginBottom: 12 }} {...props} />,
+                                        ul: ({ node, ...props }) => <ul style={{ paddingLeft: 20, marginBottom: 12, listStyleType: 'disc' }} {...props} />,
+                                        li: ({ node, ...props }) => <li style={{ marginBottom: 6, fontWeight: 500 }} {...props} />,
+                                        strong: ({ node, ...props }) => <strong style={{ fontWeight: 800 }} {...props} />
+                                    }}>
+                                        {msg.content}
+                                    </Markdown>
                                     {msg.attachedImage && (
                                         <div style={{ marginTop: 8, borderRadius: 12, overflow: 'hidden' }}>
                                             <img src={msg.attachedImage} style={{ width: '100%', maxHeight: 300, objectFit: 'cover' }} alt="User upload" />
@@ -447,9 +440,8 @@ Rules:
                                             gap: 16,
                                             boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
                                         }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#111827' }} />
-                                                <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                                                <div style={{ fontWeight: 800, fontSize: 13, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                                                     {msg.draftPayload.type === 'EVENT_DRAFT' ? t('event_strategy') : t('promo_strategy')}
                                                 </div>
                                             </div>
@@ -457,22 +449,20 @@ Rules:
                                                 onClick={() => launchStudio()}
                                                 style={{
                                                     width: '100%',
-                                                    padding: '16px',
-                                                    background: '#111827',
+                                                    padding: '18px',
+                                                    background: '#000',
                                                     color: '#fff',
                                                     border: 'none',
-                                                    borderRadius: 12,
-                                                    fontWeight: 700,
-                                                    fontSize: 14,
+                                                    borderRadius: 8,
+                                                    fontWeight: 900,
+                                                    fontSize: 13,
                                                     cursor: 'pointer',
-                                                    transition: 'all 0.2s',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    letterSpacing: '0.02em'
+                                                    letterSpacing: '0.1em',
+                                                    textTransform: 'uppercase'
                                                 }}
-                                                onMouseOver={(e) => e.target.style.background = '#000'}
-                                                onMouseOut={(e) => e.target.style.background = '#111827'}
                                             >
                                                 {t('configure_strategy_btn')}
                                             </button>
