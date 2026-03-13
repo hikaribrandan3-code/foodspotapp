@@ -115,6 +115,8 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
                 : 'gourmet_food_photography_professional_plating_'
 
             const cleanPrompt = parsedPayload?.image_prompt?.replace(/[^a-zA-Z0-9 _]/g, '')?.replace(/\s+/g, '_') || 'food_promo'
+
+            // Try 1: Supabase Edge Function
             try {
                 const { data, error } = await supabase.functions.invoke('foodspot-image', {
                     body: { prompt: parsedPayload?.image_prompt || cleanPrompt, category }
@@ -123,25 +125,26 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
                     setImageSrc(data.image)
                     return
                 }
-                throw new Error('HF empty')
-            } catch (hfError) {
-                // Fallback to Pollinations
-            }
+            } catch (hfError) { console.warn('Supabase generation failed, trying Pollinations...') }
+
+            // Try 2: Pollinations AI (Primary)
             const seed = Math.floor(Math.random() * 1000000)
-            const pollinationsUrl = `https://image.pollinations.ai/prompt/${prefix}${cleanPrompt}?width=${CANVAS_W}&height=${CANVAS_H}&nologo=true&seed=${seed}&enhance=true`
+            const primaryUrl = `https://image.pollinations.ai/prompt/${prefix}${cleanPrompt}?width=${CANVAS_W}&height=${CANVAS_H}&nologo=true&seed=${seed}&enhance=true`
 
             try {
-                const response = await fetch(pollinationsUrl, { mode: 'cors', headers: { 'Accept': 'image/*' } })
+                const response = await fetch(primaryUrl, { mode: 'cors', headers: { 'Accept': 'image/*' } })
                 if (response.ok) {
                     const blob = await response.blob()
                     const blobUrl = URL.createObjectURL(blob)
                     setImageSrc(blobUrl)
-                    return () => URL.revokeObjectURL(blobUrl)
+                    return
                 }
-                throw new Error('Fetch failed')
-            } catch (fetchError) {
-                setImageSrc(pollinationsUrl)
-            }
+            } catch (e) { console.warn('Pollinations Primary failed, trying fallback seed...') }
+
+            // Try 3: Pollinations AI (Secondary/Direct Fallback)
+            const fallbackSeed = Math.floor(Math.random() * 9999)
+            const fallbackUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}_high_quality_food_photography?width=${CANVAS_W}&height=${CANVAS_H}&nologo=true&seed=${fallbackSeed}`
+            setImageSrc(fallbackUrl)
         }
         if (src.startsWith('PROXY://')) {
             loadImageCORS()
@@ -286,6 +289,9 @@ export default function FoodSpotAI() {
     const [messages, setMessages] = useState([])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [pendingImage, setPendingImage] = useState(null)
+    const [previewUrl, setPreviewUrl] = useState(null)
+    const fileInputRef = useRef(null)
     const chatEndRef = useRef(null)
 
     const businessName = tenantData?.business_name || 'Tu Negocio'
@@ -296,17 +302,26 @@ export default function FoodSpotAI() {
 
     const handleSend = async (text) => {
         const userText = text || input.trim()
-        if (!userText || isLoading) return
-        const newMessages = [...messages, { role: 'user', content: userText }]
+        if (!userText && !pendingImage) return
+        if (isLoading) return
+
+        const newMessages = [...messages, { role: 'user', content: userText, attachedImage: previewUrl }]
         setMessages(newMessages)
         setInput(''); setIsLoading(true)
+
+        const currentPendingImage = pendingImage
+        setPendingImage(null)
+        setPreviewUrl(null)
+
         try {
             const businessContext = { name: businessName, category: tenantData?.category || 'restaurant' }
-            const { data } = await supabase.functions.invoke('foodspot-ai', {
-                body: {
-                    messages: newMessages,
-                    businessContext,
-                    systemPrompt: `## CORE IDENTITY
+            const customSystemPrompt = currentPendingImage
+                ? `## USER HAS PROVIDED THE IMAGE. 
+                   Do not invent an image prompt. 
+                   Your goal is to provide the CREATIVE TEXT (Headline, Price, Footer) to overlay on this image.
+                   Respond ONLY with the text data in PROXY:// format using a placeholder image string.
+                   Format: PROXY://user_provided_image|[HEADLINE]|[PRICE]|[footer]`
+                : `## CORE IDENTITY
 You are the Creative Director of FoodSpot AI (Nano Banana Lite), a premium marketing studio. You are a brilliant, highly-paid advertising strategist. You speak with the rhythm of a high-end agency: short, punchy, and decisive. You use white space as a weapon. You never use excessive exclamation points. Your energy is: 'I know exactly what your brand needs.'
 
 THE 4 LAWS OF NANO BANANA
@@ -355,6 +370,11 @@ Never use generic phrases like 'amazing atmosphere.'
 Never break the PROXY pipe format.
 
 Never let a user ship bad creative without a warning.`
+            const { data } = await supabase.functions.invoke('foodspot-ai', {
+                body: {
+                    messages: newMessages,
+                    businessContext,
+                    systemPrompt: customSystemPrompt
                 }
             })
             if (data?.reply) {
@@ -421,9 +441,26 @@ Never let a user ship bad creative without a warning.`
                                     boxShadow: isAssistant ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.2)'
                                 }}>
                                     {msg.content}
+                                    {msg.attachedImage && (
+                                        <div style={{ marginTop: 8, borderRadius: 12, overflow: 'hidden' }}>
+                                            <img src={msg.attachedImage} style={{ width: '100%', maxHeight: 300, objectFit: 'cover' }} alt="User upload" />
+                                        </div>
+                                    )}
                                     {msg.generatedImage && (
-                                        <div style={{ padding: 12, background: '#f3f4f6', borderRadius: 24, marginTop: 8 }}>
-                                            <LazyImage src={msg.generatedImage} category={tenantData?.category} businessName={businessName} />
+                                        <div style={{
+                                            padding: 12,
+                                            background: '#f3f4f6',
+                                            borderRadius: 24,
+                                            marginTop: 8,
+                                            maxHeight: '420px',
+                                            overflow: 'hidden'
+                                        }}>
+                                            <LazyImage
+                                                src={msg.generatedImage}
+                                                category={tenantData?.category}
+                                                businessName={businessName}
+                                                style={{ objectFit: 'contain', height: '100%' }}
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -481,66 +518,106 @@ Never let a user ship bad creative without a warning.`
                     {/* Main Input Field (Claude/Gemini Style) */}
                     <div style={{
                         display: 'flex',
-                        alignItems: 'flex-end',
-                        gap: 12,
+                        flexDirection: 'column',
                         background: '#ffffff',
-                        padding: '8px 8px 8px 20px',
                         borderRadius: 32,
                         border: '1px solid #e5e7eb',
                         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                        width: '100%'
+                        width: '100%',
+                        overflow: 'hidden'
                     }}>
-                        <textarea
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                            placeholder="Describí tu promo..."
-                            style={{
-                                flex: 1,
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#111827',
-                                fontSize: 16,
-                                resize: 'none',
-                                outline: 'none',
-                                minHeight: 44,
-                                maxHeight: 150,
-                                padding: '10px 0',
-                                fontFamily: 'inherit'
-                            }}
-                            rows={1}
-                        />
-                        <button
-                            onClick={() => handleSend()}
-                            disabled={!input.trim() || isLoading}
-                            style={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: '50%',
-                                background: input.trim() ? '#2563EB' : '#f3f4f6',
-                                border: 'none',
-                                color: input.trim() ? '#fff' : '#9ca3af',
-                                fontSize: 20,
-                                cursor: input.trim() ? 'pointer' : 'not-allowed',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            ↑
-                        </button>
+                        {previewUrl && (
+                            <div style={{ padding: '12px 20px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <div style={{ position: 'relative', width: 60, height: 60, borderRadius: 12, overflow: 'hidden' }}>
+                                    <img src={previewUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <button onClick={() => { setPendingImage(null); setPreviewUrl(null); }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, fontSize: 12, cursor: 'pointer' }}>×</button>
+                                </div>
+                                <span style={{ fontSize: 13, color: '#6b7280' }}>Foto seleccionada lista...</span>
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, padding: '8px 8px 8px 20px' }}>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                style={{ display: 'none' }}
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files[0]
+                                    if (file) {
+                                        setPendingImage(file)
+                                        setPreviewUrl(URL.createObjectURL(file))
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current.click()}
+                                style={{
+                                    width: 44,
+                                    height: 44,
+                                    background: 'transparent',
+                                    border: 'none',
+                                    fontSize: 22,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    opacity: 0.7
+                                }}
+                            >
+                                📷
+                            </button>
+                            <textarea
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                                placeholder="Describí tu promo..."
+                                style={{
+                                    flex: 1,
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#111827',
+                                    fontSize: 16,
+                                    resize: 'none',
+                                    outline: 'none',
+                                    minHeight: 44,
+                                    maxHeight: 150,
+                                    padding: '10px 0',
+                                    fontFamily: 'inherit'
+                                }}
+                                rows={1}
+                            />
+                            <button
+                                onClick={() => handleSend()}
+                                disabled={!input.trim() || isLoading}
+                                style={{
+                                    width: 44,
+                                    height: 44,
+                                    borderRadius: '50%',
+                                    background: input.trim() ? '#2563EB' : '#f3f4f6',
+                                    border: 'none',
+                                    color: input.trim() ? '#fff' : '#9ca3af',
+                                    fontSize: 20,
+                                    cursor: input.trim() ? 'pointer' : 'not-allowed',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                ↑
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <style>{`
+                <style>{`
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } 
                 @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
                 ::-webkit-scrollbar { width: 6px; }
                 ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
                 ::-webkit-scrollbar-track { background: transparent; }
             `}</style>
+            </div>
         </div>
     )
 }
