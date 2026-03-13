@@ -497,7 +497,10 @@ function App() {
         return () => clearTimeout(timer);
     }, [tenant?.isLoaded, isGlobalPath]);
 
-    if (!tenant?.isLoaded && !isGlobalPath) {
+    // 🛡️ RE-LOCKED HYDRATION GUARD: Don't render dashboard until resolved
+    const isHydrated = tenant?.isLoaded && (tenant?.tenantData || tenant?.error || isGlobalPath);
+
+    if (!isHydrated && !isGlobalPath) {
         return (
             <div className="flex h-screen items-center justify-center bg-[#1a1a2e] flex-col gap-6 px-4 text-center font-sans">
                 {showRetry ? (

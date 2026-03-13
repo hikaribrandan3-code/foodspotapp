@@ -82,14 +82,19 @@ export function TenantProvider({ children }) {
                     setBusinessId(parsed.business_id)
                     setTenantStoragePrefix(parsed.business_id)
 
-                    // Update last active
-                    localStorage.setItem('fs_last_active_slug', targetSlug)
-
-                    setLoading(false) // Hydrated!
+                    // 🛡️ CACHE SENSITIVITY: If legacy cache lacks language, don't drop loading yet.
+                    // This forces App.jsx to wait for revalidate() to speak first.
+                    if (parsed.language) {
+                        console.log(`[TenantLock] ⚡ HYDRATED from cache with language: ${parsed.language}`)
+                        setLoading(false)
+                    } else {
+                        console.warn('[TenantLock] ⚠️ Legacy cache missing language. Waiting for revalidation...')
+                    }
 
                     // Background Revalidation
                     setTimeout(() => revalidate(targetSlug), 100)
                 } else {
+                    console.log('[TenantLock] 📡 First Boot: Waiting for revalidate...')
                     await revalidate(targetSlug)
                 }
 

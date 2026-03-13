@@ -13,12 +13,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTenant } from '../contexts/TenantContext.jsx'
+import { useLanguage } from '../contexts/LanguageContext.jsx'
 import { supabase } from '../lib/supabaseClient.js'
 
 function BackendHeader({ title, onLogout }) {
     const params = useParams()
     const navigate = useNavigate()
     const { tenantData, branding, slug: contextSlug } = useTenant()
+    const { t } = useLanguage()
 
     // 🛡️ HARD-WIRE: Prioritize context slug over URL params to prevent "undefined" links
     const tenantSlug = contextSlug || params.tenantSlug
@@ -172,7 +174,7 @@ function BackendHeader({ title, onLogout }) {
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        Ver Tienda ⚡
+                        {t('view_store')} ⚡
                     </button>
                 )}
 
@@ -223,7 +225,7 @@ function BackendHeader({ title, onLogout }) {
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.5px'
                             }}>
-                                Cambiar Vista
+                                {t('change_view')}
                             </div>
 
                             {/* Bidirectional Navigation: Owner ↔ Staff */}
@@ -245,7 +247,7 @@ function BackendHeader({ title, onLogout }) {
                                         textAlign: 'left'
                                     }}
                                 >
-                                    👑 Volver a Owner
+                                    👑 {t('back_to_owner')}
                                 </button>
                             )}
 
@@ -266,7 +268,7 @@ function BackendHeader({ title, onLogout }) {
                                         textAlign: 'left'
                                     }}
                                 >
-                                    🧑‍🍳 Vista de Staff
+                                    🧑‍🍳 {t('staff_view')}
                                 </button>
                             )}
 
@@ -291,7 +293,7 @@ function BackendHeader({ title, onLogout }) {
                                     textAlign: 'left'
                                 }}
                             >
-                                Cerrar Sesión
+                                {t('logout')}
                             </button>
                         </div>
                     )}

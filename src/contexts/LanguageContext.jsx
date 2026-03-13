@@ -9,13 +9,18 @@ export const LanguageProvider = ({ children }) => {
     const { tenantData, businessId, refreshTenantData } = useTenant();
 
     // Default to 'es' if not set, prioritize tenantData value (prevents mount flicker)
-    const [lang, setLang] = useState(() => tenantData?.language || 'es');
+    const [lang, setLang] = useState(() => {
+        const initial = tenantData?.language || 'es';
+        console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (from tenantData: ${!!tenantData})`);
+        return initial;
+    });
 
     useEffect(() => {
-        if (tenantData?.language) {
+        if (tenantData?.language && tenantData.language !== lang) {
+            console.log(`[LanguageContext] 🔄 System Sync: Reverting from ${lang} to ${tenantData.language}`);
             setLang(tenantData.language);
         }
-    }, [tenantData?.language]);
+    }, [tenantData?.language, lang]);
 
     const t = (key) => {
         if (!translations[key]) {
