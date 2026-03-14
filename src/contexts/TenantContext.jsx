@@ -116,18 +116,20 @@ export function TenantProvider({ children }) {
             if (brandingError) throw brandingError
 
             if (brandingData) {
-                // 📡 DOUBLE-FETCH: Get language from tenants table
+                // 📡 DOUBLE-FETCH: Get language from tenants table using SLUG (100% reliable)
                 const { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
-                    .select('language')
-                    .eq('id', brandingData.business_id)
+                    .select('id, language')
+                    .eq('slug', slug)
                     .single()
 
                 if (langError) {
-                    console.error("SUPABASE ERROR (Tenants Fetch):", langError.message, langError.details);
+                    console.error("SUPABASE ERROR (Tenants Fetch by Slug):", langError.message, langError.details);
+                    console.error("Context:", { slug });
                 }
 
-                const data = { ...brandingData, language: tenantRow?.language || 'es' }
+                // MERGE: Ensure we keep the actual tenant PK (tenantRow.id) 
+                const data = { ...brandingData, id: tenantRow?.id, language: tenantRow?.language || 'es' }
                 // UPDATE STATE
                 if (mounted) {
                     setTenantData(data)
@@ -170,18 +172,35 @@ export function TenantProvider({ children }) {
                 .single()
 
             if (!brandingError && brandingData) {
-                // 📡 DOUBLE-FETCH: Get language from tenants table
+                // 📡 DOUBLE-FETCH: Get language from tenants table using SLUG
                 const { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
-                    .select('language')
-                    .eq('id', businessId)
+                    .select('id, language')
+                    .eq('id', tenantData?.id || businessId) // Try PK first if we have it, else fallback
                     .single()
+
+                if (langError && langError.code === 'PGRST116') {
+                    // If PK lookup fails, fallback to slug (Safety net)
+                    console.log("[TenantLock] 🔄 Refresh: PK Lookup failed, trying slug fallback...");
+                    const { data: fallbackRow } = await supabase
+                        .from('tenants')
+                        .select('id, language')
+                        .eq('slug', brandingData.slug)
+                        .single();
+
+                    if (fallbackRow) {
+                        const data = { ...brandingData, id: fallbackRow.id, language: fallbackRow.language || 'es' }
+                        setTenantData(data)
+                        applyTheme(data)
+                        return;
+                    }
+                }
 
                 if (langError) {
                     console.error("SUPABASE ERROR (Tenants Refresh):", langError.message, langError.details);
                 }
 
-                const data = { ...brandingData, language: tenantRow?.language || 'es' }
+                const data = { ...brandingData, id: tenantRow?.id, language: tenantRow?.language || 'es' }
                 setTenantData(data)
                 applyTheme(data)
 

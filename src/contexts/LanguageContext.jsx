@@ -53,10 +53,12 @@ export const LanguageProvider = ({ children }) => {
 
         try {
             // Update the tenants table as requested
+            // 🛡️ SCHEMA GUARD: Use the real tenant PK (id), not businessId (Auth UUID)
+            const targetId = tenantData?.id || businessId;
             const { error } = await supabase
                 .from('tenants')
                 .update({ language: newLang })
-                .eq('id', businessId);
+                .eq('id', targetId);
 
             if (error) {
                 console.error("SUPABASE ERROR (Language Update):", error.message, error.details);
