@@ -172,11 +172,11 @@ export function TenantProvider({ children }) {
                 .single()
 
             if (!brandingError && brandingData) {
-                // 📡 DOUBLE-FETCH: Get language from tenants table using SLUG
+                // 📡 DOUBLE-FETCH: Get language from tenants table using venue_name
                 const { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
-                    .select('id, language')
-                    .eq('id', tenantData?.id || businessId) // Try PK first if we have it, else fallback
+                    .select('id, language, venue_name')
+                    .eq('venue_name', brandingData.slug)
                     .single()
 
                 if (langError && langError.code === 'PGRST116') {
@@ -200,7 +200,7 @@ export function TenantProvider({ children }) {
                     console.error("SUPABASE ERROR (Tenants Refresh):", langError.message, langError.details);
                 }
 
-                const data = { ...brandingData, id: tenantRow?.id, language: tenantRow?.language || 'es' }
+                const data = { ...brandingData, id: tenantRow?.id, venue_name: tenantRow?.venue_name, language: tenantRow?.language || 'es' }
                 setTenantData(data)
                 applyTheme(data)
 

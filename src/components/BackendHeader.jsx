@@ -30,7 +30,7 @@ function BackendHeader({ title, onLogout }) {
 
     // 🎛️ HEADER MODE: Use branding.headerMode (default to 'text')
     const headerMode = branding?.headerMode || tenantData?.branding?.headerMode || 'text'
-    const businessName = title || tenantData?.business_name || 'FoodSpot'
+    const businessName = title || tenantData?.venue_name || tenantData?.business_name || 'FoodSpot'
     const logoUrl = branding?.logoURL || tenantData?.logo_url || tenantData?.branding?.logoURL
 
     // 🔐 ROLE DETECTION: Check current user role for bidirectional nav
