@@ -53,12 +53,16 @@ export const LanguageProvider = ({ children }) => {
 
         try {
             // Update the tenants table as requested
-            // 🛡️ SCHEMA GUARD: Use the real tenant PK (id), not businessId (Auth UUID)
-            const targetId = tenantData?.id || businessId;
+            // 🛡️ SCHEMA GUARD: Use the real tenant PK (id) from tenantData
+            if (!tenantData?.id) {
+                console.warn("[LanguageContext] ⚠️ Cannot update: tenantData.id missing.");
+                return;
+            }
+
             const { error } = await supabase
                 .from('tenants')
                 .update({ language: newLang })
-                .eq('id', targetId);
+                .eq('id', tenantData.id);
 
             if (error) {
                 console.error("SUPABASE ERROR (Language Update):", error.message, error.details);

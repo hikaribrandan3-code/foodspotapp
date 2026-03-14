@@ -116,20 +116,20 @@ export function TenantProvider({ children }) {
             if (brandingError) throw brandingError
 
             if (brandingData) {
-                // 📡 DOUBLE-FETCH: Get language from tenants table using SLUG (100% reliable)
+                // 📡 DOUBLE-FETCH: Get language from tenants table using venue_name (Official Schema)
                 const { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
-                    .select('id, language')
-                    .eq('slug', slug)
+                    .select('id, language, venue_name')
+                    .eq('venue_name', slug)
                     .single()
 
                 if (langError) {
-                    console.error("SUPABASE ERROR (Tenants Fetch by Slug):", langError.message, langError.details);
-                    console.error("Context:", { slug });
+                    console.error("SUPABASE ERROR (Tenants Fetch by venue_name):", langError.message, langError.details);
+                    console.error("Context:", { venue_name: slug });
                 }
 
-                // MERGE: Ensure we keep the actual tenant PK (tenantRow.id) 
-                const data = { ...brandingData, id: tenantRow?.id, language: tenantRow?.language || 'es' }
+                // MERGE: Ensure we keep the actual tenant PK (id) and venue_name
+                const data = { ...brandingData, id: tenantRow?.id, venue_name: tenantRow?.venue_name, language: tenantRow?.language || 'es' }
                 // UPDATE STATE
                 if (mounted) {
                     setTenantData(data)
