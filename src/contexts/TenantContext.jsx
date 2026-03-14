@@ -110,15 +110,34 @@ export function TenantProvider({ children }) {
 
             if (brandingData) {
                 // 📡 DOUBLE-FETCH: Get language from tenants table using venue_name (Official Schema)
-                const { data: tenantRow, error: langError } = await supabase
+                // 🛡️ UNIVERSAL CASE FIX: Use .ilike() for case-insensitive matching
+                let { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
-                    .select('id, language, venue_name')
-                    .eq('venue_name', slug)
+                    .select('id, language, venue_name, owner_id')
+                    .ilike('venue_name', slug)
                     .single()
 
+                // 🆘 ULTIMATE FAILSAFE: If venue_name fails, fetch by authenticated owner ID
+                if ((langError || !tenantRow) && mounted) {
+                    console.log(`[TenantLock] 🆘 Venue Lookup Failed (${slug}). Trying Owner Failsafe...`);
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        const { data: ownerRow, error: ownerError } = await supabase
+                            .from('tenants')
+                            .select('id, language, venue_name, owner_id')
+                            .eq('owner_id', user.id)
+                            .single();
+
+                        if (!ownerError && ownerRow) {
+                            console.log(`[TenantLock] ✅ Failsafe Success: Identity secured via owner_id.`);
+                            tenantRow = ownerRow;
+                            langError = null;
+                        }
+                    }
+                }
+
                 if (langError) {
-                    console.error("SUPABASE ERROR (Tenants Fetch by venue_name):", langError.message, langError.details);
-                    console.error("Context:", { venue_name: slug });
+                    console.error("SUPABASE ERROR (Tenants Fetch):", langError.message, langError.details);
                 }
 
                 // MERGE: Ensure we keep the actual tenant PK (id) and venue_name
@@ -163,14 +182,32 @@ export function TenantProvider({ children }) {
 
             if (!brandingError && brandingData) {
                 // 📡 DOUBLE-FETCH: Get language from tenants table using venue_name
-                const { data: tenantRow, error: langError } = await supabase
+                // 🛡️ UNIVERSAL CASE FIX: Use .ilike()
+                let { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
-                    .select('id, language, venue_name')
-                    .eq('venue_name', brandingData.slug)
+                    .select('id, language, venue_name, owner_id')
+                    .ilike('venue_name', brandingData.slug)
                     .single()
 
+                // 🆘 ULTIMATE FAILSAFE: Fetch by owner ID if slug fails
+                if (langError || !tenantRow) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        const { data: ownerRow, error: ownerError } = await supabase
+                            .from('tenants')
+                            .select('id, language, venue_name, owner_id')
+                            .eq('owner_id', user.id)
+                            .single();
+
+                        if (!ownerError && ownerRow) {
+                            tenantRow = ownerRow;
+                            langError = null;
+                        }
+                    }
+                }
+
                 if (langError) {
-                    console.error("SUPABASE ERROR (Tenants Refresh by venue_name):", langError.message, langError.details);
+                    console.error("SUPABASE ERROR (Tenants Refresh):", langError.message, langError.details);
                 }
 
                 const data = { ...brandingData, id: tenantRow?.id, venue_name: tenantRow?.venue_name, language: tenantRow?.language || 'es' }
