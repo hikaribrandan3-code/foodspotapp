@@ -174,7 +174,7 @@ function BackendHeader({ title, onLogout }) {
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        {t('view_store')} ⚡
+                        {t('view_store')}
                     </button>
                 )}
 

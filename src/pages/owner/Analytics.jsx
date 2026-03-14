@@ -47,7 +47,8 @@ const Analytics = () => {
     const { tenantSlug } = useParams()
     const { businessId, tenantData } = useTenant()
     const { t } = useLanguage()
-    const primaryColor = tenantData?.primary_color || '#C4856A'
+    // 🍃 OVERRIDE: Use Green for analytics as requested
+    const primaryColor = '#10B981'
 
     const handleBack = () => navigate(`/${tenantSlug}/owner/summary`)
     const handleLogout = async () => {
