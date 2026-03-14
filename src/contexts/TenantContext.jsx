@@ -120,7 +120,7 @@ export function TenantProvider({ children }) {
                 const { data: tenantRow } = await supabase
                     .from('tenants')
                     .select('language, business_id')
-                    .eq('business_id', brandingData.business_id)
+                    .eq('id', brandingData.business_id)
                     .single()
 
                 const data = { ...brandingData, language: tenantRow?.language || 'es' }
@@ -170,7 +170,7 @@ export function TenantProvider({ children }) {
                 const { data: tenantRow } = await supabase
                     .from('tenants')
                     .select('language, business_id')
-                    .eq('business_id', businessId)
+                    .eq('id', businessId)
                     .single()
 
                 const data = { ...brandingData, language: tenantRow?.language || 'es' }

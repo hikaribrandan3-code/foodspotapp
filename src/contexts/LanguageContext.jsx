@@ -56,7 +56,7 @@ export const LanguageProvider = ({ children }) => {
             const { error } = await supabase
                 .from('tenants')
                 .update({ language: newLang })
-                .eq('business_id', businessId);
+                .eq('id', businessId);
 
             if (error) {
                 console.error('Error updating language in tenants table:', error);
