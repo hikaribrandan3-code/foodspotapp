@@ -59,7 +59,8 @@ export const LanguageProvider = ({ children }) => {
                 .eq('id', businessId);
 
             if (error) {
-                console.error('Error updating language in tenants table:', error);
+                console.error("SUPABASE ERROR (Language Update):", error.message, error.details);
+                console.error('Full Update Context:', { id: businessId, newLang });
             }
 
             // Refresh tenant data to sync across app

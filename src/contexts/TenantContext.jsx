@@ -117,11 +117,15 @@ export function TenantProvider({ children }) {
 
             if (brandingData) {
                 // 📡 DOUBLE-FETCH: Get language from tenants table
-                const { data: tenantRow } = await supabase
+                const { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
-                    .select('language, business_id')
+                    .select('language')
                     .eq('id', brandingData.business_id)
                     .single()
+
+                if (langError) {
+                    console.error("SUPABASE ERROR (Tenants Fetch):", langError.message, langError.details);
+                }
 
                 const data = { ...brandingData, language: tenantRow?.language || 'es' }
                 // UPDATE STATE
@@ -167,11 +171,15 @@ export function TenantProvider({ children }) {
 
             if (!brandingError && brandingData) {
                 // 📡 DOUBLE-FETCH: Get language from tenants table
-                const { data: tenantRow } = await supabase
+                const { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
-                    .select('language, business_id')
+                    .select('language')
                     .eq('id', businessId)
                     .single()
+
+                if (langError) {
+                    console.error("SUPABASE ERROR (Tenants Refresh):", langError.message, langError.details);
+                }
 
                 const data = { ...brandingData, language: tenantRow?.language || 'es' }
                 setTenantData(data)
