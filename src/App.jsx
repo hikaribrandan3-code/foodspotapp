@@ -10,7 +10,7 @@ import { useTenant } from './contexts/TenantContext.jsx'
 import { CartProvider } from './contexts/CartContext.jsx'
 import { supabase, getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
 import { StrategyDraftProvider } from './contexts/StrategyDraftContext.jsx'
-import { LanguageProvider } from './contexts/LanguageContext.jsx'
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext.jsx'
 import { SessionProvider } from './contexts/SessionContext.jsx'
 import { StaffProvider } from './contexts/StaffContext.jsx'
 
@@ -57,41 +57,8 @@ import AdminErrorBoundary from './components/Error/AdminErrorBoundary.jsx'
 // Auth Pages
 import TrialSignup from './pages/auth/TrialSignup.jsx'
 
-// Loading fallback for lazy components
-// Loading fallback for lazy components
-const LazyFallback = () => {
-    const { t } = useLanguage()
-    return (
-        <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100vh',
-            background: 'var(--canvas-bg, #fff)',
-            color: 'var(--canvas-text, #000)',
-            fontSize: 14,
-            fontWeight: 500
-        }}>
-            {t('loading')}
-        </div>
-    )
-}
-
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
-
-function RouteAreaWrapper({ children }) {
-    const location = useLocation()
-    const getRouteArea = () => {
-        const path = location.pathname
-        if (path.includes('/admin')) return 'admin'
-        if (path.includes('/owner')) return 'owner'
-        if (path.includes('/staff')) return 'staff'
-        return 'customer'
-    }
-    const routeArea = getRouteArea()
-    return <div key={routeArea}>{children}</div>
-}
 
 function App() {
     const location = useLocation();
@@ -99,13 +66,11 @@ function App() {
     const { tenantData, businessId } = useTenant();
     const [authUser, setAuthUser] = useState(null);
 
-    // 🛡️ Safe pathname extraction - works with both useLocation and window.location
+    // Safe pathname extraction
     const pathname = location?.pathname || (typeof window !== 'undefined' ? window.location.pathname : '/');
 
-    // 🛡️ ZERO-FLASH CONFIG: Initialize from tenant data if available (from cache)
-    // This prevents the "flash of defaults" that causes style degradation
+    // ZERO-FLASH CONFIG: Initialize from tenant data if available
     const [config, setConfig] = useState(() => {
-        // If tenant data is already available (from sync cache), use it immediately
         if (tenantData?.app_config) {
             console.log('[App] ⚡ INSTANT CONFIG: Using cached app_config')
             return normalizeConfig({
@@ -131,18 +96,14 @@ function App() {
                 }
             })
         }
-        // Fallback to empty defaults (first visit, no cache)
         return normalizeConfig({})
     });
     const [orders, setOrders] = useState(() => getOrders());
 
-
-    // 🔥 HYDRATION V5: MASTER MERGE - Full app_config restoration
-    // This merges the ENTIRE app_config blob from Cloud, not just specific fields
+    // HYDRATION: Full app_config restoration
     useEffect(() => {
         if (tenantData) {
             const cloudAppConfig = tenantData.app_config || {};
-
             const merged = normalizeConfig({
                 ...config,
                 ...tenantData,
@@ -181,14 +142,14 @@ function App() {
                 heroIcons: tenantData.hero_icons || cloudAppConfig.heroIcons || config.heroIcons
             });
             setConfig(merged);
-            console.log('☁️ [App.jsx] HYDRATION V6 PRIORITY FIX:', {
+            console.log('☁️ [App.jsx] HYDRATION V6:', {
                 primaryColor: merged.colors?.primary,
                 fontFamily: merged.branding?.fontFamily
             });
         }
     }, [tenantData]);
 
-    // Listen for optimistic updates from Settings.jsx
+    // Listen for optimistic updates
     useEffect(() => {
         const handleSync = (e) => {
             setConfig(prev => normalizeConfig({ ...prev, ...e.detail }));
@@ -198,26 +159,17 @@ function App() {
     }, []);
 
     const safeConfig = useMemo(() => config ?? normalizeConfig({}), [config]);
+    const trialExpired = false;
 
-    // tenantData and businessId already mapped from useTenant() above
-    // 🛡️ TEMPORARY BYPASS: Force trial to be active for testing
-    // TODO: REMOVE BEFORE PRODUCTION
-    const trialExpired = false; // tenant?.trialExpired;
-
-
-    // ============================================
-    // 2. EFFECT HOOKS (INTERNAL NULL GUARDS)
-    // ============================================
-
+    // Effect hooks
     useEffect(() => { incrementVisit(); }, []);
 
-    // 🛑 HARD STOP: 100ms delay when entering Admin to flush tenant memory
+    // Admin ready state
     const [adminReady, setAdminReady] = useState(!pathname.startsWith('/admin'));
     useEffect(() => {
         if (pathname.startsWith('/admin')) {
             setAdminReady(false);
             sanitizeForAdmin();
-            // Allow browser to completely flush tenant memory
             const timer = setTimeout(() => setAdminReady(true), 100);
             return () => clearTimeout(timer);
         } else {
@@ -225,6 +177,7 @@ function App() {
         }
     }, [pathname]);
 
+    // Auth state
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             setAuthUser(session?.user || null);
@@ -235,39 +188,25 @@ function App() {
                 localStorage.removeItem('activeRoleView');
             }
 
-            // 🛡️ STRIKE 13.6: ACCESO ADMIN LOOP FIX
-            // If user is signed in and has a slug, NEVER let them sit on /admin or /
             if (event === 'SIGNED_IN') {
                 console.log("🔐 [App.jsx] Auth Event: SIGNED_IN", session?.user);
-                console.log("🔐 [App.jsx] User Metadata:", session?.user?.user_metadata);
-
                 if (session?.user?.user_metadata?.slug) {
                     const slug = session.user.user_metadata.slug;
                     const path = window.location.pathname;
-                    console.log("🔐 [App.jsx] Slug found:", slug, "Current Path:", path);
-
                     if (path === '/admin' || path === '/') {
                         console.log("🚀 AUTH GUARD: Redirecting to owner dashboard:", slug);
                         window.location.assign(`/${slug}/owner/summary`);
                     }
-                } else {
-                    console.warn("⚠️ [App.jsx] User signed in but NO SLUG in metadata!");
                 }
             }
         });
         return () => authListener?.subscription.unsubscribe();
     }, []);
 
-    // 🗑️ REMOVED: loadCloudBranding double-fetch
-    // TenantContext already provides branding data - no need to fetch again
-
-    // Metadata Injection: Set document title and favicon from tenant branding
-    // 🛡️ FUTURE-PROOF: Defaults to FoodSpot when tenant data missing, auto-swaps when available
+    // Metadata injection
     useEffect(() => {
-        // Generator pattern: safe fallbacks prevent m[x] crash
         const title = tenantData?.business_name || 'FoodSpot';
         const icon = tenantData?.logo_url || '/favicon.ico';
-
         document.title = title;
 
         let favicon = document.querySelector("link[rel~='icon']");
@@ -279,6 +218,7 @@ function App() {
         favicon.href = icon;
     }, [tenantData?.business_name, tenantData?.logo_url]);
 
+    // Service worker cleanup
     useEffect(() => {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
@@ -288,31 +228,26 @@ function App() {
         }
     }, []);
 
-    // 🔥 DEEP REPAINT: UNIFIED CSS INJECTION
-    // Listens to config changes AND manually forces values to root
+    // Deep repaint: CSS injection
     useEffect(() => {
         if (!config) return;
         const root = document.documentElement;
 
-        // 1. TYPOGRAPHY
         const fontFamily = config.branding?.fontFamily || 'Inter';
         const fontWeight = config.branding?.fontWeight || '400';
         root.style.setProperty('--font-family-brand', `"${fontFamily}", system-ui, -apple-system, sans-serif`);
         root.style.setProperty('--font-weight-brand', fontWeight);
         document.body.style.fontFamily = `"${fontFamily}", system-ui, -apple-system, sans-serif`;
 
-        // 2. THE BIG 4 COLORS
         const c = config.colors || {};
         root.style.setProperty('--color-primary', c.primary || '#8B7355');
         root.style.setProperty('--color-secondary', c.secondary || '#A89070');
         root.style.setProperty('--color-confirm', c.confirmation || '#22C55E');
         root.style.setProperty('--color-powered', c.powered || '#C4856A');
 
-        // 3. LEGACY NAV SUPPORT
         root.style.setProperty('--nav-primary-color', config.branding?.primaryColor || '#8B7355');
         root.style.setProperty('--nav-icon-color', config.branding?.iconColorMode === 'black' ? '#000000' : '#FFFFFF');
 
-        // 4. HERO ICONS (Manual Mapping)
         const heroIcons = config.heroIcons || {};
         const getHeroBg = (c) => (!c?.color || c.color === 'auto') ? 'var(--canvas-surface)' : c.color;
         const getHeroIcon = (c) => (!c?.iconColorMode || c.iconColorMode === 'auto') ? 'var(--canvas-surface-text)' : (c.iconColorMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK);
@@ -320,12 +255,11 @@ function App() {
         const menuC = heroIcons.menu || HERO_DEFAULT;
         root.style.setProperty('--hero-menu-bg', getHeroBg(menuC));
         root.style.setProperty('--hero-menu-icon', getHeroIcon(menuC));
-        // 🛡️ VAULT-SEAL FIX: Sync Header Image for Menu Ghosting Prevention
-        // Uses branding.hero_url from tenantData (via config normalization)
+        
         if (config.headerCover?.image && !config.headerCover.image.startsWith('blob:')) {
             root.style.setProperty('--header-image', `url(${config.headerCover.image})`);
         } else {
-            root.style.removeProperty('--header-image'); // Let CSS fallback take over
+            root.style.removeProperty('--header-image');
         }
 
         const delC = heroIcons.delivery || HERO_DEFAULT;
@@ -342,14 +276,12 @@ function App() {
         root.style.setProperty('--hero-game-bg', getHeroBg(gameC));
         root.style.setProperty('--hero-game-icon', getHeroIcon(gameC));
 
-        // 5. FORCE REPAINT
         const nav = document.querySelector('.bottom-nav');
         if (nav) {
             nav.style.display = 'none';
-            nav.offsetHeight; // trigger reflow
+            nav.offsetHeight;
             nav.style.display = 'flex';
         }
-
     }, [
         config.branding?.fontFamily,
         config.branding?.fontWeight,
@@ -439,7 +371,6 @@ function App() {
             realtimeChannel = subscribeToOrders(businessId, (newOrder) => {
                 setOrders(prev => {
                     const updated = prev.some(o => o.id === newOrder.id) ? prev : [newOrder, ...prev];
-                    // 🔄 COLD BOOT SYNC: Persist to localStorage for Staff Dashboard hydration
                     try { localStorage.setItem('foodspot_orders', JSON.stringify(updated.slice(0, 50))); } catch { }
                     return updated;
                 });
@@ -452,39 +383,21 @@ function App() {
             });
         };
         initCloudSync();
-        // 🛡️ REMOVED: visibilitychange handler that called refreshConfig()
-        // refreshConfig() only partially updates config (primaryColor, hero_url, logo)
-        // and was OVERWRITING the correct cached config with incomplete data on resume.
-        // TenantContext now handles resume correctly with the full app_config.
 
         const handleStorage = (e) => { if (e.key === 'grub_config' || e.key === null) refreshConfig(); };
-        // 🚀 CLOUD-AWARE REACTIVITY: Prefer Cloud data, fallback to localStorage
         const handleFrontend = () => {
             if (tenantData) {
-                // Cloud-First: Merge tenantData into existing config
                 setConfig(prev => normalizeConfig({ ...prev, ...tenantData }));
             } else {
-                // Fallback: localStorage (for demo mode or offline scenarios)
                 setConfig(getConfig());
             }
         };
-        // document.addEventListener('visibilitychange', handleVisibility); // ❌ REMOVED - Caused partial config overwrite
         window.addEventListener('storage', handleStorage);
         window.addEventListener('frontendSync', handleFrontend);
         return () => { if (realtimeChannel) realtimeChannel.unsubscribe(); window.removeEventListener('storage', handleStorage); window.removeEventListener('frontendSync', handleFrontend); };
     }, [businessId, refreshConfig]);
 
-    // 🛡️ VAULT-SEAL: Hydration is now handled by TenantProvider parent.
-    // App.jsx renders directly.
-
-    // ============================================
-    // 4. LOGIC INTERCEPTORS (NOW SAFE)
-    // ============================================
-    // Note: 'path' already declared above in Global Route Immunity
-
-    // 🛡️ STRIKE 13.7: LOGIN INTERCEPTOR FIX
-    // If user attempts to visit /login but is already authenticated with a slug,
-    // bounce them to their dashboard instead of trapping them in the login screen.
+    // Login interceptor fix
     useEffect(() => {
         if ((pathname === '/login/owner' || pathname === '/login') && authUser?.user_metadata?.slug) {
             const slug = authUser.user_metadata.slug;
@@ -493,10 +406,38 @@ function App() {
         }
     }, [pathname, authUser, navigate]);
 
-    // Show OwnerLogin only when on login routes and NOT authenticated
-    const showOwnerLogin = (pathname === '/login/owner' || pathname === '/login') && !authUser?.user_metadata?.slug;
+    // ============================
+    // UNIFIED APP STRUCTURE - NO EARLY RETURNS
+    // ============================
+    
+    // Inner components that use context hooks - defined inside App to ensure stable hook order
+    const LazyFallback = () => {
+        const { t } = useLanguage();
+        return (
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh',
+                background: 'var(--canvas-bg, #fff)',
+                color: 'var(--canvas-text, #000)',
+                fontSize: 14,
+                fontWeight: 500
+            }}>
+                {t('loading')}
+            </div>
+        );
+    };
 
-    // 🏢 FINAL RENDER: Single unified Routes tree - NO early returns
+    const getRouteArea = () => {
+        if (pathname.includes('/admin')) return 'admin';
+        if (pathname.includes('/owner')) return 'owner';
+        if (pathname.includes('/staff')) return 'staff';
+        return 'customer';
+    };
+
+    const routeArea = getRouteArea();
+
     return (
         <AdminIntentProvider>
             <StaffProvider>
@@ -505,7 +446,7 @@ function App() {
                         <CartProvider>
                             <SessionProvider>
                                 <div className="app-container">
-                                    <RouteAreaWrapper>
+                                    <div key={routeArea}>
                                         <Routes>
                                             {/* GLOBAL ROUTES */}
                                             <Route path="/" element={<TrialSignup />} />
@@ -531,33 +472,33 @@ function App() {
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
                                             <Route path="/:tenantSlug/promos" element={<Promos />} />
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
-                                                <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
-                                                <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
 
-                                                <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
-                                                <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
-                                                <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
-                                                <Route path="/:tenantSlug/staff/kds" element={<StaffKDS config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
+                                            <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
+                                            <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
+                                            <Route path="/:tenantSlug/staff/kds" element={<StaffKDS config={safeConfig} />} />
 
-                                                <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
-                                                <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
-                                                <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
-                                                <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
-                                                <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
-                                                <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
-                                                <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
-                                                <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><FoodSpotAI /></ProtectedRoute>} />
-                                                <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
+                                            <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><FoodSpotAI /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
 
-                                                <Route path="*" element={<Navigate to="/" replace />} />
-                                            </Routes>
-                                        </RouteAreaWrapper>
-
-                                        {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
-                                        {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
-                                        {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                        {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && <BottomNav config={safeConfig} />}
+                                            <Route path="*" element={<Navigate to="/" replace />} />
+                                        </Routes>
                                     </div>
+
+                                    {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
+                                    {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
+                                    {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
+                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && <BottomNav config={safeConfig} />}
+                                </div>
                             </SessionProvider>
                         </CartProvider>
                     </StrategyDraftProvider>
