@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../../contexts/TenantContext'
+import GameHeroEasy from '../../components/GameHero-EASY'
 
 /**
  * Arcade - TikTok-Style Vertical Swipe Game Discovery Feed
@@ -32,6 +33,7 @@ const Arcade = () => {
     // 🎮 STATE
     const [activeGameId, setActiveGameId] = useState(null)
     const [visibleIndex, setVisibleIndex] = useState(0)
+    const [showQuickGames, setShowQuickGames] = useState(false)
 
     // 🛡️ SCROLL & INTERACTION UNLOCK
     useEffect(() => {
@@ -160,6 +162,66 @@ const Arcade = () => {
                     <div style={{ width: 40 }} />
                 </div>
             </header>
+
+            {/* 🎮 QUICK GAMES TOGGLE BUTTON */}
+            <div style={{
+                position: 'absolute',
+                top: 'calc(env(safe-area-inset-top, 12px) + 70px)',
+                left: 0,
+                right: 0,
+                zIndex: 90,
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 12,
+                pointerEvents: 'auto'
+            }}>
+                <button
+                    onClick={() => setShowQuickGames(false)}
+                    style={{
+                        padding: '10px 24px',
+                        background: showQuickGames ? 'rgba(255,255,255,0.1)' : '#3B82F6',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 24,
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    🎮 ARCADE
+                </button>
+                <button
+                    onClick={() => setShowQuickGames(true)}
+                    style={{
+                        padding: '10px 24px',
+                        background: showQuickGames ? '#8B5CF6' : 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 24,
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    ⚡ QUICK GAMES
+                </button>
+            </div>
+
+            {/* 🎮 QUICK GAMES OVERLAY */}
+            {showQuickGames && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: '#0F172A',
+                    zIndex: 80,
+                    paddingTop: 'calc(env(safe-area-inset-top, 12px) + 140px)',
+                    overflowY: 'auto'
+                }}>
+                    <GameHeroEasy />
+                </div>
+            )}
 
             {/* 🎮 SCROLL CONTAINER */}
             <div
