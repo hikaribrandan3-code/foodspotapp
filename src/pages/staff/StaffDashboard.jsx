@@ -5,6 +5,8 @@ import { formatPrice } from '../../config/menuData.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics.js'
 import { useOrdersRealtime } from '../../hooks/useOrdersRealtime.js'
+import { useStaff } from '../../contexts/StaffContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 
 // Lazy-load scanner to avoid camera bundle on every page load
 const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
@@ -88,6 +90,8 @@ const getActionForStatus = (status, orderType) => {
 function StaffDashboard() {
     const { businessId, tenantData } = useTenant()
     const navigate = useNavigate()
+    const { currentShift, clearStaff } = useStaff()
+    const { t: langT, lang } = useLanguage()
     const primaryColor = tenantData?.primary_color || '#C4856A'
     const businessName = tenantData?.business_name || 'Dashboard'
     const tenantSlug = tenantData?.slug || ''
@@ -312,6 +316,42 @@ function StaffDashboard() {
                         <span style={{ fontSize: 11, color: '#6B7280', fontWeight: '600', textTransform: 'uppercase' }}>
                             En Vivo
                         </span>
+                        {currentShift && (
+                            <button
+                                onClick={async () => {
+                                    const confirmMsg = lang === 'en' ? 'End shift and log out?' : '¿Terminar turno y cerrar sesión?';
+                                    if (confirm(confirmMsg)) {
+                                        if (currentShift.id) {
+                                            await supabase.rpc('clock_out', {
+                                                p_shift_id: currentShift.id,
+                                                p_lat: 0,
+                                                p_lon: 0
+                                            });
+                                        }
+                                        clearStaff();
+                                        const logoutMsg = lang === 'en' ? 'Shift ended' : 'Turno terminado';
+                                        alert(logoutMsg);
+                                        navigate(`/${tenantSlug}/login`);
+                                    }
+                                }}
+                                style={{
+                                    background: '#DC2626',
+                                    border: 'none',
+                                    color: '#FFF',
+                                    padding: '8px 16px',
+                                    borderRadius: 8,
+                                    fontSize: 13,
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    marginLeft: 12,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 4
+                                }}
+                            >
+                                🚪 {lang === 'en' ? 'End Shift' : 'Fin Turno'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </header>

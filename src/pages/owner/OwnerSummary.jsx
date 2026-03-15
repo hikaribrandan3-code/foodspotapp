@@ -432,6 +432,119 @@ function OwnerSummary() {
 
             {/* TEAM MANAGEMENT SECTION */}
             <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.primary_color} />
+
+            {/* VIBE BOOST SECTION */}
+            <VibeBoost businessId={businessId} lang={tenantData?.language || 'es'} primaryColor={tenantData?.primary_color} />
+        </div>
+    )
+}
+
+function VibeBoost({ businessId, lang, primaryColor }) {
+    const [loading, setLoading] = useState(false)
+    const [showConfirm, setShowConfirm] = useState(false)
+
+    const handleVibeBoost = async () => {
+        setLoading(true)
+        try {
+            const { data, error } = await supabase.functions.invoke('vibe-boost', {
+                body: {
+                    business_id: businessId,
+                    amount_cents: 100000, // $1000 in cents
+                    locale: lang
+                }
+            })
+
+            if (error) throw error
+
+            const msg = lang === 'en' 
+                ? `🎉 Vibe Boost applied! ${data.updated} cards updated.`
+                : `🎉 ¡Vibe Boost aplicado! ${data.updated} tarjetas actualizadas.`;
+            alert(msg)
+            setShowConfirm(false)
+        } catch (e) {
+            alert(lang === 'en' ? 'Failed to apply boost' : 'Error al aplicar boost')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div style={{ marginTop: 24, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
+            <div style={{
+                border: '2px solid',
+                borderColor: '#8B5CF6',
+                borderRadius: 12,
+                padding: 16,
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+                textAlign: 'center'
+            }}>
+                <div style={{ fontSize: 24, marginBottom: 8 }}>🚀</div>
+                <div style={{ color: 'white', fontWeight: 700, fontSize: 16, marginBottom: 12 }}>
+                    {lang === 'en' ? 'Vibe Boost Marketing' : 'Marketing Vibe Boost'}
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, marginBottom: 16 }}>
+                    {lang === 'en' 
+                        ? 'Add $1000 credit to every active festival card'
+                        : 'Agregar $1000 de crédito a cada tarjeta activa del festival'}
+                </div>
+                {!showConfirm ? (
+                    <button
+                        onClick={() => setShowConfirm(true)}
+                        style={{
+                            padding: '12px 24px',
+                            background: '#FFF',
+                            color: '#8B5CF6',
+                            border: 'none',
+                            borderRadius: 8,
+                            fontWeight: 700,
+                            fontSize: 14,
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                        }}
+                    >
+                        {lang === 'en' ? 'Trigger Vibe Boost ($1000)' : 'Activar Vibe Boost ($1000)'}
+                    </button>
+                ) : (
+                    <div style={{ background: 'rgba(0,0,0,0.3)', padding: 16, borderRadius: 8 }}>
+                        <div style={{ color: '#FFF', fontSize: 13, marginBottom: 12 }}>
+                            {lang === 'en' 
+                                ? 'This will add credit to EVERY active card. Proceed?'
+                                : 'Esto agregará crédito a TODAS las tarjetas activas. ¿Proceder?'}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                            <button
+                                onClick={handleVibeBoost}
+                                disabled={loading}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: '#22C55E',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    fontWeight: 600,
+                                    cursor: loading ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                {loading ? '...' : (lang === 'en' ? 'Confirm' : 'Confirmar')}
+                            </button>
+                            <button
+                                onClick={() => setShowConfirm(false)}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: 'rgba(255,255,255,0.2)',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {lang === 'en' ? 'Cancel' : 'Cancelar'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

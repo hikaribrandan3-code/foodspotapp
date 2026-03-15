@@ -304,6 +304,17 @@ export const translations = {
     no_staff: { es: "No hay personal registrado", en: "No staff registered", pt: "Nenhum pessoal registrado" },
     confirm_delete: { es: "¿Eliminar este miembro?", en: "Remove this member?", pt: "Remover este membro?" },
     remove: { es: "Eliminar", en: "Remove", pt: "Remover" },
-    email: { es: "Email", en: "Email", pt: "Email" }
+    email: { es: "Email", en: "Email", pt: "Email" },
+
+    // Vibe Boost
+    vibe_boost: { es: "Marketing Vibe Boost", en: "Vibe Boost Marketing", pt: "Marketing Vibe Boost" },
+    trigger_vibe_boost: { es: "Activar Vibe Boost ($1000)", en: "Trigger Vibe Boost ($1000)", pt: "Ativar Vibe Boost ($1000)" },
+    vibe_boost_confirm: { es: "Esto agregará crédito a TODAS las tarjetas activas. ¿Proceder?", en: "This will add credit to EVERY active card. Proceed?", pt: "Isso adicionará crédito a TODOS os cartões ativos. Prosseguir?" },
+    vibe_boost_success: { es: "¡Vibe Boost aplicado!", en: "Vibe Boost applied!", pt: "Vibe Boost aplicado!" },
+
+    // Staff
+    end_shift: { es: "Fin Turno", en: "End Shift", pt: "Fim do Turno" },
+    shift_ended: { es: "Turno terminado", en: "Shift ended", pt: "Turno terminado" },
+    end_shift_confirm: { es: "¿Terminar turno y cerrar sesión?", en: "End shift and log out?", pt: "Encerrar turno e fazer logout?" }
 };
 
