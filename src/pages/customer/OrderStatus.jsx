@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
+import { useLanguage } from '../../contexts/LanguageContext'
 import { formatPrice } from '../../config/menuData.js'
 import { getGuestToken } from '../../utils/guestToken.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
@@ -23,11 +23,11 @@ const CheckIcon = () => (
 )
 
 // Status step definitions (4-step Uber style)
-const STEPS = [
-    { id: 1, label: 'Recibido', icon: '📋' },
-    { id: 2, label: 'En Cocina', icon: '👨‍🍳' },
-    { id: 3, label: 'En Camino', icon: '🚗' },
-    { id: 4, label: 'Entregado', icon: '✅' }
+const getSTEPS = (t) => [
+    { id: 1, label: t('order_received'), icon: '📋' },
+    { id: 2, label: t('order_in_kitchen'), icon: '👨‍🍳' },
+    { id: 3, label: t('order_on_way'), icon: '🚗' },
+    { id: 4, label: t('order_delivered'), icon: '✅' }
 ]
 
 // Map backend status to step number
@@ -53,17 +53,17 @@ const getStepFromStatus = (status) => {
     }
 }
 
-const getStatusLabel = (status) => {
+const getStatusLabel = (status, t) => {
     switch (status) {
-        case 'pending_payment': return 'Esperando pago...'
-        case 'paid_unreleased': return 'Pago recibido'
-        case 'released_to_kitchen': return 'Pedido confirmado'
-        case 'preparing': return 'En preparación'
-        case 'ready': return '¡Listo para recoger!'
-        case 'dispatched': return 'En camino'
-        case 'delivered': return 'Entregado'
-        case 'cancelled': return 'Cancelado'
-        case 'refunded': return 'Reembolsado'
+        case 'pending_payment': return t('status_waiting_payment')
+        case 'paid_unreleased': return t('status_payment_received')
+        case 'released_to_kitchen': return t('status_confirmed')
+        case 'preparing': return t('status_preparing')
+        case 'ready': return t('status_ready_pickup')
+        case 'dispatched': return t('status_on_way')
+        case 'delivered': return t('status_delivered')
+        case 'cancelled': return t('status_cancelled')
+        case 'refunded': return t('status_refunded')
         default: return status
     }
 }
@@ -92,6 +92,7 @@ const getStatusColor = (status) => {
 
 function OrderStatus({ config: configProp, featuredItems = [] }) {
     const { businessId, tenantData } = useTenant()
+    const { t } = useLanguage()
     const config = configProp || tenantData?.app_config || {}
     const navigate = useNavigate()
     const { orderId: paramOrderId, tenantSlug } = useParams()
@@ -242,7 +243,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 48, marginBottom: 16, animation: 'pulse 1.5s infinite' }}>📦</div>
-                    <p style={{ color: '#6B7280' }}>Cargando pedido...</p>
+                    <p style={{ color: '#6B7280' }}>{t('loading_order')}</p>
                 </div>
             </div>
         )
@@ -296,7 +297,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                 textAlign: 'center',
                 letterSpacing: '-0.02em'
             }}>
-                ¡Pedido Confirmado!
+                {t('order_confirmed_title')}
             </h1>
 
             {/* DYNAMIC SUBTITLE */}
@@ -309,8 +310,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                 lineHeight: 1.5
             }}>
                 {isDelivery
-                    ? "Tu comida está en camino."
-                    : "Estamos preparando tu pedido para la mesa."}
+                    ? t('order_on_way_sub')
+                    : t('order_preparing_sub')}
             </p>
 
             {/* ACTION BUTTONS */}
@@ -332,7 +333,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)'
                     }}
                 >
-                    Volver al Inicio
+                    {t('back_to_home')}
                 </button>
 
                 {/* SECONDARY: Pedir lo mismo (Ghost) */}
@@ -350,7 +351,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         cursor: 'pointer'
                     }}
                 >
-                    Pedir lo mismo de nuevo
+                    {t('reorder_same')}
                 </button>
             </div>
 
@@ -373,7 +374,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
                         }}
                     >
-                        {isTicketRedeemed(order) ? '✅ Entrada Canjeada' : '🎟️ Ver mi Entrada'}
+                        {isTicketRedeemed(order) ? t('ticket_redeemed_status') : t('view_my_ticket')}
                     </button>
                 </div>
             )}
@@ -436,7 +437,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         </div>
 
                         <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 16, margin: '16px 0 0' }}>
-                            Mostrá este código al staff para ingresar
+                            {t('ticket_redeem_instruction')}
                         </p>
 
                         {/* REDEEMED STAMP */}
@@ -450,7 +451,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 letterSpacing: '0.1em', opacity: 0.8,
                                 pointerEvents: 'none',
                             }}>
-                                CANJEADA
+                                {t('ticket_redeemed_stamp')}
                             </div>
                         )}
                     </div>
@@ -470,7 +471,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         borderBottom: '1px dotted #9CA3AF'
                     }}
                 >
-                    ¿Necesitas ayuda? Contáctanos
+                    {t('need_help_contact')}
                 </a>
             </div>
 
@@ -493,7 +494,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             }}>
                 <div style={{ width: 8, height: 8, background: '#22C55E', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
-                    {getStatusLabel(order.status)}
+                    {getStatusLabel(order.status, t)}
                 </span>
             </div>
 
@@ -523,7 +524,7 @@ const getTicketItemName = (order) => {
     const ticket = order?.items?.find(item =>
         item.name?.startsWith('🎟️') || item.isTicket === true
     )
-    return ticket?.name?.replace('🎟️ ', '') || 'Entrada'
+    return ticket?.name?.replace('🎟️ ', '') || 'Ticket'
 }
 
 const isTicketRedeemed = (order) => {

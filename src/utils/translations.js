@@ -315,6 +315,35 @@ export const translations = {
     // Staff
     end_shift: { es: "Fin Turno", en: "End Shift", pt: "Fim do Turno" },
     shift_ended: { es: "Turno terminado", en: "Shift ended", pt: "Turno terminado" },
-    end_shift_confirm: { es: "¿Terminar turno y cerrar sesión?", en: "End shift and log out?", pt: "Encerrar turno e fazer logout?" }
+    end_shift_confirm: { es: "¿Terminar turno y cerrar sesión?", en: "End shift and log out?", pt: "Encerrar turno e fazer logout?" },
+    info_whatsapp: { es: "Escribinos por WhatsApp", en: "Chat on WhatsApp", pt: "Escreva-nos pelo WhatsApp" },
+    info_mercado_pago: { es: "Pagar con Mercado Pago", en: "Pay with Mercado Pago", pt: "Pagar com Mercado Pago" },
+    info_rappi: { es: "Pedir por Rappi", en: "Order via Rappi", pt: "Pedir pelo Rappi" },
+    info_pedidosya: { es: "Pedir por PedidosYa", en: "Order via PedidosYa", pt: "Pedir pelo PedidosYa" },
+    info_admin_access: { es: "Acceso administrador", en: "Admin access", pt: "Acesso de administrador" },
+
+    // Order Status
+    order_received: { es: "Recibido", en: "Received", pt: "Recebido" },
+    order_in_kitchen: { es: "En Cocina", en: "In Kitchen", pt: "Na Cozinha" },
+    order_on_way: { es: "En camino", en: "On the way", pt: "A caminho" },
+    order_delivered: { es: "Entregado", en: "Delivered", pt: "Entregue" },
+    status_waiting_payment: { es: "Esperando pago...", en: "Waiting for payment...", pt: "Aguardando pagamento..." },
+    status_payment_received: { es: "Pago recibido", en: "Payment received", pt: "Pagamento recebido" },
+    status_confirmed: { es: "Pedido confirmado", en: "Order confirmed", pt: "Pedido confirmado" },
+    status_preparing: { es: "En preparación", en: "Preparing", pt: "Em preparação" },
+    status_ready_pickup: { es: "¡Listo para recoger!", en: "Ready for pickup!", pt: "Pronto para retirar!" },
+    loading_order: { es: "Cargando pedido...", en: "Loading order...", pt: "Carregando pedido..." },
+    order_confirmed_title: { es: "¡Pedido Confirmado!", en: "Order Confirmed!", pt: "Pedido Confirmado!" },
+    order_on_way_sub: { es: "Tu comida está en camino.", en: "Your food is on the way.", pt: "Sua comida está a caminho." },
+    order_preparing_sub: { es: "Estamos preparando tu pedido para la mesa.", en: "We are preparing your order for the table.", pt: "Estamos preparando seu pedido para a mesa." },
+    back_to_home: { es: "Volver al Inicio", en: "Back to Home", pt: "Voltar ao Início" },
+    reorder_same: { es: "Pedir lo mismo de nuevo", en: "Order the same again", pt: "Pedir o mesmo novamente" },
+    view_my_ticket: { es: "🎟️ Ver mi Entrada", en: "🎟️ View my Ticket", pt: "🎟️ Ver meu Ingresso" },
+    ticket_redeemed_status: { es: "✅ Entrada Canjeada", en: "✅ Ticket Redeemed", pt: "✅ Ingresso Resgatado" },
+    ticket_redeem_instruction: { es: "Mostrá este código al staff para ingresar", en: "Show this code to staff to enter", pt: "Mostre este código ao staff para entrar" },
+    ticket_redeemed_stamp: { es: "CANJEADA", en: "REDEEMED", pt: "RESGATADO" },
+    need_help_contact: { es: "¿Necesitas ayuda? Contáctanos", en: "Need help? Contact us", pt: "Precisa de ajuda? Contate-nos" },
+    no_active_orders: { es: "No tenés pedidos activos", en: "No active orders", pt: "Nenhum pedido ativo" },
+    place_order: { es: "Hacer un pedido", en: "Place an order", pt: "Fazer um pedido" }
 };
 

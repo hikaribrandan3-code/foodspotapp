@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../contexts/TenantContext'
+import { useLanguage } from '../contexts/LanguageContext'
 
 /**
  * OrderStatusEmpty - Pre-Estado Empty State Component
@@ -13,6 +14,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
     const config = configProp || {};
     const navigate = useNavigate()
     const { tenantData } = useTenant()
+    const { t } = useLanguage()
 
     // 🛡️ DYNAMIC ROUTING: Ensure we stay within the tenant silo
     const menuPath = tenantData?.slug ? `/${tenantData.slug}/menu` : '/menu'
@@ -58,7 +60,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                     textAlign: 'center',
                     margin: 0
                 }}>
-                    No tenés pedidos activos
+                    {t('no_active_orders')}
                 </p>
             </div>
 
@@ -125,7 +127,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         marginBottom: 0,
                         textWrap: 'balance'
                     }}>
-                        Productos Destacados
+                        {t('featured_products')}
                     </h2>
                 </div>
 
@@ -219,7 +221,7 @@ const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
                         transition: 'transform 0.1s ease'
                     }}
                 >
-                    Hacer un pedido
+                    {t('place_order')}
                 </button>
             </div>
         </div>

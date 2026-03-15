@@ -1,6 +1,6 @@
 
 import { formatPrice } from '../config/menuData'
-// import { getItemImage } from '../utils/imageUtils' // Removed: Inlined for portability
+import { useLanguage } from '../contexts/LanguageContext'
 
 // If getItemImage is local, I should move it to a util or pass it as a prop?
 // For now, I'll inline the image logic or expect a helper import.
@@ -22,6 +22,7 @@ const ItemCard = ({
     isPlaceholder = false,
     readOnly = false
 }) => {
+    const { t } = useLanguage()
     // 🛡️ VISUAL LOGIC
     const isDragging = dragState?.itemId === item.id
     const shakeStyle = (isEditMode && !dragState) ? { animation: 'wiggle 0.3s infinite linear alternate', animationDelay: `${Math.random() * 0.1}s` } : {}
@@ -75,7 +76,7 @@ const ItemCard = ({
                         fontSize: 11, fontWeight: 800, letterSpacing: '0.05em',
                         textTransform: 'uppercase',
                         boxShadow: '0 2px 8px rgba(239,68,68,0.3)'
-                    }}>AGOTADO</div>
+                    }}>{t('out_of_stock')}</div>
                 </div>
             )}
         </div>

@@ -1,10 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const Info = () => {
     const navigate = useNavigate();
     const { tenantSlug } = useParams();
     const { tenantData } = useTenant();
+    const { t } = useLanguage();
 
     const businessName = tenantData?.venue_name || tenantData?.name || "FOODSPOT";
     const primaryColor = tenantData?.primary_color || '#DB0007';
@@ -29,28 +31,37 @@ const Info = () => {
         boxSizing: 'border-box'
     };
 
+    // Get hero image from tenant data (same logic as Home)
+    const heroUrl = tenantData?.hero_url || tenantData?.branding?.hero_url || tenantData?.branding?.header_image;
+
     return (
-        <div className="page" style={{ padding: '20px', background: 'white', minHeight: '100vh', textAlign: 'center' }}>
-            {/* 1. BRAND LOGO AREA */}
-            <div style={{ margin: '20px 0 40px' }}>
-                {logoUrl ? (
+        <div className="page" style={{ padding: 0, background: 'white', minHeight: '100vh', textAlign: 'center' }}>
+            {/* 1. HERO COVER - Matches Home.jsx dimensions */}
+            <div style={{
+                width: '100%',
+                height: '220px', // Mobile default (matches AppHeader COVER_HEIGHTS.mobile)
+                background: heroUrl ? `url(${heroUrl}) center/cover no-repeat` : primaryColor,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+            }}>
+                {logoUrl && (
                     <img
                         src={logoUrl}
                         alt={businessName}
                         style={{
-                            maxHeight: '180px',
-                            maxWidth: '100%',
+                            height: 80,
+                            maxWidth: '80%',
                             objectFit: 'contain',
-                            display: 'block',
-                            margin: '0 auto'
+                            filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))'
                         }}
                     />
-                ) : (
-                    <h1 style={{ fontFamily: 'var(--font-family-brand)', color: primaryColor, fontSize: '2.5rem', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                        {businessName}
-                    </h1>
                 )}
             </div>
+
+            {/* Content Container */}
+            <div style={{ padding: '20px' }}>
 
             {/* 2. COLORFUL BUTTON STACK (Restored from IMG_8708) */}
             {whatsapp && (
@@ -60,7 +71,7 @@ const Info = () => {
                     rel="noopener noreferrer"
                     style={{ ...buttonBase, background: '#E55F51' }}
                 >
-                    Escribinos por WhatsApp
+                    {t('info_whatsapp')}
                 </a>
             )}
 
@@ -68,36 +79,37 @@ const Info = () => {
                 style={{ ...buttonBase, background: '#F4D03F' }}
                 onClick={() => navigate(`/${tenantSlug}/checkout`)}
             >
-                Pagar con Mercado Pago
+                {t('info_mercado_pago')}
             </button>
 
             <button style={{ ...buttonBase, background: '#E67E22' }}>
-                Pedir por Rappi
+                {t('info_rappi')}
             </button>
 
             <button style={{ ...buttonBase, background: '#58D68D' }}>
-                Pedir por PedidosYa
+                {t('info_pedidosya')}
             </button>
 
             {/* THE UNIFIED GATEWAY BUTTON */}
             <button
                 style={{ ...buttonBase, background: '#448AFF' }}
-                onClick={() => navigate(`/${tenantSlug}/login`)}
+                onClick={() => navigate(`/${tenantSlug}/owner`)}
             >
                 <span style={{ marginRight: '8px' }}>🔒</span>
-                Acceso administrador
+                {t('info_admin_access')}
             </button>
 
             {/* 3. FOOTER */}
             <div style={{ marginTop: '60px' }}>
                 <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
-                    Powered by
+                    {t('powered_by')}
                 </p>
                 <p style={{ color: '#C4856A', fontSize: '1.85rem', fontWeight: '800' }}>
                     @foodspotapp
                 </p>
             </div>
-        </div>
+        </div> {/* End Content Container */}
+    </div> {/* End Page */}
     );
 };
 
