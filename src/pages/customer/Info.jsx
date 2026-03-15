@@ -63,53 +63,53 @@ const Info = () => {
             {/* Content Container */}
             <div style={{ padding: '20px' }}>
 
-            {/* 2. COLORFUL BUTTON STACK (Restored from IMG_8708) */}
-            {whatsapp && (
-                <a
-                    href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ ...buttonBase, background: '#E55F51' }}
+                {/* 2. COLORFUL BUTTON STACK (Restored from IMG_8708) */}
+                {whatsapp && (
+                    <a
+                        href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ ...buttonBase, background: '#E55F51' }}
+                    >
+                        {t('info_whatsapp')}
+                    </a>
+                )}
+
+                <button
+                    style={{ ...buttonBase, background: '#F4D03F' }}
+                    onClick={() => navigate(`/${tenantSlug}/checkout`)}
                 >
-                    {t('info_whatsapp')}
-                </a>
-            )}
+                    {t('info_mercado_pago')}
+                </button>
 
-            <button
-                style={{ ...buttonBase, background: '#F4D03F' }}
-                onClick={() => navigate(`/${tenantSlug}/checkout`)}
-            >
-                {t('info_mercado_pago')}
-            </button>
+                <button style={{ ...buttonBase, background: '#E67E22' }}>
+                    {t('info_rappi')}
+                </button>
 
-            <button style={{ ...buttonBase, background: '#E67E22' }}>
-                {t('info_rappi')}
-            </button>
+                <button style={{ ...buttonBase, background: '#58D68D' }}>
+                    {t('info_pedidosya')}
+                </button>
 
-            <button style={{ ...buttonBase, background: '#58D68D' }}>
-                {t('info_pedidosya')}
-            </button>
+                {/* THE UNIFIED GATEWAY BUTTON */}
+                <button
+                    style={{ ...buttonBase, background: '#448AFF' }}
+                    onClick={() => navigate(`/${tenantSlug}/owner`)}
+                >
+                    <span style={{ marginRight: '8px' }}>🔒</span>
+                    {t('info_admin_access')}
+                </button>
 
-            {/* THE UNIFIED GATEWAY BUTTON */}
-            <button
-                style={{ ...buttonBase, background: '#448AFF' }}
-                onClick={() => navigate(`/${tenantSlug}/owner`)}
-            >
-                <span style={{ marginRight: '8px' }}>🔒</span>
-                {t('info_admin_access')}
-            </button>
-
-            {/* 3. FOOTER */}
-            <div style={{ marginTop: '60px' }}>
-                <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
-                    {t('powered_by')}
-                </p>
-                <p style={{ color: '#C4856A', fontSize: '1.85rem', fontWeight: '800' }}>
-                    @foodspotapp
-                </p>
-            </div>
-        </div> {/* End Content Container */}
-    </div> {/* End Page */}
+                {/* 3. FOOTER */}
+                <div style={{ marginTop: '60px' }}>
+                    <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
+                        {t('powered_by')}
+                    </p>
+                    <p style={{ color: '#C4856A', fontSize: '1.85rem', fontWeight: '800' }}>
+                        @foodspotapp
+                    </p>
+                </div>
+            </div> {/* End Content Container */}
+        </div>
     );
 };
 
