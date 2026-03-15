@@ -1,0 +1,53 @@
+/* src/pages/customer/Info.css */
+:root {
+    --primary-color: #2c3e50;
+    --staff-color: #3498db;
+    --admin-color: #e74c3c;
+    --text-light: #ffffff;
+    --border-radius: 8px;
+}
+
+.info-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.info-title {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.75rem;
+}
+
+.info-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.info-button {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    color: var(--text-light);
+}
+
+.info-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.staff-button {
+    background-color: var(--staff-color);
+}
+
+.admin-button {
+    background-color: var(--admin-color);
+}
