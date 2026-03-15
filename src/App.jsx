@@ -37,6 +37,7 @@ import Session from './pages/customer/Session.jsx'
 // Staff Pages
 import StaffLogin from './pages/staff/StaffLogin.jsx'
 import StaffDashboard from './pages/staff/StaffDashboard.jsx'
+import StaffKDS from './pages/staff/StaffKDS.jsx'
 
 // Owner Pages
 import OwnerLogin from './pages/owner/OwnerLogin.jsx'
@@ -597,6 +598,7 @@ function App() {
                                     <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
                                     <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
                                     <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
+                                    <Route path="/:tenantSlug/staff/kds" element={<StaffKDS config={safeConfig} />} />
 
                                     <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
                                     <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />

@@ -314,6 +314,130 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
                     </div>
                 )}
             </div>
+
+            {/* VICTORY SHARE BUTTON */}
+            <ShareVictoryButton venueName={tenantData?.business_name} />
+        </div>
+    )
+}
+
+function ShareVictoryButton({ venueName }) {
+    const [score, setScore] = useState(0)
+    const [showCanvas, setShowCanvas] = useState(false)
+    const canvasRef = useRef(null)
+
+    useEffect(() => {
+        const stored = localStorage.getItem('grubclub_highscore')
+        if (stored) setScore(parseInt(stored, 10))
+    }, [])
+
+    const generateVictoryImage = useCallback(() => {
+        const canvas = canvasRef.current
+        if (!canvas) return
+
+        const ctx = canvas.getContext('2d')
+        const width = 600
+        const height = 315
+
+        canvas.width = width
+        canvas.height = height
+
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, width, height)
+        gradient.addColorStop(0, '#8B5CF6')
+        gradient.addColorStop(1, '#6366F1')
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, width, height)
+
+        // FoodSpot Logo text
+        ctx.fillStyle = '#FFFFFF'
+        ctx.font = 'bold 36px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText('🍽️ FoodSpot', width / 2, 50)
+
+        // Victory text
+        ctx.font = 'bold 48px Arial'
+        ctx.fillText('🎉 VICTORY!', width / 2, 110)
+
+        // Score
+        ctx.font = 'bold 72px Arial'
+        ctx.fillStyle = '#FFD700'
+        ctx.fillText(`${score} PTS`, width / 2, 190)
+
+        // Venue name
+        ctx.font = '24px Arial'
+        ctx.fillStyle = '#FFFFFF'
+        ctx.fillText(venueName || 'GrubClub', width / 2, 250)
+
+        // Footer
+        ctx.font = '16px Arial'
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'
+        ctx.fillText('Play at FoodSpot → foodspot.app', width / 2, 290)
+
+        setShowCanvas(true)
+    }, [score, venueName])
+
+    const handleShare = async () => {
+        generateVictoryImage()
+
+        setTimeout(() => {
+            const canvas = canvasRef.current
+            if (!canvas) return
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) return
+
+                const file = new File([blob], 'victory.png', { type: 'image/png' })
+
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: '🎉 My FoodSpot Victory!',
+                            text: `I scored ${score} points at ${venueName || 'GrubClub'}!`,
+                            files: [file]
+                        })
+                    } catch (e) {
+                        console.log('Share cancelled')
+                    }
+                } else {
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'victory.png'
+                    a.click()
+                    URL.revokeObjectURL(url)
+                }
+                setShowCanvas(false)
+            })
+        }, 100)
+    }
+
+    return (
+        <div style={{
+            position: 'fixed',
+            bottom: 100,
+            right: 20,
+            zIndex: 100
+        }}>
+            <button
+                onClick={handleShare}
+                style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                    border: 'none',
+                    boxShadow: '0 4px 20px rgba(255, 165, 0, 0.5)',
+                    cursor: 'pointer',
+                    fontSize: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                🏆
+            </button>
+            <canvas ref={canvasRef} style={{ display: showCanvas ? 'block' : 'none' }} />
         </div>
     )
 }
