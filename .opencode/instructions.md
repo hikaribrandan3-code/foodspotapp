@@ -44,30 +44,28 @@
 ## Last Task Status
 
 **Date:** March 16, 2026  
-**Status:** Completed - Staff Clock-Out, Tactical Prep-Agent, and Vibe Boost Marketing
+**Status:** Completed - Phase 3 Hardening & Weaponization Complete
 
 ### Completed Features:
-1. **Staff Clock-Out**
-   - End Shift button in StaffDashboard header (high-contrast red)
-   - Confirmation prompt with TenantContext language
-   - Auto call clock_out RPC and clear StaffContext
-   - Redirect to /login after logout
+1. **Security Patch (Phase 3)**
+   - business_id added to all tables: wallets, split_payments, staff, etc.
+   - RLS policies enforce tenant isolation on all tables
+   - Every row scoped to business_id
 
-2. **Tactical Prep-Agent (StaffAgenticUI.jsx)**
-   - System prompt: Brief/Tactical, bullet points, <2 sentences
-   - Data scope: Only current business_id orders
-   - Context includes active order summary
-   - Respects locale (EN/ES)
+2. **StaffKDS Kitchen Display**
+   - Kanban: PAID → COOKING → READY columns
+   - Real-time updates every 5 seconds
+   - Uses transition_order_state RPC for atomic changes
+   - Route: /:tenantSlug/staff/kds
 
-3. **Vibe Boost Marketing Engine**
-   - Edge Function: vibe-boost (deployed and live)
-   - Bulk update: SET balance = balance + cents for all active wallets
-   - Integer math only (amounts in cents)
-   - Owner UI: Neon-bordered button with confirmation modal
-   - Translated notifications (EN/ES)
+3. **Victory-to-Story Sharing**
+   - Share Victory button in Arcade (🏆)
+   - Canvas API generates image with FoodSpot logo, score, venue name
+   - Web Share API or download as PNG
 
 4. **Previous Features**
-   - Staff Gateway (Smart Login), Team Management
+   - Staff Clock-Out, Prep-Agent AI, Vibe Boost
+   - Staff Gateway, Team Management
    - Financial Engine, Session Link System, KDS State Machine
 
 ---
