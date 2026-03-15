@@ -36,7 +36,7 @@ const Info = ({ config }) => {
         <div className="page" style={{
             display: 'flex',
             flexDirection: 'column',
-            padding: '0 12px',
+            padding: 0,
             paddingBottom: '120px',
             background: 'white',
             minHeight: '100vh',
@@ -46,13 +46,13 @@ const Info = ({ config }) => {
             {/* 1. SYSTEM HERO COVER - Unified with Home.jsx */}
             <HeaderClamp config={config} />
 
-            {/* Content Container - Flex row that pushes footer down */}
+            {/* Content Container - Tighter vertical stack */}
             <div style={{
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between',
-                padding: '20px 8px 0'
+                justifyContent: 'flex-start',
+                padding: '12px 20px 0'
             }}>
                 {/* 2. COLORFUL BUTTON STACK (Restored from IMG_8708) */}
                 <div>
@@ -93,7 +93,7 @@ const Info = ({ config }) => {
                 </div>
 
                 {/* 3. FOOTER */}
-                <div style={{ marginTop: '60px' }}>
+                <div style={{ marginTop: '40px' }}>
                     <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                         {t('powered_by')}
                     </p>
@@ -101,9 +101,6 @@ const Info = ({ config }) => {
                         @foodspotapp
                     </p>
                 </div>
-
-                {/* 4. BALANCING SPACER - Deletes 50% of the middle gap by mirroring it at the bottom */}
-                <div style={{ flex: 1 }} />
             </div> {/* End Content Container */}
         </div>
     );
