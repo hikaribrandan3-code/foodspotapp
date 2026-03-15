@@ -94,9 +94,6 @@ function RouteAreaWrapper({ children }) {
 }
 
 function App() {
-    // ============================================
-    // 1. MANDATORY HOOK CHAIN (ALL HOOKS MUST BE TOP-LEVEL)
-    // ============================================
     const location = useLocation();
     const navigate = useNavigate();
     const { tenantData, businessId } = useTenant();

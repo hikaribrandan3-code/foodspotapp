@@ -1,0 +1,667 @@
+-- ============================================================================
+-- FOODSPOT MULTI-AGENT SYNTHETIC C-SUITE - LTM MIGRATION
+-- Billion-Dollar Scale Swarm Architecture Deployment
+-- Date: 2026-03-15
+-- ============================================================================
+
+-- =============================================================================
+-- SECTION 1: EXTENSIONS VERIFICATION
+-- =============================================================================
+
+-- Enable required extensions (idempotent)
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- CREATE EXTENSION IF NOT EXISTS "pgvector";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Verify pgvector is properly installed
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
+        RAISE EXCEPTION 'pgvector extension is required but not installed';
+    END IF;
+    RAISE NOTICE '✅ pgvector extension verified and active';
+END $$;
+
+-- =============================================================================
+-- SECTION 2: CUSTOM TYPES (ENUMS)
+-- =============================================================================
+
+-- Memory layer types for Triple-Layer Sovereignty
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'memory_layer') THEN
+        CREATE TYPE memory_layer AS ENUM (
+            'captain_global',
+            'tenant_private',
+            'anonymized_network'
+        );
+        RAISE NOTICE '✅ Created memory_layer enum';
+    END IF;
+END $$;
+
+-- Agent types in the swarm
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agent_type') THEN
+        CREATE TYPE agent_type AS ENUM (
+            'coo', 'hr', 'dev', 'ceo', 'cto', 'cfo', 'cmo', 'analyst', 'orchestrator'
+        );
+        RAISE NOTICE '✅ Created agent_type enum';
+    END IF;
+END $$;
+
+-- Agent operational status
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agent_status') THEN
+        CREATE TYPE agent_status AS ENUM (
+            'initializing', 'active', 'paused', 'degraded', 'error', 'shutdown'
+        );
+        RAISE NOTICE '✅ Created agent_status enum';
+    END IF;
+END $$;
+
+-- Memory entry types
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'memory_entry_type') THEN
+        CREATE TYPE memory_entry_type AS ENUM (
+            'observation', 'decision', 'action', 'reflection', 'lesson',
+            'warning', 'insight', 'conversation', 'code_change', 
+            'performance_data', 'compliance_check'
+        );
+        RAISE NOTICE '✅ Created memory_entry_type enum';
+    END IF;
+END $$;
+
+-- Law severity levels
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'law_severity') THEN
+        CREATE TYPE law_severity AS ENUM (
+            'guideline', 'standard', 'requirement', 'critical', 'cardinal'
+        );
+        RAISE NOTICE '✅ Created law_severity enum';
+    END IF;
+END $$;
+
+-- =============================================================================
+-- SECTION 3: CORE TABLES - THE SYNTHETIC NERVOUS SYSTEM
+-- =============================================================================
+
+-- ai_master_memory: Central long-term memory store
+CREATE TABLE IF NOT EXISTS ai_master_memory (
+    memory_id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    layer               memory_layer NOT NULL,
+    tenant_id           UUID,
+    agent_id            UUID NOT NULL,
+    agent_type          agent_type NOT NULL,
+    entry_type          memory_entry_type NOT NULL DEFAULT 'observation',
+    content_text        TEXT NOT NULL,
+    content_embedding   vector(768),
+    metadata            JSONB DEFAULT '{}',
+    tags                TEXT[] DEFAULT '{}',
+    memory_timestamp    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    valid_from          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    valid_until         TIMESTAMPTZ,
+    confidence_score    DECIMAL(3,2) CHECK (confidence_score BETWEEN 0.00 AND 1.00),
+    importance_score    DECIMAL(3,2) CHECK (importance_score BETWEEN 0.00 AND 1.00),
+    access_count        INTEGER DEFAULT 0,
+    last_accessed_at    TIMESTAMPTZ,
+    parent_memory_id    UUID REFERENCES ai_master_memory(memory_id) ON DELETE SET NULL,
+    related_memory_ids  UUID[] DEFAULT '{}',
+    source_type         VARCHAR(50),
+    source_id           VARCHAR(255),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by          UUID,
+    
+    CONSTRAINT chk_tenant_for_private_layer 
+        CHECK (layer != 'tenant_private' OR tenant_id IS NOT NULL),
+    CONSTRAINT chk_no_tenant_for_global_layer 
+        CHECK (layer != 'captain_global' OR tenant_id IS NULL)
+);
+
+COMMENT ON TABLE ai_master_memory IS 
+    'Central long-term memory store for the Synthetic Nervous System';
+
+-- agent_registry: Central registry of all agents
+CREATE TABLE IF NOT EXISTS agent_registry (
+    agent_id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    agent_name          VARCHAR(100) NOT NULL UNIQUE,
+    agent_type          agent_type NOT NULL,
+    agent_description   TEXT,
+    status              agent_status NOT NULL DEFAULT 'initializing',
+    default_model       VARCHAR(100) NOT NULL DEFAULT 'gemini-2.0-flash',
+    fallback_model      VARCHAR(100) DEFAULT 'groq-llama-3.1-70b',
+    premium_model       VARCHAR(100),
+    use_premium_for     JSONB DEFAULT '[]',
+    capabilities        TEXT[] DEFAULT '{}',
+    permissions         JSONB DEFAULT '{}',
+    memory_retention_hours INTEGER DEFAULT 168,
+    max_context_tokens  INTEGER DEFAULT 8192,
+    tenant_id           UUID,
+    total_actions       BIGINT DEFAULT 0,
+    successful_actions  BIGINT DEFAULT 0,
+    failed_actions      BIGINT DEFAULT 0,
+    avg_response_time_ms DECIMAL(10,2),
+    last_heartbeat_at   TIMESTAMPTZ,
+    health_score        DECIMAL(3,2) DEFAULT 1.00,
+    config              JSONB DEFAULT '{}',
+    version             VARCHAR(20) DEFAULT '1.0.0',
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by          UUID,
+    
+    CONSTRAINT chk_health_score CHECK (health_score BETWEEN 0.00 AND 1.00)
+);
+
+COMMENT ON TABLE agent_registry IS 
+    'Central registry of all AI agents in the FoodSpot swarm';
+
+-- captain_laws: Platform-wide universal laws
+CREATE TABLE IF NOT EXISTS captain_laws (
+    law_id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    law_code            VARCHAR(50) NOT NULL UNIQUE,
+    law_name            VARCHAR(200) NOT NULL,
+    law_description     TEXT NOT NULL,
+    category            VARCHAR(50) NOT NULL,
+    severity            law_severity NOT NULL DEFAULT 'standard',
+    law_statement       TEXT NOT NULL,
+    law_embedding       vector(768),
+    conditions          JSONB DEFAULT '{}',
+    thresholds          JSONB DEFAULT '{}',
+    auto_enforce        BOOLEAN DEFAULT false,
+    escalation_agent    UUID REFERENCES agent_registry(agent_id),
+    applies_to_agents   agent_type[] DEFAULT '{}',
+    applies_to_tenants  BOOLEAN DEFAULT true,
+    is_active           BOOLEAN DEFAULT true,
+    effective_from      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    effective_until     TIMESTAMPTZ,
+    version             INTEGER DEFAULT 1,
+    supersedes_law_id   UUID REFERENCES captain_laws(law_id),
+    violation_count     INTEGER DEFAULT 0,
+    last_violation_at   TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by          UUID,
+    
+    CONSTRAINT chk_effective_dates 
+        CHECK (effective_until IS NULL OR effective_until > effective_from)
+);
+
+COMMENT ON TABLE captain_laws IS 
+    'Platform-wide universal laws that all agents must follow';
+
+-- ai_conversations: Thread persistence for AI conversations
+CREATE TABLE IF NOT EXISTS ai_conversations (
+    conversation_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    business_id         UUID NOT NULL,
+    thread_id           TEXT NOT NULL,
+    participant_type    TEXT CHECK (participant_type IN ('owner', 'staff', 'system')),
+    participant_id      UUID,
+    messages            JSONB DEFAULT '[]',
+    summary             TEXT,
+    summary_embedding   vector(768),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_message_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE ai_conversations IS 
+    'Persistent conversation threads for FoodSpot AI interactions';
+
+-- ai_knowledge: RAG knowledge base
+CREATE TABLE IF NOT EXISTS ai_knowledge (
+    knowledge_id        UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    business_id         UUID NOT NULL,
+    doc_type            TEXT NOT NULL CHECK (doc_type IN (
+        'menu_item', 'promo_history', 'strategy_draft', 
+        'customer_insight', 'operational_note', 'captain_law'
+    )),
+    source_id           UUID,
+    content             TEXT NOT NULL,
+    embedding           vector(768),
+    metadata            JSONB DEFAULT '{}',
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE ai_knowledge IS 
+    'RAG knowledge base for semantic retrieval';
+
+-- ai_strategies: Strategy memory with performance tracking
+CREATE TABLE IF NOT EXISTS ai_strategies (
+    strategy_id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    business_id         UUID NOT NULL,
+    draft_payload       JSONB NOT NULL,
+    execution_status    TEXT DEFAULT 'draft' CHECK (execution_status IN (
+        'draft', 'launched', 'completed', 'cancelled'
+    )),
+    performance_metrics JSONB,
+    embedding           vector(768),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    launched_at         TIMESTAMPTZ
+);
+
+COMMENT ON TABLE ai_strategies IS 
+    'AI-generated strategies with performance tracking for similar strategy retrieval';
+
+-- =============================================================================
+-- SECTION 4: INDEXES FOR PERFORMANCE
+-- =============================================================================
+
+-- ai_master_memory indexes
+CREATE INDEX IF NOT EXISTS idx_memory_layer ON ai_master_memory(layer);
+CREATE INDEX IF NOT EXISTS idx_memory_tenant ON ai_master_memory(tenant_id) WHERE tenant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_memory_agent ON ai_master_memory(agent_id);
+CREATE INDEX IF NOT EXISTS idx_memory_entry_type ON ai_master_memory(entry_type);
+CREATE INDEX IF NOT EXISTS idx_memory_timestamp ON ai_master_memory(memory_timestamp);
+CREATE INDEX IF NOT EXISTS idx_memory_importance ON ai_master_memory(importance_score DESC) WHERE importance_score IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_memory_tags ON ai_master_memory USING GIN(tags);
+
+-- pgvector similarity search indexes
+CREATE INDEX IF NOT EXISTS idx_memory_embedding ON ai_master_memory 
+    USING ivfflat (content_embedding vector_cosine_ops) WITH (lists = 100);
+
+-- agent_registry indexes
+CREATE INDEX IF NOT EXISTS idx_agent_type ON agent_registry(agent_type);
+CREATE INDEX IF NOT EXISTS idx_agent_status ON agent_registry(status);
+CREATE INDEX IF NOT EXISTS idx_agent_heartbeat ON agent_registry(last_heartbeat_at);
+
+-- captain_laws indexes
+CREATE INDEX IF NOT EXISTS idx_law_category ON captain_laws(category);
+CREATE INDEX IF NOT EXISTS idx_law_severity ON captain_laws(severity);
+CREATE INDEX IF NOT EXISTS idx_law_active ON captain_laws(is_active, effective_from, effective_until);
+CREATE INDEX IF NOT EXISTS idx_law_embedding ON captain_laws USING ivfflat (law_embedding vector_cosine_ops);
+
+-- ai_conversations indexes
+CREATE INDEX IF NOT EXISTS idx_conv_business ON ai_conversations(business_id);
+CREATE INDEX IF NOT EXISTS idx_conv_thread ON ai_conversations(thread_id);
+CREATE INDEX IF NOT EXISTS idx_conv_last_message ON ai_conversations(last_message_at);
+CREATE INDEX IF NOT EXISTS idx_conv_embedding ON ai_conversations USING ivfflat (summary_embedding vector_cosine_ops);
+
+-- ai_knowledge indexes
+CREATE INDEX IF NOT EXISTS idx_knowledge_business ON ai_knowledge(business_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_type ON ai_knowledge(doc_type);
+CREATE INDEX IF NOT EXISTS idx_knowledge_embedding ON ai_knowledge USING ivfflat (embedding vector_cosine_ops);
+
+-- ai_strategies indexes
+CREATE INDEX IF NOT EXISTS idx_strategy_business ON ai_strategies(business_id);
+CREATE INDEX IF NOT EXISTS idx_strategy_status ON ai_strategies(execution_status);
+CREATE INDEX IF NOT EXISTS idx_strategy_embedding ON ai_strategies USING ivfflat (embedding vector_cosine_ops);
+
+-- =============================================================================
+-- SECTION 5: TRIGGER FUNCTIONS
+-- =============================================================================
+
+-- Auto-update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply updated_at triggers
+DROP TRIGGER IF EXISTS trg_ai_master_memory_updated_at ON ai_master_memory;
+CREATE TRIGGER trg_ai_master_memory_updated_at
+    BEFORE UPDATE ON ai_master_memory
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_agent_registry_updated_at ON agent_registry;
+CREATE TRIGGER trg_agent_registry_updated_at
+    BEFORE UPDATE ON agent_registry
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_captain_laws_updated_at ON captain_laws;
+CREATE TRIGGER trg_captain_laws_updated_at
+    BEFORE UPDATE ON captain_laws
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_ai_conversations_updated_at ON ai_conversations;
+CREATE TRIGGER trg_ai_conversations_updated_at
+    BEFORE UPDATE ON ai_conversations
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =============================================================================
+-- SECTION 6: HELPER FUNCTIONS
+-- =============================================================================
+
+-- Semantic memory search
+CREATE OR REPLACE FUNCTION search_memories(
+    p_query_embedding vector(768),
+    p_layer memory_layer DEFAULT NULL,
+    p_tenant_id UUID DEFAULT NULL,
+    p_agent_type agent_type DEFAULT NULL,
+    p_limit INTEGER DEFAULT 10,
+    p_min_similarity DECIMAL DEFAULT 0.7
+)
+RETURNS TABLE (
+    memory_id UUID,
+    content_text TEXT,
+    similarity DECIMAL,
+    layer memory_layer,
+    agent_type agent_type,
+    memory_timestamp TIMESTAMPTZ
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        m.memory_id,
+        m.content_text,
+        (1 - (m.content_embedding <=> p_query_embedding))::DECIMAL(4,3) as similarity,
+        m.layer,
+        m.agent_type,
+        m.memory_timestamp
+    FROM ai_master_memory m
+    WHERE (p_layer IS NULL OR m.layer = p_layer)
+      AND (p_tenant_id IS NULL OR m.tenant_id = p_tenant_id OR m.layer = 'captain_global')
+      AND (p_agent_type IS NULL OR m.agent_type = p_agent_type)
+      AND m.content_embedding IS NOT NULL
+      AND (1 - (m.content_embedding <=> p_query_embedding)) >= p_min_similarity
+      AND (m.valid_until IS NULL OR m.valid_until > NOW())
+    ORDER BY m.content_embedding <=> p_query_embedding
+    LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION search_memories IS 
+    'Semantic search across agent memories using pgvector cosine similarity';
+
+-- Get agent context with relevant memories
+CREATE OR REPLACE FUNCTION get_agent_context(
+    p_agent_id UUID,
+    p_query TEXT,
+    p_tenant_id UUID DEFAULT NULL,
+    p_max_memories INTEGER DEFAULT 5
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_result JSONB;
+BEGIN
+    SELECT jsonb_build_object(
+        'agent_id', p_agent_id,
+        'query', p_query,
+        'tenant_id', p_tenant_id,
+        'relevant_memories', (
+            SELECT jsonb_agg(jsonb_build_object(
+                'memory_id', m.memory_id,
+                'content', m.content_text,
+                'layer', m.layer,
+                'confidence', m.confidence_score
+            ))
+            FROM ai_master_memory m
+            WHERE m.agent_id = p_agent_id
+              AND (p_tenant_id IS NULL OR m.tenant_id = p_tenant_id OR m.layer = 'captain_global')
+            ORDER BY m.importance_score DESC NULLS LAST
+            LIMIT p_max_memories
+        ),
+        'captain_laws', (
+            SELECT jsonb_agg(jsonb_build_object(
+                'law_code', l.law_code,
+                'law_statement', l.law_statement,
+                'severity', l.severity
+            ))
+            FROM captain_laws l
+            WHERE l.is_active = true
+              AND (l.applies_to_tenants = true OR p_tenant_id IS NULL)
+        )
+    ) INTO v_result;
+    
+    RETURN v_result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Check Captain's Laws compliance
+CREATE OR REPLACE FUNCTION check_law_compliance(
+    p_agent_type agent_type,
+    p_action_description TEXT,
+    p_tenant_id UUID DEFAULT NULL
+)
+RETURNS TABLE (
+    law_id UUID,
+    law_code VARCHAR(50),
+    law_statement TEXT,
+    severity law_severity,
+    compliant BOOLEAN,
+    violation_details TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        l.law_id,
+        l.law_code,
+        l.law_statement,
+        l.severity,
+        true as compliant,
+        NULL::TEXT as violation_details
+    FROM captain_laws l
+    WHERE l.is_active = true
+      AND (l.applies_to_agents = '{}' OR p_agent_type = ANY(l.applies_to_agents))
+      AND (l.applies_to_tenants = true OR p_tenant_id IS NULL)
+    ORDER BY l.severity DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Register new agent in swarm
+CREATE OR REPLACE FUNCTION register_agent(
+    p_agent_name VARCHAR(100),
+    p_agent_type agent_type,
+    p_description TEXT,
+    p_default_model VARCHAR(100) DEFAULT 'gemini-2.0-flash',
+    p_tenant_id UUID DEFAULT NULL,
+    p_capabilities TEXT[] DEFAULT '{}',
+    p_config JSONB DEFAULT '{}'
+)
+RETURNS UUID AS $$
+DECLARE
+    v_agent_id UUID;
+BEGIN
+    INSERT INTO agent_registry (
+        agent_name, agent_type, agent_description, default_model,
+        tenant_id, capabilities, config, status
+    ) VALUES (
+        p_agent_name, p_agent_type, p_description, p_default_model,
+        p_tenant_id, p_capabilities, p_config, 'initializing'
+    )
+    RETURNING agent_id INTO v_agent_id;
+    
+    -- Journal the registration
+    INSERT INTO ai_master_memory (
+        layer, tenant_id, agent_id, agent_type, entry_type,
+        content_text, confidence_score, importance_score, metadata
+    ) VALUES (
+        CASE WHEN p_tenant_id IS NULL THEN 'captain_global'::memory_layer 
+             ELSE 'tenant_private'::memory_layer END,
+        p_tenant_id, v_agent_id, p_agent_type, 'observation'::memory_entry_type,
+        format('Agent %s (%s) registered in swarm', p_agent_name, p_agent_type),
+        1.00, 0.9, jsonb_build_object('agent_name', p_agent_name, 'model', p_default_model)
+    );
+    
+    RETURN v_agent_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Record agent heartbeat
+CREATE OR REPLACE FUNCTION record_agent_heartbeat(
+    p_agent_id UUID,
+    p_health_score DECIMAL DEFAULT 1.00
+)
+RETURNS VOID AS $$
+BEGIN
+    UPDATE agent_registry
+    SET 
+        last_heartbeat_at = NOW(),
+        health_score = p_health_score,
+        status = CASE 
+            WHEN p_health_score >= 0.8 THEN 'active'::agent_status
+            WHEN p_health_score >= 0.5 THEN 'degraded'::agent_status
+            ELSE 'error'::agent_status
+        END
+    WHERE agent_id = p_agent_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =============================================================================
+-- SECTION 7: RLS POLICIES
+-- =============================================================================
+
+-- Enable RLS on all tables
+ALTER TABLE ai_master_memory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agent_registry ENABLE ROW LEVEL SECURITY;
+ALTER TABLE captain_laws ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_knowledge ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_strategies ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Global memories readable by all
+DROP POLICY IF EXISTS memory_captain_read ON ai_master_memory;
+CREATE POLICY memory_captain_read ON ai_master_memory
+    FOR SELECT USING (layer = 'captain_global');
+
+-- Policy: Tenant isolation for private memories
+DROP POLICY IF EXISTS memory_tenant_isolation ON ai_master_memory;
+CREATE POLICY memory_tenant_isolation ON ai_master_memory
+    FOR ALL USING (
+        layer = 'captain_global' OR
+        tenant_id = current_setting('app.current_tenant_id', true)::UUID
+    );
+
+-- Policy: Conversations isolated by business_id
+DROP POLICY IF EXISTS conv_business_isolation ON ai_conversations;
+CREATE POLICY conv_business_isolation ON ai_conversations
+    FOR ALL USING (business_id = current_setting('app.current_business_id', true)::UUID);
+
+-- Policy: Knowledge isolated by business_id
+DROP POLICY IF EXISTS knowledge_business_isolation ON ai_knowledge;
+CREATE POLICY knowledge_business_isolation ON ai_knowledge
+    FOR ALL USING (business_id = current_setting('app.current_business_id', true)::UUID);
+
+-- Policy: Strategies isolated by business_id
+DROP POLICY IF EXISTS strategy_business_isolation ON ai_strategies;
+CREATE POLICY strategy_business_isolation ON ai_strategies
+    FOR ALL USING (business_id = current_setting('app.current_business_id', true)::UUID);
+
+-- Policy: Captain laws readable by all
+DROP POLICY IF EXISTS laws_read_all ON captain_laws;
+CREATE POLICY laws_read_all ON captain_laws FOR SELECT USING (true);
+
+-- =============================================================================
+-- SECTION 8: SEED DATA - CORE SWARM AGENTS
+-- =============================================================================
+
+-- Register Core Agents
+INSERT INTO agent_registry (
+    agent_id, agent_name, agent_type, agent_description,
+    default_model, fallback_model, premium_model, capabilities, permissions, status
+) VALUES 
+(
+    'a0000000-0000-0000-0000-000000000001'::UUID,
+    'FoodSpot-COO-OpsMonitor', 'coo',
+    'Chief Operating Officer Agent - Monitors kitchen operations, detects corner-cutting',
+    'gemini-2.0-flash', 'groq-llama-3.1-70b', 'claude-3.5-opus',
+    ARRAY['monitor_kds', 'detect_anomalies', 'enforce_compliance'],
+    '{"kds_read": true, "staff_read": true, "orders_read": true}'::JSONB,
+    'active'
+),
+(
+    'a0000000-0000-0000-0000-000000000002'::UUID,
+    'FoodSpot-HR-TalentOptimizer', 'hr',
+    'Human Resources Agent - Analyzes schedules vs demand, manages shift swaps',
+    'gemini-2.0-flash', 'groq-llama-3.1-70b', 'claude-3.5-opus',
+    ARRAY['analyze_schedules', 'forecast_demand', 'optimize_staffing'],
+    '{"staff_read": true, "scheduler_write": true}'::JSONB,
+    'active'
+),
+(
+    'a0000000-0000-0000-0000-000000000003'::UUID,
+    'FoodSpotAI-Claw', 'dev',
+    'Developer Agent - Self-heals the application, prevents regressions',
+    'gemini-2.0-flash', 'groq-llama-3.1-70b', 'claude-3.5-opus',
+    ARRAY['self_heal', 'code_review', 'regression_prevention'],
+    '{"code_journal_write": true, "system_read": true}'::JSONB,
+    'active'
+),
+(
+    'a0000000-0000-0000-0000-000000000000'::UUID,
+    'FoodSpot-Orchestrator', 'orchestrator',
+    'Meta-agent that coordinates the entire swarm, delegates tasks',
+    'gemini-2.0-flash', 'claude-3.5-sonnet', 'claude-3.5-opus',
+    ARRAY['orchestrate', 'delegate', 'resolve_conflicts'],
+    '{"all_read": true, "all_write": true}'::JSONB,
+    'active'
+)
+ON CONFLICT (agent_id) DO UPDATE SET
+    status = 'active',
+    updated_at = NOW();
+
+-- Seed Captain's Laws
+INSERT INTO captain_laws (
+    law_code, law_name, law_description, category, severity,
+    law_statement, conditions, thresholds, applies_to_agents, applies_to_tenants
+) VALUES
+(
+    'OPS-001', 'Maximum Prep Time Variance',
+    'Kitchen staff must not complete items more than 25% faster than standard times',
+    'operations', 'critical',
+    'Items prepared more than 25% faster than standard time may indicate corner-cutting',
+    '{"applies_to": "kds_events"}'::JSONB,
+    '{"max_variance_pct": -25}'::JSONB,
+    ARRAY['coo'], true
+),
+(
+    'SEC-001', 'PII Data Protection',
+    'Customer PII must never be exposed in anonymized network layer',
+    'security', 'cardinal',
+    'No PII may be stored in or exposed through the anonymized network layer',
+    '{"applies_to": "all_data"}'::JSONB,
+    '{}'::JSONB,
+    ARRAY['coo', 'hr', 'dev', 'analyst'], true
+),
+(
+    'DEV-001', 'Regression Prevention',
+    'All code changes must be journaled for regression prevention',
+    'development', 'requirement',
+    'Dev Agent must journal every code change with diff embedding',
+    '{"applies_to": "code_changes"}'::JSONB,
+    '{}'::JSONB,
+    ARRAY['dev'], true
+)
+ON CONFLICT (law_code) DO NOTHING;
+
+-- =============================================================================
+-- SECTION 9: VERIFICATION
+-- =============================================================================
+
+DO $$
+DECLARE
+    v_count INTEGER;
+BEGIN
+    -- Verify pgvector
+    SELECT COUNT(*) INTO v_count FROM pg_extension WHERE extname = 'vector';
+    IF v_count = 0 THEN
+        RAISE EXCEPTION '❌ pgvector extension not found';
+    END IF;
+    RAISE NOTICE '✅ pgvector extension active';
+
+    -- Verify tables
+    SELECT COUNT(*) INTO v_count FROM information_schema.tables 
+    WHERE table_name IN ('ai_master_memory', 'agent_registry', 'captain_laws', 
+                         'ai_conversations', 'ai_knowledge', 'ai_strategies');
+    IF v_count < 6 THEN
+        RAISE EXCEPTION '❌ Only % of 6 core tables created', v_count;
+    END IF;
+    RAISE NOTICE '✅ All 6 core LTM tables created';
+
+    -- Verify agents
+    SELECT COUNT(*) INTO v_count FROM agent_registry WHERE status = 'active';
+    RAISE NOTICE '✅ % swarm agents registered and active', v_count;
+
+    -- Verify laws
+    SELECT COUNT(*) INTO v_count FROM captain_laws WHERE is_active = true;
+    RAISE NOTICE '✅ % Captain Laws loaded', v_count;
+
+    RAISE NOTICE '🧠 SYNTHETIC NERVOUS SYSTEM: ONLINE';
+    RAISE NOTICE '🚀 SWARM STATUS: VANGUARD-READY';
+END $$;
