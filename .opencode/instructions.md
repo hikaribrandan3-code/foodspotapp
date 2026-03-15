@@ -44,27 +44,31 @@
 ## Last Task Status
 
 **Date:** March 16, 2026  
-**Status:** Completed - Staff Gateway and Team Management deployed
+**Status:** Completed - Staff Clock-Out, Tactical Prep-Agent, and Vibe Boost Marketing
 
 ### Completed Features:
-1. **Staff Gateway (Smart Login)**
-   - `StaffContext` - Manages staff_id, shift_id, role
-   - Modified OwnerLogin to support dual mode (Owner/Staff)
-   - Flow: Check auth.users (owner) → Check staff table → Auto clock_in → Redirect to StaffDashboard
-   - Respects TenantContext language (English/Spanish)
-   - Simple hash for PIN storage (not Supabase Auth)
+1. **Staff Clock-Out**
+   - End Shift button in StaffDashboard header (high-contrast red)
+   - Confirmation prompt with TenantContext language
+   - Auto call clock_out RPC and clear StaffContext
+   - Redirect to /login after logout
 
-2. **Team Management**
-   - Team Management section at bottom of Owner Summary tab
-   - Create staff: Username, Email, PIN (4 digits), Role
-   - Roles: admin, manager, cook, cashier, runner
-   - Delete staff (sets status to inactive)
-   - Staff table with business_id isolation
+2. **Tactical Prep-Agent (StaffAgenticUI.jsx)**
+   - System prompt: Brief/Tactical, bullet points, <2 sentences
+   - Data scope: Only current business_id orders
+   - Context includes active order summary
+   - Respects locale (EN/ES)
 
-3. **Previous Features**
-   - Financial Engine (table_ledgers, wallets, split_payments)
-   - Session Link System (order_sessions, SessionContext)
-   - KDS State Machine (transition_order_state, clock_in, clock_out)
+3. **Vibe Boost Marketing Engine**
+   - Edge Function: vibe-boost (deployed and live)
+   - Bulk update: SET balance = balance + cents for all active wallets
+   - Integer math only (amounts in cents)
+   - Owner UI: Neon-bordered button with confirmation modal
+   - Translated notifications (EN/ES)
+
+4. **Previous Features**
+   - Staff Gateway (Smart Login), Team Management
+   - Financial Engine, Session Link System, KDS State Machine
 
 ---
 
