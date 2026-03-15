@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import HeaderClamp from '../../components/HeaderClamp.jsx';
 
-const Info = () => {
+const Info = ({ config }) => {
     const navigate = useNavigate();
     const { tenantSlug } = useParams();
     const { tenantData } = useTenant();
@@ -31,34 +32,10 @@ const Info = () => {
         boxSizing: 'border-box'
     };
 
-    // Get hero image from tenant data (same logic as Home)
-    const heroUrl = tenantData?.hero_url || tenantData?.branding?.hero_url || tenantData?.branding?.header_image;
-
     return (
         <div className="page" style={{ padding: 0, background: 'white', minHeight: '100vh', textAlign: 'center' }}>
-            {/* 1. HERO COVER - Matches Home.jsx dimensions */}
-            <div style={{
-                width: '100%',
-                height: '220px', // Mobile default (matches AppHeader COVER_HEIGHTS.mobile)
-                background: heroUrl ? `url(${heroUrl}) center/cover no-repeat` : primaryColor,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative'
-            }}>
-                {logoUrl && (
-                    <img
-                        src={logoUrl}
-                        alt={businessName}
-                        style={{
-                            height: 80,
-                            maxWidth: '80%',
-                            objectFit: 'contain',
-                            filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))'
-                        }}
-                    />
-                )}
-            </div>
+            {/* 1. SYSTEM HERO COVER - Unified with Home.jsx */}
+            <HeaderClamp config={config} />
 
             {/* Content Container */}
             <div style={{ padding: '20px' }}>
