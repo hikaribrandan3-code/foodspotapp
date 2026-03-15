@@ -248,6 +248,7 @@ const Arcade = () => {
                         isPlaying={activeGameId === game.id}
                         onPlay={() => handlePlay(game.id)}
                         isVisible={visibleIndex === index}
+                        businessName={businessName}
                     />
                 ))}
             </div>
@@ -275,7 +276,7 @@ const Arcade = () => {
     )
 }
 
-const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
+const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) => {
     return (
         <div
             data-game-card
@@ -378,7 +379,7 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible }) => {
             </div>
 
             {/* VICTORY SHARE BUTTON */}
-            <ShareVictoryButton venueName={tenantData?.business_name} />
+            <ShareVictoryButton venueName={businessName} />
         </div>
     )
 }
