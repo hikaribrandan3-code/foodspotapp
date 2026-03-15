@@ -44,28 +44,27 @@
 ## Last Task Status
 
 **Date:** March 16, 2026  
-**Status:** Completed - Financial Engine and KDS State Machine deployed
+**Status:** Completed - Staff Gateway and Team Management deployed
 
 ### Completed Features:
-1. **Financial Engine (SQL + Hooks)**
-   - `table_ledgers` - Track total_due, total_paid, status
-   - `wallets` - GrubCard balances
-   - `split_payments` - Individual split payments
-   - `wallet_transactions` - Audit trail
-   - `useSplitPayment()` - Bill splitting and MP preferences
-   - `useGrubCard()` - Card scanning and instant deduction
-   - Edge Functions: `create-split-preference`, `mp-split-webhook`
+1. **Staff Gateway (Smart Login)**
+   - `StaffContext` - Manages staff_id, shift_id, role
+   - Modified OwnerLogin to support dual mode (Owner/Staff)
+   - Flow: Check auth.users (owner) → Check staff table → Auto clock_in → Redirect to StaffDashboard
+   - Respects TenantContext language (English/Spanish)
+   - Simple hash for PIN storage (not Supabase Auth)
 
-2. **Session Link System**
-   - `order_sessions` - Shared order sessions
-   - `SessionContext` - Session state management
-   - `Session.jsx` - Create/join sessions with QR codes
+2. **Team Management**
+   - Team Management section at bottom of Owner Summary tab
+   - Create staff: Username, Email, PIN (4 digits), Role
+   - Roles: admin, manager, cook, cashier, runner
+   - Delete staff (sets status to inactive)
+   - Staff table with business_id isolation
 
-3. **KDS State Machine**
-   - `businesses`, `staff`, `staff_shifts`, `ledger_entries` tables
-   - `transition_order_state()` - Atomic state machine with advisory locks
-   - `clock_in()`, `clock_out()` - Staff shift management
-   - Status flow: PENDING → PAID → COOKING → READY → DELIVERED
+3. **Previous Features**
+   - Financial Engine (table_ledgers, wallets, split_payments)
+   - Session Link System (order_sessions, SessionContext)
+   - KDS State Machine (transition_order_state, clock_in, clock_out)
 
 ---
 
