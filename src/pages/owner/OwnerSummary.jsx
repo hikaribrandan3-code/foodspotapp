@@ -429,6 +429,213 @@ function OwnerSummary() {
                     </div>
                 </div>
             )}
+
+            {/* TEAM MANAGEMENT SECTION */}
+            <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.primary_color} />
+        </div>
+    )
+}
+
+function TeamManagement({ businessId, t, primaryColor }) {
+    const [showTeamPanel, setShowTeamPanel] = useState(false)
+    const [staffList, setStaffList] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [showAddForm, setShowAddForm] = useState(false)
+    const [newStaff, setNewStaff] = useState({ name: '', email: '', pin: '', role: 'cook' })
+    const [saving, setSaving] = useState(false)
+
+    const fetchStaff = async () => {
+        if (!businessId) return
+        setLoading(true)
+        const { data, error } = await supabase
+            .from('staff')
+            .select('*')
+            .eq('business_id', businessId)
+            .order('name')
+        
+        if (!error && data) setStaffList(data)
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        if (showTeamPanel) fetchStaff()
+    }, [showTeamPanel, businessId])
+
+    const handleAddStaff = async () => {
+        if (!newStaff.name || !newStaff.email || !newStaff.pin) return
+        setSaving(true)
+        
+        const simpleHash = (str) => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(16);
+        }
+
+        const { error } = await supabase
+            .from('staff')
+            .insert({
+                business_id: businessId,
+                name: newStaff.name,
+                email: newStaff.email.toLowerCase().trim(),
+                pin: simpleHash(newStaff.pin),
+                role: newStaff.role,
+                status: 'active'
+            })
+
+        if (!error) {
+            setNewStaff({ name: '', email: '', pin: '', role: 'cook' })
+            setShowAddForm(false)
+            fetchStaff()
+        }
+        setSaving(false)
+    }
+
+    const handleDeleteStaff = async (staffId) => {
+        if (!confirm(t('confirm_delete') || '¿Eliminar este miembro?')) return
+        
+        await supabase
+            .from('staff')
+            .update({ status: 'inactive' })
+            .eq('id', staffId)
+        
+        fetchStaff()
+    }
+
+    const roles = [
+        { id: 'admin', label: t('role_admin') || 'Admin' },
+        { id: 'manager', label: t('role_manager') || 'Manager' },
+        { id: 'cook', label: t('role_cook') || 'Cocinero' },
+        { id: 'cashier', label: t('role_cashier') || 'Cajero' },
+        { id: 'runner', label: t('role_runner') || 'Runner' }
+    ]
+
+    return (
+        <div style={{ marginTop: 32, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+                padding: '12px 0'
+            }}
+            onClick={() => setShowTeamPanel(!showTeamPanel)}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 24 }}>👥</span>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>
+                        {t('team_management') || 'Gestión de Equipo'}
+                    </span>
+                </div>
+                <span style={{ fontSize: 20, transform: showTeamPanel ? 'rotate(180deg)' : 'rotate(0)', transition: '0.2s' }}>▼</span>
+            </div>
+
+            {showTeamPanel && (
+                <div style={{ paddingTop: 16 }}>
+                    {!showAddForm ? (
+                        <button
+                            onClick={() => setShowAddForm(true)}
+                            style={{
+                                width: '100%',
+                                padding: 14,
+                                background: primaryColor || '#C4856A',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 12,
+                                fontSize: 15,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                marginBottom: 16
+                            }}
+                        >
+                            + {t('add_staff') || 'Agregar Personal'}
+                        </button>
+                    ) : (
+                        <div style={{ background: 'white', padding: 16, borderRadius: 12, marginBottom: 16 }}>
+                            <input
+                                type="text"
+                                placeholder={t('name') || 'Nombre'}
+                                value={newStaff.name}
+                                onChange={(e) => setNewStaff(p => ({ ...p, name: e.target.value }))}
+                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                            />
+                            <input
+                                type="text"
+                                placeholder={t('email') || 'Email/Usuario'}
+                                value={newStaff.email}
+                                onChange={(e) => setNewStaff(p => ({ ...p, email: e.target.value }))}
+                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                            />
+                            <input
+                                type="password"
+                                placeholder="PIN (4 dígitos)"
+                                value={newStaff.pin}
+                                onChange={(e) => setNewStaff(p => ({ ...p, pin: e.target.value }))}
+                                maxLength={4}
+                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                            />
+                            <select
+                                value={newStaff.role}
+                                onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
+                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                            >
+                                {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                            </select>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                    onClick={handleAddStaff}
+                                    disabled={saving || !newStaff.name || !newStaff.email || !newStaff.pin}
+                                    style={{ flex: 1, padding: 10, background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                >
+                                    {saving ? '...' : (t('save') || 'Guardar')}
+                                </button>
+                                <button
+                                    onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
+                                    style={{ flex: 1, padding: 10, background: '#E5E7EB', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                >
+                                    {t('cancel') || 'Cancelar'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: 20, color: '#6B7280' }}>...</div>
+                    ) : staffList.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: 20, color: '#6B7280' }}>
+                            {t('no_staff') || 'No hay personal registrado'}
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {staffList.map(staff => (
+                                <div key={staff.id} style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: 12,
+                                    background: 'white',
+                                    borderRadius: 10,
+                                    border: '1px solid #E5E7EB'
+                                }}>
+                                    <div>
+                                        <div style={{ fontWeight: 600, color: '#1F2937' }}>{staff.name}</div>
+                                        <div style={{ fontSize: 12, color: '#6B7280' }}>{staff.role} • {staff.email}</div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDeleteStaff(staff.id)}
+                                        style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
+                                    >
+                                        {t('remove') || 'Eliminar'}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

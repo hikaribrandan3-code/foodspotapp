@@ -11,6 +11,8 @@ import { CartProvider } from './contexts/CartContext.jsx'
 import { supabase, getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
 import { StrategyDraftProvider } from './contexts/StrategyDraftContext.jsx'
 import { LanguageProvider } from './contexts/LanguageContext.jsx'
+import { SessionProvider } from './contexts/SessionContext.jsx'
+import { StaffProvider } from './contexts/StaffContext.jsx'
 
 // Component
 import BottomNav from './components/BottomNav.jsx'
@@ -30,6 +32,7 @@ import Info from './pages/customer/Info.jsx'
 import Promos from './pages/customer/Promos.jsx'
 import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
+import Session from './pages/customer/Session.jsx'
 
 // Staff Pages
 import StaffLogin from './pages/staff/StaffLogin.jsx'
@@ -95,7 +98,7 @@ function App() {
     // ============================================
     const location = useLocation();
     const navigate = useNavigate();
-    const tenant = useTenant();
+    const { tenant: tenantData, tenantId: businessId } = useTenant();
 
     // 🛡️ ZERO-FLASH CONFIG: Initialize from tenant data if available (from cache)
     // This prevents the "flash of defaults" that causes style degradation
@@ -202,8 +205,7 @@ function App() {
 
     const safeConfig = useMemo(() => config ?? normalizeConfig({}), [config]);
 
-    const businessId = tenant?.businessId;
-    const tenantData = tenant?.tenantData;
+    // tenantData and businessId already mapped from useTenant() above
     // 🛡️ TEMPORARY BYPASS: Force trial to be active for testing
     // TODO: REMOVE BEFORE PRODUCTION
     const trialExpired = false; // tenant?.trialExpired;
@@ -476,64 +478,8 @@ function App() {
         return () => { if (realtimeChannel) realtimeChannel.unsubscribe(); window.removeEventListener('storage', handleStorage); window.removeEventListener('frontendSync', handleFrontend); };
     }, [businessId, refreshConfig]);
 
-    // ============================================
-    // 3. 🛡️ THE HYDRATION SHIELD (SAFE POSITION)
-    // ============================================
-    // 🌐 GLOBAL ROUTE IMMUNITY: These paths don't require tenant context
-    // 🔍 Define Global Path logic
-    const GLOBAL_PATHS = ['/', '/login', '/login/owner', '/admin', '/start-trial'];
-    const path = location.pathname;
-    const isGlobalPath = GLOBAL_PATHS.includes(path) || path.startsWith('/admin');
-    // 🛡️ FIX 2 (Simplified): Single Source of Truth Hydration Guard
-    const [showRetry, setShowRetry] = useState(false);
-    const [hasBooted, setHasBooted] = useState(false);
-
-    useEffect(() => {
-        let timer;
-        if (!tenant?.isLoaded && !isGlobalPath) {
-            timer = setTimeout(() => setShowRetry(true), 8000);
-        }
-        return () => clearTimeout(timer);
-    }, [tenant?.isLoaded, isGlobalPath]);
-
-    // 🛡️ RE-LOCKED HYDRATION GUARD: Don't render dashboard until resolved
-    const isHydrated = tenant?.isLoaded && (tenant?.tenantData || tenant?.error || isGlobalPath);
-
-    useEffect(() => {
-        if (isHydrated && !hasBooted) {
-            setHasBooted(true);
-        }
-    }, [isHydrated, hasBooted]);
-
-    // One-way gate: Once booted, we stay booted.
-    if (!hasBooted && !isGlobalPath) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-[#1a1a2e] flex-col gap-6 px-4 text-center font-sans">
-                {showRetry ? (
-                    <div className="animate-fade-in flex flex-col items-center gap-4">
-                        <div className="text-5xl">📡</div>
-                        <h2 className="text-white text-xl font-bold">Connection Check</h2>
-                        <p className="text-white/60 text-sm max-w-[280px] leading-relaxed">
-                            Taking longer than expected to reach the Vault.
-                        </p>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="mt-2 px-8 py-3 bg-[#7C3AED] text-white rounded-xl font-bold tracking-wide shadow-lg active:scale-95 transition-all"
-                        >
-                            Retry Now
-                        </button>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-12 h-12 border-4 border-[#DB0007] border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-white/50 text-xs font-mono uppercase tracking-[0.2em] animate-pulse">
-                            Accessing Silo...
-                        </p>
-                    </div>
-                )}
-            </div>
-        );
-    }
+    // 🛡️ VAULT-SEAL: Hydration is now handled by TenantProvider parent.
+    // App.jsx renders directly.
 
     // ============================================
     // 4. LOGIC INTERCEPTORS (NOW SAFE)
@@ -623,26 +569,30 @@ function App() {
     // 🏢 TENANT ROUTES: Full provider tree with all context
     return (
         <AdminIntentProvider>
-            <LanguageProvider>
-                <StrategyDraftProvider>
-                    <CartProvider>
-                        <div className="app-container">
-                            <RouteAreaWrapper>
-                                <Routes>
-                                    <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
-                                    <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
-                                    <Route path="/:tenantSlug/camera" element={<Camera />} />
-                                    <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
-                                    <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
-                                    <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
-                                    <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
-                                    <Route path="/:tenantSlug/rewards" element={<Rewards />} />
-                                    <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
-                                    <Route path="/:tenantSlug/game" element={<PerfectPour />} />
-                                    <Route path="/:tenantSlug/arcade" element={<Arcade />} />
-                                    <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
-                                    <Route path="/:tenantSlug/promos" element={<Promos />} />
-                                    <Route path="/:tenantSlug/wall" element={<Wall />} />
+            <StaffProvider>
+                <LanguageProvider>
+                    <StrategyDraftProvider>
+                        <CartProvider>
+                            <SessionProvider>
+                            <div className="app-container">
+                                <RouteAreaWrapper>
+                                    <Routes>
+                                        <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
+                                        <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
+                                        <Route path="/:tenantSlug/camera" element={<Camera />} />
+                                        <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
+                                        <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
+                                        <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
+                                        <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
+                                        <Route path="/:tenantSlug/rewards" element={<Rewards />} />
+                                        <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
+                                        <Route path="/:tenantSlug/game" element={<PerfectPour />} />
+                                        <Route path="/:tenantSlug/arcade" element={<Arcade />} />
+                                        <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
+                                        <Route path="/:tenantSlug/promos" element={<Promos />} />
+                                        <Route path="/:tenantSlug/wall" element={<Wall />} />
+                                        <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
+                                        <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
 
                                     <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
                                     <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
@@ -688,10 +638,12 @@ function App() {
 
                                 return <BottomNav config={safeConfig} />;
                             })()}
-                        </div>
+                            </div>
+                        </SessionProvider>
                     </CartProvider>
                 </StrategyDraftProvider>
             </LanguageProvider>
+            </StaffProvider>
         </AdminIntentProvider>
     );
 }

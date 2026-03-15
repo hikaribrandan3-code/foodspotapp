@@ -291,6 +291,19 @@ export const translations = {
     home: { es: "Home", en: "Home", pt: "Início" },
     info: { es: "Info", en: "Info", pt: "Info" },
     no_cover: { es: "Sin imagen de portada", en: "No cover image", pt: "Sem imagem de capa" },
-    no_logo: { es: "Sin logo configurado", en: "No logo configured", pt: "Sem logotipo configurado" }
+    no_logo: { es: "Sin logo configurado", en: "No logo configured", pt: "Sem logotipo configurado" },
+
+    // Team Management
+    team_management: { es: "Gestión de Equipo", en: "Team Management", pt: "Gestão de Equipe" },
+    add_staff: { es: "Agregar Personal", en: "Add Staff", pt: "Adicionar Pessoal" },
+    role_admin: { es: "Administrador", en: "Administrator", pt: "Administrador" },
+    role_manager: { es: "Gerente", en: "Manager", pt: "Gerente" },
+    role_cook: { es: "Cocinero", en: "Cook", pt: "Cozinheiro" },
+    role_cashier: { es: "Cajero", en: "Cashier", pt: "Caixa" },
+    role_runner: { es: "Runner", en: "Runner", pt: "Entregador" },
+    no_staff: { es: "No hay personal registrado", en: "No staff registered", pt: "Nenhum pessoal registrado" },
+    confirm_delete: { es: "¿Eliminar este miembro?", en: "Remove this member?", pt: "Remover este membro?" },
+    remove: { es: "Eliminar", en: "Remove", pt: "Remover" },
+    email: { es: "Email", en: "Email", pt: "Email" }
 };
 
