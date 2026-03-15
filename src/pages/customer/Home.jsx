@@ -35,30 +35,15 @@ function Home({ config: configProp }) {
     const { branding, tenantData, loading, slug: tenantSlug, businessId, refreshTenant } = useTenant()
     const { lang, t } = useLanguage()
 
-    // 🛡️ SAFETY GUARD: Prevent white screen during tenant resolution
-    if (loading || !tenantData) {
-        return (
-            <div className="page" style={{
-                padding: '0 24px',
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#F5F0E8'
-            }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 32, marginBottom: 16 }}>🍽️</div>
-                    <p style={{ color: '#7A6F65', fontSize: 14 }}>{t('loading')}</p>
-                </div>
-            </div>
-        )
-    }
-
     // 🌉 BRIDGE: Use centralized config normalizer (Phase 2 Alignment)
     // 🛡️ MOAT PROTECTION: useMemo guards against re-renders for drag physics
     const config = useMemo(() =>
         normalizeTenantConfig(configProp, tenantData),
         [configProp, tenantData])
+
+    // 🛡️ SAFETY GUARD: Prevent white screen during tenant resolution
+    // MOVED: After all hooks to prevent hook order violation
+    const isLoading = loading || !tenantData
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()
@@ -587,6 +572,25 @@ function Home({ config: configProp }) {
         } finally {
             setIsSaving(false)
         }
+    }
+
+    // 🛡️ LOADING STATE: Rendered at end to maintain hook order
+    if (isLoading) {
+        return (
+            <div className="page" style={{
+                padding: '0 24px',
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#F5F0E8'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 32, marginBottom: 16 }}>🍽️</div>
+                    <p style={{ color: '#7A6F65', fontSize: 14 }}>{t('loading')}</p>
+                </div>
+            </div>
+        )
     }
 
     return (
