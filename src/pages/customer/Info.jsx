@@ -101,6 +101,9 @@ const Info = ({ config }) => {
                         @foodspotapp
                     </p>
                 </div>
+
+                {/* 4. BALANCING SPACER - Deletes 50% of the middle gap by mirroring it at the bottom */}
+                <div style={{ flex: 1 }} />
             </div> {/* End Content Container */}
         </div>
     );
