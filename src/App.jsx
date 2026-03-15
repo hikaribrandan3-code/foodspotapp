@@ -102,12 +102,7 @@ function App() {
     const { tenantData, businessId } = useTenant();
     const [authUser, setAuthUser] = useState(null);
 
-    // 🌐 GLOBAL ROUTES: Paths that don't require tenant context
-    const isGlobalPath = location.pathname === '/' || 
-        location.pathname.startsWith('/admin') || 
-        location.pathname.startsWith('/login') || 
-        location.pathname.startsWith('/start-trial') ||
-        location.pathname.startsWith('/status');
+    // 🌐 GLOBAL ROUTES: Check if path is a global route (defined inline below)
 
     // 🛡️ ZERO-FLASH CONFIG: Initialize from tenant data if available (from cache)
     // This prevents the "flash of defaults" that causes style degradation
@@ -541,7 +536,7 @@ function App() {
     }
 
     // 🌐 GLOBAL ROUTES: Minimal tree, no tenant providers
-    if (isGlobalPath) {
+    if (location.pathname === '/' || location.pathname.startsWith('/admin') || location.pathname.startsWith('/login') || location.pathname.startsWith('/start-trial') || location.pathname.startsWith('/status')) {
         return (
             <AdminIntentProvider>
                 <div className="app-container">
