@@ -14,8 +14,17 @@ const ROLE_HIERARCHY = ['staff', 'owner', 'superadmin']
  * Attempt to login with email/password via Supabase
  * Returns { success, role, error }
  */
-export async function login(email, password) {
+export async function login(identifier, password) {
     try {
+        // 🛡️ STAFF BRIDGE LOGIC
+        // If the 'identifier' doesn't contain an '@', we treat it as a Staff Username
+        // and translate it to the Supabase email system.
+        let email = identifier;
+        if (!identifier.includes('@')) {
+            email = `${identifier.toLowerCase()}@foodspot.app`;
+            console.log(`[AuthBridge] Translating Staff Identifier: ${email}`);
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password
