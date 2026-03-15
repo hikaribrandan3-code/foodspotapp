@@ -9,6 +9,7 @@ const Info = () => {
     const businessName = tenantData?.venue_name || tenantData?.name || "FOODSPOT";
     const primaryColor = tenantData?.primary_color || '#DB0007';
     const whatsapp = tenantData?.business_info?.whatsapp || tenantData?.whatsapp;
+    const logoUrl = tenantData?.logo_url || tenantData?.hero_url || tenantData?.branding?.logoURL;
 
     // Button Styles for the "Old UI" Restoration
     const buttonBase = {
@@ -32,9 +33,23 @@ const Info = () => {
         <div className="page" style={{ padding: '20px', background: 'white', minHeight: '100vh', textAlign: 'center' }}>
             {/* 1. BRAND LOGO AREA */}
             <div style={{ margin: '20px 0 40px' }}>
-                <h1 style={{ fontFamily: 'var(--font-family-brand)', color: primaryColor, fontSize: '2.5rem', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                    {businessName}
-                </h1>
+                {logoUrl ? (
+                    <img
+                        src={logoUrl}
+                        alt={businessName}
+                        style={{
+                            maxHeight: '120px',
+                            maxWidth: '100%',
+                            objectFit: 'contain',
+                            display: 'block',
+                            margin: '0 auto'
+                        }}
+                    />
+                ) : (
+                    <h1 style={{ fontFamily: 'var(--font-family-brand)', color: primaryColor, fontSize: '2.5rem', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                        {businessName}
+                    </h1>
+                )}
             </div>
 
             {/* 2. COLORFUL BUTTON STACK (Restored from IMG_8708) */}
