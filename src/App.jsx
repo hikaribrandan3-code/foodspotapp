@@ -102,6 +102,13 @@ function App() {
     const { tenantData, businessId } = useTenant();
     const [authUser, setAuthUser] = useState(null);
 
+    // 🌐 GLOBAL ROUTES: Paths that don't require tenant context
+    const isGlobalPath = location.pathname === '/' || 
+        location.pathname.startsWith('/admin') || 
+        location.pathname.startsWith('/login') || 
+        location.pathname.startsWith('/start-trial') ||
+        location.pathname.startsWith('/status');
+
     // 🛡️ ZERO-FLASH CONFIG: Initialize from tenant data if available (from cache)
     // This prevents the "flash of defaults" that causes style degradation
     const [config, setConfig] = useState(() => {
