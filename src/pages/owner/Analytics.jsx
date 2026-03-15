@@ -50,7 +50,7 @@ const Analytics = () => {
     // 🍃 OVERRIDE: Use Green for analytics as requested
     const primaryColor = '#10B981'
 
-    const handleBack = () => navigate(`/${tenantSlug}/owner/summary`)
+    const handleBack = () => navigate(`/${tenantSlug}/owner/orders`)
     const handleLogout = async () => {
         await supabase.auth.signOut()
         logout()

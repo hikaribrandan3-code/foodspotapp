@@ -380,7 +380,7 @@ export default function FoodSpotAI() {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff', color: '#111827', position: 'relative' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff', color: '#111827', position: 'relative', paddingBottom: 'calc(var(--nav-height) + 1rem)' }}>
             <BackendHeader title={t('ai_header') || "FoodSpot AI"} />
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 0 180px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -624,6 +624,7 @@ export default function FoodSpotAI() {
                 ::-webkit-scrollbar-track { background: transparent; }
             `}</style>
             </div>
+            <BackendNav role="owner" useRoutes={true} />
         </div>
     )
 }

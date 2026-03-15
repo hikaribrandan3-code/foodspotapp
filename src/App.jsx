@@ -181,7 +181,7 @@ function App() {
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             setAuthUser(session?.user || null);
-            
+
             if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                 localStorage.removeItem('admin_intent');
                 localStorage.removeItem('simulatedRole');
@@ -255,7 +255,7 @@ function App() {
         const menuC = heroIcons.menu || HERO_DEFAULT;
         root.style.setProperty('--hero-menu-bg', getHeroBg(menuC));
         root.style.setProperty('--hero-menu-icon', getHeroIcon(menuC));
-        
+
         if (config.headerCover?.image && !config.headerCover.image.startsWith('blob:')) {
             root.style.setProperty('--header-image', `url(${config.headerCover.image})`);
         } else {
@@ -409,7 +409,7 @@ function App() {
     // ============================
     // UNIFIED APP STRUCTURE - NO EARLY RETURNS
     // ============================
-    
+
     // Inner components that use context hooks - defined inside App to ensure stable hook order
     const LazyFallback = () => {
         const { t } = useLanguage();
@@ -483,6 +483,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
                                             <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/orders" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
