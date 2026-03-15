@@ -499,7 +499,7 @@ function App() {
     // Show OwnerLogin only when on login routes and NOT authenticated
     const showOwnerLogin = (pathname === '/login/owner' || pathname === '/login') && !authUser?.user_metadata?.slug;
 
-    // 🏢 FINAL RENDER: Single unified Routes tree
+    // 🏢 FINAL RENDER: Single unified Routes tree - NO early returns
     return (
         <AdminIntentProvider>
             <StaffProvider>
@@ -507,41 +507,33 @@ function App() {
                     <StrategyDraftProvider>
                         <CartProvider>
                             <SessionProvider>
-                                {pathname.startsWith('/admin') && !adminReady ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#1a1a2e', color: '#7C3AED' }}>
-                                        <div style={{ textAlign: 'center' }}>
-                                            <div style={{ fontSize: '24px', marginBottom: '8px' }}>🧹</div>
-                                            <div style={{ fontSize: '12px', opacity: 0.8 }}>Cleaning memory...</div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="app-container">
-                                        <RouteAreaWrapper>
-                                            <Routes>
-                                                {/* GLOBAL ROUTES */}
-                                                <Route path="/" element={<TrialSignup />} />
-                                                <Route path="/start-trial" element={<TrialSignup />} />
-                                                <Route path="/login" element={<OwnerLogin />} />
-                                                <Route path="/login/owner" element={<OwnerLogin />} />
-                                                <Route path="/login/staff" element={<StaffLogin />} />
-                                                <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
-                                                <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
+                                <div className="app-container">
+                                    <RouteAreaWrapper>
+                                        <Routes>
+                                            {/* GLOBAL ROUTES */}
+                                            <Route path="/" element={<TrialSignup />} />
+                                            <Route path="/start-trial" element={<TrialSignup />} />
+                                            <Route path="/login" element={<OwnerLogin />} />
+                                            <Route path="/login/owner" element={<OwnerLogin />} />
+                                            <Route path="/login/staff" element={<StaffLogin />} />
+                                            <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
+                                            <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
-                                                {/* TENANT ROUTES */}
-                                                <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
-                                                <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
-                                                <Route path="/:tenantSlug/camera" element={<Camera />} />
-                                                <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
-                                                <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
-                                                <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
-                                                <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
-                                                <Route path="/:tenantSlug/rewards" element={<Rewards />} />
-                                                <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
-                                                <Route path="/:tenantSlug/game" element={<PerfectPour />} />
-                                                <Route path="/:tenantSlug/arcade" element={<Arcade />} />
-                                                <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
-                                                <Route path="/:tenantSlug/promos" element={<Promos />} />
-                                                <Route path="/:tenantSlug/wall" element={<Wall />} />
+                                            {/* TENANT ROUTES */}
+                                            <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/camera" element={<Camera />} />
+                                            <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
+                                            <Route path="/:tenantSlug/rewards" element={<Rewards />} />
+                                            <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/game" element={<PerfectPour />} />
+                                            <Route path="/:tenantSlug/arcade" element={<Arcade />} />
+                                            <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/promos" element={<Promos />} />
+                                            <Route path="/:tenantSlug/wall" element={<Wall />} />
                                                 <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                                 <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
 
@@ -569,7 +561,6 @@ function App() {
                                         {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
                                         {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && <BottomNav config={safeConfig} />}
                                     </div>
-                                )}
                             </SessionProvider>
                         </CartProvider>
                     </StrategyDraftProvider>
