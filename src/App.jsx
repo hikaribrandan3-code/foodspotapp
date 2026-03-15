@@ -485,7 +485,7 @@ function App() {
     // 🛡️ STRIKE 13.7: LOGIN INTERCEPTOR FIX
     // If user attempts to visit /login but is already authenticated with a slug,
     // bounce them to their dashboard instead of trapping them in the login screen.
-    if (path === '/login/owner' || path === '/login') {
+    if (location.pathname === '/login/owner' || location.pathname === '/login') {
         if (authUser?.user_metadata?.slug) {
             const slug = authUser.user_metadata.slug;
             console.log("🚀 [App.jsx] User already logged in. Redirecting to:", `/${slug}/owner/summary`);
