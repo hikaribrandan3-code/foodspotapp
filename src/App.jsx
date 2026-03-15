@@ -99,7 +99,8 @@ function App() {
     // ============================================
     const location = useLocation();
     const navigate = useNavigate();
-    const { tenant: tenantData, tenantId: businessId } = useTenant();
+    const { tenantData, businessId } = useTenant();
+    const [authUser, setAuthUser] = useState(null);
 
     // 🛡️ ZERO-FLASH CONFIG: Initialize from tenant data if available (from cache)
     // This prevents the "flash of defaults" that causes style degradation
@@ -139,53 +140,45 @@ function App() {
     // 🔥 HYDRATION V5: MASTER MERGE - Full app_config restoration
     // This merges the ENTIRE app_config blob from Cloud, not just specific fields
     useEffect(() => {
-        if (tenant?.tenantData) {
-            // 📦 MASTER MERGE: app_config is the source of truth for ALL branding
-            const cloudAppConfig = tenant.tenantData.app_config || {};
+        if (tenantData) {
+            const cloudAppConfig = tenantData.app_config || {};
 
             const merged = normalizeConfig({
                 ...config,
-                ...tenant.tenantData,
-                // 🌟 FULL CONFIG INJECTION: Merge everything from app_config
+                ...tenantData,
                 ...cloudAppConfig,
-                // Ensure deep objects are preserved
-                infoPills: tenant.tenantData.info_pills || cloudAppConfig.infoPills || config.infoPills,
-                businessInfo: tenant.tenantData.business_info || cloudAppConfig.businessInfo || config.businessInfo,
-                // 📸 HIGHLIGHT RECOVERY: ROOT > app_config > defaults
-                featuredPhotos: tenant.tenantData.featuredPhotos || cloudAppConfig.featuredPhotos || config.featuredPhotos,
-                // 🎨 DB FIELD MAPPINGS (flat fields from DB)
-                businessName: tenant.tenantData.business_name || cloudAppConfig.businessName || config.businessName,
+                infoPills: tenantData.info_pills || cloudAppConfig.infoPills || config.infoPills,
+                businessInfo: tenantData.business_info || cloudAppConfig.businessInfo || config.businessInfo,
+                featuredPhotos: tenantData.featuredPhotos || cloudAppConfig.featuredPhotos || config.featuredPhotos,
+                businessName: tenantData.business_name || cloudAppConfig.businessName || config.businessName,
                 headerCover: {
                     ...config.headerCover,
                     ...(cloudAppConfig.headerCover || {}),
-                    image: tenant.tenantData.hero_url || cloudAppConfig.headerCover?.image || config.headerCover?.image
+                    image: tenantData.hero_url || cloudAppConfig.headerCover?.image || config.headerCover?.image
                 },
                 headerBranding: {
                     ...config.headerBranding,
                     ...(cloudAppConfig.headerBranding || {}),
-                    mode: tenant.tenantData.hero_mode || cloudAppConfig.headerBranding?.mode || 'cover'
+                    mode: tenantData.hero_mode || cloudAppConfig.headerBranding?.mode || 'cover'
                 },
-                // 🎨 COLORS: ROOT > app_config > flat fields > defaults
                 colors: {
                     ...config.colors,
                     ...(cloudAppConfig.colors || {}),
-                    primary: tenant.tenantData.colors?.primary || cloudAppConfig.colors?.primary || tenant.tenantData.primary_color || config.colors?.primary,
-                    secondary: tenant.tenantData.colors?.secondary || cloudAppConfig.colors?.secondary || tenant.tenantData.secondary_color || config.colors?.secondary,
-                    confirmation: tenant.tenantData.colors?.confirmation || cloudAppConfig.colors?.confirmation || tenant.tenantData.confirmation_color || config.colors?.confirmation,
-                    powered: tenant.tenantData.colors?.powered || cloudAppConfig.colors?.powered || tenant.tenantData.powered_by_color || config.colors?.powered
+                    primary: tenantData.colors?.primary || cloudAppConfig.colors?.primary || tenantData.primary_color || config.colors?.primary,
+                    secondary: tenantData.colors?.secondary || cloudAppConfig.colors?.secondary || tenantData.secondary_color || config.colors?.secondary,
+                    confirmation: tenantData.colors?.confirmation || cloudAppConfig.colors?.confirmation || tenantData.confirmation_color || config.colors?.confirmation,
+                    powered: tenantData.colors?.powered || cloudAppConfig.colors?.powered || tenantData.powered_by_color || config.colors?.powered
                 },
                 branding: {
                     ...config.branding,
                     ...(cloudAppConfig.branding || {}),
-                    fontFamily: cloudAppConfig.branding?.fontFamily || tenant.tenantData.font_family || config.branding?.fontFamily,
-                    fontWeight: cloudAppConfig.branding?.fontWeight || tenant.tenantData.font_weight || config.branding?.fontWeight,
-                    primaryColor: cloudAppConfig.branding?.primaryColor || tenant.tenantData.navbar_color || config.branding?.primaryColor,
-                    iconColorMode: cloudAppConfig.branding?.iconColorMode || tenant.tenantData.nav_icon_mode || config.branding?.iconColorMode
+                    fontFamily: cloudAppConfig.branding?.fontFamily || tenantData.font_family || config.branding?.fontFamily,
+                    fontWeight: cloudAppConfig.branding?.fontWeight || tenantData.font_weight || config.branding?.fontWeight,
+                    primaryColor: cloudAppConfig.branding?.primaryColor || tenantData.navbar_color || config.branding?.primaryColor,
+                    iconColorMode: cloudAppConfig.branding?.iconColorMode || tenantData.nav_icon_mode || config.branding?.iconColorMode
                 },
-                // 🏠 HOME CONFIG: Restore from app_config
                 homeConfig: cloudAppConfig.homeConfig || config.homeConfig,
-                // 🎮 HERO ICONS: ROOT > app_config > defaults
-                heroIcons: tenant.tenantData.hero_icons || cloudAppConfig.heroIcons || config.heroIcons
+                heroIcons: tenantData.hero_icons || cloudAppConfig.heroIcons || config.heroIcons
             });
             setConfig(merged);
             console.log('☁️ [App.jsx] HYDRATION V6 PRIORITY FIX:', {
@@ -193,7 +186,7 @@ function App() {
                 fontFamily: merged.branding?.fontFamily
             });
         }
-    }, [tenant?.tenantData]);
+    }, [tenantData]);
 
     // Listen for optimistic updates from Settings.jsx
     useEffect(() => {
@@ -234,6 +227,8 @@ function App() {
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            setAuthUser(session?.user || null);
+            
             if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                 localStorage.removeItem('admin_intent');
                 localStorage.removeItem('simulatedRole');
@@ -465,9 +460,9 @@ function App() {
         const handleStorage = (e) => { if (e.key === 'grub_config' || e.key === null) refreshConfig(); };
         // 🚀 CLOUD-AWARE REACTIVITY: Prefer Cloud data, fallback to localStorage
         const handleFrontend = () => {
-            if (tenant?.tenantData) {
+            if (tenantData) {
                 // Cloud-First: Merge tenantData into existing config
-                setConfig(prev => normalizeConfig({ ...prev, ...tenant.tenantData }));
+                setConfig(prev => normalizeConfig({ ...prev, ...tenantData }));
             } else {
                 // Fallback: localStorage (for demo mode or offline scenarios)
                 setConfig(getConfig());
@@ -491,19 +486,11 @@ function App() {
     // If user attempts to visit /login but is already authenticated with a slug,
     // bounce them to their dashboard instead of trapping them in the login screen.
     if (path === '/login/owner' || path === '/login') {
-        const session = getSession(); // Synchronous check if available, or rely on effect
-        // NOTE: getSession is async in utils/auth.js, so we might need a more robust check here.
-        // For now, we'll let the onAuthStateChange listener handle the redirect if they ARE logged in.
-        // But we should at least log that we are hitting this interceptor.
-        console.log("🛑 [App.jsx] Intercepting Login Route. Auth State:", tenant?.session?.user ? "Logged In" : "Logged Out");
-
-        // If we have a tenant session active, FORCE redirect
-        if (tenant?.session?.user?.user_metadata?.slug) {
-            const slug = tenant.session.user.user_metadata.slug;
+        if (authUser?.user_metadata?.slug) {
+            const slug = authUser.user_metadata.slug;
             console.log("🚀 [App.jsx] User already logged in. Redirecting to:", `/${slug}/owner/summary`);
             return <Navigate to={`/${slug}/owner/summary`} replace />;
         }
-
         return <Routes><Route path="*" element={<OwnerLogin />} /></Routes>;
     }
 
