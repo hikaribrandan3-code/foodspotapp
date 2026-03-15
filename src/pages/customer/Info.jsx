@@ -33,48 +33,64 @@ const Info = ({ config }) => {
     };
 
     return (
-        <div className="page" style={{ padding: 0, background: 'white', minHeight: '100vh', textAlign: 'center' }}>
+        <div className="page" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '0 12px',
+            paddingBottom: '120px',
+            background: 'white',
+            minHeight: '100vh',
+            textAlign: 'center',
+            boxSizing: 'border-box'
+        }}>
             {/* 1. SYSTEM HERO COVER - Unified with Home.jsx */}
             <HeaderClamp config={config} />
 
-            {/* Content Container */}
-            <div style={{ padding: '20px' }}>
-
+            {/* Content Container - Flex row that pushes footer down */}
+            <div style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                padding: '20px 8px 0'
+            }}>
                 {/* 2. COLORFUL BUTTON STACK (Restored from IMG_8708) */}
-                {whatsapp && (
-                    <a
-                        href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ ...buttonBase, background: '#E55F51' }}
+                <div>
+                    {whatsapp && (
+                        <a
+                            href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ ...buttonBase, background: '#E55F51' }}
+                        >
+                            {t('info_whatsapp')}
+                        </a>
+                    )}
+
+                    <button
+                        style={{ ...buttonBase, background: '#F4D03F' }}
+                        onClick={() => navigate(`/${tenantSlug}/checkout`)}
                     >
-                        {t('info_whatsapp')}
-                    </a>
-                )}
+                        {t('info_mercado_pago')}
+                    </button>
 
-                <button
-                    style={{ ...buttonBase, background: '#F4D03F' }}
-                    onClick={() => navigate(`/${tenantSlug}/checkout`)}
-                >
-                    {t('info_mercado_pago')}
-                </button>
+                    <button style={{ ...buttonBase, background: '#E67E22' }}>
+                        {t('info_rappi')}
+                    </button>
 
-                <button style={{ ...buttonBase, background: '#E67E22' }}>
-                    {t('info_rappi')}
-                </button>
+                    <button style={{ ...buttonBase, background: '#58D68D' }}>
+                        {t('info_pedidosya')}
+                    </button>
 
-                <button style={{ ...buttonBase, background: '#58D68D' }}>
-                    {t('info_pedidosya')}
-                </button>
-
-                {/* THE UNIFIED GATEWAY BUTTON */}
-                <button
-                    style={{ ...buttonBase, background: '#448AFF' }}
-                    onClick={() => navigate(`/${tenantSlug}/owner`)}
-                >
-                    <span style={{ marginRight: '8px' }}>🔒</span>
-                    {t('info_admin_access')}
-                </button>
+                    {/* THE UNIFIED GATEWAY BUTTON */}
+                    <button
+                        style={{ ...buttonBase, background: '#448AFF' }}
+                        onClick={() => navigate(`/${tenantSlug}/owner`)}
+                    >
+                        <span style={{ marginRight: '8px' }}>🔒</span>
+                        {t('info_admin_access')}
+                    </button>
+                </div>
 
                 {/* 3. FOOTER */}
                 <div style={{ marginTop: '60px' }}>
