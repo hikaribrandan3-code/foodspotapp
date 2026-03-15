@@ -38,7 +38,7 @@ const Info = () => {
                         src={logoUrl}
                         alt={businessName}
                         style={{
-                            maxHeight: '120px',
+                            maxHeight: '180px',
                             maxWidth: '100%',
                             objectFit: 'contain',
                             display: 'block',
@@ -90,10 +90,10 @@ const Info = () => {
 
             {/* 3. FOOTER */}
             <div style={{ marginTop: '60px' }}>
-                <p style={{ color: '#000', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '8px' }}>
+                <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                     Powered by
                 </p>
-                <p style={{ color: '#C4856A', fontSize: '2.2rem', fontWeight: '800' }}>
+                <p style={{ color: '#C4856A', fontSize: '1.85rem', fontWeight: '800' }}>
                     @foodspotapp
                 </p>
             </div>
