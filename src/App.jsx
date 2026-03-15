@@ -488,14 +488,16 @@ function App() {
     // 🛡️ STRIKE 13.7: LOGIN INTERCEPTOR FIX
     // If user attempts to visit /login but is already authenticated with a slug,
     // bounce them to their dashboard instead of trapping them in the login screen.
-    if (pathname === '/login/owner' || pathname === '/login') {
-        if (authUser?.user_metadata?.slug) {
+    useEffect(() => {
+        if ((pathname === '/login/owner' || pathname === '/login') && authUser?.user_metadata?.slug) {
             const slug = authUser.user_metadata.slug;
             console.log("🚀 [App.jsx] User already logged in. Redirecting to:", `/${slug}/owner/summary`);
-            return <Navigate to={`/${slug}/owner/summary`} replace />;
+            navigate(`/${slug}/owner/summary`, { replace: true });
         }
-        return <Routes><Route path="*" element={<OwnerLogin />} /></Routes>;
-    }
+    }, [pathname, authUser, navigate]);
+
+    // Show OwnerLogin only when on login routes and NOT authenticated
+    const showOwnerLogin = (pathname === '/login/owner' || pathname === '/login') && !authUser?.user_metadata?.slug;
 
     if (trialExpired) {
         return (
