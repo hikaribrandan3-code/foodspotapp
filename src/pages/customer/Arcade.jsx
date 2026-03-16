@@ -1,54 +1,59 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../../contexts/TenantContext'
-import GameHeroEasy from '../../components/GameHero-EASY'
 
 /**
- * Arcade - TikTok-Style Vertical Swipe Game Discovery Feed
- * - Clean Covers
- * - High-Impact Header
- * - Cinematic Layout
+ * Arcade - Unified Game Feed
+ * All games in one scrollable 9:16 format
  */
 
-const GAMES = [
-    { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash.jpg' },
-    { id: 'triple-snap-slots', title: 'Triple Snap', hook: 'Can you hit the jackpot?', cover: '/games/triplesnapslots.jpg' },
-    { id: 'sushi-slicev2', title: 'Sushi Slice', hook: 'Slice precision required.', cover: '/games/sushislicernew.jpg' },
-    { id: 'gravity-flip-runner', title: 'Gravity Flip', hook: 'Up is down. Down is up.', cover: '/games/gravityflip.jpg' },
-    { id: 'pegfall-panic', title: 'Peg Stack', hook: 'Don\'t let the pegs fall!', cover: '/games/pegstacker.png' },
-    { id: 'side-scroller-runner', title: 'Box Runner', hook: 'Classic running action.', cover: '/games/siderunnergamecover.png' },
-    { id: 'false-hold', title: 'False Hold', hook: 'Keep the rhythm!', cover: '/games/falsehold.jpg' },
-    { id: 'falling-choice-gate', title: 'Escapa del Turno', hook: 'Overtime Edition - Escape now!', cover: '/games/escapadelturno.jpg' },
-    { id: 'avoid-zone-engine', title: 'Cuidado con la Grasa', hook: 'Dodge the grease!', cover: '/games/avoid-zone-engine.png' },
-    { id: 'collapse-stack', title: 'Burger Stacker', hook: 'Stack the perfect burger!', cover: '/games/collapse-stack.jpg' }
+// Custom games (local)
+const CUSTOM_GAMES = [
+    { id: 'empanada-dash', title: 'Empanada Dash', hook: 'Jump, dash, collect! Earn tasty rewards.', cover: '/games/empanada-dash.jpg', type: 'local' },
+    { id: 'triple-snap-slots', title: 'Triple Snap', hook: 'Can you hit the jackpot?', cover: '/games/triplesnapslots.jpg', type: 'local' },
+    { id: 'sushi-slicev2', title: 'Sushi Slice', hook: 'Slice precision required.', cover: '/games/sushislicernew.jpg', type: 'local' },
+    { id: 'gravity-flip-runner', title: 'Gravity Flip', hook: 'Up is down. Down is up.', cover: '/games/gravityflip.jpg', type: 'local' },
+    { id: 'pegfall-panic', title: 'Peg Stack', hook: 'Don\'t let the pegs fall!', cover: '/games/pegstacker.png', type: 'local' },
+    { id: 'side-scroller-runner', title: 'Box Runner', hook: 'Classic running action.', cover: '/games/siderunnergamecover.png', type: 'local' },
+    { id: 'false-hold', title: 'False Hold', hook: 'Keep the rhythm!', cover: '/games/falsehold.jpg', type: 'local' },
+    { id: 'falling-choice-gate', title: 'Escapa del Turno', hook: 'Overtime Edition - Escape now!', cover: '/games/escapadelturno.jpg', type: 'local' },
+    { id: 'avoid-zone-engine', title: 'Cuidado con la Grasa', hook: 'Dodge the grease!', cover: '/games/avoid-zone-engine.png', type: 'local' },
+    { id: 'collapse-stack', title: 'Burger Stacker', hook: 'Stack the perfect burger!', cover: '/games/collapse-stack.jpg', type: 'local' }
 ]
+
+// Quick games (external iframes)
+const QUICK_GAMES = [
+    { id: '2048', title: '2048', hook: 'Merge tiles to reach 2048!', cover: '🔢', type: 'external', url: 'https://gabrielecirulli.github.io/2048/' },
+    { id: 'hextris', title: 'Hextris', hook: 'Rotate hexagon, match colors.', cover: '🔷', type: 'external', url: 'https://hextris.github.io/hextris/' },
+    { id: 'stack', title: 'Stack', hook: 'Stack blocks perfectly.', cover: '📚', type: 'external', url: 'https://stevengoldberg.github.io/stack/' },
+    { id: 'clumsybird', title: 'Clumsy Bird', hook: 'Tap to fly, don\'t crash!', cover: '🐤', type: 'external', url: 'https://ellisonleao.github.io/clumsy-bird/' },
+    { id: 'tictactoe', title: 'Tic Tac Toe', hook: 'Classic X vs O.', cover: '⭕', type: 'external', url: 'https://beumsk.github.io/Tic-Tac-Toe/' },
+    { id: 'connect4', title: 'Connect Four', hook: 'Line up 4 to win.', cover: '🔴', type: 'external', url: 'https://kenrick95.github.io/connect-four/' },
+]
+
+// All games combined
+const ALL_GAMES = [...CUSTOM_GAMES, ...QUICK_GAMES]
 
 const Arcade = () => {
     const navigate = useNavigate()
     const { tenantData, slug: tenantSlug } = useTenant()
     const containerRef = useRef(null)
 
-    const [activeGameId, setActiveGameId] = useState(null)
+    const [activeGame, setActiveGame] = useState(null)
     const [visibleIndex, setVisibleIndex] = useState(0)
-    const [showQuickGames, setShowQuickGames] = useState(false)
 
     useEffect(() => {
-        if (!showQuickGames) {
-            document.body.style.overflow = 'hidden'
-            document.documentElement.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = ''
-            document.documentElement.style.overflow = ''
-        }
+        document.body.style.overflow = 'hidden'
+        document.documentElement.style.overflow = 'hidden'
         return () => {
             document.body.style.overflow = ''
             document.documentElement.style.overflow = ''
         }
-    }, [showQuickGames])
+    }, [])
 
     useEffect(() => {
         const container = containerRef.current
-        if (!container || showQuickGames) return
+        if (!container) return
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -62,21 +67,59 @@ const Arcade = () => {
             { root: container, threshold: 0.6 }
         )
 
-        const cards = container.querySelectorAll('[data-game-card]')
+        const cards = container.querySelectorAll('[data-index]')
         cards.forEach(card => observer.observe(card))
         return () => observer.disconnect()
-    }, [showQuickGames])
+    }, [])
 
-    const handlePlay = useCallback((gameId) => {
-        setActiveGameId(gameId)
+    const handlePlay = useCallback((game) => {
+        setActiveGame(game)
+    }, [])
+
+    const handleClose = useCallback(() => {
+        setActiveGame(null)
     }, [])
 
     const handleBack = useCallback(() => {
         const homePath = tenantSlug ? `/${tenantSlug}/home` : '/home'
-        navigate(homePath)
+        navigate(homePath, { replace: true })
     }, [navigate, tenantSlug])
 
     const businessName = tenantData?.business_name || 'FoodSpot'
+
+    // If playing external game, show fullscreen iframe
+    if (activeGame?.type === 'external') {
+        return (
+            <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 99999 }}>
+                <iframe
+                    src={activeGame.url}
+                    title={activeGame.title}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                    allow="fullscreen"
+                    sandbox="allow-scripts allow-same-origin"
+                />
+                <button
+                    onClick={handleClose}
+                    style={{
+                        position: 'fixed',
+                        top: 10,
+                        right: 10,
+                        zIndex: 100000,
+                        width: 44,
+                        height: 44,
+                        borderRadius: '50%',
+                        background: 'rgba(0,0,0,0.8)',
+                        border: '2px solid white',
+                        color: 'white',
+                        fontSize: 20,
+                        cursor: 'pointer'
+                    }}
+                >
+                    ✕
+                </button>
+            </div>
+        )
+    }
 
     return (
         <div style={{
@@ -89,47 +132,32 @@ const Arcade = () => {
             height: '100dvh',
             overflow: 'hidden'
         }}>
-            {/* LAYER 1: CONTENT (Scroll Container OR Quick Games Grid) */}
-            <div style={{ position: 'relative', flex: 1, width: '100%' }}>
-                {!showQuickGames ? (
-                    <div
-                        ref={containerRef}
-                        style={{
-                            position: 'absolute',
-                            inset: 0,
-                            overflowY: 'scroll',
-                            scrollSnapType: 'y mandatory',
-                            WebkitOverflowScrolling: 'touch',
-                            zIndex: 10
-                        }}
-                    >
-                        {GAMES.map((game, index) => (
-                            <GameCard
-                                key={game.id}
-                                game={game}
-                                index={index}
-                                isPlaying={activeGameId === game.id}
-                                onPlay={() => handlePlay(game.id)}
-                                isVisible={visibleIndex === index}
-                                businessName={businessName}
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: '#0F172A',
-                        zIndex: 100,
-                        paddingTop: 'calc(env(safe-area-inset-top, 12px) + 140px)',
-                        overflowY: 'auto'
-                    }}>
-                        <GameHeroEasy />
-                    </div>
-                )}
+            {/* Scroll Container */}
+            <div
+                ref={containerRef}
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    overflowY: 'scroll',
+                    scrollSnapType: 'y mandatory',
+                    WebkitOverflowScrolling: 'touch',
+                    zIndex: 10
+                }}
+            >
+                {ALL_GAMES.map((game, index) => (
+                    <GameCard
+                        key={game.id}
+                        game={game}
+                        index={index}
+                        isPlaying={activeGame?.id === game.id}
+                        onPlay={() => handlePlay(game)}
+                        isVisible={visibleIndex === index}
+                        businessName={businessName}
+                    />
+                ))}
             </div>
 
-            {/* LAYER 2: INTERFACE (Header & Toggle) - Always on Top */}
+            {/* Header */}
             <header style={{
                 position: 'absolute',
                 top: 0,
@@ -138,10 +166,9 @@ const Arcade = () => {
                 zIndex: 6000,
                 padding: '12px',
                 paddingTop: 'calc(env(safe-area-inset-top, 12px) + 12px)',
-                background: 'rgba(15, 23, 42, 0.6)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                borderBottom: '1px solid rgba(255,255,255,0.1)'
+                background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, transparent 100%)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <button onClick={handleBack} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', padding: 8, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -157,68 +184,38 @@ const Arcade = () => {
                 </div>
             </header>
 
+            {/* Progress Indicators */}
             <div style={{
-                position: 'absolute',
-                top: 'calc(env(safe-area-inset-top, 12px) + 75px)',
-                left: 0,
-                right: 0,
-                zIndex: 5500,
+                position: 'fixed',
+                right: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
                 display: 'flex',
-                justifyContent: 'center',
-                gap: 10,
-                pointerEvents: 'none'
+                flexDirection: 'column',
+                gap: 8,
+                zIndex: 100
             }}>
-                <button
-                    onClick={() => { setShowQuickGames(false); setActiveGameId(null); }}
-                    style={{
-                        padding: '8px 20px',
-                        background: !showQuickGames ? '#3B82F6' : 'rgba(255,255,255,0.1)',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        borderRadius: 20,
-                        color: 'white',
-                        fontWeight: 700,
-                        fontSize: 12,
-                        cursor: 'pointer',
-                        pointerEvents: 'auto'
-                    }}
-                >
-                    🎮 ARCADE
-                </button>
-                <button
-                    onClick={() => { setShowQuickGames(true); setActiveGameId(null); }}
-                    style={{
-                        padding: '8px 20px',
-                        background: showQuickGames ? '#8B5CF6' : 'rgba(255,255,255,0.1)',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        borderRadius: 20,
-                        color: 'white',
-                        fontWeight: 700,
-                        fontSize: 12,
-                        cursor: 'pointer',
-                        pointerEvents: 'auto'
-                    }}
-                >
-                    ⚡ QUICK GAMES
-                </button>
+                {ALL_GAMES.map((_, idx) => (
+                    <div key={idx} style={{
+                        width: 4,
+                        height: visibleIndex === idx ? 24 : 4,
+                        borderRadius: 2,
+                        background: visibleIndex === idx ? '#3B82F6' : 'rgba(255,255,255,0.2)',
+                        transition: 'all 0.3s ease'
+                    }} />
+                ))}
             </div>
-
-            {/* LAYER 3: INDICATORS */}
-            {!showQuickGames && (
-                <div style={{ height: '4px', position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', zIndex: 100 }}>
-                    {GAMES.map((_, idx) => (
-                        <div key={idx} style={{ flex: 1, background: visibleIndex === idx ? '#3B82F6' : 'rgba(255,255,255,0.1)', transition: 'background 0.3s ease' }} />
-                    ))}
-                </div>
-            )}
         </div>
     )
 }
 
 const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) => {
+    // External games use emoji covers, local games use image paths
+    const isExternal = game.type === 'external'
+
     return (
         <div
             data-game-card
-            data-game-id={game.id}
             data-index={index}
             style={{
                 height: '100dvh',
@@ -230,13 +227,38 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) =
         >
             <div style={{ height: '100%', width: '100%', position: 'relative', background: '#0F172A' }}>
                 {isPlaying ? (
-                    <iframe
-                        src={`/games/${game.id}/index.html`}
-                        title={game.title}
-                        style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
-                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
-                        allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen; pointer-lock"
-                    />
+                    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+                        <iframe
+                            src={`/games/${game.id}/index.html`}
+                            title={game.title}
+                            style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
+                            sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
+                            allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen; pointer-lock"
+                        />
+                        {/* Close button for local games */}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); window.location.reload(); }}
+                            style={{
+                                position: 'absolute',
+                                top: 'calc(env(safe-area-inset-top, 12px) + 12px)',
+                                right: 12,
+                                zIndex: 100000,
+                                width: 36,
+                                height: 36,
+                                borderRadius: '50%',
+                                background: 'rgba(0,0,0,0.5)',
+                                border: 'none',
+                                color: 'white',
+                                fontSize: 18,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            ✕
+                        </button>
+                    </div>
                 ) : (
                     <div style={{
                         position: 'absolute',
@@ -244,97 +266,62 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) =
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'flex-end',
-                        backgroundImage: `url(${game.cover})`,
+                        background: isExternal
+                            ? 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)'
+                            : `url(${game.cover})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        backgroundColor: '#0F172A'
                     }}>
-                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.9) 100%)' }} />
-                        <div style={{ position: 'relative', padding: 24, paddingBottom: 60, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        {/* Gradient overlay for text readability */}
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.9) 100%)' }} />
+
+                        {/* Content */}
+                        <div style={{
+                            position: 'relative',
+                            padding: '24px 24px 48px 24px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 12
+                        }}>
+                            {/* Emoji or icon for external games */}
+                            {isExternal && (
+                                <span style={{ fontSize: 80, marginBottom: 10 }}>{game.cover}</span>
+                            )}
+
+                            <h2 style={{ color: 'white', fontSize: 32, fontWeight: 900, margin: 0, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                                {game.title}
+                            </h2>
+
+                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, margin: 0, textAlign: 'center', maxWidth: '80%' }}>
+                                {game.hook}
+                            </p>
+
                             <button
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPlay(game.id); }}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPlay(); }}
                                 style={{
-                                    padding: '16px 40px',
-                                    background: '#3B82F6',
+                                    marginTop: 24,
+                                    padding: '18px 56px',
+                                    background: isExternal ? '#8B5CF6' : '#3B82F6',
                                     border: 'none',
-                                    borderRadius: 32,
+                                    borderRadius: 40,
                                     fontSize: 18,
-                                    fontWeight: 800,
+                                    fontWeight: 900,
                                     color: '#FFFFFF',
                                     cursor: 'pointer',
-                                    boxShadow: '0 8px 16px rgba(59, 130, 246, 0.4)',
-                                    textTransform: 'uppercase'
+                                    boxShadow: isExternal
+                                        ? '0 10px 20px rgba(139, 92, 246, 0.4)'
+                                        : '0 10px 20px rgba(59, 130, 246, 0.4)',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em'
                                 }}
                             >
-                                PLAY NOW
+                                {isExternal ? '⚡ PLAY NOW' : 'PLAY NOW'}
                             </button>
                         </div>
                     </div>
                 )}
             </div>
-
-            <ShareVictoryButton venueName={businessName} />
-        </div>
-    )
-}
-
-function ShareVictoryButton({ venueName }) {
-    const [score, setScore] = useState(0)
-    const [showCanvas, setShowCanvas] = useState(false)
-    const canvasRef = useRef(null)
-
-    useEffect(() => {
-        const stored = localStorage.getItem('grubclub_highscore')
-        if (stored) setScore(parseInt(stored, 10))
-    }, [])
-
-    const generateVictoryImage = useCallback(() => {
-        const canvas = canvasRef.current
-        if (!canvas) return
-        const ctx = canvas.getContext('2d')
-        const width = 600
-        const height = 315
-        canvas.width = width
-        canvas.height = height
-        const gradient = ctx.createLinearGradient(0, 0, width, height)
-        gradient.addColorStop(0, '#8B5CF6'); gradient.addColorStop(1, '#6366F1')
-        ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height)
-        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center'; ctx.fillText('🍽️ FoodSpot', width / 2, 50)
-        ctx.font = 'bold 48px Arial'; ctx.fillText('🎉 VICTORY!', width / 2, 110)
-        ctx.font = 'bold 72px Arial'; ctx.fillStyle = '#FFD700'; ctx.fillText(`${score} PTS`, width / 2, 190)
-        ctx.font = '24px Arial'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(venueName || 'GrubClub', width / 2, 250)
-        ctx.font = '16px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText('Play at FoodSpot → foodspot.app', width / 2, 290)
-        setShowCanvas(true)
-    }, [score, venueName])
-
-    const handleShare = async () => {
-        generateVictoryImage()
-        setTimeout(() => {
-            const canvas = canvasRef.current
-            if (!canvas) return
-            canvas.toBlob(async (blob) => {
-                if (!blob) return
-                const file = new File([blob], 'victory.png', { type: 'image/png' })
-                if (navigator.share) {
-                    try { await navigator.share({ title: '🎉 My FoodSpot Victory!', text: `I scored ${score} points at ${venueName || 'GrubClub'}!`, files: [file] }) }
-                    catch (e) { console.log('Share cancelled') }
-                } else {
-                    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'victory.png'; a.click(); URL.revokeObjectURL(url)
-                }
-                setShowCanvas(false)
-            })
-        }, 100)
-    }
-
-    return (
-        <div style={{ position: 'fixed', bottom: 100, right: 20, zIndex: 1000 }}>
-            <button
-                onClick={handleShare}
-                style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD700, #FFA500)', border: 'none', boxShadow: '0 4px 20px rgba(255, 165, 0, 0.5)', cursor: 'pointer', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-                🏆
-            </button>
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
     )
 }
