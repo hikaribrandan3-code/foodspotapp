@@ -271,79 +271,65 @@ const Arcade = () => {
                 ))}
             </div>
 
-            {/* Back Button */}
-            <button
-                onClick={handleBack}
-                onTouchStart={handleBack}
-                style={{
-                    position: 'fixed',
-                    top: 'max(12px, env(safe-area-inset-top))',
-                    left: 16,
-                    zIndex: 100,
-                    padding: '10px 16px',
-                    background: 'rgba(15,23,42,0.9)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid #334155',
-                    borderRadius: 20,
-                    color: '#fff',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    touchAction: 'manipulation'
-                }}
-            >
-                ← Back
-            </button>
-
-            <button
-                onClick={() => setShowLicense(true)}
-                style={{
-                    position: 'fixed',
-                    top: 'max(12px, env(safe-area-inset-top))',
-                    right: 16,
-                    zIndex: 100,
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: 'rgba(15,23,42,0.9)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid #334155',
-                    color: '#fff',
-                    fontSize: 16,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
-            >
-                ⓘ
-            </button>
-
-            {/* Business watermark */}
+            {/* Header Controls */}
             <div style={{
                 position: 'fixed',
                 top: 'max(12px, env(safe-area-inset-top))',
+                left: 16,
                 right: 16,
                 zIndex: 100,
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#64748b',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                pointerEvents: 'none'
             }}>
-                {businessName}
+                <button
+                    onClick={handleBack}
+                    onTouchStart={handleBack}
+                    style={{
+                        padding: '10px 16px',
+                        background: 'rgba(15,23,42,0.9)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid #334155',
+                        borderRadius: 20,
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        touchAction: 'manipulation',
+                        pointerEvents: 'auto'
+                    }}
+                >
+                    ← Back
+                </button>
+
+                <button
+                    onClick={() => setShowLicense(true)}
+                    style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        background: 'rgba(15,23,42,0.9)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid #334155',
+                        color: '#fff',
+                        fontSize: 16,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        touchAction: 'manipulation',
+                        pointerEvents: 'auto'
+                    }}
+                >
+                    ⓘ
+                </button>
             </div>
 
-            <style>{`
-                @keyframes bounce {
-                    0%, 100% { transform: translateX(-50%) translateY(0); }
-                    50% { transform: translateX(-50%) translateY(8px); }
-                }
-            `}</style>
-
+            {/* License Modal */}
             {showLicense && (
                 <div 
                     onClick={() => setShowLicense(false)}
@@ -382,7 +368,7 @@ const Arcade = () => {
                                 <li><strong>Connect Four</strong> - Kenrick</li>
                             </ul>
                             <p style={{ fontSize: 11, opacity: 0.7 }}>
-                                All games used under MIT License. Full attribution in LICENSE-ACKNOWLEDGMENTS.md
+                                Full license text: grubclub/LICENSE-ACKNOWLEDGMENTS.md
                             </p>
                         </div>
                         <button
@@ -405,6 +391,14 @@ const Arcade = () => {
                     </div>
                 </div>
             )}
+
+            <style>{`
+                @keyframes bounce {
+                    0%, 100% { transform: translateX(-50%) translateY(0); }
+                    50% { transform: translateX(-50%) translateY(8px); }
+                }
+            `}</style>
+
         </div>
     )
 }

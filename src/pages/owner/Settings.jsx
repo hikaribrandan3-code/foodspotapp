@@ -85,6 +85,7 @@ const Settings = () => {
     const [isWeightMenuOpen, setIsWeightMenuOpen] = useState(false);
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
+    const rafRef = useRef(null);
 
     // Modal states
     const [showCoverEditor, setShowCoverEditor] = useState(false);
@@ -303,13 +304,17 @@ const Settings = () => {
     };
 
     const handleColorPickerLiveChange = (newColor) => {
-        // Instant preview via CSS or local state
-        if (colorPickerState.cssVar) {
-            document.documentElement.style.setProperty(colorPickerState.cssVar, newColor);
-        }
-        if (colorPickerState.isHeroIcon) {
-            setHeroIconColors(prev => ({ ...prev, [colorPickerState.iconId]: newColor }));
-        }
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        
+        rafRef.current = requestAnimationFrame(() => {
+            // Instant preview via CSS or local state
+            if (colorPickerState.cssVar) {
+                document.documentElement.style.setProperty(colorPickerState.cssVar, newColor);
+            }
+            if (colorPickerState.isHeroIcon) {
+                setHeroIconColors(prev => ({ ...prev, [colorPickerState.iconId]: newColor }));
+            }
+        });
     };
 
     const handleColorPickerApply = (finalColor) => {
