@@ -21,14 +21,14 @@ const CUSTOM_GAMES = [
     { id: 'collapse-stack', title: 'Burger Stacker', hook: 'Stack the perfect burger!', cover: '/games/collapse-stack.jpg', type: 'local' }
 ]
 
-// Quick games (external iframes)
+// Quick games (external iframes) - MOBILE VERIFIED
 const QUICK_GAMES = [
-    { id: '2048', title: '2048', hook: 'Merge tiles to reach 2048!', cover: '🔢', type: 'external', url: 'https://gabrielecirulli.github.io/2048/' },
-    { id: 'hextris', title: 'Hextris', hook: 'Rotate hexagon, match colors.', cover: '🔷', type: 'external', url: 'https://hextris.github.io/hextris/' },
-    { id: 'stack', title: 'Stack', hook: 'Stack blocks perfectly.', cover: '📚', type: 'external', url: 'https://stevengoldberg.github.io/stack/' },
-    { id: 'clumsybird', title: 'Clumsy Bird', hook: 'Tap to fly, don\'t crash!', cover: '🐤', type: 'external', url: 'https://ellisonleao.github.io/clumsy-bird/' },
-    { id: 'tictactoe', title: 'Tic Tac Toe', hook: 'Classic X vs O.', cover: '⭕', type: 'external', url: 'https://beumsk.github.io/Tic-Tac-Toe/' },
-    { id: 'connect4', title: 'Connect Four', hook: 'Line up 4 to win.', cover: '🔴', type: 'external', url: 'https://kenrick95.github.io/connect-four/' },
+    { id: '2048', title: '2048 📱', hook: 'Merge tiles to reach 2048!', cover: '🔢', type: 'external', url: 'https://gabrielecirulli.github.io/2048/' },
+    { id: 'hextris', title: 'Hextris 📱', hook: 'Rotate hexagon, match colors.', cover: '🔷', type: 'external', url: 'https://hextris.github.io/hextris/' },
+    { id: 'stack', title: 'Stack 📱', hook: 'Stack blocks perfectly.', cover: '📚', type: 'external', url: 'https://stevengoldberg.github.io/stack/' },
+    { id: 'clumsybird', title: 'Clumsy Bird 📱', hook: 'Tap to fly, don\'t crash!', cover: '🐤', type: 'external', url: 'https://ellisonleao.github.io/clumsy-bird/' },
+    { id: 'tictactoe', title: 'Tic Tac Toe 📱', hook: 'Classic X vs O.', cover: '⭕', type: 'external', url: 'https://beumsk.github.io/Tic-Tac-Toe/' },
+    { id: 'connect4', title: 'Connect Four 📱', hook: 'Line up 4 to win.', cover: '🔴', type: 'external', url: 'https://kenrick95.github.io/connect-four/' },
 ]
 
 // All games combined
@@ -91,28 +91,30 @@ const Arcade = () => {
     if (activeGame?.type === 'external') {
         return (
             <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 99999 }}>
-                <iframe
+                <iframe 
                     src={activeGame.url}
                     title={activeGame.title}
                     style={{ width: '100%', height: '100%', border: 'none' }}
                     allow="fullscreen"
-                    sandbox="allow-scripts allow-same-origin"
+                    sandbox="allow-scripts allow-same-origin allow-pointer-lock"
                 />
-                <button
+                <button 
                     onClick={handleClose}
+                    onTouchStart={handleClose}
                     style={{
-                        position: 'fixed',
-                        top: 10,
-                        right: 10,
+                        position: 'fixed', 
+                        top: 10, 
+                        right: 10, 
                         zIndex: 100000,
-                        width: 44,
-                        height: 44,
+                        width: 44, 
+                        height: 44, 
                         borderRadius: '50%',
-                        background: 'rgba(0,0,0,0.8)',
+                        background: 'rgba(0,0,0,0.8)', 
                         border: '2px solid white',
-                        color: 'white',
+                        color: 'white', 
                         fontSize: 20,
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        touchAction: 'manipulation'
                     }}
                 >
                     ✕
@@ -133,34 +135,6 @@ const Arcade = () => {
             overflow: 'hidden',
             touchAction: 'none'
         }}>
-            {/* Header */}
-            <header style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: 6000,
-                padding: '12px',
-                paddingTop: 'calc(env(safe-area-inset-top, 12px) + 12px)',
-                background: 'rgba(15, 23, 42, 0.6)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                borderBottom: '1px solid rgba(255,255,255,0.1)'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <button onClick={handleBack} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', padding: 8, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M19 12H5M12 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{businessName}</p>
-                        <p style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.6)', margin: 0 }}>ARCADE</p>
-                    </div>
-                    <div style={{ width: 40 }} />
-                </div>
-            </header>
-
             {/* Scroll Container */}
             <div
                 ref={containerRef}
@@ -176,111 +150,174 @@ const Arcade = () => {
                 }}
             >
                 {ALL_GAMES.map((game, index) => (
-                    <GameCard
+                    <div
                         key={game.id}
-                        game={game}
-                        index={index}
-                        isPlaying={activeGame?.id === game.id}
-                        onPlay={() => handlePlay(game)}
-                        isVisible={visibleIndex === index}
-                        businessName={businessName}
-                    />
-                ))}
-            </div>
+                        data-game-card
+                        data-index={index}
+                        onClick={() => handlePlay(game)}
+                        style={{
+                            height: 'calc(100dvh - 60px)',
+                            scrollSnapAlign: 'start',
+                            scrollSnapStop: 'always',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            padding: '0 20px',
+                            position: 'relative',
+                            touchAction: 'pan-y',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {/* Game Cover */}
+                        {game.type === 'local' ? (
+                            <img 
+                                src={game.cover} 
+                                alt={game.title}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: 320,
+                                    aspectRatio: '9/16',
+                                    objectFit: 'cover',
+                                    borderRadius: 24,
+                                    marginBottom: 24,
+                                    boxShadow: visibleIndex === index 
+                                        ? '0 20px 60px rgba(0,0,0,0.5)' 
+                                        : '0 10px 30px rgba(0,0,0,0.3)',
+                                    transform: visibleIndex === index ? 'scale(1)' : 'scale(0.95)',
+                                    transition: 'all 0.3s ease',
+                                    opacity: visibleIndex === index ? 1 : 0.6
+                                }}
+                            />
+                        ) : (
+                            <div style={{
+                                width: '100%',
+                                maxWidth: 320,
+                                aspectRatio: '9/16',
+                                borderRadius: 24,
+                                marginBottom: 24,
+                                background: 'linear-gradient(135deg, #1e293b, #0f172a)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 120,
+                                boxShadow: visibleIndex === index 
+                                    ? '0 20px 60px rgba(0,0,0,0.5)' 
+                                    : '0 10px 30px rgba(0,0,0,0.3)',
+                                transform: visibleIndex === index ? 'scale(1)' : 'scale(0.95)',
+                                transition: 'all 0.3s ease',
+                                opacity: visibleIndex === index ? 1 : 0.6,
+                                border: '2px solid #334155'
+                            }}>
+                                <span>{game.cover}</span>
+                                <span style={{ fontSize: 14, color: '#94a3b8', marginTop: 16 }}>📱 Mobile</span>
+                            </div>
+                        )}
 
-            {/* Progress Indicators */}
-            <div style={{ height: '4px', position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', zIndex: 100 }}>
-                {ALL_GAMES.map((_, idx) => (
-                    <div key={idx} style={{ flex: 1, background: visibleIndex === idx ? '#3B82F6' : 'rgba(255,255,255,0.1)', transition: 'background 0.3s ease' }} />
-                ))}
-            </div>
-        </div>
-    )
-}
-
-const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) => {
-    // External games use emoji covers, local games use image paths
-    const isExternal = game.type === 'external'
-
-    return (
-        <div
-            data-game-card
-            data-game-id={game.id}
-            data-index={index}
-            style={{
-                height: '100dvh',
-                width: '100%',
-                scrollSnapAlign: 'start',
-                position: 'relative',
-                flexShrink: 0,
-                touchAction: 'pan-y'
-            }}
-        >
-            <div style={{ height: '100%', width: '100%', position: 'relative', background: '#0F172A' }}>
-                {isPlaying ? (
-                    <iframe
-                        src={`/games/${game.id}/index.html`}
-                        title={game.title}
-                        style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
-                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
-                        allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen; pointer-lock"
-                    />
-                ) : (
-                    <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'flex-end',
-                        background: isExternal
-                            ? 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)'
-                            : `url(${game.cover})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                    }}>
-                        {/* Gradient overlay for text readability */}
-                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.95) 100%)' }} />
-
-                        {/* Content */}
-                        <div style={{ position: 'relative', padding: 24, paddingBottom: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                            {/* Emoji or icon for external games */}
-                            {isExternal && (
-                                <span style={{ fontSize: 80, marginBottom: 10 }}>{game.cover}</span>
-                            )}
-
-                            <h2 style={{ color: 'white', fontSize: 28, fontWeight: 800, margin: 0, textAlign: 'center', textTransform: 'uppercase' }}>
+                        {/* Game Info */}
+                        <div style={{ textAlign: 'center', maxWidth: 320 }}>
+                            <h2 style={{ 
+                                fontSize: 28, 
+                                fontWeight: 800, 
+                                color: '#fff', 
+                                margin: '0 0 8px',
+                                textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+                            }}>
                                 {game.title}
                             </h2>
-
-                            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: 0, textAlign: 'center' }}>
+                            <p style={{ 
+                                fontSize: 16, 
+                                color: '#94a3b8', 
+                                margin: '0 0 24px',
+                                lineHeight: 1.5 
+                            }}>
                                 {game.hook}
                             </p>
-
                             <button
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPlay(); }}
                                 style={{
-                                    marginTop: 20,
                                     padding: '16px 48px',
-                                    background: isExternal ? '#8B5CF6' : '#3B82F6',
+                                    background: '#3B82F6',
+                                    color: 'white',
                                     border: 'none',
-                                    borderRadius: 32,
+                                    borderRadius: 30,
                                     fontSize: 18,
-                                    fontWeight: 800,
-                                    color: '#FFFFFF',
+                                    fontWeight: 700,
                                     cursor: 'pointer',
-                                    touchAction: 'manipulation',
-                                    boxShadow: isExternal
-                                        ? '0 8px 16px rgba(139, 92, 246, 0.4)'
-                                        : '0 8px 16px rgba(59, 130, 246, 0.4)',
-                                    textTransform: 'uppercase'
+                                    boxShadow: '0 4px 20px rgba(59,130,246,0.4)',
+                                    touchAction: 'manipulation'
                                 }}
                             >
-                                {isExternal ? '⚡ PLAY NOW' : 'PLAY NOW'}
+                                PLAY NOW
                             </button>
                         </div>
+
+                        {/* Scroll indicator */}
+                        {index < ALL_GAMES.length - 1 && (
+                            <div style={{
+                                position: 'absolute',
+                                bottom: 20,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                animation: 'bounce 2s infinite'
+                            }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                                    <path d="M12 5v14M19 12l-7 7-7-7"/>
+                                </svg>
+                            </div>
+                        )}
                     </div>
-                )}
+                ))}
             </div>
+
+            {/* Back Button */}
+            <button
+                onClick={handleBack}
+                onTouchStart={handleBack}
+                style={{
+                    position: 'fixed',
+                    top: 'max(12px, env(safe-area-inset-top))',
+                    left: 16,
+                    zIndex: 100,
+                    padding: '10px 16px',
+                    background: 'rgba(15,23,42,0.9)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid #334155',
+                    borderRadius: 20,
+                    color: '#fff',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    touchAction: 'manipulation'
+                }}
+            >
+                ← Back
+            </button>
+
+            {/* Business watermark */}
+            <div style={{
+                position: 'fixed',
+                top: 'max(12px, env(safe-area-inset-top))',
+                right: 16,
+                zIndex: 100,
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#64748b',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5
+            }}>
+                {businessName}
+            </div>
+
+            <style>{`
+                @keyframes bounce {
+                    0%, 100% { transform: translateX(-50%) translateY(0); }
+                    50% { transform: translateX(-50%) translateY(8px); }
+                }
+            `}</style>
         </div>
     )
 }
