@@ -215,9 +215,10 @@ const Arcade = () => {
                     position: 'fixed',
                     inset: 0,
                     background: '#0F172A',
-                    zIndex: 80,
+                    zIndex: 150,
                     paddingTop: 'calc(env(safe-area-inset-top, 12px) + 140px)',
-                    overflowY: 'auto'
+                    overflowY: 'auto',
+                    touchAction: 'pan-y'
                 }}>
                     <GameHeroEasy />
                 </div>
