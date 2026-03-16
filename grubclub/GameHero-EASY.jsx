@@ -4,7 +4,7 @@
  * EASIEST integration — uses live GitHub Pages URLs
  * No downloads, no hosting, just copy and use
  */
-
+ 
 import React, { useState, useEffect } from 'react';
 
 // ✅ MOBILE-OPTIMIZED games — verified touch-friendly
