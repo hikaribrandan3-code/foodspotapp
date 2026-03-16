@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 const LIVE_GAMES = [
   { id: '2048', title: '2048', url: 'https://gabrielecirulli.github.io/2048/', cover: '🔢' },
@@ -12,44 +12,59 @@ const LIVE_GAMES = [
 export default function GameHeroEasy() {
   const [playing, setPlaying] = useState(null);
 
-  const handleGameClick = (game) => {
-    console.log('🎮 Opening game:', game.title, game.url);
+  const handleGameClick = useCallback((game, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🎮 Game clicked:', game.title);
     setPlaying(game);
-  };
+  }, []);
+
+  const handleClose = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPlaying(null);
+  }, []);
 
   if (playing) {
     return (
-      <div style={{ 
-        position: 'fixed', 
-        inset: 0, 
-        background: '#000', 
-        zIndex: 99999,
-        touchAction: 'none'
-      }}>
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{ 
+          position: 'fixed', 
+          inset: 0, 
+          background: '#000', 
+          zIndex: 99999,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
         <button 
           type="button"
-          onClick={() => setPlaying(null)}
+          onClick={handleClose}
           style={{
-            position: 'fixed', 
-            top: 20, 
-            right: 20, 
+            position: 'absolute', 
+            top: 12, 
+            right: 12, 
             zIndex: 999999,
-            width: 50, 
-            height: 50, 
+            width: 44, 
+            height: 44, 
             borderRadius: '50%',
-            background: 'rgba(0,0,0,0.8)', 
+            background: 'rgba(255,255,255,0.2)', 
             border: '2px solid white',
             color: 'white', 
-            fontSize: 24, 
+            fontSize: 20, 
             cursor: 'pointer',
-            touchAction: 'manipulation'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
           ✕
         </button>
         <iframe 
-          src={playing.url} 
-          style={{ width: '100%', height: '100%', border: 'none' }}
+          src={playing.url}
+          title={playing.title}
+          style={{ width: '100%', height: '100%', border: 'none', flex: 1 }}
           allow="fullscreen"
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
         />
@@ -58,30 +73,33 @@ export default function GameHeroEasy() {
   }
 
   return (
-    <div style={{ 
-      padding: 20, 
-      position: 'relative',
-      zIndex: 90,
-      touchAction: 'pan-y'
-    }}>
+    <div 
+      onClick={(e) => e.stopPropagation()}
+      style={{ 
+        padding: '0 20px 100px 20px'
+      }}
+    >
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 15 
+        gap: 12,
+        maxWidth: 600,
+        margin: '0 auto'
       }}>
         {LIVE_GAMES.map(game => (
-          <button
-            type="button"
+          <div
             key={game.id}
-            onClick={() => handleGameClick(game)}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              handleGameClick(game);
+            onClick={(e) => handleGameClick(game, e)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleGameClick(game, e);
+              }
             }}
             style={{
               aspectRatio: '1',
               borderRadius: 16,
-              border: 'none',
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               cursor: 'pointer',
               display: 'flex',
@@ -89,17 +107,15 @@ export default function GameHeroEasy() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
-              WebkitTapHighlightColor: 'transparent',
-              touchAction: 'manipulation',
-              userSelect: 'none',
-              WebkitUserSelect: 'none'
+              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+              transition: 'transform 0.1s ease'
             }}
           >
-            <span style={{ fontSize: 40, pointerEvents: 'none' }}>{game.cover}</span>
-            <span style={{ color: 'white', fontWeight: 'bold', fontSize: 14, pointerEvents: 'none' }}>
+            <span style={{ fontSize: 36 }}>{game.cover}</span>
+            <span style={{ color: 'white', fontWeight: 'bold', fontSize: 12, textAlign: 'center', padding: '0 4px' }}>
               {game.title}
             </span>
-          </button>
+          </div>
         ))}
       </div>
     </div>

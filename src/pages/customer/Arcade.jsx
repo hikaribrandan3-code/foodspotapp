@@ -37,15 +37,23 @@ const Arcade = () => {
 
     // 🛡️ SCROLL & INTERACTION UNLOCK
     useEffect(() => {
-        document.body.style.overflow = 'hidden' // Lock body, scroll inside container
-        document.body.style.touchAction = 'none'
-        document.documentElement.style.overflow = 'hidden'
+        // Only lock body when showing native arcade games, NOT when quick games active
+        if (!showQuickGames) {
+            document.body.style.overflow = 'hidden'
+            document.body.style.touchAction = 'pan-y'
+            document.documentElement.style.overflow = 'hidden'
+        } else {
+            // Restore body when quick games shown
+            document.body.style.overflow = ''
+            document.body.style.touchAction = 'pan-y'
+            document.documentElement.style.overflow = ''
+        }
         return () => {
             document.body.style.overflow = ''
             document.body.style.touchAction = ''
             document.documentElement.style.overflow = ''
         }
-    }, [])
+    }, [showQuickGames])
 
     // 🛡️ MEMORY CLEANUP
     useEffect(() => {
@@ -224,7 +232,8 @@ const Arcade = () => {
                 </div>
             )}
 
-            {/* 🎮 SCROLL CONTAINER */}
+            {/* 🎮 SCROLL CONTAINER - disabled when quick games shown */}
+            {!showQuickGames && (
             <div
                 ref={containerRef}
                 style={{
@@ -253,6 +262,7 @@ const Arcade = () => {
                     />
                 ))}
             </div>
+            )}
 
             {/* 📊 FOOTER NAV INDICATOR */}
             <div style={{
