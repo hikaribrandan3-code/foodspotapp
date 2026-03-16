@@ -1,0 +1,107 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '../lib/supabaseClient';
+
+const SNAPBACK_TIMEOUT_MS = 8000;
+
+export const useKDSSync = (businessId) => {
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const snapbackTimers = useRef(new Map());
+
+    const fetchInitialOrders = useCallback(async () => {
+        if (!businessId) return;
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('business_id', businessId) // 🛡️ SILO GUARD
+            .in('status', ['paid', 'cooking', 'ready'])
+            .order('created_at', { ascending: true });
+
+        if (!error && data) setOrders(data);
+        setLoading(false);
+    }, [businessId]);
+
+    useEffect(() => {
+        if (!businessId) return;
+        fetchInitialOrders();
+
+        // 🛰️ REALTIME SUBSCRIPTION
+        const channel = supabase
+            .channel(`kds-silo-${businessId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'orders',
+                filter: `business_id=eq.${businessId}`
+            }, (payload) => {
+                const { eventType, new: newRow, old: oldRow } = payload;
+                
+                setOrders(current => {
+                    if (eventType === 'INSERT') {
+                        if (['paid', 'cooking', 'ready'].includes(newRow.status)) {
+                            return [...current, newRow];
+                        }
+                        return current;
+                    }
+                    
+                    if (eventType === 'UPDATE') {
+                        // 🛡️ SERVER CONFIRMATION: Clear snapback timer
+                        if (snapbackTimers.current.has(newRow.id)) {
+                            clearTimeout(snapbackTimers.current.get(newRow.id));
+                            snapbackTimers.current.delete(newRow.id);
+                        }
+                        
+                        if (['completed', 'cancelled', 'delivered'].includes(newRow.status)) {
+                            return current.filter(o => o.id !== newRow.id);
+                        }
+                        // Update order and remove optimistic flag
+                        return current.map(o => o.id === newRow.id ? { ...newRow, isOptimistic: false } : o);
+                    }
+                    
+                    if (eventType === 'DELETE') return current.filter(o => o.id !== oldRow.id);
+                    return current;
+                });
+            }).subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+            snapbackTimers.current.forEach(timer => clearTimeout(timer));
+        };
+    }, [businessId, fetchInitialOrders]);
+
+    const transitionOrderState = useCallback(async (orderId, currentStatus, newStatus) => {
+        // 🛡️ 1. OPTIMISTIC UPDATE: Instantly update UI and set flag
+        setOrders(current => current.map(o => 
+            o.id === orderId ? { ...o, status: newStatus, isOptimistic: true } : o
+        ));
+
+        // 🛡️ 2. SNAPBACK PROTECTION: Rollback if RPC fails or realtime drops
+        const timer = setTimeout(() => {
+            console.warn(`[KDS] Snapback triggered for ${orderId}`);
+            setOrders(current => current.map(o => 
+                o.id === orderId ? { ...o, status: currentStatus, isOptimistic: false } : o
+            ));
+            snapbackTimers.current.delete(orderId);
+        }, SNAPBACK_TIMEOUT_MS);
+        
+        snapbackTimers.current.set(orderId, timer);
+
+        // 🛡️ 3. DATABASE MUTATION
+        const { error } = await supabase.rpc('transition_order_state', {
+            p_order_id: orderId,
+            p_new_status: newStatus
+        });
+
+        // If hard error (not just null return), rollback immediately
+        if (error) {
+            clearTimeout(timer);
+            snapbackTimers.current.delete(orderId);
+            setOrders(current => current.map(o => 
+                o.id === orderId ? { ...o, status: currentStatus, isOptimistic: false } : o
+            ));
+        }
+    }, []);
+
+    return { orders, loading, transitionOrderState };
+};

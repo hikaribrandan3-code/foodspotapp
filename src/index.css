@@ -1646,3 +1646,20 @@ div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.came
   color: #92400e;
   font-family: monospace;
 }
+
+/* =============================================
+   KITCHEN DISPLAY SYSTEM (KDS) STYLES
+   ============================================= */
+.kds-container { padding: 1rem; height: 100vh; background: #f8fafc; }
+.kds-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; height: 100%; }
+.kds-column { background: #ffffff; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.kds-column--yellow { border-top: 4px solid #eab308; }
+.kds-column--orange { border-top: 4px solid #f97316; }
+.kds-column--green { border-top: 4px solid #22c55e; }
+.kds-column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-weight: bold; }
+.kds-count { background: #e2e8f0; padding: 0.25rem 0.75rem; border-radius: 999px; }
+.kds-orders { display: flex; flex-direction: column; gap: 0.75rem; }
+.kds-card { border: 1px solid #e2e8f0; padding: 1rem; border-radius: 6px; transition: all 0.2s; }
+.kds-card--optimistic { opacity: 0.6; border: 2px dashed #94a3b8; pointer-events: none; }
+.kds-card-header { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; }
+.kds-card-items { margin-bottom: 1rem; font-size: 0.95rem; }
