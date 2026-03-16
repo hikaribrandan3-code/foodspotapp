@@ -13,14 +13,12 @@ export default function GameHeroEasy() {
   const [playing, setPlaying] = useState(null);
 
   const handleGameClick = useCallback((game, e) => {
-    e.preventDefault();
     e.stopPropagation();
     console.log('🎮 Game clicked:', game.title);
     setPlaying(game);
   }, []);
 
   const handleClose = useCallback((e) => {
-    e.preventDefault();
     e.stopPropagation();
     setPlaying(null);
   }, []);
@@ -43,20 +41,22 @@ export default function GameHeroEasy() {
           onClick={handleClose}
           style={{
             position: 'absolute',
-            top: 12,
-            right: 12,
-            zIndex: 999999,
+            top: 20,
+            right: 20,
+            zIndex: 100000,
             width: 44,
             height: 44,
             borderRadius: '50%',
-            background: 'rgba(255,255,255,0.2)',
+            background: 'rgba(255,255,255,0.3)',
             border: '2px solid white',
             color: 'white',
-            fontSize: 20,
+            fontSize: 24,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)'
           }}
         >
           ✕
@@ -64,7 +64,7 @@ export default function GameHeroEasy() {
         <iframe
           src={playing.url}
           title={playing.title}
-          style={{ width: '100%', height: '100%', border: 'none', flex: 1 }}
+          style={{ width: '100%', height: '100%', border: 'none', flex: 1, background: 'white' }}
           allow="fullscreen; pointer-lock"
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
         />
@@ -75,15 +75,15 @@ export default function GameHeroEasy() {
   return (
     <div
       style={{
-        padding: '0 20px 100px 20px'
+        padding: '0 16px 120px 16px',
+        maxWidth: 600,
+        margin: '0 auto'
       }}
     >
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 12,
-        maxWidth: 600,
-        margin: '0 auto'
+        gap: 12
       }}>
         {LIVE_GAMES.map(game => (
           <div
@@ -91,27 +91,25 @@ export default function GameHeroEasy() {
             onClick={(e) => handleGameClick(game, e)}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleGameClick(game, e);
-              }
-            }}
             style={{
               aspectRatio: '1',
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+              border: '1px solid rgba(255,255,255,0.1)',
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
-              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-              transition: 'transform 0.1s ease'
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              userSelect: 'none',
+              touchAction: 'manipulation',
+              transition: 'transform 0.1s active'
             }}
           >
-            <span style={{ fontSize: 36 }}>{game.cover}</span>
-            <span style={{ color: 'white', fontWeight: 'bold', fontSize: 12, textAlign: 'center', padding: '0 4px' }}>
+            <span style={{ fontSize: 32 }}>{game.cover}</span>
+            <span style={{ color: 'white', fontWeight: '700', fontSize: 11, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
               {game.title}
             </span>
           </div>
