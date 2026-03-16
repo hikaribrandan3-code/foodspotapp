@@ -382,8 +382,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     // 🗑️ THE DELETER (Category Purge): Removes category from local state
+    // 🛡️ FK GUARD: Blocks deletion if category contains items
     const handleDeleteCategory = (catId) => {
-        if (!confirm('¿Eliminar categoría y todos sus ítems?')) return
+        const category = menu.categories.find(c => c.id === catId)
+        if (!category) return
+        
+        // 🛡️ FK VALIDATION: Prevent deletion of non-empty categories
+        if (category.items && category.items.length > 0) {
+            alert('Error: Category must be empty before deletion.')
+            return
+        }
+        
+        if (!confirm('¿Eliminar categoría?')) return
         setMenu(prev => ({ ...prev, categories: prev.categories.filter(c => c.id !== catId) }))
         setHasChanges(true)
     }
@@ -433,8 +443,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
 
         // 2. 🛡️ DUAL-SYNC: UPSERT HERO ITEMS to menu_items table
+        // 🛡️ TENANT-SCOPED IDs: Prevents cross-tenant data collisions
         const heroItems = (localConfig.featuredPhotos || []).slice(0, 4).map((slot, index) => ({
-            id: `hero-${index + 1}`,
+            id: `${targetBusinessId}-hero-${index + 1}`,
             business_id: targetBusinessId,
             name: slot?.name || 'Destacado',
             price: parseInt(slot?.price) || 0,
