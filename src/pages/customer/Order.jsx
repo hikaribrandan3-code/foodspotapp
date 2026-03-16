@@ -153,6 +153,28 @@ function Order({ config: configProp }) {
     const [cashFallbackNotice, setCashFallbackNotice] = useState(false)
     const [validationErrors, setValidationErrors] = useState([])
 
+    // 🔄 PAYMENT RETRY STATE (Audit #7)
+    const [isRetryMode, setIsRetryMode] = useState(false)
+    const [pendingOrderId, setPendingOrderId] = useState(null)
+    const [retryError, setRetryError] = useState(null)
+
+    // 🔄 PAYMENT RETRY DETECTION (Audit #7)
+    // Detect Mercado Pago failure from URL params on mount
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search)
+        const paymentStatus = urlParams.get('status')
+        const orderId = urlParams.get('order_id')
+
+        if ((paymentStatus === 'rejected' || paymentStatus === 'cancelled') && orderId) {
+            console.log('💳 Payment failure detected, entering retry mode:', orderId)
+            setIsRetryMode(true)
+            setPendingOrderId(orderId)
+            setRetryError('Payment was declined or cancelled. You can try again.')
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname)
+        }
+    }, [])
+
     // 📍 DISTANCE STATE (Delivery Only)
     const [distanceResult, setDistanceResult] = useState({ withinRadius: true, distanceKm: null })
 
@@ -339,7 +361,10 @@ function Order({ config: configProp }) {
                         clearCurrentOrder()
                         incrementOrderCount()
                         if (isDelivery) clearDeliveryMode()
-                        window.location.href = prefData.init_point
+                        // Add order_id for retry detection on failure
+                        const redirectUrl = new URL(prefData.init_point)
+                        redirectUrl.searchParams.set('order_id', savedOrder.id)
+                        window.location.href = redirectUrl.toString()
                         return
                     }
 
@@ -467,6 +492,113 @@ function Order({ config: configProp }) {
             showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
         }
+    }
+
+    // 🔄 PAYMENT RETRY HANDLERS (Audit #7)
+    const handleRetryPayment = async () => {
+        if (!pendingOrderId || !businessId) return
+
+        setIsSubmitting(true)
+        setRetryError(null)
+
+        try {
+            // SILO GUARD: Verify order belongs to this tenant
+            const { data: order, error: fetchError } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('id', pendingOrderId)
+                .eq('business_id', businessId) // 🔒 SILO GUARD - REQUIRED
+                .eq('status', 'pendiente')
+                .single()
+
+            if (fetchError || !order) {
+                setRetryError('Order not found or expired. Please create a new order.')
+                setIsSubmitting(false)
+                return
+            }
+
+            // Create NEW Mercado Pago preference for SAME order
+            const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
+                body: { order_id: order.id }
+            })
+
+            if (prefError) throw prefError
+
+            if (prefData?.init_point) {
+                // Redirect to MP checkout
+                window.location.href = prefData.init_point
+                return
+            }
+
+            throw new Error('No init_point returned from Edge Function')
+
+        } catch (err) {
+            console.error('[Order] Retry payment error:', err)
+            setRetryError('Connection error. Please check your internet and try again.')
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleCancelRetry = async () => {
+        if (pendingOrderId && businessId) {
+            // SILO GUARD: Cancel the pending order
+            await supabase
+                .from('orders')
+                .update({ status: 'cancelado', cancel_reason: 'payment_abandoned' })
+                .eq('id', pendingOrderId)
+                .eq('business_id', businessId) // 🔒 SILO GUARD
+        }
+
+        setIsRetryMode(false)
+        setPendingOrderId(null)
+        setRetryError(null)
+        clearCurrentOrder()
+        navigate(`../menu`)
+    }
+
+    // ============================================
+    // RENDER: RETRY MODE (Audit #7)
+    // ============================================
+    if (isRetryMode) {
+        return (
+            <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#F8F9FA' }}>
+                <HeaderClamp config={config} />
+
+                <div style={{ margin: '0 14px', paddingTop: 20 }}>
+                    <div className="retry-container">
+                        <h3 className="retry-title">⚠️ Payment Failed</h3>
+
+                        {retryError && <p className="retry-error">{retryError}</p>}
+
+                        <p className="retry-message">
+                            Your order is saved. Try payment again or cancel.
+                        </p>
+
+                        <div className="retry-actions">
+                            <button
+                                className="btn-retry"
+                                onClick={handleRetryPayment}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? 'Processing...' : '🔄 Reintentar Pago'}
+                            </button>
+
+                            <button
+                                className="btn-retry-cancel"
+                                onClick={handleCancelRetry}
+                                disabled={isSubmitting}
+                            >
+                                Cancel Order
+                            </button>
+                        </div>
+
+                        <p className="retry-order-id">
+                            Order ID: {pendingOrderId?.slice(0, 8)}...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     // ============================================

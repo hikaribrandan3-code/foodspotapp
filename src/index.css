@@ -1526,3 +1526,91 @@ div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.came
 .camera-fullscreen-wrapper {
   pointer-events: auto !important;
 }
+
+/* =============================================
+   PAYMENT RETRY UI - Audit #7 Fix
+   ============================================= */
+
+.retry-container {
+  padding: 24px;
+  background: #fef3c7;
+  border-radius: 12px;
+  border: 2px solid #f59e0b;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.retry-title {
+  margin: 0 0 12px;
+  color: #92400e;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.retry-error {
+  color: #dc2626;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.retry-message {
+  margin-bottom: 20px;
+  color: #78350f;
+  font-size: 14px;
+}
+
+.retry-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-retry {
+  padding: 12px 24px;
+  background: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-retry:hover {
+  opacity: 0.9;
+}
+
+.btn-retry:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-retry-cancel {
+  padding: 12px 24px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-retry-cancel:hover {
+  opacity: 0.9;
+}
+
+.btn-retry-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.retry-order-id {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #92400e;
+  font-family: monospace;
+}
