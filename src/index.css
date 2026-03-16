@@ -1477,6 +1477,38 @@ h3 {
 }
 
 /* =============================================
+   🚀 VAULT-SEAL: GPU ACCELERATED RENDERING
+   Forces GPU for 60fps scroll performance
+   ============================================= */
+
+/* Image container GPU acceleration - MINIMAL: translate3d only */
+.menu-item-image,
+.menu-item img,
+.card img,
+.featured-grid img,
+.actions-grid img,
+.hero-section img,
+header img,
+.cover-content img {
+  transform: translate3d(0, 0, 0);
+}
+
+/* Lazy loading placeholder optimization */
+img[loading="lazy"] {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+}
+
+/* Smooth image loading transition */
+img {
+  transition: opacity 0.3s ease;
+}
+
+img[src=""] {
+  opacity: 0;
+}
+
+/* =============================================
    GLOBAL INTERACTIVITY RESTORATION
    Safe defaults - no blocking of Sign-Up/Login/etc
    ============================================= */

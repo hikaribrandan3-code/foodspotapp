@@ -9,11 +9,56 @@
  * - System Route Fallback (Persistence)
  * - Global Refresh Support
  * - venue_name Schema Alignment
+ * - 🚀 Image Pre-fetching for Optimized Loading
  */
 
 import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../utils/storage.js'
+
+// 🚀 VAULT-SEAL: Low-priority image pre-fetcher
+// Prefetches images so they're ready before user clicks the tab
+const prefetchImages = (urls) => {
+    if (!urls || urls.length === 0) return
+    
+    // Use requestIdleCallback for low-priority fetching, fallback to setTimeout
+    const schedulePrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 1)
+    )
+    
+    schedulePrefetch(() => {
+        urls.forEach(url => {
+            if (!url || url.startsWith('blob:')) return
+            const img = new Image()
+            img.fetchPriority = 'low'
+            img.decoding = 'async'
+            img.src = url
+        })
+    }, { timeout: 2000 })
+}
+
+// Extract image URLs to prefetch from tenant data
+// 🛡️ MOBILE-CONSTRAINED: Only hero + top 5 featured items (prevents network saturation)
+const extractPrefetchUrls = (brandingData) => {
+    const urls = []
+    
+    // 1. Hero/Banner image (PRIORITY)
+    if (brandingData?.hero_url) {
+        urls.push(brandingData.hero_url)
+    }
+    
+    // 2. Top 5 featured menu items ONLY (no category items to prevent mobile network saturation)
+    const featuredPhotos = brandingData?.app_config?.featuredPhotos || brandingData?.featured_photos || []
+    featuredPhotos.slice(0, 5).forEach(photo => {
+        if (photo?.image && !photo.image.startsWith('blob:')) {
+            urls.push(photo.image)
+        }
+    })
+    
+    // 🚫 REMOVED: Category item prefetching to prevent mobile network saturation
+    // Previously fetched 5 items per category - now limited to hero + 5 featured max
+    
+    return urls.slice(0, 6) // Max 6 images (1 hero + 5 featured)
+}
 
 // Context Definition
 const TenantContext = createContext(null)
@@ -148,6 +193,13 @@ export function TenantProvider({ children }) {
                     setBusinessId(data.business_id)
                     setTenantStoragePrefix(data.business_id)
                     setTrialExpired(false)
+                    
+                    // 🚀 VAULT-SEAL: Pre-fetch critical images in background
+                    const prefetchUrls = extractPrefetchUrls(data)
+                    if (prefetchUrls.length > 0) {
+                        console.log(`[TenantLock] 🚀 Pre-fetching ${prefetchUrls.length} images...`)
+                        prefetchImages(prefetchUrls)
+                    }
                 }
 
                 // UPDATE PERSISTENCE

@@ -2,10 +2,17 @@
 import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
 
-// If getItemImage is local, I should move it to a util or pass it as a prop?
-// For now, I'll inline the image logic or expect a helper import.
-// Actually, Menu.jsx defined it locally? No, it usually uses a helper.
-// Let's assume a simple inline logic or prop for now.
+// 🚀 VAULT-SEAL: Image Optimization Helper
+const getOptimizedImageUrl = (url, options = {}) => {
+    if (!url || url.startsWith('blob:')) return url
+    if (url.includes('unsplash.com')) {
+        return url.includes('?') ? url : `${url}?w=400&q=75&fit=crop`
+    }
+    if (url.includes('width=') || url.includes('quality=')) return url
+    const { width = 400, quality = 75, format = 'webp' } = options
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}width=${width}&quality=${quality}&format=${format}`
+}
 
 const ItemCard = ({
     item,
@@ -27,9 +34,9 @@ const ItemCard = ({
     const isDragging = dragState?.itemId === item.id
     const shakeStyle = (isEditMode && !dragState) ? { animation: 'wiggle 0.3s infinite linear alternate', animationDelay: `${Math.random() * 0.1}s` } : {}
 
-    // Image Source Logic 
+    // Image Source Logic - Optimized
     const imageSrc = (item.image && !item.image.startsWith('blob:'))
-        ? item.image
+        ? getOptimizedImageUrl(item.image, { width: 300, quality: 75, format: 'webp' })
         : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80'
 
     return (
@@ -56,7 +63,14 @@ const ItemCard = ({
             }}
         >
             <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none', opacity: isPlaceholder ? 0 : 1 }}>
-                <img src={imageSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} />
+                <img 
+                    src={imageSrc} 
+                    alt="" 
+                    loading="lazy"
+                    decoding="async"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    draggable={false} 
+                />
             </div>
             <div style={{ padding: '8px 4px', opacity: isPlaceholder ? 0 : 1 }}>
                 <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', marginBottom: 2, lineHeight: 1.3 }}>{item.name}</p>

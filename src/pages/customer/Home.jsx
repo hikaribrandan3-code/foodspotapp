@@ -12,6 +12,18 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 
+// 🚀 VAULT-SEAL: Image Optimization Helper
+const getOptimizedImageUrl = (url, options = {}) => {
+    if (!url || url.startsWith('blob:')) return url
+    if (url.includes('unsplash.com')) {
+        return url.includes('?') ? url : `${url}?w=600&q=80&fit=crop`
+    }
+    if (url.includes('width=') || url.includes('quality=')) return url
+    const { width = 600, quality = 80, format = 'webp' } = options
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}width=${width}&quality=${quality}&format=${format}`
+}
+
 // Long-press timing (1.8 seconds)
 const LONG_PRESS_DURATION = 1800
 
@@ -116,12 +128,12 @@ function Home({ config: configProp }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [homeConfig?.primaryActions]) // Removed isEditMode to prevent snapback
 
-    // Fallback images
+    // Fallback images - Optimized
     const placeholderImages = {
-        'flat-white': 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=400&q=80',
-        'cappuccino': 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&q=80',
-        'brownie-nuez': 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&q=80',
-        'medialuna-manteca': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80'
+        'flat-white': 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=400&q=80&format=webp',
+        'cappuccino': 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&q=80&format=webp',
+        'brownie-nuez': 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&q=80&format=webp',
+        'medialuna-manteca': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80&format=webp'
     }
 
     // Featured items with LOCAL STATE for optimistic updates
@@ -855,9 +867,28 @@ function Home({ config: configProp }) {
                                 height: 120,
                                 width: '100%',
                                 background: item.image
-                                    ? `url(${item.image}) center/cover no-repeat`
-                                    : '#E5E0D8'
-                            }} />
+                                    ? '#E5E0D8' // Fallback while image loads
+                                    : '#E5E0D8',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}>
+                                {item.image && (
+                                    <img 
+                                        src={item.image}
+                                        alt={item.name}
+                                        loading="lazy"
+                                        decoding="async"
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover'
+                                        }}
+                                    />
+                                )}
+                            </div>
                             <div style={{ padding: '10px 12px' }}>
                                 <div style={{
                                     fontSize: 12,
@@ -954,9 +985,25 @@ function Home({ config: configProp }) {
                                 height: 120,
                                 width: '100%',
                                 background: item.image
-                                    ? `url(${item.image}) center/cover no-repeat`
-                                    : '#E5E0D8'
-                            }} />
+                                    ? '#E5E0D8'
+                                    : '#E5E0D8',
+                                position: 'relative'
+                            }}>
+                                {item.image && (
+                                    <img 
+                                        src={item.image}
+                                        alt=""
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover'
+                                        }}
+                                    />
+                                )}
+                            </div>
                             <div style={{ padding: '10px 12px' }}>
                                 <div style={{
                                     fontSize: 12,

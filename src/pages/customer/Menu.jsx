@@ -9,6 +9,21 @@ import HeaderClamp from '../../components/HeaderClamp'
 import { getDividerPreset } from '../../config/dividerPresets'
 import ItemCard from '../../components/ItemCard'
 
+// 🚀 VAULT-SEAL: Image Optimization Helper
+// Appends Supabase transformation parameters for lighter assets
+const getOptimizedImageUrl = (url, options = {}) => {
+    if (!url || url.startsWith('blob:')) return url
+    // Skip optimization for Unsplash images (they have their own params)
+    if (url.includes('unsplash.com')) {
+        return url.includes('?') ? url : `${url}?w=500&q=80&fit=crop`
+    }
+    // Skip if already has transformation params
+    if (url.includes('width=') || url.includes('quality=')) return url
+    const { width = 500, quality = 80, format = 'webp' } = options
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}width=${width}&quality=${quality}&format=${format}`
+}
+
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
 const ENABLE_AUTO_SCROLL = true
 const AUTO_SCROLL_ZONE_PERCENT = 0.10
@@ -259,7 +274,9 @@ export default function Menu({ config: configProp }) {
     }
 
     const getItemImage = (item) => {
-        if (item.image && !item.image.startsWith('blob:')) return item.image
+        if (item.image && !item.image.startsWith('blob:')) {
+            return getOptimizedImageUrl(item.image, { width: 400, quality: 75, format: 'webp' })
+        }
         return `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80`
     }
 
@@ -792,7 +809,13 @@ export default function Menu({ config: configProp }) {
                     }}>
                         <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
                             <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD' }}>
-                                <img src={getItemImage(item)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img 
+                                    src={getItemImage(item)} 
+                                    alt="" 
+                                    loading="lazy"
+                                    decoding="async"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                />
                             </div>
                             <div style={{ padding: '8px 4px' }}>
                                 <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937' }}>{item.name}</p>

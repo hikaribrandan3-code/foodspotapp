@@ -242,6 +242,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [isSaving, setIsSaving] = useState(false)
     // 📦 PENDING FILE BUFFER: Holds raw File objects until save
     const [pendingFiles, setPendingFiles] = useState({})
+    
+    // 🛡️ VAULT-SEAL: Blob URL tracker for memory management
+    const { createBlobUrl, revokeBlobUrl, revokeAllBlobUrls } = useBlobUrlTracker()
+    
+    // 🛡️ Cleanup blob URLs on unmount
+    useEffect(() => {
+        return () => {
+            revokeAllBlobUrls()
+        }
+    }, [])
 
     // 💾 Persist dirty state to sessionStorage
     useEffect(() => {
@@ -504,7 +514,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             return
         }
 
-        const previewUrl = URL.createObjectURL(file)
+        const previewUrl = createBlobUrl(file)
         const targetSlot = activeFeaturedSlotRef.current
         const targetItem = activeCategoryItemRef.current
 
@@ -584,6 +594,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         } finally {
             setIsUploading(false)
             setInputKey(prev => prev + 1)
+            // 🛡️ Revoke the blob URL after upload completes (replaced with public URL)
+            revokeBlobUrl(previewUrl)
             activeFeaturedSlotRef.current = null
             activeCategoryItemRef.current = null
         }

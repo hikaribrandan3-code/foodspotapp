@@ -299,10 +299,39 @@ export default function FoodSpotAI() {
     const { ingestAIDraft, launchStudio } = useStrategyDraft()
     const { lang, t } = useLanguage()
     const businessName = tenantData?.business_name || 'tu negocio'
+    
+    // 🛡️ VAULT-SEAL: Track blob URLs for cleanup
+    const blobUrlsRef = useRef([])
+    
+    // Helper to create tracked blob URL
+    const createTrackedObjectURL = (file) => {
+        const url = URL.createObjectURL(file)
+        blobUrlsRef.current.push(url)
+        return url
+    }
+    
+    // Helper to revoke and clear blob URLs
+    const revokeBlobUrls = () => {
+        blobUrlsRef.current.forEach(url => {
+            try {
+                URL.revokeObjectURL(url)
+            } catch (e) {
+                console.warn('Failed to revoke blob URL:', e)
+            }
+        })
+        blobUrlsRef.current = []
+    }
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
+    
+    // 🛡️ Cleanup blob URLs on unmount
+    useEffect(() => {
+        return () => {
+            revokeBlobUrls()
+        }
+    }, [])
 
     const handleSend = async (text) => {
         const userText = text || input.trim()
@@ -535,7 +564,11 @@ export default function FoodSpotAI() {
                             <div style={{ padding: '12px 20px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <div style={{ position: 'relative', width: 60, height: 60, borderRadius: 12, overflow: 'hidden' }}>
                                     <img src={previewUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    <button onClick={() => { setPendingImage(null); setPreviewUrl(null); }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, fontSize: 12, cursor: 'pointer' }}>×</button>
+                                    <button onClick={() => { 
+                                    if (previewUrl) URL.revokeObjectURL(previewUrl)
+                                    setPendingImage(null); 
+                                    setPreviewUrl(null); 
+                                }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, fontSize: 12, cursor: 'pointer' }}>×</button>
                                 </div>
                                 <span style={{ fontSize: 13, color: '#6b7280' }}>{t('photo_selected_ready')}</span>
                             </div>
@@ -550,7 +583,7 @@ export default function FoodSpotAI() {
                                     const file = e.target.files[0]
                                     if (file) {
                                         setPendingImage(file)
-                                        setPreviewUrl(URL.createObjectURL(file))
+                                        setPreviewUrl(createTrackedObjectURL(file))
                                     }
                                 }}
                             />
