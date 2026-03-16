@@ -1,118 +1,90 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const LIVE_GAMES = [
-  { id: '2048', title: '2048', url: 'https://gabrielecirulli.github.io/2048/', cover: '🔢' },
-  { id: 'tetris', title: 'Tetris', url: 'https://jakesgordon.github.io/javascript-tetris/', cover: '🧱' },
-  { id: 'stack', title: 'Stack', url: 'https://stevengoldberg.github.io/stack/', cover: '📚' },
-  { id: 'tictactoe', title: 'Tic Tac Toe', url: 'https://beumsk.github.io/Tic-Tac-Toe/', cover: '⭕' },
-  { id: 'connect4', title: 'Connect Four', url: 'https://kenrick95.github.io/connect-four/', cover: '🔴' },
-  { id: 'pacman', title: 'Pac-Man', url: 'https://spite.github.io/pacman/', cover: '👻' },
+  { id: '2048', title: '2048', url: 'https://gabrielecirulli.github.io/2048/', cover: '🔢', mobile: true },
+  { id: 'hextris', title: 'Hextris', url: 'https://hextris.github.io/hextris/', cover: '🔷', mobile: true },
+  { id: 'stack', title: 'Stack', url: 'https://stevengoldberg.github.io/stack/', cover: '📚', mobile: true },
+  { id: 'clumsybird', title: 'Clumsy Bird', url: 'https://ellisonleao.github.io/clumsy-bird/', cover: '🐤', mobile: true },
+  { id: 'tictactoe', title: 'Tic Tac Toe', url: 'https://beumsk.github.io/Tic-Tac-Toe/', cover: '⭕', mobile: true },
+  { id: 'connect4', title: 'Connect Four', url: 'https://kenrick95.github.io/connect-four/', cover: '🔴', mobile: true },
 ];
 
 export default function GameHeroEasy() {
   const [playing, setPlaying] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleGameClick = useCallback((game, e) => {
-    e.stopPropagation();
-    console.log('🎮 Game clicked:', game.title);
+  const handlePlay = (game) => {
+    setLoading(true);
     setPlaying(game);
-  }, []);
+    setTimeout(() => setLoading(false), 1000);
+  };
 
-  const handleClose = useCallback((e) => {
-    e.stopPropagation();
+  const handleClose = () => {
     setPlaying(null);
-  }, []);
+    setLoading(false);
+  };
 
   if (playing) {
     return (
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: '#000',
-          zIndex: 99999,
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
+      <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 99999 }}>
+        {loading && (
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white' }}>
+            Loading {playing.title}...
+          </div>
+        )}
+
+        <iframe
+          src={playing.url}
+          style={{ width: '100%', height: '100%', border: 'none', opacity: loading ? 0 : 1 }}
+          allow="fullscreen"
+          sandbox="allow-scripts allow-same-origin"
+        />
+
         <button
-          type="button"
           onClick={handleClose}
           style={{
-            position: 'absolute',
-            top: 20,
-            right: 20,
+            position: 'fixed',
+            top: 10,
+            right: 10,
             zIndex: 100000,
             width: 44,
             height: 44,
             borderRadius: '50%',
-            background: 'rgba(255,255,255,0.3)',
+            background: 'rgba(0,0,0,0.8)',
             border: '2px solid white',
             color: 'white',
-            fontSize: 24,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)'
+            fontSize: 20
           }}
         >
           ✕
         </button>
-        <iframe
-          src={playing.url}
-          title={playing.title}
-          style={{ width: '100%', height: '100%', border: 'none', flex: 1, background: 'white' }}
-          allow="fullscreen; pointer-lock"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
-        />
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        padding: '0 16px 120px 16px',
-        maxWidth: 600,
-        margin: '0 auto'
-      }}
-    >
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 12
-      }}>
+    <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {LIVE_GAMES.map(game => (
-          <div
+          <button
             key={game.id}
-            onClick={(e) => handleGameClick(game, e)}
-            role="button"
-            tabIndex={0}
+            onClick={() => handlePlay(game)}
             style={{
               aspectRatio: '1',
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+              background: 'linear-gradient(135deg, #1E293B, #0F172A)',
               border: '1px solid rgba(255,255,255,0.1)',
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              userSelect: 'none',
-              touchAction: 'manipulation',
-              transition: 'transform 0.1s active'
+              gap: 8
             }}
           >
             <span style={{ fontSize: 32 }}>{game.cover}</span>
-            <span style={{ color: 'white', fontWeight: '700', fontSize: 11, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-              {game.title}
-            </span>
-          </div>
+            <span style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>{game.title}</span>
+          </button>
         ))}
       </div>
     </div>
