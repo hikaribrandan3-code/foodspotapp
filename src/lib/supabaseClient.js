@@ -21,6 +21,12 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { getScopedGuestToken, migrateLegacyToken } from '../utils/storage.js';
+
+// Trigger migration on client init
+if (typeof window !== 'undefined') {
+    migrateLegacyToken();
+}
 
 // Supabase Project Credentials
 const SUPABASE_URL = 'https://buendqgmwpxdixwvlkhd.supabase.co'
@@ -42,7 +48,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             const headers = new Headers(options?.headers || {})
 
             if (typeof window !== 'undefined') {
-                const guestToken = localStorage.getItem('fs_guest_token')
+                const guestToken = getScopedGuestToken();
                 if (guestToken) {
                     headers.set('x-guest-token', guestToken)
                     // console.log('[Supabase] 🔐 Injecting x-guest-token', guestToken)
