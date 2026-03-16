@@ -41,6 +41,7 @@ const Arcade = () => {
 
     const [activeGame, setActiveGame] = useState(null)
     const [visibleIndex, setVisibleIndex] = useState(0)
+    const [showLicense, setShowLicense] = useState(false)
 
     useEffect(() => {
         document.body.style.overflow = 'hidden'
@@ -297,6 +298,30 @@ const Arcade = () => {
                 ← Back
             </button>
 
+            <button
+                onClick={() => setShowLicense(true)}
+                style={{
+                    position: 'fixed',
+                    top: 'max(12px, env(safe-area-inset-top))',
+                    right: 16,
+                    zIndex: 100,
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'rgba(15,23,42,0.9)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid #334155',
+                    color: '#fff',
+                    fontSize: 16,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                ⓘ
+            </button>
+
             {/* Business watermark */}
             <div style={{
                 position: 'fixed',
@@ -318,6 +343,68 @@ const Arcade = () => {
                     50% { transform: translateX(-50%) translateY(8px); }
                 }
             `}</style>
+
+            {showLicense && (
+                <div 
+                    onClick={() => setShowLicense(false)}
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.8)',
+                        zIndex: 99999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 20
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: '#1e293b',
+                            borderRadius: 16,
+                            padding: 24,
+                            maxWidth: 400,
+                            maxHeight: '80vh',
+                            overflow: 'auto',
+                            color: '#fff'
+                        }}
+                    >
+                        <h3 style={{ margin: '0 0 16px', fontSize: 18 }}>Game Licenses</h3>
+                        <div style={{ fontSize: 13, lineHeight: 1.6, color: '#94a3b8' }}>
+                            <p style={{ marginBottom: 12 }}>FoodSpot Arcade includes MIT-licensed open source games:</p>
+                            <ul style={{ paddingLeft: 20, marginBottom: 16 }}>
+                                <li><strong>2048</strong> - Gabriele Cirulli</li>
+                                <li><strong>Stack</strong> - Steven Goldberg</li>
+                                <li><strong>Hextris</strong> - Hextris Team</li>
+                                <li><strong>Clumsy Bird</strong> - Ellison Leão</li>
+                                <li><strong>Tic Tac Toe</strong> - beumsk</li>
+                                <li><strong>Connect Four</strong> - Kenrick</li>
+                            </ul>
+                            <p style={{ fontSize: 11, opacity: 0.7 }}>
+                                All games used under MIT License. Full attribution in LICENSE-ACKNOWLEDGMENTS.md
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setShowLicense(false)}
+                            style={{
+                                marginTop: 16,
+                                width: '100%',
+                                padding: 12,
+                                background: '#3B82F6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 8,
+                                fontSize: 14,
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
