@@ -67,7 +67,7 @@ const Arcade = () => {
             { root: container, threshold: 0.6 }
         )
 
-        const cards = container.querySelectorAll('[data-index]')
+        const cards = container.querySelectorAll('[data-game-card]')
         cards.forEach(card => observer.observe(card))
         return () => observer.disconnect()
     }, [])
@@ -82,7 +82,7 @@ const Arcade = () => {
 
     const handleBack = useCallback(() => {
         const homePath = tenantSlug ? `/${tenantSlug}/home` : '/home'
-        navigate(homePath, { replace: true })
+        navigate(homePath)
     }, [navigate, tenantSlug])
 
     const businessName = tenantData?.business_name || 'FoodSpot'
@@ -130,33 +130,9 @@ const Arcade = () => {
             display: 'flex',
             flexDirection: 'column',
             height: '100dvh',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            touchAction: 'none'
         }}>
-            {/* Scroll Container */}
-            <div
-                ref={containerRef}
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    overflowY: 'scroll',
-                    scrollSnapType: 'y mandatory',
-                    WebkitOverflowScrolling: 'touch',
-                    zIndex: 10
-                }}
-            >
-                {ALL_GAMES.map((game, index) => (
-                    <GameCard
-                        key={game.id}
-                        game={game}
-                        index={index}
-                        isPlaying={activeGame?.id === game.id}
-                        onPlay={() => handlePlay(game)}
-                        isVisible={visibleIndex === index}
-                        businessName={businessName}
-                    />
-                ))}
-            </div>
-
             {/* Header */}
             <header style={{
                 position: 'absolute',
@@ -166,9 +142,10 @@ const Arcade = () => {
                 zIndex: 6000,
                 padding: '12px',
                 paddingTop: 'calc(env(safe-area-inset-top, 12px) + 12px)',
-                background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, transparent 100%)',
-                backdropFilter: 'blur(4px)',
-                WebkitBackdropFilter: 'blur(4px)',
+                background: 'rgba(15, 23, 42, 0.6)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                borderBottom: '1px solid rgba(255,255,255,0.1)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <button onClick={handleBack} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', padding: 8, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -184,25 +161,37 @@ const Arcade = () => {
                 </div>
             </header>
 
+            {/* Scroll Container */}
+            <div
+                ref={containerRef}
+                style={{
+                    position: 'relative',
+                    flex: 1,
+                    overflowY: 'scroll',
+                    scrollSnapType: 'y mandatory',
+                    WebkitOverflowScrolling: 'touch',
+                    touchAction: 'pan-y',
+                    zIndex: 10,
+                    marginTop: 'calc(env(safe-area-inset-top, 12px) + 60px)'
+                }}
+            >
+                {ALL_GAMES.map((game, index) => (
+                    <GameCard
+                        key={game.id}
+                        game={game}
+                        index={index}
+                        isPlaying={activeGame?.id === game.id}
+                        onPlay={() => handlePlay(game)}
+                        isVisible={visibleIndex === index}
+                        businessName={businessName}
+                    />
+                ))}
+            </div>
+
             {/* Progress Indicators */}
-            <div style={{
-                position: 'fixed',
-                right: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-                zIndex: 100
-            }}>
+            <div style={{ height: '4px', position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', zIndex: 100 }}>
                 {ALL_GAMES.map((_, idx) => (
-                    <div key={idx} style={{
-                        width: 4,
-                        height: visibleIndex === idx ? 24 : 4,
-                        borderRadius: 2,
-                        background: visibleIndex === idx ? '#3B82F6' : 'rgba(255,255,255,0.2)',
-                        transition: 'all 0.3s ease'
-                    }} />
+                    <div key={idx} style={{ flex: 1, background: visibleIndex === idx ? '#3B82F6' : 'rgba(255,255,255,0.1)', transition: 'background 0.3s ease' }} />
                 ))}
             </div>
         </div>
@@ -216,49 +205,26 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) =
     return (
         <div
             data-game-card
+            data-game-id={game.id}
             data-index={index}
             style={{
                 height: '100dvh',
                 width: '100%',
                 scrollSnapAlign: 'start',
                 position: 'relative',
-                flexShrink: 0
+                flexShrink: 0,
+                touchAction: 'pan-y'
             }}
         >
             <div style={{ height: '100%', width: '100%', position: 'relative', background: '#0F172A' }}>
                 {isPlaying ? (
-                    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
-                        <iframe
-                            src={`/games/${game.id}/index.html`}
-                            title={game.title}
-                            style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
-                            sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
-                            allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen; pointer-lock"
-                        />
-                        {/* Close button for local games */}
-                        <button
-                            onClick={(e) => { e.stopPropagation(); window.location.reload(); }}
-                            style={{
-                                position: 'absolute',
-                                top: 'calc(env(safe-area-inset-top, 12px) + 12px)',
-                                right: 12,
-                                zIndex: 100000,
-                                width: 36,
-                                height: 36,
-                                borderRadius: '50%',
-                                background: 'rgba(0,0,0,0.5)',
-                                border: 'none',
-                                color: 'white',
-                                fontSize: 18,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            ✕
-                        </button>
-                    </div>
+                    <iframe
+                        src={`/games/${game.id}/index.html`}
+                        title={game.title}
+                        style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
+                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
+                        allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen; pointer-lock"
+                    />
                 ) : (
                     <div style={{
                         position: 'absolute',
@@ -273,47 +239,40 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) =
                         backgroundPosition: 'center',
                     }}>
                         {/* Gradient overlay for text readability */}
-                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.9) 100%)' }} />
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.95) 100%)' }} />
 
                         {/* Content */}
-                        <div style={{
-                            position: 'relative',
-                            padding: '24px 24px 48px 24px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: 12
-                        }}>
+                        <div style={{ position: 'relative', padding: 24, paddingBottom: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                             {/* Emoji or icon for external games */}
                             {isExternal && (
                                 <span style={{ fontSize: 80, marginBottom: 10 }}>{game.cover}</span>
                             )}
 
-                            <h2 style={{ color: 'white', fontSize: 32, fontWeight: 900, margin: 0, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                            <h2 style={{ color: 'white', fontSize: 28, fontWeight: 800, margin: 0, textAlign: 'center', textTransform: 'uppercase' }}>
                                 {game.title}
                             </h2>
 
-                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, margin: 0, textAlign: 'center', maxWidth: '80%' }}>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: 0, textAlign: 'center' }}>
                                 {game.hook}
                             </p>
 
                             <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPlay(); }}
                                 style={{
-                                    marginTop: 24,
-                                    padding: '18px 56px',
+                                    marginTop: 20,
+                                    padding: '16px 48px',
                                     background: isExternal ? '#8B5CF6' : '#3B82F6',
                                     border: 'none',
-                                    borderRadius: 40,
+                                    borderRadius: 32,
                                     fontSize: 18,
-                                    fontWeight: 900,
+                                    fontWeight: 800,
                                     color: '#FFFFFF',
                                     cursor: 'pointer',
+                                    touchAction: 'manipulation',
                                     boxShadow: isExternal
-                                        ? '0 10px 20px rgba(139, 92, 246, 0.4)'
-                                        : '0 10px 20px rgba(59, 130, 246, 0.4)',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em'
+                                        ? '0 8px 16px rgba(139, 92, 246, 0.4)'
+                                        : '0 8px 16px rgba(59, 130, 246, 0.4)',
+                                    textTransform: 'uppercase'
                                 }}
                             >
                                 {isExternal ? '⚡ PLAY NOW' : 'PLAY NOW'}
