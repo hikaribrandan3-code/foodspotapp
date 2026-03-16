@@ -2,7 +2,6 @@ export const translations = {
     // Shared / Navigation
     summary: { es: "Resumen", en: "Summary", pt: "Resumo" },
     menu: { es: "Menú", en: "Menu", pt: "Cardápio" },
-    status: { es: "Estado", en: "Status", pt: "Status" },
     orders: { es: "Pedidos", en: "Orders", pt: "Pedidos" },
     promos: { es: "Promos", en: "Promos", pt: "Promos" },
     analytics: { es: "Métricas", en: "Analytics", pt: "Métricas" },
