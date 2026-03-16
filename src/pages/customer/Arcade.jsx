@@ -103,16 +103,65 @@ const Arcade = () => {
             height: '100dvh',
             pointerEvents: 'auto'
         }}>
-            {/* 🎨 HEADER */}
+            {/* 🎮 SCROLL CONTAINER */}
+            {!showQuickGames && (
+                <div
+                    ref={containerRef}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        overflowY: 'scroll',
+                        scrollSnapType: 'y mandatory',
+                        WebkitOverflowScrolling: 'touch',
+                        overscrollBehaviorY: 'contain',
+                        touchAction: 'pan-y',
+                        pointerEvents: 'auto',
+                        zIndex: 10
+                    }}
+                >
+                    {GAMES.map((game, index) => (
+                        <GameCard
+                            key={game.id}
+                            game={game}
+                            index={index}
+                            isPlaying={activeGameId === game.id}
+                            onPlay={() => handlePlay(game.id)}
+                            isVisible={visibleIndex === index}
+                            businessName={businessName}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* 🎮 QUICK GAMES OVERLAY */}
+            {showQuickGames && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: '#0F172A',
+                    zIndex: 100,
+                    paddingTop: 'calc(env(safe-area-inset-top, 12px) + 140px)',
+                    overflowY: 'auto',
+                    touchAction: 'pan-y',
+                    pointerEvents: 'auto'
+                }}>
+                    <GameHeroEasy />
+                </div>
+            )}
+
+            {/* 🎨 HEADER - High Z-index */}
             <header style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 right: 0,
-                zIndex: 100,
+                zIndex: 6000,
                 padding: '12px',
                 paddingTop: 'calc(env(safe-area-inset-top, 12px) + 12px)',
-                background: 'rgba(15, 23, 42, 0.4)', /* Lighter backdrop */
+                background: 'rgba(15, 23, 42, 0.4)',
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 borderBottom: '1px solid rgba(255,255,255,0.05)',
@@ -143,11 +192,10 @@ const Arcade = () => {
                     </button>
 
                     <div style={{ textAlign: 'center', pointerEvents: 'none' }}>
-                        {/* 💎 UPDATED VISUAL HIERARCHY */}
                         <p style={{
-                            fontSize: 14, /* Bigger */
-                            fontWeight: 700, /* Bolder */
-                            color: '#FFFFFF', /* Brighter */
+                            fontSize: 14,
+                            fontWeight: 700,
+                            color: '#FFFFFF',
                             margin: 0,
                             letterSpacing: '0.05em',
                             textTransform: 'uppercase',
@@ -155,10 +203,6 @@ const Arcade = () => {
                         }}>
                             {businessName}
                         </p>
-                        <h1 style={{
-                            display: 'none' /* Hidden for cleaner look, or verify if user wants title too? Keeping for now hidden to emphasize brand */
-                        }}>Discover Games</h1>
-                        {/* Option B: Keep title smaller? Let's assume user wants BRAND name big. */}
                         <p style={{
                             fontSize: 10,
                             fontWeight: 500,
@@ -171,13 +215,13 @@ const Arcade = () => {
                 </div>
             </header>
 
-            {/* 🎮 QUICK GAMES TOGGLE BUTTON */}
+            {/* 🎮 QUICK GAMES TOGGLE BUTTONS - High Z-index */}
             <div style={{
                 position: 'absolute',
                 top: 'calc(env(safe-area-inset-top, 12px) + 70px)',
                 left: 0,
                 right: 0,
-                zIndex: 90,
+                zIndex: 5000,
                 display: 'flex',
                 justifyContent: 'center',
                 gap: 12,
@@ -216,53 +260,6 @@ const Arcade = () => {
                     ⚡ QUICK GAMES
                 </button>
             </div>
-
-            {/* 🎮 QUICK GAMES OVERLAY */}
-            {showQuickGames && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    background: '#0F172A',
-                    zIndex: 150,
-                    paddingTop: 'calc(env(safe-area-inset-top, 12px) + 140px)',
-                    overflowY: 'auto',
-                    touchAction: 'pan-y'
-                }}>
-                    <GameHeroEasy />
-                </div>
-            )}
-
-            {/* 🎮 SCROLL CONTAINER - disabled when quick games shown */}
-            {!showQuickGames && (
-            <div
-                ref={containerRef}
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    overflowY: 'scroll',
-                    scrollSnapType: 'y mandatory',
-                    WebkitOverflowScrolling: 'touch',
-                    overscrollBehaviorY: 'contain',
-                    touchAction: 'pan-y',
-                    pointerEvents: 'auto'
-                }}
-            >
-                {GAMES.map((game, index) => (
-                    <GameCard
-                        key={game.id}
-                        game={game}
-                        index={index}
-                        isPlaying={activeGameId === game.id}
-                        onPlay={() => handlePlay(game.id)}
-                        isVisible={visibleIndex === index}
-                        businessName={businessName}
-                    />
-                ))}
-            </div>
-            )}
 
             {/* 📊 FOOTER NAV INDICATOR */}
             <div style={{
@@ -320,7 +317,7 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) =
                             zIndex: 10
                         }}
                         sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
-                        allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                        allow="accelerometer; gyroscope; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen; pointer-lock"
                     />
                 ) : (
                     /* 📺 POSTER MODE - CLEAN */
@@ -330,14 +327,12 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) =
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'flex-end',
-                        /* 📷 CENTERED COVER, NO CROPPING THE TOP LOGO */
                         backgroundImage: `url(${game.cover})`,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center 20%', /* Shift focus slightly up so logo is safe */
+                        backgroundPosition: 'center 20%',
                         backgroundColor: '#1E293B',
                         pointerEvents: 'none'
                     }}>
-                        {/* 🔽 REDUCED GRADIENT - ONLY BOTTOM 25% */}
                         <div style={{
                             position: 'absolute',
                             bottom: 0,
@@ -348,7 +343,6 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) =
                             pointerEvents: 'none'
                         }} />
 
-                        {/* 🕹️ UI Layer - BUTTON ONLY */}
                         <div style={{
                             position: 'relative',
                             padding: 24,
@@ -360,9 +354,6 @@ const GameCard = ({ game, index, isPlaying, onPlay, isVisible, businessName }) =
                             alignItems: 'center',
                             flexDirection: 'column'
                         }}>
-                            {/* 🧹 TITLE & HOOK DELETED as requested */}
-
-                            {/* PLAY BUTTON - ONLY CLICKABLE ELEMENT */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -416,34 +407,28 @@ function ShareVictoryButton({ venueName }) {
         canvas.width = width
         canvas.height = height
 
-        // Background gradient
         const gradient = ctx.createLinearGradient(0, 0, width, height)
         gradient.addColorStop(0, '#8B5CF6')
         gradient.addColorStop(1, '#6366F1')
         ctx.fillStyle = gradient
         ctx.fillRect(0, 0, width, height)
 
-        // FoodSpot Logo text
         ctx.fillStyle = '#FFFFFF'
         ctx.font = 'bold 36px Arial'
         ctx.textAlign = 'center'
         ctx.fillText('🍽️ FoodSpot', width / 2, 50)
 
-        // Victory text
         ctx.font = 'bold 48px Arial'
         ctx.fillText('🎉 VICTORY!', width / 2, 110)
 
-        // Score
         ctx.font = 'bold 72px Arial'
         ctx.fillStyle = '#FFD700'
         ctx.fillText(`${score} PTS`, width / 2, 190)
 
-        // Venue name
         ctx.font = '24px Arial'
         ctx.fillStyle = '#FFFFFF'
         ctx.fillText(venueName || 'GrubClub', width / 2, 250)
 
-        // Footer
         ctx.font = '16px Arial'
         ctx.fillStyle = 'rgba(255,255,255,0.7)'
         ctx.fillText('Play at FoodSpot → foodspot.app', width / 2, 290)

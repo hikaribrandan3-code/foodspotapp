@@ -27,32 +27,32 @@ export default function GameHeroEasy() {
 
   if (playing) {
     return (
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          position: 'fixed', 
-          inset: 0, 
-          background: '#000', 
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: '#000',
           zIndex: 99999,
           display: 'flex',
           flexDirection: 'column'
         }}
       >
-        <button 
+        <button
           type="button"
           onClick={handleClose}
           style={{
-            position: 'absolute', 
-            top: 12, 
-            right: 12, 
+            position: 'absolute',
+            top: 12,
+            right: 12,
             zIndex: 999999,
-            width: 44, 
-            height: 44, 
+            width: 44,
+            height: 44,
             borderRadius: '50%',
-            background: 'rgba(255,255,255,0.2)', 
+            background: 'rgba(255,255,255,0.2)',
             border: '2px solid white',
-            color: 'white', 
-            fontSize: 20, 
+            color: 'white',
+            fontSize: 20,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -61,26 +61,25 @@ export default function GameHeroEasy() {
         >
           ✕
         </button>
-        <iframe 
+        <iframe
           src={playing.url}
           title={playing.title}
           style={{ width: '100%', height: '100%', border: 'none', flex: 1 }}
-          allow="fullscreen"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+          allow="fullscreen; pointer-lock"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
         />
       </div>
     );
   }
 
   return (
-    <div 
-      onClick={(e) => e.stopPropagation()}
-      style={{ 
+    <div
+      style={{
         padding: '0 20px 100px 20px'
       }}
     >
-      <div style={{ 
-        display: 'grid', 
+      <div style={{
+        display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
         gap: 12,
         maxWidth: 600,
