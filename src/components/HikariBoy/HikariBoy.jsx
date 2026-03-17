@@ -194,17 +194,14 @@ export function HikariBoy({
         )}
       </div>
 
-      {/* Mid Bar — hidden via CSS, kept for backward compat */}
-      <div className="hb-midbar"></div>
+      {/* Mid Bar — BLACK ZONE with foodspot branding */}
+      <div className="hb-midbar">
+        <span className="hb-brand-text">foodspot</span>
+      </div>
 
-      {/* Controller (45%) — GRAPE PURPLE */}
+      {/* Controller (45%) — SHELL COLOR */}
       <div className="hb-controller">
-        <div className="hb-noise-overlay"></div>
-        
-        {/* ✦ BRANDING — Moved closer to screen */}
-        <div className="hb-branding-top">
-          <span className="hb-brand-text">foodspot</span>
-        </div>
+        {/* Shoulder Buttons */}
 
         {/* Shoulder Buttons */}
         <div className="hb-shoulders">

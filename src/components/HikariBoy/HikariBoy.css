@@ -1,22 +1,23 @@
 /**
- * HikariBoy Pixel-Perfect v1.1 — Delta Corrections
- * 98% match to Spice Invaders reference.
- * Target: iPhone 17 Pro Max baseline.
- *
- * DELTA FIXES:
- * 1. foodspot branding sits AT the screen/controller junction (not floating)
- * 2. D-Pad 15% larger with thicker arms
- * 3. A/B wider diagonal offset — B more centered
- * 4. System buttons: MENU far-left, SELECT+START grouped center-right
- * 5. Shoulders wider (30%) and thicker
- * 6. Cooler purple tone
+ * HikariBoy Controller Shell Reskin
+ * Visual CSS changes only - no logic/touch modifications
+ * 
+ * Changes:
+ * - D-pad: cross only, no circular surround
+ * - L/R shoulders: light gray #D1D5DB, 27% width, 4.5% height, flush top
+ * - Shell: #6B0FCC with --shell-color variable
+ * - All buttons: light gray #D1D5DB
+ * - Brand: mid-bar, 12px, weight 400, letter-spacing 3px, white
+ * - Sparkle: bottom-right, shell color, 28px
  */
 
 /* ========== CSS CUSTOM PROPERTIES ========== */
 :root {
-  --hb-purple: #6B2FA0;
-  --hb-purple-dark: #5A1F90;
-  --hb-purple-light: #7B3FBB;
+  --shell-color: #6B0FCC;
+  --shell-color-dark: #5A0FB0;
+  --shell-color-light: #7B2FD9;
+  --button-gray: #D1D5DB;
+  --button-gray-dark: #9CA3AF;
   --hb-screen-bg: #000000;
 }
 
@@ -27,12 +28,10 @@
     --dpad-size: 130px;
     --sys-btn-size: 22px;
     --action-a-size: 64px;
-    --action-b-size: 64px;
-    --shoulder-height: 28px;
+    --action-b-size: 58px;
+    --shoulder-height: 4.5vh;
     --controls-pad-x: 24px;
     --controls-pad-y: 8px;
-    --brand-font: 20px;
-    --brand-pad: 6px;
     --sys-btn-bottom: 20px;
   }
 }
@@ -44,12 +43,10 @@
     --dpad-size: 140px;
     --sys-btn-size: 24px;
     --action-a-size: 70px;
-    --action-b-size: 70px;
-    --shoulder-height: 30px;
+    --action-b-size: 62px;
+    --shoulder-height: 4.5vh;
     --controls-pad-x: 30px;
     --controls-pad-y: 10px;
-    --brand-font: 22px;
-    --brand-pad: 8px;
     --sys-btn-bottom: 22px;
   }
 }
@@ -60,13 +57,11 @@
     --btn-scale: 1;
     --dpad-size: 150px;
     --sys-btn-size: 28px;
-    --action-a-size: 72px; /* Slightly larger than B */
-    --action-b-size: 68px;
-    --shoulder-height: 32px;
+    --action-a-size: 72px;
+    --action-b-size: 66px;
+    --shoulder-height: 4.5vh;
     --controls-pad-x: 36px;
     --controls-pad-y: 12px;
-    --brand-font: 22px;
-    --brand-pad: 4px;
     --sys-btn-bottom: 24px;
   }
 }
@@ -123,10 +118,10 @@
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 32px;
   font-weight: 800;
-  color: var(--hb-purple-light);
+  color: var(--shell-color-light);
   letter-spacing: 2px;
   text-transform: lowercase;
-  text-shadow: 0 0 20px rgba(106, 13, 173, 0.5);
+  text-shadow: 0 0 20px rgba(107, 15, 204, 0.5);
 }
 
 /* Pause Overlay */
@@ -152,7 +147,7 @@
 .hb-pause-overlay button {
   padding: 12px 30px;
   background: transparent;
-  border: 2px solid var(--hb-purple);
+  border: 2px solid var(--shell-color);
   color: #fff;
   border-radius: 8px;
   font-size: 16px;
@@ -174,49 +169,45 @@
   z-index: 100;
 }
 
-/* ========== MID BAR — hidden, replaced by hb-branding ========== */
+/* ========== MID BAR — BLACK ZONE WITH BRANDING ========== */
 .hb-midbar {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  background: #000;
+  flex-shrink: 0;
 }
 
-/* ========== CONTROLLER BODY — GRAPE PURPLE ========== */
+.hb-brand-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #FFFFFF;
+  letter-spacing: 3px;
+  text-transform: lowercase;
+  user-select: none;
+}
+
+/* ========== CONTROLLER BODY — SHELL COLOR ========== */
 .hb-controller {
   flex: 0 0 50.6%;
-  background: radial-gradient(
-    circle at 50% 40%,
-    #7535B0 0%,
-    #6B2FA0 40%,
-    #5B1F93 100%
-  );
+  background: var(--shell-color);
   display: flex;
   flex-direction: column;
   position: relative;
   padding: 0;
   overflow: hidden;
   min-height: 315px;
-  box-shadow: 
-    inset 0 10px 20px rgba(0,0,0,0.2),
-    inset 0 -5px 15px rgba(0,0,0,0.1);
 }
 
-.hb-noise-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.08; /* ~1% gain effect */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3%3Ffilter id='noiseFilter'%3E%3FfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3/filter%3E%3rect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3/svg%3E");
-  z-index: 1;
-}
-
-/* ========== SHOULDER BUTTONS (L / R) — WIDER ========== */
+/* ========== SHOULDER BUTTONS (L / R) — LIGHT GRAY ========== */
 .hb-shoulders {
   position: relative;
   width: 100%;
   height: var(--shoulder-height);
   flex: 0 0 auto;
-  /* The Well Effect for shoulders */
-  background: rgba(0,0,0,0.2);
-  box-shadow: inset 0 3px 8px rgba(0,0,0,0.5);
+  background: transparent;
   display: flex;
 }
 
@@ -224,17 +215,13 @@
   position: absolute;
   top: 0;
   height: 100%;
-  width: 32%;
-  background: linear-gradient(180deg, #E0E0E0 0%, #D0D0D0 40%, #B0B0B0 100%);
+  width: 27%;
+  background: var(--button-gray);
   border: none;
-  color: #666;
+  color: var(--button-gray-dark);
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
-  /* Floating above well */
-  box-shadow:
-    0 2px 5px rgba(0,0,0,0.3),
-    inset 0 1px 2px rgba(255,255,255,0.8);
   display: flex;
   align-items: center;
   letter-spacing: 1px;
@@ -245,43 +232,16 @@
 
 .shoulder-l {
   left: 0;
-  border-radius: 0 0 20px 0;
+  border-radius: 0 0 12px 0;
   padding-left: 18px;
   justify-content: flex-start;
 }
 
 .shoulder-r {
   right: 0;
-  border-radius: 0 0 0 20px;
+  border-radius: 0 0 0 12px;
   padding-right: 18px;
   justify-content: flex-end;
-}
-
-/* ========== BRANDING — MOVED CLOSER TO SCREEN & DEBOSSED ========== */
-.hb-branding-top {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--brand-pad) 0;
-  margin-top: 2px;
-  margin-bottom: -4px;
-  z-index: 2;
-  position: relative;
-}
-
-.hb-brand-text {
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-  font-size: var(--brand-font);
-  font-weight: 900;
-  color: #FFFFFF;
-  letter-spacing: 3px;
-  text-transform: lowercase;
-  /* Debossed (stamped) effect */
-  text-shadow: 
-    0 1px 0 rgba(255,255,255,0.25), 
-    0 -1.5px 1px rgba(0,0,0,0.7);
-  opacity: 0.9;
-  user-select: none;
 }
 
 /* ========== MAIN CONTROLS ROW ========== */
@@ -294,7 +254,7 @@
   min-height: 0;
 }
 
-/* ========== D-PAD — LARGER CROSS WITH THICK ARMS ========== */
+/* ========== D-PAD — CROSS ONLY, NO CIRCULAR SURROUND ========== */
 .hb-dpad {
   width: var(--dpad-size);
   height: var(--dpad-size);
@@ -303,11 +263,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  /* The Well Effect */
-  background: rgba(0,0,0,0.15);
-  border-radius: 50%;
-  box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
-  padding: 8px;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
   z-index: 2;
 }
 
@@ -326,13 +285,12 @@
   transform: translateY(-50%);
   width: 100%;
   height: 38%;
-  background: #999; /* Matte Grey */
+  background: var(--button-gray);
   border-radius: 6px;
-  /* Physical Travel / Edges */
   box-shadow:
     inset 0 1px 1.5px rgba(255,255,255,0.4),
-    inset 0 -1px 1px rgba(0,0,0,0.3),
-    0 2px 5px rgba(0,0,0,0.4); /* Floating */
+    inset 0 -1px 1px rgba(0,0,0,0.2),
+    0 2px 5px rgba(0,0,0,0.3);
 }
 
 /* Vertical arm */
@@ -344,18 +302,16 @@
   transform: translateX(-50%);
   width: 38%;
   height: 100%;
-  /* Matte Grey Material */
-  background: #999;
+  background: var(--button-gray);
   border-radius: 6px;
-  /* Physical Travel / Edges */
   box-shadow:
     inset 1px 0 1.5px rgba(255,255,255,0.4),
-    inset -1px 0 1px rgba(0,0,0,0.3),
-    0 2px 5px rgba(0,0,0,0.4); /* Floating */
+    inset -1px 0 1px rgba(0,0,0,0.2),
+    0 2px 5px rgba(0,0,0,0.3);
   z-index: 1;
 }
 
-/* Directional hit-boxes & Carved Triangles */
+/* Directional hit-boxes */
 .dpad-area {
   position: absolute;
   background: transparent;
@@ -373,54 +329,8 @@
   content: '';
   width: 0;
   height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
   filter: drop-shadow(0 1px 1px rgba(255,255,255,0.8));
   opacity: 0.6;
-}
-
-.dpad-up::after {
-  border-bottom: 10px solid #888;
-  margin-bottom: 4px;
-}
-
-.dpad-down::after {
-  border-top: 10px solid #888;
-  margin-top: 4px;
-}
-
-.dpad-left::after {
-  border-right: 10px solid #888;
-  margin-right: 4px;
-  transform: rotate(0deg); /* reset if needed */
-}
-
-.dpad-left::after {
-  border: none;
-  border-right: 10px solid #888;
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
-}
-
-.dpad-right::after {
-  border: none;
-  border-left: 10px solid #888;
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
-}
-
-.dpad-up::after {
-  border: none;
-  border-bottom: 10px solid #888;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-}
-
-.dpad-down::after {
-  border: none;
-  border-top: 10px solid #888;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
 }
 
 .dpad-up {
@@ -431,12 +341,26 @@
   height: 30%;
 }
 
+.dpad-up::after {
+  border: none;
+  border-bottom: 10px solid var(--button-gray-dark);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+}
+
 .dpad-down {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 36%;
   height: 30%;
+}
+
+.dpad-down::after {
+  border: none;
+  border-top: 10px solid var(--button-gray-dark);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
 }
 
 .dpad-left {
@@ -447,12 +371,26 @@
   height: 36%;
 }
 
+.dpad-left::after {
+  border: none;
+  border-right: 10px solid var(--button-gray-dark);
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+
 .dpad-right {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
   width: 30%;
   height: 36%;
+}
+
+.dpad-right::after {
+  border: none;
+  border-left: 10px solid var(--button-gray-dark);
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
 }
 
 /* Diagonal zones */
@@ -473,17 +411,15 @@
 .dpad-down-left { bottom: 3%; left: 3%; }
 .dpad-down-right { bottom: 3%; right: 3%; }
 
-/* ========== A/B BUTTONS — WIDER DIAGONAL OFFSET ========== */
-/* Reference layout: A is top-right corner, B is center-low (between D-Pad & A) */
+/* ========== A/B BUTTONS — LIGHT GRAY ========== */
 .hb-action-btns {
   position: relative;
-  width: 140px; /* Tightened for ergonomics */
+  width: 140px;
   height: 140px;
   flex-shrink: 0;
-  /* The Well Effect */
-  background: rgba(0,0,0,0.15);
-  border-radius: 50%; /* Revert to circular well */
-  box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
   margin-right: -10px;
   z-index: 2;
 }
@@ -491,21 +427,15 @@
 .action-btn {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.8); /* Minimal black outline */
-  background: linear-gradient(
-    155deg,
-    #F8F8F8 0%,
-    #EDEDED 30%,
-    #D8D8D8 70%,
-    #C8C8C8 100%
-  );
+  border: 1px solid rgba(0,0,0,0.3);
+  background: var(--button-gray);
   box-shadow:
-    0 4px 8px rgba(0,0,0,0.4), /* Floating above well */
+    0 4px 8px rgba(0,0,0,0.3),
     inset 0 1px 2px rgba(255,255,255,0.8),
     inset 0 -2px 2px rgba(0,0,0,0.1);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 400;
-  color: #777;
+  color: var(--button-gray-dark);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -516,7 +446,7 @@
   will-change: transform;
 }
 
-/* A button — top-right corner */
+/* A button — top-right */
 .btn-a {
   width: var(--action-a-size);
   height: var(--action-a-size);
@@ -525,15 +455,16 @@
   right: 0;
 }
 
-/* B button — center-bottom, shifted right from D-pad */
+/* B button — bottom-left offset */
 .btn-b {
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(26px * var(--btn-scale));
   bottom: 12px;
-  left: 12px; /* Tightened gap */
+  left: 12px;
 }
 
+/* ========== SYSTEM BUTTONS — LIGHT GRAY ========== */
 .hb-system-btns {
   display: flex;
   align-items: flex-end;
@@ -545,14 +476,12 @@
   gap: 0;
 }
 
-/* MENU is positioned on far left with 30px padding matched from start-wrap margin */
 .menu-wrap {
   margin-right: auto;
 }
 
-/* SELECT + START grouped on far right */
 .select-wrap {
-  margin-right: 15px; /* Same spacing from start to select */
+  margin-right: 15px;
 }
 
 .start-wrap {
@@ -570,12 +499,12 @@
   width: var(--sys-btn-size);
   height: var(--sys-btn-size);
   border-radius: 50%;
-  background: linear-gradient(155deg, #E8E8E8 0%, #CDCDCD 100%);
+  background: var(--button-gray);
   border: none;
   box-shadow:
     inset 0 1px 3px rgba(255,255,255,0.85),
-    0 2px 4px rgba(0,0,0,0.5), /* Tactile depth outline */
-    0 0 0 1px rgba(0,0,0,0.2); /* Outer rim */
+    0 2px 4px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(0,0,0,0.2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -583,22 +512,25 @@
 }
 
 .sys-label {
-  font-size: 12px; /* Increased +4px */
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.8px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
-/* ========== SPARKLE — bottom-right ========== */
+/* ========== SPARKLE — BOTTOM-RIGHT, SHELL COLOR ========== */
 .hb-sparkle {
-  display: none;
-}
-
-@keyframes sparkle-twinkle {
-  0%, 100% { opacity: 0.25; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.15); }
+  position: absolute;
+  bottom: 20px;
+  right: 24px;
+  font-size: 28px;
+  color: var(--shell-color);
+  opacity: 0.3;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
 }
 
 /* ========== LEAK FIX ========== */
@@ -687,15 +619,15 @@ body.hikariboy-active .modal-overlay {
 .action-btn:active {
   transform: scale(0.93);
   box-shadow:
-    0 2px 4px rgba(0,0,0,0.4),
-    inset 0 3px 8px rgba(0,0,0,0.25);
+    0 2px 4px rgba(0,0,0,0.3),
+    inset 0 3px 8px rgba(0,0,0,0.2);
 }
 
 .sys-circle:active {
   transform: scale(0.88);
   box-shadow:
     0 1px 2px rgba(0,0,0,0.3),
-    inset 0 2px 5px rgba(0,0,0,0.35);
+    inset 0 2px 5px rgba(0,0,0,0.3);
 }
 
 .dpad-area:active {
@@ -706,7 +638,7 @@ body.hikariboy-active .modal-overlay {
 .shoulder-r:active {
   transform: scaleY(0.90);
   box-shadow:
-    inset 0 3px 8px rgba(0,0,0,0.35),
+    inset 0 3px 8px rgba(0,0,0,0.3),
     0 2px 4px rgba(0,0,0,0.2);
 }
 
@@ -730,12 +662,16 @@ body.hikariboy-active .modal-overlay {
   }
 
   .sys-label {
-    font-size: 7px;
+    font-size: 10px;
   }
 
   .hb-sparkle {
     bottom: 10px;
     right: 12px;
-    font-size: 14px;
+    font-size: 22px;
+  }
+  
+  .hb-midbar {
+    height: 28px;
   }
 }
