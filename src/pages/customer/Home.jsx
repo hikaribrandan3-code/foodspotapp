@@ -34,6 +34,7 @@ const ACTION_DEFINITIONS = {
     menu: { icon: MenuIcon, label: 'menu', path: 'menu' },
     envios: { icon: DeliveryIcon, label: 'delivery', path: 'envios' },
     promos: { icon: PromosIcon, label: 'promos', path: 'promos' },
+    rewards: { icon: PromosIcon, label: 'rewards', path: 'rewards' },
     game: { icon: GameIcon, label: 'arcade', path: 'arcade' },
     arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' }  // ← Alias for 'game'
 }
@@ -718,6 +719,7 @@ function Home({ config: configProp }) {
                     if (!action) return null
 
                     const Icon = action.icon
+                    const isArcade = actionId === 'game' || actionId === 'arcade'
                     const isDragging = dragState?.gridType === 'actions' && dragState?.itemId === actionId
                     const isPlaceholder = dragState?.gridType === 'actions' && dragState?.targetIndex === index && !isDragging
 
@@ -728,26 +730,48 @@ function Home({ config: configProp }) {
                         </>
                     )
 
+                    const commonTileProps = {
+                        key: actionId,
+                        'data-item-id': actionId,
+                        className: isEditMode ? 'menu-item-wiggle' : '',
+                        style: {
+                            ...tileStyle,
+                            backgroundColor: getHeroBg(actionId),
+                            cursor: isEditMode ? 'grab' : 'pointer',
+                            opacity: isDragging ? 0.3 : 1,
+                            background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getHeroBg(actionId),
+                            border: isPlaceholder ? '2px dashed #22C55E' : 'none',
+                            touchAction: isEditMode ? 'none' : 'manipulation', // ⚡ Hardware Accelerated Hit-Box
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            WebkitTouchCallout: isEditMode ? 'none' : 'default',
+                            willChange: 'transform', // 🚀 Force GPU Layer
+                            textDecoration: 'none'
+                        }
+                    }
+
                     if (isOwnerMode) {
                         return (
                             <div
-                                key={actionId}
+                                {...commonTileProps}
                                 onContextMenu={(e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
                                 }}
-                                data-item-id={actionId}
                                 onTouchStart={(e) => handleTouchStart(e, 'actions', actionId, index, localPrimaryActions)}
                                 onTouchEnd={(e) => {
-                                    handleTouchEndOrMove() // Always clear long press timer
-                                    // 🎮 ARCADE: Open immediately on tap (drag check removed)
-                                    if (actionId === 'game' || actionId === 'arcade') {
+                                    handleTouchEndOrMove()
+                                    
+                                    // 🛡️ ISOLATION: Dragging/Editing blocks navigation
+                                    if (isDraggingRef.current || isEditMode) return
+                                    
+                                    // 🚀 Prevent 'Ghost Click' delay on mobile
+                                    if (e.cancelable) e.preventDefault()
+                                    
+                                    if (isArcade) {
                                         setShowArcade(true)
-                                        return
-                                    }
-                                    // Other tiles: ignore if dragging or in edit mode
-                                    if (!isDraggingRef.current && !isEditMode) {
-                                        handleTileClick(e, action.path)
+                                    } else {
+                                        handleTileClick(e, action.path, actionId)
                                     }
                                 }}
                                 onTouchMove={handleTouchEndOrMove}
@@ -755,27 +779,14 @@ function Home({ config: configProp }) {
                                     if (isEditMode) initiateDrag(e, 'actions', actionId, index, localPrimaryActions)
                                 }}
                                 onClick={(e) => {
-                                    // Desktop / Fallback click
-                                    if (isEditMode || isDraggingRef.current) return;
+                                    // Desktop / Fallback click handler
+                                    if (isEditMode || isDraggingRef.current) return
                                     
-                                    if (actionId === 'game' || actionId === 'arcade') {
+                                    if (isArcade) {
                                         setShowArcade(true)
                                     } else {
-                                        handleTileClick(e, action.path)
+                                        handleTileClick(e, action.path, actionId)
                                     }
-                                }}
-                                className={isEditMode ? 'menu-item-wiggle' : ''}
-                                style={{
-                                    ...tileStyle,
-                                    backgroundColor: getHeroBg(actionId),
-                                    cursor: isEditMode ? 'grab' : 'pointer',
-                                    opacity: isDragging ? 0.3 : 1,
-                                    background: isPlaceholder ? 'rgba(34, 197, 94, 0.15)' : getHeroBg(actionId),
-                                    border: isPlaceholder ? '2px dashed #22C55E' : 'none',
-                                    touchAction: isEditMode ? 'none' : 'auto',
-                                    userSelect: 'none',
-                                    WebkitUserSelect: 'none',
-                                    WebkitTouchCallout: isEditMode ? 'none' : 'default'
                                 }}
                             >
                                 {tileContent}
@@ -783,25 +794,14 @@ function Home({ config: configProp }) {
                         )
                     }
 
-                    // 🎮 ARCADE: Special handling - opens HikariBoy modal instead of navigating
-                    if (actionId === 'game' || actionId === 'arcade') {
+                    // 🛡️ GUEST MODE ISOLATION
+                    if (isArcade) {
                         return (
                             <div
-                                key={actionId}
-                                onClick={() => setShowArcade(true)}
-                                onTouchStart={(e) => e.preventDefault()}
-                                onTouchEnd={(e) => {
-                                    e.preventDefault();
-                                    setShowArcade(true);
-                                }}
-                                style={{ 
-                                    ...tileStyle, 
-                                    backgroundColor: getHeroBg(actionId), 
-                                    cursor: 'pointer',
-                                    userSelect: 'none',
-                                    WebkitUserSelect: 'none',
-                                    WebkitTouchCallout: 'none',
-                                    touchAction: 'manipulation'
+                                {...commonTileProps}
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    setShowArcade(true)
                                 }}
                             >
                                 {tileContent}
@@ -811,9 +811,14 @@ function Home({ config: configProp }) {
 
                     return (
                         <Link
-                            key={actionId}
+                            {...commonTileProps}
                             to={`/${tenantSlug}/${action.path}`}
-                            style={{ ...tileStyle, backgroundColor: getHeroBg(actionId) }}
+                            onClick={(e) => {
+                                // Double check isolation if needed
+                                if (isDraggingRef.current || isEditMode) {
+                                    e.preventDefault()
+                                }
+                            }}
                         >
                             {tileContent}
                         </Link>
