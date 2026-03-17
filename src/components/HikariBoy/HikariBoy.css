@@ -1,38 +1,38 @@
 /**
- * HikariBoy Pixel-Perfect v1.0
- * 1:1 Clone of Spice Invaders reference.
+ * HikariBoy Pixel-Perfect v1.1 — Delta Corrections
+ * 98% match to Spice Invaders reference.
  * Target: iPhone 17 Pro Max baseline.
  *
- * Palette: Grape Purple (#6a0dad)
- * D-Pad: Cross-shaped SVG with recessed plastic effect
- * A/B: Offset layout, A higher-right, B lower-left
- * Branding: "foodspot" centered between D-Pad and Action pad
- * System: MENU / SELECT / START — 40% of A button, labels below
+ * DELTA FIXES:
+ * 1. foodspot branding sits AT the screen/controller junction (not floating)
+ * 2. D-Pad 15% larger with thicker arms
+ * 3. A/B wider diagonal offset — B more centered
+ * 4. System buttons: MENU far-left, SELECT+START grouped center-right
+ * 5. Shoulders wider (30%) and thicker
+ * 6. Cooler purple tone
  */
 
 /* ========== CSS CUSTOM PROPERTIES ========== */
 :root {
-  --hb-purple: #6a0dad;
-  --hb-purple-dark: #5a0a96;
-  --hb-purple-light: #7b1fbe;
+  --hb-purple: #6B2FA0;
+  --hb-purple-dark: #5A1F90;
+  --hb-purple-light: #7B3FBB;
   --hb-screen-bg: #000000;
-  --hb-btn-surface: #E8E8E8;
-  --hb-btn-shadow: #C8C8C8;
-  --hb-btn-highlight: #F8F8F8;
 }
 
 /* iPhone Regular (SE / Mini / 15) */
 @media (max-height: 850px) {
   :root {
     --btn-scale: 0.82;
-    --dpad-size: 120px;
+    --dpad-size: 130px;
     --sys-btn-size: 22px;
-    --action-a-size: 62px;
-    --action-b-size: 56px;
-    --midbar-height: 28px;
-    --shoulder-height: 22px;
-    --controls-pad-x: 30px;
-    --controls-pad-y: 10px;
+    --action-a-size: 68px;
+    --action-b-size: 58px;
+    --shoulder-height: 24px;
+    --controls-pad-x: 24px;
+    --controls-pad-y: 0px;
+    --brand-font: 20px;
+    --brand-pad: 6px;
   }
 }
 
@@ -40,14 +40,15 @@
 @media (min-height: 851px) and (max-height: 920px) {
   :root {
     --btn-scale: 0.92;
-    --dpad-size: 130px;
+    --dpad-size: 140px;
     --sys-btn-size: 24px;
-    --action-a-size: 68px;
+    --action-a-size: 74px;
     --action-b-size: 62px;
-    --midbar-height: 32px;
-    --shoulder-height: 24px;
-    --controls-pad-x: 36px;
-    --controls-pad-y: 12px;
+    --shoulder-height: 26px;
+    --controls-pad-x: 30px;
+    --controls-pad-y: 0px;
+    --brand-font: 22px;
+    --brand-pad: 8px;
   }
 }
 
@@ -55,14 +56,15 @@
 @media (min-height: 921px) {
   :root {
     --btn-scale: 1;
-    --dpad-size: 140px;
-    --sys-btn-size: 26px;
-    --action-a-size: 74px;
+    --dpad-size: 150px;
+    --sys-btn-size: 28px;
+    --action-a-size: 80px;
     --action-b-size: 68px;
-    --midbar-height: 36px;
-    --shoulder-height: 26px;
-    --controls-pad-x: 42px;
-    --controls-pad-y: 14px;
+    --shoulder-height: 28px;
+    --controls-pad-x: 36px;
+    --controls-pad-y: 0px;
+    --brand-font: 24px;
+    --brand-pad: 10px;
   }
 }
 
@@ -82,9 +84,9 @@
   overflow: hidden;
 }
 
-/* ========== SCREEN (top portion) — DO NOT TOUCH ========== */
+/* ========== SCREEN (top ~55%) — DO NOT TOUCH ========== */
 .hb-screen {
-  flex: 0 0 55%;
+  flex: 1 1 auto;
   position: relative;
   background: var(--hb-screen-bg);
   display: flex;
@@ -92,6 +94,7 @@
   justify-content: center;
   overflow: hidden;
   width: 100%;
+  min-height: 0;
 }
 
 .hb-game-frame {
@@ -168,56 +171,20 @@
   z-index: 100;
 }
 
-/* ========== SHOULDER BUTTONS (L / R) ========== */
-.hb-shoulders {
-  position: relative;
-  width: 100%;
-  height: 0;
-  z-index: 2;
+/* ========== MID BAR — hidden, replaced by hb-branding ========== */
+.hb-midbar {
+  display: none;
 }
 
-.shoulder-l, .shoulder-r {
-  position: absolute;
-  top: 0;
-  height: var(--shoulder-height);
-  width: 27%;
-  background: linear-gradient(180deg, #F0F0F0 0%, #D8D8D8 40%, #C0C0C0 100%);
-  border: none;
-  color: #888;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow:
-    inset 0 2px 3px rgba(255,255,255,0.7),
-    0 4px 8px rgba(0,0,0,0.35);
-  display: flex;
-  align-items: center;
-  letter-spacing: 1px;
-}
-
-.shoulder-l {
-  left: 0;
-  border-radius: 0 0 20px 0;
-  padding-left: 14px;
-  justify-content: flex-start;
-}
-
-.shoulder-r {
-  right: 0;
-  border-radius: 0 0 0 20px;
-  padding-right: 14px;
-  justify-content: flex-end;
-}
-
-/* ========== CONTROLLER BODY (45%) — GRAPE PURPLE ========== */
+/* ========== CONTROLLER BODY — GRAPE PURPLE ========== */
 .hb-controller {
-  flex: 0 0 45%;
+  flex: 0 0 auto;
   background: linear-gradient(
     180deg,
-    #5a0a96 0%,
-    #6a0dad 25%,
-    #7b1fbe 70%,
-    #8928d0 100%
+    #5B1F93 0%,
+    #6B2FA0 15%,
+    #7535B0 50%,
+    #8040C0 100%
   );
   display: flex;
   flex-direction: column;
@@ -226,28 +193,72 @@
   overflow: hidden;
 }
 
-/* ========== BRANDING — CENTERED IN BODY ========== */
+/* ========== SHOULDER BUTTONS (L / R) — WIDER ========== */
+.hb-shoulders {
+  position: relative;
+  width: 100%;
+  height: var(--shoulder-height);
+  flex: 0 0 auto;
+}
+
+.shoulder-l, .shoulder-r {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(180deg, #F0F0F0 0%, #DCDCDC 30%, #C8C8C8 100%);
+  border: none;
+  color: #777;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.8),
+    0 4px 10px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  letter-spacing: 1px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.shoulder-l {
+  left: 0;
+  border-radius: 0 0 18px 0;
+  padding-left: 14px;
+  justify-content: flex-start;
+}
+
+.shoulder-r {
+  right: 0;
+  border-radius: 0 0 0 18px;
+  padding-right: 14px;
+  justify-content: flex-end;
+}
+
+/* ========== BRANDING — AT THE JUNCTION ========== */
+/* This sits RIGHT below the shoulders, acting as a bridge */
 .hb-branding {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 0 0 0;
+  padding: var(--brand-pad) 0;
   flex: 0 0 auto;
 }
 
 .hb-brand-text {
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-  font-size: 22px;
+  font-size: var(--brand-font);
   font-weight: 900;
   color: #FFFFFF;
-  letter-spacing: 4px;
+  letter-spacing: 3px;
   text-transform: lowercase;
   text-shadow:
     1px 1px 0 #000,
     -1px -1px 0 #000,
     1px -1px 0 #000,
     -1px 1px 0 #000,
-    0 2px 8px rgba(0,0,0,0.3);
+    0 2px 6px rgba(0,0,0,0.4);
   user-select: none;
 }
 
@@ -257,10 +268,11 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--controls-pad-y) var(--controls-pad-x);
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
-/* ========== D-PAD — CROSS-SHAPED WITH RECESSED PLASTIC ========== */
+/* ========== D-PAD — LARGER CROSS WITH THICK ARMS ========== */
 .hb-dpad {
   width: var(--dpad-size);
   height: var(--dpad-size);
@@ -268,6 +280,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .dpad-cross {
@@ -276,7 +289,7 @@
   height: 100%;
 }
 
-/* Horizontal arm */
+/* Horizontal arm — THICKER (38%) */
 .dpad-cross::before {
   content: '';
   position: absolute;
@@ -284,29 +297,29 @@
   left: 0;
   transform: translateY(-50%);
   width: 100%;
-  height: 36%;
-  background: linear-gradient(180deg, #F5F5F5 0%, #E0E0E0 40%, #CCCCCC 100%);
-  border-radius: 10px;
+  height: 38%;
+  background: linear-gradient(180deg, #F5F5F5 0%, #E0E0E0 35%, #C8C8C8 100%);
+  border-radius: 8px;
   box-shadow:
-    inset 2px 3px 5px rgba(255,255,255,0.9),
-    inset -2px -3px 5px rgba(0,0,0,0.15),
-    0 5px 12px rgba(0,0,0,0.35);
+    inset 2px 3px 6px rgba(255,255,255,0.9),
+    inset -2px -3px 5px rgba(0,0,0,0.12),
+    0 6px 14px rgba(0,0,0,0.4);
 }
 
-/* Vertical arm */
+/* Vertical arm — THICKER (38%) */
 .dpad-cross::after {
   content: '';
   position: absolute;
   left: 50%;
   top: 0;
   transform: translateX(-50%);
-  width: 36%;
+  width: 38%;
   height: 100%;
-  background: linear-gradient(90deg, #F5F5F5 0%, #E0E0E0 40%, #CCCCCC 100%);
-  border-radius: 10px;
+  background: linear-gradient(90deg, #F5F5F5 0%, #E0E0E0 35%, #C8C8C8 100%);
+  border-radius: 8px;
   box-shadow:
-    inset 3px 2px 5px rgba(255,255,255,0.9),
-    inset -3px -2px 5px rgba(0,0,0,0.15);
+    inset 3px 2px 6px rgba(255,255,255,0.9),
+    inset -3px -2px 5px rgba(0,0,0,0.12);
 }
 
 /* Center circle — recessed indentation */
@@ -315,23 +328,23 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 26%;
-  height: 26%;
+  width: 24%;
+  height: 24%;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, #B8B8B8 0%, #A0A0A0 50%, #888 100%);
+  background: radial-gradient(circle at 38% 38%, #B0B0B0 0%, #999 50%, #7A7A7A 100%);
   box-shadow:
-    inset 0 3px 6px rgba(0,0,0,0.4),
-    inset 0 -1px 2px rgba(255,255,255,0.3);
+    inset 0 3px 8px rgba(0,0,0,0.45),
+    inset 0 -1px 2px rgba(255,255,255,0.25);
   z-index: 2;
 }
 
-/* Directional hit-boxes (transparent, over the cross) */
+/* Directional hit-boxes */
 .dpad-area {
   position: absolute;
   background: transparent;
   border: none;
   color: #9CA3AF;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   z-index: 3;
   display: flex;
@@ -342,42 +355,42 @@
 }
 
 .dpad-up {
-  top: 2%;
+  top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 34%;
-  height: 28%;
+  width: 36%;
+  height: 30%;
 }
 
 .dpad-down {
-  bottom: 2%;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 34%;
-  height: 28%;
+  width: 36%;
+  height: 30%;
 }
 
 .dpad-left {
-  left: 2%;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 28%;
-  height: 34%;
+  width: 30%;
+  height: 36%;
 }
 
 .dpad-right {
-  right: 2%;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 28%;
-  height: 34%;
+  width: 30%;
+  height: 36%;
 }
 
 /* Diagonal zones */
 .dpad-diagonal {
   position: absolute;
-  width: 22%;
-  height: 22%;
+  width: 24%;
+  height: 24%;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -386,16 +399,18 @@
   touch-action: manipulation;
 }
 
-.dpad-up-left { top: 5%; left: 5%; }
-.dpad-up-right { top: 5%; right: 5%; }
-.dpad-down-left { bottom: 5%; left: 5%; }
-.dpad-down-right { bottom: 5%; right: 5%; }
+.dpad-up-left { top: 3%; left: 3%; }
+.dpad-up-right { top: 3%; right: 3%; }
+.dpad-down-left { bottom: 3%; left: 3%; }
+.dpad-down-right { bottom: 3%; right: 3%; }
 
-/* ========== A/B BUTTONS — OFFSET LAYOUT ========== */
+/* ========== A/B BUTTONS — WIDER DIAGONAL OFFSET ========== */
+/* Reference layout: A is top-right corner, B is center-low (between D-Pad & A) */
 .hb-action-btns {
   position: relative;
-  width: 150px;
-  height: 150px;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
 }
 
 .action-btn {
@@ -403,15 +418,16 @@
   border-radius: 50%;
   border: none;
   background: linear-gradient(
-    160deg,
+    155deg,
     #F8F8F8 0%,
-    #E8E8E8 35%,
-    #D0D0D0 100%
+    #EDEDED 30%,
+    #D8D8D8 70%,
+    #C8C8C8 100%
   );
   box-shadow:
-    0 5px 12px rgba(0,0,0,0.35),
-    inset 0 2px 3px rgba(255,255,255,0.9),
-    inset 0 -2px 2px rgba(0,0,0,0.08);
+    0 6px 14px rgba(0,0,0,0.35),
+    inset 0 2px 4px rgba(255,255,255,0.95),
+    inset 0 -3px 3px rgba(0,0,0,0.06);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 400;
   color: #777;
@@ -425,7 +441,7 @@
   will-change: transform;
 }
 
-/* A button — top-right, 15% larger */
+/* A button — top-right corner */
 .btn-a {
   width: var(--action-a-size);
   height: var(--action-a-size);
@@ -434,42 +450,58 @@
   right: 0;
 }
 
-/* B button — bottom-left, offset down */
+/* B button — center-bottom, shifted right from D-pad */
 .btn-b {
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(26px * var(--btn-scale));
   bottom: 10px;
-  left: 10px;
+  left: 25px;
 }
 
-/* ========== SYSTEM BUTTONS — 40% OF A, LABELS BELOW ========== */
+/* ========== SYSTEM BUTTONS ========== */
+/* Reference: MENU far-left, SELECT center, START right-of-center */
 .hb-system-btns {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 25px 18px;
+  padding: 0 24px 16px;
   position: relative;
-  height: 65px;
-  gap: 45px;
+  height: 60px;
+  flex: 0 0 auto;
+}
+
+/* MENU is pushed to the left with auto margin */
+.menu-wrap {
+  margin-right: auto;
+  padding-left: 8px;
+}
+
+/* SELECT + START are grouped together in the center */
+.select-wrap {
+  margin-right: 12px;
+}
+
+.start-wrap {
+  margin-right: 0;
 }
 
 .sys-btn-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .sys-circle {
   width: var(--sys-btn-size);
   height: var(--sys-btn-size);
   border-radius: 50%;
-  background: linear-gradient(160deg, #E8E8E8 0%, #C8C8C8 100%);
+  background: linear-gradient(155deg, #E8E8E8 0%, #CDCDCD 100%);
   border: none;
   box-shadow:
-    inset 0 1px 3px rgba(255,255,255,0.8),
-    0 3px 6px rgba(0,0,0,0.35);
+    inset 0 1px 3px rgba(255,255,255,0.85),
+    0 3px 7px rgba(0,0,0,0.4);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -480,17 +512,17 @@
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.8px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
   text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
-/* ========== SPARKLE ========== */
+/* ========== SPARKLE — bottom-right ========== */
 .hb-sparkle {
   position: absolute;
-  bottom: 22px;
-  right: 22px;
-  font-size: 20px;
+  bottom: 18px;
+  right: 20px;
+  font-size: 18px;
   color: rgba(255, 255, 255, 0.35);
   animation: sparkle-twinkle 2.5s ease-in-out infinite;
   pointer-events: none;
@@ -588,26 +620,25 @@ body.hikariboy-active .modal-overlay {
   transform: scale(0.93);
   box-shadow:
     0 2px 4px rgba(0,0,0,0.4),
-    inset 0 3px 6px rgba(0,0,0,0.25);
+    inset 0 3px 8px rgba(0,0,0,0.25);
 }
 
 .sys-circle:active {
-  transform: scale(0.90);
+  transform: scale(0.88);
   box-shadow:
     0 1px 2px rgba(0,0,0,0.3),
-    inset 0 2px 4px rgba(0,0,0,0.3);
+    inset 0 2px 5px rgba(0,0,0,0.35);
 }
 
 .dpad-area:active {
-  /* Visual press: darken the arm under the finger */
-  filter: brightness(0.92);
+  filter: brightness(0.90);
 }
 
 .shoulder-l:active,
 .shoulder-r:active {
-  transform: scaleY(0.92);
+  transform: scaleY(0.90);
   box-shadow:
-    inset 0 3px 6px rgba(0,0,0,0.3),
+    inset 0 3px 8px rgba(0,0,0,0.35),
     0 2px 4px rgba(0,0,0,0.2);
 }
 
@@ -626,9 +657,8 @@ body.hikariboy-active .modal-overlay {
 /* ========== RESPONSIVE — SMALL SCREENS ========== */
 @media (max-height: 700px) {
   .hb-system-btns {
-    height: 50px;
-    gap: 30px;
-    padding-bottom: 12px;
+    height: 48px;
+    padding-bottom: 10px;
   }
 
   .sys-label {
@@ -636,22 +666,8 @@ body.hikariboy-active .modal-overlay {
   }
 
   .hb-sparkle {
-    bottom: 12px;
+    bottom: 10px;
     right: 12px;
-    font-size: 16px;
+    font-size: 14px;
   }
-
-  .hb-brand-text {
-    font-size: 18px;
-    letter-spacing: 3px;
-  }
-
-  .hb-branding {
-    padding: 4px 0 0 0;
-  }
-}
-
-/* ========== MID BAR (Legacy — now replaced by hb-branding) ========== */
-.hb-midbar {
-  display: none;
 }
