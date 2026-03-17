@@ -34,7 +34,8 @@ const ACTION_DEFINITIONS = {
     menu: { icon: MenuIcon, label: 'menu', path: 'menu' },
     envios: { icon: DeliveryIcon, label: 'delivery', path: 'envios' },
     promos: { icon: PromosIcon, label: 'promos', path: 'promos' },
-    game: { icon: GameIcon, label: 'arcade', path: 'arcade' }
+    game: { icon: GameIcon, label: 'arcade', path: 'arcade' },
+    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' }  // ← Alias for 'game'
 }
 
 // --- MAIN COMPONENT ---
