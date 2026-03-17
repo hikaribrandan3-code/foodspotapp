@@ -28,11 +28,12 @@
     --sys-btn-size: 22px;
     --action-a-size: 68px;
     --action-b-size: 58px;
-    --shoulder-height: 24px;
+    --shoulder-height: 28px;
     --controls-pad-x: 24px;
-    --controls-pad-y: 0px;
+    --controls-pad-y: 8px;
     --brand-font: 20px;
     --brand-pad: 6px;
+    --sys-btn-bottom: 20px;
   }
 }
 
@@ -44,11 +45,12 @@
     --sys-btn-size: 24px;
     --action-a-size: 74px;
     --action-b-size: 62px;
-    --shoulder-height: 26px;
+    --shoulder-height: 30px;
     --controls-pad-x: 30px;
-    --controls-pad-y: 0px;
+    --controls-pad-y: 10px;
     --brand-font: 22px;
     --brand-pad: 8px;
+    --sys-btn-bottom: 22px;
   }
 }
 
@@ -60,11 +62,12 @@
     --sys-btn-size: 28px;
     --action-a-size: 80px;
     --action-b-size: 68px;
-    --shoulder-height: 28px;
+    --shoulder-height: 32px;
     --controls-pad-x: 36px;
-    --controls-pad-y: 0px;
+    --controls-pad-y: 12px;
     --brand-font: 24px;
     --brand-pad: 10px;
+    --sys-btn-bottom: 24px;
   }
 }
 
@@ -191,6 +194,7 @@
   position: relative;
   padding: 0;
   overflow: hidden;
+  min-height: 280px;
 }
 
 /* ========== SHOULDER BUTTONS (L / R) — WIDER ========== */
@@ -465,7 +469,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 24px 16px;
+  padding: 0 24px var(--sys-btn-bottom, 20px);
   position: relative;
   height: 60px;
   flex: 0 0 auto;
