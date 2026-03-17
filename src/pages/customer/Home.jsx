@@ -710,6 +710,7 @@ function Home({ config: configProp }) {
                                 onTouchEnd={(e) => {
                                     handleTouchEndOrMove()
                                     if (actionId === 'game' && !isDraggingRef.current && !isEditMode) {
+                                        console.log('🕹️ ARCADE TOUCH (Owner Mode)', actionId)
                                         setShowArcade(true)
                                     }
                                 }}
@@ -718,6 +719,7 @@ function Home({ config: configProp }) {
                                     if (isEditMode) initiateDrag(e, 'actions', actionId, index, localPrimaryActions)
                                 }}
                                 onClick={(e) => {
+                                    console.log('🕹️ ARCADE CLICK (Owner Mode)', actionId)
                                     if (actionId === 'game') {
                                         setShowArcade(true)
                                     } else {
@@ -745,22 +747,22 @@ function Home({ config: configProp }) {
 
                     if (actionId === 'game') {
                         return (
-                            <Link
+                            <div
                                 key={actionId}
-                                to="#"
                                 onClick={(e) => {
-                                    e.preventDefault()
+                                    console.log('🕹️ ARCADE CLICK (Guest Mode)')
                                     setShowArcade(true)
                                 }}
                                 onTouchEnd={(e) => {
                                     if (!isDraggingRef.current && !isEditMode) {
+                                        console.log('🕹️ ARCADE TOUCH (Guest Mode)')
                                         setShowArcade(true)
                                     }
                                 }}
                                 style={{ ...tileStyle, backgroundColor: getHeroBg(actionId), cursor: 'pointer' }}
                             >
                                 {tileContent}
-                            </Link>
+                            </div>
                         )
                     }
 
