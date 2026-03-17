@@ -20,12 +20,11 @@ const Promos = () => {
         position: 'fixed',
         inset: 0,
         backgroundColor: '#000000',
-        color: '#FFFFFF',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 99999,
+        zIndex: 999999, // Absolute top
         padding: '24px',
         textAlign: 'center',
         overflow: 'hidden'
@@ -43,17 +42,16 @@ const Promos = () => {
           borderRadius: '9999px',
           backgroundColor: 'rgba(255,255,255,0.15)',
           border: 'none',
-          color: '#FFFFFF',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 0.2s ease',
-          zIndex: 100000
+          zIndex: 1000000
         }}
         aria-label="Volver"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
       </button>
@@ -67,20 +65,31 @@ const Promos = () => {
         flex: 1,
         width: '100%'
       }}>
-        <h1 style={{
+        <h1 className="promo-title" style={{
           fontSize: 'clamp(4rem, 18vw, 10rem)',
           fontWeight: 900,
           letterSpacing: '-0.05em',
           lineHeight: 0.85,
-          margin: '0 0 24px 0',
+          margin: '0 0 16px 0',
           textTransform: 'uppercase',
           fontStretch: 'extra-condensed',
           whiteSpace: 'pre-line',
-          color: '#FFFFFF !important', // Forced pure white
-          display: 'block'
+          display: 'block',
+          color: '#FFFFFF'
         }}>
           COMING{"\n"}SOON
         </h1>
+        
+        <p style={{
+          fontSize: 'clamp(1rem, 3vw, 1.5rem)',
+          fontWeight: 500,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          color: '#FFFFFF',
+          margin: '0 0 24px 0'
+        }}>
+          May 2026
+        </p>
         
         <div style={{
           width: '80px',
@@ -89,15 +98,14 @@ const Promos = () => {
           marginBottom: '32px'
         }}></div>
         
-        <p style={{
+        <p className="promo-tagline" style={{
           fontSize: 'clamp(1.5rem, 5vw, 3rem)',
           fontWeight: 600,
           letterSpacing: '0.25em',
-          opacity: 1, // Full opacity
           textTransform: 'uppercase',
           fontStyle: 'italic',
-          color: '#FFFFFF !important', // Forced pure white
-          margin: 0
+          margin: 0,
+          color: '#FFFFFF'
         }}>
           Stay Tuned
         </p>
@@ -105,8 +113,16 @@ const Promos = () => {
 
       <style>{`
         .promos-page {
-          font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif !important;
           user-select: none;
+          background-color: #000000 !important;
+        }
+
+        .promo-title, .promo-tagline {
+          color: #FFFFFF !important;
+          -webkit-text-fill-color: #FFFFFF !important;
+          opacity: 1 !important;
+          filter: none !important;
         }
 
         .animate-fade-in {
