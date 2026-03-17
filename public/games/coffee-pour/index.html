@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Coffee Pour</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: #3E2723; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; font-weight: bold; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">SCORE: <span id="score">0</span> | PERFECTS: <span id="perfect">0</span></div>
+    <div id="gameOver">
+        <h2 style="color: #78350F;">BARISTA MASTER!</h2>
+        <button onclick="resetGame()" style="background: #78350F; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">POUR AGAIN</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'playing';
+let score = 0;
+let perfects = 0;
+let cup = { x: 200, y: 200, width: 80, height: 100, fill: 0 };
+let targetFill = 70 + Math.random() * 20;
+let pouring = false;
+let meter = 0;
+let meterSpeed = 2;
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    
+    ctx.clearRect(0, 0, 480, 320);
+    
+    // Meter background
+    ctx.fillStyle = '#5D4037';
+    ctx.fillRect(40, 40, 400, 30);
+    
+    // Target zone
+    ctx.fillStyle = 'rgba(34, 197, 94, 0.3)';
+    ctx.fillRect(40 + targetFill * 4 - 20, 35, 40, 40);
+    
+    // Target line
+    ctx.strokeStyle = '#22C55E';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(40 + targetFill * 4, 35);
+    ctx.lineTo(40 + targetFill * 4, 75);
+    ctx.stroke();
+    
+    // Meter fill
+    if (pouring) {
+        meter += meterSpeed;
+        if (meter >= 100) {
+            pouring = false;
+            checkResult();
+        }
+    }
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(40, 40, meter * 4, 30);
+    
+    // Cup
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(cup.x, cup.y, cup.width, cup.height);
+    ctx.strokeStyle = '#DDD';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(cup.x, cup.y, cup.width, cup.height);
+    
+    // Coffee in cup
+    if (meter > 0) {
+        ctx.fillStyle = '#3E2723';
+        const fillHeight = (meter / 100) * cup.height * 0.8;
+        ctx.fillRect(cup.x + 5, cup.y + cup.height - fillHeight - 5, cup.width - 10, fillHeight);
+    }
+    
+    // Pour stream
+    if (pouring) {
+        ctx.fillStyle = '#3E2723';
+        ctx.fillRect(cup.x + cup.width/2 - 5, 70, 10, cup.y - 70);
+    }
+    
+    // Mug
+    ctx.font = '60px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('☕', 240, 160);
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function startPour() {
+    if (gameState !== 'playing') return;
+    pouring = true;
+}
+
+function stopPour() {
+    if (!pouring) return;
+    pouring = false;
+    checkResult();
+}
+
+function checkResult() {
+    const diff = Math.abs(meter - targetFill);
+    if (diff < 5) {
+        score += 300;
+        perfects++;
+    } else if (diff < 15) {
+        score += 150;
+    } else if (diff < 25) {
+        score += 50;
+    } else {
+        score += 10;
+    }
+    
+    document.getElementById('score').textContent = score;
+    document.getElementById('perfect').textContent = perfects;
+    window.parent.postMessage({ type: 'SCORE', score: score }, '*');
+    
+    setTimeout(() => {
+        meter = 0;
+        targetFill = 60 + Math.random() * 30;
+    }, 500);
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
+}
+
+function resetGame() {
+    score = 0;
+    perfects = 0;
+    meter = 0;
+    pouring = false;
+    targetFill = 60 + Math.random() * 30;
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('score').textContent = score;
+    document.getElementById('perfect').textContent = perfects;
+}
+
+// Controls
+canvas.addEventListener('mousedown', startPour);
+canvas.addEventListener('mouseup', stopPour);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPour(); });
+canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopPour(); });
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('coffeePour_state', JSON.stringify({score, perfects})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('coffeePour_state');
+            if (saved) { const data = JSON.parse(saved); score = data.score; perfects = data.perfects; }
+            break;
+    }
+});
+
+gameLoop();
+</script>
+</body>
+</html>

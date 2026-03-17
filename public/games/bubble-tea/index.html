@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bubble Tea</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: linear-gradient(180deg, #8B5CF6 0%, #1a1a2e 100%); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; font-weight: bold; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">SCORE: <span id="score">0</span> | MOVES: <span id="moves">20</span></div>
+    <div id="gameOver">
+        <h2 style="color: #8B5CF6;">OUT OF MOVES!</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="resetGame()" style="background: #8B5CF6; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">MATCH AGAIN</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const GRID_SIZE = 8;
+const CELL_SIZE = 50;
+const OFFSET_X = 40;
+const OFFSET_Y = 30;
+
+const COLORS = ['#EF4444', '#22C55E', '#3B82F6', '#F59E0B', '#EC4899', '#8B5CF6'];
+const EMOJIS = ['🔴', '🟢', '🔵', '🟡', '🩷', '🟣'];
+
+let gameState = 'playing';
+let score = 0;
+let moves = 20;
+let grid = [];
+let selected = null;
+
+function createGrid() {
+    grid = [];
+    for (let y = 0; y < GRID_SIZE; y++) {
+        grid[y] = [];
+        for (let x = 0; x < GRID_SIZE; x++) {
+            grid[y][x] = Math.floor(Math.random() * COLORS.length);
+        }
+    }
+    // Remove initial matches
+    while (findMatches().length > 0) {
+        removeMatches();
+        fillGrid();
+    }
+}
+
+function drawGrid() {
+    for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < GRID_SIZE; x++) {
+            const cell = grid[y][x];
+            if (cell === null) continue;
+            
+            const px = OFFSET_X + x * CELL_SIZE;
+            const py = OFFSET_Y + y * CELL_SIZE;
+            
+            // Cell background
+            ctx.fillStyle = selected && selected.x === x && selected.y === y ? '#fff' : 'rgba(255,255,255,0.1)';
+            ctx.fillRect(px, py, CELL_SIZE - 4, CELL_SIZE - 4);
+            
+            // Emoji
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(EMOJIS[cell], px + CELL_SIZE/2, py + CELL_SIZE/2);
+        }
+    }
+}
+
+function findMatches() {
+    const matches = [];
+    
+    // Horizontal
+    for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < GRID_SIZE - 2; x++) {
+            const c = grid[y][x];
+            if (c !== null && c === grid[y][x+1] && c === grid[y][x+2]) {
+                matches.push({x, y}, {x: x+1, y}, {x: x+2, y});
+            }
+        }
+    }
+    
+    // Vertical
+    for (let x = 0; x < GRID_SIZE; x++) {
+        for (let y = 0; y < GRID_SIZE - 2; y++) {
+            const c = grid[y][x];
+            if (c !== null && c === grid[y+1][x] && c === grid[y+2][x]) {
+                matches.push({x, y}, {x, y: y+1}, {x, y: y+2});
+            }
+        }
+    }
+    
+    return [...new Set(matches.map(m => `${m.x},${m.y}`))].map(s => {
+        const [x, y] = s.split(',').map(Number);
+        return {x, y};
+    });
+}
+
+function removeMatches() {
+    const matches = findMatches();
+    if (matches.length > 0) {
+        score += matches.length * 100;
+        document.getElementById('score').textContent = score;
+        window.parent.postMessage({ type: 'SCORE', score: score }, '*');
+        matches.forEach(m => grid[m.y][m.x] = null);
+    }
+    return matches.length;
+}
+
+function fillGrid() {
+    for (let x = 0; x < GRID_SIZE; x++) {
+        let empty = 0;
+        for (let y = GRID_SIZE - 1; y >= 0; y--) {
+            if (grid[y][x] === null) {
+                empty++;
+            } else if (empty > 0) {
+                grid[y + empty][x] = grid[y][x];
+                grid[y][x] = null;
+            }
+        }
+        for (let y = 0; y < empty; y++) {
+            grid[y][x] = Math.floor(Math.random() * COLORS.length);
+        }
+    }
+}
+
+function handleClick(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor(((clientX - rect.left) * (480 / rect.width) - OFFSET_X) / CELL_SIZE);
+    const y = Math.floor(((clientY - rect.top) * (320 / rect.height) - OFFSET_Y) / CELL_SIZE);
+    
+    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return;
+    
+    if (!selected) {
+        selected = {x, y};
+    } else {
+        const dx = Math.abs(x - selected.x);
+        const dy = Math.abs(y - selected.y);
+        
+        if (dx + dy === 1) {
+            // Swap
+            const temp = grid[y][x];
+            grid[y][x] = grid[selected.y][selected.x];
+            grid[selected.y][selected.x] = temp;
+            
+            moves--;
+            document.getElementById('moves').textContent = moves;
+            
+            // Check for matches
+            setTimeout(() => {
+                let chain = 0;
+                while (removeMatches() > 0) {
+                    chain++;
+                    fillGrid();
+                }
+                if (chain === 0 && moves <= 0) {
+                    gameOver();
+                }
+            }, 100);
+        }
+        selected = null;
+    }
+}
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    ctx.clearRect(0, 0, 480, 320);
+    drawGrid();
+    requestAnimationFrame(gameLoop);
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
+}
+
+function resetGame() {
+    score = 0;
+    moves = 20;
+    selected = null;
+    createGrid();
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('score').textContent = score;
+    document.getElementById('moves').textContent = moves;
+}
+
+// Controls
+canvas.addEventListener('click', (e) => handleClick(e.clientX, e.clientY));
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleClick(e.touches[0].clientX, e.touches[0].clientY);
+});
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('bubbleTea_state', JSON.stringify({score, moves})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('bubbleTea_state');
+            if (saved) { const data = JSON.parse(saved); score = data.score; moves = data.moves; }
+            break;
+    }
+});
+
+createGrid();
+gameLoop();
+</script>
+</body>
+</html>

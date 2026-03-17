@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bento Box</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: #DC2626; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; font-weight: bold; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">LEVEL: <span id="level">1</span> | MOVES: <span id="moves">0</span></div>
+    <div id="gameOver">
+        <h2 style="color: #6366F1;">PERFECT BENTO!</h2>
+        <button onclick="nextLevel()" style="background: #6366F1; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">NEXT LEVEL</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const GRID_SIZE = 5;
+const CELL_SIZE = 50;
+const OFFSET_X = 100;
+const OFFSET_Y = 35;
+
+const ITEMS = [
+    { emoji: '🍙', color: '#FFF', size: 1 },
+    { emoji: '🍤', color: '#F59E0B', size: 1 },
+    { emoji: '🥦', color: '#22C55E', size: 1 },
+    { emoji: '🍣', color: '#F472B6', size: 2 },
+    { emoji: '🥟', color: '#E5E7EB', size: 1 }
+];
+
+let gameState = 'playing';
+let level = 1;
+let moves = 0;
+let grid = [];
+let selected = null;
+
+function createLevel() {
+    grid = [];
+    moves = 0;
+    document.getElementById('moves').textContent = moves;
+    
+    for (let y = 0; y < GRID_SIZE; y++) {
+        grid[y] = [];
+        for (let x = 0; x < GRID_SIZE; x++) {
+            grid[y][x] = Math.floor(Math.random() * ITEMS.length);
+        }
+    }
+}
+
+function drawGrid() {
+    // Bento box background
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(OFFSET_X - 10, OFFSET_Y - 10, GRID_SIZE * CELL_SIZE + 20, GRID_SIZE * CELL_SIZE + 20);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(OFFSET_X - 5, OFFSET_Y - 5, GRID_SIZE * CELL_SIZE + 10, GRID_SIZE * CELL_SIZE + 10);
+    
+    for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < GRID_SIZE; x++) {
+            const px = OFFSET_X + x * CELL_SIZE;
+            const py = OFFSET_Y + y * CELL_SIZE;
+            
+            // Cell background
+            ctx.fillStyle = selected && selected.x === x && selected.y === y ? '#FFD700' : '#2D1F1F';
+            ctx.fillRect(px, py, CELL_SIZE - 2, CELL_SIZE - 2);
+            
+            // Item
+            const item = ITEMS[grid[y][x]];
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(item.emoji, px + CELL_SIZE/2, py + CELL_SIZE/2);
+        }
+    }
+}
+
+function checkWin() {
+    // Check if each row has same items
+    for (let y = 0; y < GRID_SIZE; y++) {
+        const first = grid[y][0];
+        for (let x = 1; x < GRID_SIZE; x++) {
+            if (grid[y][x] !== first) return false;
+        }
+    }
+    return true;
+}
+
+function handleClick(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor(((clientX - rect.left) * (480 / rect.width) - OFFSET_X) / CELL_SIZE);
+    const y = Math.floor(((clientY - rect.top) * (320 / rect.height) - OFFSET_Y) / CELL_SIZE);
+    
+    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return;
+    
+    if (!selected) {
+        selected = { x, y };
+    } else {
+        if (selected.x !== x || selected.y !== y) {
+            // Swap
+            const temp = grid[y][x];
+            grid[y][x] = grid[selected.y][selected.x];
+            grid[selected.y][selected.x] = temp;
+            moves++;
+            document.getElementById('moves').textContent = moves;
+            
+            if (checkWin()) {
+                setTimeout(gameOver, 100);
+            }
+        }
+        selected = null;
+    }
+}
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    ctx.clearRect(0, 0, 480, 320);
+    drawGrid();
+    requestAnimationFrame(gameLoop);
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: 10000 - moves * 100 }, '*');
+}
+
+function nextLevel() {
+    level++;
+    document.getElementById('level').textContent = level;
+    createLevel();
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+}
+
+// Controls
+canvas.addEventListener('click', (e) => handleClick(e.clientX, e.clientY));
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleClick(e.touches[0].clientX, e.touches[0].clientY);
+});
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('bentoBox_state', JSON.stringify({level, moves})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('bentoBox_state');
+            if (saved) { const data = JSON.parse(saved); level = data.level; moves = data.moves; }
+            break;
+    }
+});
+
+createLevel();
+gameLoop();
+</script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Donut Roll</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: #FBCFE8; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 10px; color: #333; font-weight: bold; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">LEVEL: <span id="level">1</span> | DEATHS: <span id="deaths">0</span></div>
+    <div id="gameOver">
+        <h2 style="color: #EC4899;">LEVEL COMPLETE!</h2>
+        <button onclick="nextLevel()" style="background: #EC4899; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">NEXT LEVEL</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const CELL_SIZE = 40;
+const OFFSET_X = 40;
+const OFFSET_Y = 40;
+
+let gameState = 'playing';
+let level = 1;
+let deaths = 0;
+let donut = { x: 1, y: 1 };
+let maze = [];
+let holes = [];
+
+const LEVELS = [
+    // Simple
+    [
+        '############',
+        '#S.........#',
+        '#.########.#',
+        '#.#......#.#',
+        '#.#.####.#.#',
+        '#..........#',
+        '############'
+    ],
+    // More complex
+    [
+        '############',
+        '#S.........#',
+        '###.######.#',
+        '#...#....#.#',
+        '#.###.##.#.#',
+        '#.........G#',
+        '############'
+    ],
+    // Hard
+    [
+        '############',
+        '#S..#......#',
+        '###.#.####.#',
+        '#...#.#..#.#',
+        '#.###.##.#.#',
+        '#..........#',
+        '############'
+    ]
+];
+
+function loadLevel(n) {
+    const data = LEVELS[(n - 1) % LEVELS.length];
+    maze = [];
+    holes = [];
+    
+    for (let y = 0; y < data.length; y++) {
+        maze[y] = [];
+        for (let x = 0; x < data[y].length; x++) {
+            maze[y][x] = data[y][x] === '#' ? 1 : 0;
+            if (data[y][x] === 'S') donut = { x, y };
+            if (data[y][x] === 'G') holes.push({ x, y });
+        }
+    }
+}
+
+function drawMaze() {
+    for (let y = 0; y < maze.length; y++) {
+        for (let x = 0; x < maze[y].length; x++) {
+            const px = OFFSET_X + x * CELL_SIZE;
+            const py = OFFSET_Y + y * CELL_SIZE;
+            
+            if (maze[y][x] === 1) {
+                ctx.fillStyle = '#EC4899';
+                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+            } else {
+                ctx.fillStyle = '#FCE7F3';
+                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+            }
+        }
+    }
+    
+    // Draw holes
+    holes.forEach(h => {
+        const px = OFFSET_X + h.x * CELL_SIZE + CELL_SIZE/2;
+        const py = OFFSET_Y + h.y * CELL_SIZE + CELL_SIZE/2;
+        ctx.font = '25px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🕳️', px, py);
+    });
+}
+
+function drawDonut() {
+    const px = OFFSET_X + donut.x * CELL_SIZE + CELL_SIZE/2;
+    const py = OFFSET_Y + donut.y * CELL_SIZE + CELL_SIZE/2;
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🍩', px, py);
+}
+
+function move(dx, dy) {
+    if (gameState !== 'playing') return;
+    
+    const newX = donut.x + dx;
+    const newY = donut.y + dy;
+    
+    if (maze[newY][newX] === 0) {
+        donut.x = newX;
+        donut.y = newY;
+        
+        // Check hole
+        const inHole = holes.some(h => h.x === donut.x && h.y === donut.y);
+        if (inHole) {
+            deaths++;
+            document.getElementById('deaths').textContent = deaths;
+            loadLevel(level);
+            window.parent.postMessage({ type: 'SCORE', score: Math.max(0, 1000 - deaths * 100) }, '*');
+        }
+        
+        // Check win (reached right side)
+        if (donut.x === maze[0].length - 2 && donut.y === maze.length - 2) {
+            gameOver();
+        }
+    }
+}
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    
+    ctx.clearRect(0, 0, 480, 320);
+    drawMaze();
+    drawDonut();
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: 1000 - deaths * 100 }, '*');
+}
+
+function nextLevel() {
+    level++;
+    document.getElementById('level').textContent = level;
+    loadLevel(level);
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+}
+
+// Controls
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowUp') move(0, -1);
+    if (e.code === 'ArrowDown') move(0, 1);
+    if (e.code === 'ArrowLeft') move(-1, 0);
+    if (e.code === 'ArrowRight') move(1, 0);
+});
+
+canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (480 / rect.width);
+    const y = (e.clientY - rect.top) * (320 / rect.height);
+    
+    const donutPx = OFFSET_X + donut.x * CELL_SIZE + CELL_SIZE/2;
+    const donutPy = OFFSET_Y + donut.y * CELL_SIZE + CELL_SIZE/2;
+    
+    const dx = x - donutPx;
+    const dy = y - donutPy;
+    
+    if (Math.abs(dx) > Math.abs(dy)) {
+        move(dx > 0 ? 1 : -1, 0);
+    } else {
+        move(0, dy > 0 ? 1 : -1);
+    }
+});
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('donutRoll_state', JSON.stringify({level, deaths})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('donutRoll_state');
+            if (saved) { const data = JSON.parse(saved); level = data.level; deaths = data.deaths; }
+            break;
+    }
+});
+
+loadLevel(level);
+gameLoop();
+</script>
+</body>
+</html>

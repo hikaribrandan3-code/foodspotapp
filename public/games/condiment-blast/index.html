@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Condiment Blast</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: #0f0f23; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 10px; color: #fff; font-weight: bold; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">SCORE: <span id="score">0</span> | WAVE: <span id="wave">1</span></div>
+    <div id="gameOver">
+        <h2 style="color: #DC2626;">GAME OVER!</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="resetGame()" style="background: #DC2626; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">BLAST AGAIN</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'playing';
+let score = 0;
+let wave = 1;
+let player = { x: 220, y: 260, width: 40, height: 40 };
+let bullets = [];
+let enemies = [];
+let particles = [];
+
+class Bullet {
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.speed = 8;
+        this.emoji = type === 'ketchup' ? '🔴' : '🟡';
+    }
+    update() { this.y -= this.speed; }
+    draw() { ctx.font = '20px Arial'; ctx.textAlign = 'center'; ctx.fillText(this.emoji, this.x, this.y); }
+}
+
+class Enemy {
+    constructor() {
+        this.x = Math.random() * 440 + 20;
+        this.y = -30;
+        this.speed = 1 + wave * 0.5;
+        this.emoji = ['🥦', '🥕', '🍆', '🥒'][Math.floor(Math.random() * 4)];
+        this.health = 1;
+    }
+    update() { this.y += this.speed; }
+    draw() { ctx.font = '30px Arial'; ctx.textAlign = 'center'; ctx.fillText(this.emoji, this.x, this.y); }
+}
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y;
+        this.vx = (Math.random() - 0.5) * 6;
+        this.vy = (Math.random() - 0.5) * 6;
+        this.color = color;
+        this.life = 20;
+    }
+    update() { this.x += this.vx; this.y += this.vy; this.life--; }
+    draw() { ctx.fillStyle = this.color; ctx.globalAlpha = this.life / 20; ctx.fillRect(this.x, this.y, 6, 6); ctx.globalAlpha = 1; }
+}
+
+function shoot(type) {
+    bullets.push(new Bullet(player.x + 20, player.y, type));
+}
+
+function spawnEnemy() {
+    if (gameState !== 'playing') return;
+    enemies.push(new Enemy());
+    setTimeout(spawnEnemy, 1500 - Math.min(1000, wave * 100));
+}
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    
+    ctx.fillStyle = '#0f0f23';
+    ctx.fillRect(0, 0, 480, 320);
+    
+    // Draw player (bottle)
+    ctx.font = '40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🍼', player.x + 20, player.y + 35);
+    
+    // Update bullets
+    bullets = bullets.filter(b => {
+        b.update();
+        b.draw();
+        return b.y > -10;
+    });
+    
+    // Update enemies
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        e.update();
+        e.draw();
+        
+        // Check collision with bullets
+        for (let j = bullets.length - 1; j >= 0; j--) {
+            const b = bullets[j];
+            if (Math.abs(b.x - e.x) < 20 && Math.abs(b.y - e.y) < 20) {
+                // Hit!
+                for (let k = 0; k < 5; k++) particles.push(new Particle(e.x, e.y, '#FCD34D'));
+                score += 100;
+                document.getElementById('score').textContent = score;
+                window.parent.postMessage({ type: 'SCORE', score: score }, '*');
+                enemies.splice(i, 1);
+                bullets.splice(j, 1);
+                break;
+            }
+        }
+        
+        // Check collision with player
+        if (e.y > player.y - 20 && Math.abs(e.x - player.x - 20) < 30) {
+            gameOver();
+        }
+        
+        // Remove off screen
+        if (e.y > 350) {
+            enemies.splice(i, 1);
+        }
+    }
+    
+    // Update particles
+    particles = particles.filter(p => {
+        p.update();
+        p.draw();
+        return p.life > 0;
+    });
+    
+    // Wave progression
+    if (score > wave * 1000) {
+        wave++;
+        document.getElementById('wave').textContent = wave;
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
+}
+
+function resetGame() {
+    score = 0;
+    wave = 1;
+    bullets = [];
+    enemies = [];
+    particles = [];
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('score').textContent = score;
+    document.getElementById('wave').textContent = wave;
+    spawnEnemy();
+}
+
+// Controls
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowLeft') player.x = Math.max(0, player.x - 15);
+    if (e.code === 'ArrowRight') player.x = Math.min(440, player.x + 15);
+    if (e.code === 'Space') shoot('ketchup');
+});
+
+function movePlayer(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (480 / rect.width);
+    player.x = Math.max(0, Math.min(440, x - 20));
+}
+
+canvas.addEventListener('mousemove', (e) => movePlayer(e.clientX));
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); movePlayer(e.touches[0].clientX); });
+canvas.addEventListener('click', () => shoot('ketchup'));
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); shoot('ketchup'); });
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('condimentBlast_state', JSON.stringify({score, wave})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('condimentBlast_state');
+            if (saved) { const data = JSON.parse(saved); score = data.score; wave = data.wave; }
+            break;
+    }
+});
+
+spawnEnemy();
+gameLoop();
+</script>
+</body>
+</html>

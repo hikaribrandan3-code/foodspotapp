@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Steak Flip</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: linear-gradient(180deg, #5D4037 0%, #3E2723 100%); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; font-weight: bold; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">SCORE: <span id="score">0</span> | STREAK: <span id="streak">0</span></div>
+    <div id="gameOver">
+        <h2 style="color: #7F1D1D;">BURNT!</h2>
+        <button onclick="resetGame()" style="background: #7F1D1D; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">FLIP AGAIN</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'playing';
+let score = 0;
+let streak = 0;
+let steak = { x: 220, y: 200, vy: 0, rotation: 0, state: 'cooking' };
+let heat = 0;
+let targetZone = { min: 40, max: 70 };
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    
+    ctx.clearRect(0, 0, 480, 320);
+    
+    // Grill
+    ctx.fillStyle = '#2D1F1F';
+    ctx.fillRect(0, 250, 480, 70);
+    for (let x = 0; x < 480; x += 30) {
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(x, 250, 3, 70);
+    }
+    
+    // Heat indicator
+    ctx.fillStyle = '#333';
+    ctx.fillRect(40, 40, 400, 20);
+    
+    // Target zone
+    ctx.fillStyle = 'rgba(34, 197, 94, 0.3)';
+    ctx.fillRect(40 + targetZone.min * 4, 35, (targetZone.max - targetZone.min) * 4, 30);
+    
+    // Heat bar
+    heat += 0.3;
+    ctx.fillStyle = heat > 80 ? '#DC2626' : (heat > targetZone.min && heat < targetZone.max ? '#22C55E' : '#F59E0B');
+    ctx.fillRect(40, 40, Math.min(heat, 100) * 4, 20);
+    
+    // Burn check
+    if (heat > 100) {
+        gameOver();
+        return;
+    }
+    
+    // Steak physics
+    steak.y += steak.vy;
+    steak.rotation += steak.vy * 0.05;
+    steak.vy += 0.5;
+    
+    if (steak.y >= 230) {
+        steak.y = 230;
+        steak.vy = 0;
+        steak.rotation = 0;
+        if (steak.state === 'flipping') {
+            checkFlip();
+        }
+    }
+    
+    // Draw steak
+    ctx.save();
+    ctx.translate(steak.x + 20, steak.y + 20);
+    ctx.rotate(steak.rotation);
+    ctx.font = '40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🥩', 0, 0);
+    ctx.restore();
+    
+    // Fire effect if too hot
+    if (heat > 75) {
+        ctx.font = '30px Arial';
+        ctx.fillText('🔥', steak.x + 60, steak.y - 20);
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function flip() {
+    if (gameState !== 'playing' || steak.state === 'flipping') return;
+    steak.vy = -15;
+    steak.state = 'flipping';
+}
+
+function checkFlip() {
+    steak.state = 'cooking';
+    if (heat >= targetZone.min && heat <= targetZone.max) {
+        score += 100 + streak * 20;
+        streak++;
+        heat = 0;
+        targetZone = { min: 30 + Math.random() * 20, max: 60 + Math.random() * 20 };
+    } else {
+        streak = 0;
+        heat = 0;
+    }
+    document.getElementById('score').textContent = score;
+    document.getElementById('streak').textContent = streak;
+    window.parent.postMessage({ type: 'SCORE', score: score }, '*');
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
+}
+
+function resetGame() {
+    score = 0;
+    streak = 0;
+    heat = 0;
+    steak = { x: 220, y: 200, vy: 0, rotation: 0, state: 'cooking' };
+    targetZone = { min: 40, max: 70 };
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('score').textContent = score;
+    document.getElementById('streak').textContent = streak;
+}
+
+// Controls
+canvas.addEventListener('click', flip);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); flip(); });
+document.addEventListener('keydown', (e) => { if (e.code === 'Space') flip(); });
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('steakFlip_state', JSON.stringify({score, streak})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('steakFlip_state');
+            if (saved) { const data = JSON.parse(saved); score = data.score; streak = data.streak; }
+            break;
+    }
+});
+
+gameLoop();
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Fry Catch</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #F4E4C1 50%); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 10px; color: #333; font-weight: bold; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">SCORE: <span id="score">0</span> | LIVES: <span id="lives">3</span></div>
+    <div id="gameOver">
+        <h2 style="color: #EAB308;">FRY FRENZY!</h2>
+        <p>Score: <span id="finalScore">0</span></p>
+        <button onclick="resetGame()" style="background: #EAB308; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">CATCH AGAIN</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'playing';
+let score = 0;
+let lives = 3;
+let fries = [];
+let basket = { x: 220, y: 270, width: 60, height: 40 };
+
+class Fry {
+    constructor() {
+        this.x = Math.random() * 440 + 20;
+        this.y = -30;
+        this.speed = 2 + Math.random() * 3 + (score / 500);
+        this.rotation = Math.random() * Math.PI;
+        this.rotSpeed = (Math.random() - 0.5) * 0.1;
+    }
+
+    update() {
+        this.y += this.speed;
+        this.rotation += this.rotSpeed;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.font = '25px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🍟', 0, 0);
+        ctx.restore();
+    }
+}
+
+function drawBasket() {
+    ctx.font = '45px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🧺', basket.x + basket.width/2, basket.y + 35);
+}
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    
+    ctx.clearRect(0, 0, 480, 320);
+    
+    // Floor
+    ctx.fillStyle = '#D4A574';
+    ctx.fillRect(0, 280, 480, 40);
+    
+    drawBasket();
+    
+    // Update fries
+    for (let i = fries.length - 1; i >= 0; i--) {
+        const fry = fries[i];
+        fry.update();
+        fry.draw();
+        
+        // Catch check
+        if (fry.y > basket.y && fry.y < basket.y + basket.height &&
+            fry.x > basket.x && fry.x < basket.x + basket.width) {
+            score += 10;
+            document.getElementById('score').textContent = score;
+            window.parent.postMessage({ type: 'SCORE', score: score }, '*');
+            fries.splice(i, 1);
+            continue;
+        }
+        
+        // Miss check
+        if (fry.y > 320) {
+            lives--;
+            document.getElementById('lives').textContent = lives;
+            fries.splice(i, 1);
+            
+            if (lives <= 0) {
+                gameOver();
+            }
+        }
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function spawnFry() {
+    if (gameState !== 'playing') return;
+    fries.push(new Fry());
+    setTimeout(spawnFry, 600 - Math.min(300, score / 10));
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
+}
+
+function resetGame() {
+    score = 0;
+    lives = 3;
+    fries = [];
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('score').textContent = score;
+    document.getElementById('lives').textContent = lives;
+    spawnFry();
+}
+
+// Controls
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowLeft') basket.x = Math.max(0, basket.x - 20);
+    if (e.code === 'ArrowRight') basket.x = Math.min(420, basket.x + 20);
+});
+
+// Touch/mouse
+function moveBasket(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (480 / rect.width);
+    basket.x = Math.max(0, Math.min(420, x - 30));
+}
+
+canvas.addEventListener('mousemove', (e) => moveBasket(e.clientX));
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    moveBasket(e.touches[0].clientX);
+});
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('fryCatch_state', JSON.stringify({score, lives})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('fryCatch_state');
+            if (saved) { const data = JSON.parse(saved); score = data.score; lives = data.lives; }
+            break;
+    }
+});
+
+spawnFry();
+gameLoop();
+</script>
+</body>
+</html>

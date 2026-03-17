@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ice Cream</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 10px; color: #333; font-weight: bold; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">SCOOPS: <span id="scoops">0</span> | BEST: <span id="best">0</span></div>
+    <div id="gameOver">
+        <h2 style="color: #FCD34D;">SPLAT!</h2>
+        <button onclick="resetGame()" style="background: #FCD34D; border: none; padding: 10px 20px; color: #333; border-radius: 5px; cursor: pointer;">STACK AGAIN</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'playing';
+let scoops = [];
+let swingingScoop = null;
+let best = parseInt(localStorage.getItem('iceCream_best') || '0');
+
+const FLAVORS = ['🍦', '🍨', '🍧'];
+const COLORS = ['#FCD34D', '#F472B6', '#A78BFA'];
+
+class Scoop {
+    constructor() {
+        this.x = 50;
+        this.y = 40;
+        this.swingAngle = 0;
+        this.swingSpeed = 0.02 + (scoops.length * 0.003);
+        this.flavor = Math.floor(Math.random() * FLAVORS.length);
+        this.dropped = false;
+    }
+
+    update() {
+        if (!this.dropped) {
+            this.swingAngle += this.swingSpeed;
+            this.x = 240 + Math.sin(this.swingAngle) * 150;
+        } else {
+            this.y += 4;
+            
+            if (scoops.length === 0) {
+                if (this.y + 30 >= 280) {
+                    this.y = 250;
+                    this.land();
+                }
+            } else {
+                const top = scoops[scoops.length - 1];
+                if (this.y + 30 >= top.y) {
+                    const diff = Math.abs(this.x - top.x);
+                    if (diff < 40) {
+                        this.y = top.y - 35;
+                        this.land();
+                    } else {
+                        gameOver();
+                    }
+                }
+            }
+        }
+    }
+
+    land() {
+        this.dropped = false;
+        scoops.push({ x: this.x, y: this.y, flavor: this.flavor });
+        
+        document.getElementById('scoops').textContent = scoops.length;
+        window.parent.postMessage({ type: 'SCORE', score: scoops.length * 100 }, '*');
+        
+        if (scoops.length > best) {
+            best = scoops.length;
+            localStorage.setItem('iceCream_best', best);
+            document.getElementById('best').textContent = best;
+        }
+        
+        swingingScoop = new Scoop();
+    }
+
+    draw() {
+        ctx.font = '35px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(FLAVORS[this.flavor], this.x, this.y);
+    }
+}
+
+function drawCone() {
+    // Cone
+    ctx.fillStyle = '#D4A574';
+    ctx.beginPath();
+    ctx.moveTo(220, 280);
+    ctx.lineTo(260, 280);
+    ctx.lineTo(240, 180);
+    ctx.fill();
+    
+    // Scoops
+    scoops.forEach((scoop, i) => {
+        ctx.font = '35px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(FLAVORS[scoop.flavor], scoop.x, scoop.y + 10);
+    });
+}
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    
+    ctx.clearRect(0, 0, 480, 320);
+    
+    drawCone();
+    
+    if (swingingScoop) {
+        swingingScoop.update();
+        swingingScoop.draw();
+        
+        if (scoops.length > 0 && scoops[scoops.length - 1].y < 60) {
+            gameOver();
+        }
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function drop() {
+    if (swingingScoop && !swingingScoop.dropped) {
+        swingingScoop.dropped = true;
+    }
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: scoops.length * 100 }, '*');
+}
+
+function resetGame() {
+    scoops = [];
+    swingingScoop = new Scoop();
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('scoops').textContent = 0;
+}
+
+// Controls
+canvas.addEventListener('click', drop);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); drop(); });
+document.addEventListener('keydown', (e) => { if (e.code === 'Space') drop(); });
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('iceCream_state', JSON.stringify({scoops})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('iceCream_state');
+            if (saved) { scoops = JSON.parse(saved).scoops; }
+            break;
+    }
+});
+
+document.getElementById('best').textContent = best;
+swingingScoop = new Scoop();
+gameLoop();
+</script>
+</body>
+</html>

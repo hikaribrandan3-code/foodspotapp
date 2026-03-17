@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sushi Roll</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { background: #2d1f3d; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
+        #gameCanvas { background: linear-gradient(180deg, #1a1a2e 0%, #2d1f3d 100%); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 10px; left: 0; right: 0; text-align: center; color: #10B981; font-weight: bold; font-size: 14px; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <div id="ui">SCORE: <span id="score">0</span> | COMBO: <span id="combo">0</span></div>
+    <div id="gameOver">
+        <h2 style="color: #10B981;">SUSHI MASTER!</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="resetGame()" style="background: #10B981; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">ROLL AGAIN</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'playing';
+let score = 0;
+let combo = 0;
+let notes = [];
+let hitZone = { y: 250, height: 40 };
+
+const BEATS = ['🍣', '🍤', '🥢', '🍙', '🍥'];
+const COLORS = ['#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#FCD34D'];
+
+class Note {
+    constructor(lane) {
+        this.lane = lane;
+        this.x = 80 + lane * 80;
+        this.y = -50;
+        this.speed = 3 + Math.random() * 2;
+        this.emoji = BEATS[Math.floor(Math.random() * BEATS.length)];
+        this.color = COLORS[lane % COLORS.length];
+        this.hit = false;
+    }
+
+    update() {
+        this.y += this.speed;
+    }
+
+    draw() {
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.emoji, this.x, this.y);
+        
+        // Glow effect
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 10;
+        ctx.fillText(this.emoji, this.x, this.y);
+        ctx.shadowBlur = 0;
+    }
+}
+
+function drawLane() {
+    // Lane background
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    for (let i = 0; i < 5; i++) {
+        ctx.fillRect(40 + i * 80, 0, 80, 320);
+    }
+    
+    // Hit zone
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+    ctx.fillRect(0, hitZone.y, 480, hitZone.height);
+    ctx.strokeStyle = '#10B981';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(0, hitZone.y, 480, hitZone.height);
+    
+    // Lane labels
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.textAlign = 'center';
+    for (let i = 0; i < 5; i++) {
+        ctx.fillText(['A','S','D','F','G'][i], 80 + i * 80, 290);
+    }
+}
+
+function spawnNote() {
+    if (gameState !== 'playing') return;
+    notes.push(new Note(Math.floor(Math.random() * 5)));
+    setTimeout(spawnNote, 800 - Math.min(400, combo * 10));
+}
+
+function hitLane(lane) {
+    if (gameState !== 'playing') return;
+    
+    const hitNote = notes.find(n => n.lane === lane && !n.hit && Math.abs(n.y - hitZone.y - 20) < 30);
+    
+    if (hitNote) {
+        hitNote.hit = true;
+        const accuracy = Math.abs(hitNote.y - hitZone.y - 20);
+        
+        if (accuracy < 10) {
+            score += 100 + combo * 10;
+            combo++;
+        } else {
+            score += 50;
+            combo = Math.max(0, combo - 1);
+        }
+        
+        window.parent.postMessage({ type: 'SCORE', score: score }, '*');
+        notes = notes.filter(n => n !== hitNote);
+    } else {
+        combo = 0;
+    }
+    
+    document.getElementById('score').textContent = score;
+    document.getElementById('combo').textContent = combo;
+}
+
+function gameLoop() {
+    if (gameState === 'paused') return;
+    
+    ctx.clearRect(0, 0, 480, 320);
+    
+    drawLane();
+    
+    // Update and draw notes
+    notes = notes.filter(n => {
+        n.update();
+        n.draw();
+        
+        // Missed note
+        if (n.y > 320 && !n.hit) {
+            combo = 0;
+            document.getElementById('combo').textContent = combo;
+            return false;
+        }
+        return n.y < 350;
+    });
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('gameOver').style.display = 'block';
+    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
+}
+
+function resetGame() {
+    score = 0;
+    combo = 0;
+    notes = [];
+    gameState = 'playing';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('score').textContent = score;
+    document.getElementById('combo').textContent = combo;
+    spawnNote();
+}
+
+// Controls
+const keyMap = { 'KeyA': 0, 'KeyS': 1, 'KeyD': 2, 'KeyF': 3, 'KeyG': 4 };
+document.addEventListener('keydown', (e) => {
+    if (keyMap[e.code] !== undefined) hitLane(keyMap[e.code]);
+});
+
+// Touch controls
+const laneWidth = 96;
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (480 / rect.width);
+    const lane = Math.floor(x / laneWidth);
+    if (lane >= 0 && lane < 5) hitLane(lane);
+});
+
+// PostMessage API
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'PAUSE': gameState = 'paused'; break;
+        case 'RESUME': gameState = 'playing'; gameLoop(); break;
+        case 'SAVE_STATE': localStorage.setItem('sushiRoll_state', JSON.stringify({score, combo})); break;
+        case 'LOAD_STATE':
+            const saved = localStorage.getItem('sushiRoll_state');
+            if (saved) { const data = JSON.parse(saved); score = data.score; combo = data.combo; }
+            break;
+    }
+});
+
+// Start
+spawnNote();
+gameLoop();
+</script>
+</body>
+</html>
