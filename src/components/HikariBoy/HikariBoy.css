@@ -460,30 +460,30 @@
 }
 
 /* ========== SYSTEM BUTTONS ========== */
-/* Reference: MENU far-left, SELECT center, START right-of-center */
+/* Target: MENU far-left, SELECT+START grouped center-right (like Spice Invaders render) */
 .hb-system-btns {
   display: flex;
   align-items: flex-end;
-  justify-content: center;
-  padding: 0 24px 16px;
+  justify-content: flex-start; /* Align to left, we'll push MENU left */
+  padding: 0 30px 18px;
   position: relative;
   height: 60px;
   flex: 0 0 auto;
+  gap: 0;
 }
 
-/* MENU is pushed to the left with auto margin */
+/* MENU is positioned on far left */
 .menu-wrap {
-  margin-right: auto;
-  padding-left: 8px;
+  margin-right: auto; /* Pushes everything after to the right */
 }
 
-/* SELECT + START are grouped together in the center */
+/* SELECT + START are grouped together on the right */
 .select-wrap {
-  margin-right: 12px;
+  margin-right: 16px; /* Space between SELECT and START */
 }
 
 .start-wrap {
-  margin-right: 0;
+  margin-right: 40px; /* Space from right edge */
 }
 
 .sys-btn-wrap {
