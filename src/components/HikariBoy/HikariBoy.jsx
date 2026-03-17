@@ -2,8 +2,11 @@
  * HikariBoy Emulator Shell - Delta 1:1
  * Deep purple GBA-style layout for FoodSpot Arcade
  * 
- * Visual reference: Delta emulator iOS
- * Responsive: iPhone Regular / Pro / Pro Max
+ * Features:
+ * - Full-screen game showcase with cover images
+ * - Left/Right to browse, A/Start to play
+ * - Leak fix: hides background auth elements
+ * - Responsive: iPhone Regular / Pro / Pro Max
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -21,24 +24,24 @@ const BUTTONS = {
   MENU: 'menu'
 };
 
-// 16 NEW GAMES (Agent Swarm)
+// 16 GAMES with cover.png paths
 const GAMES = [
-  { id: 'burger-stack', name: 'Burger Stack', emoji: '🍔', url: '/games/burger-stack/index.html' },
-  { id: 'food-fight', name: 'Food Fight', emoji: '👊', url: '/games/food-fight/index.html' },
-  { id: 'pizza-slice', name: 'Pizza Slice', emoji: '🍕', url: '/games/pizza-slice/index.html' },
-  { id: 'sushi-roll', name: 'Sushi Roll', emoji: '🍣', url: '/games/sushi-roll/index.html' },
-  { id: 'fry-catch', name: 'Fry Catch', emoji: '🍟', url: '/games/fry-catch/index.html' },
-  { id: 'taco-tower', name: 'Taco Tower', emoji: '🌮', url: '/games/taco-tower/index.html' },
-  { id: 'condiment-blast', name: 'Condiment Blast', emoji: '🥫', url: '/games/condiment-blast/index.html' },
-  { id: 'bubble-tea', name: 'Bubble Tea', emoji: '🧋', url: '/games/bubble-tea/index.html' },
-  { id: 'donut-roll', name: 'Donut Roll', emoji: '🍩', url: '/games/donut-roll/index.html' },
-  { id: 'hotdog-dash', name: 'Hotdog Dash', emoji: '🌭', url: '/games/hotdog-dash/index.html' },
-  { id: 'coffee-pour', name: 'Coffee Pour', emoji: '☕', url: '/games/coffee-pour/index.html' },
-  { id: 'steak-flip', name: 'Steak Flip', emoji: '🥩', url: '/games/steak-flip/index.html' },
-  { id: 'ice-cream', name: 'Ice Cream', emoji: '🍦', url: '/games/ice-cream/index.html' },
-  { id: 'spice-invaders', name: 'Spice Invaders', emoji: '🌶️', url: '/games/spice-invaders/index.html' },
-  { id: 'fruit-slice', name: 'Fruit Slice', emoji: '🥝', url: '/games/fruit-slice/index.html' },
-  { id: 'bento-box', name: 'Bento Box', emoji: '🍱', url: '/games/bento-box/index.html' },
+  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
+  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
+  { id: 'pizza-slice', name: 'Pizza Slice', cover: '/games/pizza-slice/cover.png', url: '/games/pizza-slice/index.html' },
+  { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
+  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', url: '/games/fry-catch/index.html' },
+  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', url: '/games/taco-tower/index.html' },
+  { id: 'condiment-blast', name: 'Condiment Blast', cover: '/games/condiment-blast/cover.png', url: '/games/condiment-blast/index.html' },
+  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
+  { id: 'donut-roll', name: 'Donut Roll', cover: '/games/donut-roll/cover.png', url: '/games/donut-roll/index.html' },
+  { id: 'hotdog-dash', name: 'Hotdog Dash', cover: '/games/hotdog-dash/cover.png', url: '/games/hotdog-dash/index.html' },
+  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', url: '/games/coffee-pour/index.html' },
+  { id: 'steak-flip', name: 'Steak Flip', cover: '/games/steak-flip/cover.png', url: '/games/steak-flip/index.html' },
+  { id: 'ice-cream', name: 'Ice Cream', cover: '/games/ice-cream/cover.png', url: '/games/ice-cream/index.html' },
+  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
+  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
+  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', url: '/games/bento-box/index.html' },
 ];
 
 export function HikariBoy({ 
@@ -51,6 +54,49 @@ export function HikariBoy({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const gameFrameRef = useRef(null);
 
+  // LEAK FIX: Hide background signup/auth when HikariBoy opens
+  useEffect(() => {
+    // Add class to body to hide auth elements
+    document.body.classList.add('hikariboy-active');
+    
+    // Find and hide common auth container classes
+    const authSelectors = [
+      '.signup-container',
+      '.auth-container', 
+      '.login-container',
+      '[class*="signup"]',
+      '[class*="auth"]',
+      '.modal-overlay',
+      '.sign-up-modal'
+    ];
+    
+    authSelectors.forEach(selector => {
+      const el = document.querySelector(selector);
+      if (el) {
+        el.style.display = 'none';
+        el.setAttribute('data-hikariboy-hidden', 'true');
+      }
+    });
+
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      // Cleanup: restore everything when HikariBoy closes
+      document.body.classList.remove('hikariboy-active');
+      document.body.style.overflow = '';
+      
+      authSelectors.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el && el.getAttribute('data-hikariboy-hidden') === 'true') {
+          el.style.display = '';
+          el.removeAttribute('data-hikariboy-hidden');
+        }
+      });
+    };
+  }, []);
+
+  // Boot sequence
   useEffect(() => {
     const timer = setTimeout(() => setIsBooting(false), 2000);
     return () => clearTimeout(timer);
@@ -76,14 +122,14 @@ export function HikariBoy({
         }
       }
     } else if (!isBooting) {
-      // Selector controls
+      // SELECTOR CONTROLS
       if (button === BUTTONS.DPAD_LEFT) {
         setSelectedIndex(prev => prev > 0 ? prev - 1 : GAMES.length - 1);
       }
       if (button === BUTTONS.DPAD_RIGHT) {
         setSelectedIndex(prev => prev < GAMES.length - 1 ? prev + 1 : 0);
       }
-      if (button === BUTTONS.A) {
+      if (button === BUTTONS.A || button === BUTTONS.START) {
         setCurrentGame(GAMES[selectedIndex]);
       }
       if (button === BUTTONS.MENU) onClose?.();
@@ -148,7 +194,7 @@ export function HikariBoy({
 
         {/* Main Controls */}
         <div className="hb-controls-main">
-          {/* D-Pad - Single Cross Piece */}
+          {/* D-Pad */}
           <div className="hb-dpad">
             <div className="dpad-cross">
               <button 
@@ -171,7 +217,7 @@ export function HikariBoy({
             </div>
           </div>
 
-          {/* A/B Buttons - A larger & higher */}
+          {/* A/B Buttons */}
           <div className="hb-action-btns">
             <button 
               className="action-btn btn-b"
@@ -184,7 +230,7 @@ export function HikariBoy({
           </div>
         </div>
 
-        {/* System Buttons - Circles with labels below */}
+        {/* System Buttons */}
         <div className="hb-system-btns">
           <div className="sys-btn-wrap menu-wrap">
             <button 
@@ -213,23 +259,42 @@ export function HikariBoy({
   );
 }
 
-// Game Selector Component
+// Game Selector - Shows ONE large cover image at a time
 function GameSelector({ games, selectedIndex }) {
+  const selectedGame = games[selectedIndex];
+  
   return (
     <div className="hb-selector">
-      <div className="selector-games">
-        {games.map((game, idx) => (
-          <div 
-            key={game.id}
-            className={`game-thumb ${idx === selectedIndex ? 'active' : ''}`}
-          >
-            <div className="thumb-emoji">{game.emoji}</div>
-            <div className="thumb-name">{game.name}</div>
-          </div>
-        ))}
+      {/* Arrow indicators */}
+      <div className="selector-arrows">
+        {selectedIndex > 0 && <span className="arrow-left">◀</span>}
+        <span className="game-counter">{selectedIndex + 1} / {games.length}</span>
+        {selectedIndex < games.length - 1 && <span className="arrow-right">▶</span>}
       </div>
+      
+      {/* Large Cover Image */}
+      <div className="game-showcase">
+        <div className="cover-container">
+          <img 
+            src={selectedGame.cover} 
+            alt={selectedGame.name}
+            className="game-cover"
+            onError={(e) => {
+              // Fallback if cover.png doesn't exist yet
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <div className="cover-fallback" style={{display: 'none'}}>
+            {selectedGame.name}
+          </div>
+        </div>
+        <div className="game-title">{selectedGame.name}</div>
+      </div>
+      
+      {/* Instructions */}
       <div className="selector-hint">
-        ◀ ▶ to browse  ●  A to play
+        ◀ ▶ Browse  ●  A or START to Play
       </div>
     </div>
   );
