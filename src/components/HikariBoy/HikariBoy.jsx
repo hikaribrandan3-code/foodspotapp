@@ -31,23 +31,24 @@ const BUTTONS = {
 };
 
 // 15 GAMES with cover paths (11 food + 4 GBA homebrew)
+// PNG covers preferred, SVG fallback for missing PNGs
 const GAMES = [
-  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
-  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
-  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', url: '/games/fry-catch/index.html' },
-  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', url: '/games/taco-tower/index.html' },
-  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
-  { id: 'hotdog-dash', name: 'Hotdog Dash', cover: '/games/hotdog-dash/cover.png', url: '/games/hotdog-dash/index.html' },
-  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', url: '/games/coffee-pour/index.html' },
-  { id: 'steak-flip', name: 'Steak Flip', cover: '/games/steak-flip/cover.png', url: '/games/steak-flip/index.html' },
-  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
-  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
-  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', url: '/games/bento-box/index.html' },
-  // GBA Homebrew Games (with music)
-  { id: 'luminesweeper', name: 'Luminesweeper', cover: '/games/luminesweeper/cover.svg', url: '/games/luminesweeper/index.html' },
-  { id: 'bulletgba', name: 'BulletGBA', cover: '/games/bulletgba/cover.svg', url: '/games/bulletgba/index.html' },
-  { id: 'gorf', name: 'Gorf', cover: '/games/gorf/cover.svg', url: '/games/gorf/index.html' },
-  { id: 'ucity', name: 'μCity', cover: '/games/ucity/cover.svg', url: '/games/ucity/index.html' },
+  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', fallback: '/games/burger-stack/cover.svg', url: '/games/burger-stack/index.html' },
+  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', fallback: '/games/food-fight/cover.svg', url: '/games/food-fight/index.html' },
+  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', fallback: '/games/fry-catch/cover.svg', url: '/games/fry-catch/index.html' },
+  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', fallback: '/games/taco-tower/cover.svg', url: '/games/taco-tower/index.html' },
+  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', fallback: '/games/bubble-tea/cover.svg', url: '/games/bubble-tea/index.html' },
+  { id: 'hotdog-dash', name: 'Hotdog Dash', cover: '/games/hotdog-dash/cover.png', fallback: '/games/hotdog-dash/cover.svg', url: '/games/hotdog-dash/index.html' },
+  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', fallback: '/games/coffee-pour/cover.svg', url: '/games/coffee-pour/index.html' },
+  { id: 'steak-flip', name: 'Steak Flip', cover: '/games/steak-flip/cover.png', fallback: '/games/steak-flip/cover.svg', url: '/games/steak-flip/index.html' },
+  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', fallback: '/games/spice-invaders/cover.svg', url: '/games/spice-invaders/index.html' },
+  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', fallback: '/games/fruit-slice/cover.svg', url: '/games/fruit-slice/index.html' },
+  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', fallback: '/games/bento-box/cover.svg', url: '/games/bento-box/index.html' },
+  // GBA Homebrew Games (with music) - SVG only for now
+  { id: 'luminesweeper', name: 'Luminesweeper', cover: '/games/luminesweeper/cover.svg', fallback: null, url: '/games/luminesweeper/index.html' },
+  { id: 'bulletgba', name: 'BulletGBA', cover: '/games/bulletgba/cover.svg', fallback: null, url: '/games/bulletgba/index.html' },
+  { id: 'gorf', name: 'Gorf', cover: '/games/gorf/cover.svg', fallback: null, url: '/games/gorf/index.html' },
+  { id: 'ucity', name: 'μCity', cover: '/games/ucity/cover.svg', fallback: null, url: '/games/ucity/index.html' },
 ];
 
 export function HikariBoy({ 
@@ -306,6 +307,25 @@ export function HikariBoy({
 // Game Selector - Shows ONE large cover image at a time
 function GameSelector({ games, selectedIndex }) {
   const selectedGame = games[selectedIndex];
+  const [imgSrc, setImgSrc] = useState(selectedGame.cover);
+  const [hasError, setHasError] = useState(false);
+  
+  // Reset image when game changes
+  useEffect(() => {
+    setImgSrc(selectedGame.cover);
+    setHasError(false);
+  }, [selectedIndex, selectedGame]);
+  
+  const handleError = () => {
+    if (!hasError && selectedGame.fallback) {
+      // Try fallback SVG
+      setImgSrc(selectedGame.fallback);
+      setHasError(true);
+    } else {
+      // No fallback, show text
+      setHasError(true);
+    }
+  };
   
   return (
     <div className="hb-selector">
@@ -319,18 +339,18 @@ function GameSelector({ games, selectedIndex }) {
       {/* Large Cover Image - FULL SIZE */}
       <div className="game-showcase">
         <div className="cover-container-full">
-          <img 
-            src={selectedGame.cover} 
-            alt={selectedGame.name}
-            className="game-cover-full"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-          <div className="cover-fallback-full" style={{display: 'none'}}>
-            {selectedGame.name}
-          </div>
+          {!hasError ? (
+            <img 
+              src={imgSrc} 
+              alt={selectedGame.name}
+              className="game-cover-full"
+              onError={handleError}
+            />
+          ) : (
+            <div className="cover-fallback-full">
+              {selectedGame.name}
+            </div>
+          )}
         </div>
       </div>
     </div>
