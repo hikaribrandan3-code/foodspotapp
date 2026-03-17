@@ -9,6 +9,7 @@ import { getSession } from '../../utils/auth.js'
 const isInDemoMode = () => false; // STUB: Demo mode disabled for now
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -74,6 +75,9 @@ function Home({ config: configProp }) {
     const longPressStartRef = useRef(null)
     const [hasChanges, setHasChanges] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+
+    // 🎮 ARCADE STATE
+    const [showArcade, setShowArcade] = useState(false)
 
     // Detect 'Ver Tienda' edit intent from URL
     // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
@@ -513,10 +517,16 @@ function Home({ config: configProp }) {
 
     // Click handler that respects drag lock
     // 🛡️ SILO-AWARE: Prepend tenantSlug to path
-    const handleTileClick = useCallback((e, path) => {
+    const handleTileClick = useCallback((e, path, actionId) => {
         if (isDraggingRef.current || isEditMode) {
             e.preventDefault()
             e.stopPropagation()
+            return
+        }
+
+        // 🎮 ARCADE: Open HikariBoy modal instead of navigating
+        if (actionId === 'game' || actionId === 'arcade' || path === 'arcade') {
+            setShowArcade(true)
             return
         }
 
@@ -710,7 +720,7 @@ function Home({ config: configProp }) {
                                 onMouseDown={(e) => {
                                     if (isEditMode) initiateDrag(e, 'actions', actionId, index, localPrimaryActions)
                                 }}
-                                onClick={(e) => handleTileClick(e, action.path)}
+                                onClick={(e) => handleTileClick(e, action.path, actionId)}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...tileStyle,
@@ -723,6 +733,39 @@ function Home({ config: configProp }) {
                                     userSelect: 'none',
                                     WebkitUserSelect: 'none',
                                     WebkitTouchCallout: isEditMode ? 'none' : 'default'
+                                }}
+                            >
+                                {tileContent}
+                            </div>
+                        )
+                    }
+
+                    // 🎮 ARCADE: Special handling - opens HikariBoy modal instead of navigating
+                    if (actionId === 'game' || actionId === 'arcade') {
+                        return (
+                            <div
+                                key={actionId}
+                                onClick={() => {
+                                    console.log('🎮 ARCADE CLICKED - opening HikariBoy')
+                                    setShowArcade(true)
+                                }}
+                                onTouchStart={(e) => {
+                                    e.preventDefault()
+                                    console.log('🎮 ARCADE TOUCH START')
+                                }}
+                                onTouchEnd={(e) => {
+                                    e.preventDefault()
+                                    console.log('🎮 ARCADE TOUCH END - opening HikariBoy')
+                                    setShowArcade(true)
+                                }}
+                                style={{
+                                    ...tileStyle,
+                                    backgroundColor: getHeroBg(actionId),
+                                    cursor: 'pointer',
+                                    userSelect: 'none',
+                                    WebkitUserSelect: 'none',
+                                    WebkitTouchCallout: 'none',
+                                    touchAction: 'manipulation'
                                 }}
                             >
                                 {tileContent}
@@ -1123,6 +1166,42 @@ function Home({ config: configProp }) {
                             to { transform: translate(-50%, 0); opacity: 1; }
                         }
                     `}</style>
+                </div>
+            )}
+            {showArcade && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 9999,
+                    background: '#000'
+                }}>
+                    {/* DEBUG: Test if overlay opens */}
+                    <div 
+                        onClick={() => {
+                            console.log('DEBUG: Test overlay clicked, closing')
+                            setShowArcade(false)
+                        }}
+                        style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            background: 'red',
+                            color: 'white',
+                            padding: '40px',
+                            fontSize: '24px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🎮 ARCADE OVERLAY WORKS!<br/>
+                        Click to close
+                    </div>
+                    {/* 
+                    <HikariBoy
+                        onClose={() => setShowArcade(false)}
+                        controllerColor={branding?.primaryColor || '#8B5CF6'}
+                    />
+                    */}
                 </div>
             )}
         </div>
