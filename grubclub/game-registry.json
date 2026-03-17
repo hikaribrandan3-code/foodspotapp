@@ -1,0 +1,461 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-15T23:10:08.615Z",
+  "categories": [
+    {
+      "id": "bar",
+      "label": "Bar Games",
+      "icon": "🍺",
+      "color": "#8B4513"
+    },
+    {
+      "id": "arcade",
+      "label": "Arcade",
+      "icon": "🕹️",
+      "color": "#FF006E"
+    },
+    {
+      "id": "classic",
+      "label": "Classics",
+      "icon": "👾",
+      "color": "#FB5607"
+    },
+    {
+      "id": "addictive",
+      "label": "Addictive",
+      "icon": "🔥",
+      "color": "#FF006E"
+    },
+    {
+      "id": "sports",
+      "label": "Sports",
+      "icon": "⚽",
+      "color": "#38B000"
+    }
+  ],
+  "games": [
+    {
+      "id": "2048",
+      "title": "2048",
+      "category": "addictive",
+      "description": "The number-matching puzzle that hooks you",
+      "cover": "assets/covers/2048.svg",
+      "source": {
+        "type": "github",
+        "repo": "gabrielecirulli/2048",
+        "license": "MIT",
+        "pagesUrl": "https://gabrielecirulli.github.io/2048/"
+      },
+      "integration": {
+        "path": "https://gabrielecirulli.github.io/2048/",
+        "isExternal": true,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "tetris",
+      "title": "Tetris",
+      "category": "classic",
+      "description": "The legendary block-stacking game",
+      "cover": "assets/covers/tetris.svg",
+      "source": {
+        "type": "github",
+        "repo": "jakesgordon/javascript-tetris",
+        "license": "MIT",
+        "pagesUrl": "https://jakesgordon.github.io/javascript-tetris/"
+      },
+      "integration": {
+        "path": "https://jakesgordon.github.io/javascript-tetris/",
+        "isExternal": true,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "snake",
+      "title": "Snake",
+      "category": "classic",
+      "description": "Classic snake game, always addictive",
+      "cover": "assets/covers/snake.svg",
+      "source": {
+        "type": "github",
+        "repo": "platzhersh/html5-snake",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/snake/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "pacman",
+      "title": "Pac-Man",
+      "category": "classic",
+      "description": "The original maze chase arcade game",
+      "cover": "assets/covers/pacman.svg",
+      "source": {
+        "type": "github",
+        "repo": "spite/pacman",
+        "license": "MIT",
+        "pagesUrl": "https://spite.github.io/pacman/"
+      },
+      "integration": {
+        "path": "https://spite.github.io/pacman/",
+        "isExternal": true,
+        "exitButton": true,
+        "mobileOptimized": false
+      }
+    },
+    {
+      "id": "doodle-jump",
+      "title": "Doodle Jump",
+      "category": "addictive",
+      "description": "Bounce your way up endlessly",
+      "cover": "assets/covers/doodle-jump.svg",
+      "source": {
+        "type": "github",
+        "repo": "cyrilix/doodle-jump-html5",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/doodle-jump/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "asteroids",
+      "title": "Asteroids",
+      "category": "arcade",
+      "description": "Classic space shooter with vector graphics",
+      "cover": "assets/covers/asteroids.svg",
+      "source": {
+        "type": "github",
+        "repo": "dmcinnes/html5-asteroids",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/asteroids/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": " breakout",
+      "title": "Breakout",
+      "category": "classic",
+      "description": "Brick-breaking arcade action",
+      "cover": "assets/covers/ breakout.svg",
+      "source": {
+        "type": "github",
+        "repo": "chriz001/ breakout-js",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/ breakout/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "minesweeper",
+      "title": "Minesweeper",
+      "category": "classic",
+      "description": "The classic puzzle game of deduction",
+      "cover": "assets/covers/minesweeper.svg",
+      "source": {
+        "type": "github",
+        "repo": "jonathan-edwards/minesweeper",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/minesweeper/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "sudoku",
+      "title": "Sudoku",
+      "category": "classic",
+      "description": "Number placement puzzle",
+      "cover": "assets/covers/sudoku.svg",
+      "source": {
+        "type": "github",
+        "repo": "bernii/jquery-sudoku",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/sudoku/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "memory-match",
+      "title": "Memory Match",
+      "category": "classic",
+      "description": "Card matching memory game",
+      "cover": "assets/covers/memory-match.svg",
+      "source": {
+        "type": "github",
+        "repo": "sarahdrasner/memory-game",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/memory-match/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "hangman",
+      "title": "Hangman",
+      "category": "classic",
+      "description": "Word guessing game",
+      "cover": "assets/covers/hangman.svg",
+      "source": {
+        "type": "github",
+        "repo": "nadbm/react-hangman",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/hangman/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "wordle",
+      "title": "Wordle",
+      "category": "addictive",
+      "description": "Guess the 5-letter word",
+      "cover": "assets/covers/wordle.svg",
+      "source": {
+        "type": "github",
+        "repo": "lynn/wordle-clone",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/wordle/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "tictactoe",
+      "title": "Tic Tac Toe",
+      "category": "classic",
+      "description": "Classic X and O strategy game",
+      "cover": "assets/covers/tictactoe.svg",
+      "source": {
+        "type": "github",
+        "repo": "beumsk/Tic-Tac-Toe",
+        "license": "MIT",
+        "pagesUrl": "https://beumsk.github.io/Tic-Tac-Toe/"
+      },
+      "integration": {
+        "path": "https://beumsk.github.io/Tic-Tac-Toe/",
+        "isExternal": true,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "connect-four",
+      "title": "Connect Four",
+      "category": "classic",
+      "description": "Vertical strategy game",
+      "cover": "assets/covers/connect-four.svg",
+      "source": {
+        "type": "github",
+        "repo": "kenrick95/connect-four",
+        "license": "MIT",
+        "pagesUrl": "https://kenrick95.github.io/connect-four/"
+      },
+      "integration": {
+        "path": "https://kenrick95.github.io/connect-four/",
+        "isExternal": true,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "chess",
+      "title": "Chess",
+      "category": "classic",
+      "description": "Play against AI",
+      "cover": "assets/covers/chess.svg",
+      "source": {
+        "type": "github",
+        "repo": "lhartikk/simple-chess-ai",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/chess/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": false
+      }
+    },
+    {
+      "id": "slope",
+      "title": "Slope",
+      "category": "addictive",
+      "description": "Endless 3D ball runner",
+      "cover": "assets/covers/slope.svg",
+      "source": {
+        "type": "github",
+        "repo": "cdn/slope-game",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/slope/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "stack",
+      "title": "Stack",
+      "category": "addictive",
+      "description": "Tower stacking precision game",
+      "cover": "assets/covers/stack.svg",
+      "source": {
+        "type": "github",
+        "repo": "stevengoldberg/stack",
+        "license": "MIT",
+        "pagesUrl": "https://stevengoldberg.github.io/stack/"
+      },
+      "integration": {
+        "path": "https://stevengoldberg.github.io/stack/",
+        "isExternal": true,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "color-switch",
+      "title": "Color Switch",
+      "category": "addictive",
+      "description": "Tap through matching colors",
+      "cover": "assets/covers/color-switch.svg",
+      "source": {
+        "type": "github",
+        "repo": "jdrescher/colorswitch",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/color-switch/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "helix-jump",
+      "title": "Helix Jump",
+      "category": "addictive",
+      "description": "Bounce down the helix tower",
+      "cover": "assets/covers/helix-jump.svg",
+      "source": {
+        "type": "github",
+        "repo": "prateek/helix-jump",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/helix-jump/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "subway-surfers",
+      "title": "Subway Surfers",
+      "category": "addictive",
+      "description": "Endless runner with swiping",
+      "cover": "assets/covers/subway-surfers.svg",
+      "source": {
+        "type": "github",
+        "repo": "simon/subway-surfers-web",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/subway-surfers/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "temple-run",
+      "title": "Temple Run",
+      "category": "addictive",
+      "description": "Swipe to turn, jump and slide",
+      "cover": "assets/covers/temple-run.svg",
+      "source": {
+        "type": "github",
+        "repo": "html5/temple-run",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/temple-run/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    },
+    {
+      "id": "geometry-dash",
+      "title": "Geometry Dash",
+      "category": "addictive",
+      "description": "Rhythm-based platformer",
+      "cover": "assets/covers/geometry-dash.svg",
+      "source": {
+        "type": "github",
+        "repo": "mgcd/geometry-dash",
+        "license": "MIT",
+        "pagesUrl": null
+      },
+      "integration": {
+        "path": "games/geometry-dash/index.html",
+        "isExternal": false,
+        "exitButton": true,
+        "mobileOptimized": true
+      }
+    }
+  ],
+  "featured": [
+    "2048",
+    "doodle-jump",
+    "wordle"
+  ]
+}

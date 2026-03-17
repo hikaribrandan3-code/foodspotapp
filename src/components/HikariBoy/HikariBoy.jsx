@@ -1,283 +1,292 @@
 /**
- * HikariBoy Digital Handheld Console - Main Component
- * FoodSpot OS Arcade Module
+ * HikariBoy Emulator Shell
+ * Delta GBA-style layout for FoodSpot Arcade
+ * 
+ * Structure:
+ * - Top: Game Screen (iframe or canvas)
+ * - Bottom: Purple Controller (D-pad + A/B + Select/Start/Menu)
+ * 
+ * Visual reference: Delta emulator screenshots
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './HikariBoy.css';
 
-// Mock sub-components for now (as I'll create them or keep them simple)
-// If the user didn't provide GameCarousel, etc., I'll need to handle that.
-// BUT the user said "PASTE THE JSX CONTENT I PROVIDED ABOVE" and provided placeholders for index.js
-// and HikariBoy.jsx. 
-// I will adapt the FoodBoyConsole.tsx content to HikariBoy.jsx.
+// Controller button handlers
+const BUTTONS = {
+  DPAD_UP: 'dpad-up',
+  DPAD_DOWN: 'dpad-down', 
+  DPAD_LEFT: 'dpad-left',
+  DPAD_RIGHT: 'dpad-right',
+  A: 'a',
+  B: 'b',
+  SELECT: 'select',
+  START: 'start',
+  MENU: 'menu'
+};
 
-const GameCarousel = ({ games, selectedIndex, userScores, onSelect, onStart }) => (
-  <div className="game-carousel">
-    <div className="carousel-header">
-      <span>SELECT GAME</span>
-      <span className="swipe-hint">↔ SWIPE</span>
-    </div>
-    <div className="carousel-container">
-      <div className="carousel-track" style={{ transform: `translateX(${-selectedIndex * 220}px)` }}>
-        {games.map((game, i) => (
-          <div key={game.id} className={`game-card ${i === selectedIndex ? 'active' : ''}`} onClick={() => onSelect(i)}>
-            <div className="game-icon">{game.icon}</div>
-            <div className="game-name">{game.name}</div>
-            <div className="game-stats">HI-SCORE: {userScores[game.id]?.highScore || 0}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-    <div className="play-hint">TAP [A] TO START</div>
-  </div>
-);
+export function HikariBoy({ 
+  gameUrl = null, // URL to HTML5 game
+  onClose, 
+  onGameSelect,
+  foodReady = false, // Notification trigger
+  controllerColor = '#8B5CF6' // FoodSpot purple default
+}) {
+  const [isBooting, setIsBooting] = useState(true);
+  const [showSelector, setShowSelector] = useState(false);
+  const [currentGame, setCurrentGame] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const gameFrameRef = useRef(null);
 
-const GameScreen = ({ game, onGameEnd, onPause }) => (
-  <div className="game-screen" style={{ background: game.color }}>
-    <div style={{ padding: 20, textAlign: 'center' }}>
-      <h2>{game.name}</h2>
-      <p>Playing...</p>
-      <button onClick={() => onGameEnd(Math.floor(Math.random() * 1000))}>END GAME</button>
-      <button onClick={onPause}>PAUSE</button>
-    </div>
-  </div>
-);
-
-const RewardsScreen = ({ coupons, onRedeem, onBack }) => (
-  <div className="rewards-screen">
-    <h3>MY REWARDS</h3>
-    {coupons.length === 0 ? <p>No coupons yet!</p> : (
-      <ul>
-        {coupons.map(c => (
-          <li key={c.id}>
-            {c.rewardDescription} - {c.code}
-            <button onClick={() => onRedeem(c)}>REDEEM</button>
-          </li>
-        ))}
-      </ul>
-    )}
-    <button onClick={onBack}>BACK</button>
-  </div>
-);
-
-// Basic SoundEngine stub
-class SoundEngine {
-  play(type) { console.log('Playing sound:', type); }
-  cleanup() { }
-}
-
-const GAMES = [
-  {
-    id: 'burger-builder',
-    code: 'BURG',
-    name: 'Burger Builder',
-    icon: '🍔',
-    description: 'Stack ingredients in the perfect order!',
-    color: '#F59E0B',
-    thresholds: [
-      { score: 500, discount: 5, reward: '5% OFF' },
-      { score: 1000, discount: 10, reward: '10% OFF' },
-      { score: 2000, discount: 15, reward: '15% OFF' },
-      { score: 5000, discount: 100, reward: 'FREE SIDE', type: 'free_item' }
-    ]
-  },
-  {
-    id: 'slice-stacker',
-    code: 'PIZZ',
-    name: 'Slice Stacker',
-    icon: '🍕',
-    description: 'Stack pizza slices without toppling!',
-    color: '#EF4444',
-    thresholds: [
-      { score: 300, discount: 3, reward: '3% OFF' },
-      { score: 600, discount: 6, reward: '6% OFF' },
-      { score: 1200, discount: 12, reward: '12% OFF' },
-      { score: 2500, discount: 100, reward: 'FREE DRINK', type: 'free_item' }
-    ]
-  }
-];
-
-export const HikariBoy = ({ 
-  userId = 'guest', 
-  onCouponRedeemed,
-  onClose,
-  controllerColor = '#8B5CF6' 
-}) => {
-  const [screenState, setScreenState] = useState('carousel');
-  const [selectedGameIndex, setSelectedGameIndex] = useState(0);
-  const [currentScore, setCurrentScore] = useState(0);
-  const [userScores, setUserScores] = useState({});
-  const [coupons, setCoupons] = useState([]);
-  const [earnedCoupon, setEarnedCoupon] = useState(null);
-  const [showCRT, setShowCRT] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  
-  const soundEngine = useRef(null);
-
+  // Boot sequence (2 seconds)
   useEffect(() => {
-    soundEngine.current = new SoundEngine();
-    return () => {
-      soundEngine.current?.cleanup();
-    };
+    const timer = setTimeout(() => {
+      setIsBooting(false);
+      setShowSelector(true);
+    }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
-  const playSound = (soundType) => {
-    if (soundEnabled && soundEngine.current) {
-      soundEngine.current.play(soundType);
+  // Food ready notification
+  useEffect(() => {
+    if (foodReady && currentGame) {
+      // Send message to game frame
+      gameFrameRef.current?.contentWindow?.postMessage({
+        type: 'FOOD_READY',
+        message: 'Your food is ready! 🍔'
+      }, '*');
     }
-  };
+  }, [foodReady, currentGame]);
 
-  const handleGameSelect = (index) => {
-    setSelectedGameIndex(index);
-    playSound('select');
-  };
-
-  const handleStartGame = () => {
-    playSound('start');
-    setScreenState('playing');
-    setCurrentScore(0);
-  };
-
-  const handleGameEnd = (finalScore) => {
-    setCurrentScore(finalScore);
-    setScreenState('gameover');
-    playSound('gameover');
-    
-    // Simple mock logic for thresholds
-    const game = GAMES[selectedGameIndex];
-    const threshold = game.thresholds.find(t => finalScore >= t.score);
-    if (threshold) {
-      const coupon = {
-        id: `coupon-${Date.now()}`,
-        code: `HIKARI-${game.code}-${threshold.score}-${Math.random().toString(36).substr(2,4).toUpperCase()}`,
-        rewardDescription: threshold.reward
-      };
-      setEarnedCoupon(coupon);
-      setCoupons(prev => [...prev, coupon]);
-    }
-  };
-
+  // Handle controller input
   const handleButtonPress = (button) => {
-    playSound('button');
-    if (button === 'b' && screenState === 'carousel') {
-      onClose?.();
-    } else if (button === 'a' && screenState === 'carousel') {
-      handleStartGame();
-    } else if (button === 'left') {
-      setSelectedGameIndex(prev => Math.max(0, prev - 1));
-    } else if (button === 'right') {
-      setSelectedGameIndex(prev => Math.min(GAMES.length - 1, prev + 1));
+    if (!currentGame) return;
+    
+    // Send to game iframe
+    gameFrameRef.current?.contentWindow?.postMessage({
+      type: 'BUTTON_PRESS',
+      button
+    }, '*');
+
+    // Handle system buttons
+    switch(button) {
+      case BUTTONS.START:
+        setIsPaused(!isPaused);
+        break;
+      case BUTTONS.MENU:
+        onClose?.();
+        break;
+      case BUTTONS.SELECT:
+        // Back to selector confirmation
+        if (window.confirm('Go back to Game Selector?')) {
+          setCurrentGame(null);
+          setShowSelector(true);
+        }
+        break;
     }
   };
 
-  const renderScreen = () => {
-    switch (screenState) {
-      case 'carousel':
-        return (
-          <GameCarousel
-            games={GAMES}
-            selectedIndex={selectedGameIndex}
-            userScores={userScores}
-            onSelect={handleGameSelect}
-            onStart={handleStartGame}
+  const launchGame = (game) => {
+    setCurrentGame(game);
+    setShowSelector(false);
+    setIsPaused(false);
+  };
+
+  // Boot screen
+  if (isBooting) {
+    return (
+      <div className="hikariboy-boot">
+        <div className="boot-backlight"></div>
+        <div className="boot-logo">
+          <span className="pixel-text">HIKARIBOY</span>
+        </div>
+        <div className="boot-tagline">Food coming. Game on.</div>
+      </div>
+    );
+  }
+
+  // Game selector carousel
+  if (showSelector) {
+    return (
+      <div className="hikariboy-selector">
+        <GameSelector onSelect={launchGame} onClose={onClose} />
+      </div>
+    );
+  }
+
+  // Main emulator with game
+  return (
+    <div className="hikariboy-emulator" style={{ '--controller-color': controllerColor }}>
+      {/* Game Screen */}
+      <div className="game-screen">
+        {currentGame && (
+          <iframe
+            ref={gameFrameRef}
+            src={currentGame.url}
+            title={currentGame.name}
+            className="game-frame"
+            sandbox="allow-scripts allow-same-origin"
           />
-        );
-      case 'playing':
-        return (
-          <GameScreen
-            game={GAMES[selectedGameIndex]}
-            onGameEnd={handleGameEnd}
-            onPause={() => setScreenState('carousel')}
-          />
-        );
-      case 'gameover':
-        return (
-          <div className="gameover-screen">
-            <div className="gameover-title">GAME OVER</div>
-            <div className="final-score">{currentScore}</div>
-            {earnedCoupon && (
-              <div className="coupon-earned">
-                <div className="coupon-badge">🎁 COUPON!</div>
-                <div className="coupon-reward">{earnedCoupon.rewardDescription}</div>
-              </div>
-            )}
-            <button onClick={() => setScreenState('carousel')}>CONTINUE</button>
+        )}
+        
+        {/* Pause Overlay */}
+        {isPaused && (
+          <div className="pause-overlay">
+            <div className="pause-icon">II</div>
+            <div className="pause-title">{currentGame?.name}</div>
+            <div className="pause-options">
+              <button onClick={() => setIsPaused(false)}>Resume</button>
+              <button>Save State</button>
+              <button>Load State</button>
+            </div>
           </div>
-        );
-      case 'rewards':
-        return (
-          <RewardsScreen
-            coupons={coupons}
-            onRedeem={(c) => { onCouponRedeemed?.(c); setScreenState('carousel'); }}
-            onBack={() => setScreenState('carousel')}
-          />
-        );
-      default: return null;
+        )}
+
+        {/* Food Ready Notification */}
+        {foodReady && (
+          <div className="food-ready-banner">
+            🍔 Your food is ready!
+          </div>
+        )}
+      </div>
+
+      {/* Purple Controller */}
+      <div className="controller" style={{ backgroundColor: controllerColor }}>
+        {/* L/R Shoulder buttons */}
+        <div className="shoulder-buttons">
+          <div className="shoulder-l">L</div>
+          <div className="delta-brand">HIKARIBOY</div>
+          <div className="shoulder-r">R</div>
+        </div>
+
+        {/* Main controls row */}
+        <div className="controls-row">
+          {/* D-Pad */}
+          <div className="dpad">
+            <button 
+              className="dpad-btn dpad-up"
+              onTouchStart={() => handleButtonPress(BUTTONS.DPAD_UP)}
+              onMouseDown={() => handleButtonPress(BUTTONS.DPAD_UP)}
+            >
+              ▲
+            </button>
+            <button 
+              className="dpad-btn dpad-left"
+              onTouchStart={() => handleButtonPress(BUTTONS.DPAD_LEFT)}
+              onMouseDown={() => handleButtonPress(BUTTONS.DPAD_LEFT)}
+            >
+              ◀
+            </button>
+            <div className="dpad-center"></div>
+            <button 
+              className="dpad-btn dpad-right"
+              onTouchStart={() => handleButtonPress(BUTTONS.DPAD_RIGHT)}
+              onMouseDown={() => handleButtonPress(BUTTONS.DPAD_RIGHT)}
+            >
+              ▶
+            </button>
+            <button 
+              className="dpad-btn dpad-down"
+              onTouchStart={() => handleButtonPress(BUTTONS.DPAD_DOWN)}
+              onMouseDown={() => handleButtonPress(BUTTONS.DPAD_DOWN)}
+            >
+              ▼
+            </button>
+          </div>
+
+          {/* A/B Buttons */}
+          <div className="action-buttons">
+            <button 
+              className="btn-b"
+              onTouchStart={() => handleButtonPress(BUTTONS.B)}
+              onMouseDown={() => handleButtonPress(BUTTONS.B)}
+            >
+              B
+            </button>
+            <button 
+              className="btn-a"
+              onTouchStart={() => handleButtonPress(BUTTONS.A)}
+              onMouseDown={() => handleButtonPress(BUTTONS.A)}
+            >
+              A
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom row: Menu, Select, Start */}
+        <div className="system-buttons">
+          <button 
+            className="sys-btn menu-btn"
+            onClick={() => handleButtonPress(BUTTONS.MENU)}
+          >
+            MENU
+          </button>
+          <button 
+            className="sys-btn select-btn"
+            onClick={() => handleButtonPress(BUTTONS.SELECT)}
+          >
+            SELECT
+          </button>
+          <button 
+            className="sys-btn start-btn"
+            onClick={() => handleButtonPress(BUTTONS.START)}
+          >
+            START
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Game Selector Component
+function GameSelector({ onSelect, onClose }) {
+  const games = [
+    // Placeholder - will be populated by swarm
+    { id: 1, name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
+    { id: 2, name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
+    { id: 3, name: 'Pizza Catch', cover: '/games/pizza-catch/cover.png', url: '/games/pizza-catch/index.html' },
+    // ... more from swarm
+  ];
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const scroll = (direction) => {
+    if (direction === 'left') {
+      setSelectedIndex(prev => prev > 0 ? prev - 1 : games.length - 1);
+    } else {
+      setSelectedIndex(prev => prev < games.length - 1 ? prev + 1 : 0);
     }
   };
 
   return (
-    <div className="hikariboy-overlay" style={{ '--controller-color': controllerColor }}>
-      <div className="hikariboy-console">
-        <div className="console-header">
-          <div className="console-branding">
-            <span className="brand-dots">▓▓</span>
-            <span className="brand-name">HIKARIBOY</span>
-            <span className="brand-dots">▓▓</span>
-          </div>
-          <div className="console-indicators">
-            <span className="indicator" title="Battery">🔋</span>
-            <span className="indicator" onClick={() => setSoundEnabled(!soundEnabled)}>
-              {soundEnabled ? '🔊' : '🔇'}
-            </span>
-            <span className="indicator" onClick={() => setShowCRT(!showCRT)}>📺</span>
-          </div>
+    <div className="selector-container">
+      <h2>Select Game</h2>
+      <div className="carousel">
+        <button className="arrow left" onClick={() => scroll('left')}>◀</button>
+        
+        <div className="game-card">
+          <img src={games[selectedIndex].cover} alt={games[selectedIndex].name} />
+          <div className="game-title">{games[selectedIndex].name}</div>
         </div>
         
-        <div className="screen-bezel">
-          <div className={`screen-display ${showCRT ? 'crt-effect' : ''}`}>
-            {renderScreen()}
-            {showCRT && <div className="scanlines" />}
-          </div>
-        </div>
-        
-        <div className="control-labels">
-          <span className="label">🎮 SELECT</span>
-          <span className="label" onClick={handleStartGame}>START ▶️</span>
-          <span className="label" onClick={() => setScreenState('rewards')}>🎁 REWARDS</span>
-        </div>
-        
-        <div className="d-pad">
-          <button className="dpad-btn up" onClick={() => handleButtonPress('up')}>▲</button>
-          <button className="dpad-btn left" onClick={() => handleButtonPress('left')}>◀</button>
-          <div className="dpad-center">●</div>
-          <button className="dpad-btn right" onClick={() => handleButtonPress('right')}>▶</button>
-          <button className="dpad-btn down" onClick={() => handleButtonPress('down')}>▼</button>
-        </div>
-        
-        <div className="action-buttons">
-          <button className="action-btn btn-a" onClick={() => handleButtonPress('a')}>
-            <span className="btn-label">A</span>
-          </button>
-          <button className="action-btn btn-b" onClick={() => handleButtonPress('b')}>
-            <span className="btn-label">B</span>
-          </button>
-        </div>
-        
-        <div className="speaker-grille">
-          <span className="speaker-line">🔊</span>
-          {[...Array(5)].map((_, i) => <div key={i} className="grille-line" />)}
-        </div>
-        
-        <div className="console-footer">
-          <span>POWERED BY HIKARI OS</span>
-        </div>
+        <button className="arrow right" onClick={() => scroll('right')}>▶</button>
       </div>
       
-      <button className="hikariboy-close" onClick={onClose}>✕ CLOSE</button>
+      <div className="selector-controls">
+        <button className="launch-btn" onClick={() => onSelect(games[selectedIndex])}>
+          A Button: LAUNCH
+        </button>
+        <button className="back-btn" onClick={onClose}>
+          MENU: BACK
+        </button>
+      </div>
+      
+      <div className="game-count">
+        {selectedIndex + 1} / {games.length}
+      </div>
     </div>
   );
-};
+}
 
 export default HikariBoy;

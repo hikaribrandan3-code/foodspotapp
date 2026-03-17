@@ -9,6 +9,7 @@ import { getSession } from '../../utils/auth.js'
 const isInDemoMode = () => false; // STUB: Demo mode disabled for now
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import HikariBoy from '../../components/HikariBoy'
@@ -89,6 +90,9 @@ function Home({ config: configProp }) {
     useEffect(() => {
         // console.log('🕹️ ARCADE STATE:', { showArcade, isEditMode, isOwnerMode })
     }, [showArcade, isEditMode, isOwnerMode])
+
+    // 🎮 ARCADE STATE
+    const [showArcade, setShowArcade] = useState(false)
 
     // Detect 'Ver Tienda' edit intent from URL
     // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
@@ -540,10 +544,16 @@ function Home({ config: configProp }) {
 
     // Click handler that respects drag lock
     // 🛡️ SILO-AWARE: Prepend tenantSlug to path
-    const handleTileClick = useCallback((e, path) => {
+    const handleTileClick = useCallback((e, path, actionId) => {
         if (isDraggingRef.current || isEditMode) {
             e.preventDefault()
             e.stopPropagation()
+            return
+        }
+
+        // 🎮 ARCADE: Open HikariBoy modal instead of navigating
+        if (actionId === 'game' || actionId === 'arcade' || path === 'arcade') {
+            setShowArcade(true)
             return
         }
 
@@ -777,6 +787,7 @@ function Home({ config: configProp }) {
                         )
                     }
 
+                    // 🎮 ARCADE: Special handling - opens HikariBoy modal instead of navigating
                     if (actionId === 'game' || actionId === 'arcade') {
                         return (
                             <div

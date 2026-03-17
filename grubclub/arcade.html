@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FoodSpot Arcade</title>
+  <link rel="stylesheet" href="styles/arcade.css">
+</head>
+<body>
+  <!-- Category Filter -->
+  <div class="category-bar" id="category-bar">
+    <button class="category-pill active" data-category="all">
+      🎮 All
+    </button>
+    <button class="category-pill" data-category="bar">
+      🍺 Bar Games
+    </button>
+    <button class="category-pill" data-category="arcade">
+      🕹️ Arcade
+    </button>
+    <button class="category-pill" data-category="classic">
+      👾 Classics
+    </button>
+    <button class="category-pill" data-category="addictive">
+      🔥 Addictive
+    </button>
+  </div>
+
+  <!-- Game Scroll Container -->
+  <div class="game-scroll" id="game-container">
+    <!-- Games will be injected here by JavaScript -->
+    <div class="game-card loading-card">
+      Loading games...
+    </div>
+  </div>
+
+  <!-- Scroll Indicators -->
+  <div class="scroll-indicator" id="scroll-indicators">
+    <!-- Dots injected by JS -->
+  </div>
+
+  <script src="scripts/game-launcher.js"></script>
+  <script>
+    // Initialize launcher
+    const launcher = new GameLauncher('game-container', {
+      onGameStart: (game) => {
+        console.log('Starting:', game.title);
+        // Haptic feedback if available
+        if (navigator.vibrate) navigator.vibrate(50);
+      },
+      onGameExit: (game) => {
+        console.log('Exited:', game.title);
+        // Refresh high score display
+        updateHighScores();
+      },
+      onScoreUpdate: (gameId, score) => {
+        console.log('Score update:', gameId, score);
+      }
+    });
+
+    // Load and render games
+    async function init() {
+      await launcher.loadRegistry();
+      launcher.renderGameCards();
+      updateHighScores();
+      updateScrollIndicators();
+    }
+
+    // Category filter
+    document.getElementById('category-bar').addEventListener('click', (e) => {
+      if (e.target.classList.contains('category-pill')) {
+        document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+        e.target.classList.add('active');
+        launcher.filterByCategory(e.target.dataset.category);
+      }
+    });
+
+    // Update high score badges
+    function updateHighScores() {
+      if (!launcher.registry) return;
+      
+      launcher.registry.games.forEach(game => {
+        const score = launcher.getHighScore(game.id);
+        if (score > 0) {
+          const card = document.querySelector(`[data-game-id="${game.id}"]`);
+          if (card && !card.querySelector('.high-score')) {
+            const badge = document.createElement('div');
+            badge.className = 'high-score';
+            badge.textContent = score.toLocaleString();
+            card.querySelector('.game-cover').appendChild(badge);
+          }
+        }
+      });
+    }
+
+    // Scroll indicators
+    function updateScrollIndicators() {
+      const container = document.getElementById('game-container');
+      const dotsContainer = document.getElementById('scroll-indicators');
+      
+      if (!launcher.registry) return;
+      
+      dotsContainer.innerHTML = launcher.registry.games.map((_, i) => 
+        `\u003cdiv class="scroll-dot ${i === 0 ? 'active' : ''}" data-index="${i}"\u003e\u003c/div\u003e`
+      ).join('');
+      
+      // Update on scroll
+      container.addEventListener('scroll', () => {
+        const scrollTop = container.scrollTop;
+        const cardHeight = window.innerHeight;
+        const activeIndex = Math.round(scrollTop / cardHeight);
+        
+        document.querySelectorAll('.scroll-dot').forEach((dot, i) => {
+          dot.classList.toggle('active', i === activeIndex);
+        });
+      });
+    }
+
+    // Start
+    init();
+  </script>
+</body>
+</html>
