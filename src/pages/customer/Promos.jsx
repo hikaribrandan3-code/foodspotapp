@@ -1,80 +1,78 @@
-import { useState, useRef, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { useTenant } from '../../contexts/TenantContext.jsx'
-import PromosComingSoon from './PromosComingSoon.jsx'
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTenant } from '../../contexts/TenantContext';
 
-export default function Promos() {
-    const { tenantData } = useTenant()
-    const containerRef = useRef(null)
-    const [activeIndex, setActiveIndex] = useState(0)
-    const appConfig = tenantData?.app_config || {}
-    const flyers = appConfig?.promos?.items || []
-    
-    // Track scroll position for dot indicators
-    useEffect(() => {
-        const container = containerRef.current
-        if (!container || flyers.length <= 1) return
+const Promos = () => {
+  const navigate = useNavigate();
+  const { branding } = useTenant();
 
-        const handleScroll = () => {
-            const scrollTop = container.scrollTop
-            const height = container.clientHeight
-            const newIndex = Math.round(scrollTop / height)
-            setActiveIndex(newIndex)
+  // Handle the "Back to App" trigger
+  const goBack = () => {
+    // Force return to the main home screen
+    navigate(-1); 
+  };
+
+  return (
+    <div className="promos-vault flex flex-col items-center justify-center min-h-screen p-6 text-center">
+      
+      {/* 🛡️ HARDWARE BACK ARROW */}
+      <button 
+        onClick={goBack}
+        className="back-arrow-fixed absolute top-6 left-6 p-3 rounded-full flex items-center justify-center"
+        style={{ 
+          backgroundColor: 'rgba(0,0,0,0.05)',
+          border: '1px solid rgba(0,0,0,0.1)' 
+        }}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+
+      {/* 🎨 PROMO BRANDING */}
+      <div 
+        className="promo-icon-large mb-6 p-8 rounded-3xl"
+        style={{ backgroundColor: '#FF8C42' }} // Match the orange from your screenshot
+      >
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+          <line x1="7" y1="7" x2="7.01" y2="7"></line>
+        </svg>
+      </div>
+
+      <h1 className="text-3xl font-black tracking-tight mb-2">Próximamente</h1>
+      <p className="text-lg opacity-60 mb-8 max-w-xs">
+        Estamos cocinando las mejores promociones para vos. ¡Volvé pronto!
+      </p>
+
+      <button 
+        onClick={goBack}
+        className="w-full max-w-xs py-4 rounded-2xl font-bold text-white shadow-lg active:scale-95 transition-transform"
+        style={{ backgroundColor: 'var(--color-primary)' }}
+      >
+        Volver al Inicio
+      </button>
+
+      <style>{`
+        .promos-vault {
+          background-color: var(--color-background, #f8fafc);
+          contain: layout style;
+          animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        container.addEventListener('scroll', handleScroll)
-        return () => container.removeEventListener('scroll', handleScroll)
-    }, [flyers.length])
+        .back-arrow-fixed {
+          will-change: transform;
+          transition: background-color 0.2s;
+        }
 
-    const scrollToFlyer = (index) => {
-        const container = containerRef.current
-        if (!container) return
-        container.scrollTo({ top: index * container.clientHeight, behavior: 'smooth' })
-    }
-    
-    // Show coming soon if no promos configured
-    if (flyers.length === 0) {
-        return <PromosComingSoon />
-    }
-    return (
-        <div style={{ height: '100vh', background: '#000', position: 'relative', overflow: 'hidden' }}>
-            <div ref={containerRef} style={{ height: '100vh', overflowY: 'scroll', scrollSnapType: 'y mandatory', scrollBehavior: 'smooth', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-                {flyers.map((flyer, i) => (
-                    <div key={i} style={{ height: '100vh', width: '100vw', scrollSnapAlign: 'start', position: 'relative', overflow: 'hidden', background: '#0a0a0a' }}>
-                        <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-                            {flyer.image ? (
-                                <img src={flyer.image} alt={flyer.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center center' }} loading={i === 0 ? "eager" : "lazy"} />
-                            ) : (
-                                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <span style={{ color: '#fff', fontSize: 24, opacity: 0.5 }}>Sin imagen</span>
-                                </div>
-                            )}
-                        </div>
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 30%), linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 50%)', zIndex: 2, pointerEvents: 'none' }} />
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+};
 
-                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 24px 100px', zIndex: 10, color: '#fff' }}>
-                            <h2 style={{ fontSize: 'clamp(28px, 8vw, 42px)', fontWeight: 900, margin: '0 0 8px 0', lineHeight: 1.1, textShadow: '0 2px 20px rgba(0,0,0,0.5)', letterSpacing: '-0.02em' }}>
-                                {flyer.title || 'Promo Especial'}
-                            </h2>
-                            <p style={{ fontSize: 'clamp(16px, 4vw, 20px)', opacity: 0.9, margin: 0, fontWeight: 500, textShadow: '0 1px 10px rgba(0,0,0,0.5)' }}>
-                                {flyer.subtitle || ''}
-                            </p>
-                            {flyer.price && (
-                                <div style={{ marginTop: 16, fontSize: 'clamp(24px, 6vw, 32px)', fontWeight: 800, color: '#FFD700' }}>{flyer.price}</div>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {flyers.length > 1 && (
-                <div style={{ position: 'fixed', right: 16, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 100 }}>
-                    {flyers.map((_, i) => (
-                        <button key={i} onClick={() => scrollToFlyer(i)} style={{ width: 8, height: 8, borderRadius: '50%', border: 'none', background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.3)', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} aria-label={`Flyer ${i + 1}`} />
-                    ))}
-                </div>
-            )}
-            <style>{`div::-webkit-scrollbar { display: none; }`}</style>
-        </div>
-    )
-}
+export default Promos;
