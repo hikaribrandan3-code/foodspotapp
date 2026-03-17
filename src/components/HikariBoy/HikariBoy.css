@@ -346,6 +346,37 @@
   height: 30%;
 }
 
+/* Diagonal zones for 8-way D-pad */
+.dpad-diagonal {
+  position: absolute;
+  width: 20%;
+  height: 20%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 4;
+}
+
+.dpad-up-left {
+  top: 8%;
+  left: 8%;
+}
+
+.dpad-up-right {
+  top: 8%;
+  right: 8%;
+}
+
+.dpad-down-left {
+  bottom: 8%;
+  left: 8%;
+}
+
+.dpad-down-right {
+  bottom: 8%;
+  right: 8%;
+}
+
 /* ========== A/B BUTTONS ========== */
 .hb-action-btns {
   position: relative;

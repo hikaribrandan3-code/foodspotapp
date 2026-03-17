@@ -17,6 +17,10 @@ const BUTTONS = {
   DPAD_DOWN: 'dpad-down', 
   DPAD_LEFT: 'dpad-left',
   DPAD_RIGHT: 'dpad-right',
+  DPAD_UP_LEFT: 'dpad-up-left',
+  DPAD_UP_RIGHT: 'dpad-up-right',
+  DPAD_DOWN_LEFT: 'dpad-down-left',
+  DPAD_DOWN_RIGHT: 'dpad-down-right',
   A: 'a',
   B: 'b',
   SELECT: 'select',
@@ -202,36 +206,57 @@ export function HikariBoy({
         <div className="hb-shoulders">
           <button 
             className="shoulder-l"
-            onClick={() => handleButtonPress(BUTTONS.SELECT)}
+            onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.SELECT); }}
           >L</button>
           <button 
             className="shoulder-r"
-            onClick={() => handleButtonPress(BUTTONS.START)}
+            onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.START); }}
           >R</button>
         </div>
 
         {/* Main Controls */}
         <div className="hb-controls-main">
-          {/* D-Pad */}
+          {/* D-Pad with diagonal zones */}
           <div className="hb-dpad">
             <div className="dpad-cross">
               <button 
                 className="dpad-area dpad-up"
-                onClick={() => handleButtonPress(BUTTONS.DPAD_UP)}
+                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP); }}
               >▲</button>
               <button 
                 className="dpad-area dpad-left"
-                onClick={() => handleButtonPress(BUTTONS.DPAD_LEFT)}
+                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_LEFT); }}
               >◀</button>
               <div className="dpad-center-indent"></div>
               <button 
                 className="dpad-area dpad-right"
-                onClick={() => handleButtonPress(BUTTONS.DPAD_RIGHT)}
+                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_RIGHT); }}
               >▶</button>
               <button 
                 className="dpad-area dpad-down"
-                onClick={() => handleButtonPress(BUTTONS.DPAD_DOWN)}
+                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN); }}
               >▼</button>
+              {/* Diagonal zones - invisible but clickable */}
+              <button 
+                className="dpad-diagonal dpad-up-left"
+                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP_LEFT); }}
+                aria-label="up-left"
+              />
+              <button 
+                className="dpad-diagonal dpad-up-right"
+                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP_RIGHT); }}
+                aria-label="up-right"
+              />
+              <button 
+                className="dpad-diagonal dpad-down-left"
+                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN_LEFT); }}
+                aria-label="down-left"
+              />
+              <button 
+                className="dpad-diagonal dpad-down-right"
+                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN_RIGHT); }}
+                aria-label="down-right"
+              />
             </div>
           </div>
 
@@ -239,11 +264,11 @@ export function HikariBoy({
           <div className="hb-action-btns">
             <button 
               className="action-btn btn-b"
-              onClick={() => handleButtonPress(BUTTONS.B)}
+              onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.B); }}
             >B</button>
             <button 
               className="action-btn btn-a"
-              onClick={() => handleButtonPress(BUTTONS.A)}
+              onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.A); }}
             >A</button>
           </div>
         </div>
@@ -253,21 +278,21 @@ export function HikariBoy({
           <div className="sys-btn-wrap menu-wrap">
             <button 
               className="sys-circle menu-btn"
-              onClick={() => onClose?.()}
+              onTouchStart={(e) => { e.preventDefault(); onClose?.(); }}
             ></button>
             <span className="sys-label">MENU</span>
           </div>
           <div className="sys-btn-wrap select-wrap">
             <button 
               className="sys-circle select-btn"
-              onClick={() => handleButtonPress(BUTTONS.SELECT)}
+              onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.SELECT); }}
             ></button>
             <span className="sys-label">SELECT</span>
           </div>
           <div className="sys-btn-wrap start-wrap">
             <button 
               className="sys-circle start-btn"
-              onClick={() => handleButtonPress(BUTTONS.START)}
+              onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.START); }}
             ></button>
             <span className="sys-label">START</span>
           </div>
