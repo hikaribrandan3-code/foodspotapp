@@ -570,5 +570,21 @@ body.hikariboy-active .modal-overlay {
   .shoulder-l,
   .shoulder-r {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation; /* Faster touch response */
   }
+}
+
+/* ========== GENEROUS TOUCH PADDING FOR BOTTOM BUTTONS ========== */
+.sys-btn-wrap {
+  padding: 10px; /* Invisible hit area around small buttons */
+  margin: -10px; /* Compensate for padding */
+}
+
+/* ========== WILL-CHANGE FOR PERFORMANCE ========== */
+.action-btn,
+.sys-circle,
+.dpad-area,
+.shoulder-l,
+.shoulder-r {
+  will-change: transform;
 }
