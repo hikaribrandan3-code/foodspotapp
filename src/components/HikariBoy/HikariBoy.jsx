@@ -242,11 +242,22 @@ export function HikariBoy({
 // Game Selector Component
 function GameSelector({ onSelect, onClose }) {
   const games = [
-    // Placeholder - will be populated by swarm
-    { id: 1, name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
-    { id: 2, name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
-    { id: 3, name: 'Pizza Catch', cover: '/games/pizza-catch/cover.png', url: '/games/pizza-catch/index.html' },
-    // ... more from swarm
+    { id: '2048', name: '2048', cover: 'https://gabrielecirulli.github.io/2048/meta/apple-touch-icon.png', url: 'https://gabrielecirulli.github.io/2048/' },
+    { id: 'tetris', name: 'Tetris', cover: '/games/tetris/cover.jpg', url: 'https://jakesgordon.github.io/javascript-tetris/' },
+    { id: 'pacman', name: 'Pac-Man', cover: 'https://spite.github.io/pacman/icon.png', url: 'https://spite.github.io/pacman/' },
+    { id: 'snake', name: 'Snake', cover: '/games/snake/cover.png', url: '/games/snake/index.html' },
+    { id: 'tictactoe', name: 'Tic Tac Toe', cover: 'https://beumsk.github.io/Tic-Tac-Toe/icon.png', url: 'https://beumsk.github.io/Tic-Tac-Toe/' },
+    { id: 'connect-four', name: 'Connect Four', cover: 'https://kenrick95.github.io/connect-four/icon.png', url: 'https://kenrick95.github.io/connect-four/' },
+    { id: 'stack', name: 'Stack', cover: 'https://stevengoldberg.github.io/stack/icon.png', url: 'https://stevengoldberg.github.io/stack/' },
+    { id: 'doodle-jump', name: 'Doodle Jump', cover: '/games/doodle-jump/cover.png', url: '/games/doodle-jump/index.html' },
+    { id: 'asteroids', name: 'Asteroids', cover: '/games/asteroids/cover.png', url: '/games/asteroids/index.html' },
+    { id: 'breakout', name: 'Breakout', cover: '/games/breakout/cover.png', url: '/games/breakout/index.html' },
+    { id: 'minesweeper', name: 'Minesweeper', cover: '/games/minesweeper/cover.png', url: '/games/minesweeper/index.html' },
+    { id: 'sudoku', name: 'Sudoku', cover: '/games/sudoku/cover.png', url: '/games/sudoku/index.html' },
+    { id: 'wordle', name: 'Wordle', cover: '/games/wordle/cover.png', url: '/games/wordle/index.html' },
+    { id: 'chess', name: 'Chess', cover: '/games/chess/cover.png', url: '/games/chess/index.html' },
+    { id: 'slope', name: 'Slope', cover: '/games/slope/cover.png', url: '/games/slope/index.html' },
+    { id: 'color-switch', name: 'Color Switch', cover: '/games/color-switch/cover.png', url: '/games/color-switch/index.html' },
   ];
 
   const [selectedIndex, setSelectedIndex] = useState(0);
