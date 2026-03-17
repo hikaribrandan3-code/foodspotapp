@@ -52,7 +52,81 @@
 - **React Integration:** `GameHero.jsx` - Drop-in React component
 - **License File:** `LICENSE-ACKNOWLEDGMENTS.md` - MIT attributions
 
-### Game Catalog (24 Games)
+## 🎮 HikariBoy Emulator Shell (NEW - March 2026)
+**Status:** Production ready (`commit 749b67d`)
+
+### Delta 1:1 UI Implementation
+- **Style:** GBA-style emulator with deep purple controller (#6B0FCC)
+- **Screen:Controller ratio:** 55:45 (Delta accurate)
+- **Responsive:** CSS custom properties for iPhone Regular/Pro/Pro Max
+
+### Components
+| Component | Specification |
+|-----------|---------------|
+| L/R Shoulders | Light gray, 27% width, 4.5% height, flush top |
+| D-Pad | Cross piece with sunken center indent |
+| A/B Buttons | A larger (68px) & higher, B smaller (62px) & lower |
+| System Buttons | 28px circles, MENU isolated left, SELECT/START grouped right |
+| Mid Bar | Black with HIKARIBOY logo (22px height) |
+
+### Game Selector
+- **Display:** Single large cover image (200×280)
+- **Browse:** Left/Right D-pad arrows with pulse animation
+- **Launch:** A or START button
+- **Counter:** "1 / 16" position indicator
+- **Covers:** SVG placeholders (replace with PNG when available)
+
+### 16 Food Games
+| # | Game | Status | Exit Button |
+|---|------|--------|-------------|
+| 1 | Burger Stack | ✅ Complete | ✅ Yes |
+| 2 | Food Fight | ✅ Complete | ⚠️ SELECT only |
+| 3 | Pizza Slice | ✅ Complete | ⚠️ SELECT only |
+| 4 | Sushi Roll | ✅ Complete | ⚠️ SELECT only |
+| 5 | Fry Catch | ✅ Complete | ⚠️ SELECT only |
+| 6 | Taco Tower | ✅ Complete | ⚠️ SELECT only |
+| 7 | Condiment Blast | ✅ Complete | ⚠️ SELECT only |
+| 8 | Bubble Tea | ✅ Complete | ⚠️ SELECT only |
+| 9 | Donut Roll | ✅ Complete | ⚠️ SELECT only |
+| 10 | Hotdog Dash | ✅ Complete | ⚠️ SELECT only |
+| 11 | Coffee Pour | ✅ Complete | ⚠️ SELECT only |
+| 12 | Steak Flip | ✅ Complete | ⚠️ SELECT only |
+| 13 | Ice Cream | ✅ Complete | ⚠️ SELECT only |
+| 14 | Spice Invaders | ✅ Complete | ⚠️ SELECT only |
+| 15 | Fruit Slice | ✅ Complete | ⚠️ SELECT only |
+| 16 | Bento Box | ✅ Complete | ⚠️ SELECT only |
+
+### Controls
+| Button | Selector Mode | Game Mode |
+|--------|---------------|-----------|
+| D-Pad Left/Right | Browse games | In-game |
+| A / START | Launch game | Action / Start |
+| SELECT | - | Exit to selector |
+| MENU | Close HikariBoy | Close HikariBoy |
+| L Shoulder | - | SELECT function |
+| R Shoulder | - | START function |
+
+### Exit Methods
+1. **SELECT button:** Confirm dialog "Back to Game Selector?"
+2. **GAME_EXIT postMessage:** Games can call `exitGame()` to return
+3. **MENU button:** Closes entire HikariBoy shell
+
+### Leak Fix
+```css
+body.hikariboy-active .signup-container,
+body.hikariboy-active .auth-container { display: none !important; }
+```
+
+### Key Files
+- `src/components/HikariBoy/HikariBoy.jsx` - Main shell
+- `src/components/HikariBoy/HikariBoy.css` - Delta styling
+- `public/games/*/index.html` - 16 game files
+- `public/games/*/cover.svg` - Placeholder covers
+
+### Pending
+- Replace SVG covers with PNG assets from Mac
+- Add exit buttons to remaining 15 games (optional)
+
 
 #### 🔥 Addictive Games (10)
 | Game | Source | Status | URL |
