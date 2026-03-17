@@ -214,9 +214,11 @@ export function HikariBoy({
 
         {/* Main Controls: D-Pad (left) + A/B (right) */}
         <div className="hb-controls-main">
-          {/* D-Pad — Cross-Shaped with recessed plastic effect */}
+          {/* D-Pad — Cross-Shaped with black outline and center circle */}
           <div className="hb-dpad">
             <div className="dpad-cross">
+              {/* Center circle */}
+              <div className="dpad-center"></div>
               <button 
                 className="dpad-area dpad-up"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP); }}
