@@ -52,49 +52,49 @@
 - **React Integration:** `GameHero.jsx` - Drop-in React component
 - **License File:** `LICENSE-ACKNOWLEDGMENTS.md` - MIT attributions
 
-## 🎮 HikariBoy Emulator Shell (NEW - March 2026)
-**Status:** Production ready (`commit 749b67d`)
+## 🎮 HikariBoy Emulator Shell
+**Status:** Production ready (`commit ace6ad0` - March 2026)
 
-### Delta 1:1 UI Implementation
+### Delta 1:1 UI Implementation (Final Design)
 - **Style:** GBA-style emulator with deep purple controller (#6B0FCC)
 - **Screen:Controller ratio:** 55:45 (Delta accurate)
 - **Responsive:** CSS custom properties for iPhone Regular/Pro/Pro Max
+- **Reference:** Spice Invaders photo (IMG_0087) for final styling
 
 ### Components
 | Component | Specification |
 |-----------|---------------|
-| L/R Shoulders | Light gray, 27% width, 4.5% height, flush top |
-| D-Pad | Cross piece with sunken center indent |
-| A/B Buttons | A larger (68px) & higher, B smaller (62px) & lower |
-| System Buttons | 28px circles, MENU isolated left, SELECT/START grouped right |
-| Mid Bar | Black with HIKARIBOY logo (22px height) |
+| L/R Shoulders | Light gray (#D1D5DB), 27% width, 4.5% height, 3D gradient, flush top |
+| D-Pad | Cross piece only (no circular surround), light gray |
+| A/B Buttons | Same size, 3px black outline (#1a1a1a), light gray fill |
+| System Buttons | 28px circles, MENU far left, SELECT+START grouped right |
+| Mid Bar | Empty black spacer (22px height) |
+| Branding | "foodspot" between L/R shoulders, 20px, weight 425 |
+| Sparkle | ✦ bottom-right, shell color, 28px |
 
 ### Game Selector
-- **Display:** Single large cover image (200×280)
+- **Display:** Single large cover image (full screen)
 - **Browse:** Left/Right D-pad arrows with pulse animation
 - **Launch:** A or START button
-- **Counter:** "1 / 16" position indicator
+- **Counter:** "1 / 11" position indicator
 - **Covers:** SVG placeholders (replace with PNG when available)
 
-### 16 Food Games
+### 11 Food Games (Reduced from 16)
 | # | Game | Status | Exit Button |
 |---|------|--------|-------------|
-| 1 | Burger Stack | ✅ Complete | ✅ Yes |
-| 2 | Food Fight | ✅ Complete | ⚠️ SELECT only |
-| 3 | Pizza Slice | ✅ Complete | ⚠️ SELECT only |
-| 4 | Sushi Roll | ✅ Complete | ⚠️ SELECT only |
-| 5 | Fry Catch | ✅ Complete | ⚠️ SELECT only |
-| 6 | Taco Tower | ✅ Complete | ⚠️ SELECT only |
-| 7 | Condiment Blast | ✅ Complete | ⚠️ SELECT only |
-| 8 | Bubble Tea | ✅ Complete | ⚠️ SELECT only |
-| 9 | Donut Roll | ✅ Complete | ⚠️ SELECT only |
-| 10 | Hotdog Dash | ✅ Complete | ⚠️ SELECT only |
-| 11 | Coffee Pour | ✅ Complete | ⚠️ SELECT only |
-| 12 | Steak Flip | ✅ Complete | ⚠️ SELECT only |
-| 13 | Ice Cream | ✅ Complete | ⚠️ SELECT only |
-| 14 | Spice Invaders | ✅ Complete | ⚠️ SELECT only |
-| 15 | Fruit Slice | ✅ Complete | ⚠️ SELECT only |
-| 16 | Bento Box | ✅ Complete | ⚠️ SELECT only |
+| 1 | Burger Stack | ✅ Complete | ✅ SELECT |
+| 2 | Food Fight | ✅ Complete | ✅ SELECT |
+| 3 | Fry Catch | ✅ Complete | ✅ SELECT |
+| 4 | Taco Tower | ✅ Complete | ✅ SELECT |
+| 5 | Bubble Tea | ✅ Complete | ✅ SELECT |
+| 6 | Hotdog Dash | ✅ Complete | ✅ SELECT |
+| 7 | Coffee Pour | ✅ Complete | ✅ SELECT |
+| 8 | Steak Flip | ✅ Complete | ✅ SELECT |
+| 9 | Spice Invaders | ✅ Complete | ✅ SELECT |
+| 10 | Fruit Slice | ✅ Complete | ✅ SELECT |
+| 11 | Bento Box | ✅ Complete | ✅ SELECT |
+
+**Removed:** Pizza Slice, Sushi Roll, Condiment Blast, Donut Roll, Ice Cream (quality audit)
 
 ### Controls
 | Button | Selector Mode | Game Mode |
