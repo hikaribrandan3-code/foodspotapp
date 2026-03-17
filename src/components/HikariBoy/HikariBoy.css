@@ -245,16 +245,14 @@
 
 .shoulder-l {
   left: 0;
-  /* Curve follows the top frame */
-  border-radius: 20px 0 15px 0;
+  border-radius: 0 0 20px 0;
   padding-left: 18px;
   justify-content: flex-start;
 }
 
 .shoulder-r {
   right: 0;
-  /* Curve follows the top frame */
-  border-radius: 0 20px 0 15px;
+  border-radius: 0 0 0 20px;
   padding-right: 18px;
   justify-content: flex-end;
 }
@@ -484,8 +482,7 @@
   flex-shrink: 0;
   /* The Well Effect */
   background: rgba(0,0,0,0.15);
-  border-radius: 60px;
-  transform: rotate(-25deg);
+  border-radius: 50%; /* Revert to circular well */
   box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
   margin-right: -10px;
   z-index: 2;
@@ -494,7 +491,7 @@
 .action-btn {
   position: absolute;
   border-radius: 50%;
-  border: none;
+  border: 1px solid rgba(0,0,0,0.8); /* Minimal black outline */
   background: linear-gradient(
     155deg,
     #F8F8F8 0%,
