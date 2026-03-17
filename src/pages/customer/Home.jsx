@@ -123,6 +123,16 @@ function Home({ config: configProp }) {
     const actionsGridRef = useRef(null)
     const featuredGridRef = useRef(null)
 
+    // 🛡️ DRAG SAFETY: Auto-reset isDraggingRef if no dragState exists
+    // Prevents permanent deadlock from orphaned drag sessions (Arcade button fix)
+    useEffect(() => {
+        if (!dragState && isDraggingRef.current) {
+            console.warn('[DRAG SAFETY] Clearing orphaned isDraggingRef')
+            isDraggingRef.current = false
+            navigationBlockedRef.current = false
+        }
+    }, [dragState])
+
     // Get home config with defaults
     const homeConfig = config?.homeConfig || defaultConfig.homeConfig || {}
 
@@ -448,7 +458,9 @@ function Home({ config: configProp }) {
             document.addEventListener('mouseup', handleEnd, { capture: true })
 
             const blockClick = (e) => {
-                if (isDraggingRef.current) {
+                // 🛡️ Only block clicks if dragState exists AND isDraggingRef is true
+                // Prevents orphaned drag state from permanently blocking clicks
+                if (isDraggingRef.current && dragState) {
                     e.preventDefault()
                     e.stopPropagation()
                     e.stopImmediatePropagation()
@@ -722,11 +734,14 @@ function Home({ config: configProp }) {
                                 onTouchStart={(e) => handleTouchStart(e, 'actions', actionId, index, localPrimaryActions)}
                                 onTouchEnd={(e) => {
                                     handleTouchEndOrMove() // Always clear long press timer
-                                    // Robust trigger: ignore if dragging or in edit mode
+                                    // 🎮 ARCADE: Open immediately on tap (drag check removed)
+                                    if (actionId === 'game' || actionId === 'arcade') {
+                                        setShowArcade(true)
+                                        return
+                                    }
+                                    // Other tiles: ignore if dragging or in edit mode
                                     if (!isDraggingRef.current && !isEditMode) {
-                                        if (actionId === 'game' || actionId === 'arcade') {
-                                            setShowArcade(true)
-                                        }
+                                        handleTileClick(e, action.path)
                                     }
                                 }}
                                 onTouchMove={handleTouchEndOrMove}
