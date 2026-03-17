@@ -22,6 +22,8 @@ export const useKDSSync = (businessId) => {
         setLoading(false);
     }, [businessId]);
 
+    const fetchOrders = fetchInitialOrders;
+
     useEffect(() => {
         if (!businessId) return;
         fetchInitialOrders();
@@ -35,6 +37,11 @@ export const useKDSSync = (businessId) => {
                 table: 'orders',
                 filter: `business_id=eq.${businessId}`
             }, (payload) => {
+                // 🛡️ CAMTECH GUARD: Ignore updates when camera is active
+                if (window.__camTechActive) {
+                    console.log('[KDS] 🛡️ Ignoring realtime update (CamTech active)');
+                    return;
+                }
                 const { eventType, new: newRow, old: oldRow } = payload;
                 
                 setOrders(current => {
@@ -71,6 +78,9 @@ export const useKDSSync = (businessId) => {
     }, [businessId, fetchInitialOrders]);
 
     const transitionOrderState = useCallback(async (orderId, currentStatus, newStatus) => {
+        // 🛡️ CAMTECH GUARD: Prevent transitions while camera is active
+        if (window.__camTechActive) return;
+
         // 🛡️ 1. OPTIMISTIC UPDATE: Instantly update UI and set flag
         setOrders(current => current.map(o => 
             o.id === orderId ? { ...o, status: newStatus, isOptimistic: true } : o
@@ -103,5 +113,5 @@ export const useKDSSync = (businessId) => {
         }
     }, []);
 
-    return { orders, loading, transitionOrderState };
+    return { orders, loading, transitionOrderState, fetchOrders };
 };

@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useKDSSync } from '../../hooks/useKDSSync';
+import { useCamTechListener } from '../../hooks/useCamTech';
 
 const KDS_COLUMNS = [
     { id: 'paid', next: 'cooking', color: 'yellow' },
@@ -13,7 +14,20 @@ const KDS_COLUMNS = [
 export const StaffKDS = () => {
     const { businessId } = useTenant();
     const { t } = useLanguage();
-    const { orders, loading, transitionOrderState } = useKDSSync(businessId);
+    const [isPaused, setIsPaused] = React.useState(false);
+    const { orders, loading, transitionOrderState, fetchOrders } = useKDSSync(businessId);
+
+    useCamTechListener({
+        onPause: () => {
+            console.log('[KDS] ⏸️ Pausing live updates (Camera Active)');
+            setIsPaused(true);
+        },
+        onResume: () => {
+            console.log('[KDS] ▶️ Resuming live updates');
+            setIsPaused(false);
+            fetchOrders();
+        }
+    });
 
     const ordersByStatus = useMemo(() => {
         const grouped = { paid: [], cooking: [], ready: [] };

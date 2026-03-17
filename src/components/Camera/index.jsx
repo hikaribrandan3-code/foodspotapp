@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import CameraLayer from './CameraLayer.jsx'
 import EditorLayer from './EditorLayer.jsx'
 import SettingsSheet from './SettingsSheet.jsx'
+import { useCamTechBroadcaster } from '../../hooks/useCamTech'
 import './CameraLayer.css'
 import './EditorLayer.css'
 
@@ -15,6 +16,7 @@ export const VERSION = 'CamTech v2.2'
 
 function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
+    const { activateCamera, deactivateCamera } = useCamTechBroadcaster()
 
     const [mode, setMode] = useState('CAMERA')
     const [capturedImage, setCapturedImage] = useState(null)
@@ -42,6 +44,12 @@ function Camera({ neonContext = null, branding = null }) {
             }
         }
     }, [capturedImage])
+
+    // --- CAMTECH BLACK BOX: Global State Management ---
+    useEffect(() => {
+        activateCamera()
+        return () => deactivateCamera()
+    }, [activateCamera, deactivateCamera])
 
     const handleCapture = (captureResult) => {
         if (!captureResult) return
