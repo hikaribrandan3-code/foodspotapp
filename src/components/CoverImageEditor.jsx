@@ -128,7 +128,7 @@ function StaticBottomNav({ config = {} }) {
 
 const SNAP_THRESHOLD = 4
 
-function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = false, config, businessId, heroMode }) {
+function CoverImageEditor({ isOpen, onClose, onSave, initialData, config, businessId, heroMode }) {
     // ============================================
     // 1. STATE
     // ============================================
@@ -404,7 +404,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             console.error("Save failed:", err)
             setIsSaving(false)
         }
-    }, [originalFile, demoMode, businessId, image, onSave, onClose])
+    }, [originalFile, businessId, image, onSave, onClose])
 
     if (!isOpen) return null
 

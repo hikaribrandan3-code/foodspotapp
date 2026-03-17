@@ -116,7 +116,6 @@ export const defaultConfig = {
     },
 
     // System States
-    demoMode: false, // Only Super Admin can toggle
     maintenanceMode: false,
     maintenanceMessage: "Estamos en mantenimiento. ¡Volvemos pronto!",
     pauseOrders: false,
@@ -271,12 +270,6 @@ export const defaultConfig = {
 
 // Storage key
 export const CONFIG_STORAGE_KEY = "grub_config";
-
-// Demo branding storage key (must match demoSession.js)
-const ACTIVE_BRANDING_KEY = 'foodspot_active_branding';
-const DEMO_SESSION_KEY = 'demo_session'; // sessionStorage - best-effort accelerator
-const DEMO_INTENT_KEY = 'foodspot_demo_active'; // localStorage - source of truth for PWA
-
 // ============================================
 // CONFIG NORMALIZATION (FOUNDATIONAL SAFETY)
 // ============================================
@@ -301,7 +294,6 @@ export function normalizeConfig(config) {
         dividerPresetId: config.dividerPresetId || 'coffee-beans',
 
         // === BOOLEANS (explicit false defaults) ===
-        demoMode: config.demoMode ?? false,
         maintenanceMode: config.maintenanceMode ?? false,
         pauseOrders: config.pauseOrders ?? false,
 
@@ -424,28 +416,6 @@ export function normalizeConfig(config) {
         featuredPhotos: Array.isArray(config.featuredPhotos) ? config.featuredPhotos : defaultConfig.featuredPhotos,
     };
 }
-
-// Helper: Check if in demo mode (localStorage first, then sessionStorage)
-function isDemoModeActive() {
-    // Check localStorage first (source of truth for PWA)
-    try {
-        const intent = localStorage.getItem(DEMO_INTENT_KEY);
-        if (intent) {
-            const parsed = JSON.parse(intent);
-            if (parsed.active && Date.now() < parsed.expiresAt) {
-                return true;
-            }
-            // Expired - clean up
-            localStorage.removeItem(DEMO_INTENT_KEY);
-        }
-    } catch (e) {
-        // Ignore parse errors
-    }
-
-    // Fallback to sessionStorage
-    return !!sessionStorage.getItem(DEMO_SESSION_KEY);
-}
-
 // Get current config from storage or return default
 // In demo mode, also merges active demo branding
 export function getConfig() {

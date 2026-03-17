@@ -38,7 +38,7 @@ const sanitizeMenu = (menuData) => {
     return cleanMenu
 }
 
-function MenuManager({ config: configProp, demoMode = false }) {
+function MenuManager({ config: configProp }) {
     const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
@@ -274,7 +274,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const handleLogout = async () => {
         await supabase.auth.signOut()
         clearAuth()
-        window.location.href = demoMode ? '/' : `/${tenantSlug}`
+        window.location.href = `/${tenantSlug}`
     }
 
     // --- 🛡️ SAFE-SYNC: Sync Logic (Final Boss Fix) ---
@@ -867,7 +867,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
-                title={demoMode ? "Demo Menú" : "Menú"}
+                title="Menú"
                 onLogout={handleLogout}
             />
 
@@ -1705,7 +1705,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
             {/* Backend Navigation */}
             <BackendNav
-                role={demoMode ? 'demo' : 'owner'}
+                role="owner"
                 useRoutes={true}
             />
             {/* SAVE SUCCESS TOAST */}

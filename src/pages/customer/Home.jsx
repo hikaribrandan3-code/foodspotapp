@@ -5,8 +5,6 @@ import { defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appCon
 import { supabase } from '../../lib/supabaseClient'
 // 🛡️ CLOUD-ONLY: getMenu removed (Anti-Gravity V3.0)
 import { getSession } from '../../utils/auth.js'
-// import { isInDemoMode } from '../../utils/demoSession.js' // REMOVED: File deleted
-const isInDemoMode = () => false; // STUB: Demo mode disabled for now
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
@@ -65,7 +63,6 @@ function Home({ config: configProp }) {
     const [isOwnerMode, setIsOwnerMode] = useState(
         session?.role === 'superadmin' ||
         session?.role === 'owner' ||
-        isInDemoMode() ||
         localStorage.getItem('foodspot_owner_mode') === 'true'
     )
 
@@ -785,28 +782,6 @@ function Home({ config: configProp }) {
                 })}
 
                 {/* Role Badges - Centered in Grid */}
-                {isInDemoMode() && session?.role !== 'superadmin' && session?.role !== 'owner' && (
-                    <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        zIndex: 10,
-                        background: '#F59E0B',
-                        color: '#FFFFFF',
-                        padding: '2px 8px',
-                        borderRadius: 12,
-                        fontWeight: 700,
-                        fontSize: 9,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        pointerEvents: 'none',
-                        letterSpacing: 0.5,
-                        whiteSpace: 'nowrap'
-                    }}>
-                        DEMO
-                    </div>
-                )}
-
                 {session?.role === 'superadmin' && (
                     <div style={{
                         position: 'absolute',

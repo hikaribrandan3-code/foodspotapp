@@ -15,7 +15,7 @@ import { useLanguage } from '../../contexts/LanguageContext.jsx'
  * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
  * Payment gate logic MUST use canAdvanceOrder() from orderStateGuard.js.
  */
-function DeliveryManager({ config: configProp, demoMode = false }) {
+function DeliveryManager({ config: configProp }) {
     const config = configProp || {};
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
@@ -25,7 +25,6 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
 
     // NOTE: Auth check removed - ProtectedRoute handles authentication
-    // demoMode components bypass ProtectedRoute entirely via separate routes
 
     // Poll for order updates
     useEffect(() => {
@@ -39,7 +38,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const handleLogout = async () => {
         await supabase.auth.signOut()
         clearAuth()
-        window.location.href = demoMode ? '/' : `/${tenantSlug}`
+        window.location.href = `/${tenantSlug}`
     }
 
     // Helper for status info (reusing Staff logic)
@@ -120,7 +119,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         }))
     ]
 
-    const effectiveOrders = demoMode ? demoOrdersData : orders
+    const effectiveOrders = orders
 
     // Filter for active vs completed delivery orders
     const deliveryOrders = effectiveOrders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
@@ -132,7 +131,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F9FAFB' }}>
             <BackendHeader
-                title={demoMode ? t('demo_orders') : t('deliveries')}
+                title={t('deliveries')}
                 onLogout={handleLogout}
             />
 
@@ -329,46 +328,6 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                     })
                 )}
 
-                {/* DEMO ONLY: History Section to match Summary Stats */}
-                {demoMode && completedOrders.length > 0 && (
-                    <div style={{ marginTop: 32 }}>
-                        <h3 style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 12, textTransform: 'uppercase' }}>
-                            {t('today_history_demo')}
-                        </h3>
-                        {completedOrders.map(order => (
-                            <div key={order.id} style={{
-                                background: 'white',
-                                borderRadius: 10,
-                                border: '1px solid #E5E7EB',
-                                padding: 12,
-                                marginBottom: 10,
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                opacity: 0.7
-                            }}>
-                                <div>
-                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{order.customerName}</div>
-                                    <div style={{ fontSize: 12, color: '#6B7280' }}>
-                                        {order.items.length} items · ${order.total.toLocaleString()}
-                                    </div>
-                                </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <span style={{
-                                        fontSize: 11,
-                                        background: '#F1F5F9',
-                                        color: '#64748B',
-                                        padding: '2px 8px',
-                                        borderRadius: 12
-                                    }}>
-                                        {t('delivered_status')}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
                 {/* Today's delivery summary */}
                 <div style={{ textAlign: 'center', marginTop: 24, color: '#9CA3AF', fontSize: 13 }}>
                     <p>{t('processed_today')}<strong style={{ color: '#F97316' }}>{todayDeliveries}</strong></p>
@@ -377,7 +336,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
             {/* Backend Navigation */}
             <BackendNav
-                role={demoMode ? 'demo' : 'owner'}
+                role="owner"
                 useRoutes={true}
             />
         </div>

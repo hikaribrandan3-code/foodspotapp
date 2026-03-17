@@ -68,8 +68,6 @@ export const STORAGE_KEYS = {
     ORDERS: "orders",
     REWARDS: "rewards",
     ANALYTICS: "analytics",
-    DEMO_MODE: "demo_mode",
-    DEMO_DATA: "demo_data",
     CURRENT_ORDER: "current_order",
     AUTH: "auth",
 };
@@ -311,36 +309,6 @@ export function clearAllData() {
     // Also clear date-based keys
     removeItem("last_order_date");
     removeItem("order_counter");
-    return true;
-}
-
-// Demo mode - checks multiple sources for PWA compatibility
-// 1. sessionStorage (best-effort accelerator)
-// 2. localStorage demo intent (source of truth for PWA)
-// 3. localStorage active branding (fallback - implies demo was applied)
-export function isDemoMode() {
-    return Boolean(
-        sessionStorage.getItem('demo_session') ||
-        localStorage.getItem('foodspot_demo_active') ||
-        localStorage.getItem('foodspot_active_branding')
-    );
-}
-
-export function setDemoMode(enabled) {
-    return setItem(STORAGE_KEYS.DEMO_MODE, enabled);
-}
-
-export function getDemoData() {
-    return getItem(STORAGE_KEYS.DEMO_DATA) || null;
-}
-
-export function saveDemoData(data) {
-    return setItem(STORAGE_KEYS.DEMO_DATA, data);
-}
-
-export function clearDemoData() {
-    removeItem(STORAGE_KEYS.DEMO_DATA);
-    removeItem(STORAGE_KEYS.DEMO_MODE);
     return true;
 }
 
