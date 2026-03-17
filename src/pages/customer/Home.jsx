@@ -47,7 +47,8 @@ function Home({ config: configProp }) {
     // 🛡️ CLOUD-ONLY: Local menu removed. Using tenantData exclusively.
 
     // 🌉 THE DATA BRIDGE: Connect TenantContext to existing config-based logic
-    const { branding, tenantData, loading, slug: tenantSlug, businessId, refreshTenant } = useTenant()
+    const { tenantData, loading, businessId, refreshTenantData: refreshTenant } = useTenant()
+    const tenantSlug = tenantData?.slug
     const { lang, t } = useLanguage()
 
     // 🌉 BRIDGE: Use centralized config normalizer (Phase 2 Alignment)
@@ -542,6 +543,8 @@ function Home({ config: configProp }) {
     // Click handler that respects drag lock
     // 🛡️ SILO-AWARE: Prepend tenantSlug to path
     const handleTileClick = useCallback((e, path, actionId) => {
+        // console.log('🖱️ TILE CLICK:', { actionId, path, tenantSlug, isDragging: isDraggingRef.current, isEditMode })
+        
         if (isDraggingRef.current || isEditMode) {
             e.preventDefault()
             e.stopPropagation()
@@ -556,11 +559,12 @@ function Home({ config: configProp }) {
 
         // 🛡️ SILO GUARD: Prevent navigation if slug is undefined or loading
         if (!tenantSlug) {
-            // console.error('[SILO GUARD] Navigation blocked - tenantSlug is undefined')
+            console.error('[SILO GUARD] Navigation blocked - tenantSlug is undefined. Check TenantContext hydration.')
             return
         }
 
         // Navigate with tenant-scoped path
+        // console.log(`🚀 NAVIGATING to: /${tenantSlug}/${path}`)
         navigate(`/${tenantSlug}/${path}`)
     }, [navigate, isEditMode, tenantSlug])
 
