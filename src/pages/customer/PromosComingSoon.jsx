@@ -1,75 +1,53 @@
 /**
  * PromosComingSoon.jsx
- * Modern placeholder for Promos tab pre-launch
- * Dark theme with purple accents, animated elements
+ * Simple placeholder for Promos tab pre-launch
+ * Clean "Coming Soon" message - May 2026
  */
 
 import React from 'react';
-import './PromosComingSoon.css';
 
 export default function PromosComingSoon() {
   return (
-    <div className="promos-coming-soon">
-      {/* Background gradient mesh */}
-      <div className="pcs-bg-mesh">
-        <div className="mesh-blob blob-1"></div>
-        <div className="mesh-blob blob-2"></div>
-        <div className="mesh-blob blob-3"></div>
+    <div style={{
+      height: '100vh',
+      background: '#0a0a0a',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      color: '#fff',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      textAlign: 'center',
+      padding: '20px'
+    }}>
+      {/* Simple Coming Soon Message */}
+      <div style={{
+        fontSize: 'clamp(32px, 10vw, 56px)',
+        fontWeight: 800,
+        letterSpacing: '-0.02em',
+        marginBottom: '16px'
+      }}>
+        Coming Soon
       </div>
-
-      {/* Content */}
-      <div className="pcs-content">
-        {/* Icon */}
-        <div className="pcs-icon-wrap">
-          <span className="pcs-icon">🎉</span>
-          <div className="icon-glow"></div>
-        </div>
-
-        {/* Title */}
-        <h1 className="pcs-title">
-          <span className="title-line">Próximamente</span>
-          <span className="title-sub">Something Big is Cooking</span>
-        </h1>
-
-        {/* Description */}
-        <p className="pcs-desc">
-          Eventos exclusivos, cover gratis, y promos que no vas a querer perderte.
-        </p>
-
-        {/* Feature preview cards */}
-        <div className="pcs-preview-grid">
-          <div className="preview-card">
-            <span className="preview-icon">🎟️</span>
-            <span className="preview-label">Event Tickets</span>
-          </div>
-          <div className="preview-card">
-            <span className="preview-icon">🆓</span>
-            <span className="preview-label">Free Cover</span>
-          </div>
-          <div className="preview-card">
-            <span className="preview-icon">🎁</span>
-            <span className="preview-label">Flash Deals</span>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="pcs-cta">
-          <span className="cta-badge">
-            <span className="badge-dot"></span>
-            Launching Q2 2026
-          </span>
-        </div>
-
-        {/* Decorative elements */}
-        <div className="pcs-decoration">
-          <div className="decoration-line"></div>
-          <span className="decoration-text">FoodSpot Events</span>
-          <div className="decoration-line"></div>
-        </div>
+      
+      <div style={{
+        fontSize: 'clamp(18px, 5vw, 28px)',
+        fontWeight: 600,
+        color: '#888',
+        marginBottom: '8px'
+      }}>
+        May 2026
       </div>
-
-      {/* Noise texture overlay */}
-      <div className="pcs-noise"></div>
+      
+      <div style={{
+        fontSize: '14px',
+        color: '#555',
+        marginTop: '32px',
+        maxWidth: '280px',
+        lineHeight: 1.5
+      }}>
+        Exclusive events, free cover & deals you won't want to miss
+      </div>
     </div>
   );
 }

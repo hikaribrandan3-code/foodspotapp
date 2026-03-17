@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "platform": "hikariboy",
+  "totalGames": 15,
+  "categories": [
+    {
+      "id": "food",
+      "name": "Food Games",
+      "games": [
+        { "id": "burger-stack", "name": "Burger Stack", "type": "canvas", "size": "~15KB" },
+        { "id": "food-fight", "name": "Food Fight", "type": "canvas", "size": "~15KB" },
+        { "id": "fry-catch", "name": "Fry Catch", "type": "canvas", "size": "~15KB" },
+        { "id": "taco-tower", "name": "Taco Tower", "type": "canvas", "size": "~15KB" },
+        { "id": "bubble-tea", "name": "Bubble Tea", "type": "canvas", "size": "~15KB" },
+        { "id": "hotdog-dash", "name": "Hotdog Dash", "type": "canvas", "size": "~15KB" },
+        { "id": "coffee-pour", "name": "Coffee Pour", "type": "canvas", "size": "~15KB" },
+        { "id": "steak-flip", "name": "Steak Flip", "type": "canvas", "size": "~15KB" },
+        { "id": "spice-invaders", "name": "Spice Invaders", "type": "canvas", "size": "~15KB" },
+        { "id": "fruit-slice", "name": "Fruit Slice", "type": "canvas", "size": "~15KB" },
+        { "id": "bento-box", "name": "Bento Box", "type": "canvas", "size": "~15KB" }
+      ]
+    },
+    {
+      "id": "homebrew",
+      "name": "GBA Homebrew",
+      "games": [
+        {
+          "id": "luminesweeper",
+          "name": "Luminesweeper",
+          "type": "gba",
+          "rom": "luminesweeper.gba",
+          "size": "128KB",
+          "music": "XM/MOD",
+          "genre": "Puzzle",
+          "controls": { "dpad": "Move", "a": "Place", "b": "Flag", "select": "Exit" }
+        },
+        {
+          "id": "bulletgba",
+          "name": "BulletGBA",
+          "type": "gba",
+          "rom": "bulletgba.gba",
+          "size": "64KB",
+          "music": "Chiptune",
+          "genre": "Bullet Hell",
+          "controls": { "dpad": "Move", "a": "Shoot", "b": "Bomb", "l": "Slow", "r": "Focus", "select": "Exit" }
+        },
+        {
+          "id": "gorf",
+          "name": "Gorf",
+          "type": "gba",
+          "rom": "gorf.gba",
+          "size": "128KB",
+          "music": "Speech + BGM",
+          "genre": "Arcade",
+          "controls": { "dpad": "Move", "a": "Fire", "select": "Exit" }
+        },
+        {
+          "id": "ucity",
+          "name": "μCity",
+          "type": "gb",
+          "rom": "ucity.gb",
+          "size": "64KB",
+          "music": "GBT Player",
+          "genre": "Simulation",
+          "controls": { "dpad": "Cursor", "a": "Build", "b": "Demolish", "select": "Menu", "start": "Exit" }
+        }
+      ]
+    }
+  ],
+  "emulator": {
+    "core": "@thenick775/mgba-wasm@2.4.1",
+    "buttonMap": {
+      "a": 0, "b": 1, "select": 2, "start": 3,
+      "right": 4, "left": 5, "up": 6, "down": 7,
+      "r": 8, "l": 9
+    }
+  }
+}

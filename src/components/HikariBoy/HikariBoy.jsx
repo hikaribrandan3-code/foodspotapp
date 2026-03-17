@@ -25,10 +25,12 @@ const BUTTONS = {
   B: 'b',
   SELECT: 'select',
   START: 'start',
-  MENU: 'menu'
+  MENU: 'menu',
+  L: 'l',
+  R: 'r'
 };
 
-// 11 GAMES with cover.png paths (5 deleted: pizza-slice, sushi-roll, condiment-blast, donut-roll, ice-cream)
+// 15 GAMES with cover paths (11 food + 4 GBA homebrew)
 const GAMES = [
   { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
   { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
@@ -41,6 +43,11 @@ const GAMES = [
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
   { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
   { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', url: '/games/bento-box/index.html' },
+  // GBA Homebrew Games (with music)
+  { id: 'luminesweeper', name: 'Luminesweeper', cover: '/games/luminesweeper/cover.svg', url: '/games/luminesweeper/index.html' },
+  { id: 'bulletgba', name: 'BulletGBA', cover: '/games/bulletgba/cover.svg', url: '/games/bulletgba/index.html' },
+  { id: 'gorf', name: 'Gorf', cover: '/games/gorf/cover.svg', url: '/games/gorf/index.html' },
+  { id: 'ucity', name: 'μCity', cover: '/games/ucity/cover.svg', url: '/games/ucity/index.html' },
 ];
 
 export function HikariBoy({ 
@@ -203,11 +210,11 @@ export function HikariBoy({
         <div className="hb-shoulders">
           <button 
             className="shoulder-l"
-            onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.SELECT); }}
+            onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
           >L</button>
           <button 
             className="shoulder-r"
-            onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.START); }}
+            onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.R : BUTTONS.START); }}
           >R</button>
         </div>
 

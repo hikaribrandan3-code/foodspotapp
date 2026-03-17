@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gorf</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        body { 
+            background: #000510; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        #gameCanvas { 
+            image-rendering: pixelated;
+            box-shadow: 0 0 30px rgba(0,128,255,0.4);
+            max-width: 100%;
+            max-height: 70vh;
+        }
+        #demoScreen {
+            position: absolute;
+            width: 480px;
+            height: 320px;
+            background: #000510;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #00ff00;
+            text-align: center;
+            border: 2px solid #00ff00;
+        }
+        #demoScreen h1 {
+            font-size: 48px;
+            letter-spacing: 8px;
+            text-shadow: 0 0 15px rgba(0,255,0,0.8);
+            margin-bottom: 20px;
+        }
+        #demoScreen .line {
+            width: 200px;
+            height: 2px;
+            background: #00ff00;
+            margin: 10px 0;
+        }
+        #demoScreen .quote {
+            font-size: 10px;
+            margin: 15px 0;
+        }
+        #demoScreen .modes {
+            font-size: 11px;
+            color: #0a0;
+            margin-top: 20px;
+        }
+        #demoScreen .controls {
+            font-size: 11px;
+            color: #666;
+            margin-top: 15px;
+        }
+        #ui, #loading { display: none; }
+    </style>
+</head>
+<body>
+    <div id="demoScreen">
+        <h1>GORF</h1>
+        <div class="line"></div>
+        <div class="quote">"LONG LIVE THE GORFIAN EMPIRE"</div>
+        <div class="line"></div>
+        <div class="modes">5 ARCADE MODES • SPEECH SYNTH</div>
+        <div class="controls">A=FIRE • SELECT=EXIT</div>
+    </div>
+    
+    <div id="loading">LOADING...</div>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+
+<script type="module">
+import mGBA from 'https://cdn.jsdelivr.net/npm/@thenick775/mgba-wasm@2.4.1/dist/mgba-wasm.min.js';
+
+const canvas = document.getElementById('gameCanvas');
+const demoScreen = document.getElementById('demoScreen');
+const loading = document.getElementById('loading');
+let emulator = null;
+
+const BUTTONS = { A: 0, B: 1, SELECT: 2, START: 3, RIGHT: 4, LEFT: 5, UP: 6, DOWN: 7, R: 8, L: 9 };
+
+async function checkROM() {
+    try {
+        const response = await fetch('gorf.gba', { method: 'HEAD' });
+        if (response.ok) {
+            demoScreen.style.display = 'none';
+            loading.style.display = 'block';
+            initEmulator();
+        }
+    } catch (e) {
+        console.log('Demo mode: gorf.gba not found');
+    }
+}
+
+async function initEmulator() {
+    try {
+        const Module = await mGBA({ canvas });
+        await Module.FSInit();
+        const romData = await fetch('gorf.gba').then(r => r.arrayBuffer());
+        Module.FS.writeFile('/gorf.gba', new Uint8Array(romData));
+        Module.loadGame('/gorf.gba');
+        Module.run();
+        emulator = Module;
+        loading.style.display = 'none';
+    } catch (err) {
+        loading.innerHTML = `ERROR: ${err.message}`;
+    }
+}
+
+function exitGame() {
+    if (emulator) emulator.pause();
+    window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'gorf' }, '*');
+}
+
+window.addEventListener('message', (e) => {
+    switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            if (e.data.button === 'select') {
+                exitGame();
+                return;
+            }
+            if (!emulator) return;
+            switch(e.data.button) {
+                case 'dpad-up': emulator.buttonPress(BUTTONS.UP); break;
+                case 'dpad-down': emulator.buttonPress(BUTTONS.DOWN); break;
+                case 'dpad-left': emulator.buttonPress(BUTTONS.LEFT); break;
+                case 'dpad-right': emulator.buttonPress(BUTTONS.RIGHT); break;
+                case 'a': emulator.buttonPress(BUTTONS.A); break;
+                case 'b': emulator.buttonPress(BUTTONS.B); break;
+                case 'start': emulator.buttonPress(BUTTONS.START); break;
+            }
+            break;
+        case 'PAUSE': if (emulator) emulator.pause(); break;
+        case 'RESUME': if (emulator) emulator.resume(); break;
+    }
+});
+
+checkROM();
+</script>
+</body>
+</html>
