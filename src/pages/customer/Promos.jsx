@@ -1,32 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import PromosComingSoon from './PromosComingSoon.jsx'
 
 export default function Promos() {
     const { tenantData } = useTenant()
     const appConfig = tenantData?.app_config || {}
     const flyers = appConfig?.promos?.items || []
-    const containerRef = useRef(null)
-    const [activeIndex, setActiveIndex] = useState(0)
-
-    useEffect(() => {
-        const container = containerRef.current
-        if (!container) return
-        const handleScroll = () => setActiveIndex(Math.round(container.scrollTop / container.clientHeight))
-        container.addEventListener('scroll', handleScroll, { passive: true })
-        return () => container.removeEventListener('scroll', handleScroll)
-    }, [])
-    const scrollToFlyer = (index) => {
-        const container = containerRef.current
-        if (container) container.scrollTo({ top: index * container.clientHeight, behavior: 'smooth' })
-    }
+    
+    // Show coming soon if no promos configured
     if (flyers.length === 0) {
-        return (
-            <div style={{ height: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#666', gap: 16 }}>
-                <div style={{ fontSize: 48 }}>🍌</div>
-                <div style={{ fontSize: 18 }}>No hay promos activas</div>
-            </div>
-        )
+        return <PromosComingSoon />
     }
     return (
         <div style={{ height: '100vh', background: '#000', position: 'relative', overflow: 'hidden' }}>
