@@ -192,6 +192,13 @@ export function HikariBoy({
 
       {/* Controller (45%) — GRAPE PURPLE */}
       <div className="hb-controller">
+        <div className="hb-noise-overlay"></div>
+        
+        {/* ✦ BRANDING — Moved closer to screen */}
+        <div className="hb-branding-top">
+          <span className="hb-brand-text">foodspot</span>
+        </div>
+
         {/* Shoulder Buttons */}
         <div className="hb-shoulders">
           <button 
@@ -202,11 +209,6 @@ export function HikariBoy({
             className="shoulder-r"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.START); }}
           >R</button>
-        </div>
-
-        {/* ✦ BRANDING — Centered between shoulders and controls */}
-        <div className="hb-branding">
-          <span className="hb-brand-text">foodspot</span>
         </div>
 
         {/* Main Controls: D-Pad (left) + A/B (right) */}

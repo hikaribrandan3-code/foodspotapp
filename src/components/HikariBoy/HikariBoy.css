@@ -60,13 +60,13 @@
     --btn-scale: 1;
     --dpad-size: 150px;
     --sys-btn-size: 28px;
-    --action-a-size: 76px;
-    --action-b-size: 76px;
+    --action-a-size: 72px; /* Slightly larger than B */
+    --action-b-size: 68px;
     --shoulder-height: 32px;
     --controls-pad-x: 36px;
     --controls-pad-y: 12px;
-    --brand-font: 24px;
-    --brand-pad: 10px;
+    --brand-font: 22px;
+    --brand-pad: 4px;
     --sys-btn-bottom: 24px;
   }
 }
@@ -181,20 +181,31 @@
 
 /* ========== CONTROLLER BODY — GRAPE PURPLE ========== */
 .hb-controller {
-  flex: 0 0 50.6%; /* Reduced by 8% from 55% */
-  background: linear-gradient(
-    180deg,
-    #5B1F93 0%,
-    #6B2FA0 15%,
-    #7535B0 50%,
-    #8040C0 100%
+  flex: 0 0 50.6%;
+  background: radial-gradient(
+    circle at 50% 40%,
+    #7535B0 0%,
+    #6B2FA0 40%,
+    #5B1F93 100%
   );
   display: flex;
   flex-direction: column;
   position: relative;
   padding: 0;
   overflow: hidden;
-  min-height: 315px; /* Reduced from 340px */
+  min-height: 315px;
+  box-shadow: 
+    inset 0 10px 20px rgba(0,0,0,0.2),
+    inset 0 -5px 15px rgba(0,0,0,0.1);
+}
+
+.hb-noise-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08; /* ~1% gain effect */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3%3Ffilter id='noiseFilter'%3E%3FfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3/filter%3E%3rect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3/svg%3E");
+  z-index: 1;
 }
 
 /* ========== SHOULDER BUTTONS (L / R) — WIDER ========== */
@@ -203,52 +214,61 @@
   width: 100%;
   height: var(--shoulder-height);
   flex: 0 0 auto;
+  /* The Well Effect for shoulders */
+  background: rgba(0,0,0,0.2);
+  box-shadow: inset 0 3px 8px rgba(0,0,0,0.5);
+  display: flex;
 }
 
 .shoulder-l, .shoulder-r {
   position: absolute;
   top: 0;
   height: 100%;
-  width: 30%;
-  background: linear-gradient(180deg, #F0F0F0 0%, #DCDCDC 30%, #C8C8C8 100%);
+  width: 32%;
+  background: linear-gradient(180deg, #E0E0E0 0%, #D0D0D0 40%, #B0B0B0 100%);
   border: none;
-  color: #777;
-  font-size: 12px;
-  font-weight: 700;
+  color: #666;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
+  /* Floating above well */
   box-shadow:
-    inset 0 2px 4px rgba(255,255,255,0.8),
-    0 4px 10px rgba(0,0,0,0.4);
+    0 2px 5px rgba(0,0,0,0.3),
+    inset 0 1px 2px rgba(255,255,255,0.8);
   display: flex;
   align-items: center;
   letter-spacing: 1px;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  z-index: 2;
 }
 
 .shoulder-l {
   left: 0;
-  border-radius: 0 0 18px 0;
-  padding-left: 14px;
+  /* Curve follows the top frame */
+  border-radius: 20px 0 15px 0;
+  padding-left: 18px;
   justify-content: flex-start;
 }
 
 .shoulder-r {
   right: 0;
-  border-radius: 0 0 0 18px;
-  padding-right: 14px;
+  /* Curve follows the top frame */
+  border-radius: 0 20px 0 15px;
+  padding-right: 18px;
   justify-content: flex-end;
 }
 
-/* ========== BRANDING — AT THE JUNCTION ========== */
-/* This sits RIGHT below the shoulders, acting as a bridge */
-.hb-branding {
+/* ========== BRANDING — MOVED CLOSER TO SCREEN & DEBOSSED ========== */
+.hb-branding-top {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--brand-pad) 0;
-  margin-top: -10px; /* Move up 10px */
-  flex: 0 0 auto;
+  margin-top: 2px;
+  margin-bottom: -4px;
+  z-index: 2;
+  position: relative;
 }
 
 .hb-brand-text {
@@ -258,12 +278,11 @@
   color: #FFFFFF;
   letter-spacing: 3px;
   text-transform: lowercase;
-  text-shadow:
-    1px 1px 0 #000,
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    0 2px 6px rgba(0,0,0,0.4);
+  /* Debossed (stamped) effect */
+  text-shadow: 
+    0 1px 0 rgba(255,255,255,0.25), 
+    0 -1.5px 1px rgba(0,0,0,0.7);
+  opacity: 0.9;
   user-select: none;
 }
 
@@ -286,6 +305,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* The Well Effect */
+  background: rgba(0,0,0,0.15);
+  border-radius: 50%;
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+  padding: 8px;
+  z-index: 2;
 }
 
 .dpad-cross {
@@ -294,7 +319,7 @@
   height: 100%;
 }
 
-/* Horizontal arm — THICKER (38%) */
+/* Horizontal arm */
 .dpad-cross::before {
   content: '';
   position: absolute;
@@ -303,15 +328,16 @@
   transform: translateY(-50%);
   width: 100%;
   height: 38%;
-  background: linear-gradient(180deg, #F5F5F5 0%, #E0E0E0 35%, #C8C8C8 100%);
-  border-radius: 8px;
+  background: #999; /* Matte Grey */
+  border-radius: 6px;
+  /* Physical Travel / Edges */
   box-shadow:
-    inset 2px 3px 6px rgba(255,255,255,0.9),
-    inset -2px -3px 5px rgba(0,0,0,0.12),
-    0 6px 14px rgba(0,0,0,0.4);
+    inset 0 1px 1.5px rgba(255,255,255,0.4),
+    inset 0 -1px 1px rgba(0,0,0,0.3),
+    0 2px 5px rgba(0,0,0,0.4); /* Floating */
 }
 
-/* Vertical arm — THICKER (38%) */
+/* Vertical arm */
 .dpad-cross::after {
   content: '';
   position: absolute;
@@ -320,11 +346,14 @@
   transform: translateX(-50%);
   width: 38%;
   height: 100%;
-  background: linear-gradient(90deg, #F5F5F5 0%, #E0E0E0 35%, #C8C8C8 100%);
-  border-radius: 8px;
+  /* Matte Grey Material */
+  background: #999;
+  border-radius: 6px;
+  /* Physical Travel / Edges */
   box-shadow:
-    inset 3px 2px 6px rgba(255,255,255,0.9),
-    inset -3px -2px 5px rgba(0,0,0,0.12);
+    inset 1px 0 1.5px rgba(255,255,255,0.4),
+    inset -1px 0 1px rgba(0,0,0,0.3),
+    0 2px 5px rgba(0,0,0,0.4); /* Floating */
   z-index: 1;
 }
 
@@ -450,9 +479,16 @@
 /* Reference layout: A is top-right corner, B is center-low (between D-Pad & A) */
 .hb-action-btns {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 140px; /* Tightened for ergonomics */
+  height: 140px;
   flex-shrink: 0;
+  /* The Well Effect */
+  background: rgba(0,0,0,0.15);
+  border-radius: 60px;
+  transform: rotate(-25deg);
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+  margin-right: -10px;
+  z-index: 2;
 }
 
 .action-btn {
@@ -467,9 +503,9 @@
     #C8C8C8 100%
   );
   box-shadow:
-    0 6px 14px rgba(0,0,0,0.35),
-    inset 0 2px 4px rgba(255,255,255,0.95),
-    inset 0 -3px 3px rgba(0,0,0,0.06);
+    0 4px 8px rgba(0,0,0,0.4), /* Floating above well */
+    inset 0 1px 2px rgba(255,255,255,0.8),
+    inset 0 -2px 2px rgba(0,0,0,0.1);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 400;
   color: #777;
@@ -497,8 +533,8 @@
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(26px * var(--btn-scale));
-  bottom: 10px;
-  left: 25px;
+  bottom: 12px;
+  left: 12px; /* Tightened gap */
 }
 
 .hb-system-btns {
