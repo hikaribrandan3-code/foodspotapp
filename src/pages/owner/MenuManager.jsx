@@ -247,6 +247,37 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // 🛡️ VAULT-SEAL: Blob URL tracker for memory management
     const { createBlobUrl, revokeBlobUrl, revokeAllBlobUrls } = useBlobUrlTracker()
     
+    // 🚀 VAULT-SEAL: Thumbnail URL optimizer for backend menu manager
+    const getThumbUrl = (url, size = 80) => {
+        if (!url || url.startsWith('blob:')) return url
+        if (url.includes('unsplash.com')) {
+            return `${url.split('?')[0]}?w=${size}&q=60&fit=crop&format=webp`
+        }
+        const sep = url.includes('?') ? '&' : '?'
+        return `${url}${sep}width=${size}&quality=60&format=webp`
+    }
+    
+    // 🚀 Preload featured item thumbnails (priority)
+    useEffect(() => {
+        if (!activeFeaturedItems?.length) return
+        
+        const preloadUrls = activeFeaturedItems
+            .filter(slot => slot?.image && !slot.image.startsWith('blob:'))
+            .map(slot => getThumbUrl(slot.image, 200))
+            
+        if (preloadUrls.length === 0) return
+        
+        // Low priority preload
+        const schedulePrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 1))
+        schedulePrefetch(() => {
+            preloadUrls.forEach(url => {
+                const img = new Image()
+                img.fetchPriority = 'low'
+                img.src = url
+            })
+        }, { timeout: 2000 })
+    }, [activeFeaturedItems])
+    
     // 🛡️ Cleanup blob URLs on unmount
     useEffect(() => {
         return () => {
@@ -1177,7 +1208,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     className={!slot ? "empty-box" : ""}
                                     style={{
                                         aspectRatio: '1/1',
-                                        background: slot?.image ? `url(${slot.image}) center/cover` : '#F1F5F9',
+                                        background: '#F1F5F9',
                                         borderRadius: 10,
                                         border: '1px dashed #CBD5E1',
                                         display: 'flex',
@@ -1188,7 +1219,20 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         cursor: 'pointer',
                                         boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                     }}>
-                                    {!slot && (
+                                    {slot?.image ? (
+                                        <img 
+                                            src={getThumbUrl(slot.image, 200)} 
+                                            alt=""
+                                            loading="lazy"
+                                            decoding="async"
+                                            style={{ 
+                                                width: '100%', 
+                                                height: '100%', 
+                                                objectFit: 'cover',
+                                                animation: 'fadeIn 0.3s ease'
+                                            }} 
+                                        />
+                                    ) : (
                                         <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center', pointerEvents: 'none' }}>Editar</span>
                                     )}
                                 </div>
@@ -1469,7 +1513,19 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 }}
                                             >
                                                 {item.image ? (
-                                                    <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                                                    <img 
+                                                        src={getThumbUrl(item.image, 80)} 
+                                                        alt="" 
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        style={{ 
+                                                            width: '100%', 
+                                                            height: '100%', 
+                                                            objectFit: 'cover', 
+                                                            pointerEvents: 'none',
+                                                            animation: 'fadeIn 0.3s ease'
+                                                        }} 
+                                                    />
                                                 ) : (
                                                     <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
                                                 )}

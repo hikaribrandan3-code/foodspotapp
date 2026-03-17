@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+// 🚀 VAULT-SEAL: Thumbnail optimizer
+const getThumbUrl = (url, size = 80) => {
+    if (!url || url.startsWith('blob:')) return url
+    if (url.includes('unsplash.com')) {
+        return `${url.split('?')[0]}?w=${size}&q=60&fit=crop&format=webp`
+    }
+    const sep = url.includes('?') ? '&' : '?'
+    return `${url}${sep}width=${size}&quality=60&format=webp`
+}
+
 export default function CategoryList({
   categories,
   onToggleCategory,
@@ -302,25 +312,39 @@ export default function CategoryList({
                     borderBottom: '1px solid #F1F5F9'
                   }}
                 >
-                  {/* Item Image */}
+                  {/* Item Image - Lazy loaded thumbnail */}
                   <div
                     onClick={() => onEditItem(category.id, item)}
                     style={{
                       width: 48,
                       height: 48,
                       borderRadius: 8,
-                      background: item.image 
-                        ? `url(${item.image}) center/cover` 
-                        : '#F1F5F9',
+                      background: '#F1F5F9',
                       border: '1px dashed #CBD5E1',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      overflow: 'hidden'
                     }}
                   >
-                    {!item.image && <span style={{ fontSize: 16 }}>📷</span>}
+                    {item.image ? (
+                        <img 
+                            src={getThumbUrl(item.image, 80)}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                animation: 'fadeIn 0.3s ease'
+                            }}
+                        />
+                    ) : (
+                        <span style={{ fontSize: 16 }}>📷</span>
+                    )}
                   </div>
 
                   {/* Item Info */}
