@@ -109,9 +109,10 @@ export function HikariBoy({
   }, []);
 
   const handleButtonPress = (button) => {
-    // Haptic feedback on every button press
+    // ⚡ HEAVY HAPTICS: 50-80ms bursts for retro tactile feel
     if (navigator.vibrate) {
-      navigator.vibrate(15); // 15ms light vibration
+      const isAction = button === BUTTONS.A || button === BUTTONS.B;
+      navigator.vibrate(isAction ? 65 : 50); // Heavy profile
     }
     
     if (isPaused && button === BUTTONS.START) {
@@ -186,12 +187,10 @@ export function HikariBoy({
         )}
       </div>
 
-      {/* Mid Bar with foodspot logo */}
-      <div className="hb-midbar">
-        <span className="midbar-logo">foodspot</span>
-      </div>
+      {/* Mid Bar — hidden via CSS, kept for backward compat */}
+      <div className="hb-midbar"></div>
 
-      {/* Controller (45%) */}
+      {/* Controller (45%) — GRAPE PURPLE */}
       <div className="hb-controller">
         {/* Shoulder Buttons */}
         <div className="hb-shoulders">
@@ -205,9 +204,14 @@ export function HikariBoy({
           >R</button>
         </div>
 
-        {/* Main Controls */}
+        {/* ✦ BRANDING — Centered between shoulders and controls */}
+        <div className="hb-branding">
+          <span className="hb-brand-text">foodspot</span>
+        </div>
+
+        {/* Main Controls: D-Pad (left) + A/B (right) */}
         <div className="hb-controls-main">
-          {/* D-Pad with diagonal zones */}
+          {/* D-Pad — Cross-Shaped with recessed plastic effect */}
           <div className="hb-dpad">
             <div className="dpad-cross">
               <button 
@@ -250,7 +254,7 @@ export function HikariBoy({
             </div>
           </div>
 
-          {/* A/B Buttons */}
+          {/* A/B Buttons — Offset: A top-right, B bottom-left */}
           <div className="hb-action-btns">
             <button 
               className="action-btn btn-b"
@@ -263,7 +267,7 @@ export function HikariBoy({
           </div>
         </div>
 
-        {/* System Buttons with labels BELOW */}
+        {/* System Buttons — 40% of A, labels BELOW */}
         <div className="hb-system-btns">
           <div className="sys-btn-wrap menu-wrap">
             <button 
