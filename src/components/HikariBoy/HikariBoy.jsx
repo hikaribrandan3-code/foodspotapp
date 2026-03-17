@@ -217,20 +217,19 @@ export function HikariBoy({
               <button 
                 className="dpad-area dpad-up"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP); }}
-              >▲</button>
+              ></button>
               <button 
                 className="dpad-area dpad-left"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_LEFT); }}
-              >◀</button>
-              <div className="dpad-center-indent"></div>
+              ></button>
               <button 
                 className="dpad-area dpad-right"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_RIGHT); }}
-              >▶</button>
+              ></button>
               <button 
                 className="dpad-area dpad-down"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN); }}
-              >▼</button>
+              ></button>
               <button 
                 className="dpad-diagonal dpad-up-left"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP_LEFT); }}
