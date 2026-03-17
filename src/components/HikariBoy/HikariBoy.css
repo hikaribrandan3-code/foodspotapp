@@ -1,10 +1,16 @@
 /**
- * HikariBoy Delta 1:1 CSS
- * Deep purple (#6B0FCC) GBA-style controller
- * Responsive: iPhone Regular / Pro / Pro Max
+ * HikariBoy Delta 1:1 CSS - Updated
+ * Full-screen game display, foodspot branding
+ * 
+ * Changes:
+ * - Game screen fills entire top (no frame)
+ * - foodspot logo in mid bar
+ * - No instruction text
+ * - Labels below system buttons
+ * - Sparkle decoration
  */
 
-/* ========== CSS CUSTOM PROPERTIES (Responsive Scaling) ========== */
+/* ========== CSS CUSTOM PROPERTIES ========== */
 :root {
   --hb-purple: #6B0FCC;
   --hb-purple-dark: #5A00B0;
@@ -14,7 +20,7 @@
   --hb-btn-gray-dark: #D1D5DB;
 }
 
-/* iPhone Regular (smaller screens) */
+/* iPhone Regular */
 @media (max-height: 850px) {
   :root {
     --btn-scale: 0.85;
@@ -40,7 +46,7 @@
   }
 }
 
-/* iPhone Pro Max (reference screenshots) */
+/* iPhone Pro Max */
 @media (min-height: 921px) {
   :root {
     --btn-scale: 1;
@@ -64,12 +70,11 @@
   flex-direction: column;
   background: #000;
   z-index: 9999;
-  /* Safe area for Dynamic Island/notch */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* ========== SCREEN (55% height) ========== */
+/* ========== SCREEN (55% height) - FULL SIZE ========== */
 .hb-screen {
   flex: 0 0 55%;
   position: relative;
@@ -78,13 +83,16 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  width: 100%;
 }
 
+/* Game iframe - FULL WIDTH, NO BORDER */
 .hb-game-frame {
   width: 100%;
   height: 100%;
   border: none;
   background: #000;
+  object-fit: contain;
 }
 
 /* Boot Screen */
@@ -96,20 +104,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 15px;
 }
 
 .boot-logo {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 32px;
+  font-weight: 800;
   color: var(--hb-purple-light);
-  letter-spacing: 4px;
-}
-
-.boot-tagline {
-  color: #666;
-  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: lowercase;
 }
 
 /* Pause Overlay */
@@ -157,7 +160,7 @@
   z-index: 100;
 }
 
-/* ========== MID BAR (Black gap with logo) ========== */
+/* ========== MID BAR ========== */
 .hb-midbar {
   flex: 0 0 var(--midbar-height);
   background: #000000;
@@ -167,10 +170,11 @@
 }
 
 .midbar-logo {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 3px;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: lowercase;
 }
 
 /* ========== CONTROLLER (45% height) ========== */
@@ -182,7 +186,7 @@
     var(--hb-purple) 30%,
     var(--hb-purple-light) 100%
   );
-  border-radius: 8px 8px 0 0;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -198,13 +202,13 @@
 
 .shoulder-l, .shoulder-r {
   position: absolute;
-  top: 0;                    /* CRITICAL: Flush to top edge */
+  top: 0;
   height: var(--shoulder-height);
-  width: 27%;                /* Long and stretched (27-28%) */
+  width: 27%;
   background: linear-gradient(180deg, #E5E7EB, #D1D5DB);
   border: none;
   color: #6B7280;
-  font-size: 11px;           /* Was not specified */
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 
@@ -216,14 +220,14 @@
 
 .shoulder-l {
   left: 0;
-  border-radius: 0 0 24px 0;  /* Curves inward toward center */
+  border-radius: 0 0 24px 0;
   padding-left: 12px;
   justify-content: flex-start;
 }
 
 .shoulder-r {
   right: 0;
-  border-radius: 0 0 0 24px;  /* Curves inward toward center */
+  border-radius: 0 0 0 24px;
   padding-right: 12px;
   justify-content: flex-end;
 }
@@ -233,11 +237,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 45px;  /* Wider gap between D-pad and A/B */
+  padding: 15px 45px;
   flex: 1;
 }
 
-/* ========== D-PAD (Single Cross Piece) ========== */
+/* ========== D-PAD ========== */
 .hb-dpad {
   width: var(--dpad-size);
   height: var(--dpad-size);
@@ -253,7 +257,7 @@
   height: 100%;
 }
 
-/* Horizontal bar of cross */
+/* Horizontal bar */
 .dpad-cross::before {
   content: '';
   position: absolute;
@@ -263,14 +267,14 @@
   width: 100%;
   height: 33%;
   background: linear-gradient(180deg, #F9FAFB 0%, #E5E7EB 50%, #D1D5DB 100%);
-  border-radius: 8px;  /* Rounded tips on horizontal bar */
+  border-radius: 8px;
   box-shadow: 
     inset 2px 2px 4px rgba(255,255,255,0.8),
     inset -2px -2px 4px rgba(0,0,0,0.2),
     0 4px 8px rgba(0,0,0,0.3);
 }
 
-/* Vertical bar of cross */
+/* Vertical bar */
 .dpad-cross::after {
   content: '';
   position: absolute;
@@ -280,13 +284,13 @@
   width: 33%;
   height: 100%;
   background: linear-gradient(90deg, #F9FAFB 0%, #E5E7EB 50%, #D1D5DB 100%);
-  border-radius: 8px;  /* Rounded tips on vertical bar */
+  border-radius: 8px;
   box-shadow: 
     inset 2px 2px 4px rgba(255,255,255,0.8),
     inset -2px -2px 4px rgba(0,0,0,0.2);
 }
 
-/* Sunken center indentation */
+/* Center indentation */
 .dpad-center-indent {
   position: absolute;
   top: 50%;
@@ -300,7 +304,7 @@
   z-index: 2;
 }
 
-/* Directional click areas (invisible overlays) */
+/* Directional areas */
 .dpad-area {
   position: absolute;
   background: transparent;
@@ -346,7 +350,7 @@
   height: 30%;
 }
 
-/* Diagonal zones for 8-way D-pad */
+/* Diagonal zones */
 .dpad-diagonal {
   position: absolute;
   width: 20%;
@@ -357,25 +361,10 @@
   z-index: 4;
 }
 
-.dpad-up-left {
-  top: 8%;
-  left: 8%;
-}
-
-.dpad-up-right {
-  top: 8%;
-  right: 8%;
-}
-
-.dpad-down-left {
-  bottom: 8%;
-  left: 8%;
-}
-
-.dpad-down-right {
-  bottom: 8%;
-  right: 8%;
-}
+.dpad-up-left { top: 8%; left: 8%; }
+.dpad-up-right { top: 8%; right: 8%; }
+.dpad-down-left { bottom: 8%; left: 8%; }
+.dpad-down-right { bottom: 8%; right: 8%; }
 
 /* ========== A/B BUTTONS ========== */
 .hb-action-btns {
@@ -397,7 +386,7 @@
     0 4px 8px rgba(0,0,0,0.3),
     inset 0 1px 2px rgba(255,255,255,0.8);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 300;      /* Thin, not bold */
+  font-weight: 300;
   color: #6B7280;
   cursor: pointer;
   display: flex;
@@ -406,58 +395,42 @@
   user-select: none;
 }
 
-/* A button - LARGER and HIGHER */
 .btn-a {
   width: var(--action-a-size);
   height: var(--action-a-size);
   font-size: calc(28px * var(--btn-scale));
-  top: 5px;              /* Higher position */
+  top: 5px;
   right: 0;
 }
 
-/* B button - SMALLER and LOWER */
 .btn-b {
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(26px * var(--btn-scale));
-  bottom: 25px;          /* Lower position */
+  bottom: 25px;
   left: 0;
 }
 
-/* ========== SYSTEM BUTTONS (MENU/SELECT/START) ========== */
+/* ========== SYSTEM BUTTONS (LABELS BELOW) ========== */
 .hb-system-btns {
   display: flex;
-  align-items: center;
-  padding: 10px 20px 20px;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 20px 15px;
   position: relative;
-  height: 50px;
+  height: 60px;
+  gap: 40px;
 }
 
 .sys-btn-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: absolute;
+  gap: 6px;
 }
 
-/* MENU - isolated on far left (~10%) */
-.menu-wrap {
-  left: 10%;
-}
-
-/* SELECT - at ~42% */
-.select-wrap {
-  left: 42%;
-}
-
-/* START - at ~57% (grouped with SELECT) */
-.start-wrap {
-  left: 57%;
-}
-
-/* Small circle buttons */
 .sys-circle {
-  width: var(--sys-btn-size);  /* 24-28px based on device */
+  width: var(--sys-btn-size);
   height: var(--sys-btn-size);
   border-radius: 50%;
   background: linear-gradient(135deg, #F3F4F6, #D1D5DB);
@@ -468,17 +441,30 @@
   cursor: pointer;
 }
 
-/* Labels BELOW buttons */
 .sys-label {
-  margin-top: 6px;
-  font-size: 8px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
 }
 
-/* ========== BODY CLASS FOR LEAK FIX ========== */
+/* ========== SPARKLE ========== */
+.hb-sparkle {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.3);
+  animation: sparkle-twinkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
+/* ========== LEAK FIX ========== */
 body.hikariboy-active .signup-container,
 body.hikariboy-active .auth-container,
 body.hikariboy-active .login-container,
@@ -488,7 +474,7 @@ body.hikariboy-active .modal-overlay {
   display: none !important;
 }
 
-/* ========== GAME SELECTOR (Single Cover) ========== */
+/* ========== GAME SELECTOR - FULL SCREEN ========== */
 .hb-selector {
   width: 100%;
   height: 100%;
@@ -497,14 +483,12 @@ body.hikariboy-active .modal-overlay {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
   position: relative;
 }
 
-/* Arrow indicators */
 .selector-arrows {
   position: absolute;
-  top: 15px;
+  top: 20px;
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -529,56 +513,38 @@ body.hikariboy-active .modal-overlay {
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* Large Cover Image */
+/* Full screen cover display */
 .game-showcase {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-}
-
-.cover-container {
-  width: 200px;
-  height: 280px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  box-shadow: 
-    0 0 0 2px var(--hb-purple),
-    0 10px 30px rgba(107, 15, 204, 0.4);
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.game-cover {
+.cover-container-full {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
-.cover-fallback {
+.game-cover-full {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.cover-fallback-full {
   color: #fff;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   text-align: center;
   padding: 20px;
-}
-
-.game-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #fff;
-  text-align: center;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-}
-
-.selector-hint {
-  position: absolute;
-  bottom: 20px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 1px;
 }
 
 /* ========== ACTIVE STATES ========== */
@@ -593,29 +559,42 @@ body.hikariboy-active .modal-overlay {
     inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* ========== TOUCH FEEDBACK ========== */
+/* ========== TOUCH OPTIMIZATION ========== */
 @media (hover: none) {
   .action-btn,
   .sys-circle,
   .dpad-area,
   .shoulder-l,
-  .shoulder-r {
+  .shoulder-r,
+  .dpad-diagonal {
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation; /* Faster touch response */
+    touch-action: manipulation;
   }
 }
 
-/* ========== GENEROUS TOUCH PADDING FOR BOTTOM BUTTONS ========== */
-.sys-btn-wrap {
-  padding: 10px; /* Invisible hit area around small buttons */
-  margin: -10px; /* Compensate for padding */
-}
-
-/* ========== WILL-CHANGE FOR PERFORMANCE ========== */
 .action-btn,
 .sys-circle,
 .dpad-area,
 .shoulder-l,
-.shoulder-r {
+.shoulder-r,
+.dpad-diagonal {
   will-change: transform;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-height: 700px) {
+  .hb-system-btns {
+    height: 50px;
+    gap: 30px;
+  }
+  
+  .sys-label {
+    font-size: 8px;
+  }
+  
+  .hb-sparkle {
+    bottom: 15px;
+    right: 15px;
+    font-size: 16px;
+  }
 }

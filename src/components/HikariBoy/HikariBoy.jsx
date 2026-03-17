@@ -1,11 +1,11 @@
 /**
- * HikariBoy Emulator Shell - Delta 1:1
- * Deep purple GBA-style layout for FoodSpot Arcade
+ * HikariBoy Emulator Shell - Delta 1:1 (Updated)
+ * Full-screen game display, foodspot branding
  * 
  * Features:
- * - Full-screen game showcase with cover images
- * - Left/Right to browse, A/Start to play
- * - Leak fix: hides background auth elements
+ * - Game fills entire top screen (no frame)
+ * - foodspot logo in mid bar
+ * - Labels below system buttons (MENU/SELECT/START)
  * - Responsive: iPhone Regular / Pro / Pro Max
  */
 
@@ -28,24 +28,24 @@ const BUTTONS = {
   MENU: 'menu'
 };
 
-// 16 GAMES with cover.svg paths (replace with .png when available)
+// 16 GAMES with cover.png paths
 const GAMES = [
-  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.svg', url: '/games/burger-stack/index.html' },
-  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.svg', url: '/games/food-fight/index.html' },
-  { id: 'pizza-slice', name: 'Pizza Slice', cover: '/games/pizza-slice/cover.svg', url: '/games/pizza-slice/index.html' },
-  { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.svg', url: '/games/sushi-roll/index.html' },
-  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.svg', url: '/games/fry-catch/index.html' },
-  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.svg', url: '/games/taco-tower/index.html' },
-  { id: 'condiment-blast', name: 'Condiment Blast', cover: '/games/condiment-blast/cover.svg', url: '/games/condiment-blast/index.html' },
-  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.svg', url: '/games/bubble-tea/index.html' },
-  { id: 'donut-roll', name: 'Donut Roll', cover: '/games/donut-roll/cover.svg', url: '/games/donut-roll/index.html' },
-  { id: 'hotdog-dash', name: 'Hotdog Dash', cover: '/games/hotdog-dash/cover.svg', url: '/games/hotdog-dash/index.html' },
-  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.svg', url: '/games/coffee-pour/index.html' },
-  { id: 'steak-flip', name: 'Steak Flip', cover: '/games/steak-flip/cover.svg', url: '/games/steak-flip/index.html' },
-  { id: 'ice-cream', name: 'Ice Cream', cover: '/games/ice-cream/cover.svg', url: '/games/ice-cream/index.html' },
-  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.svg', url: '/games/spice-invaders/index.html' },
-  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.svg', url: '/games/fruit-slice/index.html' },
-  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.svg', url: '/games/bento-box/index.html' },
+  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
+  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
+  { id: 'pizza-slice', name: 'Pizza Slice', cover: '/games/pizza-slice/cover.png', url: '/games/pizza-slice/index.html' },
+  { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
+  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', url: '/games/fry-catch/index.html' },
+  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', url: '/games/taco-tower/index.html' },
+  { id: 'condiment-blast', name: 'Condiment Blast', cover: '/games/condiment-blast/cover.png', url: '/games/condiment-blast/index.html' },
+  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
+  { id: 'donut-roll', name: 'Donut Roll', cover: '/games/donut-roll/cover.png', url: '/games/donut-roll/index.html' },
+  { id: 'hotdog-dash', name: 'Hotdog Dash', cover: '/games/hotdog-dash/cover.png', url: '/games/hotdog-dash/index.html' },
+  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', url: '/games/coffee-pour/index.html' },
+  { id: 'steak-flip', name: 'Steak Flip', cover: '/games/steak-flip/cover.png', url: '/games/steak-flip/index.html' },
+  { id: 'ice-cream', name: 'Ice Cream', cover: '/games/ice-cream/cover.png', url: '/games/ice-cream/index.html' },
+  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
+  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
+  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', url: '/games/bento-box/index.html' },
 ];
 
 export function HikariBoy({ 
@@ -60,10 +60,8 @@ export function HikariBoy({
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
   useEffect(() => {
-    // Add class to body to hide auth elements
     document.body.classList.add('hikariboy-active');
     
-    // Find and hide common auth container classes
     const authSelectors = [
       '.signup-container',
       '.auth-container', 
@@ -82,11 +80,9 @@ export function HikariBoy({
       }
     });
 
-    // Prevent body scroll
     document.body.style.overflow = 'hidden';
 
     return () => {
-      // Cleanup: restore everything when HikariBoy closes
       document.body.classList.remove('hikariboy-active');
       document.body.style.overflow = '';
       
@@ -130,18 +126,15 @@ export function HikariBoy({
       }, '*');
 
       if (button === BUTTONS.START) setIsPaused(true);
-      // MENU: Close entire HikariBoy (back to main app)
       if (button === BUTTONS.MENU) {
         onClose?.();
         return;
       }
-      // SELECT: Back to game selector (instant, no confirm)
       if (button === BUTTONS.SELECT) {
         setCurrentGame(null);
         return;
       }
     } else if (!isBooting) {
-      // SELECTOR CONTROLS
       if (button === BUTTONS.DPAD_LEFT) {
         setSelectedIndex(prev => prev > 0 ? prev - 1 : GAMES.length - 1);
       }
@@ -151,7 +144,6 @@ export function HikariBoy({
       if (button === BUTTONS.A || button === BUTTONS.START) {
         setCurrentGame(GAMES[selectedIndex]);
       }
-      // MENU: Close HikariBoy from selector too
       if (button === BUTTONS.MENU) {
         onClose?.();
       }
@@ -160,12 +152,11 @@ export function HikariBoy({
 
   return (
     <div className="hikariboy-emulator">
-      {/* Screen Container (55%) */}
+      {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
       <div className="hb-screen">
         {isBooting ? (
           <div className="hb-boot">
-            <div className="boot-logo">HIKARIBOY</div>
-            <div className="boot-tagline">Food coming. Game on.</div>
+            <div className="boot-logo">foodspot</div>
           </div>
         ) : !currentGame ? (
           <GameSelector 
@@ -195,9 +186,9 @@ export function HikariBoy({
         )}
       </div>
 
-      {/* Mid Bar with Logo */}
+      {/* Mid Bar with foodspot logo */}
       <div className="hb-midbar">
-        <span className="midbar-logo">HIKARIBOY</span>
+        <span className="midbar-logo">foodspot</span>
       </div>
 
       {/* Controller (45%) */}
@@ -236,7 +227,6 @@ export function HikariBoy({
                 className="dpad-area dpad-down"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN); }}
               >▼</button>
-              {/* Diagonal zones - invisible but clickable */}
               <button 
                 className="dpad-diagonal dpad-up-left"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP_LEFT); }}
@@ -273,7 +263,7 @@ export function HikariBoy({
           </div>
         </div>
 
-        {/* System Buttons */}
+        {/* System Buttons with labels BELOW */}
         <div className="hb-system-btns">
           <div className="sys-btn-wrap menu-wrap">
             <button 
@@ -297,6 +287,9 @@ export function HikariBoy({
             <span className="sys-label">START</span>
           </div>
         </div>
+
+        {/* Sparkle decoration */}
+        <div className="hb-sparkle">✦</div>
       </div>
     </div>
   );
@@ -308,36 +301,29 @@ function GameSelector({ games, selectedIndex }) {
   
   return (
     <div className="hb-selector">
-      {/* Arrow indicators */}
+      {/* Arrow indicators at top */}
       <div className="selector-arrows">
         {selectedIndex > 0 && <span className="arrow-left">◀</span>}
         <span className="game-counter">{selectedIndex + 1} / {games.length}</span>
         {selectedIndex < games.length - 1 && <span className="arrow-right">▶</span>}
       </div>
       
-      {/* Large Cover Image */}
+      {/* Large Cover Image - FULL SIZE */}
       <div className="game-showcase">
-        <div className="cover-container">
+        <div className="cover-container-full">
           <img 
             src={selectedGame.cover} 
             alt={selectedGame.name}
-            className="game-cover"
+            className="game-cover-full"
             onError={(e) => {
-              // Fallback if cover.png doesn't exist yet
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
             }}
           />
-          <div className="cover-fallback" style={{display: 'none'}}>
+          <div className="cover-fallback-full" style={{display: 'none'}}>
             {selectedGame.name}
           </div>
         </div>
-        <div className="game-title">{selectedGame.name}</div>
-      </div>
-      
-      {/* Instructions */}
-      <div className="selector-hint">
-        ◀ ▶ Browse  ●  A/START Play  ●  MENU Exit
       </div>
     </div>
   );
