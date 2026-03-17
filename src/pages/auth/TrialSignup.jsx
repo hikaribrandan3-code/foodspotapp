@@ -32,6 +32,11 @@ const TrialSignup = () => {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
 
+    // Performance: Respect user's motion preferences
+    const prefersReducedMotion = typeof window !== 'undefined' 
+        ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+        : false
+
     // UI State
     const [mode, setMode] = useState('signup') // 'signup' | 'login'
     const [showEmailForm, setShowEmailForm] = useState(false)
@@ -335,25 +340,37 @@ const TrialSignup = () => {
                 fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
                 backgroundColor: '#D80000'
             }}>
-                {/* SUNBURST */}
+                {/* SUNBURST - GPU Optimized */}
                 <div style={{
-                    position: 'absolute', inset: -400, zIndex: 0,
-                    background: `repeating-conic-gradient(from 0deg at 50% 50%, #D00000 0deg 15deg, #FF3300 15deg 30deg)`,
-                    filter: 'blur(4px) contrast(1.2)',
-                    animation: 'spin 60s linear infinite',
-                }} />
-                {/* HEAT GLOW */}
+                    position: 'absolute',
+                    width: 2000,
+                    height: 2000,
+                    top: '50%',
+                    left: '50%',
+                    marginLeft: -1000,
+                    marginTop: -1000,
+                    zIndex: 0,
+                }}>
+                    <div style={{
+                        width: '100%',
+                        height: '100%',
+                        background: `repeating-conic-gradient(from 0deg at 50% 50%, #D00000 0deg 15deg, #FF3300 15deg 30deg)`,
+                        filter: prefersReducedMotion ? 'none' : 'blur(2px)',
+                        animation: prefersReducedMotion ? 'none' : 'spin 60s linear infinite',
+                        willChange: 'transform',
+                    }} />
+                </div>
+                {/* HEAT GLOW - Optimized (Removed expensive mix-blend-mode) */}
                 <div style={{
                     position: 'absolute', inset: 0, zIndex: 1,
-                    background: 'radial-gradient(circle at center, rgba(255,100,0,0.2) 0%, rgba(160,0,0,0.6) 90%)',
-                    mixBlendMode: 'overlay'
+                    background: 'radial-gradient(circle at center, rgba(255,100,0,0.3) 0%, rgba(160,0,0,0.7) 90%)',
                 }} />
                 {/* HERO BURGER */}
                 <div style={{
                     position: 'absolute', top: '50%', left: '50%',
                     transform: 'translate(-50%, -50%)',
                     width: '95%', height: 'auto', aspectRatio: '1/1', zIndex: 2,
-                    backgroundImage: 'url(https://pngimg.com/uploads/burger_sandwich/burger_sandwich_PNG4135.png)',
+                    backgroundImage: 'url(/assets/burger-hero.jpg)',
                     backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
                     filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.6))',
                     marginTop: 10

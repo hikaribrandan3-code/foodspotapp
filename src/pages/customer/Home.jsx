@@ -766,8 +766,20 @@ function Home({ config: configProp }) {
                             <div
                                 key={actionId}
                                 onClick={() => setShowArcade(true)}
-                                onTouchEnd={() => setShowArcade(true)}
-                                style={{ ...tileStyle, backgroundColor: getHeroBg(actionId), cursor: 'pointer' }}
+                                onTouchStart={(e) => e.preventDefault()}
+                                onTouchEnd={(e) => {
+                                    e.preventDefault();
+                                    setShowArcade(true);
+                                }}
+                                style={{ 
+                                    ...tileStyle, 
+                                    backgroundColor: getHeroBg(actionId), 
+                                    cursor: 'pointer',
+                                    userSelect: 'none',
+                                    WebkitUserSelect: 'none',
+                                    WebkitTouchCallout: 'none',
+                                    touchAction: 'manipulation'
+                                }}
                             >
                                 {tileContent}
                             </div>
