@@ -26,8 +26,8 @@
     --btn-scale: 0.82;
     --dpad-size: 130px;
     --sys-btn-size: 22px;
-    --action-a-size: 68px;
-    --action-b-size: 58px;
+    --action-a-size: 64px;
+    --action-b-size: 64px;
     --shoulder-height: 28px;
     --controls-pad-x: 24px;
     --controls-pad-y: 8px;
@@ -43,8 +43,8 @@
     --btn-scale: 0.92;
     --dpad-size: 140px;
     --sys-btn-size: 24px;
-    --action-a-size: 74px;
-    --action-b-size: 62px;
+    --action-a-size: 70px;
+    --action-b-size: 70px;
     --shoulder-height: 30px;
     --controls-pad-x: 30px;
     --controls-pad-y: 10px;
@@ -60,8 +60,8 @@
     --btn-scale: 1;
     --dpad-size: 150px;
     --sys-btn-size: 28px;
-    --action-a-size: 80px;
-    --action-b-size: 68px;
+    --action-a-size: 76px;
+    --action-b-size: 76px;
     --shoulder-height: 32px;
     --controls-pad-x: 36px;
     --controls-pad-y: 12px;
@@ -247,6 +247,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--brand-pad) 0;
+  margin-top: -10px; /* Move up 10px */
   flex: 0 0 auto;
 }
 
@@ -257,6 +258,7 @@
   color: #FFFFFF;
   letter-spacing: 3px;
   text-transform: lowercase;
+  transform: rotate(15deg); /* Slanted 15 degrees right */
   text-shadow:
     1px 1px 0 #000,
     -1px -1px 0 #000,
@@ -328,18 +330,7 @@
 
 /* Center circle — recessed indentation */
 .dpad-center-indent {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 24%;
-  height: 24%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 38%, #B0B0B0 0%, #999 50%, #7A7A7A 100%);
-  box-shadow:
-    inset 0 3px 8px rgba(0,0,0,0.45),
-    inset 0 -1px 2px rgba(255,255,255,0.25);
-  z-index: 2;
+  display: none;
 }
 
 /* Directional hit-boxes */
@@ -463,31 +454,29 @@
   left: 25px;
 }
 
-/* ========== SYSTEM BUTTONS ========== */
-/* Target: MENU far-left, SELECT+START grouped center-right (like Spice Invaders render) */
 .hb-system-btns {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 24px var(--sys-btn-bottom, 20px);
+  padding: 0 30px var(--sys-btn-bottom, 20px);
   position: relative;
   height: 60px;
   flex: 0 0 auto;
   gap: 0;
 }
 
-/* MENU is positioned on far left */
+/* MENU is positioned on far left with 30px padding matched from start-wrap margin */
 .menu-wrap {
-  margin-right: auto; /* Pushes everything after to the right */
+  margin-right: auto;
 }
 
-/* SELECT + START are grouped together on the right */
+/* SELECT + START grouped on far right */
 .select-wrap {
-  margin-right: 16px; /* Space between SELECT and START */
+  margin-right: 15px; /* Same spacing from start to select */
 }
 
 .start-wrap {
-  margin-right: 40px; /* Space from right edge */
+  margin-right: 0;
 }
 
 .sys-btn-wrap {
@@ -523,13 +512,7 @@
 
 /* ========== SPARKLE — bottom-right ========== */
 .hb-sparkle {
-  position: absolute;
-  bottom: 18px;
-  right: 20px;
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.35);
-  animation: sparkle-twinkle 2.5s ease-in-out infinite;
-  pointer-events: none;
+  display: none;
 }
 
 @keyframes sparkle-twinkle {
