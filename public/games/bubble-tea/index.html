@@ -206,6 +206,38 @@ canvas.addEventListener('touchstart', (e) => {
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            const btn = e.data.button;
+            if (btn === 'dpad-left' || btn === 'dpad-up') { 
+                if (selected) { selected.x = Math.max(0, selected.x - 1); }
+                else { selected = {x: 0, y: 0}; }
+            }
+            if (btn === 'dpad-right' || btn === 'dpad-down') { 
+                if (selected) { selected.x = Math.min(GRID_SIZE - 1, selected.x + 1); }
+                else { selected = {x: 0, y: 0}; }
+            }
+            if (btn === 'a' || btn === 'start') {
+                if (!selected) selected = {x: 0, y: 0};
+                else {
+                    // Simple swap with neighbor for now
+                    const nx = selected.x + 1;
+                    if (nx < GRID_SIZE) {
+                        const temp = grid[selected.y][selected.x];
+                        grid[selected.y][selected.x] = grid[selected.y][nx];
+                        grid[selected.y][nx] = temp;
+                        moves--;
+                        document.getElementById('moves').textContent = moves;
+                        setTimeout(() => {
+                            let chain = 0;
+                            while (removeMatches() > 0) { chain++; fillGrid(); }
+                            if (chain === 0 && moves <= 0) gameOver();
+                        }, 100);
+                    }
+                    selected = null;
+                }
+            }
+            if (btn === 'select') window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'bubble-tea' }, '*');
+            break;
         case 'PAUSE': gameState = 'paused'; break;
         case 'RESUME': gameState = 'playing'; gameLoop(); break;
         case 'SAVE_STATE': localStorage.setItem('bubbleTea_state', JSON.stringify({score, moves})); break;

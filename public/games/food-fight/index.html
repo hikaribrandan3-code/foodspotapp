@@ -493,24 +493,20 @@ canvas.addEventListener('click', () => {
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            const btn = e.data.button;
+            if (btn === 'dpad-left') { keys['ArrowLeft'] = true; setTimeout(() => keys['ArrowLeft'] = false, 150); }
+            if (btn === 'dpad-right') { keys['ArrowRight'] = true; setTimeout(() => keys['ArrowRight'] = false, 150); }
+            if (btn === 'dpad-up') { keys['ArrowUp'] = true; setTimeout(() => keys['ArrowUp'] = false, 150); }
+            if (btn === 'a' || btn === 'b') { keys['Space'] = true; setTimeout(() => keys['Space'] = false, 150); }
+            if (btn === 'select') { window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'food-fight' }, '*'); }
+            break;
         case 'PAUSE': gameState = 'paused'; break;
         case 'RESUME': gameState = 'playing'; gameLoop(); break;
-        case 'SAVE_STATE':
-            localStorage.setItem('foodFight_state', JSON.stringify({
-                p1: {health: P1.health, x: P1.x, y: P1.y},
-                p2: {health: P2.health, x: P2.x, y: P2.y},
-                score: score, timeLeft: timeLeft
-            }));
-            break;
+        case 'SAVE_STATE': localStorage.setItem('foodFight_state', JSON.stringify({ score })); break;
         case 'LOAD_STATE':
             const saved = localStorage.getItem('foodFight_state');
-            if (saved) {
-                const data = JSON.parse(saved);
-                Object.assign(P1, data.p1);
-                Object.assign(P2, data.p2);
-                score = data.score;
-                timeLeft = data.timeLeft;
-            }
+            if (saved) { score = JSON.parse(saved).score; }
             break;
     }
 });

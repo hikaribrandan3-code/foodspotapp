@@ -153,6 +153,10 @@ document.addEventListener('keydown', (e) => { if (e.code === 'Space') drop(); })
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            if (e.data.button === 'a' || e.data.button === 'start') drop();
+            if (e.data.button === 'select') window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'taco-tower' }, '*');
+            break;
         case 'PAUSE': gameState = 'paused'; break;
         case 'RESUME': gameState = 'playing'; gameLoop(); break;
         case 'SAVE_STATE': localStorage.setItem('tacoTower_state', JSON.stringify({tower, score})); break;

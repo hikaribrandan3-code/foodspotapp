@@ -150,6 +150,19 @@ canvas.addEventListener('touchstart', (e) => {
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            const btn = e.data.button;
+            if (!selected) selected = {x: 0, y: 0};
+            if (btn === 'dpad-left') selected.x = Math.max(0, selected.x - 1);
+            if (btn === 'dpad-right') selected.x = Math.min(GRID_SIZE - 1, selected.x + 1);
+            if (btn === 'dpad-up') selected.y = Math.max(0, selected.y - 1);
+            if (btn === 'dpad-down') selected.y = Math.min(GRID_SIZE - 1, selected.y + 1);
+            if (btn === 'a' || btn === 'start') handleClick(
+                OFFSET_X + selected.x * CELL_SIZE + CELL_SIZE/2,
+                OFFSET_Y + selected.y * CELL_SIZE + CELL_SIZE/2
+            );
+            if (btn === 'select') window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'bento-box' }, '*');
+            break;
         case 'PAUSE': gameState = 'paused'; break;
         case 'RESUME': gameState = 'playing'; gameLoop(); break;
         case 'SAVE_STATE': localStorage.setItem('bentoBox_state', JSON.stringify({level, moves})); break;

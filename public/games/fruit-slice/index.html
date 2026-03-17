@@ -204,6 +204,11 @@ canvas.addEventListener('touchmove', (e) => {
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            if (e.data.button === 'select') {
+                window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'fruit-slice' }, '*');
+            }
+            break;
         case 'PAUSE': gameState = 'paused'; break;
         case 'RESUME': gameState = 'playing'; gameLoop(); break;
         case 'SAVE_STATE': localStorage.setItem('fruitSlice_state', JSON.stringify({score})); break;

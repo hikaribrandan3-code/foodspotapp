@@ -154,6 +154,15 @@ canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopPour(); });
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            if (e.data.button === 'a' || e.data.button === 'start') startPour();
+            if (e.data.button === 'b' || e.data.button === 'select') {
+                stopPour();
+                if (e.data.button === 'select') {
+                    window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'coffee-pour' }, '*');
+                }
+            }
+            break;
         case 'PAUSE': gameState = 'paused'; break;
         case 'RESUME': gameState = 'playing'; gameLoop(); break;
         case 'SAVE_STATE': localStorage.setItem('coffeePour_state', JSON.stringify({score, perfects})); break;

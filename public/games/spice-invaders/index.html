@@ -163,6 +163,13 @@ canvas.addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            const btn = e.data.button;
+            if (btn === 'dpad-left') player.x = Math.max(30, player.x - 20);
+            if (btn === 'dpad-right') player.x = Math.min(450, player.x + 20);
+            if (btn === 'a' || btn === 'b' || btn === 'start') shoot();
+            if (btn === 'select') window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'spice-invaders' }, '*');
+            break;
         case 'PAUSE': gameState = 'paused'; break;
         case 'RESUME': gameState = 'playing'; gameLoop(); break;
         case 'SAVE_STATE': localStorage.setItem('spiceInvaders_state', JSON.stringify({score})); break;
