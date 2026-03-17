@@ -50,6 +50,23 @@
             font-size: 16px;
             margin-top: 10px;
         }
+        #exitBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            font-size: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
@@ -60,8 +77,14 @@
         <p>Final Score: <span id="finalScore">0</span></p>
         <button onclick="resetGame()">STACK AGAIN</button>
     </div>
+    <button id="exitBtn" onclick="exitGame()">✕</button>
 
 <script>
+// Exit game function
+function exitGame() {
+    window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'burger-stack' }, '*');
+}
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -318,6 +341,14 @@ document.addEventListener('keydown', (e) => {
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            if (e.data.button === 'a' || e.data.button === 'start') {
+                dropIngredient();
+            }
+            if (e.data.button === 'select') {
+                exitGame();
+            }
+            break;
         case 'PAUSE':
             gameState = 'paused';
             break;
