@@ -11,6 +11,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
+import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
 import './MenuStyles.css'
 
 /**

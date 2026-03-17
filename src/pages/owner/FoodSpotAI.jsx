@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabaseClient'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import Markdown from 'react-markdown'
+import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
 
 // ─── CONFIG ───
 const CANVAS_W = 1080
@@ -333,34 +334,11 @@ export function FoodSpotAI({ context = {} }) {
     const { lang, t } = useLanguage()
     const businessName = tenantData?.business_name || 'tu negocio'
     
-    const blobUrlsRef = useRef([])
-    
-    const createTrackedObjectURL = (file) => {
-        const url = URL.createObjectURL(file)
-        blobUrlsRef.current.push(url)
-        return url
-    }
-    
-    const revokeBlobUrls = () => {
-        blobUrlsRef.current.forEach(url => {
-            try {
-                URL.revokeObjectURL(url)
-            } catch (e) {
-                console.warn('Failed to revoke blob URL:', e)
-            }
-        })
-        blobUrlsRef.current = []
-    }
+    const { createBlobUrl, revokeBlobUrl, revokeAllBlobUrls } = useBlobUrlTracker()
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
-    
-    useEffect(() => {
-        return () => {
-            revokeBlobUrls()
-        }
-    }, [])
 
     const handleSend = async (text) => {
         const userText = text || input.trim()
@@ -634,7 +612,7 @@ User Question: ${userText}`;
                                     const file = e.target.files[0]
                                     if (file) {
                                         setPendingImage(file)
-                                        setPreviewUrl(createTrackedObjectURL(file))
+                                        setPreviewUrl(createBlobUrl(file))
                                     }
                                 }}
                             />
