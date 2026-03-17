@@ -1,8 +1,17 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const Promos = () => {
   const navigate = useNavigate();
+  const { tenantSlug } = useParams();
+
+  const handleBack = () => {
+    if (tenantSlug) {
+      navigate(`/${tenantSlug}/home`);
+    } else {
+      navigate(-1);
+    }
+  };
 
   return (
     <div 
@@ -25,7 +34,7 @@ const Promos = () => {
       
       {/* Back Button */}
       <button 
-        onClick={() => navigate(-1)}
+        onClick={handleBack}
         style={{
           position: 'absolute',
           top: '32px',
@@ -67,7 +76,7 @@ const Promos = () => {
           textTransform: 'uppercase',
           fontStretch: 'extra-condensed',
           whiteSpace: 'pre-line',
-          color: '#FFFFFF', // Explicit white
+          color: '#FFFFFF !important', // Forced pure white
           display: 'block'
         }}>
           COMING{"\n"}SOON
@@ -87,7 +96,7 @@ const Promos = () => {
           opacity: 1, // Full opacity
           textTransform: 'uppercase',
           fontStyle: 'italic',
-          color: '#FFFFFF', // Explicit white
+          color: '#FFFFFF !important', // Forced pure white
           margin: 0
         }}>
           Stay Tuned
