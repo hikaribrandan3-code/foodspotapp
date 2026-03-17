@@ -305,20 +305,17 @@
   transform: translateY(2px);
 }
 
-/* ========== BOOT SCREEN ========== */
+/* ========== BOOT SCREEN (INSIDE SCREEN) ========== */
 .hikariboy-boot {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background: #000;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 30px;
-  z-index: 10000;
+  gap: 15px;
+  position: relative;
 }
 
 .boot-backlight {
@@ -344,11 +341,11 @@
 
 .pixel-text {
   font-family: 'Courier New', monospace;
-  font-size: 48px;
+  font-size: 32px;
   font-weight: bold;
   color: var(--hikariboy-purple);
-  text-shadow: 4px 4px 0 rgba(139, 92, 246, 0.3);
-  letter-spacing: 4px;
+  text-shadow: 2px 2px 0 rgba(139, 92, 246, 0.3);
+  letter-spacing: 2px;
 }
 
 @keyframes logoIn {
@@ -364,8 +361,8 @@
 
 .boot-tagline {
   z-index: 1;
-  color: #888;
-  font-size: 16px;
+  color: #666;
+  font-size: 12px;
   animation: fadeIn 1s ease-out 1s both;
 }
 
@@ -374,116 +371,91 @@
   to { opacity: 1; }
 }
 
-/* ========== GAME SELECTOR ========== */
-.hikariboy-selector {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+/* ========== EMBEDDED SELECTOR ========== */
+.selector-embedded {
+  width: 100%;
+  height: 100%;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  padding: 10px;
 }
 
-.selector-container {
-  width: 100%;
-  max-width: 400px;
-  padding: 20px;
-  text-align: center;
-}
-
-.selector-container h2 {
-  color: #fff;
-  margin-bottom: 30px;
-  font-size: 24px;
-}
-
-.carousel {
+.carousel-mini {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 10px;
+  width: 100%;
 }
 
-.arrow {
-  width: 40px;
-  height: 40px;
-  background: var(--hikariboy-purple);
+.mini-arrow {
+  background: rgba(255,255,255,0.1);
   border: none;
-  border-radius: 50%;
   color: #fff;
-  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--button-shadow);
 }
 
-.arrow:active {
-  box-shadow: var(--button-active-shadow);
-  transform: translateY(2px);
-}
-
-.game-card {
+.mini-card {
   background: #0f3460;
-  border-radius: 16px;
-  padding: 20px;
-  width: 200px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.game-card img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 8px;
-  background: #1a1a2e;
-}
-
-.game-title {
-  color: #fff;
-  margin-top: 15px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.selector-controls {
+  border: 2px solid var(--hikariboy-purple);
+  border-radius: 12px;
+  padding: 10px;
+  width: 120px;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  transition: transform 0.2s;
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-top: 20px;
+  align-items: center;
 }
 
-.launch-btn, .back-btn {
-  padding: 15px 30px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: var(--button-shadow);
+.mini-card:active {
+  transform: scale(0.95);
 }
 
-.launch-btn {
-  background: var(--hikariboy-purple);
+.mini-card img {
+  width: 100px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #000;
+}
+
+.emoji-cover {
+  font-size: 60px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-title {
   color: #fff;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.back-btn {
-  background: transparent;
+.mini-hint {
+  margin-top: 15px;
+  font-size: 10px;
   color: #888;
-  border: 2px solid #444;
-}
-
-.game-count {
-  color: #666;
-  margin-top: 20px;
-  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 /* ========== RESPONSIVE ========== */
