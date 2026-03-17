@@ -58,6 +58,14 @@ function Home({ config: configProp }) {
     // MOVED: After all hooks to prevent hook order violation
     const isLoading = loading || !tenantData
 
+    useEffect(() => {
+        console.log('🏠 HOME MOUNTED', {
+            isOwnerMode: !!localStorage.getItem('foodspot_owner_mode'),
+            tenantSlug,
+            businessId
+        })
+    }, [tenantSlug, businessId])
+
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()
     // 🛡️ VAULT-SEAL FIX: Owner Mode Persistence
@@ -76,6 +84,10 @@ function Home({ config: configProp }) {
     const [hasChanges, setHasChanges] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [showArcade, setShowArcade] = useState(false)
+
+    useEffect(() => {
+        console.log('🕹️ ARCADE STATE:', { showArcade, isEditMode, isOwnerMode })
+    }, [showArcade, isEditMode, isOwnerMode])
 
     // Detect 'Ver Tienda' edit intent from URL
     // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
@@ -709,9 +721,12 @@ function Home({ config: configProp }) {
                                 onTouchStart={(e) => handleTouchStart(e, 'actions', actionId, index, localPrimaryActions)}
                                 onTouchEnd={(e) => {
                                     handleTouchEndOrMove()
-                                    if (actionId === 'game' && !isDraggingRef.current && !isEditMode) {
-                                        console.log('🕹️ ARCADE TOUCH (Owner Mode)', actionId)
-                                        setShowArcade(true)
+                                    if (!isDraggingRef.current && !isEditMode) {
+                                        console.log('👆 TOUCH END (Owner Block):', actionId)
+                                        if (actionId === 'game' || actionId === 'arcade') {
+                                            console.log('🚀 TRIGGERING ARCADE (Owner Block - Touch)')
+                                            setShowArcade(true)
+                                        }
                                     }
                                 }}
                                 onTouchMove={handleTouchEndOrMove}
@@ -719,8 +734,11 @@ function Home({ config: configProp }) {
                                     if (isEditMode) initiateDrag(e, 'actions', actionId, index, localPrimaryActions)
                                 }}
                                 onClick={(e) => {
-                                    console.log('🕹️ ARCADE CLICK (Owner Mode)', actionId)
-                                    if (actionId === 'game') {
+                                    console.log('🖱️ CLICK (Owner Block):', { actionId, isEditMode })
+                                    if (isEditMode) return;
+                                    
+                                    if (actionId === 'game' || actionId === 'arcade') {
+                                        console.log('🚀 TRIGGERING ARCADE (Owner Block)')
                                         setShowArcade(true)
                                     } else {
                                         handleTileClick(e, action.path)
