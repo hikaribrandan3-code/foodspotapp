@@ -707,7 +707,12 @@ function Home({ config: configProp }) {
                                 }}
                                 data-item-id={actionId}
                                 onTouchStart={(e) => handleTouchStart(e, 'actions', actionId, index, localPrimaryActions)}
-                                onTouchEnd={handleTouchEndOrMove}
+                                onTouchEnd={(e) => {
+                                    handleTouchEndOrMove()
+                                    if (actionId === 'game' && !isDraggingRef.current && !isEditMode) {
+                                        setShowArcade(true)
+                                    }
+                                }}
                                 onTouchMove={handleTouchEndOrMove}
                                 onMouseDown={(e) => {
                                     if (isEditMode) initiateDrag(e, 'actions', actionId, index, localPrimaryActions)
@@ -740,13 +745,22 @@ function Home({ config: configProp }) {
 
                     if (actionId === 'game') {
                         return (
-                            <div 
+                            <Link
                                 key={actionId}
-                                onClick={() => setShowArcade(true)}
+                                to="#"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    setShowArcade(true)
+                                }}
+                                onTouchEnd={(e) => {
+                                    if (!isDraggingRef.current && !isEditMode) {
+                                        setShowArcade(true)
+                                    }
+                                }}
                                 style={{ ...tileStyle, backgroundColor: getHeroBg(actionId), cursor: 'pointer' }}
                             >
                                 {tileContent}
-                            </div>
+                            </Link>
                         )
                     }
 
