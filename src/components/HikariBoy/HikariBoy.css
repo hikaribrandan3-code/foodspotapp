@@ -201,7 +201,7 @@
   min-height: 315px;
 }
 
-/* ========== SHOULDER BUTTONS (L / R) — LIGHT GRAY ========== */
+/* ========== SHOULDER BUTTONS (L / R) — 3D LIGHT GRAY ========== */
 .hb-shoulders {
   position: relative;
   width: 100%;
@@ -211,37 +211,70 @@
   display: flex;
 }
 
+/* The "well" background behind buttons */
+.hb-shoulders::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
 .shoulder-l, .shoulder-r {
   position: absolute;
   top: 0;
   height: 100%;
   width: 27%;
-  background: var(--button-gray);
+  /* 3D gradient: top highlight, bottom shadow */
+  background: linear-gradient(
+    180deg,
+    #E8E8E8 0%,
+    #D1D5DB 30%,
+    #B8B8B8 70%,
+    #A0A0A0 100%
+  );
   border: none;
-  color: var(--button-gray-dark);
-  font-size: 13px;
+  color: #888;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   z-index: 2;
+  /* 3D shadow for raised effect */
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
 .shoulder-l {
   left: 0;
-  border-radius: 0 0 12px 0;
-  padding-left: 18px;
+  border-radius: 0 0 14px 0;
+  padding-left: 20px;
   justify-content: flex-start;
 }
 
 .shoulder-r {
   right: 0;
-  border-radius: 0 0 0 12px;
-  padding-right: 18px;
+  border-radius: 0 0 0 14px;
+  padding-right: 20px;
   justify-content: flex-end;
+}
+
+/* Active/pressed state for shoulders */
+.shoulder-l:active,
+.shoulder-r:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* ========== MAIN CONTROLS ROW ========== */
@@ -632,14 +665,6 @@ body.hikariboy-active .modal-overlay {
 
 .dpad-area:active {
   filter: brightness(0.90);
-}
-
-.shoulder-l:active,
-.shoulder-r:active {
-  transform: scaleY(0.90);
-  box-shadow:
-    inset 0 3px 8px rgba(0,0,0,0.3),
-    0 2px 4px rgba(0,0,0,0.2);
 }
 
 /* ========== TOUCH OPTIMIZATION ========== */
