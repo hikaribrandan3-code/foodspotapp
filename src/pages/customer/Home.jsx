@@ -12,7 +12,6 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
-import HikariBoy from '../../components/HikariBoy'
 
 // 🚀 VAULT-SEAL: Image Optimization Helper
 const getOptimizedImageUrl = (url, options = {}) => {
@@ -90,9 +89,6 @@ function Home({ config: configProp }) {
     useEffect(() => {
         // console.log('🕹️ ARCADE STATE:', { showArcade, isEditMode, isOwnerMode })
     }, [showArcade, isEditMode, isOwnerMode])
-
-    // 🎮 ARCADE STATE
-    const [showArcade, setShowArcade] = useState(false)
 
     // Detect 'Ver Tienda' edit intent from URL
     // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
