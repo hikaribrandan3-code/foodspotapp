@@ -5,8 +5,32 @@ import PromosComingSoon from './PromosComingSoon.jsx'
 
 export default function Promos() {
     const { tenantData } = useTenant()
+    const containerRef = useRef(null)
+    const [activeIndex, setActiveIndex] = useState(0)
     const appConfig = tenantData?.app_config || {}
     const flyers = appConfig?.promos?.items || []
+    
+    // Track scroll position for dot indicators
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container || flyers.length <= 1) return
+
+        const handleScroll = () => {
+            const scrollTop = container.scrollTop
+            const height = container.clientHeight
+            const newIndex = Math.round(scrollTop / height)
+            setActiveIndex(newIndex)
+        }
+
+        container.addEventListener('scroll', handleScroll)
+        return () => container.removeEventListener('scroll', handleScroll)
+    }, [flyers.length])
+
+    const scrollToFlyer = (index) => {
+        const container = containerRef.current
+        if (!container) return
+        container.scrollTo({ top: index * container.clientHeight, behavior: 'smooth' })
+    }
     
     // Show coming soon if no promos configured
     if (flyers.length === 0) {
