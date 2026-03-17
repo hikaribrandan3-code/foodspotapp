@@ -209,6 +209,21 @@
   flex: 0 0 auto;
   background: transparent;
   display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* foodspot branding between L and R */
+.hb-brand-shoulder {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 20px;
+  font-weight: 425;
+  color: #FFFFFF;
+  letter-spacing: 3px;
+  text-transform: lowercase;
+  user-select: none;
+  z-index: 3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* The "well" background behind buttons */
@@ -444,7 +459,7 @@
 .dpad-down-left { bottom: 3%; left: 3%; }
 .dpad-down-right { bottom: 3%; right: 3%; }
 
-/* ========== A/B BUTTONS — LIGHT GRAY ========== */
+/* ========== A/B BUTTONS — LIGHT GRAY WITH BLACK OUTLINE ========== */
 .hb-action-btns {
   position: relative;
   width: 140px;
@@ -460,10 +475,11 @@
 .action-btn {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.3);
+  /* Thick black outline like reference photo */
+  border: 3px solid #1a1a1a;
   background: var(--button-gray);
   box-shadow:
-    0 4px 8px rgba(0,0,0,0.3),
+    0 4px 8px rgba(0,0,0,0.4),
     inset 0 1px 2px rgba(255,255,255,0.8),
     inset 0 -2px 2px rgba(0,0,0,0.1);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -479,20 +495,20 @@
   will-change: transform;
 }
 
-/* A button — top-right */
+/* A button — top-right (same size as B) */
 .btn-a {
-  width: var(--action-a-size);
-  height: var(--action-a-size);
-  font-size: calc(30px * var(--btn-scale));
+  width: var(--action-b-size);
+  height: var(--action-b-size);
+  font-size: calc(28px * var(--btn-scale));
   top: 0;
   right: 0;
 }
 
-/* B button — bottom-left offset */
+/* B button — bottom-left offset (same size as A) */
 .btn-b {
   width: var(--action-b-size);
   height: var(--action-b-size);
-  font-size: calc(26px * var(--btn-scale));
+  font-size: calc(28px * var(--btn-scale));
   bottom: 12px;
   left: 12px;
 }

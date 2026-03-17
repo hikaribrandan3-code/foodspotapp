@@ -194,21 +194,18 @@ export function HikariBoy({
         )}
       </div>
 
-      {/* Mid Bar — BLACK ZONE with foodspot branding */}
-      <div className="hb-midbar">
-        <span className="hb-brand-text">foodspot</span>
-      </div>
+      {/* Mid Bar — BLACK ZONE */}
+      <div className="hb-midbar"></div>
 
       {/* Controller (45%) — SHELL COLOR */}
       <div className="hb-controller">
-        {/* Shoulder Buttons */}
-
-        {/* Shoulder Buttons */}
+        {/* Shoulder Buttons with foodspot branding between */}
         <div className="hb-shoulders">
           <button 
             className="shoulder-l"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
           >L</button>
+          <span className="hb-brand-shoulder">foodspot</span>
           <button 
             className="shoulder-r"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.R : BUTTONS.START); }}
