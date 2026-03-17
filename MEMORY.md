@@ -124,7 +124,7 @@ body.hikariboy-active .auth-container { display: none !important; }
 - `public/games/*/cover.svg` - Placeholder covers
 
 ### Pending
-- Replace SVG covers with PNG assets from Mac
+- ✅ Replace SVG covers with PNG assets (7 games synced)
 - Add exit buttons to remaining 15 games (optional)
 
 
