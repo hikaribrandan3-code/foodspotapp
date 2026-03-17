@@ -9,6 +9,7 @@ import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import ItemCard from '../../components/ItemCard'
 import { QRCodeSVG } from 'qrcode.react'
+import HikariBoy from '../../components/HikariBoy'
 
 // ============================================
 // 📊 ORDER STATUS - REAL-TIME LIVE TRACKER
@@ -112,6 +113,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
     const paymentStatus = searchParams.get('payment')
     const primaryColor = tenantData?.primary_color || '#C4856A'
+    const [showArcade, setShowArcade] = useState(false)
 
     // ============================================
     // 🔍 FETCH ORDER FROM SUPABASE
@@ -231,6 +233,15 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             } else {
                 window.location.href = `/menu?reorder=true`
             }
+        }
+    }
+
+    const handleOpenArcade = () => {
+        const waitingStates = ['released_to_kitchen', 'preparing', 'ready', 'dispatched']
+        if (order && waitingStates.includes(order.status)) {
+            setShowArcade(true)
+        } else {
+            alert(t('place_order_first_arcade') || 'Place an order first to unlock the Arcade!')
         }
     }
 
@@ -498,6 +509,42 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     {getStatusLabel(order.status, t)}
                 </span>
             </div>
+
+            {/* 🎮 GAME HERO ICON (ARCADE TRIGGER) */}
+            <div 
+                onClick={handleOpenArcade}
+                style={{
+                    position: 'fixed',
+                    bottom: 24,
+                    right: 24,
+                    width: 64,
+                    height: 64,
+                    background: '#1F2937',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 32,
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                    zIndex: 100,
+                    transition: 'transform 0.2s',
+                    border: '3px solid #FFF'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+                🎮
+            </div>
+
+            {/* 🕹️ ARCADE OVERLAY */}
+            {showArcade && (
+                <HikariBoy 
+                    onClose={() => setShowArcade(false)}
+                    controllerColor={tenantData?.primary_color || '#8B5CF6'}
+                    userId={order?.customer_phone || order?.guest_token || 'guest'}
+                />
+            )}
 
             <style>{`
                 @keyframes float {
