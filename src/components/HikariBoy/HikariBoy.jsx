@@ -1,18 +1,14 @@
 /**
- * HikariBoy Emulator Shell
- * Delta GBA-style layout for FoodSpot Arcade
+ * HikariBoy Emulator Shell - Delta 1:1
+ * Deep purple GBA-style layout for FoodSpot Arcade
  * 
- * Structure:
- * - Top: Game Screen (Boot -> Selector -> Game)
- * - Bottom: Purple Controller (Always Visible)
- * 
- * Visual reference: Delta emulator screenshots
+ * Visual reference: Delta emulator iOS
+ * Responsive: iPhone Regular / Pro / Pro Max
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import './HikariBoy.css';
 
-// Controller button handlers
 const BUTTONS = {
   DPAD_UP: 'dpad-up',
   DPAD_DOWN: 'dpad-down', 
@@ -25,183 +21,216 @@ const BUTTONS = {
   MENU: 'menu'
 };
 
+// 16 NEW GAMES (Agent Swarm)
+const GAMES = [
+  { id: 'burger-stack', name: 'Burger Stack', emoji: '🍔', url: '/games/burger-stack/index.html' },
+  { id: 'food-fight', name: 'Food Fight', emoji: '👊', url: '/games/food-fight/index.html' },
+  { id: 'pizza-slice', name: 'Pizza Slice', emoji: '🍕', url: '/games/pizza-slice/index.html' },
+  { id: 'sushi-roll', name: 'Sushi Roll', emoji: '🍣', url: '/games/sushi-roll/index.html' },
+  { id: 'fry-catch', name: 'Fry Catch', emoji: '🍟', url: '/games/fry-catch/index.html' },
+  { id: 'taco-tower', name: 'Taco Tower', emoji: '🌮', url: '/games/taco-tower/index.html' },
+  { id: 'condiment-blast', name: 'Condiment Blast', emoji: '🥫', url: '/games/condiment-blast/index.html' },
+  { id: 'bubble-tea', name: 'Bubble Tea', emoji: '🧋', url: '/games/bubble-tea/index.html' },
+  { id: 'donut-roll', name: 'Donut Roll', emoji: '🍩', url: '/games/donut-roll/index.html' },
+  { id: 'hotdog-dash', name: 'Hotdog Dash', emoji: '🌭', url: '/games/hotdog-dash/index.html' },
+  { id: 'coffee-pour', name: 'Coffee Pour', emoji: '☕', url: '/games/coffee-pour/index.html' },
+  { id: 'steak-flip', name: 'Steak Flip', emoji: '🥩', url: '/games/steak-flip/index.html' },
+  { id: 'ice-cream', name: 'Ice Cream', emoji: '🍦', url: '/games/ice-cream/index.html' },
+  { id: 'spice-invaders', name: 'Spice Invaders', emoji: '🌶️', url: '/games/spice-invaders/index.html' },
+  { id: 'fruit-slice', name: 'Fruit Slice', emoji: '🥝', url: '/games/fruit-slice/index.html' },
+  { id: 'bento-box', name: 'Bento Box', emoji: '🍱', url: '/games/bento-box/index.html' },
+];
+
 export function HikariBoy({ 
   onClose, 
-  foodReady = false, 
-  controllerColor = '#8B5CF6' 
+  foodReady = false
 }) {
   const [isBooting, setIsBooting] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const gameFrameRef = useRef(null);
 
-  // Boot sequence (2 seconds)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsBooting(false);
-    }, 2000);
+    const timer = setTimeout(() => setIsBooting(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle controller input
   const handleButtonPress = (button) => {
-    // 1. If paused, system handle
     if (isPaused && button === BUTTONS.START) {
       setIsPaused(false);
       return;
     }
 
-    // 2. If in game, send to frame
     if (currentGame) {
       gameFrameRef.current?.contentWindow?.postMessage({
         type: 'BUTTON_PRESS',
         button
       }, '*');
 
-      // System buttons
       if (button === BUTTONS.START) setIsPaused(true);
       if (button === BUTTONS.MENU) onClose?.();
       if (button === BUTTONS.SELECT) {
-        if (window.confirm('Go back to Game Selector?')) {
+        if (window.confirm('Back to Game Selector?')) {
           setCurrentGame(null);
         }
       }
     } else if (!isBooting) {
-      // 3. If in selector, limited controls could map to carousel later
+      // Selector controls
+      if (button === BUTTONS.DPAD_LEFT) {
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : GAMES.length - 1);
+      }
+      if (button === BUTTONS.DPAD_RIGHT) {
+        setSelectedIndex(prev => prev < GAMES.length - 1 ? prev + 1 : 0);
+      }
+      if (button === BUTTONS.A) {
+        setCurrentGame(GAMES[selectedIndex]);
+      }
       if (button === BUTTONS.MENU) onClose?.();
     }
   };
 
-  const launchGame = (game) => {
-    setCurrentGame(game);
-    setIsPaused(false);
-  };
-
   return (
-    <div className="hikariboy-emulator" style={{ '--controller-color': controllerColor }}>
-      {/* Game Screen Container (Top Half) */}
-      <div className="game-screen">
+    <div className="hikariboy-emulator">
+      {/* Screen Container (55%) */}
+      <div className="hb-screen">
         {isBooting ? (
-          <div className="hikariboy-boot">
-            <div className="boot-backlight"></div>
-            <div className="boot-logo">
-              <span className="pixel-text">HIKARIBOY</span>
-            </div>
+          <div className="hb-boot">
+            <div className="boot-logo">HIKARIBOY</div>
             <div className="boot-tagline">Food coming. Game on.</div>
           </div>
         ) : !currentGame ? (
-          <GameSelector onSelect={launchGame} onClose={onClose} />
+          <GameSelector 
+            games={GAMES} 
+            selectedIndex={selectedIndex}
+          />
         ) : (
           <>
             <iframe
               ref={gameFrameRef}
               src={currentGame.url}
               title={currentGame.name}
-              className="game-frame"
+              className="hb-game-frame"
               sandbox="allow-scripts allow-same-origin"
             />
-            
             {isPaused && (
-              <div className="pause-overlay">
-                <div className="pause-icon">II</div>
-                <div className="pause-title">{currentGame.name}</div>
-                <div className="pause-options">
-                  <button onClick={() => setIsPaused(false)}>Resume</button>
-                  <button onClick={() => setCurrentGame(null)}>Quit Game</button>
-                </div>
+              <div className="hb-pause-overlay">
+                <div className="pause-icon">PAUSED</div>
+                <button onClick={() => setIsPaused(false)}>Resume</button>
+                <button onClick={() => setCurrentGame(null)}>Quit</button>
               </div>
             )}
-
             {foodReady && (
-              <div className="food-ready-banner">
-                🍔 Your food is ready!
-              </div>
+              <div className="hb-food-banner">🍔 Your food is ready!</div>
             )}
           </>
         )}
       </div>
 
-      {/* Purple Controller (Bottom Half - ALWAYS VISIBLE) */}
-      <div className="controller" style={{ backgroundColor: controllerColor }}>
-        <div className="shoulder-buttons">
-          <div className="shoulder-l">L</div>
-          <div className="delta-brand">HIKARIBOY</div>
-          <div className="shoulder-r">R</div>
+      {/* Mid Bar with Logo */}
+      <div className="hb-midbar">
+        <span className="midbar-logo">HIKARIBOY</span>
+      </div>
+
+      {/* Controller (45%) */}
+      <div className="hb-controller">
+        {/* Shoulder Buttons */}
+        <div className="hb-shoulders">
+          <button 
+            className="shoulder-l"
+            onClick={() => handleButtonPress(BUTTONS.SELECT)}
+          >L</button>
+          <button 
+            className="shoulder-r"
+            onClick={() => handleButtonPress(BUTTONS.START)}
+          >R</button>
         </div>
 
-        <div className="controls-row">
-          {/* D-Pad */}
-          <div className="dpad">
-            <button className="dpad-btn dpad-up" onMouseDown={() => handleButtonPress(BUTTONS.DPAD_UP)}>▲</button>
-            <button className="dpad-btn dpad-left" onMouseDown={() => handleButtonPress(BUTTONS.DPAD_LEFT)}>◀</button>
-            <div className="dpad-center"></div>
-            <button className="dpad-btn dpad-right" onMouseDown={() => handleButtonPress(BUTTONS.DPAD_RIGHT)}>▶</button>
-            <button className="dpad-btn dpad-down" onMouseDown={() => handleButtonPress(BUTTONS.DPAD_DOWN)}>▼</button>
+        {/* Main Controls */}
+        <div className="hb-controls-main">
+          {/* D-Pad - Single Cross Piece */}
+          <div className="hb-dpad">
+            <div className="dpad-cross">
+              <button 
+                className="dpad-area dpad-up"
+                onClick={() => handleButtonPress(BUTTONS.DPAD_UP)}
+              >▲</button>
+              <button 
+                className="dpad-area dpad-left"
+                onClick={() => handleButtonPress(BUTTONS.DPAD_LEFT)}
+              >◀</button>
+              <div className="dpad-center-indent"></div>
+              <button 
+                className="dpad-area dpad-right"
+                onClick={() => handleButtonPress(BUTTONS.DPAD_RIGHT)}
+              >▶</button>
+              <button 
+                className="dpad-area dpad-down"
+                onClick={() => handleButtonPress(BUTTONS.DPAD_DOWN)}
+              >▼</button>
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="action-buttons">
-            <button className="btn-b" onMouseDown={() => handleButtonPress(BUTTONS.B)}>B</button>
-            <button className="btn-a" onMouseDown={() => handleButtonPress(BUTTONS.A)}>A</button>
+          {/* A/B Buttons - A larger & higher */}
+          <div className="hb-action-btns">
+            <button 
+              className="action-btn btn-b"
+              onClick={() => handleButtonPress(BUTTONS.B)}
+            >B</button>
+            <button 
+              className="action-btn btn-a"
+              onClick={() => handleButtonPress(BUTTONS.A)}
+            >A</button>
           </div>
         </div>
 
-        <div className="system-buttons">
-          <button className="sys-btn menu-btn" onClick={() => onClose?.()}>MENU</button>
-          <button className="sys-btn select-btn" onClick={() => handleButtonPress(BUTTONS.SELECT)}>SELECT</button>
-          <button className="sys-btn start-btn" onClick={() => handleButtonPress(BUTTONS.START)}>START</button>
+        {/* System Buttons - Circles with labels below */}
+        <div className="hb-system-btns">
+          <div className="sys-btn-wrap menu-wrap">
+            <button 
+              className="sys-circle menu-btn"
+              onClick={() => onClose?.()}
+            ></button>
+            <span className="sys-label">MENU</span>
+          </div>
+          <div className="sys-btn-wrap select-wrap">
+            <button 
+              className="sys-circle select-btn"
+              onClick={() => handleButtonPress(BUTTONS.SELECT)}
+            ></button>
+            <span className="sys-label">SELECT</span>
+          </div>
+          <div className="sys-btn-wrap start-wrap">
+            <button 
+              className="sys-circle start-btn"
+              onClick={() => handleButtonPress(BUTTONS.START)}
+            ></button>
+            <span className="sys-label">START</span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// Game Selector Component (Renders INSIDE the screen)
-function GameSelector({ onSelect, onClose }) {
-  const games = [
-    { id: 'empanada-dash', name: 'Empanada Dash', cover: '/games/empanada-dash.jpg', url: '/games/empanada-dash/index.html' },
-    { id: 'triple-snap-slots', name: 'Triple Snap', cover: '/games/triplesnapslots.jpg', url: '/games/triple-snap-slots/index.html' },
-    { id: 'sushi-slice', name: 'Sushi Slice', cover: '/games/sushislicernew.jpg', url: '/games/sushi-slice/index.html' },
-    { id: 'gravity-flip', name: 'Gravity Flip', cover: '/games/gravityflip.jpg', url: '/games/gravity-flip/index.html' },
-    { id: 'pegfall-panic', name: 'Peg Stack', cover: '/games/pegstacker.png', url: '/games/peg-stack/index.html' },
-    { id: 'box-runner', name: 'Box Runner', cover: '/games/siderunnergamecover.png', url: '/games/box-runner/index.html' },
-    { id: 'false-hold', name: 'False Hold', cover: '/games/falsehold.jpg', url: '/games/false-hold/index.html' },
-    { id: 'escapa-del-turno', name: 'Escapa del Turno', cover: '/games/escapadelturno.jpg', url: '/games/escapa-del-turno/index.html' },
-    { id: 'avoid-zone', name: 'Cuidado con la Grasa', cover: '/games/avoid-zone-engine.png', url: '/games/avoid-grasa/index.html' },
-    { id: 'collapse-stack', name: 'Burger Stacker', cover: '/games/collapse-stack.jpg', url: '/games/burger-stacker/index.html' },
-    { id: '2048', name: '2048 📱', cover: '🔢', url: 'https://gabrielecirulli.github.io/2048/' },
-    { id: 'hextris', name: 'Hextris 📱', cover: '🔷', url: 'https://hextris.github.io/hextris/' },
-    { id: 'stack', name: 'Stack 📱', cover: '📚', url: 'https://stevengoldberg.github.io/stack/' },
-    { id: 'clumsybird', name: 'Clumsy Bird 📱', cover: '🐤', url: 'https://ellisonleao.github.io/clumsy-bird/' },
-    { id: 'tictactoe', name: 'Tic Tac Toe 📱', cover: '⭕', url: 'https://beumsk.github.io/Tic-Tac-Toe/' },
-    { id: 'connect4', name: 'Connect Four 📱', cover: '🔴', url: 'https://kenrick95.github.io/connect-four/' },
-  ];
-
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const scroll = (direction) => {
-    if (direction === 'left') {
-      setSelectedIndex(prev => prev > 0 ? prev - 1 : games.length - 1);
-    } else {
-      setSelectedIndex(prev => prev < games.length - 1 ? prev + 1 : 0);
-    }
-  };
-
+// Game Selector Component
+function GameSelector({ games, selectedIndex }) {
   return (
-    <div className="selector-embedded">
-      <div className="carousel-mini">
-        <button className="mini-arrow" onClick={() => scroll('left')}>◀</button>
-        <div className="mini-card" onClick={() => onSelect(games[selectedIndex])}>
-          {games[selectedIndex].cover.length < 5 ? (
-            <div className="emoji-cover">{games[selectedIndex].cover}</div>
-          ) : (
-            <img src={games[selectedIndex].cover} alt={games[selectedIndex].name} />
-          )}
-          <div className="mini-title">{games[selectedIndex].name}</div>
-        </div>
-        <button className="mini-arrow" onClick={() => scroll('right')}>▶</button>
+    <div className="hb-selector">
+      <div className="selector-games">
+        {games.map((game, idx) => (
+          <div 
+            key={game.id}
+            className={`game-thumb ${idx === selectedIndex ? 'active' : ''}`}
+          >
+            <div className="thumb-emoji">{game.emoji}</div>
+            <div className="thumb-name">{game.name}</div>
+          </div>
+        ))}
       </div>
-      <div className="mini-hint">Press A or Tap to Start</div>
+      <div className="selector-hint">
+        ◀ ▶ to browse  ●  A to play
+      </div>
     </div>
   );
 }
