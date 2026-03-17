@@ -114,6 +114,11 @@ export function HikariBoy({
   }, []);
 
   const handleButtonPress = (button) => {
+    // Haptic feedback on every button press
+    if (navigator.vibrate) {
+      navigator.vibrate(15); // 15ms light vibration
+    }
+    
     if (isPaused && button === BUTTONS.START) {
       setIsPaused(false);
       return;
