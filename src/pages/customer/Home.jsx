@@ -11,6 +11,7 @@ import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/H
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
+import HikariBoy from '../../components/HikariBoy'
 
 // 🚀 VAULT-SEAL: Image Optimization Helper
 const getOptimizedImageUrl = (url, options = {}) => {
@@ -74,6 +75,7 @@ function Home({ config: configProp }) {
     const longPressStartRef = useRef(null)
     const [hasChanges, setHasChanges] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+    const [showArcade, setShowArcade] = useState(false)
 
     // Detect 'Ver Tienda' edit intent from URL
     // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
@@ -710,7 +712,13 @@ function Home({ config: configProp }) {
                                 onMouseDown={(e) => {
                                     if (isEditMode) initiateDrag(e, 'actions', actionId, index, localPrimaryActions)
                                 }}
-                                onClick={(e) => handleTileClick(e, action.path)}
+                                onClick={(e) => {
+                                    if (actionId === 'game') {
+                                        setShowArcade(true)
+                                    } else {
+                                        handleTileClick(e, action.path)
+                                    }
+                                }}
                                 className={isEditMode ? 'menu-item-wiggle' : ''}
                                 style={{
                                     ...tileStyle,
@@ -724,6 +732,18 @@ function Home({ config: configProp }) {
                                     WebkitUserSelect: 'none',
                                     WebkitTouchCallout: isEditMode ? 'none' : 'default'
                                 }}
+                            >
+                                {tileContent}
+                            </div>
+                        )
+                    }
+
+                    if (actionId === 'game') {
+                        return (
+                            <div 
+                                key={actionId}
+                                onClick={() => setShowArcade(true)}
+                                style={{ ...tileStyle, backgroundColor: getHeroBg(actionId), cursor: 'pointer' }}
                             >
                                 {tileContent}
                             </div>
@@ -1124,6 +1144,14 @@ function Home({ config: configProp }) {
                         }
                     `}</style>
                 </div>
+            )}
+            {/* 🕹️ ARCADE OVERLAY */}
+            {showArcade && (
+                <HikariBoy 
+                    onClose={() => setShowArcade(false)}
+                    controllerColor={tenantData?.primary_color || '#8B5CF6'}
+                    userId={tenantData?.business_name || 'guest'}
+                />
             )}
         </div>
     )
