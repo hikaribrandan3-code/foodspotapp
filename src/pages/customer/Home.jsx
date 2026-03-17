@@ -59,11 +59,11 @@ function Home({ config: configProp }) {
     const isLoading = loading || !tenantData
 
     useEffect(() => {
-        console.log('🏠 HOME MOUNTED', {
-            isOwnerMode: !!localStorage.getItem('foodspot_owner_mode'),
-            tenantSlug,
-            businessId
-        })
+        // console.log('🏠 HOME MOUNTED', {
+        //     isOwnerMode: !!localStorage.getItem('foodspot_owner_mode'),
+        //     tenantSlug,
+        //     businessId
+        // })
     }, [tenantSlug, businessId])
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
@@ -86,7 +86,7 @@ function Home({ config: configProp }) {
     const [showArcade, setShowArcade] = useState(false)
 
     useEffect(() => {
-        console.log('🕹️ ARCADE STATE:', { showArcade, isEditMode, isOwnerMode })
+        // console.log('🕹️ ARCADE STATE:', { showArcade, isEditMode, isOwnerMode })
     }, [showArcade, isEditMode, isOwnerMode])
 
     // Detect 'Ver Tienda' edit intent from URL
@@ -99,14 +99,14 @@ function Home({ config: configProp }) {
         const forceEdit = params.get('editMode') === 'true' || params.get('editmode') === 'true'
 
         if (ownerStart || forceEdit) {
-            console.log("🚀 OWNER MODE ACTIVE (Home via URL)")
+            // console.log("🚀 OWNER MODE ACTIVE (Home via URL)")
             setIsOwnerMode(true)
             // Note: isOwnerMode is derived from session, but we also trust the URL for the visual 'Start' signal if needed
             // Actually, isOwnerMode logic in Home is strictly session-based.
             // But if we came from Backend, we ARE owner.
 
             if (forceEdit) {
-                console.log("🚀 ANTIGRAVITY ACTIVATED")
+                // console.log("🚀 ANTIGRAVITY ACTIVATED")
                 if (navigator.vibrate) navigator.vibrate([30, 50])
                 setIsEditMode(true)
             }
@@ -197,7 +197,7 @@ function Home({ config: configProp }) {
     // Safe navigation wrapper
     const safeNavigate = useCallback((path) => {
         if (isDraggingRef.current || isEditMode) {
-            console.log('[DRAG SAFETY] Navigation blocked - drag/edit in progress')
+            // console.log('[DRAG SAFETY] Navigation blocked - drag/edit in progress')
             return false
         }
         navigate(path)
@@ -227,7 +227,7 @@ function Home({ config: configProp }) {
         // Otherwise, wait 1.8s to enter edit mode
         longPressStartRef.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
         longPressTimerRef.current = setTimeout(() => {
-            console.log("⚡ JIGGLE TRIGGERED (Home 1.8s)")
+            // console.log("⚡ JIGGLE TRIGGERED (Home 1.8s)")
             if (navigator.vibrate) navigator.vibrate(50)
             setIsEditMode(true)
             initiateDrag(e, gridType, itemId, index, availableItems)
@@ -369,7 +369,7 @@ function Home({ config: configProp }) {
             const [movedItem] = newOrder.splice(itemIndex, 1)
             newOrder.splice(targetIndex, 0, movedItem)
 
-            console.log('[DRAG] OPTIMISTIC UPDATE:', newOrder)
+            // console.log('[DRAG] OPTIMISTIC UPDATE:', newOrder)
 
             // ====== STEP 1: UPDATE STATE INSTANTLY (OPTIMISTIC) ======
             if (gridType === 'actions') {
@@ -400,10 +400,10 @@ function Home({ config: configProp }) {
             if (navigator.vibrate) navigator.vibrate(10)
 
             // 3. Log
-            console.log('[DRAG] Local Drop Successful. Waiting for User Save.')
+            // console.log('[DRAG] Local Drop Successful. Waiting for User Save.')
 
         } else {
-            console.log('[DRAG] No movement detected, skipping save')
+            // console.log('[DRAG] No movement detected, skipping save')
         }
 
         // Clear drag state immediately (ghost disappears)
@@ -536,7 +536,7 @@ function Home({ config: configProp }) {
 
         // 🛡️ SILO GUARD: Prevent navigation if slug is undefined or loading
         if (!tenantSlug) {
-            console.error('[SILO GUARD] Navigation blocked - tenantSlug is undefined')
+            // console.error('[SILO GUARD] Navigation blocked - tenantSlug is undefined')
             return
         }
 
@@ -564,7 +564,7 @@ function Home({ config: configProp }) {
                 }
             }
 
-            console.log('[PLATFORM SAVE] Sealing Home Vault:', updatePayload)
+            // console.log('[PLATFORM SAVE] Sealing Home Vault:', updatePayload)
 
             const { error } = await supabase
                 .from('branding')
@@ -590,10 +590,10 @@ function Home({ config: configProp }) {
 
             if (navigator.vibrate) navigator.vibrate([50, 50])
             window.dispatchEvent(new Event('frontendSync'))
-            console.log('[PLATFORM SAVE] Success: Home Order Persisted')
+            // console.log('[PLATFORM SAVE] Success: Home Order Persisted')
 
         } catch (err) {
-            console.error('[PLATFORM SAVE] Critical Failure:', err)
+            // console.error('[PLATFORM SAVE] Critical Failure:', err)
             alert(t('error_saving') || 'Error al guardar cambios: ' + err.message)
         } finally {
             setIsSaving(false)
@@ -720,11 +720,10 @@ function Home({ config: configProp }) {
                                 data-item-id={actionId}
                                 onTouchStart={(e) => handleTouchStart(e, 'actions', actionId, index, localPrimaryActions)}
                                 onTouchEnd={(e) => {
-                                    handleTouchEndOrMove()
+                                    handleTouchEndOrMove() // Always clear long press timer
+                                    // Robust trigger: ignore if dragging or in edit mode
                                     if (!isDraggingRef.current && !isEditMode) {
-                                        console.log('👆 TOUCH END (Owner Block):', actionId)
                                         if (actionId === 'game' || actionId === 'arcade') {
-                                            console.log('🚀 TRIGGERING ARCADE (Owner Block - Touch)')
                                             setShowArcade(true)
                                         }
                                     }
@@ -734,11 +733,10 @@ function Home({ config: configProp }) {
                                     if (isEditMode) initiateDrag(e, 'actions', actionId, index, localPrimaryActions)
                                 }}
                                 onClick={(e) => {
-                                    console.log('🖱️ CLICK (Owner Block):', { actionId, isEditMode })
-                                    if (isEditMode) return;
+                                    // Desktop / Fallback click
+                                    if (isEditMode || isDraggingRef.current) return;
                                     
                                     if (actionId === 'game' || actionId === 'arcade') {
-                                        console.log('🚀 TRIGGERING ARCADE (Owner Block)')
                                         setShowArcade(true)
                                     } else {
                                         handleTileClick(e, action.path)
@@ -763,20 +761,12 @@ function Home({ config: configProp }) {
                         )
                     }
 
-                    if (actionId === 'game') {
+                    if (actionId === 'game' || actionId === 'arcade') {
                         return (
                             <div
                                 key={actionId}
-                                onClick={(e) => {
-                                    console.log('🕹️ ARCADE CLICK (Guest Mode)')
-                                    setShowArcade(true)
-                                }}
-                                onTouchEnd={(e) => {
-                                    if (!isDraggingRef.current && !isEditMode) {
-                                        console.log('🕹️ ARCADE TOUCH (Guest Mode)')
-                                        setShowArcade(true)
-                                    }
-                                }}
+                                onClick={() => setShowArcade(true)}
+                                onTouchEnd={() => setShowArcade(true)}
                                 style={{ ...tileStyle, backgroundColor: getHeroBg(actionId), cursor: 'pointer' }}
                             >
                                 {tileContent}
@@ -927,7 +917,7 @@ function Home({ config: configProp }) {
                                 overflow: 'hidden'
                             }}>
                                 {item.image && (
-                                    <img 
+                                    <img
                                         src={item.image}
                                         alt={item.name}
                                         loading="lazy"
@@ -1044,7 +1034,7 @@ function Home({ config: configProp }) {
                                 position: 'relative'
                             }}>
                                 {item.image && (
-                                    <img 
+                                    <img
                                         src={item.image}
                                         alt=""
                                         style={{
@@ -1181,7 +1171,7 @@ function Home({ config: configProp }) {
             )}
             {/* 🕹️ ARCADE OVERLAY */}
             {showArcade && (
-                <HikariBoy 
+                <HikariBoy
                     onClose={() => setShowArcade(false)}
                     controllerColor={tenantData?.primary_color || '#8B5CF6'}
                     userId={tenantData?.business_name || 'guest'}
