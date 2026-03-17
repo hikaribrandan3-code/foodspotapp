@@ -10,7 +10,7 @@ const Promos = () => {
       {/* Back Button */}
       <button 
         onClick={() => navigate(-1)}
-        className="absolute top-8 left-8 p-2 rounded-full hover:bg-white/10 transition-colors"
+        className="absolute top-8 left-8 p-2 rounded-full hover:bg-white/10 transition-colors z-10"
         aria-label="Volver"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -19,14 +19,14 @@ const Promos = () => {
       </button>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center animate-fade-in">
-        <h1 className="text-6xl md:text-8xl font-[900] tracking-tighter leading-none mb-4 text-center">
-          COMING<br />SOON
+      <div className="flex flex-col items-center justify-center animate-fade-in text-center">
+        <h1 className="text-7xl md:text-[10rem] font-[900] tracking-tighter leading-[0.85] mb-6 whitespace-pre-line">
+          COMING{"\n"}SOON
         </h1>
         
-        <div className="w-12 h-[1px] bg-white/30 mb-6"></div>
+        <div className="w-16 h-[1.5px] bg-white/40 mb-8"></div>
         
-        <p className="text-lg md:text-xl font-medium tracking-wide opacity-80">
+        <p className="text-2xl md:text-3xl font-medium tracking-widest opacity-90 uppercase italic">
           Stay Tuned
         </p>
       </div>
@@ -38,16 +38,17 @@ const Promos = () => {
         }
 
         .animate-fade-in {
-          animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: fadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
 
         h1 {
           font-stretch: extra-condensed;
+          text-transform: uppercase;
         }
       `}</style>
     </div>
