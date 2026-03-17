@@ -126,11 +126,15 @@ export function HikariBoy({
       }, '*');
 
       if (button === BUTTONS.START) setIsPaused(true);
-      if (button === BUTTONS.MENU) onClose?.();
+      // MENU: Close entire HikariBoy (back to main app)
+      if (button === BUTTONS.MENU) {
+        onClose?.();
+        return;
+      }
+      // SELECT: Back to game selector (instant, no confirm)
       if (button === BUTTONS.SELECT) {
-        if (window.confirm('Back to Game Selector?')) {
-          setCurrentGame(null);
-        }
+        setCurrentGame(null);
+        return;
       }
     } else if (!isBooting) {
       // SELECTOR CONTROLS
@@ -143,7 +147,10 @@ export function HikariBoy({
       if (button === BUTTONS.A || button === BUTTONS.START) {
         setCurrentGame(GAMES[selectedIndex]);
       }
-      if (button === BUTTONS.MENU) onClose?.();
+      // MENU: Close HikariBoy from selector too
+      if (button === BUTTONS.MENU) {
+        onClose?.();
+      }
     }
   };
 
@@ -305,7 +312,7 @@ function GameSelector({ games, selectedIndex }) {
       
       {/* Instructions */}
       <div className="selector-hint">
-        ◀ ▶ Browse  ●  A or START to Play
+        ◀ ▶ Browse  ●  A/START Play  ●  MENU Exit
       </div>
     </div>
   );
