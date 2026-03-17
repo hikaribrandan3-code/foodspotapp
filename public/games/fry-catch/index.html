@@ -150,6 +150,17 @@ canvas.addEventListener('touchmove', (e) => {
 // PostMessage API
 window.addEventListener('message', (e) => {
     switch(e.data.type) {
+        case 'BUTTON_PRESS':
+            const btn = e.data.button;
+            if (btn === 'dpad-left') basket.x = Math.max(0, basket.x - 30);
+            if (btn === 'dpad-right') basket.x = Math.min(420, basket.x + 30);
+            if (btn === 'a' || btn === 'start') {
+                // Speed boost or special move could go here
+            }
+            if (btn === 'select') {
+                window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'fry-catch' }, '*');
+            }
+            break;
         case 'PAUSE': gameState = 'paused'; break;
         case 'RESUME': gameState = 'playing'; gameLoop(); break;
         case 'SAVE_STATE': localStorage.setItem('fryCatch_state', JSON.stringify({score, lives})); break;
