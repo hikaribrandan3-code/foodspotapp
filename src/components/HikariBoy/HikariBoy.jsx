@@ -210,6 +210,11 @@ export function HikariBoy({
         )}
       </div>
 
+      {/* Brand Mark — MUNCH BOY */}
+      <div className="hb-brand-mark">
+        <span className="hb-brand-text-layer">MUNCH BOY</span>
+      </div>
+
       {/* Mid Bar — BLACK ZONE */}
       <div className="hb-midbar"></div>
 
