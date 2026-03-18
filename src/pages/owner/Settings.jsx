@@ -374,7 +374,9 @@ const Settings = () => {
                 hero_url: tenant.hero_url,
                 hero_icons: tenant.hero_icons,
                 info_pills: tenant.info_pills,
-                app_config: tenant.app_config, // 🛡️ JSON STORAGE for extended settings
+                munchboy_enabled: tenant.munchboy_enabled,
+                munchboy_name: tenant.munchboy_name,
+                app_config: tenant.app_config,
                 updated_at: new Date()
             };
 
@@ -742,6 +744,70 @@ const Settings = () => {
                         <ColorPillar label={t('secondary')} keyName="secondary_color" cssVar="--color-secondary" defaultValue="#A89070" />
                         <ColorPillar label={t('confirmation')} keyName="confirmation_color" cssVar="--color-confirm" defaultValue="#22C55E" />
                         <ColorPillar label={t('powered_by')} keyName="powered_by_color" cssVar="--color-powered" defaultValue="#C4856A" />
+                    </div>
+                </section>
+
+                {/* ========== 6. MUNCHBOY BRANDING ========== */}
+                <section className="branding-card">
+                    <div className="section-header">
+                        <h3>🎮 Munchboy Arcade</h3>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Customize the gaming experience branding</p>
+                    
+                    <div style={{ 
+                        background: 'linear-gradient(135deg, #6B0FCC 0%, #4e4a9e 100%)', 
+                        borderRadius: 16, 
+                        padding: 20,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                        boxShadow: '0 4px 12px rgba(107, 15, 204, 0.3)'
+                    }}>
+                        <div style={{
+                            width: 60,
+                            height: 60,
+                            background: '#fff',
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 32
+                        }}>🎮</div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ 
+                                fontSize: 18, 
+                                fontWeight: 700, 
+                                color: '#fff',
+                                marginBottom: 4
+                            }}>MUNCHBOY</div>
+                            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>Powered by FoodSpot Arcade</div>
+                        </div>
+                        <label className="switch-label" style={{ margin: 0 }}>
+                            <span style={{ color: tenant?.munchboy_enabled ? '#22C55E' : 'rgba(255,255,255,0.6)', marginRight: 8 }}>
+                                {tenant?.munchboy_enabled ? 'ON' : 'OFF'}
+                            </span>
+                            <input
+                                type="checkbox"
+                                checked={!!tenant?.munchboy_enabled}
+                                onChange={(e) => handleFieldUpdate('munchboy_enabled', e.target.checked)}
+                                style={{ accentColor: '#22C55E' }}
+                            />
+                        </label>
+                    </div>
+                    
+                    <div style={{ marginTop: 16 }}>
+                        <label style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', display: 'block', marginBottom: 8 }}>
+                            Arcade Display Name
+                        </label>
+                        <input
+                            type="text"
+                            className="pill-input"
+                            value={tenant?.munchboy_name || 'MUNCHBOY'}
+                            placeholder="MUNCHBOY"
+                            onChange={(e) => handleFieldUpdate('munchboy_name', e.target.value)}
+                            onBlur={(e) => handleFieldUpdate('munchboy_name', e.target.value)}
+                            style={{ width: '100%' }}
+                        />
                     </div>
                 </section>
 
