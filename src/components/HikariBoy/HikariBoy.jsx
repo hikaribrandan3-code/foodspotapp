@@ -56,7 +56,6 @@ export function HikariBoy({
   foodReady = false
 }) {
   const [gbaBootComplete, setGbaBootComplete] = useState(false);
-  const [isBooting, setIsBooting] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -100,76 +99,6 @@ export function HikariBoy({
     };
   }, []);
 
-  // Boot sequence - MUNCHBOY with START to continue
-  const [bootPhase, setBootPhase] = useState('intro'); // 'intro', 'ready', 'done'
-  const [lettersDropped, setLettersDropped] = useState(false);
-  const [showPressStart, setShowPressStart] = useState(false);
-  const audioCtxRef = useRef(null);
-
-  const playGbaChime = () => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    const ctx = audioCtxRef.current;
-    const now = ctx.currentTime;
-    
-    const pulse = (freq, start, duration, vol, type = 'square') => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, start);
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(vol, start + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + duration);
-    };
-    
-    // GBA "Bling" Sound
-    pulse(523.25, now, 0.08, 0.1, 'square');
-    setTimeout(() => {
-      pulse(1046.50, now + 0.08, 1.2, 0.15, 'square');
-      pulse(2093.00, now + 0.08, 0.8, 0.05, 'triangle');
-    }, 80);
-  };
-
-  const startBootSequence = () => {
-    if (bootPhase !== 'intro') return;
-    setBootPhase('animating');
-    
-    // Drop letters with stagger
-    setTimeout(() => setLettersDropped(true), 100);
-    
-    // Play chime and show press start
-    setTimeout(() => {
-      playGbaChime();
-      setShowPressStart(true);
-      setBootPhase('ready');
-    }, 800);
-  };
-
-  const completeBoot = () => {
-    if (bootPhase === 'ready') {
-      setBootPhase('done');
-      setIsBooting(false);
-    }
-  };
-
-  // Handle button presses during boot
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (bootPhase === 'intro') {
-        startBootSequence();
-      } else if (bootPhase === 'ready' && (e.code === 'Space' || e.code === 'Enter')) {
-        completeBoot();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [bootPhase]);
-
   // Listen for GAME_EXIT from child games
   useEffect(() => {
     const handleMessage = (e) => {
@@ -187,20 +116,7 @@ export function HikariBoy({
       const isAction = button === BUTTONS.A || button === BUTTONS.B;
       navigator.vibrate(isAction ? 65 : 50);
     }
-    
-    // Boot sequence handling
-    if (isBooting) {
-      if (bootPhase === 'intro') {
-        startBootSequence();
-        return;
-      }
-      if (bootPhase === 'ready' && (button === BUTTONS.A || button === BUTTONS.START)) {
-        completeBoot();
-        return;
-      }
-      return;
-    }
-    
+
     if (isPaused && button === BUTTONS.START) {
       setIsPaused(false);
       return;
@@ -245,29 +161,7 @@ export function HikariBoy({
       <div className="hikariboy-emulator">
         {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
         <div className="hb-screen">
-          {isBooting ? (
-            <div className="munchboy-boot" onClick={startBootSequence}>
-              <div className="munchboy-container">
-                <span className={`munch-letter l-M ${lettersDropped ? 'dropped' : ''}`}>M</span>
-                <span className={`munch-letter l-U ${lettersDropped ? 'dropped' : ''}`}>U</span>
-                <span className={`munch-letter l-N ${lettersDropped ? 'dropped' : ''}`}>N</span>
-                <span className={`munch-letter l-C ${lettersDropped ? 'dropped' : ''}`}>C</span>
-                <span className={`munch-letter l-H ${lettersDropped ? 'dropped' : ''}`}>H</span>
-                <span className={`munch-letter l-B ${lettersDropped ? 'dropped' : ''}`}>B</span>
-                <span className={`munch-letter l-O ${lettersDropped ? 'dropped' : ''}`}>O</span>
-                <span className={`munch-letter l-Y ${lettersDropped ? 'dropped' : ''}`}>Y</span>
-              </div>
-              <div className={`munch-footer ${lettersDropped ? 'visible' : ''}`}>
-                foodspot mobile
-              </div>
-              {bootPhase === 'intro' && (
-                <div className="munch-hint">TAP SCREEN OR PRESS A</div>
-              )}
-              {showPressStart && (
-                <div className="munch-press-start">PRESS START</div>
-              )}
-            </div>
-          ) : !currentGame ? (
+          {!currentGame ? (
           <GameSelector 
             games={GAMES} 
             selectedIndex={selectedIndex}
