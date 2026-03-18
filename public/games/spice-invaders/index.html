@@ -570,7 +570,7 @@ class Game{
     this.nebula=new Nebula();this.stars=new Starfield();this.shake=new Shake();
     this.inp={LEFT:false,RIGHT:false,A:false,B:false,L:false,R:false,START:false,
               A_PRESSED:false,B_PRESSED:false,L_PRESSED:false,R_PRESSED:false,START_PRESSED:false};
-    this._zHeld=false;this._lHeld=false;this._rHeld=false;
+
     this.state='title';this.score=0;this.wave=1;this.frame=0;
     this.highScore=parseInt(localStorage.getItem('si_hs')||'0');
     this.player=null;this.enemies=[];this.boss=null;
@@ -582,27 +582,26 @@ class Game{
   }
 
   setupInput(){
+    // HikariBoy message handler - uses state field for held buttons
     window.addEventListener('message',e=>{
       const{type,button,state}=e.data;
-      if(type==='BUTTON_PRESS'){
-        const map={'dpad-left':'LEFT','dpad-right':'RIGHT','dpad-up':'UP','dpad-down':'DOWN','a':'A','b':'B','start':'START'};
-        const g=map[button];
-        if(g){this.inp[g]=true;this.inp[g+'_PRESSED']=true;}
-      }else if(type==='BUTTON_RELEASE'){
-        const map={'dpad-left':'LEFT','dpad-right':'RIGHT','dpad-up':'UP','dpad-down':'DOWN','a':'A','b':'B','start':'START'};
-        const g=map[button];
-        if(g){this.inp[g]=false;}
-      }
+      if(type!=='BUTTON_PRESS'&&type!=='BUTTON_RELEASE')return;
+      const map={'dpad-left':'LEFT','dpad-right':'RIGHT','dpad-up':'UP','dpad-down':'DOWN','a':'A','b':'B','start':'START'};
+      const g=map[button];if(!g)return;
+      const isDown=(state!==undefined)?state:(type==='BUTTON_PRESS');
+      if(isDown&&!this.inp[g])this.inp[g+'_PRESSED']=true;
+      this.inp[g]=isDown;
     });
+    // Keyboard for testing only - remove conflicting keybinds
     window.addEventListener('keydown',e=>{
-      const map={'ArrowLeft':'LEFT','ArrowRight':'RIGHT','ArrowUp':'UP','ArrowDown':'DOWN','z':'A','Z':'A','x':'B','X':'B','a':'L','A':'L','s':'R','S':'R','Enter':'START',' ':'A'};
+      const map={'ArrowLeft':'LEFT','ArrowRight':'RIGHT','ArrowUp':'UP','ArrowDown':'DOWN','z':'A','Z':'A','x':'B','X':'B','Enter':'START',' ':'A'};
       const g=map[e.key];
-      if(g){if(!this.inp[g])this.inp[g+'_PRESSED']=true;this.inp[g]=true;if(g==='A')this._zHeld=true;if(g==='LEFT')this._lHeld=true;if(g==='RIGHT')this._rHeld=true;}
+      if(g){if(!this.inp[g])this.inp[g+'_PRESSED']=true;this.inp[g]=true;}
       e.preventDefault();
     });
     window.addEventListener('keyup',e=>{
-      const map={'ArrowLeft':'LEFT','ArrowRight':'RIGHT','ArrowUp':'UP','ArrowDown':'DOWN','z':'A','Z':'A','x':'B','X':'B','a':'L','A':'L','s':'R','S':'R','Enter':'START',' ':'A'};
-      const g=map[e.key];if(g){this.inp[g]=false;if(g==='A')this._zHeld=false;if(g==='LEFT')this._lHeld=false;if(g==='RIGHT')this._rHeld=false;}
+      const map={'ArrowLeft':'LEFT','ArrowRight':'RIGHT','ArrowUp':'UP','ArrowDown':'DOWN','z':'A','Z':'A','x':'B','X':'B','Enter':'START',' ':'A'};
+      const g=map[e.key];if(g)this.inp[g]=false;
     });
     // Touch disabled - use d-pad buttons only
   }
@@ -649,6 +648,8 @@ class Game{
       case 'paused':this.updatePaused();break;
       case 'gameover':case 'victory':if(this.inp.A_PRESSED||this.inp.START_PRESSED)this.state='title';break;
     }
+    // Clear all inputs each frame - HikariBoy sends fresh state every frame
+    this.inp.LEFT=false;this.inp.RIGHT=false;this.inp.A=false;this.inp.B=false;this.inp.START=false;
     ['A_PRESSED','B_PRESSED','L_PRESSED','R_PRESSED','START_PRESSED'].forEach(k=>this.inp[k]=false);
   }
 
