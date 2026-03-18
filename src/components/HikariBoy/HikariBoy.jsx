@@ -31,26 +31,25 @@ const BUTTONS = {
   R: 'r'
 };
 
-// 19 GAMES with cover paths (15 food + 4 GBA homebrew)
-// All new games have music and high-quality cover.png images
+// 16 GAMES with cover paths (all premium food games with music)
+// PNG covers preferred, null fallback triggers text display on error
 const GAMES = [
-  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
-  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
-  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', url: '/games/fry-catch/index.html' },
-  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
-  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', url: '/games/coffee-pour/index.html' },
-  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
-  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
-  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', url: '/games/bento-box/index.html' },
-  { id: 'condiment-blast', name: 'Condiment Blast', cover: '/games/condiment-blast/cover.png', url: '/games/condiment-blast/index.html' },
-  { id: 'donut-roll', name: 'Donut Roll', cover: '/games/donut-roll/cover.png', url: '/games/donut-roll/index.html' },
-  { id: 'ice-cream', name: 'Ice Cream', cover: '/games/ice-cream/cover.png', url: '/games/ice-cream/index.html' },
-  { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
-  // NEW GAMES (with music!)
-  { id: 'hot-dog-dash', name: 'Hot Dog Dash', cover: '/games/hot-dog-dash/cover.png', url: '/games/hot-dog-dash/index.html' },
-  { id: 'ingredient-match', name: 'Ingredient Match', cover: '/games/ingredient-match/cover.png', url: '/games/ingredient-match/index.html' },
-  { id: 'perfect-steak', name: 'Perfect Steak', cover: '/games/perfect-steak/cover.png', url: '/games/perfect-steak/index.html' },
-  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', url: '/games/taco-tower/index.html' },
+  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', fallback: null, url: '/games/burger-stack/index.html' },
+  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', fallback: null, url: '/games/food-fight/index.html' },
+  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', fallback: null, url: '/games/fry-catch/index.html' },
+  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', fallback: null, url: '/games/bubble-tea/index.html' },
+  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', fallback: null, url: '/games/coffee-pour/index.html' },
+  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', fallback: null, url: '/games/spice-invaders/index.html' },
+  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', fallback: null, url: '/games/fruit-slice/index.html' },
+  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', fallback: null, url: '/games/bento-box/index.html' },
+  { id: 'condiment-blast', name: 'Condiment Blast', cover: '/games/condiment-blast/cover.png', fallback: null, url: '/games/condiment-blast/index.html' },
+  { id: 'donut-roll', name: 'Donut Roll', cover: '/games/donut-roll/cover.png', fallback: null, url: '/games/donut-roll/index.html' },
+  { id: 'ice-cream', name: 'Ice Cream', cover: '/games/ice-cream/cover.png', fallback: null, url: '/games/ice-cream/index.html' },
+  { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', fallback: null, url: '/games/sushi-roll/index.html' },
+  { id: 'hot-dog-dash', name: 'Hot Dog Dash', cover: '/games/hot-dog-dash/cover.png', fallback: null, url: '/games/hot-dog-dash/index.html' },
+  { id: 'ingredient-match', name: 'Ingredient Match', cover: '/games/ingredient-match/cover.png', fallback: null, url: '/games/ingredient-match/index.html' },
+  { id: 'perfect-steak', name: 'Perfect Steak', cover: '/games/perfect-steak/cover.png', fallback: null, url: '/games/perfect-steak/index.html' },
+  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', fallback: null, url: '/games/taco-tower/index.html' },
 ];
 
 export function HikariBoy({ 
@@ -325,14 +324,8 @@ function GameSelector({ games, selectedIndex }) {
   }, [selectedIndex, selectedGame]);
   
   const handleError = () => {
-    if (!hasError && selectedGame.fallback) {
-      // Try fallback SVG
-      setImgSrc(selectedGame.fallback);
-      setHasError(true);
-    } else {
-      // No fallback, show text
-      setHasError(true);
-    }
+    // No fallback or already tried fallback - show text
+    setHasError(true);
   };
   
   return (
