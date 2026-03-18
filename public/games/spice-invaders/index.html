@@ -765,29 +765,19 @@ class Game{
   boom(x,y,size){this.explosions.push({x,y,size,p:0});}
 
   draw(){
-    ctx.save();ctx.clearRect(0,0,W,H);
+    ctx.save();
+    // Fill entire screen with background color first (no black bars)
+    ctx.fillStyle='#06001a';ctx.fillRect(0,0,W,H);
     // Scale to fit full height
     ctx.scale(SCALE,SCALE);
-    // Draw extended background to fill side bars
+    // Calculate centering offset
     const gameW=W/SCALE;
     const bgOffset=(gameW-BW)/2;
-    // Draw wider background first
-    ctx.save();
-    ctx.translate(-bgOffset,0);
+    // Draw gradient background across full width
     const wideBg=ctx.createLinearGradient(0,0,0,BH);
     wideBg.addColorStop(0,'#06001a');wideBg.addColorStop(0.5,'#0d0030');wideBg.addColorStop(1,'#1a0010');
-    ctx.fillStyle=wideBg;ctx.fillRect(0,0,gameW,BH);
-    // Extended stars
-    this.stars.layers.forEach(l=>{
-      for(let i=0;i<l.stars.length*2;i++){
-        const sx=(i/l.stars.length/2)*gameW;
-        const sy=l.stars[i%l.stars.length].y;
-        ctx.fillStyle=`rgba(255,255,255,${l.alpha*0.6})`;
-        ctx.beginPath();ctx.arc(sx,sy,l.stars[i%l.stars.length].s,0,Math.PI*2);ctx.fill();
-      }
-    });
-    ctx.restore();
-    // Now center the actual gameplay
+    ctx.fillStyle=wideBg;ctx.fillRect(-bgOffset,0,gameW,BH);
+    // Center the gameplay
     ctx.translate(bgOffset,0);
     this.shake.apply(ctx);
     this.nebula.draw(ctx);this.stars.draw(ctx,this.frame);
