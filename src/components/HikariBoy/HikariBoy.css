@@ -98,7 +98,7 @@
 
 /* ========== SCREEN (flexible aspect, game maintains own ratio) ========== */
 .hb-screen {
-  flex: 1 1 auto;
+  flex: 0 0 50%;
   position: relative;
   background: var(--hb-screen-bg);
   display: flex;
@@ -277,7 +277,7 @@
 
 /* ========== CONTROLLER BODY — SHELL COLOR ========== */
 .hb-controller {
-  flex: 0 0 45%;
+  flex: 0 0 50%;
   background: linear-gradient(180deg, #6E56CF 0%, #4B3FA3 100%);
   display: flex;
   flex-direction: column;
