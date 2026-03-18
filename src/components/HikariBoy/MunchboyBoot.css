@@ -35,7 +35,7 @@
   transform: translateY(-300px) scaleY(1.5);
   user-select: none;
   position: relative;
-  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.1s;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.1s;
 }
 
 .munch-letter.dropped {
@@ -108,7 +108,7 @@
 
 .rainbow-sweep.active,
 .rainbow-sweep-footer.active {
-  animation: rainbowWave 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: rainbowWave 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes rainbowWave {
