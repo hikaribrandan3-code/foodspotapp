@@ -11,7 +11,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import './HikariBoy.css';
-import GbaBoot from './GbaBoot';
 
 const BUTTONS = {
   DPAD_UP: 'dpad-up',
@@ -33,14 +32,15 @@ const BUTTONS = {
 
 // 15 GAMES with cover paths (11 food + 4 GBA homebrew)
 // PNG covers preferred, SVG fallback for missing PNGs
-// 12 GAMES with cover paths (8 food + 4 GBA homebrew)
-// PNG covers preferred, SVG fallback for missing PNGs
 const GAMES = [
   { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', fallback: '/games/burger-stack/cover.svg', url: '/games/burger-stack/index.html' },
   { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', fallback: '/games/food-fight/cover.svg', url: '/games/food-fight/index.html' },
   { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', fallback: '/games/fry-catch/cover.svg', url: '/games/fry-catch/index.html' },
+  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', fallback: '/games/taco-tower/cover.svg', url: '/games/taco-tower/index.html' },
   { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', fallback: '/games/bubble-tea/cover.svg', url: '/games/bubble-tea/index.html' },
+  { id: 'hotdog-dash', name: 'Hotdog Dash', cover: '/games/hotdog-dash/cover.png', fallback: '/games/hotdog-dash/cover.svg', url: '/games/hotdog-dash/index.html' },
   { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', fallback: '/games/coffee-pour/cover.svg', url: '/games/coffee-pour/index.html' },
+  { id: 'steak-flip', name: 'Steak Flip', cover: '/games/steak-flip/cover.png', fallback: '/games/steak-flip/cover.svg', url: '/games/steak-flip/index.html' },
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', fallback: '/games/spice-invaders/cover.svg', url: '/games/spice-invaders/index.html' },
   { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', fallback: '/games/fruit-slice/cover.svg', url: '/games/fruit-slice/index.html' },
   { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', fallback: '/games/bento-box/cover.svg', url: '/games/bento-box/index.html' },
@@ -55,7 +55,7 @@ export function HikariBoy({
   onClose, 
   foodReady = false
 }) {
-  const [gbaBootComplete, setGbaBootComplete] = useState(false);
+  const [isBooting, setIsBooting] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -99,6 +99,12 @@ export function HikariBoy({
     };
   }, []);
 
+  // Boot sequence
+  useEffect(() => {
+    const timer = setTimeout(() => setIsBooting(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Listen for GAME_EXIT from child games
   useEffect(() => {
     const handleMessage = (e) => {
@@ -114,9 +120,9 @@ export function HikariBoy({
     // ⚡ HEAVY HAPTICS: 50-80ms bursts for retro tactile feel
     if (navigator.vibrate) {
       const isAction = button === BUTTONS.A || button === BUTTONS.B;
-      navigator.vibrate(isAction ? 65 : 50);
+      navigator.vibrate(isAction ? 65 : 50); // Heavy profile
     }
-
+    
     if (isPaused && button === BUTTONS.START) {
       setIsPaused(false);
       return;
@@ -137,7 +143,7 @@ export function HikariBoy({
         setCurrentGame(null);
         return;
       }
-    } else {
+    } else if (!isBooting) {
       if (button === BUTTONS.DPAD_LEFT) {
         setSelectedIndex(prev => prev > 0 ? prev - 1 : GAMES.length - 1);
       }
@@ -154,14 +160,14 @@ export function HikariBoy({
   };
 
   return (
-    <>
-      {!gbaBootComplete && (
-        <GbaBoot onComplete={() => setGbaBootComplete(true)} />
-      )}
-      <div className="hikariboy-emulator">
-        {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
-        <div className="hb-screen">
-          {!currentGame ? (
+    <div className="hikariboy-emulator">
+      {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
+      <div className="hb-screen">
+        {isBooting ? (
+          <div className="hb-boot">
+            <div className="boot-logo">foodspot</div>
+          </div>
+        ) : !currentGame ? (
           <GameSelector 
             games={GAMES} 
             selectedIndex={selectedIndex}
@@ -194,21 +200,17 @@ export function HikariBoy({
 
       {/* Controller (45%) — SHELL COLOR */}
       <div className="hb-controller">
-        {/* Shoulder Buttons */}
+        {/* Shoulder Buttons with foodspot branding between */}
         <div className="hb-shoulders">
           <button 
             className="shoulder-l"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
           >L</button>
+          <span className="hb-brand-shoulder">foodspot</span>
           <button 
             className="shoulder-r"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.R : BUTTONS.START); }}
           >R</button>
-        </div>
-
-        {/* Branding Row - between shoulders and controls */}
-        <div className="hb-branding-row">
-          <span className="hb-brand-foodspot">foodspot</span>
         </div>
 
         {/* Main Controls: D-Pad (left) + A/B (right) */}
@@ -299,7 +301,6 @@ export function HikariBoy({
         <div className="hb-sparkle">✦</div>
       </div>
     </div>
-    </>
   );
 }
 
