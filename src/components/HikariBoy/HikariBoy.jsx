@@ -210,27 +210,23 @@ export function HikariBoy({
         )}
       </div>
 
-      {/* Brand Mark — MUNCH BOY */}
-      <div className="hb-brand-mark">
-        <span className="hb-brand-text-layer">MUNCH BOY</span>
-      </div>
-
-      {/* Mid Bar — BLACK ZONE */}
-      <div className="hb-midbar"></div>
-
       {/* Controller (45%) — SHELL COLOR */}
       <div className="hb-controller">
-        {/* Shoulder Buttons with foodspot branding between */}
+        {/* Shoulder Buttons */}
         <div className="hb-shoulders">
           <button 
             className="shoulder-l"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
           >L</button>
-          <span className="hb-brand-shoulder">foodspot</span>
           <button 
             className="shoulder-r"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.R : BUTTONS.START); }}
           >R</button>
+        </div>
+
+        {/* Brand Mark — MUNCH BOY */}
+        <div className="hb-brand-mark">
+          <span className="hb-brand-text-layer">MUNCH BOY</span>
         </div>
 
         {/* Main Controls: D-Pad (left) + A/B (right) */}
