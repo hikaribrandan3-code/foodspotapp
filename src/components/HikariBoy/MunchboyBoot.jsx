@@ -11,7 +11,6 @@ export default function MunchboyBoot({ onComplete }) {
   const [lettersDropped, setLettersDropped] = useState(false);
   const [showFooter, setShowFooter] = useState(false);
   const [showPressStart, setShowPressStart] = useState(false);
-  const [rainbowActive, setRainbowActive] = useState(false);
   const audioCtxRef = useRef(null);
 
   const playGbaChime = async () => {
@@ -75,7 +74,6 @@ export default function MunchboyBoot({ onComplete }) {
     
     const chimeTimer = setTimeout(() => {
       playGbaChime();
-      setRainbowActive(true);
       setShowFooter(true);
     }, CHIME_DELAY);
     
@@ -112,16 +110,10 @@ export default function MunchboyBoot({ onComplete }) {
             {letter}
           </span>
         ))}
-        <div className={`rainbow-sweep ${rainbowActive ? 'active' : ''}`}>
-          MUNCHBOY
-        </div>
       </div>
       
       <div className={`munchboy-footer ${showFooter ? 'visible' : ''}`}>
         foodspot mobile
-        <div className={`rainbow-sweep-footer ${rainbowActive ? 'active' : ''}`}>
-          foodspot mobile
-        </div>
       </div>
       
       {showPressStart && (
