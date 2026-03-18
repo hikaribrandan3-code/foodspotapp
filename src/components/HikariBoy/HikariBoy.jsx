@@ -111,6 +111,9 @@ export function HikariBoy({
   useEffect(() => {
     if (currentGame) {
       setGameLoading(true);
+      // Fallback: hide loader after 2 seconds max (iframe onLoad unreliable)
+      const timer = setTimeout(() => setGameLoading(false), 2000);
+      return () => clearTimeout(timer);
     }
   }, [currentGame]);
 
