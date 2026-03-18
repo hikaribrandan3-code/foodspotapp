@@ -14,12 +14,23 @@ export default function MunchboyBoot({ onComplete }) {
   const [rainbowActive, setRainbowActive] = useState(false);
   const audioCtxRef = useRef(null);
 
-  const playGbaChime = () => {
+  const playGbaChime = async () => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
     const ctx = audioCtxRef.current;
+    
+    // Auto-resume if browser started suspended
+    if (ctx.state === 'suspended') {
+      await ctx.resume().catch(console.warn);
+    }
+    
     const now = ctx.currentTime;
+    
+    // Frequency constants
+    const f1 = 523.25; // C5
+    const f2 = 1046.50; // C6
+    const f3 = 2093.00; // C7
     
     const pulse = (freq, start, duration, vol, type = 'square') => {
       const osc = ctx.createOscillator();
@@ -35,38 +46,53 @@ export default function MunchboyBoot({ onComplete }) {
       osc.stop(start + duration);
     };
     
-    // GBA "Bling" Sound
-    pulse(523.25, now, 0.08, 0.1, 'square');
+    // 1. Initial blips
+    pulse(f1, now, 0.08, 0.1, 'square');
+    // 2. High dual-tone
     setTimeout(() => {
-      pulse(1046.50, now + 0.08, 1.2, 0.15, 'square');
-      pulse(2093.00, now + 0.08, 0.8, 0.05, 'triangle');
+      pulse(f2, now + 0.08, 1.2, 0.15, 'square');
+      pulse(f3, now + 0.08, 0.8, 0.05, 'triangle');
     }, 80);
   };
 
-  // Auto-start on mount
+  const [shake, setShake] = useState(false);
+
+  // Auto-start on mount following the exact original logic
   useEffect(() => {
-    const dropTimer = setTimeout(() => {
-      setLettersDropped(true);
-    }, 300);
+    // 1. Start letter drops immediately
+    setLettersDropped(true);
+
+    // Hardcode: 8 letters * 80ms = 640ms total drop time for last letter
+    const SHAKE_DELAY = 640; 
+    const CHIME_DELAY = SHAKE_DELAY + 400; // 1040ms
+    const FINISH_DELAY = CHIME_DELAY + 1500; // 2540ms
+
+    const shakeTimer = setTimeout(() => {
+      setShake(true);
+      setTimeout(() => setShake(false), 200);
+    }, SHAKE_DELAY);
     
     const chimeTimer = setTimeout(() => {
       playGbaChime();
       setRainbowActive(true);
       setShowFooter(true);
-    }, 1000);
+    }, CHIME_DELAY);
     
-    const pressStartTimer = setTimeout(() => {
+    const finishTimer = setTimeout(() => {
       setShowPressStart(true);
-    }, 2500);
+    }, FINISH_DELAY);
     
+    // Auto-continue to selector (optional, keep it or remove it?)
+    // The user's code just says "press start to power on", let's leave
+    // auto-continue for user convenience, at 5000ms.
     const autoContinueTimer = setTimeout(() => {
       onComplete?.();
-    }, 5000); // Auto-continue after 5 seconds
+    }, 5000); 
     
     return () => {
-      clearTimeout(dropTimer);
+      clearTimeout(shakeTimer);
       clearTimeout(chimeTimer);
-      clearTimeout(pressStartTimer);
+      clearTimeout(finishTimer);
       clearTimeout(autoContinueTimer);
     };
   }, [onComplete]);
@@ -78,7 +104,7 @@ export default function MunchboyBoot({ onComplete }) {
   };
 
   return (
-    <div className="munchboy-boot-screen" onClick={handleClick}>
+    <div className={`munchboy-boot-screen ${shake ? 'shake' : ''}`} onClick={handleClick}>
       <div className="munchboy-logo-container">
         {'MUNCHBOY'.split('').map((letter, i) => (
           <span

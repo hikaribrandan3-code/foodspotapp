@@ -16,6 +16,17 @@
   overflow: hidden;
 }
 
+.munchboy-boot-screen.shake {
+  animation: shakeScreen 0.2s ease-in-out;
+}
+
+@keyframes shakeScreen {
+  0%, 100% { transform: translate(0,0); }
+  25% { transform: translate(-2px, 2px); }
+  50% { transform: translate(2px, -2px); }
+  75% { transform: translate(-1px, -1px); }
+}
+
 .munchboy-logo-container {
   display: flex;
   align-items: center;
@@ -59,8 +70,16 @@
   font-size: clamp(12px, 3vw, 18px);
   color: #ec008c;
   letter-spacing: -0.5px;
+  
+  /* Nintendo Pill Style */
+  border: 2px solid #ec008c;
+  border-radius: 20px;
+  padding: 4px 14px;
+  display: inline-block;
+  background: white;
+
   opacity: 0;
-  margin-top: 10px;
+  margin-top: 15px;
   position: relative;
   transition: opacity 0.4s ease-out;
 }
@@ -123,15 +142,26 @@
   bottom: 60px;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 800;
-  color: #333;
+  color: #111; /* Static black */
   letter-spacing: 2px;
   font-size: 14px;
-  animation: pulseStart 1s infinite;
+  opacity: 0;
+  transition: opacity 0.5s;
 }
 
-@keyframes pulseStart {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
+.munchboy-boot-screen .press-start-text {
+  /* It is rendered conditionally rather than by opacity class in React, 
+     but we can keep an entrance animation if desired.
+     The user requested specifically: the black start word there (no pulse).
+     Since it's conditionally rendered in JSX: {showPressStart && ( ... )}
+     it just appears. 
+  */
+  animation: fadeIn 0.5s forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Hide on small screens if needed */
