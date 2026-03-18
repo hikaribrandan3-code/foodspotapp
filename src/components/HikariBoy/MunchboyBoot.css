@@ -26,13 +26,13 @@
 
 .munch-letter {
   font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: clamp(48px, 10vw, 72px);
+  font-size: clamp(40px, 10vw, 64px);
   font-weight: 900;
   line-height: 1;
   display: inline-block;
-  margin: 0 -4px;
+  margin: 0 -3px;
   opacity: 0;
-  transform: translateY(-400px) scaleY(1.5);
+  transform: translateY(-300px) scaleY(1.5);
   user-select: none;
   position: relative;
   transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.1s;
@@ -43,7 +43,7 @@
   transform: translateY(0) rotate(var(--rot)) scale(1);
 }
 
-/* Color and Tilt mappings */
+/* Rainbow colors and rotation */
 .l-M { color: #4555e3; --rot: -7deg; z-index: 10; }
 .l-U { color: #29abe2; --rot: 4deg; z-index: 9; }
 .l-N { color: #8cc63f; --rot: -4deg; z-index: 8; }
@@ -56,7 +56,7 @@
 .munchboy-footer {
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 900;
-  font-size: clamp(14px, 4vw, 20px);
+  font-size: clamp(12px, 3vw, 18px);
   color: #ec008c;
   letter-spacing: -0.5px;
   opacity: 0;
@@ -69,7 +69,7 @@
   opacity: 1;
 }
 
-/* Rainbow Sweep Effect */
+/* Rainbow sweep effect */
 .rainbow-sweep,
 .rainbow-sweep-footer {
   position: absolute;
@@ -98,12 +98,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(48px, 10vw, 72px);
+  font-size: clamp(40px, 10vw, 64px);
   font-weight: 900;
 }
 
 .rainbow-sweep-footer {
-  font-size: clamp(14px, 4vw, 20px);
+  font-size: clamp(12px, 3vw, 18px);
 }
 
 .rainbow-sweep.active,
@@ -121,27 +121,25 @@
 .press-start-text {
   position: absolute;
   bottom: 60px;
-  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 800;
   color: #333;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   font-size: 14px;
-  animation: pressStartPulse 1s infinite;
+  animation: pulseStart 1s infinite;
 }
 
-@keyframes pressStartPulse {
+@keyframes pulseStart {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
 }
 
-/* Responsive */
-@media (max-width: 400px) {
+/* Hide on small screens if needed */
+@media (max-height: 500px) {
   .munch-letter {
-    font-size: 40px;
-    margin: 0 -2px;
+    font-size: 36px;
   }
-  
-  .rainbow-sweep {
-    font-size: 40px;
+  .munchboy-footer {
+    font-size: 10px;
   }
 }
