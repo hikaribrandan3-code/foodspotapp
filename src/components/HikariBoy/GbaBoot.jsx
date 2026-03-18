@@ -69,26 +69,29 @@ export default function GbaBoot({ onComplete }) {
     }
   };
 
+  // Auto-start boot sequence on mount for "wow" effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      startBoot();
+    }, 300); // Short delay to let screen render
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (!isBooting && (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyA')) {
-        startBoot();
-      } else if (showPressStart && (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyA')) {
+      if (showPressStart && (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyA')) {
         handlePressStart();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isBooting, showPressStart]);
+  }, [showPressStart]);
 
   return (
     <div className="gba-boot-overlay">
       <div className="gba-bezel">
-        <div className="gba-screen-boot" onClick={isBooting ? handlePressStart : startBoot}>
-          {!isBooting && (
-            <div className="gba-hint">Tap Screen to Power On</div>
-          )}
+        <div className="gba-screen-boot" onClick={showPressStart ? handlePressStart : null}>
           
           <div className="munchboy-logo">
             {'MUNCHBOY'.split('').map((letter, i) => (
