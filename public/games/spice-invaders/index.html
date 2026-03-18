@@ -16,7 +16,7 @@
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H,SCALE;
-function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;SCALE=Math.min(W/320,H/480);}
+function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;SCALE=W/320;}
 resize();
 window.addEventListener('resize',resize);
 
@@ -764,8 +764,7 @@ class Game{
 
   draw(){
     ctx.save();ctx.clearRect(0,0,W,H);
-    const ox=(W-BW*SCALE)/2,oy=(H-BH*SCALE)/2;
-    ctx.translate(ox,oy);ctx.scale(SCALE,SCALE);
+    ctx.scale(SCALE,SCALE);
     this.shake.apply(ctx);
     this.nebula.draw(ctx);this.stars.draw(ctx,this.frame);
     switch(this.state){
