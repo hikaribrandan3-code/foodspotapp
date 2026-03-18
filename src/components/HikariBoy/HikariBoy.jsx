@@ -31,7 +31,7 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 7 games (clean & focused)
+// Curated game library - 6 games (clean & focused)
 const GAMES = [
   { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
@@ -39,7 +39,6 @@ const GAMES = [
   { id: 'hot-dog-dash', name: 'Hot Dog Dash', cover: '/games/hot-dog-dash/cover.png', url: '/games/hot-dog-dash/index.html' },
   { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
   { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
-  { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
 ];
 
 export function HikariBoy({ 
