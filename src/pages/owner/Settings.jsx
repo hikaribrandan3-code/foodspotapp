@@ -885,16 +885,16 @@ const Settings = () => {
                             {/* A/B Buttons */}
                             <div style={{
                                 position: 'relative',
-                                width: 76,
-                                height: 70
+                                width: 60,
+                                height: 58
                             }}>
                                 {/* A Button */}
                                 <div 
                                     onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', localMunchboyColors.a)}
                                     style={{
                                         position: 'absolute',
-                                        top: 6,
-                                        right: 6,
+                                        top: 0,
+                                        right: 0,
                                         width: 44,
                                         height: 44,
                                         borderRadius: '50%',
@@ -915,8 +915,8 @@ const Settings = () => {
                                     onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', localMunchboyColors.b)}
                                     style={{
                                         position: 'absolute',
-                                        bottom: 6,
-                                        left: 6,
+                                        bottom: 0,
+                                        left: 0,
                                         width: 44,
                                         height: 44,
                                         borderRadius: '50%',
