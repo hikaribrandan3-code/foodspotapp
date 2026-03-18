@@ -14,11 +14,17 @@ export default function MunchboyBoot({ onComplete }) {
   const [rainbowActive, setRainbowActive] = useState(false);
   const audioCtxRef = useRef(null);
 
-  const playGbaChime = () => {
+  const playGbaChime = async () => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
     const ctx = audioCtxRef.current;
+    
+    // Resume context if suspended (browser auto-play policy)
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+    
     const now = ctx.currentTime;
     
     const pulse = (freq, start, duration, vol, type = 'square') => {
@@ -48,11 +54,14 @@ export default function MunchboyBoot({ onComplete }) {
     const dropTimer = setTimeout(() => {
       setLettersDropped(true);
     }, 300);
+
+    const footerTimer = setTimeout(() => {
+      setShowFooter(true);
+    }, 1000); // Appear sooner as letters settle
     
     const chimeTimer = setTimeout(() => {
       playGbaChime();
       setRainbowActive(true);
-      setShowFooter(true);
     }, 1800);
     
     const pressStartTimer = setTimeout(() => {
@@ -65,6 +74,7 @@ export default function MunchboyBoot({ onComplete }) {
     
     return () => {
       clearTimeout(dropTimer);
+      clearTimeout(footerTimer);
       clearTimeout(chimeTimer);
       clearTimeout(pressStartTimer);
       clearTimeout(autoContinueTimer);
