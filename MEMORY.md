@@ -111,6 +111,41 @@
 2. **GAME_EXIT postMessage:** Games can call `exitGame()` to return
 3. **MENU button:** Closes entire HikariBoy shell
 
+### Boot Sequences
+
+#### 1. GBA Bezel Boot (Entry Point)
+**File:** `GbaBoot.jsx`
+- Full-screen overlay when clicking Arcade Hero icon
+- GBA purple hardware bezel (#4e4a9e) with hardware styling
+- MUNCHBOY logo with rainbow letter colors
+- GBA "bling" chime sound (Web Audio API: C5 → C6/C7 dual-tone)
+- Rainbow wave sweep animation
+- Tap/Press A → Letters drop → Chime → PRESS START
+- Responsive scaling for mobile devices
+
+#### 2. HikariBoy Inline Boot
+**File:** `HikariBoy.jsx` (internal)
+- White screen inside emulator shell
+- Same MUNCHBOY letter animation
+- Same GBA chime sound
+- PRESS START to enter game selector
+
+### Game Catalog (12 Total)
+| # | Game | Type | Cover |
+|---|------|------|-------|
+| 1 | Burger Stack | Food | PNG |
+| 2 | Food Fight | Food | PNG |
+| 3 | Fry Catch | Food | PNG |
+| 4 | Bubble Tea | Food | PNG |
+| 5 | Coffee Pour | Food | PNG |
+| 6 | Spice Invaders | Food | PNG |
+| 7 | Fruit Slice | Food | PNG |
+| 8 | Bento Box | Food | PNG |
+| 9 | Luminesweeper | GBA Homebrew | SVG |
+| 10 | BulletGBA | GBA Homebrew | SVG |
+| 11 | Gorf | GBA Homebrew | SVG |
+| 12 | μCity | GBA Homebrew | SVG |
+
 ### Leak Fix
 ```css
 body.hikariboy-active .signup-container,
@@ -120,12 +155,16 @@ body.hikariboy-active .auth-container { display: none !important; }
 ### Key Files
 - `src/components/HikariBoy/HikariBoy.jsx` - Main shell
 - `src/components/HikariBoy/HikariBoy.css` - Delta styling
-- `public/games/*/index.html` - 16 game files
-- `public/games/*/cover.svg` - Placeholder covers
+- `src/components/HikariBoy/GbaBoot.jsx` - GBA bezel boot screen
+- `src/components/HikariBoy/GbaBoot.css` - Boot screen styles
+- `public/games/*/index.html` - 12 game files
+- `public/games/*/cover.png` - PNG covers (8 games)
+- `public/games/*/cover.svg` - SVG fallback covers
 
 ### Pending
-- ✅ Replace SVG covers with PNG assets (7 games synced)
-- Add exit buttons to remaining 15 games (optional)
+- ✅ Replace SVG covers with PNG assets (8/12 done - food games have PNG)
+- ✅ MUNCHBOY boot sequence with GBA chime (DONE)
+- Add exit buttons to remaining games (optional)
 
 
 #### 🔥 Addictive Games (10)
