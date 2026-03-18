@@ -31,19 +31,14 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 12 games total
+// Curated game library - 7 games (clean & focused)
 const GAMES = [
   { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
   { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
   { id: 'hot-dog-dash', name: 'Hot Dog Dash', cover: '/games/hot-dog-dash/cover.png', url: '/games/hot-dog-dash/index.html' },
   { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
-  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', url: '/games/bento-box/index.html' },
-  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', url: '/games/coffee-pour/index.html' },
-  { id: 'condiment-blast', name: 'Condiment Blast', cover: '/games/condiment-blast/cover.png', url: '/games/condiment-blast/index.html' },
   { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
-  { id: 'ice-cream', name: 'Ice Cream', cover: '/games/ice-cream/cover.png', url: '/games/ice-cream/index.html' },
-  { id: 'ingredient-match', name: 'Ingredient Match', cover: '/games/ingredient-match/cover.png', url: '/games/ingredient-match/index.html' },
   { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
 ];
 
