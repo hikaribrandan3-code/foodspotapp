@@ -80,13 +80,12 @@ const Settings = () => {
         font_weight: '600'
     });
 
-    // 🎮 Munchboy local state (fixes input reload issue)
-    const [localMunchboy, setLocalMunchboy] = useState({
-        name: 'MUNCHBOY',
-        enabled: true,
-        shellColor: '#6B0FCC',
-        aColor: '#D1D5DB',
-        bColor: '#D1D5DB'
+    // LOCAL STATE for munchboy fields (prevents reload/flicker issues)
+    const [localMunchboyName, setLocalMunchboyName] = useState('MUNCHBOY');
+    const [localMunchboyColors, setLocalMunchboyColors] = useState({
+        shell: '#6B0FCC',
+        a: '#D1D5DB',
+        b: '#D1D5DB'
     });
 
     // Dropdown states
@@ -124,15 +123,6 @@ const Settings = () => {
                 font_weight: tenant.font_weight || '600'
             });
 
-            // 🎮 Sync Munchboy local state
-            setLocalMunchboy({
-                name: tenant.munchboy_name ?? 'MUNCHBOY',
-                enabled: tenant.munchboy_enabled ?? true,
-                shellColor: tenant.munchboy_shell_color || '#6B0FCC',
-                aColor: tenant.munchboy_a_color || '#D1D5DB',
-                bColor: tenant.munchboy_b_color || '#D1D5DB'
-            });
-
             // Sync hero icon colors from tenant
             const icons = tenant.hero_icons || {};
             setHeroIconColors({
@@ -141,6 +131,16 @@ const Settings = () => {
                 promos: icons.promos?.color || '#FFFFFF',
                 game: icons.game?.color || '#FFFFFF'
             });
+
+            // Sync munchboy fields from tenant (only if not dirty to avoid overwrite)
+            if (!hasChanges) {
+                setLocalMunchboyName(tenant.munchboy_name || 'MUNCHBOY');
+                setLocalMunchboyColors({
+                    shell: tenant.munchboy_shell_color || '#6B0FCC',
+                    a: tenant.munchboy_a_color || '#D1D5DB',
+                    b: tenant.munchboy_b_color || '#D1D5DB'
+                });
+            }
 
             // Force CSS visuals
             if (tenant.font_family) {
@@ -153,7 +153,7 @@ const Settings = () => {
                 document.documentElement.style.setProperty('--color-navbar-bg', tenant.navbar_color);
             }
         }
-    }, [tenant]);
+    }, [tenant, hasChanges]);
 
     // 🛡️ BODY SCROLL LOCK: Prevent background scroll when ColorPicker is open
     useEffect(() => {
@@ -280,26 +280,6 @@ const Settings = () => {
         setHasChanges(true);
     };
 
-    // 🎮 Munchboy handlers (fixes input reload issue)
-    const handleMunchboyNameChange = (e) => {
-        setLocalMunchboy(prev => ({ ...prev, name: e.target.value }));
-    };
-
-    const handleMunchboyNameBlur = async () => {
-        if (!businessId) return;
-        const finalName = localMunchboy.name.trim() || 'MUNCHBOY';
-        setLocalMunchboy(prev => ({ ...prev, name: finalName }));
-        syncContext({ munchboy_name: finalName });
-        setHasChanges(true);
-    };
-
-    const handleMunchboyEnabledChange = (e) => {
-        const enabled = e.target.checked;
-        setLocalMunchboy(prev => ({ ...prev, enabled }));
-        syncContext({ munchboy_enabled: enabled });
-        setHasChanges(true);
-    };
-
     const handleFontSelect = (family) => {
         setLocalIdentity(prev => ({ ...prev, font_family: family }));
         document.documentElement.style.setProperty('--font-main', family);
@@ -352,15 +332,13 @@ const Settings = () => {
             if (colorPickerState.isHeroIcon) {
                 setHeroIconColors(prev => ({ ...prev, [colorPickerState.iconId]: newColor }));
             }
-            // 🎮 Preview Munchboy colors in local state
+            // Live preview for munchboy colors
             if (colorPickerState.keyName === 'munchboy_shell_color') {
-                setLocalMunchboy(prev => ({ ...prev, shellColor: newColor }));
-            }
-            if (colorPickerState.keyName === 'munchboy_a_color') {
-                setLocalMunchboy(prev => ({ ...prev, aColor: newColor }));
-            }
-            if (colorPickerState.keyName === 'munchboy_b_color') {
-                setLocalMunchboy(prev => ({ ...prev, bColor: newColor }));
+                setLocalMunchboyColors(prev => ({ ...prev, shell: newColor }));
+            } else if (colorPickerState.keyName === 'munchboy_a_color') {
+                setLocalMunchboyColors(prev => ({ ...prev, a: newColor }));
+            } else if (colorPickerState.keyName === 'munchboy_b_color') {
+                setLocalMunchboyColors(prev => ({ ...prev, b: newColor }));
             }
         });
     };
@@ -377,16 +355,21 @@ const Settings = () => {
                 [pillId]: { ...(currentPills[pillId] || {}), bgColor: finalColor }
             };
             handleFieldUpdate('info_pills', newPills);
-        } else if (colorPickerState.keyName.startsWith('munchboy_')) {
-            // 🎮 Sync Munchboy colors to context and local state
-            handleFieldUpdate(colorPickerState.keyName, finalColor);
-            if (colorPickerState.keyName === 'munchboy_shell_color') {
-                setLocalMunchboy(prev => ({ ...prev, shellColor: finalColor }));
-            } else if (colorPickerState.keyName === 'munchboy_a_color') {
-                setLocalMunchboy(prev => ({ ...prev, aColor: finalColor }));
-            } else if (colorPickerState.keyName === 'munchboy_b_color') {
-                setLocalMunchboy(prev => ({ ...prev, bColor: finalColor }));
-            }
+        } else if (colorPickerState.keyName === 'munchboy_shell_color') {
+            // Update local state for munchboy shell color
+            setLocalMunchboyColors(prev => ({ ...prev, shell: finalColor }));
+            syncContext({ munchboy_shell_color: finalColor });
+            setHasChanges(true);
+        } else if (colorPickerState.keyName === 'munchboy_a_color') {
+            // Update local state for munchboy A button color
+            setLocalMunchboyColors(prev => ({ ...prev, a: finalColor }));
+            syncContext({ munchboy_a_color: finalColor });
+            setHasChanges(true);
+        } else if (colorPickerState.keyName === 'munchboy_b_color') {
+            // Update local state for munchboy B button color
+            setLocalMunchboyColors(prev => ({ ...prev, b: finalColor }));
+            syncContext({ munchboy_b_color: finalColor });
+            setHasChanges(true);
         } else {
             handleFieldUpdate(colorPickerState.keyName, finalColor);
         }
@@ -401,15 +384,13 @@ const Settings = () => {
         if (colorPickerState.isHeroIcon) {
             setHeroIconColors(prev => ({ ...prev, [colorPickerState.iconId]: colorPickerState.originalColor }));
         }
-        // 🎮 Revert Munchboy colors in local state
+        // Revert munchboy colors on cancel
         if (colorPickerState.keyName === 'munchboy_shell_color') {
-            setLocalMunchboy(prev => ({ ...prev, shellColor: colorPickerState.originalColor }));
-        }
-        if (colorPickerState.keyName === 'munchboy_a_color') {
-            setLocalMunchboy(prev => ({ ...prev, aColor: colorPickerState.originalColor }));
-        }
-        if (colorPickerState.keyName === 'munchboy_b_color') {
-            setLocalMunchboy(prev => ({ ...prev, bColor: colorPickerState.originalColor }));
+            setLocalMunchboyColors(prev => ({ ...prev, shell: colorPickerState.originalColor }));
+        } else if (colorPickerState.keyName === 'munchboy_a_color') {
+            setLocalMunchboyColors(prev => ({ ...prev, a: colorPickerState.originalColor }));
+        } else if (colorPickerState.keyName === 'munchboy_b_color') {
+            setLocalMunchboyColors(prev => ({ ...prev, b: colorPickerState.originalColor }));
         }
         setColorPickerState(prev => ({ ...prev, isOpen: false }));
     };
@@ -427,7 +408,8 @@ const Settings = () => {
         console.log('💾 SAVING BRANDING VAULT:', businessId);
 
         try {
-            // 1. Construct Full Payload from Optimistic Tenant State
+            // 1. Construct Full Payload from Optimistic Tenant State + Local State
+            // Use local state for munchboy fields to ensure colors are saved correctly
             const payload = {
                 business_name: tenant.business_name,
                 font_family: tenant.font_family,
@@ -443,10 +425,10 @@ const Settings = () => {
                 hero_icons: tenant.hero_icons,
                 info_pills: tenant.info_pills,
                 munchboy_enabled: tenant.munchboy_enabled,
-                munchboy_name: tenant.munchboy_name,
-                munchboy_shell_color: tenant.munchboy_shell_color,
-                munchboy_a_color: tenant.munchboy_a_color,
-                munchboy_b_color: tenant.munchboy_b_color,
+                munchboy_name: localMunchboyName,
+                munchboy_shell_color: localMunchboyColors.shell,
+                munchboy_a_color: localMunchboyColors.a,
+                munchboy_b_color: localMunchboyColors.b,
                 app_config: tenant.app_config,
                 updated_at: new Date()
             };
@@ -829,7 +811,7 @@ const Settings = () => {
                     <div 
                         className="munchboy-preview"
                         style={{
-                            background: localMunchboy.shellColor,
+                            background: localMunchboyColors.shell,
                             borderRadius: 20,
                             padding: '24px 16px 16px',
                             marginBottom: 20,
@@ -860,7 +842,7 @@ const Settings = () => {
                             marginBottom: 16,
                             opacity: 0.9
                         }}>
-                            {localMunchboy.name}
+                            {localMunchboyName}
                         </div>
                         
                         {/* Controller preview */}
@@ -903,12 +885,12 @@ const Settings = () => {
                             {/* A/B Buttons */}
                             <div style={{
                                 position: 'relative',
-                                width: 90,
-                                height: 70
+                                width: 60,
+                                height: 58
                             }}>
                                 {/* A Button */}
                                 <div 
-                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', localMunchboy.aColor)}
+                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', localMunchboyColors.a)}
                                     style={{
                                         position: 'absolute',
                                         top: 0,
@@ -916,7 +898,7 @@ const Settings = () => {
                                         width: 44,
                                         height: 44,
                                         borderRadius: '50%',
-                                        background: localMunchboy.aColor,
+                                        background: localMunchboyColors.a,
                                         border: '3px solid #1a1a1a',
                                         boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
                                         display: 'flex',
@@ -930,7 +912,7 @@ const Settings = () => {
                                 >A</div>
                                 {/* B Button */}
                                 <div 
-                                    onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', localMunchboy.bColor)}
+                                    onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', localMunchboyColors.b)}
                                     style={{
                                         position: 'absolute',
                                         bottom: 0,
@@ -938,7 +920,7 @@ const Settings = () => {
                                         width: 44,
                                         height: 44,
                                         borderRadius: '50%',
-                                        background: localMunchboy.bColor,
+                                        background: localMunchboyColors.b,
                                         border: '3px solid #1a1a1a',
                                         boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
                                         display: 'flex',
@@ -954,115 +936,77 @@ const Settings = () => {
                         </div>
                     </div>
                     
-                    {/* Color Pickers */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
-                        {/* Shell Color */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>Shell Color</span>
+                    {/* Compact Controls Row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                        {/* Colors - compact row */}
+                        <div style={{ display: 'flex', gap: 8, flex: 1 }}>
                             <div 
-                                onClick={() => openColorPicker('Shell Color', 'munchboy_shell_color', '', localMunchboy.shellColor)}
+                                onClick={() => openColorPicker('Shell', 'munchboy_shell_color', '', localMunchboyColors.shell)}
                                 style={{
-                                    width: 44,
-                                    height: 44,
-                                    borderRadius: 10,
-                                    background: localMunchboy.shellColor,
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: 8,
+                                    background: localMunchboyColors.shell,
                                     border: '2px solid rgba(0,0,0,0.1)',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                    cursor: 'pointer'
                                 }}
+                                title="Shell"
+                            />
+                            <div 
+                                onClick={() => openColorPicker('A Button', 'munchboy_a_color', '', localMunchboyColors.a)}
+                                style={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: '50%',
+                                    background: localMunchboyColors.a,
+                                    border: '2px solid rgba(0,0,0,0.1)',
+                                    cursor: 'pointer'
+                                }}
+                                title="A Button"
+                            />
+                            <div 
+                                onClick={() => openColorPicker('B Button', 'munchboy_b_color', '', localMunchboyColors.b)}
+                                style={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: '50%',
+                                    background: localMunchboyColors.b,
+                                    border: '2px solid rgba(0,0,0,0.1)',
+                                    cursor: 'pointer'
+                                }}
+                                title="B Button"
                             />
                         </div>
                         
-                        {/* A Button Color */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>A Button Color</span>
-                            <div 
-                                onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', localMunchboy.aColor)}
-                                style={{
-                                    width: 44,
-                                    height: 44,
-                                    borderRadius: 10,
-                                    background: localMunchboy.aColor,
-                                    border: '2px solid rgba(0,0,0,0.1)',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                }}
-                            />
-                        </div>
-                        
-                        {/* B Button Color */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>B Button Color</span>
-                            <div 
-                                onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', localMunchboy.bColor)}
-                                style={{
-                                    width: 44,
-                                    height: 44,
-                                    borderRadius: 10,
-                                    background: localMunchboy.bColor,
-                                    border: '2px solid rgba(0,0,0,0.1)',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                }}
-                            />
-                        </div>
-                    </div>
-                    
-                    {/* Enable/Display Name */}
-                    <div style={{ 
-                        background: localMunchboy.shellColor, 
-                        borderRadius: 16, 
-                        padding: 20,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 16,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                        marginBottom: 16
-                    }}>
-                        <div style={{
-                            width: 60,
-                            height: 60,
-                            background: '#fff',
-                            borderRadius: 12,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 32
-                        }}>🎮</div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ 
-                                fontSize: 18, 
-                                fontWeight: 700, 
-                                color: '#fff',
-                                marginBottom: 4
-                            }}>{localMunchboy.name}</div>
-                            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>Powered by FoodSpot Arcade</div>
-                        </div>
-                        <label className="switch-label" style={{ margin: 0 }}>
-                            <span style={{ color: localMunchboy.enabled ? '#22C55E' : 'rgba(255,255,255,0.6)', marginRight: 8 }}>
-                                {localMunchboy.enabled ? 'ON' : 'OFF'}
+                        {/* Enable Toggle */}
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: tenant?.munchboy_enabled ? '#22C55E' : '#64748B' }}>
+                                {tenant?.munchboy_enabled ? 'ON' : 'OFF'}
                             </span>
                             <input
                                 type="checkbox"
-                                checked={localMunchboy.enabled}
-                                onChange={handleMunchboyEnabledChange}
+                                checked={!!tenant?.munchboy_enabled}
+                                onChange={(e) => handleFieldUpdate('munchboy_enabled', e.target.checked)}
                                 style={{ accentColor: '#22C55E' }}
                             />
                         </label>
                     </div>
                     
+                    {/* Display Name */}
                     <div>
-                        <label style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', display: 'block', marginBottom: 8 }}>
-                            Arcade Display Name
+                        <label style={{ fontSize: 12, fontWeight: 600, color: '#64748B', display: 'block', marginBottom: 6 }}>
+                            Display Name
                         </label>
                         <input
                             type="text"
                             className="pill-input"
-                            value={localMunchboy.name}
+                            value={localMunchboyName}
                             placeholder="MUNCHBOY"
-                            onChange={handleMunchboyNameChange}
-                            onBlur={handleMunchboyNameBlur}
-                            style={{ width: '100%' }}
+                            onChange={(e) => {
+                                setLocalMunchboyName(e.target.value);
+                                setHasChanges(true);
+                            }}
+                            style={{ width: '100%', fontSize: 14 }}
                         />
                     </div>
                 </section>
