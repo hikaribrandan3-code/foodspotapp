@@ -1049,8 +1049,8 @@ function drawSplash(t){
   // Sparkles everywhere
   sparklesArr.forEach(sp=>{ sp.update(); sp.draw(); });
   
-  // Draw chibi mascot - WAY BIGGER (was 1.3 scale, now 2.2!)
-  drawChibiMascot(t,W/2,H*.72,2.2);
+  // Draw chibi mascot - positioned right under the title
+  drawChibiMascot(t,W/2,H*.58,2.2);
   
   // Floating boba friends in background
   const floatY=H*.78+Math.sin(t*.001)*R*.5;
