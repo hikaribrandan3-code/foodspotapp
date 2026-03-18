@@ -376,6 +376,9 @@ const Settings = () => {
                 info_pills: tenant.info_pills,
                 munchboy_enabled: tenant.munchboy_enabled,
                 munchboy_name: tenant.munchboy_name,
+                munchboy_shell_color: tenant.munchboy_shell_color,
+                munchboy_a_color: tenant.munchboy_a_color,
+                munchboy_b_color: tenant.munchboy_b_color,
                 app_config: tenant.app_config,
                 updated_at: new Date()
             };
@@ -754,6 +757,190 @@ const Settings = () => {
                     </div>
                     <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Customize the gaming experience branding</p>
                     
+                    {/* Visual Emulator Preview */}
+                    <div 
+                        className="munchboy-preview"
+                        style={{
+                            background: tenant?.munchboy_shell_color || '#6B0FCC',
+                            borderRadius: 20,
+                            padding: '24px 16px 16px',
+                            marginBottom: 20,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+                        }}
+                    >
+                        {/* Screen area */}
+                        <div style={{
+                            background: '#000',
+                            borderRadius: 12,
+                            height: 120,
+                            marginBottom: 16,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '3px solid #333'
+                        }}>
+                            <span style={{ color: '#fff', fontSize: 12, opacity: 0.5 }}>GAME SCREEN</span>
+                        </div>
+                        
+                        {/* foodspot branding */}
+                        <div style={{
+                            textAlign: 'center',
+                            color: '#fff',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            letterSpacing: 3,
+                            marginBottom: 16,
+                            opacity: 0.9
+                        }}>
+                            {tenant?.munchboy_name || 'MUNCHBOY'}
+                        </div>
+                        
+                        {/* Controller preview */}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '0 8px'
+                        }}>
+                            {/* D-Pad */}
+                            <div style={{
+                                width: 70,
+                                height: 70,
+                                position: 'relative'
+                            }}>
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: 0,
+                                    transform: 'translateY(-50%)',
+                                    width: '100%',
+                                    height: '35%',
+                                    background: '#D1D5DB',
+                                    borderRadius: 6,
+                                    border: '2px solid #1a1a1a'
+                                }} />
+                                <div style={{
+                                    position: 'absolute',
+                                    left: '50%',
+                                    top: 0,
+                                    transform: 'translateX(-50%)',
+                                    width: '35%',
+                                    height: '100%',
+                                    background: '#D1D5DB',
+                                    borderRadius: 6,
+                                    border: '2px solid #1a1a1a'
+                                }} />
+                            </div>
+                            
+                            {/* A/B Buttons */}
+                            <div style={{
+                                position: 'relative',
+                                width: 90,
+                                height: 70
+                            }}>
+                                {/* A Button */}
+                                <div 
+                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', tenant?.munchboy_a_color || '#D1D5DB')}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        right: 0,
+                                        width: 44,
+                                        height: 44,
+                                        borderRadius: '50%',
+                                        background: tenant?.munchboy_a_color || '#D1D5DB',
+                                        border: '3px solid #1a1a1a',
+                                        boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        fontSize: 16,
+                                        fontWeight: 'bold',
+                                        color: '#666'
+                                    }}
+                                >A</div>
+                                {/* B Button */}
+                                <div 
+                                    onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', tenant?.munchboy_b_color || '#D1D5DB')}
+                                    style={{
+                                        position: 'absolute',
+                                        bottom: 0,
+                                        left: 0,
+                                        width: 44,
+                                        height: 44,
+                                        borderRadius: '50%',
+                                        background: tenant?.munchboy_b_color || '#D1D5DB',
+                                        border: '3px solid #1a1a1a',
+                                        boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        fontSize: 16,
+                                        fontWeight: 'bold',
+                                        color: '#666'
+                                    }}
+                                >B</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Color Pickers */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
+                        {/* Shell Color */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>Shell Color</span>
+                            <div 
+                                onClick={() => openColorPicker('Shell Color', 'munchboy_shell_color', '', tenant?.munchboy_shell_color || '#6B0FCC')}
+                                style={{
+                                    width: 44,
+                                    height: 44,
+                                    borderRadius: 10,
+                                    background: tenant?.munchboy_shell_color || '#6B0FCC',
+                                    border: '2px solid rgba(0,0,0,0.1)',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                }}
+                            />
+                        </div>
+                        
+                        {/* A Button Color */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>A Button Color</span>
+                            <div 
+                                onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', tenant?.munchboy_a_color || '#D1D5DB')}
+                                style={{
+                                    width: 44,
+                                    height: 44,
+                                    borderRadius: 10,
+                                    background: tenant?.munchboy_a_color || '#D1D5DB',
+                                    border: '2px solid rgba(0,0,0,0.1)',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                }}
+                            />
+                        </div>
+                        
+                        {/* B Button Color */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>B Button Color</span>
+                            <div 
+                                onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', tenant?.munchboy_b_color || '#D1D5DB')}
+                                style={{
+                                    width: 44,
+                                    height: 44,
+                                    borderRadius: 10,
+                                    background: tenant?.munchboy_b_color || '#D1D5DB',
+                                    border: '2px solid rgba(0,0,0,0.1)',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                }}
+                            />
+                        </div>
+                    </div>
+                    
+                    {/* Enable/Display Name */}
                     <div style={{ 
                         background: 'linear-gradient(135deg, #6B0FCC 0%, #4e4a9e 100%)', 
                         borderRadius: 16, 
@@ -761,7 +948,8 @@ const Settings = () => {
                         display: 'flex',
                         alignItems: 'center',
                         gap: 16,
-                        boxShadow: '0 4px 12px rgba(107, 15, 204, 0.3)'
+                        boxShadow: '0 4px 12px rgba(107, 15, 204, 0.3)',
+                        marginBottom: 16
                     }}>
                         <div style={{
                             width: 60,
@@ -795,7 +983,7 @@ const Settings = () => {
                         </label>
                     </div>
                     
-                    <div style={{ marginTop: 16 }}>
+                    <div>
                         <label style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', display: 'block', marginBottom: 8 }}>
                             Arcade Display Name
                         </label>

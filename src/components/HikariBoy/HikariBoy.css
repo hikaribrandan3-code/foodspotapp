@@ -18,6 +18,10 @@
   --shell-color-light: #7B2FD9;
   --button-gray: #D1D5DB;
   --button-gray-dark: #9CA3AF;
+  --button-a-color: #D1D5DB;
+  --button-b-color: #D1D5DB;
+  --button-a-outline: #1a1a1a;
+  --button-b-outline: #1a1a1a;
   --hb-screen-bg: #000000;
 }
 
@@ -654,22 +658,26 @@
     inset 0 1px 2px rgba(255, 255, 255, 0.6);
 }
 
-/* A button — top-right (same size as B) */
+/* A button — customizable color */
 .btn-a {
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(28px * var(--btn-scale));
   top: 0;
   right: 0;
+  background: radial-gradient(circle at 35% 35%, var(--button-a-color) 0%, var(--button-a-color) 40%, var(--button-gray-dark) 100%);
+  border-color: var(--button-a-outline);
 }
 
-/* B button — bottom-left offset (same size as A) */
+/* B button — customizable color */
 .btn-b {
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(28px * var(--btn-scale));
   bottom: 12px;
   left: 12px;
+  background: radial-gradient(circle at 35% 35%, var(--button-b-color) 0%, var(--button-b-color) 40%, var(--button-gray-dark) 100%);
+  border-color: var(--button-b-outline);
 }
 
 /* ========== SYSTEM BUTTONS — LIGHT GRAY ========== */

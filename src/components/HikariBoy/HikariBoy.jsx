@@ -55,6 +55,18 @@ export function HikariBoy({
   useEffect(() => {
     document.body.classList.add('hikariboy-active');
     
+    // Apply tenant Munchboy colors from localStorage (set by TenantContext)
+    const tenant = JSON.parse(localStorage.getItem('tenant') || '{}');
+    if (tenant.munchboy_shell_color) {
+      document.documentElement.style.setProperty('--shell-color', tenant.munchboy_shell_color);
+    }
+    if (tenant.munchboy_a_color) {
+      document.documentElement.style.setProperty('--button-a-color', tenant.munchboy_a_color);
+    }
+    if (tenant.munchboy_b_color) {
+      document.documentElement.style.setProperty('--button-b-color', tenant.munchboy_b_color);
+    }
+    
     const authSelectors = [
       '.signup-container',
       '.auth-container', 
@@ -78,6 +90,11 @@ export function HikariBoy({
     return () => {
       document.body.classList.remove('hikariboy-active');
       document.body.style.overflow = '';
+      
+      // Reset CSS variables
+      document.documentElement.style.removeProperty('--shell-color');
+      document.documentElement.style.removeProperty('--button-a-color');
+      document.documentElement.style.removeProperty('--button-b-color');
       
       authSelectors.forEach(selector => {
         const el = document.querySelector(selector);
