@@ -63,6 +63,7 @@ export default function MunchboyBoot({ onComplete }) {
     setLettersDropped(true);
 
     // Hardcode: 8 letters * 110ms = 770ms total drop time for last letter
+    // slowing it down by ~0.3s overall (from 80ms to 110ms)
     const SHAKE_DELAY = 770; 
     const CHIME_DELAY = SHAKE_DELAY + 400; // 1170ms
     const FINISH_DELAY = CHIME_DELAY + 1500; // 2670ms
@@ -89,8 +90,12 @@ export default function MunchboyBoot({ onComplete }) {
     };
   }, [onComplete]);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (showPressStart) {
+      // Ensure audio context is resumed if browser blocked initial autoplay
+      if (audioCtxRef.current?.state === 'suspended') {
+        await audioCtxRef.current.resume().catch(console.warn);
+      }
       onComplete?.();
     }
   };

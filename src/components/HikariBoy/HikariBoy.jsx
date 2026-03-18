@@ -106,10 +106,10 @@ export function HikariBoy({
     };
   }, []);
 
-  // Boot sequence
+  // Boot sequence - controlled by MunchboyBoot now
   useEffect(() => {
-    const timer = setTimeout(() => setIsBooting(false), 2000);
-    return () => clearTimeout(timer);
+    // Initial state is booting: true
+    // We only set it to false when the boot component tells us via onComplete
   }, []);
 
   // Listen for GAME_EXIT from child games
