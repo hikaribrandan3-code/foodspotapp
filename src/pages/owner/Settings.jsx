@@ -800,7 +800,8 @@ const Settings = () => {
                     </div>
                 </section>
 
-                {/* ========== 6. MUNCHBOY BRANDING ========== */}
+                {/* ========== 6. MUNCHBOY BRANDING - HIDDEN FOR LAUNCH ========== */}
+                {false && (
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>🎮 Munchboy Arcade</h3>
@@ -1010,6 +1011,7 @@ const Settings = () => {
                         />
                     </div>
                 </section>
+                )}
 
                 {/* ========== 6. INFO PILLS ========== */}
                 {/* ========== 6. INFO PILLS ========== */}

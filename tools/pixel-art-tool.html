@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Munchboy Pixel Art Tool</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0d0221;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            color: #ff6600;
+            text-shadow: 2px 2px 0 #ff0066;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .drop-zone {
+            border: 3px dashed #6B0FCC;
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            background: rgba(107, 15, 204, 0.1);
+            transition: all 0.3s;
+            margin-bottom: 30px;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            background: rgba(107, 15, 204, 0.2);
+            border-color: #ff6600;
+        }
+        .drop-zone p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .controls {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .control-group label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        input[type="range"] {
+            width: 150px;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            background: #1a1a2e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+        }
+        select {
+            padding: 8px 12px;
+            background: #1a1a2e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+        }
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #6B0FCC 0%, #ff0066 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(107, 15, 204, 0.5);
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .image-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+        .image-card canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+            image-rendering: pixelated;
+            background: #1a1a2e;
+        }
+        .image-card .info {
+            padding: 15px;
+        }
+        .image-card .info h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #ff6600;
+        }
+        .image-card .dimensions {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .download-btn {
+            width: 100%;
+            padding: 10px;
+            background: #22C55E;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .value-display {
+            color: #ff6600;
+            font-weight: bold;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 MUNCHBOY PIXEL ART TOOL</h1>
+        <p class="subtitle">Drop images → Pixelate → Download for your game</p>
+        
+        <div class="drop-zone" id="dropZone">
+            <p>📁 DRAG & DROP IMAGES HERE</p>
+            <p style="font-size: 14px; color: #666;">or click to select files</p>
+            <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Pixel Size (smaller = more pixelated)</label>
+                <div>
+                    <input type="range" id="pixelSize" min="8" max="128" value="32">
+                    <span class="value-display" id="pixelSizeValue">32px</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Color Palette</label>
+                <select id="palette">
+                    <option value="full">Full Color</option>
+                    <option value="16">16 Colors (Retro)</option>
+                    <option value="8">8 Colors (Game Boy)</option>
+                    <option value="4">4 Colors (CGA)</option>
+                    <option value="2">2 Colors (B&W)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Scale Output</label>
+                <div>
+                    <input type="number" id="scale" value="1" min="1" max="10">x
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Quick Presets</label>
+                <div>
+                    <button onclick="setPreset(16, '16')">16px Sprite</button>
+                    <button onclick="setPreset(32, 'full')">32px Sprite</button>
+                    <button onclick="setPreset(64, '16')">64px Character</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="gallery" id="gallery"></div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const gallery = document.getElementById('gallery');
+        const pixelSizeSlider = document.getElementById('pixelSize');
+        const pixelSizeValue = document.getElementById('pixelSizeValue');
+        const paletteSelect = document.getElementById('palette');
+        const scaleInput = document.getElementById('scale');
+        
+        let processedImages = [];
+        
+        // Update slider display
+        pixelSizeSlider.addEventListener('input', () => {
+            pixelSizeValue.textContent = pixelSizeSlider.value + 'px';
+            reprocessAll();
+        });
+        
+        paletteSelect.addEventListener('change', reprocessAll);
+        scaleInput.addEventListener('input', reprocessAll);
+        
+        function setPreset(size, palette) {
+            pixelSizeSlider.value = size;
+            pixelSizeValue.textContent = size + 'px';
+            paletteSelect.value = palette;
+            reprocessAll();
+        }
+        
+        // Drag & drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        processImage(img, file.name);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function processImage(img, filename) {
+            const pixelSize = parseInt(pixelSizeSlider.value);
+            const palette = paletteSelect.value;
+            const scale = parseInt(scaleInput.value) || 1;
+            
+            // Create small canvas (pixelated)
+            const smallCanvas = document.createElement('canvas');
+            smallCanvas.width = pixelSize;
+            smallCanvas.height = Math.round(pixelSize * (img.height / img.width));
+            const smallCtx = smallCanvas.getContext('2d');
+            
+            // Draw image small (nearest neighbor for crisp pixels)
+            smallCtx.imageSmoothingEnabled = false;
+            smallCtx.drawImage(img, 0, 0, smallCanvas.width, smallCanvas.height);
+            
+            // Get pixel data for palette reduction
+            if (palette !== 'full') {
+                reduceColors(smallCtx, smallCanvas.width, smallCanvas.height, parseInt(palette));
+            }
+            
+            // Create final canvas (scaled up for viewing)
+            const canvas = document.createElement('canvas');
+            canvas.width = smallCanvas.width * scale;
+            canvas.height = smallCanvas.height * scale;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(smallCanvas, 0, 0, canvas.width, canvas.height);
+            
+            // Create card
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            card.innerHTML = `
+                <canvas id="canvas-${filename}" width="${canvas.width}" height="${canvas.height}"></canvas>
+                <div class="info">
+                    <h3>${filename}</h3>
+                    <div class="dimensions">${smallCanvas.width}×${smallCanvas.height} → ${canvas.width}×${canvas.height}</div>
+                    <button class="download-btn" onclick="downloadImage('${filename}')">⬇ Download PNG</button>
+                </div>
+            `;
+            gallery.appendChild(card);
+            
+            // Copy to visible canvas
+            const visibleCanvas = card.querySelector('canvas');
+            const visibleCtx = visibleCanvas.getContext('2d');
+            visibleCtx.drawImage(canvas, 0, 0);
+            
+            // Store for reprocessing
+            processedImages.push({
+                original: img,
+                filename,
+                card,
+                smallCanvas
+            });
+        }
+        
+        function reduceColors(ctx, width, height, numColors) {
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            // Simple color quantization
+            const step = Math.floor(256 / Math.pow(numColors, 1/3));
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.floor(data[i] / step) * step;     // R
+                data[i + 1] = Math.floor(data[i + 1] / step) * step; // G
+                data[i + 2] = Math.floor(data[i + 2] / step) * step; // B
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        function reprocessAll() {
+            gallery.innerHTML = '';
+            const images = [...processedImages];
+            processedImages = [];
+            images.forEach(({ original, filename }) => {
+                processImage(original, filename);
+            });
+        }
+        
+        function downloadImage(filename) {
+            const card = processedImages.find(p => p.filename === filename)?.card;
+            if (!card) return;
+            
+            const canvas = card.querySelector('canvas');
+            const link = document.createElement('a');
+            link.download = filename.replace(/\.[^/.]+$/, '') + '_pixel.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

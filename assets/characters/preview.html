@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Food Fight - Character Preview</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0d0221;
+            color: #fff;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #ff6600;
+            text-shadow: 2px 2px 0 #ff0066;
+        }
+        .roster {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .character {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            border: 2px solid #333;
+        }
+        .character h2 {
+            color: #ff6600;
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        .character .id {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+        .frames {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .frame {
+            text-align: center;
+        }
+        .frame img {
+            width: 48px;
+            height: 48px;
+            image-rendering: pixelated;
+            background: #1a1a2e;
+            border-radius: 8px;
+            border: 2px solid #444;
+        }
+        .frame label {
+            display: block;
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .walk-row {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .walk-row img {
+            width: 32px;
+            height: 32px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 FOOD FIGHT - CHARACTER ROSTER</h1>
+    <p style="text-align: center; color: #888;">6 Fighters | 43 Frames | 48×48 Pixel Art</p>
+    
+    <div class="roster">
+        <!-- Hamburger -->
+        <div class="character">
+            <h2>🍔 Hamburger Fighter</h2>
+            <div class="id">FF-KBTF003 | Boxing | Balanced</div>
+            <div class="frames">
+                <div class="frame"><img src="hamburger/idle.png"><label>IDLE</label></div>
+                <div class="frame"><img src="hamburger/attack.png"><label>ATK</label></div>
+                <div class="frame"><img src="hamburger/damage.png"><label>HIT</label></div>
+            </div>
+            <div class="walk-row">
+                <img src="hamburger/walk_0.png">
+                <img src="hamburger/walk_1.png">
+                <img src="hamburger/walk_2.png">
+                <img src="hamburger/walk_3.png">
+            </div>
+        </div>
+
+        <!-- Pizza -->
+        <div class="character">
+            <h2>🍕 Pizza Fighter</h2>
+            <div class="id">FF-KBTF002 | Punch | Speed</div>
+            <div class="frames">
+                <div class="frame"><img src="pizza/idle.png"><label>IDLE</label></div>
+                <div class="frame"><img src="pizza/attack.png"><label>ATK</label></div>
+                <div class="frame"><img src="pizza/damage.png"><label>HIT</label></div>
+            </div>
+            <div class="walk-row">
+                <img src="pizza/walk_0.png">
+                <img src="pizza/walk_1.png">
+                <img src="pizza/walk_2.png">
+                <img src="pizza/walk_3.png">
+            </div>
+        </div>
+
+        <!-- Taco -->
+        <div class="character">
+            <h2>🌮 Taco Fighter</h2>
+            <div class="id">FF-KBTF001 | Boxing | Power</div>
+            <div class="frames">
+                <div class="frame"><img src="taco/idle.png"><label>IDLE</label></div>
+                <div class="frame"><img src="taco/attack.png"><label>ATK</label></div>
+                <div class="frame"><img src="taco/damage.png"><label>HIT</label></div>
+            </div>
+            <div class="walk-row">
+                <img src="taco/walk_0.png">
+                <img src="taco/walk_1.png">
+                <img src="taco/walk_2.png">
+                <img src="taco/walk_3.png">
+            </div>
+        </div>
+
+        <!-- Sushi -->
+        <div class="character">
+            <h2>🍣 Sushi Warrior</h2>
+            <div class="id">FF-KBTF004 | Sword | Technical</div>
+            <div class="frames">
+                <div class="frame"><img src="sushi/idle.png"><label>IDLE</label></div>
+                <div class="frame"><img src="sushi/attack.png"><label>ATK</label></div>
+                <div class="frame"><img src="sushi/damage.png"><label>HIT</label></div>
+            </div>
+            <div class="walk-row">
+                <img src="sushi/walk_0.png">
+                <img src="sushi/walk_1.png">
+                <img src="sushi/walk_2.png">
+                <img src="sushi/walk_3.png">
+            </div>
+        </div>
+
+        <!-- Empanada -->
+        <div class="character">
+            <h2>🥟 Empanada Fighter</h2>
+            <div class="id">FF-KBTF005 | Knife | Agile</div>
+            <div class="frames">
+                <div class="frame"><img src="empanada/idle.png"><label>IDLE</label></div>
+                <div class="frame"><img src="empanada/attack.png"><label>ATK</label></div>
+                <div class="frame"><img src="empanada/damage.png"><label>HIT</label></div>
+            </div>
+            <div class="walk-row">
+                <img src="empanada/walk_0.png">
+                <img src="empanada/walk_1.png">
+                <img src="empanada/walk_2.png">
+                <img src="empanada/walk_3.png">
+            </div>
+        </div>
+
+        <!-- Alfajor -->
+        <div class="character">
+            <h2>🍪 Alfajor Fighter</h2>
+            <div class="id">FF-KBTF006 | Nunchaku | Tricky</div>
+            <div class="frames">
+                <div class="frame"><img src="alfajor/idle.png"><label>IDLE</label></div>
+                <div class="frame"><img src="alfajor/attack.png"><label>ATK</label></div>
+                <div class="frame"><img src="alfajor/damage.png"><label>HIT</label></div>
+            </div>
+            <div class="walk-row">
+                <img src="alfajor/walk_0.png">
+                <img src="alfajor/walk_1.png">
+                <img src="alfajor/walk_2.png">
+                <img src="alfajor/walk_3.png">
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(107,15,204,0.1); border-radius: 12px;">
+        <p style="color: #ff6600; font-weight: bold;">✅ ALL 6 CHARACTERS EXTRACTED</p>
+        <p style="color: #888; font-size: 14px;">Open this file in your browser to preview all sprites</p>
+    </div>
+</body>
+</html>

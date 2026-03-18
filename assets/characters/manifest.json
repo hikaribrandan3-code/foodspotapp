@@ -1,0 +1,64 @@
+{
+  "roster": {
+    "name": "Food Fight - 6 Character Roster",
+    "version": "2.0",
+    "total_frames": 43,
+    "frame_size": "48x48"
+  },
+  "characters": {
+    "hamburger": {
+      "name": "Hamburger Fighter",
+      "id": "FF-KBTF003",
+      "weapon": "boxing",
+      "archetype": "balanced",
+      "frames": ["idle", "attack", "damage", "walk_0", "walk_1", "walk_2", "walk_3"],
+      "path": "assets/characters/hamburger/"
+    },
+    "pizza": {
+      "name": "Pizza Fighter", 
+      "id": "FF-KBTF002",
+      "weapon": "punch",
+      "archetype": "speed",
+      "frames": ["idle", "attack", "damage", "walk_0", "walk_1", "walk_2", "walk_3"],
+      "path": "assets/characters/pizza/"
+    },
+    "taco": {
+      "name": "Taco Fighter",
+      "id": "FF-KBTF001", 
+      "weapon": "boxing",
+      "archetype": "power",
+      "frames": ["idle", "attack", "damage", "walk_0", "walk_1", "walk_2", "walk_3"],
+      "path": "assets/characters/taco/"
+    },
+    "sushi": {
+      "name": "Sushi Warrior",
+      "id": "FF-KBTF004",
+      "weapon": "sword",
+      "archetype": "technical",
+      "frames": ["idle", "attack", "damage", "walk_0", "walk_1", "walk_2", "walk_3", "idle_alt"],
+      "path": "assets/characters/sushi/"
+    },
+    "empanada": {
+      "name": "Empanada Fighter",
+      "id": "FF-KBTF005",
+      "weapon": "knife",
+      "archetype": "agile",
+      "frames": ["idle", "attack", "damage", "walk_0", "walk_1", "walk_2", "walk_3"],
+      "path": "assets/characters/empanada/"
+    },
+    "alfajor": {
+      "name": "Alfajor Fighter",
+      "id": "FF-KBTF006",
+      "weapon": "nunchaku",
+      "archetype": "tricky",
+      "frames": ["idle", "attack", "damage", "walk_0", "walk_1", "walk_2", "walk_3"],
+      "path": "assets/characters/alfajor/"
+    }
+  },
+  "animations": {
+    "idle": { "frames": ["idle"], "fps": 1 },
+    "attack": { "frames": ["attack"], "fps": 12 },
+    "damage": { "frames": ["damage"], "fps": 8 },
+    "walk": { "frames": ["walk_0", "walk_1", "walk_2", "walk_3"], "fps": 8, "loop": true }
+  }
+}
