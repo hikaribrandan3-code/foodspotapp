@@ -2,186 +2,1468 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spice Invaders</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPICE INVADERS</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
-        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
-        #gameCanvas { background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        #ui { position: absolute; top: 10px; left: 10px; color: #0f0; font-weight: bold; }
-        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a0a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(255, 100, 0, 0.5);
+            border: 3px solid #ff6600;
+            border-radius: 8px;
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #0d0221 0%, #1a0a2e 50%, #2d1b4e 100%);
+        }
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="480" height="320"></canvas>
-    <div id="ui">SCORE: <span id="score">0</span> | LIVES: <span id="lives">3</span></div>
-    <div id="gameOver">
-        <h2 style="color: #DC2626;">GAME OVER!</h2>
-        <button onclick="resetGame()" style="background: #DC2626; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">INVADE AGAIN</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
     </div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+    <script>
+        // ==================== GAME CONSTANTS ====================
+        const CANVAS_WIDTH = 480;
+        const CANVAS_HEIGHT = 320;
+        const PLAYER_SPEED = 4;
+        const BULLET_SPEED = 6;
+        const ENEMY_SPEED = 1;
+        const MAX_SPICE = 100;
+        const GARLIC_BOMBS_MAX = 3;
+        const TOTAL_WAVES = 10;
+        const BOSS_WAVES = [5, 10];
 
-let gameState = 'playing';
-let score = 0;
-let lives = 3;
-let player = { x: 220, y: 280 };
-let bullets = [];
-let enemies = [];
-let enemyDir = 1;
-let enemySpeed = 0.3;
+        // ==================== AUDIO SYSTEM ====================
+        class AudioSystem {
+            constructor() {
+                this.muted = false;
+                this.ctx = null;
+                this.init();
+            }
 
-class Bullet {
-    constructor(x, y) { this.x = x; this.y = y; }
-    update() { this.y -= 6; }
-    draw() { ctx.fillStyle = '#0f0'; ctx.fillRect(this.x, this.y, 4, 10); }
-}
+            init() {
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    console.log('Audio not supported');
+                }
+            }
 
-class Enemy {
-    constructor(x, y) { this.x = x; this.y = y; this.emoji = '🌶️'; }
-    draw() { ctx.font = '25px Arial'; ctx.textAlign = 'center'; ctx.fillText(this.emoji, this.x, this.y); }
-}
+            resume() {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
 
-function createEnemies() {
-    enemies = [];
-    for (let y = 0; y < 3; y++) {
-        for (let x = 0; x < 8; x++) {
-            enemies.push(new Enemy(60 + x * 50, 50 + y * 40));
-        }
-    }
-}
+            playTone(freq, duration, type = 'square', vol = 0.3) {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
 
-function gameLoop() {
-    if (gameState === 'paused') return;
-    
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, 480, 320);
-    
-    // Stars
-    ctx.fillStyle = '#fff';
-    for (let i = 0; i < 20; i++) {
-        ctx.fillRect((i * 47) % 480, (i * 23) % 320, 2, 2);
-    }
-    
-    // Player
-    ctx.font = '35px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('🧂', player.x, player.y);
-    
-    // Update bullets
-    bullets = bullets.filter(b => {
-        b.update();
-        b.draw();
-        return b.y > 0;
-    });
-    
-    // Move enemies
-    let hitEdge = false;
-    enemies.forEach(e => {
-        e.x += enemySpeed * enemyDir;
-        if (e.x < 30 || e.x > 450) hitEdge = true;
-    });
-    
-    if (hitEdge) {
-        enemyDir *= -1;
-        enemies.forEach(e => e.y += 20);
-    }
-    
-    // Check collisions
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        enemies[i].draw();
-        
-        for (let j = bullets.length - 1; j >= 0; j--) {
-            if (Math.abs(bullets[j].x - enemies[i].x) < 15 && Math.abs(bullets[j].y - enemies[i].y) < 15) {
-                enemies.splice(i, 1);
-                bullets.splice(j, 1);
-                score += 100;
-                document.getElementById('score').textContent = score;
-                window.parent.postMessage({ type: 'SCORE', score: score }, '*');
-                break;
+            playShoot() {
+                this.playTone(800, 0.1, 'square', 0.2);
+            }
+
+            playSpread() {
+                this.playTone(600, 0.15, 'sawtooth', 0.25);
+            }
+
+            playPierce() {
+                this.playTone(1000, 0.2, 'sine', 0.2);
+            }
+
+            playExplosion() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
+            }
+
+            playBomb() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + 0.8);
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.8);
+            }
+
+            playPowerup() {
+                this.playTone(1200, 0.3, 'sine', 0.3);
+                setTimeout(() => this.playTone(1500, 0.2, 'sine', 0.3), 100);
+            }
+
+            playBossMusic() {
+                if (this.muted || !this.ctx) return;
+                // Boss warning sound
+                this.playTone(300, 0.5, 'sawtooth', 0.4);
+                setTimeout(() => this.playTone(250, 0.5, 'sawtooth', 0.4), 200);
+                setTimeout(() => this.playTone(200, 0.8, 'sawtooth', 0.4), 400);
+            }
+
+            playGameOver() {
+                if (this.muted || !this.ctx) return;
+                [400, 350, 300, 250, 200].forEach((freq, i) => {
+                    setTimeout(() => this.playTone(freq, 0.4, 'sawtooth', 0.4), i * 150);
+                });
             }
         }
-    }
-    
-    // Game over check
-    if (enemies.some(e => e.y > 260)) {
-        lives = 0;
-        document.getElementById('lives').textContent = lives;
-        gameOver();
-    }
-    
-    if (enemies.length === 0) {
-        enemySpeed += 0.1;
-        createEnemies();
-    }
-    
-    requestAnimationFrame(gameLoop);
-}
 
-function shoot() {
-    bullets.push(new Bullet(player.x, player.y - 20));
-}
+        // ==================== SPRITE RENDERER ====================
+        class SpriteRenderer {
+            static drawPlayer(ctx, x, y, frame) {
+                // Spice ship - red chili pepper shape
+                ctx.save();
+                ctx.translate(x, y);
+                
+                // Ship body
+                ctx.fillStyle = '#ff3333';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 12, 18, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Green stem
+                ctx.fillStyle = '#33aa33';
+                ctx.fillRect(-4, -20, 8, 8);
+                
+                // Engine glow
+                const glow = Math.sin(frame * 0.3) * 3 + 8;
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.moveTo(-6, 15);
+                ctx.lineTo(0, 15 + glow);
+                ctx.lineTo(6, 15);
+                ctx.fill();
+                
+                // Cockpit
+                ctx.fillStyle = '#ffffaa';
+                ctx.beginPath();
+                ctx.arc(0, -5, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
 
-function gameOver() {
-    gameState = 'gameover';
-    document.getElementById('gameOver').style.display = 'block';
-    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
-}
+            static drawEnemy(ctx, x, y, type, frame) {
+                ctx.save();
+                ctx.translate(x, y);
+                
+                const wobble = Math.sin(frame * 0.1 + x) * 2;
+                
+                switch(type) {
+                    case 'pepper': // Red hot pepper
+                        ctx.fillStyle = '#cc0000';
+                        ctx.beginPath();
+                        ctx.ellipse(wobble, 0, 10, 14, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#ff6666';
+                        ctx.beginPath();
+                        ctx.arc(wobble - 3, -3, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'onion': // Purple onion
+                        ctx.fillStyle = '#9966cc';
+                        ctx.beginPath();
+                        ctx.arc(wobble, 0, 12, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#cc99ff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(wobble, 0, 8, 0, Math.PI * 2);
+                        ctx.stroke();
+                        break;
+                        
+                    case 'carrot': // Orange carrot
+                        ctx.fillStyle = '#ff8800';
+                        ctx.beginPath();
+                        ctx.ellipse(wobble, 0, 8, 16, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#00aa00';
+                        ctx.fillRect(wobble - 3, -18, 6, 6);
+                        break;
+                        
+                    case 'broccoli': // Green broccoli
+                        ctx.fillStyle = '#228822';
+                        ctx.beginPath();
+                        ctx.arc(wobble, -5, 10, 0, Math.PI * 2);
+                        ctx.arc(wobble - 8, 5, 7, 0, Math.PI * 2);
+                        ctx.arc(wobble + 8, 5, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'mushroom': // Brown mushroom
+                        ctx.fillStyle = '#8b4513';
+                        ctx.beginPath();
+                        ctx.arc(wobble, -5, 12, Math.PI, 0);
+                        ctx.fill();
+                        ctx.fillStyle = '#f5deb3';
+                        ctx.fillRect(wobble - 5, -5, 10, 12);
+                        break;
+                        
+                    case 'tomato': // Red tomato
+                        ctx.fillStyle = '#ff4444';
+                        ctx.beginPath();
+                        ctx.arc(wobble, 0, 11, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#228822';
+                        ctx.beginPath();
+                        ctx.moveTo(wobble, -10);
+                        ctx.lineTo(wobble - 4, -16);
+                        ctx.lineTo(wobble + 4, -16);
+                        ctx.fill();
+                        break;
+                }
+                
+                ctx.restore();
+            }
 
-function resetGame() {
-    score = 0;
-    lives = 3;
-    bullets = [];
-    enemySpeed = 0.3;
-    createEnemies();
-    gameState = 'playing';
-    document.getElementById('gameOver').style.display = 'none';
-    document.getElementById('score').textContent = score;
-    document.getElementById('lives').textContent = lives;
-}
+            static drawBoss(ctx, x, y, type, hp, maxHp, frame) {
+                ctx.save();
+                ctx.translate(x, y);
+                
+                const pulse = Math.sin(frame * 0.05) * 3;
+                
+                if (type === 'chili') {
+                    // Giant Chili Pepper Boss
+                    ctx.fillStyle = '#aa0000';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 35 + pulse, 55 + pulse, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Stem
+                    ctx.fillStyle = '#228822';
+                    ctx.fillRect(-8, -65, 16, 15);
+                    
+                    // Angry eyes
+                    ctx.fillStyle = '#ffff00';
+                    ctx.beginPath();
+                    ctx.ellipse(-12, -15, 8, 12, -0.3, 0, Math.PI * 2);
+                    ctx.ellipse(12, -15, 8, 12, 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#000000';
+                    ctx.beginPath();
+                    ctx.arc(-12, -15, 4, 0, Math.PI * 2);
+                    ctx.arc(12, -15, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Mouth
+                    ctx.fillStyle = '#660000';
+                    ctx.beginPath();
+                    ctx.arc(0, 15, 15, 0, Math.PI);
+                    ctx.fill();
+                    
+                    // Flames around
+                    ctx.fillStyle = '#ff6600';
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (frame * 0.1 + i * Math.PI / 3);
+                        const fx = Math.cos(angle) * 50;
+                        const fy = Math.sin(angle) * 50;
+                        ctx.beginPath();
+                        ctx.arc(fx, fy, 8 + Math.sin(frame * 0.2 + i) * 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                } else if (type === 'garlic') {
+                    // Giant Garlic Boss
+                    ctx.fillStyle = '#f5f5dc';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 45 + pulse, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Garlic cloves
+                    ctx.fillStyle = '#e8e8d0';
+                    for (let i = 0; i < 5; i++) {
+                        const angle = i * Math.PI * 2 / 5;
+                        const cx = Math.cos(angle) * 25;
+                        const cy = Math.sin(angle) * 25;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Evil eyes
+                    ctx.fillStyle = '#6600cc';
+                    ctx.beginPath();
+                    ctx.ellipse(-15, -10, 10, 15, -0.2, 0, Math.PI * 2);
+                    ctx.ellipse(15, -10, 10, 15, 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#000000';
+                    ctx.beginPath();
+                    ctx.arc(-15, -10, 5, 0, Math.PI * 2);
+                    ctx.arc(15, -10, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Purple aura
+                    ctx.strokeStyle = '#9933cc';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 55 + Math.sin(frame * 0.1) * 5, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                // HP bar
+                const barWidth = 80;
+                const barHeight = 8;
+                ctx.fillStyle = '#333';
+                ctx.fillRect(-barWidth/2, 70, barWidth, barHeight);
+                ctx.fillStyle = hp > maxHp * 0.5 ? '#00ff00' : hp > maxHp * 0.25 ? '#ffff00' : '#ff0000';
+                ctx.fillRect(-barWidth/2, 70, barWidth * (hp / maxHp), barHeight);
+                
+                ctx.restore();
+            }
 
-// Controls
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'ArrowLeft') player.x = Math.max(30, player.x - 15);
-    if (e.code === 'ArrowRight') player.x = Math.min(450, player.x + 15);
-    if (e.code === 'Space') shoot();
-});
+            static drawBullet(ctx, x, y, type) {
+                ctx.save();
+                ctx.translate(x, y);
+                
+                switch(type) {
+                    case 'chili':
+                        ctx.fillStyle = '#ff0000';
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, 4, 8, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#ffaa00';
+                        ctx.fillRect(-2, -2, 4, 4);
+                        break;
+                        
+                    case 'spread':
+                        ctx.fillStyle = '#ffaa00';
+                        ctx.beginPath();
+                        ctx.moveTo(0, -8);
+                        ctx.lineTo(-5, 5);
+                        ctx.lineTo(5, 5);
+                        ctx.fill();
+                        break;
+                        
+                    case 'pierce':
+                        ctx.fillStyle = '#00ffff';
+                        ctx.beginPath();
+                        ctx.moveTo(0, -12);
+                        ctx.lineTo(-3, 8);
+                        ctx.lineTo(0, 4);
+                        ctx.lineTo(3, 8);
+                        ctx.fill();
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = '#00ffff';
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                        break;
+                        
+                    case 'enemy':
+                        ctx.fillStyle = '#ff00ff';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                }
+                
+                ctx.restore();
+            }
 
-function movePlayer(clientX) {
-    const rect = canvas.getBoundingClientRect();
-    const x = (clientX - rect.left) * (480 / rect.width);
-    player.x = Math.max(30, Math.min(450, x));
-}
+            static drawSpiceDrop(ctx, x, y, frame) {
+                ctx.save();
+                ctx.translate(x, y);
+                const bounce = Math.sin(frame * 0.2) * 3;
+                
+                ctx.fillStyle = '#ff6600';
+                ctx.beginPath();
+                ctx.moveTo(0, -10 + bounce);
+                ctx.lineTo(-8, 5 + bounce);
+                ctx.lineTo(0, 2 + bounce);
+                ctx.lineTo(8, 5 + bounce);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffff00';
+                ctx.beginPath();
+                ctx.arc(0, bounce, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
 
-canvas.addEventListener('mousemove', (e) => movePlayer(e.clientX));
-canvas.addEventListener('touchmove', (e) => { e.preventDefault(); movePlayer(e.touches[0].clientX); });
-canvas.addEventListener('click', shoot);
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
+            static drawExplosion(ctx, x, y, size, progress) {
+                ctx.save();
+                ctx.translate(x, y);
+                
+                const alpha = 1 - progress;
+                const currentSize = size * (0.5 + progress * 0.5);
+                
+                ctx.fillStyle = `rgba(255, 100, 0, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, currentSize, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = `rgba(255, 200, 0, ${alpha * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, currentSize * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = `rgba(255, 255, 200, ${alpha * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, currentSize * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
 
-// PostMessage API
-window.addEventListener('message', (e) => {
-    switch(e.data.type) {
-        case 'BUTTON_PRESS':
-            const btn = e.data.button;
-            if (btn === 'dpad-left') player.x = Math.max(30, player.x - 20);
-            if (btn === 'dpad-right') player.x = Math.min(450, player.x + 20);
-            if (btn === 'a' || btn === 'b' || btn === 'start') shoot();
-            if (btn === 'select') window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'spice-invaders' }, '*');
-            break;
-        case 'PAUSE': gameState = 'paused'; break;
-        case 'RESUME': gameState = 'playing'; gameLoop(); break;
-        case 'SAVE_STATE': localStorage.setItem('spiceInvaders_state', JSON.stringify({score})); break;
-        case 'LOAD_STATE':
-            const saved = localStorage.getItem('spiceInvaders_state');
-            if (saved) { score = JSON.parse(saved).score; }
-            break;
-    }
-});
+            static drawBombEffect(ctx, x, y, progress) {
+                ctx.save();
+                ctx.translate(x, y);
+                
+                const maxRadius = 200;
+                const currentRadius = progress * maxRadius;
+                const alpha = 1 - progress;
+                
+                // Shockwave
+                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.arc(0, 0, currentRadius, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Inner explosion
+                ctx.fillStyle = `rgba(255, 200, 0, ${alpha * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, currentRadius * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = `rgba(255, 100, 0, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, currentRadius * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
 
-createEnemies();
-gameLoop();
-</script>
+        // ==================== GAME CLASSES ====================
+        class Player {
+            constructor() {
+                this.x = CANVAS_WIDTH / 2;
+                this.y = CANVAS_HEIGHT - 40;
+                this.width = 24;
+                this.height = 36;
+                this.spice = MAX_SPICE;
+                this.garlicBombs = GARLIC_BOMBS_MAX;
+                this.weaponMode = 'chili'; // chili, spread, pierce
+                this.shootCooldown = 0;
+                this.invulnerable = 0;
+            }
+
+            update(input, dt) {
+                // Movement
+                if (input.LEFT && this.x > this.width) {
+                    this.x -= PLAYER_SPEED;
+                }
+                if (input.RIGHT && this.x < CANVAS_WIDTH - this.width) {
+                    this.x += PLAYER_SPEED;
+                }
+
+                // Weapon switching
+                if (input.L_PRESSED) {
+                    this.weaponMode = 'spread';
+                }
+                if (input.R_PRESSED) {
+                    this.weaponMode = 'pierce';
+                }
+
+                // Shooting
+                if (this.shootCooldown > 0) this.shootCooldown -= dt;
+                
+                if (input.A && this.shootCooldown <= 0) {
+                    return this.shoot();
+                }
+
+                // Garlic bomb
+                if (input.B_PRESSED && this.garlicBombs > 0) {
+                    this.garlicBombs--;
+                    return { type: 'bomb' };
+                }
+
+                if (this.invulnerable > 0) this.invulnerable -= dt;
+
+                return null;
+            }
+
+            shoot() {
+                const bullets = [];
+                
+                switch(this.weaponMode) {
+                    case 'chili':
+                        this.shootCooldown = 8;
+                        bullets.push({
+                            x: this.x,
+                            y: this.y - 20,
+                            vx: 0,
+                            vy: -BULLET_SPEED,
+                            type: 'chili',
+                            damage: 1
+                        });
+                        break;
+                        
+                    case 'spread':
+                        this.shootCooldown = 12;
+                        for (let i = -1; i <= 1; i++) {
+                            bullets.push({
+                                x: this.x,
+                                y: this.y - 20,
+                                vx: i * 2,
+                                vy: -BULLET_SPEED,
+                                type: 'spread',
+                                damage: 1
+                            });
+                        }
+                        break;
+                        
+                    case 'pierce':
+                        this.shootCooldown = 15;
+                        bullets.push({
+                            x: this.x,
+                            y: this.y - 20,
+                            vx: 0,
+                            vy: -BULLET_SPEED,
+                            type: 'pierce',
+                            damage: 3,
+                            pierce: true
+                        });
+                        break;
+                }
+                
+                return { type: 'bullets', bullets };
+            }
+
+            draw(ctx, frame) {
+                if (this.invulnerable > 0 && Math.floor(frame / 4) % 2 === 0) return;
+                SpriteRenderer.drawPlayer(ctx, this.x, this.y, frame);
+            }
+
+            takeDamage(amount) {
+                if (this.invulnerable > 0) return false;
+                this.spice -= amount;
+                this.invulnerable = 60;
+                return this.spice <= 0;
+            }
+
+            heal(amount) {
+                this.spice = Math.min(MAX_SPICE, this.spice + amount);
+            }
+
+            addBomb() {
+                this.garlicBombs = Math.min(GARLIC_BOMBS_MAX, this.garlicBombs + 1);
+            }
+        }
+
+        class Enemy {
+            constructor(x, y, type, wave) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.hp = this.getBaseHp() + Math.floor(wave / 2);
+                this.maxHp = this.hp;
+                this.shootCooldown = Math.random() * 120 + 60;
+                this.formationX = x;
+                this.formationY = y;
+                this.breaking = false;
+                this.breakX = 0;
+                this.breakY = 0;
+                this.breakTimer = 0;
+            }
+
+            getBaseHp() {
+                const hpMap = { pepper: 1, onion: 2, carrot: 1, broccoli: 3, mushroom: 2, tomato: 2 };
+                return hpMap[this.type] || 1;
+            }
+
+            getScore() {
+                const scoreMap = { pepper: 10, onion: 20, carrot: 10, broccoli: 30, mushroom: 20, tomato: 15 };
+                return scoreMap[this.type] || 10;
+            }
+
+            update(formationOffsetX, formationOffsetY, playerX, playerY, dt) {
+                // Formation movement
+                if (!this.breaking) {
+                    this.x = this.formationX + formationOffsetX;
+                    this.y = this.formationY + formationOffsetY;
+                    
+                    // Random chance to break formation
+                    if (Math.random() < 0.002) {
+                        this.breaking = true;
+                        const angle = Math.atan2(playerY - this.y, playerX - this.x);
+                        this.breakX = Math.cos(angle) * 2;
+                        this.breakY = Math.sin(angle) * 2;
+                    }
+                } else {
+                    this.x += this.breakX;
+                    this.y += this.breakY;
+                    this.breakTimer += dt;
+                    
+                    if (this.breakTimer > 180 || this.y > CANVAS_HEIGHT + 30) {
+                        this.breaking = false;
+                        this.breakTimer = 0;
+                    }
+                }
+
+                // Shooting
+                this.shootCooldown -= dt;
+                if (this.shootCooldown <= 0 && !this.breaking && this.y > 0) {
+                    this.shootCooldown = Math.random() * 150 + 100;
+                    if (Math.random() < 0.3) {
+                        return this.shoot(playerX, playerY);
+                    }
+                }
+
+                return null;
+            }
+
+            shoot(playerX, playerY) {
+                const angle = Math.atan2(playerY - this.y, playerX - this.x);
+                return {
+                    x: this.x,
+                    y: this.y + 15,
+                    vx: Math.cos(angle) * 3,
+                    vy: Math.sin(angle) * 3,
+                    type: 'enemy'
+                };
+            }
+
+            takeDamage(damage) {
+                this.hp -= damage;
+                return this.hp <= 0;
+            }
+
+            draw(ctx, frame) {
+                SpriteRenderer.drawEnemy(ctx, this.x, this.y, this.type, frame);
+            }
+        }
+
+        class Boss {
+            constructor(type) {
+                this.type = type;
+                this.x = CANVAS_WIDTH / 2;
+                this.y = 80;
+                this.hp = type === 'chili' ? 100 : 150;
+                this.maxHp = this.hp;
+                this.phase = 0;
+                this.moveTimer = 0;
+                this.targetX = this.x;
+                this.shootPattern = 0;
+                this.shootTimer = 0;
+            }
+
+            update(playerX, playerY, dt) {
+                // Movement
+                this.moveTimer += dt;
+                if (this.moveTimer > 120) {
+                    this.moveTimer = 0;
+                    this.targetX = 80 + Math.random() * (CANVAS_WIDTH - 160);
+                }
+                
+                this.x += (this.targetX - this.x) * 0.02;
+                
+                // Phase based on HP
+                this.phase = this.hp < this.maxHp * 0.5 ? 2 : 1;
+                
+                // Shooting
+                this.shootTimer += dt;
+                const shootInterval = this.phase === 2 ? 30 : 50;
+                
+                if (this.shootTimer > shootInterval) {
+                    this.shootTimer = 0;
+                    return this.shoot(playerX, playerY);
+                }
+
+                return null;
+            }
+
+            shoot(playerX, playerY) {
+                const bullets = [];
+                
+                if (this.type === 'chili') {
+                    // Fire spread
+                    const angle = Math.atan2(playerY - this.y, playerX - this.x);
+                    for (let i = -2; i <= 2; i++) {
+                        bullets.push({
+                            x: this.x,
+                            y: this.y + 40,
+                            vx: Math.cos(angle + i * 0.3) * 4,
+                            vy: Math.sin(angle + i * 0.3) * 4,
+                            type: 'enemy'
+                        });
+                    }
+                } else {
+                    // Garlic spiral
+                    const time = Date.now() * 0.002;
+                    for (let i = 0; i < 6; i++) {
+                        const angle = time + i * Math.PI / 3;
+                        bullets.push({
+                            x: this.x,
+                            y: this.y + 40,
+                            vx: Math.cos(angle) * 3,
+                            vy: Math.sin(angle) * 3,
+                            type: 'enemy'
+                        });
+                    }
+                }
+                
+                return bullets;
+            }
+
+            takeDamage(damage) {
+                this.hp -= damage;
+                return this.hp <= 0;
+            }
+
+            draw(ctx, frame) {
+                SpriteRenderer.drawBoss(ctx, this.x, this.y, this.type, this.hp, this.maxHp, frame);
+            }
+        }
+
+        // ==================== MAIN GAME ====================
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.audio = new AudioSystem();
+                
+                this.inputState = {
+                    LEFT: false, RIGHT: false,
+                    A: false, B: false, L: false, R: false, START: false,
+                    B_PRESSED: false, L_PRESSED: false, R_PRESSED: false, START_PRESSED: false
+                };
+                
+                this.state = 'title'; // title, playing, paused, gameover, victory
+                this.score = 0;
+                this.wave = 1;
+                this.frame = 0;
+                
+                this.player = null;
+                this.enemies = [];
+                this.boss = null;
+                this.bullets = [];
+                this.enemyBullets = [];
+                this.explosions = [];
+                this.spiceDrops = [];
+                this.bombEffect = null;
+                
+                this.formationOffsetX = 0;
+                this.formationDirection = 1;
+                this.formationOffsetY = 0;
+                
+                this.menuSelection = 0;
+                this.menuItems = ['RESUME', 'MUTE', 'QUIT'];
+                
+                this.stars = this.generateStars();
+                
+                this.loadSave();
+                this.setupInput();
+                this.loop();
+            }
+
+            generateStars() {
+                const stars = [];
+                for (let i = 0; i < 50; i++) {
+                    stars.push({
+                        x: Math.random() * CANVAS_WIDTH,
+                        y: Math.random() * CANVAS_HEIGHT,
+                        size: Math.random() * 2 + 1,
+                        speed: Math.random() * 0.5 + 0.2
+                    });
+                }
+                return stars;
+            }
+
+            setupInput() {
+                window.addEventListener('message', (e) => {
+                    const {type, button, state} = e.data;
+                    if (type === 'button') {
+                        const wasPressed = this.inputState[button];
+                        this.inputState[button] = state;
+                        if (state && !wasPressed) {
+                            this.inputState[button + '_PRESSED'] = true;
+                        }
+                    }
+                    if (type === 'mute') this.audio.muted = true;
+                });
+
+                // Keyboard fallback
+                window.addEventListener('keydown', (e) => {
+                    const keyMap = {
+                        'ArrowLeft': 'LEFT', 'ArrowRight': 'RIGHT',
+                        'z': 'A', 'x': 'B', 'a': 'L', 's': 'R', 'Enter': 'START'
+                    };
+                    if (keyMap[e.key]) {
+                        const btn = keyMap[e.key];
+                        if (!this.inputState[btn]) this.inputState[btn + '_PRESSED'] = true;
+                        this.inputState[btn] = true;
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    const keyMap = {
+                        'ArrowLeft': 'LEFT', 'ArrowRight': 'RIGHT',
+                        'z': 'A', 'x': 'B', 'a': 'L', 's': 'R', 'Enter': 'START'
+                    };
+                    if (keyMap[e.key]) this.inputState[keyMap[e.key]] = false;
+                });
+            }
+
+            loadSave() {
+                try {
+                    const save = localStorage.getItem('munchboy_save_spiceinvaders');
+                    if (save) {
+                        const data = JSON.parse(save);
+                        if (Date.now() - data.timestamp < 86400000) {
+                            this.savedScore = data.score || 0;
+                            this.savedWave = data.wave || 1;
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            saveGameState() {
+                try {
+                    localStorage.setItem('munchboy_save_spiceinvaders', JSON.stringify({
+                        score: this.score,
+                        wave: this.wave,
+                        timestamp: Date.now()
+                    }));
+                } catch(e) {}
+            }
+
+            reportScore() {
+                if (window.parent !== window) {
+                    window.parent.postMessage({type: 'score', value: this.score}, '*');
+                }
+            }
+
+            startGame() {
+                this.state = 'playing';
+                this.score = 0;
+                this.wave = 1;
+                this.player = new Player();
+                this.spawnWave();
+                this.audio.resume();
+            }
+
+            spawnWave() {
+                this.enemies = [];
+                this.boss = null;
+                this.bullets = [];
+                this.enemyBullets = [];
+                
+                if (BOSS_WAVES.includes(this.wave)) {
+                    // Boss wave
+                    const bossType = this.wave === 5 ? 'chili' : 'garlic';
+                    this.boss = new Boss(bossType);
+                    this.audio.playBossMusic();
+                } else {
+                    // Regular wave
+                    const enemyTypes = ['pepper', 'onion', 'carrot', 'broccoli', 'mushroom', 'tomato'];
+                    const rows = 3 + Math.floor(this.wave / 3);
+                    const cols = 6 + Math.floor(this.wave / 2);
+                    
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const typeIndex = (r + this.wave) % enemyTypes.length;
+                            this.enemies.push(new Enemy(
+                                60 + c * 50,
+                                40 + r * 35,
+                                enemyTypes[typeIndex],
+                                this.wave
+                            ));
+                        }
+                    }
+                }
+                
+                this.formationOffsetX = 0;
+                this.formationDirection = 1;
+                this.formationOffsetY = 0;
+            }
+
+            update() {
+                this.frame++;
+                
+                // Reset pressed states
+                this.inputState.B_PRESSED = false;
+                this.inputState.L_PRESSED = false;
+                this.inputState.R_PRESSED = false;
+                this.inputState.START_PRESSED = false;
+
+                // Update stars
+                this.stars.forEach(star => {
+                    star.y += star.speed;
+                    if (star.y > CANVAS_HEIGHT) {
+                        star.y = 0;
+                        star.x = Math.random() * CANVAS_WIDTH;
+                    }
+                });
+
+                switch(this.state) {
+                    case 'title':
+                        this.updateTitle();
+                        break;
+                    case 'playing':
+                        this.updatePlaying();
+                        break;
+                    case 'paused':
+                        this.updatePaused();
+                        break;
+                    case 'gameover':
+                    case 'victory':
+                        this.updateEndScreen();
+                        break;
+                }
+            }
+
+            updateTitle() {
+                if (this.inputState.A || this.inputState.START_PRESSED) {
+                    this.startGame();
+                }
+            }
+
+            updatePlaying() {
+                // Pause
+                if (this.inputState.START_PRESSED) {
+                    this.state = 'paused';
+                    this.menuSelection = 0;
+                    return;
+                }
+
+                // Player
+                const action = this.player.update(this.inputState, 1);
+                if (action) {
+                    if (action.type === 'bullets') {
+                        this.bullets.push(...action.bullets);
+                        if (this.player.weaponMode === 'chili') this.audio.playShoot();
+                        else if (this.player.weaponMode === 'spread') this.audio.playSpread();
+                        else if (this.player.weaponMode === 'pierce') this.audio.playPierce();
+                    } else if (action.type === 'bomb') {
+                        this.triggerBomb();
+                    }
+                }
+
+                // Formation movement
+                this.formationOffsetX += 0.5 * this.formationDirection;
+                if (Math.abs(this.formationOffsetX) > 30) {
+                    this.formationDirection *= -1;
+                    this.formationOffsetY += 2;
+                }
+
+                // Enemies
+                this.enemies.forEach(enemy => {
+                    const bullet = enemy.update(
+                        this.formationOffsetX,
+                        this.formationOffsetY,
+                        this.player.x,
+                        this.player.y,
+                        1
+                    );
+                    if (bullet) this.enemyBullets.push(bullet);
+                });
+
+                // Boss
+                if (this.boss) {
+                    const bullets = this.boss.update(this.player.x, this.player.y, 1);
+                    if (bullets) this.enemyBullets.push(...bullets);
+                }
+
+                // Bullets
+                this.updateBullets();
+
+                // Explosions
+                this.explosions = this.explosions.filter(exp => {
+                    exp.progress += 0.05;
+                    return exp.progress < 1;
+                });
+
+                // Spice drops
+                this.spiceDrops = this.spiceDrops.filter(drop => {
+                    drop.y += 1.5;
+                    
+                    // Collision with player
+                    const dx = drop.x - this.player.x;
+                    const dy = drop.y - this.player.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 25) {
+                        this.player.heal(15);
+                        this.audio.playPowerup();
+                        return false;
+                    }
+                    
+                    return drop.y < CANVAS_HEIGHT + 20;
+                });
+
+                // Bomb effect
+                if (this.bombEffect) {
+                    this.bombEffect.progress += 0.03;
+                    if (this.bombEffect.progress >= 1) {
+                        this.bombEffect = null;
+                    }
+                }
+
+                // Spice depletion
+                if (this.frame % 60 === 0) {
+                    this.player.spice = Math.max(0, this.player.spice - 0.5);
+                }
+
+                // Check game over
+                if (this.player.spice <= 0) {
+                    this.state = 'gameover';
+                    this.audio.playGameOver();
+                    this.saveGameState();
+                    this.reportScore();
+                }
+
+                // Check wave complete
+                this.checkWaveComplete();
+            }
+
+            updateBullets() {
+                // Player bullets
+                this.bullets = this.bullets.filter(bullet => {
+                    bullet.x += bullet.vx;
+                    bullet.y += bullet.vy;
+
+                    // Check enemy hits
+                    let hit = false;
+                    
+                    if (this.boss) {
+                        const dx = bullet.x - this.boss.x;
+                        const dy = bullet.y - this.boss.y;
+                        if (Math.sqrt(dx * dx + dy * dy) < 50) {
+                            if (this.boss.takeDamage(bullet.damage)) {
+                                this.createExplosion(this.boss.x, this.boss.y, 60);
+                                this.score += 1000;
+                                this.boss = null;
+                                this.audio.playExplosion();
+                            }
+                            hit = !bullet.pierce;
+                        }
+                    }
+                    
+                    if (!hit) {
+                        for (let i = this.enemies.length - 1; i >= 0; i--) {
+                            const enemy = this.enemies[i];
+                            const dx = bullet.x - enemy.x;
+                            const dy = bullet.y - enemy.y;
+                            if (Math.sqrt(dx * dx + dy * dy) < 20) {
+                                if (enemy.takeDamage(bullet.damage)) {
+                                    this.createExplosion(enemy.x, enemy.y, 25);
+                                    this.score += enemy.getScore();
+                                    
+                                    // Drop spice
+                                    if (Math.random() < 0.3) {
+                                        this.spiceDrops.push({ x: enemy.x, y: enemy.y });
+                                    }
+                                    
+                                    this.enemies.splice(i, 1);
+                                    this.audio.playExplosion();
+                                }
+                                hit = !bullet.pierce;
+                                break;
+                            }
+                        }
+                    }
+
+                    return bullet.y > -20 && !hit;
+                });
+
+                // Enemy bullets
+                this.enemyBullets = this.enemyBullets.filter(bullet => {
+                    bullet.x += bullet.vx;
+                    bullet.y += bullet.vy;
+
+                    // Check player hit
+                    const dx = bullet.x - this.player.x;
+                    const dy = bullet.y - this.player.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 18) {
+                        if (this.player.takeDamage(15)) {
+                            this.state = 'gameover';
+                            this.audio.playGameOver();
+                            this.saveGameState();
+                            this.reportScore();
+                        }
+                        return false;
+                    }
+
+                    return bullet.y < CANVAS_HEIGHT + 20 && bullet.x > -20 && bullet.x < CANVAS_WIDTH + 20;
+                });
+            }
+
+            triggerBomb() {
+                this.bombEffect = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, progress: 0 };
+                this.audio.playBomb();
+                
+                // Destroy all enemies
+                this.enemies.forEach(enemy => {
+                    this.createExplosion(enemy.x, enemy.y, 25);
+                    this.score += enemy.getScore() / 2;
+                });
+                this.enemies = [];
+                
+                // Damage boss
+                if (this.boss) {
+                    if (this.boss.takeDamage(30)) {
+                        this.createExplosion(this.boss.x, this.boss.y, 60);
+                        this.score += 500;
+                        this.boss = null;
+                    }
+                }
+                
+                // Clear enemy bullets
+                this.enemyBullets = [];
+            }
+
+            createExplosion(x, y, size) {
+                this.explosions.push({ x, y, size, progress: 0 });
+            }
+
+            checkWaveComplete() {
+                const enemiesDefeated = this.enemies.length === 0 && !this.boss;
+                
+                if (enemiesDefeated) {
+                    if (this.wave >= TOTAL_WAVES) {
+                        this.state = 'victory';
+                        this.audio.playBossMusic();
+                        this.saveGameState();
+                        this.reportScore();
+                    } else {
+                        this.wave++;
+                        this.spawnWave();
+                        this.player.heal(20);
+                        this.player.addBomb();
+                    }
+                }
+            }
+
+            updatePaused() {
+                if (this.inputState.START_PRESSED) {
+                    this.state = 'playing';
+                    return;
+                }
+
+                if (this.inputState.UP_PRESSED) {
+                    this.menuSelection = (this.menuSelection - 1 + this.menuItems.length) % this.menuItems.length;
+                }
+                if (this.inputState.DOWN_PRESSED) {
+                    this.menuSelection = (this.menuSelection + 1) % this.menuItems.length;
+                }
+
+                if (this.inputState.A_PRESSED) {
+                    switch(this.menuItems[this.menuSelection]) {
+                        case 'RESUME':
+                            this.state = 'playing';
+                            break;
+                        case 'MUTE':
+                            this.audio.muted = !this.audio.muted;
+                            this.menuItems[1] = this.audio.muted ? 'UNMUTE' : 'MUTE';
+                            break;
+                        case 'QUIT':
+                            this.state = 'title';
+                            break;
+                    }
+                }
+            }
+
+            updateEndScreen() {
+                if (this.inputState.A || this.inputState.START_PRESSED) {
+                    this.state = 'title';
+                }
+            }
+
+            draw() {
+                // Clear
+                this.ctx.fillStyle = '#0d0221';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                // Draw stars
+                this.ctx.fillStyle = '#ffffff';
+                this.stars.forEach(star => {
+                    this.ctx.globalAlpha = 0.3 + Math.sin(this.frame * 0.05 + star.x) * 0.2;
+                    this.ctx.fillRect(star.x, star.y, star.size, star.size);
+                });
+                this.ctx.globalAlpha = 1;
+
+                switch(this.state) {
+                    case 'title':
+                        this.drawTitle();
+                        break;
+                    case 'playing':
+                        this.drawPlaying();
+                        break;
+                    case 'paused':
+                        this.drawPlaying();
+                        this.drawPauseMenu();
+                        break;
+                    case 'gameover':
+                        this.drawPlaying();
+                        this.drawGameOver();
+                        break;
+                    case 'victory':
+                        this.drawPlaying();
+                        this.drawVictory();
+                        break;
+                }
+            }
+
+            drawTitle() {
+                // Title
+                this.ctx.fillStyle = '#ff6600';
+                this.ctx.font = 'bold 36px Courier New';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('SPICE INVADERS', CANVAS_WIDTH / 2, 100);
+                
+                // Subtitle
+                this.ctx.fillStyle = '#ffaa00';
+                this.ctx.font = '16px Courier New';
+                this.ctx.fillText('GALAGA-STYLE SHOOTER', CANVAS_WIDTH / 2, 130);
+                
+                // Controls
+                this.ctx.fillStyle = '#aaaaaa';
+                this.ctx.font = '12px Courier New';
+                this.ctx.fillText('ARROWS: Move  |  Z: Chili Shot  |  X: Garlic Bomb', CANVAS_WIDTH / 2, 180);
+                this.ctx.fillText('A: Spread Mode  |  S: Pierce Mode', CANVAS_WIDTH / 2, 200);
+                
+                // Start prompt
+                if (Math.floor(this.frame / 30) % 2 === 0) {
+                    this.ctx.fillStyle = '#00ff00';
+                    this.ctx.font = '18px Courier New';
+                    this.ctx.fillText('PRESS START OR Z TO PLAY', CANVAS_WIDTH / 2, 250);
+                }
+                
+                // High score
+                if (this.savedScore) {
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.font = '14px Courier New';
+                    this.ctx.fillText(`LAST RUN: Wave ${this.savedWave} | Score ${this.savedScore}`, CANVAS_WIDTH / 2, 290);
+                }
+            }
+
+            drawPlaying() {
+                // Player
+                if (this.player) this.player.draw(this.ctx, this.frame);
+
+                // Enemies
+                this.enemies.forEach(enemy => enemy.draw(this.ctx, this.frame));
+
+                // Boss
+                if (this.boss) this.boss.draw(this.ctx, this.frame);
+
+                // Bullets
+                this.bullets.forEach(bullet => {
+                    SpriteRenderer.drawBullet(this.ctx, bullet.x, bullet.y, bullet.type);
+                });
+                this.enemyBullets.forEach(bullet => {
+                    SpriteRenderer.drawBullet(this.ctx, bullet.x, bullet.y, 'enemy');
+                });
+
+                // Explosions
+                this.explosions.forEach(exp => {
+                    SpriteRenderer.drawExplosion(this.ctx, exp.x, exp.y, exp.size, exp.progress);
+                });
+
+                // Spice drops
+                this.spiceDrops.forEach(drop => {
+                    SpriteRenderer.drawSpiceDrop(this.ctx, drop.x, drop.y, this.frame);
+                });
+
+                // Bomb effect
+                if (this.bombEffect) {
+                    SpriteRenderer.drawBombEffect(this.ctx, this.bombEffect.x, this.bombEffect.y, this.bombEffect.progress);
+                }
+
+                // UI
+                this.drawUI();
+            }
+
+            drawUI() {
+                // Score
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = 'bold 14px Courier New';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`SCORE: ${this.score}`, 10, 20);
+
+                // Wave
+                this.ctx.textAlign = 'right';
+                this.ctx.fillText(`WAVE: ${this.wave}/${TOTAL_WAVES}`, CANVAS_WIDTH - 10, 20);
+
+                if (this.player) {
+                    // Spice meter (health)
+                    const barWidth = 120;
+                    const barHeight = 12;
+                    const barX = 10;
+                    const barY = CANVAS_HEIGHT - 25;
+                    
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.fillRect(barX, barY, barWidth, barHeight);
+                    
+                    const spicePercent = this.player.spice / MAX_SPICE;
+                    const spiceColor = spicePercent > 0.5 ? '#00ff00' : spicePercent > 0.25 ? '#ffff00' : '#ff0000';
+                    this.ctx.fillStyle = spiceColor;
+                    this.ctx.fillRect(barX, barY, barWidth * spicePercent, barHeight);
+                    
+                    this.ctx.strokeStyle = '#fff';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+                    
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = '10px Courier New';
+                    this.ctx.textAlign = 'left';
+                    this.ctx.fillText('SPICE', barX, barY - 4);
+
+                    // Weapon mode
+                    this.ctx.fillStyle = this.player.weaponMode === 'chili' ? '#ff0000' :
+                                        this.player.weaponMode === 'spread' ? '#ffaa00' : '#00ffff';
+                    this.ctx.font = 'bold 12px Courier New';
+                    this.ctx.textAlign = 'right';
+                    this.ctx.fillText(this.player.weaponMode.toUpperCase(), CANVAS_WIDTH - 10, CANVAS_HEIGHT - 15);
+
+                    // Garlic bombs
+                    this.ctx.fillStyle = '#f5f5dc';
+                    this.ctx.textAlign = 'right';
+                    this.ctx.fillText(`BOMBS: ${this.player.garlicBombs}`, CANVAS_WIDTH - 10, CANVAS_HEIGHT - 30);
+                }
+            }
+
+            drawPauseMenu() {
+                // Darken background
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                // Menu title
+                this.ctx.fillStyle = '#ff6600';
+                this.ctx.font = 'bold 24px Courier New';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('PAUSED', CANVAS_WIDTH / 2, 100);
+
+                // Menu items
+                this.ctx.font = '16px Courier New';
+                this.menuItems.forEach((item, i) => {
+                    if (i === this.menuSelection) {
+                        this.ctx.fillStyle = '#00ff00';
+                        this.ctx.fillText('> ' + item + ' <', CANVAS_WIDTH / 2, 150 + i * 30);
+                    } else {
+                        this.ctx.fillStyle = '#aaaaaa';
+                        this.ctx.fillText(item, CANVAS_WIDTH / 2, 150 + i * 30);
+                    }
+                });
+            }
+
+            drawGameOver() {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                this.ctx.fillStyle = '#ff0000';
+                this.ctx.font = 'bold 32px Courier New';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, 130);
+
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '18px Courier New';
+                this.ctx.fillText(`FINAL SCORE: ${this.score}`, CANVAS_WIDTH / 2, 170);
+                this.ctx.fillText(`WAVES CLEARED: ${this.wave - 1}`, CANVAS_WIDTH / 2, 200);
+
+                if (Math.floor(this.frame / 30) % 2 === 0) {
+                    this.ctx.fillStyle = '#00ff00';
+                    this.ctx.font = '14px Courier New';
+                    this.ctx.fillText('PRESS START OR Z', CANVAS_WIDTH / 2, 250);
+                }
+            }
+
+            drawVictory() {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.font = 'bold 32px Courier New';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('VICTORY!', CANVAS_WIDTH / 2, 100);
+
+                this.ctx.fillStyle = '#ff6600';
+                this.ctx.font = 'bold 20px Courier New';
+                this.ctx.fillText('ALL WAVES CLEARED!', CANVAS_WIDTH / 2, 140);
+
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '18px Courier New';
+                this.ctx.fillText(`FINAL SCORE: ${this.score}`, CANVAS_WIDTH / 2, 180);
+
+                // Fireworks effect
+                for (let i = 0; i < 5; i++) {
+                    const x = 80 + i * 80;
+                    const y = 220 + Math.sin(this.frame * 0.1 + i) * 20;
+                    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
+                    this.ctx.fillStyle = colors[i];
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+
+                if (Math.floor(this.frame / 30) % 2 === 0) {
+                    this.ctx.fillStyle = '#00ff00';
+                    this.ctx.font = '14px Courier New';
+                    this.ctx.fillText('PRESS START OR Z', CANVAS_WIDTH / 2, 280);
+                }
+            }
+
+            loop() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.loop());
+            }
+        }
+
+        // ==================== INITIALIZE ====================
+        window.onload = () => {
+            new Game();
+        };
+    </script>
 </body>
 </html>

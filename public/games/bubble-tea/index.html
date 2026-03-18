@@ -2,254 +2,1245 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Bubble Tea</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Tea Blast</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
-        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
-        #gameCanvas { background: linear-gradient(180deg, #8B5CF6 0%, #1a1a2e 100%); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; font-weight: bold; }
-        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2d1b4e 0%, #1a0f2e 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #ffe4e1 0%, #fff8dc 50%, #f5deb3 100%);
+        }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="480" height="320"></canvas>
-    <div id="ui">SCORE: <span id="score">0</span> | MOVES: <span id="moves">20</span></div>
-    <div id="gameOver">
-        <h2 style="color: #8B5CF6;">OUT OF MOVES!</h2>
-        <p>Final Score: <span id="finalScore">0</span></p>
-        <button onclick="resetGame()" style="background: #8B5CF6; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">MATCH AGAIN</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
     </div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-const GRID_SIZE = 8;
-const CELL_SIZE = 50;
-const OFFSET_X = 40;
-const OFFSET_Y = 30;
-
-const COLORS = ['#EF4444', '#22C55E', '#3B82F6', '#F59E0B', '#EC4899', '#8B5CF6'];
-const EMOJIS = ['🔴', '🟢', '🔵', '🟡', '🩷', '🟣'];
-
-let gameState = 'playing';
-let score = 0;
-let moves = 20;
-let grid = [];
-let selected = null;
-
-function createGrid() {
-    grid = [];
-    for (let y = 0; y < GRID_SIZE; y++) {
-        grid[y] = [];
-        for (let x = 0; x < GRID_SIZE; x++) {
-            grid[y][x] = Math.floor(Math.random() * COLORS.length);
-        }
-    }
-    // Remove initial matches
-    while (findMatches().length > 0) {
-        removeMatches();
-        fillGrid();
-    }
-}
-
-function drawGrid() {
-    for (let y = 0; y < GRID_SIZE; y++) {
-        for (let x = 0; x < GRID_SIZE; x++) {
-            const cell = grid[y][x];
-            if (cell === null) continue;
-            
-            const px = OFFSET_X + x * CELL_SIZE;
-            const py = OFFSET_Y + y * CELL_SIZE;
-            
-            // Cell background
-            ctx.fillStyle = selected && selected.x === x && selected.y === y ? '#fff' : 'rgba(255,255,255,0.1)';
-            ctx.fillRect(px, py, CELL_SIZE - 4, CELL_SIZE - 4);
-            
-            // Emoji
-            ctx.font = '30px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(EMOJIS[cell], px + CELL_SIZE/2, py + CELL_SIZE/2);
-        }
-    }
-}
-
-function findMatches() {
-    const matches = [];
-    
-    // Horizontal
-    for (let y = 0; y < GRID_SIZE; y++) {
-        for (let x = 0; x < GRID_SIZE - 2; x++) {
-            const c = grid[y][x];
-            if (c !== null && c === grid[y][x+1] && c === grid[y][x+2]) {
-                matches.push({x, y}, {x: x+1, y}, {x: x+2, y});
-            }
-        }
-    }
-    
-    // Vertical
-    for (let x = 0; x < GRID_SIZE; x++) {
-        for (let y = 0; y < GRID_SIZE - 2; y++) {
-            const c = grid[y][x];
-            if (c !== null && c === grid[y+1][x] && c === grid[y+2][x]) {
-                matches.push({x, y}, {x, y: y+1}, {x, y: y+2});
-            }
-        }
-    }
-    
-    return [...new Set(matches.map(m => `${m.x},${m.y}`))].map(s => {
-        const [x, y] = s.split(',').map(Number);
-        return {x, y};
-    });
-}
-
-function removeMatches() {
-    const matches = findMatches();
-    if (matches.length > 0) {
-        score += matches.length * 100;
-        document.getElementById('score').textContent = score;
-        window.parent.postMessage({ type: 'SCORE', score: score }, '*');
-        matches.forEach(m => grid[m.y][m.x] = null);
-    }
-    return matches.length;
-}
-
-function fillGrid() {
-    for (let x = 0; x < GRID_SIZE; x++) {
-        let empty = 0;
-        for (let y = GRID_SIZE - 1; y >= 0; y--) {
-            if (grid[y][x] === null) {
-                empty++;
-            } else if (empty > 0) {
-                grid[y + empty][x] = grid[y][x];
-                grid[y][x] = null;
-            }
-        }
-        for (let y = 0; y < empty; y++) {
-            grid[y][x] = Math.floor(Math.random() * COLORS.length);
-        }
-    }
-}
-
-function handleClick(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.floor(((clientX - rect.left) * (480 / rect.width) - OFFSET_X) / CELL_SIZE);
-    const y = Math.floor(((clientY - rect.top) * (320 / rect.height) - OFFSET_Y) / CELL_SIZE);
-    
-    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return;
-    
-    if (!selected) {
-        selected = {x, y};
-    } else {
-        const dx = Math.abs(x - selected.x);
-        const dy = Math.abs(y - selected.y);
+    <script>
+        // ============================================
+        // BUBBLE TEA BLAST - Puzzle Bobble Clone
+        // ============================================
         
-        if (dx + dy === 1) {
-            // Swap
-            const temp = grid[y][x];
-            grid[y][x] = grid[selected.y][selected.x];
-            grid[selected.y][selected.x] = temp;
-            
-            moves--;
-            document.getElementById('moves').textContent = moves;
-            
-            // Check for matches
-            setTimeout(() => {
-                let chain = 0;
-                while (removeMatches() > 0) {
-                    chain++;
-                    fillGrid();
-                }
-                if (chain === 0 && moves <= 0) {
-                    gameOver();
-                }
-            }, 100);
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game Constants
+        const GAME_WIDTH = 480;
+        const GAME_HEIGHT = 320;
+        const GRID_COLS = 12;
+        const GRID_ROWS = 14;
+        const BOBA_RADIUS = 14;
+        const GRID_WIDTH = BOBA_RADIUS * 2 * GRID_COLS;
+        const GRID_OFFSET_X = (GAME_WIDTH - GRID_WIDTH) / 2 + BOBA_RADIUS;
+        const GRID_OFFSET_Y = 35;
+        const CANNON_X = GAME_WIDTH / 2;
+        const CANNON_Y = GAME_HEIGHT - 35;
+        const SHOT_SPEED = 8;
+        const CEILING_DROP_INTERVAL = 5;
+        const CEILING_DROP_AMOUNT = BOBA_RADIUS * 1.732; // Hexagonal spacing
+        
+        // Boba Colors
+        const BOBA_COLORS = {
+            TAPIOCA: { name: 'tapioca', color: '#5D4037', highlight: '#8D6E63', shadow: '#3E2723' },
+            MATCHA: { name: 'matcha', color: '#7CB342', highlight: '#AED581', shadow: '#558B2F' },
+            STRAWBERRY: { name: 'strawberry', color: '#F48FB1', highlight: '#F8BBD9', shadow: '#C2185B' },
+            MANGO: { name: 'mango', color: '#FFCA28', highlight: '#FFE082', shadow: '#FF8F00' },
+            TARO: { name: 'taro', color: '#9575CD', highlight: '#B39DDB', shadow: '#5E35B1' },
+            RAINBOW: { name: 'rainbow', colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'] }
+        };
+        
+        const REGULAR_COLORS = [
+            BOBA_COLORS.TAPIOCA,
+            BOBA_COLORS.MATCHA,
+            BOBA_COLORS.STRAWBERRY,
+            BOBA_COLORS.MANGO,
+            BOBA_COLORS.TARO
+        ];
+        
+        // Game State
+        let gameState = 'playing'; // playing, paused, gameover
+        let score = 0;
+        let level = 1;
+        let shotsFired = 0;
+        let ceilingOffset = 0;
+        let grid = [];
+        let particles = [];
+        let floatingTexts = [];
+        let currentBoba = null;
+        let nextBoba = null;
+        let projectile = null;
+        let cannonAngle = -Math.PI / 2;
+        let aimLine = [];
+        let audioMuted = false;
+        let animationId = null;
+        let lastTime = 0;
+        
+        // Input State
+        const inputState = {
+            LEFT: false,
+            RIGHT: false,
+            A: false,
+            B: false,
+            L: false,
+            R: false,
+            START: false
+        };
+        
+        // Audio Context
+        let audioCtx = null;
+        
+        // ============================================
+        // AUDIO SYSTEM
+        // ============================================
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
         }
-        selected = null;
-    }
-}
-
-function gameLoop() {
-    if (gameState === 'paused') return;
-    ctx.clearRect(0, 0, 480, 320);
-    drawGrid();
-    requestAnimationFrame(gameLoop);
-}
-
-function gameOver() {
-    gameState = 'gameover';
-    document.getElementById('finalScore').textContent = score;
-    document.getElementById('gameOver').style.display = 'block';
-    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
-}
-
-function resetGame() {
-    score = 0;
-    moves = 20;
-    selected = null;
-    createGrid();
-    gameState = 'playing';
-    document.getElementById('gameOver').style.display = 'none';
-    document.getElementById('score').textContent = score;
-    document.getElementById('moves').textContent = moves;
-}
-
-// Controls
-canvas.addEventListener('click', (e) => handleClick(e.clientX, e.clientY));
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    handleClick(e.touches[0].clientX, e.touches[0].clientY);
-});
-
-// PostMessage API
-window.addEventListener('message', (e) => {
-    switch(e.data.type) {
-        case 'BUTTON_PRESS':
-            const btn = e.data.button;
-            if (btn === 'dpad-left' || btn === 'dpad-up') { 
-                if (selected) { selected.x = Math.max(0, selected.x - 1); }
-                else { selected = {x: 0, y: 0}; }
+        
+        function playSound(type) {
+            if (audioMuted || !audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            switch(type) {
+                case 'shoot':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                    break;
+                    
+                case 'pop':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                    break;
+                    
+                case 'clear':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                    break;
+                    
+                case 'ceiling':
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.4);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                    break;
+                    
+                case 'gameover':
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
+                    osc.start(now);
+                    osc.stop(now + 1);
+                    break;
+                    
+                case 'swap':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(500, now);
+                    osc.frequency.exponentialRampToValueAtTime(700, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                    break;
             }
-            if (btn === 'dpad-right' || btn === 'dpad-down') { 
-                if (selected) { selected.x = Math.min(GRID_SIZE - 1, selected.x + 1); }
-                else { selected = {x: 0, y: 0}; }
+        }
+        
+        // Background music (simple melody loop)
+        let bgmInterval = null;
+        const bgmNotes = [262, 330, 392, 523, 392, 330, 262, 196];
+        let bgmIndex = 0;
+        
+        function playBGM() {
+            if (audioMuted || !audioCtx || bgmInterval) return;
+            
+            bgmInterval = setInterval(() => {
+                if (audioMuted || gameState === 'gameover') {
+                    clearInterval(bgmInterval);
+                    bgmInterval = null;
+                    return;
+                }
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.value = bgmNotes[bgmIndex];
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+                
+                bgmIndex = (bgmIndex + 1) % bgmNotes.length;
+            }, 400);
+        }
+        
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
             }
-            if (btn === 'a' || btn === 'start') {
-                if (!selected) selected = {x: 0, y: 0};
-                else {
-                    // Simple swap with neighbor for now
-                    const nx = selected.x + 1;
-                    if (nx < GRID_SIZE) {
-                        const temp = grid[selected.y][selected.x];
-                        grid[selected.y][selected.x] = grid[selected.y][nx];
-                        grid[selected.y][nx] = temp;
-                        moves--;
-                        document.getElementById('moves').textContent = moves;
-                        setTimeout(() => {
-                            let chain = 0;
-                            while (removeMatches() > 0) { chain++; fillGrid(); }
-                            if (chain === 0 && moves <= 0) gameOver();
-                        }, 100);
+        }
+        
+        // ============================================
+        // GAME CLASSES
+        // ============================================
+        
+        class Boba {
+            constructor(colorType, x, y) {
+                this.colorType = colorType;
+                this.x = x;
+                this.y = y;
+                this.radius = BOBA_RADIUS;
+                this.pulse = 0;
+            }
+            
+            draw(ctx, offsetX = 0, offsetY = 0) {
+                const x = this.x + offsetX;
+                const y = this.y + offsetY;
+                
+                // Draw boba pearl
+                ctx.save();
+                
+                if (this.colorType.name === 'rainbow') {
+                    // Rainbow gradient
+                    const gradient = ctx.createRadialGradient(
+                        x - 4, y - 4, 0,
+                        x, y, this.radius
+                    );
+                    const colors = this.colorType.colors;
+                    colors.forEach((c, i) => {
+                        gradient.addColorStop(i / colors.length, c);
+                    });
+                    ctx.fillStyle = gradient;
+                } else {
+                    // Regular color with 3D effect
+                    const gradient = ctx.createRadialGradient(
+                        x - 4, y - 4, 0,
+                        x, y, this.radius
+                    );
+                    gradient.addColorStop(0, this.colorType.highlight);
+                    gradient.addColorStop(0.5, this.colorType.color);
+                    gradient.addColorStop(1, this.colorType.shadow);
+                    ctx.fillStyle = gradient;
+                }
+                
+                ctx.beginPath();
+                ctx.arc(x, y, this.radius - 1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Shine highlight
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath();
+                ctx.ellipse(x - 4, y - 4, 4, 3, -Math.PI / 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Small shine dot
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.beginPath();
+                ctx.arc(x - 5, y - 5, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            matches(other) {
+                if (this.colorType.name === 'rainbow' || other.colorType.name === 'rainbow') {
+                    return true;
+                }
+                return this.colorType.name === other.colorType.name;
+            }
+        }
+        
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6 - 2;
+                this.radius = Math.random() * 4 + 2;
+                this.color = color;
+                this.life = 1;
+                this.decay = Math.random() * 0.03 + 0.02;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.15; // Gravity
+                this.life -= this.decay;
+                this.radius *= 0.98;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        
+        class FloatingText {
+            constructor(x, y, text, color = '#FFF') {
+                this.x = x;
+                this.y = y;
+                this.text = text;
+                this.color = color;
+                this.life = 1;
+                this.vy = -1;
+            }
+            
+            update() {
+                this.y += this.vy;
+                this.life -= 0.02;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.strokeText(this.text, this.x, this.y);
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+        
+        class Projectile {
+            constructor(boba, angle) {
+                this.boba = boba;
+                this.x = CANNON_X;
+                this.y = CANNON_Y;
+                this.vx = Math.cos(angle) * SHOT_SPEED;
+                this.vy = Math.sin(angle) * SHOT_SPEED;
+                this.radius = BOBA_RADIUS;
+                this.stopped = false;
+            }
+            
+            update() {
+                if (this.stopped) return;
+                
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Wall bounce
+                const leftBound = GRID_OFFSET_X - BOBA_RADIUS;
+                const rightBound = GRID_OFFSET_X + (GRID_COLS - 1) * BOBA_RADIUS * 2 + BOBA_RADIUS;
+                
+                if (this.x - this.radius < leftBound) {
+                    this.x = leftBound + this.radius;
+                    this.vx = Math.abs(this.vx);
+                } else if (this.x + this.radius > rightBound) {
+                    this.x = rightBound - this.radius;
+                    this.vx = -Math.abs(this.vx);
+                }
+                
+                // Ceiling collision
+                if (this.y - this.radius < GRID_OFFSET_Y + ceilingOffset) {
+                    this.stopped = true;
+                }
+                
+                // Check collision with grid bobas
+                for (let row = 0; row < grid.length; row++) {
+                    for (let col = 0; col < grid[row].length; col++) {
+                        const boba = grid[row][col];
+                        if (boba) {
+                            const dx = this.x - boba.x;
+                            const dy = this.y - boba.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < this.radius + boba.radius - 2) {
+                                this.stopped = true;
+                                return;
+                            }
+                        }
                     }
-                    selected = null;
                 }
             }
-            if (btn === 'select') window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'bubble-tea' }, '*');
-            break;
-        case 'PAUSE': gameState = 'paused'; break;
-        case 'RESUME': gameState = 'playing'; gameLoop(); break;
-        case 'SAVE_STATE': localStorage.setItem('bubbleTea_state', JSON.stringify({score, moves})); break;
-        case 'LOAD_STATE':
-            const saved = localStorage.getItem('bubbleTea_state');
-            if (saved) { const data = JSON.parse(saved); score = data.score; moves = data.moves; }
-            break;
-    }
-});
-
-createGrid();
-gameLoop();
-</script>
+            
+            draw(ctx) {
+                this.boba.x = this.x;
+                this.boba.y = this.y;
+                this.boba.draw(ctx);
+            }
+        }
+        
+        // ============================================
+        // GRID FUNCTIONS
+        // ============================================
+        
+        function initGrid() {
+            grid = [];
+            const startRows = 5;
+            
+            for (let row = 0; row < GRID_ROWS; row++) {
+                grid[row] = [];
+                const colsInRow = (row % 2 === 0) ? GRID_COLS : GRID_COLS - 1;
+                const offsetX = (row % 2 === 0) ? 0 : BOBA_RADIUS;
+                
+                for (let col = 0; col < colsInRow; col++) {
+                    if (row < startRows) {
+                        const colorType = getRandomColor();
+                        const x = GRID_OFFSET_X + col * BOBA_RADIUS * 2 + offsetX;
+                        const y = GRID_OFFSET_Y + row * BOBA_RADIUS * 1.732;
+                        grid[row][col] = new Boba(colorType, x, y);
+                    } else {
+                        grid[row][col] = null;
+                    }
+                }
+            }
+        }
+        
+        function getRandomColor() {
+            // 10% chance for rainbow
+            if (Math.random() < 0.1) {
+                return BOBA_COLORS.RAINBOW;
+            }
+            return REGULAR_COLORS[Math.floor(Math.random() * REGULAR_COLORS.length)];
+        }
+        
+        function getGridPosition(x, y) {
+            const row = Math.round((y - GRID_OFFSET_Y - ceilingOffset) / (BOBA_RADIUS * 1.732));
+            const offsetX = (row % 2 === 0) ? 0 : BOBA_RADIUS;
+            const col = Math.round((x - GRID_OFFSET_X - offsetX) / (BOBA_RADIUS * 2));
+            return { row, col };
+        }
+        
+        function snapToGrid(row, col) {
+            const offsetX = (row % 2 === 0) ? 0 : BOBA_RADIUS;
+            const x = GRID_OFFSET_X + col * BOBA_RADIUS * 2 + offsetX;
+            const y = GRID_OFFSET_Y + row * BOBA_RADIUS * 1.732 + ceilingOffset;
+            return { x, y };
+        }
+        
+        function findEmptySpotNear(x, y) {
+            const centerRow = Math.round((y - GRID_OFFSET_Y - ceilingOffset) / (BOBA_RADIUS * 1.732));
+            const offsetX = (centerRow % 2 === 0) ? 0 : BOBA_RADIUS;
+            const centerCol = Math.round((x - GRID_OFFSET_X - offsetX) / (BOBA_RADIUS * 2));
+            
+            // Check center first
+            if (isValidPosition(centerRow, centerCol) && !grid[centerRow][centerCol]) {
+                return { row: centerRow, col: centerCol };
+            }
+            
+            // Search in expanding circles
+            for (let radius = 1; radius < 5; radius++) {
+                for (let dr = -radius; dr <= radius; dr++) {
+                    for (let dc = -radius; dc <= radius; dc++) {
+                        if (Math.abs(dr) + Math.abs(dc) !== radius) continue;
+                        const row = centerRow + dr;
+                        const col = centerCol + dc;
+                        if (isValidPosition(row, col) && !grid[row][col]) {
+                            return { row, col };
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        function isValidPosition(row, col) {
+            if (row < 0 || row >= GRID_ROWS) return false;
+            const colsInRow = (row % 2 === 0) ? GRID_COLS : GRID_COLS - 1;
+            return col >= 0 && col < colsInRow;
+        }
+        
+        function getNeighbors(row, col) {
+            const neighbors = [];
+            const isEvenRow = row % 2 === 0;
+            
+            const offsets = isEvenRow ? [
+                [-1, -1], [-1, 0],
+                [0, -1], [0, 1],
+                [1, -1], [1, 0]
+            ] : [
+                [-1, 0], [-1, 1],
+                [0, -1], [0, 1],
+                [1, 0], [1, 1]
+            ];
+            
+            for (const [dr, dc] of offsets) {
+                const nr = row + dr;
+                const nc = col + dc;
+                if (isValidPosition(nr, nc) && grid[nr][nc]) {
+                    neighbors.push({ row: nr, col: nc, boba: grid[nr][nc] });
+                }
+            }
+            
+            return neighbors;
+        }
+        
+        function findMatches(startRow, startCol, colorType) {
+            const matches = [];
+            const visited = new Set();
+            const queue = [{ row: startRow, col: startCol }];
+            
+            while (queue.length > 0) {
+                const { row, col } = queue.shift();
+                const key = `${row},${col}`;
+                
+                if (visited.has(key)) continue;
+                visited.add(key);
+                
+                const boba = grid[row][col];
+                if (!boba) continue;
+                
+                // Check if matches (rainbow matches everything)
+                const matchesColor = colorType.name === 'rainbow' || 
+                                    boba.colorType.name === 'rainbow' ||
+                                    colorType.name === boba.colorType.name;
+                
+                if (matchesColor) {
+                    matches.push({ row, col, boba });
+                    
+                    const neighbors = getNeighbors(row, col);
+                    for (const neighbor of neighbors) {
+                        const nKey = `${neighbor.row},${neighbor.col}`;
+                        if (!visited.has(nKey)) {
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+            }
+            
+            return matches;
+        }
+        
+        function findFloatingBoba() {
+            const visited = new Set();
+            const queue = [];
+            
+            // Start from top row
+            for (let col = 0; col < grid[0].length; col++) {
+                if (grid[0][col]) {
+                    queue.push({ row: 0, col });
+                    visited.add(`0,${col}`);
+                }
+            }
+            
+            // BFS to find all connected bobas
+            while (queue.length > 0) {
+                const { row, col } = queue.shift();
+                const neighbors = getNeighbors(row, col);
+                
+                for (const neighbor of neighbors) {
+                    const key = `${neighbor.row},${neighbor.col}`;
+                    if (!visited.has(key)) {
+                        visited.add(key);
+                        queue.push(neighbor);
+                    }
+                }
+            }
+            
+            // Find floating bobas (not visited)
+            const floating = [];
+            for (let row = 0; row < grid.length; row++) {
+                for (let col = 0; col < grid[row].length; col++) {
+                    if (grid[row][col] && !visited.has(`${row},${col}`)) {
+                        floating.push({ row, col, boba: grid[row][col] });
+                    }
+                }
+            }
+            
+            return floating;
+        }
+        
+        function dropCeiling() {
+            ceilingOffset += CEILING_DROP_AMOUNT;
+            playSound('ceiling');
+            
+            // Add new row at top
+            const newRow = [];
+            const colsInRow = (grid.length % 2 === 0) ? GRID_COLS : GRID_COLS - 1;
+            const offsetX = (grid.length % 2 === 0) ? 0 : BOBA_RADIUS;
+            
+            for (let col = 0; col < colsInRow; col++) {
+                const colorType = getRandomColor();
+                const x = GRID_OFFSET_X + col * BOBA_RADIUS * 2 + offsetX;
+                const y = GRID_OFFSET_Y - CEILING_DROP_AMOUNT;
+                newRow.push(new Boba(colorType, x, y));
+            }
+            
+            grid.unshift(newRow);
+            if (grid.length > GRID_ROWS) {
+                grid.pop();
+            }
+            
+            // Update all positions
+            updateGridPositions();
+        }
+        
+        function updateGridPositions() {
+            for (let row = 0; row < grid.length; row++) {
+                const offsetX = (row % 2 === 0) ? 0 : BOBA_RADIUS;
+                for (let col = 0; col < grid[row].length; col++) {
+                    if (grid[row][col]) {
+                        grid[row][col].x = GRID_OFFSET_X + col * BOBA_RADIUS * 2 + offsetX;
+                        grid[row][col].y = GRID_OFFSET_Y + row * BOBA_RADIUS * 1.732 + ceilingOffset;
+                    }
+                }
+            }
+        }
+        
+        function createParticles(x, y, colorType) {
+            const color = colorType.name === 'rainbow' ? '#FFD700' : colorType.color;
+            for (let i = 0; i < 8; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+        
+        function createFloatingText(x, y, text) {
+            floatingTexts.push(new FloatingText(x, y, text));
+        }
+        
+        // ============================================
+        // CANNON & AIMING
+        // ============================================
+        
+        function calculateAimLine() {
+            aimLine = [];
+            let x = CANNON_X;
+            let y = CANNON_Y;
+            let vx = Math.cos(cannonAngle) * 10;
+            let vy = Math.sin(cannonAngle) * 10;
+            
+            const leftBound = GRID_OFFSET_X - BOBA_RADIUS;
+            const rightBound = GRID_OFFSET_X + (GRID_COLS - 1) * BOBA_RADIUS * 2 + BOBA_RADIUS;
+            
+            for (let i = 0; i < 30; i++) {
+                x += vx;
+                y += vy;
+                
+                // Wall bounce
+                if (x - BOBA_RADIUS < leftBound) {
+                    x = leftBound + BOBA_RADIUS;
+                    vx = Math.abs(vx);
+                } else if (x + BOBA_RADIUS > rightBound) {
+                    x = rightBound - BOBA_RADIUS;
+                    vx = -Math.abs(vx);
+                }
+                
+                // Ceiling stop
+                if (y < GRID_OFFSET_Y + ceilingOffset + BOBA_RADIUS * 3) {
+                    break;
+                }
+                
+                aimLine.push({ x, y });
+            }
+        }
+        
+        function drawCannon(ctx) {
+            ctx.save();
+            ctx.translate(CANNON_X, CANNON_Y);
+            ctx.rotate(cannonAngle + Math.PI / 2);
+            
+            // Cannon body
+            const gradient = ctx.createLinearGradient(-15, 0, 15, 0);
+            gradient.addColorStop(0, '#8D6E63');
+            gradient.addColorStop(0.5, '#D7CCC8');
+            gradient.addColorStop(1, '#5D4037');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(-12, -35, 24, 45);
+            
+            // Cannon rim
+            ctx.fillStyle = '#3E2723';
+            ctx.fillRect(-14, -40, 28, 8);
+            
+            // Decorative stripe
+            ctx.fillStyle = '#FF80AB';
+            ctx.fillRect(-10, -25, 20, 5);
+            
+            ctx.restore();
+            
+            // Cannon base
+            ctx.fillStyle = '#5D4037';
+            ctx.beginPath();
+            ctx.ellipse(CANNON_X, CANNON_Y + 5, 25, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Base highlight
+            ctx.fillStyle = '#8D6E63';
+            ctx.beginPath();
+            ctx.ellipse(CANNON_X, CANNON_Y + 3, 18, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawAimLine(ctx) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(CANNON_X, CANNON_Y);
+            
+            for (const point of aimLine) {
+                ctx.lineTo(point.x, point.y);
+            }
+            
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        // ============================================
+        // GAME LOGIC
+        // ============================================
+        
+        function spawnNewBoba() {
+            currentBoba = nextBoba || new Boba(getRandomColor(), 0, 0);
+            nextBoba = new Boba(getRandomColor(), 0, 0);
+        }
+        
+        function swapBoba() {
+            const temp = currentBoba;
+            currentBoba = nextBoba;
+            nextBoba = temp;
+            playSound('swap');
+        }
+        
+        function fireBoba() {
+            if (projectile) return;
+            
+            initAudio();
+            projectile = new Projectile(currentBoba, cannonAngle);
+            playSound('shoot');
+            spawnNewBoba();
+        }
+        
+        function checkGameOver() {
+            for (let row = grid.length - 1; row >= 0; row--) {
+                for (let col = 0; col < grid[row].length; col++) {
+                    if (grid[row][col]) {
+                        const bobaY = grid[row][col].y;
+                        if (bobaY > CANNON_Y - BOBA_RADIUS * 3) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        
+        function handleProjectileStop() {
+            if (!projectile) return;
+            
+            const spot = findEmptySpotNear(projectile.x, projectile.y);
+            if (!spot) {
+                projectile = null;
+                return;
+            }
+            
+            const { x, y } = snapToGrid(spot.row, spot.col);
+            projectile.boba.x = x;
+            projectile.boba.y = y;
+            grid[spot.row][spot.col] = projectile.boba;
+            
+            // Find matches
+            const matches = findMatches(spot.row, spot.col, projectile.boba.colorType);
+            
+            if (matches.length >= 3) {
+                // Remove matches
+                let points = matches.length * 10;
+                if (matches.length > 3) points += (matches.length - 3) * 20;
+                
+                for (const match of matches) {
+                    createParticles(match.boba.x, match.boba.y, match.boba.colorType);
+                    grid[match.row][match.col] = null;
+                }
+                
+                playSound(matches.length >= 5 ? 'clear' : 'pop');
+                createFloatingText(CANNON_X, CANNON_Y - 40, `+${points}`);
+                score += points;
+                reportScore(score);
+                
+                // Find and drop floating bobas
+                const floating = findFloatingBoba();
+                if (floating.length > 0) {
+                    const dropPoints = floating.length * 20;
+                    for (const item of floating) {
+                        createParticles(item.boba.x, item.boba.y, item.boba.colorType);
+                        grid[item.row][item.col] = null;
+                    }
+                    createFloatingText(CANNON_X, CANNON_Y - 60, `DROP +${dropPoints}!`);
+                    score += dropPoints;
+                    reportScore(score);
+                    playSound('clear');
+                }
+            }
+            
+            projectile = null;
+            shotsFired++;
+            
+            // Drop ceiling every 5 shots
+            if (shotsFired % CEILING_DROP_INTERVAL === 0) {
+                dropCeiling();
+            }
+            
+            // Check game over
+            if (checkGameOver()) {
+                gameOver();
+            }
+            
+            saveGameState();
+        }
+        
+        function gameOver() {
+            gameState = 'gameover';
+            stopBGM();
+            playSound('gameover');
+            saveGameState();
+        }
+        
+        // ============================================
+        // DRAWING
+        // ============================================
+        
+        function drawBackground(ctx) {
+            // Gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+            gradient.addColorStop(0, '#FFF8E7');
+            gradient.addColorStop(0.5, '#FFE4C4');
+            gradient.addColorStop(1, '#DEB887');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Bubble tea shop decorations
+            ctx.fillStyle = 'rgba(255, 182, 193, 0.3)';
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * GAME_WIDTH, Math.random() * GAME_HEIGHT, 
+                       Math.random() * 20 + 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Side panels
+            ctx.fillStyle = '#8D6E63';
+            ctx.fillRect(0, 0, GRID_OFFSET_X - BOBA_RADIUS - 5, GAME_HEIGHT);
+            ctx.fillRect(GAME_WIDTH - (GRID_OFFSET_X - BOBA_RADIUS - 5), 0, 
+                        GRID_OFFSET_X - BOBA_RADIUS - 5, GAME_HEIGHT);
+            
+            // Panel decoration
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(GRID_OFFSET_X - BOBA_RADIUS - 8, 0, 3, GAME_HEIGHT);
+            ctx.fillRect(GAME_WIDTH - (GRID_OFFSET_X - BOBA_RADIUS - 5), 0, 3, GAME_HEIGHT);
+        }
+        
+        function drawGrid(ctx) {
+            for (let row = 0; row < grid.length; row++) {
+                for (let col = 0; col < grid[row].length; col++) {
+                    if (grid[row][col]) {
+                        grid[row][col].draw(ctx);
+                    }
+                }
+            }
+        }
+        
+        function drawCurrentBoba(ctx) {
+            if (currentBoba && !projectile) {
+                currentBoba.x = CANNON_X + Math.cos(cannonAngle) * 30;
+                currentBoba.y = CANNON_Y + Math.sin(cannonAngle) * 30;
+                currentBoba.draw(ctx);
+            }
+        }
+        
+        function drawNextBoba(ctx) {
+            // Next boba preview box
+            const boxX = GAME_WIDTH - 50;
+            const boxY = GAME_HEIGHT - 70;
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(boxX - 22, boxY - 22, 44, 44);
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillRect(boxX - 20, boxY - 20, 40, 40);
+            
+            ctx.strokeStyle = '#8D6E63';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(boxX - 20, boxY - 20, 40, 40);
+            
+            if (nextBoba) {
+                nextBoba.x = boxX;
+                nextBoba.y = boxY;
+                nextBoba.draw(ctx);
+            }
+            
+            // Label
+            ctx.fillStyle = '#5D4037';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('NEXT', boxX, boxY + 32);
+        }
+        
+        function drawUI(ctx) {
+            // Score
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(10, 10, 100, 30);
+            
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`SCORE: ${score}`, 15, 30);
+            
+            // Level
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(10, 45, 80, 25);
+            
+            ctx.fillStyle = '#FFE082';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText(`LEVEL: ${level}`, 15, 62);
+            
+            // Shots until ceiling drop
+            const shotsLeft = CEILING_DROP_INTERVAL - (shotsFired % CEILING_DROP_INTERVAL);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(10, 75, 100, 20);
+            
+            ctx.fillStyle = shotsLeft <= 1 ? '#FF6B6B' : '#AED581';
+            ctx.font = '10px Arial';
+            ctx.fillText(`DROP IN: ${shotsLeft}`, 15, 89);
+        }
+        
+        function drawPauseMenu(ctx) {
+            // Semi-transparent overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Menu box
+            const boxX = GAME_WIDTH / 2 - 80;
+            const boxY = GAME_HEIGHT / 2 - 80;
+            
+            ctx.fillStyle = '#FFF8E7';
+            ctx.fillRect(boxX, boxY, 160, 160);
+            
+            ctx.strokeStyle = '#8D6E63';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(boxX, boxY, 160, 160);
+            
+            // Title
+            ctx.fillStyle = '#5D4037';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('PAUSED', GAME_WIDTH / 2, boxY + 30);
+            
+            // Menu items
+            ctx.font = '14px Arial';
+            ctx.fillText('RESUME', GAME_WIDTH / 2, boxY + 65);
+            ctx.fillText(audioMuted ? 'UNMUTE' : 'MUTE', GAME_WIDTH / 2, boxY + 95);
+            ctx.fillText('QUIT', GAME_WIDTH / 2, boxY + 125);
+            
+            // Controls hint
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#8D6E63';
+            ctx.fillText('A: Select', GAME_WIDTH / 2, boxY + 150);
+        }
+        
+        function drawGameOver(ctx) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            const boxX = GAME_WIDTH / 2 - 100;
+            const boxY = GAME_HEIGHT / 2 - 60;
+            
+            ctx.fillStyle = '#FF6B6B';
+            ctx.fillRect(boxX, boxY, 200, 120);
+            
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(boxX, boxY, 200, 120);
+            
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', GAME_WIDTH / 2, boxY + 40);
+            
+            ctx.font = '16px Arial';
+            ctx.fillText(`Final Score: ${score}`, GAME_WIDTH / 2, boxY + 70);
+            
+            ctx.font = '12px Arial';
+            ctx.fillText('Press START to restart', GAME_WIDTH / 2, boxY + 100);
+        }
+        
+        // ============================================
+        // MAIN GAME LOOP
+        // ============================================
+        
+        function update() {
+            if (gameState !== 'playing') return;
+            
+            // Handle input for aiming
+            if (inputState.LEFT || inputState.L) {
+                cannonAngle -= 0.04;
+            }
+            if (inputState.RIGHT || inputState.R) {
+                cannonAngle += 0.04;
+            }
+            
+            // Clamp angle
+            cannonAngle = Math.max(-Math.PI + 0.2, Math.min(-0.2, cannonAngle));
+            
+            // Fire
+            if (inputState.A && !projectile) {
+                fireBoba();
+            }
+            
+            // Swap
+            if (inputState.B && !projectile) {
+                swapBoba();
+                inputState.B = false; // Prevent continuous swapping
+            }
+            
+            // Update projectile
+            if (projectile) {
+                projectile.update();
+                if (projectile.stopped) {
+                    handleProjectileStop();
+                }
+            }
+            
+            // Update particles
+            particles = particles.filter(p => {
+                p.update();
+                return p.life > 0;
+            });
+            
+            // Update floating texts
+            floatingTexts = floatingTexts.filter(t => {
+                t.update();
+                return t.life > 0;
+            });
+            
+            // Calculate aim line
+            calculateAimLine();
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            drawBackground(ctx);
+            drawGrid(ctx);
+            drawAimLine(ctx);
+            drawCannon(ctx);
+            drawCurrentBoba(ctx);
+            
+            if (projectile) {
+                projectile.draw(ctx);
+            }
+            
+            // Draw particles
+            for (const p of particles) {
+                p.draw(ctx);
+            }
+            
+            // Draw floating texts
+            for (const t of floatingTexts) {
+                t.draw(ctx);
+            }
+            
+            drawNextBoba(ctx);
+            drawUI(ctx);
+            
+            if (gameState === 'paused') {
+                drawPauseMenu(ctx);
+            } else if (gameState === 'gameover') {
+                drawGameOver(ctx);
+            }
+        }
+        
+        function gameLoop(timestamp) {
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            
+            update();
+            draw();
+            
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        // ============================================
+        // INPUT HANDLING
+        // ============================================
+        
+        window.addEventListener('message', (e) => {
+            const { type, button, state } = e.data;
+            
+            if (type === 'button') {
+                inputState[button] = state;
+                
+                // Handle START button
+                if (button === 'START' && state) {
+                    initAudio();
+                    if (gameState === 'playing') {
+                        gameState = 'paused';
+                        stopBGM();
+                    } else if (gameState === 'paused') {
+                        gameState = 'playing';
+                        playBGM();
+                    } else if (gameState === 'gameover') {
+                        resetGame();
+                    }
+                }
+                
+                // Handle menu selection when paused
+                if (gameState === 'paused' && button === 'A' && state) {
+                    gameState = 'playing';
+                    playBGM();
+                }
+                
+                // Handle mute toggle
+                if (gameState === 'paused' && button === 'B' && state) {
+                    audioMuted = !audioMuted;
+                    if (audioMuted) {
+                        stopBGM();
+                    } else {
+                        playBGM();
+                    }
+                }
+            }
+            
+            if (type === 'mute') {
+                audioMuted = true;
+                stopBGM();
+            }
+        });
+        
+        // Keyboard controls for testing
+        window.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft': inputState.LEFT = true; break;
+                case 'ArrowRight': inputState.RIGHT = true; break;
+                case 'z': case 'Z': inputState.A = true; break;
+                case 'x': case 'X': inputState.B = true; break;
+                case 'a': case 'A': inputState.L = true; break;
+                case 's': case 'S': inputState.R = true; break;
+                case 'Enter': inputState.START = true; break;
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft': inputState.LEFT = false; break;
+                case 'ArrowRight': inputState.RIGHT = false; break;
+                case 'z': case 'Z': inputState.A = false; break;
+                case 'x': case 'X': inputState.B = false; break;
+                case 'a': case 'A': inputState.L = false; break;
+                case 's': case 'S': inputState.R = false; break;
+                case 'Enter': inputState.START = false; break;
+            }
+        });
+        
+        // ============================================
+        // REQUIRED FUNCTIONS
+        // ============================================
+        
+        function reportScore(score) {
+            parent.postMessage({ type: 'score', value: score }, '*');
+        }
+        
+        function saveGameState() {
+            localStorage.setItem('munchboy_save_bubbleteablast', JSON.stringify({
+                score: score,
+                level: level,
+                timestamp: Date.now()
+            }));
+        }
+        
+        function loadGameState() {
+            const saved = localStorage.getItem('munchboy_save_bubbleteablast');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    return data;
+                } catch (e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+        
+        function resetGame() {
+            score = 0;
+            level = 1;
+            shotsFired = 0;
+            ceilingOffset = 0;
+            particles = [];
+            floatingTexts = [];
+            projectile = null;
+            cannonAngle = -Math.PI / 2;
+            gameState = 'playing';
+            
+            initGrid();
+            spawnNewBoba();
+            spawnNewBoba(); // Set up next boba too
+            
+            playBGM();
+        }
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        function init() {
+            resetGame();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        init();
+    </script>
 </body>
 </html>

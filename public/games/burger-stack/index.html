@@ -2,367 +2,911 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Burger Stack</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burger Stack - Physics Stacking Game</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
-        body { 
-            background: #1a1a2e; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a2e;
+            font-family: 'Arial', sans-serif;
             overflow: hidden;
-            font-family: 'Courier New', monospace;
         }
-        #gameCanvas { 
-            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #F4E4C1 50%, #D4A574 100%);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
-        #ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-size: 14px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
-        #gameOver {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            color: white;
+        #pauseMenu {
             display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
         }
-        #gameOver h2 { color: #F59E0B; margin-bottom: 10px; }
-        #gameOver button {
-            background: #22C55E;
+        #pauseMenu.active {
+            display: flex;
+        }
+        .menu-btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
             border: none;
-            padding: 10px 20px;
-            color: white;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-transform: uppercase;
         }
-        #exitBtn { display: none !important; }
+        .menu-btn:hover {
+            transform: scale(1.05);
+        }
+        .btn-resume {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+        .btn-mute {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+        .btn-exit {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+        #gameTitle {
+            color: #FFD700;
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="480" height="320"></canvas>
-    <div id="ui">SCORE: <span id="score">0</span> | HIGH: <span id="high">0</span></div>
-    <div id="gameOver">
-        <h2>BURGER COMPLETE!</h2>
-        <p>Final Score: <span id="finalScore">0</span></p>
-        <button onclick="resetGame()">STACK AGAIN</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
+        <div id="pauseMenu">
+            <h1 id="gameTitle">BURGER STACK</h1>
+            <button class="menu-btn btn-resume" onclick="resumeGame()">Resume</button>
+            <button class="menu-btn btn-mute" onclick="toggleMute()" id="muteBtn">Mute: OFF</button>
+            <button class="menu-btn btn-exit" onclick="exitGame()">Back to Selector</button>
+        </div>
     </div>
-    <button id="exitBtn" onclick="exitGame()">✕</button>
 
-<script>
-// Exit game function
-function exitGame() {
-    window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'burger-stack' }, '*');
-}
-
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-// Game state
-let gameState = 'playing'; // playing, paused, gameover
-let score = 0;
-let highScore = parseInt(localStorage.getItem('burgerStack_high') || '0');
-let ingredients = [];
-let currentIngredient = null;
-let platform = { x: 140, y: 280, width: 200, height: 20 };
-
-// Ingredient types
-const TYPES = [
-    { name: 'bottom_bun', color: '#D4A574', height: 25, width: 100, score: 10 },
-    { name: 'lettuce', color: '#22C55E', height: 8, width: 110, score: 20 },
-    { name: 'patty', color: '#7C2D12', height: 20, width: 105, score: 30 },
-    { name: 'cheese', color: '#FCD34D', height: 5, width: 115, score: 25 },
-    { name: 'tomato', color: '#DC2626', height: 12, width: 100, score: 20 },
-    { name: 'onion', color: '#C084FC', height: 6, width: 108, score: 15 },
-    { name: 'top_bun', color: '#D4A574', height: 30, width: 100, score: 50 }
-];
-
-let currentTypeIndex = 0;
-
-// Physics
-const GRAVITY = 0.5;
-const BOUNCE = 0.3;
-
-class Ingredient {
-    constructor(type, x, y) {
-        this.type = type;
-        this.x = x;
-        this.y = y;
-        this.width = type.width;
-        this.height = type.height;
-        this.vx = 0;
-        this.vy = 0;
-        this.isDropped = false;
-        this.isSettled = false;
-        this.swayOffset = Math.random() * Math.PI * 2;
-    }
-
-    update() {
-        if (!this.isDropped) {
-            // Sway animation
-            this.swayOffset += 0.03;
-            this.x = 240 + Math.sin(this.swayOffset) * 100 - this.width/2;
-            return;
-        }
-
-        // Gravity
-        this.vy += GRAVITY;
-        this.x += this.vx;
-        this.y += this.vy;
-
-        // Check collision with platform or other ingredients
-        let landed = false;
+    <script>
+        // ==================== GAME CONFIGURATION ====================
+        const CANVAS_WIDTH = 480;
+        const CANVAS_HEIGHT = 320;
+        const GRAVITY = 0.25;
+        const FRICTION = 0.98;
+        const BOUNCE = 0.3;
+        const PLATFORM_SPEED = 4;
+        const INGREDIENT_SIZE = 40;
         
-        // Check platform
-        if (this.y + this.height >= platform.y && 
-            this.x + this.width > platform.x && 
-            this.x < platform.x + platform.width &&
-            ingredients.length === 0) {
-            this.y = platform.y - this.height;
-            this.vy = 0;
-            this.vx = 0;
-            this.isSettled = true;
-            landed = true;
-        }
-
-        // Check other ingredients
-        for (let other of ingredients) {
-            if (other !== this && other.isSettled) {
-                if (this.y + this.height >= other.y &&
-                    this.y < other.y + other.height &&
-                    this.x + this.width > other.x &&
-                    this.x < other.x + other.width) {
-                    
-                    this.y = other.y - this.height;
-                    this.vy = 0;
-                    this.vx *= 0.5; // Friction
-                    
-                    if (Math.abs(this.vx) < 0.1) {
-                        this.vx = 0;
-                        this.isSettled = true;
-                        landed = true;
-                    }
+        // ==================== GAME STATE ====================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const pauseMenu = document.getElementById('pauseMenu');
+        
+        let gameState = 'playing'; // 'playing', 'paused', 'gameover'
+        let score = 0;
+        let level = 1;
+        let audioMuted = false;
+        let frameCount = 0;
+        
+        // Input state for PostMessage API
+        const inputState = {
+            'LEFT': false,
+            'RIGHT': false,
+            'A': false,
+            'B': false,
+            'START': false
+        };
+        
+        // ==================== AUDIO SYSTEM ====================
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        
+        function playSound(type, frequency = 200, duration = 0.1) {
+            if (audioMuted) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            switch(type) {
+                case 'thud':
+                    osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.15);
                     break;
+                case 'wobble':
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(250, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                    break;
+                case 'gameover':
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.6);
+                    break;
+                case 'drop':
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'levelup':
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(554, audioCtx.currentTime + 0.1);
+                    osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                    break;
+            }
+        }
+        
+        // Background music loop
+        let musicInterval;
+        function startMusic() {
+            if (musicInterval) clearInterval(musicInterval);
+            let note = 0;
+            const melody = [262, 294, 330, 349, 330, 294, 262, 220];
+            musicInterval = setInterval(() => {
+                if (gameState === 'playing' && !audioMuted) {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.setValueAtTime(melody[note], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                    note = (note + 1) % melody.length;
+                }
+            }, 400);
+        }
+        
+        // ==================== INGREDIENT TYPES ====================
+        const INGREDIENT_TYPES = [
+            { name: 'bottomBun', color: '#D2691E', height: 15, width: 50, type: 'bun' },
+            { name: 'lettuce', color: '#32CD32', height: 8, width: 55, type: 'leaf' },
+            { name: 'patty', color: '#8B4513', height: 12, width: 48, type: 'meat' },
+            { name: 'cheese', color: '#FFD700', height: 6, width: 52, type: 'cheese' },
+            { name: 'tomato', color: '#FF6347', height: 10, width: 42, type: 'veg' },
+            { name: 'onion', color: '#E6E6FA', height: 8, width: 45, type: 'veg' },
+            { name: 'pickle', color: '#228B22', height: 6, width: 38, type: 'veg' },
+            { name: 'topBun', color: '#CD853F', height: 18, width: 48, type: 'bun', hasSeeds: true }
+        ];
+        
+        // ==================== GAME OBJECTS ====================
+        class Platform {
+            constructor() {
+                this.width = 80;
+                this.height = 12;
+                this.x = CANVAS_WIDTH / 2 - this.width / 2;
+                this.y = CANVAS_HEIGHT - 40;
+                this.vx = 0;
+            }
+            
+            update() {
+                if (inputState['LEFT']) this.vx = -PLATFORM_SPEED;
+                else if (inputState['RIGHT']) this.vx = PLATFORM_SPEED;
+                else this.vx = 0;
+                
+                this.x += this.vx;
+                
+                // Keep platform in bounds
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > CANVAS_WIDTH) this.x = CANVAS_WIDTH - this.width;
+            }
+            
+            draw() {
+                // Platform shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(this.x + 3, this.y + 3, this.width, this.height);
+                
+                // Platform body
+                const gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
+                gradient.addColorStop(0, '#8B4513');
+                gradient.addColorStop(0.5, '#A0522D');
+                gradient.addColorStop(1, '#654321');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Platform border
+                ctx.strokeStyle = '#4a3728';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+            }
+        }
+        
+        class Ingredient {
+            constructor(x, y, typeIndex = null) {
+                this.typeIndex = typeIndex !== null ? typeIndex : Math.floor(Math.random() * (INGREDIENT_TYPES.length - 1)) + 1;
+                this.type = INGREDIENT_TYPES[this.typeIndex];
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = 0;
+                this.rotation = 0;
+                this.vr = 0; // rotational velocity
+                this.width = this.type.width;
+                this.height = this.type.height;
+                this.settled = false;
+                this.wobble = 0;
+                this.wobblePhase = Math.random() * Math.PI * 2;
+                this.id = Math.random();
+            }
+            
+            update() {
+                if (!this.settled) {
+                    this.vy += GRAVITY;
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.rotation += this.vr;
+                    this.vr *= FRICTION;
+                    
+                    // Air resistance
+                    this.vx *= 0.995;
+                } else {
+                    // Wobble effect when settled
+                    this.wobblePhase += 0.1;
+                    this.wobble = Math.sin(this.wobblePhase) * Math.abs(this.vr) * 2;
+                    this.vr *= 0.95;
+                }
+                
+                // Screen boundaries
+                if (this.x < this.width/2) {
+                    this.x = this.width/2;
+                    this.vx *= -BOUNCE;
+                }
+                if (this.x > CANVAS_WIDTH - this.width/2) {
+                    this.x = CANVAS_WIDTH - this.width/2;
+                    this.vx *= -BOUNCE;
                 }
             }
-        }
-
-        // Wall collision
-        if (this.x < 0) { this.x = 0; this.vx *= -BOUNCE; }
-        if (this.x + this.width > 480) { this.x = 480 - this.width; this.vx *= -BOUNCE; }
-
-        // Game over if falls off screen
-        if (this.y > 320) {
-            gameOver();
-        }
-
-        // Score on land
-        if (landed && !this.scored) {
-            this.scored = true;
-            score += this.type.score;
-            document.getElementById('score').textContent = score;
             
-            // Send score to parent
-            window.parent.postMessage({ type: 'SCORE', score: score }, '*');
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation + this.wobble);
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.fillRect(-this.width/2 + 2, -this.height/2 + 2, this.width, this.height);
+                
+                // Ingredient body
+                ctx.fillStyle = this.type.color;
+                
+                if (this.type.name === 'bottomBun' || this.type.name === 'topBun') {
+                    // Rounded buns
+                    ctx.beginPath();
+                    ctx.roundRect(-this.width/2, -this.height/2, this.width, this.height, 8);
+                    ctx.fill();
+                    
+                    // Bun highlight
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                    ctx.beginPath();
+                    ctx.roundRect(-this.width/2 + 3, -this.height/2 + 2, this.width - 6, this.height/3, 4);
+                    ctx.fill();
+                    
+                    // Sesame seeds for top bun
+                    if (this.type.hasSeeds) {
+                        ctx.fillStyle = '#FFF8DC';
+                        for (let i = 0; i < 6; i++) {
+                            const sx = -this.width/3 + (i % 3) * 12;
+                            const sy = -this.height/4 + Math.floor(i / 3) * 6;
+                            ctx.beginPath();
+                            ctx.ellipse(sx, sy, 2, 1, Math.random() * Math.PI, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                } else if (this.type.name === 'lettuce') {
+                    // Wavy lettuce
+                    ctx.beginPath();
+                    for (let i = 0; i <= this.width; i += 5) {
+                        const wave = Math.sin(i * 0.5) * 3;
+                        if (i === 0) ctx.moveTo(-this.width/2 + i, wave);
+                        else ctx.lineTo(-this.width/2 + i, wave);
+                    }
+                    ctx.lineTo(this.width/2, this.height/2);
+                    ctx.lineTo(-this.width/2, this.height/2);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (this.type.name === 'cheese') {
+                    // Cheese slice with corners
+                    ctx.beginPath();
+                    ctx.moveTo(-this.width/2, -this.height/2);
+                    ctx.lineTo(this.width/2, -this.height/2);
+                    ctx.lineTo(this.width/2 - 5, this.height/2);
+                    ctx.lineTo(-this.width/2 + 5, this.height/2);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Melting corners
+                    ctx.fillStyle = 'rgba(255,215,0,0.8)';
+                    ctx.beginPath();
+                    ctx.moveTo(this.width/2 - 8, this.height/2);
+                    ctx.lineTo(this.width/2 - 3, this.height/2 + 4);
+                    ctx.lineTo(this.width/2 - 13, this.height/2);
+                    ctx.fill();
+                } else if (this.type.name === 'tomato') {
+                    // Tomato slices
+                    ctx.beginPath();
+                    ctx.roundRect(-this.width/2, -this.height/2, this.width, this.height, 4);
+                    ctx.fill();
+                    ctx.fillStyle = '#FF4500';
+                    ctx.fillRect(-this.width/2 + 4, -this.height/2 + 3, this.width - 8, this.height - 6);
+                } else {
+                    // Default rectangle
+                    ctx.beginPath();
+                    ctx.roundRect(-this.width/2, -this.height/2, this.width, this.height, 3);
+                    ctx.fill();
+                }
+                
+                // Border
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+            
+            getBounds() {
+                return {
+                    left: this.x - this.width/2,
+                    right: this.x + this.width/2,
+                    top: this.y - this.height/2,
+                    bottom: this.y + this.height/2
+                };
+            }
         }
-    }
-
-    draw() {
-        ctx.fillStyle = this.type.color;
         
-        // Draw ingredient with rounded corners
-        ctx.beginPath();
-        ctx.roundRect(this.x, this.y, this.width, this.height, 5);
-        ctx.fill();
-        
-        // Shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.fillRect(this.x + 2, this.y + this.height - 3, this.width - 4, 3);
-        
-        // Detail based on type
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        if (this.type.name === 'patty') {
-            // Grill marks
-            for (let i = 10; i < this.width - 10; i += 15) {
-                ctx.fillRect(this.x + i, this.y + 5, 3, this.height - 10);
+        // ==================== GAME CLASSES ====================
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4 - 2;
+                this.life = 1;
+                this.color = color;
+                this.size = Math.random() * 4 + 2;
             }
-        } else if (this.type.name === 'cheese') {
-            // Drips
-            ctx.beginPath();
-            ctx.moveTo(this.x + 10, this.y + this.height);
-            ctx.lineTo(this.x + 15, this.y + this.height + 8);
-            ctx.lineTo(this.x + 20, this.y + this.height);
-            ctx.fill();
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.15;
+                this.life -= 0.02;
+            }
+            
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.globalAlpha = 1;
+            }
         }
-    }
-}
-
-function spawnIngredient() {
-    if (currentTypeIndex >= TYPES.length) {
-        // Completed burger!
-        gameOver(true);
-        return;
-    }
-    const type = TYPES[currentTypeIndex];
-    currentIngredient = new Ingredient(type, 240 - type.width/2, 30);
-    currentTypeIndex++;
-}
-
-function dropIngredient() {
-    if (currentIngredient && !currentIngredient.isDropped) {
-        currentIngredient.isDropped = true;
-        ingredients.push(currentIngredient);
         
-        // Slight random velocity
-        currentIngredient.vx = (Math.random() - 0.5) * 2;
+        // ==================== GAME VARIABLES ====================
+        const platform = new Platform();
+        let ingredients = [];
+        let particles = [];
+        let currentIngredient = null;
+        let nextSpawnTime = 0;
+        let spawnInterval = 180; // frames
+        let stackHeight = 0;
+        let maxStackHeight = 0;
+        let stability = 100;
+        let gameOverTimer = 0;
+        let cameraY = 0;
         
-        setTimeout(spawnIngredient, 1000);
-    }
-}
-
-function drawPlatform() {
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-    // Wood grain
-    ctx.strokeStyle = '#654321';
-    for (let i = 0; i < platform.width; i += 20) {
-        ctx.beginPath();
-        ctx.moveTo(platform.x + i, platform.y);
-        ctx.lineTo(platform.x + i + 10, platform.y + platform.height);
-        ctx.stroke();
-    }
-}
-
-function drawGuide() {
-    if (currentIngredient && !currentIngredient.isDropped) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.moveTo(currentIngredient.x + currentIngredient.width/2, currentIngredient.y);
-        ctx.lineTo(currentIngredient.x + currentIngredient.width/2, 320);
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-}
-
-function gameLoop() {
-    if (gameState === 'paused') return;
-    
-    // Clear
-    ctx.clearRect(0, 0, 480, 320);
-    
-    // Draw background elements
-    drawPlatform();
-    drawGuide();
-    
-    // Update and draw ingredients
-    ingredients.forEach(ing => {
-        ing.update();
-        ing.draw();
-    });
-    
-    // Current ingredient
-    if (currentIngredient && !currentIngredient.isDropped) {
-        currentIngredient.update();
-        currentIngredient.draw();
-    }
-    
-    requestAnimationFrame(gameLoop);
-}
-
-function gameOver(completed = false) {
-    gameState = 'gameover';
-    if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('burgerStack_high', highScore);
-        document.getElementById('high').textContent = highScore;
-    }
-    
-    // Send final score
-    window.parent.postMessage({ type: 'GAME_OVER', score: score, completed: completed }, '*');
-    
-    document.getElementById('finalScore').textContent = score;
-    document.getElementById('gameOver').style.display = 'block';
-}
-
-function resetGame() {
-    ingredients = [];
-    currentIngredient = null;
-    currentTypeIndex = 0;
-    score = 0;
-    document.getElementById('score').textContent = score;
-    document.getElementById('gameOver').style.display = 'none';
-    gameState = 'playing';
-    spawnIngredient();
-    gameLoop();
-}
-
-// Input handling
-canvas.addEventListener('click', dropIngredient);
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    dropIngredient();
-});
-
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') dropIngredient();
-});
-
-// PostMessage API
-window.addEventListener('message', (e) => {
-    switch(e.data.type) {
-        case 'BUTTON_PRESS':
-            if (e.data.button === 'a' || e.data.button === 'start') {
-                dropIngredient();
+        // ==================== PHYSICS FUNCTIONS ====================
+        function checkCollision(a, b) {
+            const boundsA = a.getBounds();
+            const boundsB = b.getBounds();
+            
+            return boundsA.left < boundsB.right &&
+                   boundsA.right > boundsB.left &&
+                   boundsA.top < boundsB.bottom &&
+                   boundsA.bottom > boundsB.top;
+        }
+        
+        function resolveCollision(ingredient, other) {
+            const boundsI = ingredient.getBounds();
+            const boundsO = other.getBounds();
+            
+            const overlapTop = boundsI.bottom - boundsO.top;
+            const overlapBottom = boundsO.bottom - boundsI.top;
+            const overlapLeft = boundsI.right - boundsO.left;
+            const overlapRight = boundsO.right - boundsI.left;
+            
+            const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
+            
+            if (minOverlap === overlapTop && ingredient.vy > 0) {
+                ingredient.y = boundsO.top - ingredient.height/2;
+                ingredient.vy *= -BOUNCE;
+                ingredient.vx *= FRICTION;
+                
+                // Transfer some horizontal momentum
+                const dx = ingredient.x - other.x;
+                ingredient.vr = dx * 0.001;
+                
+                // Settle if slow enough
+                if (Math.abs(ingredient.vy) < 1) {
+                    ingredient.settled = true;
+                    ingredient.vy = 0;
+                    
+                    // Play thud sound
+                    if (Math.abs(ingredient.vy) > 0.5) {
+                        playSound('thud');
+                        createParticles(ingredient.x, ingredient.y + ingredient.height/2, ingredient.type.color);
+                    }
+                }
+            } else if (minOverlap === overlapBottom) {
+                ingredient.y = boundsO.bottom + ingredient.height/2;
+                ingredient.vy *= -BOUNCE;
+            } else if (minOverlap === overlapLeft) {
+                ingredient.x = boundsO.left - ingredient.width/2;
+                ingredient.vx *= -BOUNCE;
+            } else if (minOverlap === overlapRight) {
+                ingredient.x = boundsO.right + ingredient.width/2;
+                ingredient.vx *= -BOUNCE;
             }
-            if (e.data.button === 'select') {
-                exitGame();
+        }
+        
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 5; i++) {
+                particles.push(new Particle(x, y, color));
             }
-            break;
-        case 'PAUSE':
+        }
+        
+        function calculateStability() {
+            if (ingredients.length < 2) return 100;
+            
+            let totalWobble = 0;
+            let settledCount = 0;
+            
+            for (let ing of ingredients) {
+                if (ing.settled) {
+                    totalWobble += Math.abs(ing.vr);
+                    settledCount++;
+                }
+            }
+            
+            if (settledCount === 0) return 100;
+            
+            const avgWobble = totalWobble / settledCount;
+            stability = Math.max(0, 100 - avgWobble * 500);
+            
+            // Play wobble sound if unstable
+            if (stability < 30 && frameCount % 30 === 0) {
+                playSound('wobble');
+            }
+            
+            return stability;
+        }
+        
+        function checkGameOver() {
+            // Game over if stack falls off platform or too unstable
+            const settledIngredients = ingredients.filter(i => i.settled);
+            
+            if (settledIngredients.length === 0) return false;
+            
+            // Check if any settled ingredient fell off
+            for (let ing of settledIngredients) {
+                if (ing.x < -50 || ing.x > CANVAS_WIDTH + 50 || ing.y > CANVAS_HEIGHT + 50) {
+                    return true;
+                }
+            }
+            
+            // Check stability
+            if (stability <= 0) {
+                gameOverTimer++;
+                if (gameOverTimer > 60) return true;
+            } else {
+                gameOverTimer = 0;
+            }
+            
+            return false;
+        }
+        
+        // ==================== GAME FUNCTIONS ====================
+        function spawnIngredient() {
+            const x = platform.x + platform.width/2 + (Math.random() - 0.5) * 40;
+            const y = cameraY - 50;
+            currentIngredient = new Ingredient(x, y);
+            ingredients.push(currentIngredient);
+        }
+        
+        function update() {
+            if (gameState !== 'playing') return;
+            
+            frameCount++;
+            
+            // Update platform
+            platform.update();
+            
+            // Spawn ingredients
+            if (frameCount >= nextSpawnTime) {
+                spawnIngredient();
+                nextSpawnTime = frameCount + spawnInterval;
+                // Speed up as level increases
+                spawnInterval = Math.max(60, 180 - (level - 1) * 20);
+            }
+            
+            // Fast drop with A button
+            if (inputState['A'] && currentIngredient && !currentIngredient.settled) {
+                currentIngredient.vy += 0.5;
+            }
+            
+            // Rotate with B button
+            if (inputState['B'] && currentIngredient && !currentIngredient.settled) {
+                currentIngredient.vr += 0.02;
+            }
+            
+            // Update ingredients
+            for (let i = ingredients.length - 1; i >= 0; i--) {
+                const ing = ingredients[i];
+                ing.update();
+                
+                // Check collision with platform
+                if (!ing.settled && ing.y + ing.height/2 >= platform.y && 
+                    ing.x > platform.x && ing.x < platform.x + platform.width) {
+                    ing.y = platform.y - ing.height/2;
+                    ing.vy *= -BOUNCE;
+                    ing.vx *= FRICTION;
+                    
+                    if (Math.abs(ing.vy) < 1) {
+                        ing.settled = true;
+                        ing.vy = 0;
+                        playSound('thud');
+                        createParticles(ing.x, ing.y + ing.height/2, ing.type.color);
+                    }
+                }
+                
+                // Check collision with other ingredients
+                for (let j = 0; j < ingredients.length; j++) {
+                    if (i !== j && checkCollision(ing, ingredients[j])) {
+                        resolveCollision(ing, ingredients[j]);
+                    }
+                }
+                
+                // Remove if fell too far
+                if (ing.y > CANVAS_HEIGHT + 100) {
+                    ingredients.splice(i, 1);
+                }
+            }
+            
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            
+            // Calculate stack height and score
+            let minY = CANVAS_HEIGHT;
+            for (let ing of ingredients) {
+                if (ing.settled && ing.y < minY) {
+                    minY = ing.y;
+                }
+            }
+            stackHeight = Math.max(0, Math.floor((platform.y - minY) / 10));
+            
+            if (stackHeight > maxStackHeight) {
+                maxStackHeight = stackHeight;
+                score = maxStackHeight * 10 + (level - 1) * 50;
+                reportScore(score);
+                
+                // Level up every 10 height
+                if (maxStackHeight > 0 && maxStackHeight % 10 === 0) {
+                    level++;
+                    playSound('levelup');
+                }
+            }
+            
+            // Calculate stability
+            calculateStability();
+            
+            // Camera follow
+            const targetCameraY = Math.min(0, CANVAS_HEIGHT/2 - minY - 50);
+            cameraY += (targetCameraY - cameraY) * 0.05;
+            
+            // Check game over
+            if (checkGameOver()) {
+                gameState = 'gameover';
+                playSound('gameover');
+                saveGameState();
+            }
+        }
+        
+        function drawBackground() {
+            // Kitchen background
+            const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Kitchen tiles
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            for (let y = 0; y < CANVAS_HEIGHT; y += 40) {
+                for (let x = 0; x < CANVAS_WIDTH; x += 40) {
+                    if ((x/40 + y/40) % 2 === 0) {
+                        ctx.fillRect(x, y, 40, 40);
+                    }
+                }
+            }
+            
+            // Counter
+            ctx.fillStyle = '#DEB887';
+            ctx.fillRect(0, CANVAS_HEIGHT - 30, CANVAS_WIDTH, 30);
+            ctx.fillStyle = '#8B7355';
+            ctx.fillRect(0, CANVAS_HEIGHT - 35, CANVAS_WIDTH, 5);
+        }
+        
+        function drawUI() {
+            // Score display
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(5, 5, 120, 70);
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(5, 5, 120, 70);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('SCORE: ' + score, 12, 22);
+            ctx.fillStyle = '#FFF';
+            ctx.fillText('LEVEL: ' + level, 12, 40);
+            ctx.fillText('HEIGHT: ' + stackHeight, 12, 58);
+            
+            // Height indicator bar
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(CANVAS_WIDTH - 25, 10, 20, 150);
+            
+            const heightPercent = Math.min(1, stackHeight / 50);
+            const barHeight = 140 * heightPercent;
+            
+            const barGradient = ctx.createLinearGradient(0, 150, 0, 150 - barHeight);
+            barGradient.addColorStop(0, '#00FF00');
+            barGradient.addColorStop(0.5, '#FFFF00');
+            barGradient.addColorStop(1, '#FF0000');
+            ctx.fillStyle = barGradient;
+            ctx.fillRect(CANVAS_WIDTH - 23, 150 - barHeight + 10, 16, barHeight);
+            
+            // Stability meter
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(5, CANVAS_HEIGHT - 25, 100, 20);
+            
+            const stabColor = stability > 70 ? '#00FF00' : stability > 30 ? '#FFFF00' : '#FF0000';
+            ctx.fillStyle = stabColor;
+            ctx.fillRect(8, CANVAS_HEIGHT - 22, stability * 0.94, 14);
+            
+            ctx.fillStyle = '#FFF';
+            ctx.font = '10px Arial';
+            ctx.fillText('STABILITY', 35, CANVAS_HEIGHT - 11);
+            
+            // Game over text
+            if (gameState === 'gameover') {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                ctx.fillStyle = '#FF0000';
+                ctx.font = 'bold 36px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER!', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 20);
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 20px Arial';
+                ctx.fillText('Final Score: ' + score, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 20);
+                
+                ctx.fillStyle = '#FFF';
+                ctx.font = '14px Arial';
+                ctx.fillText('Press START to restart', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 50);
+                
+                ctx.textAlign = 'left';
+            }
+            
+            // Controls hint
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(CANVAS_WIDTH - 130, CANVAS_HEIGHT - 50, 125, 45);
+            ctx.fillStyle = '#AAA';
+            ctx.font = '10px Arial';
+            ctx.fillText('L/R: Move', CANVAS_WIDTH - 125, CANVAS_HEIGHT - 38);
+            ctx.fillText('A: Drop Fast', CANVAS_WIDTH - 125, CANVAS_HEIGHT - 26);
+            ctx.fillText('B: Rotate', CANVAS_WIDTH - 125, CANVAS_HEIGHT - 14);
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            drawBackground();
+            
+            ctx.save();
+            ctx.translate(0, cameraY);
+            
+            // Draw platform
+            platform.draw();
+            
+            // Draw ingredients
+            for (let ing of ingredients) {
+                ing.draw();
+            }
+            
+            // Draw particles
+            for (let p of particles) {
+                p.draw();
+            }
+            
+            ctx.restore();
+            
+            drawUI();
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // ==================== POSTMESSAGE API ====================
+        window.addEventListener('message', (e) => {
+            const {type, button, state} = e.data;
+            if (type === 'button') {
+                inputState[button] = state === 'pressed';
+                
+                // Handle START button for pause/menu
+                if (button === 'START' && state === 'pressed') {
+                    if (gameState === 'playing') {
+                        pauseGame();
+                    } else if (gameState === 'paused') {
+                        resumeGame();
+                    } else if (gameState === 'gameover') {
+                        resetGame();
+                    }
+                }
+            }
+            if (type === 'mute') { 
+                audioMuted = true; 
+                updateMuteButton();
+            }
+        });
+        
+        // ==================== SCORE REPORTING ====================
+        function reportScore(score) {
+            parent.postMessage({type: 'score', value: score}, '*');
+        }
+        
+        // ==================== SAVE/LOAD ====================
+        function saveGameState() {
+            const saveData = {
+                score: score, 
+                level: level, 
+                gameState: gameState, 
+                timestamp: Date.now()
+            };
+            localStorage.setItem('munchboy_save_burgerstack', JSON.stringify(saveData));
+        }
+        
+        function loadGameState() {
+            const saveData = localStorage.getItem('munchboy_save_burgerstack');
+            if (saveData) {
+                const data = JSON.parse(saveData);
+                console.log('Loaded save:', data);
+            }
+        }
+        
+        // ==================== MENU FUNCTIONS ====================
+        function pauseGame() {
             gameState = 'paused';
-            break;
-        case 'RESUME':
-            if (gameState === 'paused') {
-                gameState = 'playing';
-                gameLoop();
+            pauseMenu.classList.add('active');
+        }
+        
+        function resumeGame() {
+            gameState = 'playing';
+            pauseMenu.classList.remove('active');
+        }
+        
+        function toggleMute() {
+            audioMuted = !audioMuted;
+            updateMuteButton();
+        }
+        
+        function updateMuteButton() {
+            document.getElementById('muteBtn').textContent = 'Mute: ' + (audioMuted ? 'ON' : 'OFF');
+        }
+        
+        function exitGame() {
+            parent.postMessage({type: 'navigate', target: 'selector'}, '*');
+        }
+        
+        function resetGame() {
+            ingredients = [];
+            particles = [];
+            currentIngredient = null;
+            score = 0;
+            level = 1;
+            stackHeight = 0;
+            maxStackHeight = 0;
+            stability = 100;
+            gameOverTimer = 0;
+            cameraY = 0;
+            frameCount = 0;
+            nextSpawnTime = 0;
+            spawnInterval = 180;
+            gameState = 'playing';
+            reportScore(0);
+        }
+        
+        // ==================== KEYBOARD CONTROLS (for testing) ====================
+        window.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft': inputState['LEFT'] = true; break;
+                case 'ArrowRight': inputState['RIGHT'] = true; break;
+                case 'a':
+                case 'A': inputState['A'] = true; break;
+                case 'b':
+                case 'B': inputState['B'] = true; break;
+                case 'Enter': 
+                    inputState['START'] = true;
+                    if (gameState === 'playing') pauseGame();
+                    else if (gameState === 'paused') resumeGame();
+                    else if (gameState === 'gameover') resetGame();
+                    break;
             }
-            break;
-        case 'SAVE_STATE':
-            localStorage.setItem('burgerStack_state', JSON.stringify({
-                ingredients: ingredients.map(i => ({...i})),
-                score: score,
-                currentTypeIndex: currentTypeIndex
-            }));
-            break;
-        case 'LOAD_STATE':
-            const saved = localStorage.getItem('burgerStack_state');
-            if (saved) {
-                // Would restore state here
-                console.log('Load state not fully implemented');
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft': inputState['LEFT'] = false; break;
+                case 'ArrowRight': inputState['RIGHT'] = false; break;
+                case 'a':
+                case 'A': inputState['A'] = false; break;
+                case 'b':
+                case 'B': inputState['B'] = false; break;
+                case 'Enter': inputState['START'] = false; break;
             }
-            break;
-    }
-});
-
-// Init
-document.getElementById('high').textContent = highScore;
-spawnIngredient();
-gameLoop();
-</script>
+        });
+        
+        // ==================== INITIALIZATION ====================
+        loadGameState();
+        startMusic();
+        gameLoop();
+    </script>
 </body>
 </html>

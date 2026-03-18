@@ -62,10 +62,10 @@ export default function MunchboyBoot({ onComplete }) {
     // 1. Start letter drops immediately
     setLettersDropped(true);
 
-    // Hardcode: 8 letters * 80ms = 640ms total drop time for last letter
-    const SHAKE_DELAY = 640; 
-    const CHIME_DELAY = SHAKE_DELAY + 400; // 1040ms
-    const FINISH_DELAY = CHIME_DELAY + 1500; // 2540ms
+    // Hardcode: 8 letters * 110ms = 770ms total drop time for last letter
+    const SHAKE_DELAY = 770; 
+    const CHIME_DELAY = SHAKE_DELAY + 400; // 1170ms
+    const FINISH_DELAY = CHIME_DELAY + 1500; // 2670ms
 
     const shakeTimer = setTimeout(() => {
       setShake(true);
@@ -82,18 +82,10 @@ export default function MunchboyBoot({ onComplete }) {
       setShowPressStart(true);
     }, FINISH_DELAY);
     
-    // Auto-continue to selector (optional, keep it or remove it?)
-    // The user's code just says "press start to power on", let's leave
-    // auto-continue for user convenience, at 5000ms.
-    const autoContinueTimer = setTimeout(() => {
-      onComplete?.();
-    }, 5000); 
-    
     return () => {
       clearTimeout(shakeTimer);
       clearTimeout(chimeTimer);
       clearTimeout(finishTimer);
-      clearTimeout(autoContinueTimer);
     };
   }, [onComplete]);
 
@@ -110,7 +102,7 @@ export default function MunchboyBoot({ onComplete }) {
           <span
             key={i}
             className={`munch-letter l-${letter} ${lettersDropped ? 'dropped' : ''}`}
-            style={{ transitionDelay: `${i * 80}ms` }}
+            style={{ transitionDelay: `${i * 110}ms` }}
           >
             {letter}
           </span>

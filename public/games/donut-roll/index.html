@@ -2,214 +2,1111 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Donut Roll</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donut Roll - Rolling Platformer</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
-        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
-        #gameCanvas { background: #FBCFE8; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        #ui { position: absolute; top: 10px; left: 10px; color: #333; font-weight: bold; }
-        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #2a1810 0%, #4a2c1a 50%, #2a1810 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 150, 50, 0.5), 0 0 100px rgba(255, 100, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #FFE4C4 0%, #DEB887 50%, #D2691E 100%);
+        }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="480" height="320"></canvas>
-    <div id="ui">LEVEL: <span id="level">1</span> | DEATHS: <span id="deaths">0</span></div>
-    <div id="gameOver">
-        <h2 style="color: #EC4899;">LEVEL COMPLETE!</h2>
-        <button onclick="nextLevel()" style="background: #EC4899; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">NEXT LEVEL</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
     </div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-const CELL_SIZE = 40;
-const OFFSET_X = 40;
-const OFFSET_Y = 40;
-
-let gameState = 'playing';
-let level = 1;
-let deaths = 0;
-let donut = { x: 1, y: 1 };
-let maze = [];
-let holes = [];
-
-const LEVELS = [
-    // Simple
-    [
-        '############',
-        '#S.........#',
-        '#.########.#',
-        '#.#......#.#',
-        '#.#.####.#.#',
-        '#..........#',
-        '############'
-    ],
-    // More complex
-    [
-        '############',
-        '#S.........#',
-        '###.######.#',
-        '#...#....#.#',
-        '#.###.##.#.#',
-        '#.........G#',
-        '############'
-    ],
-    // Hard
-    [
-        '############',
-        '#S..#......#',
-        '###.#.####.#',
-        '#...#.#..#.#',
-        '#.###.##.#.#',
-        '#..........#',
-        '############'
-    ]
-];
-
-function loadLevel(n) {
-    const data = LEVELS[(n - 1) % LEVELS.length];
-    maze = [];
-    holes = [];
-    
-    for (let y = 0; y < data.length; y++) {
-        maze[y] = [];
-        for (let x = 0; x < data[y].length; x++) {
-            maze[y][x] = data[y][x] === '#' ? 1 : 0;
-            if (data[y][x] === 'S') donut = { x, y };
-            if (data[y][x] === 'G') holes.push({ x, y });
-        }
-    }
-}
-
-function drawMaze() {
-    for (let y = 0; y < maze.length; y++) {
-        for (let x = 0; x < maze[y].length; x++) {
-            const px = OFFSET_X + x * CELL_SIZE;
-            const py = OFFSET_Y + y * CELL_SIZE;
+    <script>
+        // ==================== GAME CONSTANTS ====================
+        const CANVAS_WIDTH = 480;
+        const CANVAS_HEIGHT = 320;
+        const GROUND_Y = 260;
+        const GRAVITY = 0.6;
+        const JUMP_FORCE = -12;
+        const BASE_SPEED = 4;
+        const MAX_SPEED = 10;
+        const MIN_SPEED = 2;
+        
+        // ==================== AUDIO SYSTEM ====================
+        class AudioSystem {
+            constructor() {
+                this.muted = false;
+                this.ctx = null;
+                this.initAudio();
+            }
             
-            if (maze[y][x] === 1) {
-                ctx.fillStyle = '#EC4899';
-                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
-            } else {
-                ctx.fillStyle = '#FCE7F3';
-                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+            initAudio() {
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    console.log('Audio not supported');
+                }
+            }
+            
+            resume() {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            
+            setMuted(muted) {
+                this.muted = muted;
+            }
+            
+            playTone(freq, duration, type = 'sine', volume = 0.3) {
+                if (this.muted || !this.ctx) return;
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                
+                gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+            
+            playJump() {
+                this.playTone(400, 0.3, 'sine', 0.4);
+                setTimeout(() => this.playTone(600, 0.2, 'sine', 0.3), 50);
+            }
+            
+            playRoll() {
+                if (this.muted || !this.ctx) return;
+                // Low rumble for rolling
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(80, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+            
+            playCollect() {
+                this.playTone(800, 0.1, 'sine', 0.3);
+                setTimeout(() => this.playTone(1200, 0.15, 'sine', 0.3), 50);
+                setTimeout(() => this.playTone(1600, 0.2, 'sine', 0.2), 100);
+            }
+            
+            playHit() {
+                this.playTone(150, 0.4, 'sawtooth', 0.4);
+                setTimeout(() => this.playTone(100, 0.3, 'sawtooth', 0.3), 100);
+            }
+            
+            playShield() {
+                this.playTone(500, 0.2, 'sine', 0.3);
+                setTimeout(() => this.playTone(700, 0.3, 'sine', 0.3), 100);
+                setTimeout(() => this.playTone(900, 0.4, 'sine', 0.2), 200);
+            }
+            
+            playBoost() {
+                this.playTone(300, 0.1, 'sawtooth', 0.3);
+                setTimeout(() => this.playTone(400, 0.1, 'sawtooth', 0.3), 50);
+                setTimeout(() => this.playTone(500, 0.2, 'sawtooth', 0.3), 100);
+            }
+            
+            playGameOver() {
+                this.playTone(300, 0.5, 'sawtooth', 0.4);
+                setTimeout(() => this.playTone(250, 0.5, 'sawtooth', 0.4), 300);
+                setTimeout(() => this.playTone(200, 0.8, 'sawtooth', 0.4), 600);
+            }
+            
+            playBGM() {
+                // Simple background melody loop
+                if (this.muted || !this.ctx) return;
+                const melody = [262, 294, 330, 349, 330, 294, 262, 220];
+                let noteIndex = 0;
+                
+                const playNote = () => {
+                    if (this.muted) return;
+                    this.playTone(melody[noteIndex], 0.3, 'sine', 0.15);
+                    noteIndex = (noteIndex + 1) % melody.length;
+                    setTimeout(playNote, 400);
+                };
+                
+                playNote();
             }
         }
-    }
-    
-    // Draw holes
-    holes.forEach(h => {
-        const px = OFFSET_X + h.x * CELL_SIZE + CELL_SIZE/2;
-        const py = OFFSET_Y + h.y * CELL_SIZE + CELL_SIZE/2;
-        ctx.font = '25px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🕳️', px, py);
-    });
-}
-
-function drawDonut() {
-    const px = OFFSET_X + donut.x * CELL_SIZE + CELL_SIZE/2;
-    const py = OFFSET_Y + donut.y * CELL_SIZE + CELL_SIZE/2;
-    ctx.font = '30px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🍩', px, py);
-}
-
-function move(dx, dy) {
-    if (gameState !== 'playing') return;
-    
-    const newX = donut.x + dx;
-    const newY = donut.y + dy;
-    
-    if (maze[newY][newX] === 0) {
-        donut.x = newX;
-        donut.y = newY;
         
-        // Check hole
-        const inHole = holes.some(h => h.x === donut.x && h.y === donut.y);
-        if (inHole) {
-            deaths++;
-            document.getElementById('deaths').textContent = deaths;
-            loadLevel(level);
-            window.parent.postMessage({ type: 'SCORE', score: Math.max(0, 1000 - deaths * 100) }, '*');
+        // ==================== GAME STATE ====================
+        const GameState = {
+            MENU: 0,
+            PLAYING: 1,
+            PAUSED: 2,
+            GAMEOVER: 3
+        };
+        
+        // ==================== INPUT STATE ====================
+        const inputState = {
+            A: false,
+            B: false,
+            L: false,
+            R: false,
+            'D-PAD-LEFT': false,
+            'D-PAD-RIGHT': false,
+            'D-PAD-UP': false,
+            'D-PAD-DOWN': false,
+            START: false,
+            SELECT: false
+        };
+        
+        let audioMuted = false;
+        const audio = new AudioSystem();
+        
+        // ==================== POSTMESSAGE API ====================
+        window.addEventListener('message', (e) => {
+            const {type, button, state} = e.data;
+            if (type === 'button') {
+                inputState[button] = state;
+                if (state && button === 'A') audio.resume();
+            }
+            if (type === 'mute') {
+                audioMuted = true;
+                audio.setMuted(true);
+            }
+        });
+        
+        function reportScore(score) {
+            parent.postMessage({type: 'score', value: score}, '*');
         }
         
-        // Check win (reached right side)
-        if (donut.x === maze[0].length - 2 && donut.y === maze.length - 2) {
-            gameOver();
+        function saveGameState() {
+            localStorage.setItem('munchboy_save_donutroll', JSON.stringify({
+                score: game.score,
+                distance: game.distance,
+                timestamp: Date.now()
+            }));
         }
-    }
-}
-
-function gameLoop() {
-    if (gameState === 'paused') return;
-    
-    ctx.clearRect(0, 0, 480, 320);
-    drawMaze();
-    drawDonut();
-    
-    requestAnimationFrame(gameLoop);
-}
-
-function gameOver() {
-    gameState = 'gameover';
-    document.getElementById('gameOver').style.display = 'block';
-    window.parent.postMessage({ type: 'GAME_OVER', score: 1000 - deaths * 100 }, '*');
-}
-
-function nextLevel() {
-    level++;
-    document.getElementById('level').textContent = level;
-    loadLevel(level);
-    gameState = 'playing';
-    document.getElementById('gameOver').style.display = 'none';
-}
-
-// Controls
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'ArrowUp') move(0, -1);
-    if (e.code === 'ArrowDown') move(0, 1);
-    if (e.code === 'ArrowLeft') move(-1, 0);
-    if (e.code === 'ArrowRight') move(1, 0);
-});
-
-canvas.addEventListener('click', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (480 / rect.width);
-    const y = (e.clientY - rect.top) * (320 / rect.height);
-    
-    const donutPx = OFFSET_X + donut.x * CELL_SIZE + CELL_SIZE/2;
-    const donutPy = OFFSET_Y + donut.y * CELL_SIZE + CELL_SIZE/2;
-    
-    const dx = x - donutPx;
-    const dy = y - donutPy;
-    
-    if (Math.abs(dx) > Math.abs(dy)) {
-        move(dx > 0 ? 1 : -1, 0);
-    } else {
-        move(0, dy > 0 ? 1 : -1);
-    }
-});
-
-// PostMessage API
-window.addEventListener('message', (e) => {
-    switch(e.data.type) {
-        case 'PAUSE': gameState = 'paused'; break;
-        case 'RESUME': gameState = 'playing'; gameLoop(); break;
-        case 'SAVE_STATE': localStorage.setItem('donutRoll_state', JSON.stringify({level, deaths})); break;
-        case 'LOAD_STATE':
-            const saved = localStorage.getItem('donutRoll_state');
-            if (saved) { const data = JSON.parse(saved); level = data.level; deaths = data.deaths; }
-            break;
-    }
-});
-
-loadLevel(level);
-gameLoop();
-</script>
+        
+        function loadGameState() {
+            const saved = localStorage.getItem('munchboy_save_donutroll');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            return null;
+        }
+        
+        // ==================== GAME CLASSES ====================
+        class Donut {
+            constructor() {
+                this.x = 80;
+                this.y = GROUND_Y - 25;
+                this.radius = 22;
+                this.vy = 0;
+                this.rotation = 0;
+                this.onGround = true;
+                this.shieldActive = false;
+                this.shieldTimer = 0;
+                this.invincible = false;
+                this.invincibleTimer = 0;
+                this.color = '#D2691E';
+                this.glazeColor = '#FF69B4';
+            }
+            
+            update() {
+                // Gravity
+                if (!this.onGround) {
+                    this.vy += GRAVITY;
+                    this.y += this.vy;
+                }
+                
+                // Ground collision
+                if (this.y + this.radius >= GROUND_Y) {
+                    this.y = GROUND_Y - this.radius;
+                    this.vy = 0;
+                    this.onGround = true;
+                }
+                
+                // Rotation based on speed
+                this.rotation += game.speed * 0.1;
+                
+                // Shield timer
+                if (this.shieldActive) {
+                    this.shieldTimer--;
+                    if (this.shieldTimer <= 0) {
+                        this.shieldActive = false;
+                    }
+                }
+                
+                // Invincibility timer
+                if (this.invincible) {
+                    this.invincibleTimer--;
+                    if (this.invincibleTimer <= 0) {
+                        this.invincible = false;
+                    }
+                }
+            }
+            
+            jump() {
+                if (this.onGround) {
+                    this.vy = JUMP_FORCE;
+                    this.onGround = false;
+                    audio.playJump();
+                    game.createParticles(this.x, this.y + this.radius, '#DEB887', 5);
+                }
+            }
+            
+            activateShield() {
+                if (!this.shieldActive) {
+                    this.shieldActive = true;
+                    this.shieldTimer = 180; // 3 seconds at 60fps
+                    audio.playShield();
+                }
+            }
+            
+            takeDamage() {
+                if (this.shieldActive || this.invincible) return false;
+                
+                this.invincible = true;
+                this.invincibleTimer = 60; // 1 second
+                audio.playHit();
+                game.createParticles(this.x, this.y, '#FF0000', 8);
+                return true;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Shield effect
+                if (this.shieldActive) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 215, 0, ${0.5 + Math.sin(Date.now() / 100) * 0.3})`;
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius + 12, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 255, 200, ${0.3 + Math.sin(Date.now() / 150) * 0.2})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                
+                // Invincibility blink
+                if (this.invincible && Math.floor(Date.now() / 50) % 2 === 0) {
+                    ctx.globalAlpha = 0.5;
+                }
+                
+                ctx.rotate(this.rotation);
+                
+                // Donut body
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Donut hole
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius * 0.4, 0, Math.PI * 2);
+                ctx.fillStyle = '#DEB887';
+                ctx.fill();
+                
+                // Glaze
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius * 0.85, 0, Math.PI * 2);
+                ctx.fillStyle = this.glazeColor;
+                ctx.globalAlpha = 0.7;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                // Sprinkles on donut
+                const sprinkleColors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2 + this.rotation * 0.5;
+                    const sx = Math.cos(angle) * this.radius * 0.6;
+                    const sy = Math.sin(angle) * this.radius * 0.6;
+                    ctx.fillStyle = sprinkleColors[i % sprinkleColors.length];
+                    ctx.fillRect(sx - 2, sy - 1, 4, 2);
+                }
+                
+                ctx.restore();
+            }
+        }
+        
+        class Obstacle {
+            constructor(x, type) {
+                this.x = x;
+                this.type = type;
+                this.y = GROUND_Y;
+                this.width = 30;
+                this.height = 30;
+                this.active = true;
+                
+                switch(type) {
+                    case 'coffee':
+                        this.y = GROUND_Y - 5;
+                        this.width = 35;
+                        this.height = 10;
+                        break;
+                    case 'oil':
+                        this.y = GROUND_Y - 3;
+                        this.width = 40;
+                        this.height = 8;
+                        break;
+                    case 'pin':
+                        this.y = GROUND_Y - 40;
+                        this.width = 15;
+                        this.height = 40;
+                        break;
+                    case 'hole':
+                        this.y = GROUND_Y + 5;
+                        this.width = 50;
+                        this.height = 20;
+                        break;
+                }
+            }
+            
+            update() {
+                this.x -= game.speed;
+                if (this.x + this.width < 0) {
+                    this.active = false;
+                }
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                
+                switch(this.type) {
+                    case 'coffee':
+                        // Coffee spill
+                        ctx.fillStyle = '#4B3621';
+                        ctx.beginPath();
+                        ctx.ellipse(this.x + this.width/2, this.y, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Splash drops
+                        ctx.fillStyle = '#6B4E31';
+                        for (let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.arc(this.x + 5 + i * 12, this.y - 5 - i * 3, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+                        
+                    case 'oil':
+                        // Oil slick
+                        ctx.fillStyle = '#2F4F4F';
+                        ctx.beginPath();
+                        ctx.ellipse(this.x + this.width/2, this.y, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Oil shine
+                        ctx.fillStyle = '#708090';
+                        ctx.beginPath();
+                        ctx.ellipse(this.x + this.width/3, this.y - 2, this.width/4, this.height/4, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'pin':
+                        // Rolling pin
+                        ctx.fillStyle = '#DEB887';
+                        ctx.fillRect(this.x, this.y + 10, this.width, this.height - 10);
+                        // Pin handles
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(this.x - 5, this.y + 15, 5, 8);
+                        ctx.fillRect(this.x + this.width, this.y + 15, 5, 8);
+                        // Rolling animation
+                        ctx.strokeStyle = '#8B4513';
+                        ctx.lineWidth = 1;
+                        for (let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x, this.y + 15 + i * 8);
+                            ctx.lineTo(this.x + this.width, this.y + 15 + i * 8);
+                            ctx.stroke();
+                        }
+                        break;
+                        
+                    case 'hole':
+                        // Hole in path
+                        ctx.fillStyle = '#1a0f08';
+                        ctx.fillRect(this.x, this.y, this.width, this.height);
+                        // Hole edge
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(this.x, this.y, this.width, 4);
+                        break;
+                }
+                
+                ctx.restore();
+            }
+            
+            getBounds() {
+                return {
+                    x: this.x,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+        }
+        
+        class Sprinkle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 6;
+                this.active = true;
+                this.bobOffset = Math.random() * Math.PI * 2;
+                this.colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
+                this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+            }
+            
+            update() {
+                this.x -= game.speed;
+                this.y += Math.sin(Date.now() / 200 + this.bobOffset) * 0.5;
+                if (this.x + this.radius < 0) {
+                    this.active = false;
+                }
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(Date.now() / 300);
+                
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.radius, -this.radius/2, this.radius*2, this.radius);
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(-this.radius + 2, -this.radius/2 + 1, this.radius, this.radius/3);
+                
+                ctx.restore();
+            }
+            
+            getBounds() {
+                return {
+                    x: this.x - this.radius,
+                    y: this.y - this.radius/2,
+                    width: this.radius * 2,
+                    height: this.radius
+                };
+            }
+        }
+        
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+                this.life = 30;
+                this.maxLife = 30;
+                this.color = color;
+                this.size = Math.random() * 4 + 2;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2;
+                this.life--;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life / this.maxLife;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+        
+        // ==================== MAIN GAME CLASS ====================
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.state = GameState.MENU;
+                this.donut = new Donut();
+                this.obstacles = [];
+                this.sprinkles = [];
+                this.particles = [];
+                this.score = 0;
+                this.distance = 0;
+                this.speed = BASE_SPEED;
+                this.health = 4;
+                this.maxHealth = 4;
+                this.sugarRushTimer = 0;
+                this.boostTimer = 0;
+                this.menuSelection = 0;
+                this.bgOffset = 0;
+                
+                // Spawn timers
+                this.obstacleTimer = 0;
+                this.sprinkleTimer = 0;
+                
+                // Background elements
+                this.bgElements = [];
+                this.generateBgElements();
+                
+                // Start BGM
+                audio.playBGM();
+                
+                // Input handling
+                this.setupInput();
+                
+                // Start game loop
+                this.lastTime = 0;
+                requestAnimationFrame((t) => this.loop(t));
+            }
+            
+            generateBgElements() {
+                for (let i = 0; i < 10; i++) {
+                    this.bgElements.push({
+                        x: Math.random() * CANVAS_WIDTH * 2,
+                        y: Math.random() * (GROUND_Y - 50),
+                        type: Math.random() > 0.5 ? 'bread' : 'croissant',
+                        scale: 0.5 + Math.random() * 0.5
+                    });
+                }
+            }
+            
+            setupInput() {
+                // Keyboard fallback
+                window.addEventListener('keydown', (e) => {
+                    audio.resume();
+                    switch(e.key) {
+                        case ' ': case 'ArrowUp': case 'w': case 'W':
+                            inputState.A = true;
+                            break;
+                        case 's': case 'S': case 'ArrowDown':
+                            inputState.B = true;
+                            break;
+                        case 'a': case 'A': case 'ArrowLeft':
+                            inputState['D-PAD-LEFT'] = true;
+                            break;
+                        case 'd': case 'D': case 'ArrowRight':
+                            inputState['D-PAD-RIGHT'] = true;
+                            break;
+                        case 'q': case 'Q':
+                            inputState.L = true;
+                            break;
+                        case 'e': case 'E':
+                            inputState.R = true;
+                            break;
+                        case 'Enter':
+                            inputState.START = true;
+                            break;
+                    }
+                });
+                
+                window.addEventListener('keyup', (e) => {
+                    switch(e.key) {
+                        case ' ': case 'ArrowUp': case 'w': case 'W':
+                            inputState.A = false;
+                            break;
+                        case 's': case 'S': case 'ArrowDown':
+                            inputState.B = false;
+                            break;
+                        case 'a': case 'A': case 'ArrowLeft':
+                            inputState['D-PAD-LEFT'] = false;
+                            break;
+                        case 'd': case 'D': case 'ArrowRight':
+                            inputState['D-PAD-RIGHT'] = false;
+                            break;
+                        case 'q': case 'Q':
+                            inputState.L = false;
+                            break;
+                        case 'e': case 'E':
+                            inputState.R = false;
+                            break;
+                        case 'Enter':
+                            inputState.START = false;
+                            break;
+                    }
+                });
+            }
+            
+            createParticles(x, y, color, count) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push(new Particle(x, y, color));
+                }
+            }
+            
+            spawnObstacle() {
+                const types = ['coffee', 'oil', 'pin', 'hole'];
+                const weights = [0.3, 0.3, 0.25, 0.15];
+                
+                let random = Math.random();
+                let type = types[0];
+                let cumulative = 0;
+                
+                for (let i = 0; i < types.length; i++) {
+                    cumulative += weights[i];
+                    if (random <= cumulative) {
+                        type = types[i];
+                        break;
+                    }
+                }
+                
+                this.obstacles.push(new Obstacle(CANVAS_WIDTH + 50, type));
+            }
+            
+            spawnSprinkle() {
+                const y = GROUND_Y - 30 - Math.random() * 80;
+                this.sprinkles.push(new Sprinkle(CANVAS_WIDTH + 30, y));
+            }
+            
+            checkCollision(circle, rect) {
+                const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.width));
+                const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.height));
+                
+                const dx = circle.x - closestX;
+                const dy = circle.y - closestY;
+                
+                return (dx * dx + dy * dy) < (circle.radius * circle.radius);
+            }
+            
+            update() {
+                // Handle pause
+                if (inputState.START) {
+                    inputState.START = false;
+                    if (this.state === GameState.PLAYING) {
+                        this.state = GameState.PAUSED;
+                    } else if (this.state === GameState.PAUSED) {
+                        this.state = GameState.PLAYING;
+                    } else if (this.state === GameState.MENU) {
+                        this.state = GameState.PLAYING;
+                    } else if (this.state === GameState.GAMEOVER) {
+                        this.reset();
+                        this.state = GameState.PLAYING;
+                    }
+                }
+                
+                if (this.state !== GameState.PLAYING) return;
+                
+                // Speed control with D-PAD
+                if (inputState['D-PAD-LEFT']) {
+                    this.speed = Math.max(MIN_SPEED, this.speed - 0.1);
+                }
+                if (inputState['D-PAD-RIGHT']) {
+                    this.speed = Math.min(MAX_SPEED, this.speed + 0.1);
+                }
+                
+                // Sugar rush boost
+                if (inputState.L || inputState.R) {
+                    if (this.boostTimer <= 0) {
+                        this.speed = Math.min(MAX_SPEED + 2, this.speed + 4);
+                        this.boostTimer = 60;
+                        audio.playBoost();
+                        this.createParticles(this.donut.x, this.donut.y, '#FFD700', 5);
+                    }
+                }
+                
+                if (this.boostTimer > 0) {
+                    this.boostTimer--;
+                    if (this.boostTimer === 0) {
+                        this.speed = BASE_SPEED;
+                    }
+                }
+                
+                // Jump
+                if (inputState.A) {
+                    inputState.A = false;
+                    this.donut.jump();
+                }
+                
+                // Glaze shield
+                if (inputState.B) {
+                    inputState.B = false;
+                    this.donut.activateShield();
+                }
+                
+                // Update donut
+                this.donut.update();
+                
+                // Update distance and score
+                this.distance += this.speed * 0.01;
+                this.score = Math.floor(this.distance * 10 + this.sprinkles.length * 50);
+                
+                // Spawn obstacles
+                this.obstacleTimer++;
+                const spawnRate = Math.max(60, 150 - Math.floor(this.distance / 10));
+                if (this.obstacleTimer >= spawnRate) {
+                    this.obstacleTimer = 0;
+                    this.spawnObstacle();
+                }
+                
+                // Spawn sprinkles
+                this.sprinkleTimer++;
+                if (this.sprinkleTimer >= 80) {
+                    this.sprinkleTimer = 0;
+                    if (Math.random() > 0.3) {
+                        this.spawnSprinkle();
+                    }
+                }
+                
+                // Update obstacles
+                this.obstacles = this.obstacles.filter(obs => {
+                    obs.update();
+                    
+                    // Check collision with donut
+                    if (obs.active && this.checkCollision(this.donut, obs.getBounds())) {
+                        if (this.donut.takeDamage()) {
+                            this.health--;
+                            if (this.health <= 0) {
+                                this.gameOver();
+                            }
+                        }
+                        obs.active = false;
+                    }
+                    
+                    return obs.active;
+                });
+                
+                // Update sprinkles
+                this.sprinkles = this.sprinkles.filter(spr => {
+                    spr.update();
+                    
+                    // Check collection
+                    if (spr.active && this.checkCollision(this.donut, spr.getBounds())) {
+                        spr.active = false;
+                        this.score += 50;
+                        audio.playCollect();
+                        this.createParticles(spr.x, spr.y, spr.color, 5);
+                    }
+                    
+                    return spr.active;
+                });
+                
+                // Update particles
+                this.particles = this.particles.filter(p => {
+                    p.update();
+                    return p.life > 0;
+                });
+                
+                // Update background
+                this.bgOffset -= this.speed * 0.3;
+                if (this.bgOffset < -CANVAS_WIDTH) {
+                    this.bgOffset = 0;
+                }
+                
+                // Report score periodically
+                if (Math.floor(this.distance * 10) % 100 === 0) {
+                    reportScore(this.score);
+                }
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#FFE4C4';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                // Draw bakery background
+                this.drawBackground();
+                
+                // Draw ground
+                this.ctx.fillStyle = '#DEB887';
+                this.ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
+                
+                // Ground texture
+                this.ctx.strokeStyle = '#CD853F';
+                this.ctx.lineWidth = 2;
+                for (let x = this.bgOffset % 40; x < CANVAS_WIDTH; x += 40) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, GROUND_Y);
+                    this.ctx.lineTo(x - 20, CANVAS_HEIGHT);
+                    this.ctx.stroke();
+                }
+                
+                // Draw game objects
+                this.sprinkles.forEach(s => s.draw(this.ctx));
+                this.obstacles.forEach(o => o.draw(this.ctx));
+                this.donut.draw(this.ctx);
+                this.particles.forEach(p => p.draw(this.ctx));
+                
+                // Draw UI
+                this.drawUI();
+                
+                // Draw menu overlays
+                if (this.state === GameState.MENU) {
+                    this.drawMenu();
+                } else if (this.state === GameState.PAUSED) {
+                    this.drawPauseMenu();
+                } else if (this.state === GameState.GAMEOVER) {
+                    this.drawGameOver();
+                }
+            }
+            
+            drawBackground() {
+                // Bakery wall pattern
+                this.ctx.fillStyle = '#F5DEB3';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, GROUND_Y);
+                
+                // Brick pattern
+                this.ctx.strokeStyle = '#DEB887';
+                this.ctx.lineWidth = 1;
+                for (let y = 0; y < GROUND_Y; y += 30) {
+                    const offset = (y / 30) % 2 === 0 ? 0 : 25;
+                    for (let x = -50 + offset; x < CANVAS_WIDTH; x += 50) {
+                        this.ctx.strokeRect(x, y, 50, 30);
+                    }
+                }
+                
+                // Background bakery elements
+                this.bgElements.forEach(el => {
+                    const x = (el.x + this.bgOffset * 0.5) % (CANVAS_WIDTH * 2);
+                    const drawX = x < 0 ? x + CANVAS_WIDTH * 2 : x;
+                    
+                    this.ctx.save();
+                    this.ctx.translate(drawX, el.y);
+                    this.ctx.scale(el.scale, el.scale);
+                    
+                    if (el.type === 'bread') {
+                        // Bread loaf
+                        this.ctx.fillStyle = '#DEB887';
+                        this.ctx.beginPath();
+                        this.ctx.ellipse(0, 0, 25, 15, 0, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.strokeStyle = '#8B4513';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.stroke();
+                        // Slashes
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-15, -5);
+                        this.ctx.lineTo(-5, 5);
+                        this.ctx.moveTo(0, -8);
+                        this.ctx.lineTo(10, 2);
+                        this.ctx.moveTo(15, -5);
+                        this.ctx.lineTo(20, 0);
+                        this.ctx.stroke();
+                    } else {
+                        // Croissant
+                        this.ctx.fillStyle = '#DAA520';
+                        this.ctx.beginPath();
+                        this.ctx.arc(-10, 0, 12, 0, Math.PI * 2);
+                        this.ctx.arc(0, -5, 14, 0, Math.PI * 2);
+                        this.ctx.arc(10, 0, 12, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                    
+                    this.ctx.restore();
+                });
+            }
+            
+            drawUI() {
+                // Score
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.font = 'bold 20px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`Score: ${this.score}`, 10, 30);
+                
+                // Distance
+                this.ctx.font = '16px Arial';
+                this.ctx.fillText(`Distance: ${Math.floor(this.distance)}m`, 10, 55);
+                
+                // Speed indicator
+                this.ctx.fillText(`Speed: ${this.speed.toFixed(1)}`, 10, 75);
+                
+                // Health (hearts)
+                const heartX = CANVAS_WIDTH - 120;
+                for (let i = 0; i < this.maxHealth; i++) {
+                    this.ctx.fillStyle = i < this.health ? '#FF0000' : '#444';
+                    this.drawHeart(heartX + i * 28, 20, 10);
+                }
+                
+                // Shield indicator
+                if (this.donut.shieldActive) {
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = 'bold 14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('SHIELD!', CANVAS_WIDTH / 2, 100);
+                    
+                    // Shield bar
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.fillRect(CANVAS_WIDTH/2 - 50, 105, 100, 10);
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.fillRect(CANVAS_WIDTH/2 - 50, 105, 100 * (this.donut.shieldTimer / 180), 10);
+                }
+                
+                // Boost indicator
+                if (this.boostTimer > 0) {
+                    this.ctx.fillStyle = '#FF6600';
+                    this.ctx.font = 'bold 14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('SUGAR RUSH!', CANVAS_WIDTH / 2, 125);
+                }
+            }
+            
+            drawHeart(x, y, size) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, y + size/4);
+                this.ctx.quadraticCurveTo(x, y, x + size/4, y);
+                this.ctx.quadraticCurveTo(x + size/2, y, x + size/2, y + size/4);
+                this.ctx.quadraticCurveTo(x + size/2, y, x + size*3/4, y);
+                this.ctx.quadraticCurveTo(x + size, y, x + size, y + size/4);
+                this.ctx.quadraticCurveTo(x + size, y + size/2, x + size/2, y + size);
+                this.ctx.quadraticCurveTo(x, y + size/2, x, y + size/4);
+                this.ctx.fill();
+            }
+            
+            drawMenu() {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.font = 'bold 36px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('DONUT ROLL', CANVAS_WIDTH / 2, 100);
+                
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = '20px Arial';
+                this.ctx.fillText('Press START to Play', CANVAS_WIDTH / 2, 160);
+                
+                this.ctx.font = '14px Arial';
+                this.ctx.fillText('A: Jump  |  B: Shield  |  L/R: Boost', CANVAS_WIDTH / 2, 200);
+                this.ctx.fillText('D-PAD: Speed Control', CANVAS_WIDTH / 2, 220);
+                
+                // Draw donut preview
+                this.ctx.save();
+                this.ctx.translate(CANVAS_WIDTH / 2, 270);
+                this.ctx.rotate(Date.now() / 500);
+                
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                this.ctx.fillStyle = '#D2691E';
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#8B4513';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 10, 0, Math.PI * 2);
+                this.ctx.fillStyle = '#FFE4C4';
+                this.ctx.fill();
+                
+                this.ctx.restore();
+            }
+            
+            drawPauseMenu() {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.font = 'bold 32px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('PAUSED', CANVAS_WIDTH / 2, 100);
+                
+                const options = ['Resume', audio.muted ? 'Unmute' : 'Mute', 'Back to Selector'];
+                
+                options.forEach((opt, i) => {
+                    this.ctx.fillStyle = i === this.menuSelection ? '#FFD700' : '#FFF';
+                    this.ctx.font = i === this.menuSelection ? 'bold 22px Arial' : '20px Arial';
+                    this.ctx.fillText(opt, CANVAS_WIDTH / 2, 160 + i * 40);
+                });
+                
+                // Handle menu selection
+                if (inputState['D-PAD-DOWN']) {
+                    inputState['D-PAD-DOWN'] = false;
+                    this.menuSelection = (this.menuSelection + 1) % options.length;
+                }
+                if (inputState['D-PAD-UP']) {
+                    inputState['D-PAD-UP'] = false;
+                    this.menuSelection = (this.menuSelection - 1 + options.length) % options.length;
+                }
+                if (inputState.A) {
+                    inputState.A = false;
+                    switch(this.menuSelection) {
+                        case 0:
+                            this.state = GameState.PLAYING;
+                            break;
+                        case 1:
+                            audio.setMuted(!audio.muted);
+                            audioMuted = audio.muted;
+                            break;
+                        case 2:
+                            parent.postMessage({type: 'navigate', to: 'selector'}, '*');
+                            break;
+                    }
+                }
+            }
+            
+            drawGameOver() {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                this.ctx.fillStyle = '#FF0000';
+                this.ctx.font = 'bold 36px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, 100);
+                
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = '24px Arial';
+                this.ctx.fillText(`Final Score: ${this.score}`, CANVAS_WIDTH / 2, 150);
+                this.ctx.fillText(`Distance: ${Math.floor(this.distance)}m`, CANVAS_WIDTH / 2, 180);
+                
+                this.ctx.font = '18px Arial';
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillText('Press START to Restart', CANVAS_WIDTH / 2, 230);
+            }
+            
+            gameOver() {
+                this.state = GameState.GAMEOVER;
+                audio.playGameOver();
+                reportScore(this.score);
+                saveGameState();
+            }
+            
+            reset() {
+                this.donut = new Donut();
+                this.obstacles = [];
+                this.sprinkles = [];
+                this.particles = [];
+                this.score = 0;
+                this.distance = 0;
+                this.speed = BASE_SPEED;
+                this.health = this.maxHealth;
+                this.obstacleTimer = 0;
+                this.sprinkleTimer = 0;
+                this.boostTimer = 0;
+                this.menuSelection = 0;
+            }
+            
+            loop(timestamp) {
+                const deltaTime = timestamp - this.lastTime;
+                this.lastTime = timestamp;
+                
+                this.update();
+                this.draw();
+                
+                requestAnimationFrame((t) => this.loop(t));
+            }
+        }
+        
+        // ==================== INITIALIZE GAME ====================
+        const game = new Game();
+    </script>
 </body>
 </html>

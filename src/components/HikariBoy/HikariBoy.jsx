@@ -141,7 +141,11 @@ export function HikariBoy({
         setCurrentGame(null);
         return;
       }
-    } else if (!isBooting) {
+    } else if (isBooting) {
+      if (button === BUTTONS.START || button === BUTTONS.A) {
+        setIsBooting(false);
+      }
+    } else {
       if (button === BUTTONS.DPAD_LEFT) {
         setSelectedIndex(prev => prev > 0 ? prev - 1 : GAMES.length - 1);
       }

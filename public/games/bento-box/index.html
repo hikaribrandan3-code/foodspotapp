@@ -2,179 +2,1032 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Bento Box</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bento Box - Tetromino Puzzle</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
-        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
-        #gameCanvas { background: #DC2626; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; font-weight: bold; }
-        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #2a1f1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="480" height="320"></canvas>
-    <div id="ui">LEVEL: <span id="level">1</span> | MOVES: <span id="moves">0</span></div>
-    <div id="gameOver">
-        <h2 style="color: #6366F1;">PERFECT BENTO!</h2>
-        <button onclick="nextLevel()" style="background: #6366F1; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">NEXT LEVEL</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
     </div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-const GRID_SIZE = 5;
-const CELL_SIZE = 50;
-const OFFSET_X = 100;
-const OFFSET_Y = 35;
-
-const ITEMS = [
-    { emoji: '🍙', color: '#FFF', size: 1 },
-    { emoji: '🍤', color: '#F59E0B', size: 1 },
-    { emoji: '🥦', color: '#22C55E', size: 1 },
-    { emoji: '🍣', color: '#F472B6', size: 2 },
-    { emoji: '🥟', color: '#E5E7EB', size: 1 }
-];
-
-let gameState = 'playing';
-let level = 1;
-let moves = 0;
-let grid = [];
-let selected = null;
-
-function createLevel() {
-    grid = [];
-    moves = 0;
-    document.getElementById('moves').textContent = moves;
-    
-    for (let y = 0; y < GRID_SIZE; y++) {
-        grid[y] = [];
-        for (let x = 0; x < GRID_SIZE; x++) {
-            grid[y][x] = Math.floor(Math.random() * ITEMS.length);
-        }
-    }
-}
-
-function drawGrid() {
-    // Bento box background
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(OFFSET_X - 10, OFFSET_Y - 10, GRID_SIZE * CELL_SIZE + 20, GRID_SIZE * CELL_SIZE + 20);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(OFFSET_X - 5, OFFSET_Y - 5, GRID_SIZE * CELL_SIZE + 10, GRID_SIZE * CELL_SIZE + 10);
-    
-    for (let y = 0; y < GRID_SIZE; y++) {
-        for (let x = 0; x < GRID_SIZE; x++) {
-            const px = OFFSET_X + x * CELL_SIZE;
-            const py = OFFSET_Y + y * CELL_SIZE;
-            
-            // Cell background
-            ctx.fillStyle = selected && selected.x === x && selected.y === y ? '#FFD700' : '#2D1F1F';
-            ctx.fillRect(px, py, CELL_SIZE - 2, CELL_SIZE - 2);
-            
-            // Item
-            const item = ITEMS[grid[y][x]];
-            ctx.font = '30px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(item.emoji, px + CELL_SIZE/2, py + CELL_SIZE/2);
-        }
-    }
-}
-
-function checkWin() {
-    // Check if each row has same items
-    for (let y = 0; y < GRID_SIZE; y++) {
-        const first = grid[y][0];
-        for (let x = 1; x < GRID_SIZE; x++) {
-            if (grid[y][x] !== first) return false;
-        }
-    }
-    return true;
-}
-
-function handleClick(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.floor(((clientX - rect.left) * (480 / rect.width) - OFFSET_X) / CELL_SIZE);
-    const y = Math.floor(((clientY - rect.top) * (320 / rect.height) - OFFSET_Y) / CELL_SIZE);
-    
-    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return;
-    
-    if (!selected) {
-        selected = { x, y };
-    } else {
-        if (selected.x !== x || selected.y !== y) {
-            // Swap
-            const temp = grid[y][x];
-            grid[y][x] = grid[selected.y][selected.x];
-            grid[selected.y][selected.x] = temp;
-            moves++;
-            document.getElementById('moves').textContent = moves;
-            
-            if (checkWin()) {
-                setTimeout(gameOver, 100);
+    <script>
+        // ============================================
+        // BENTO BOX - Tetromino Puzzle Game
+        // ============================================
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game Constants
+        const GRID_SIZE = 16;
+        const GRID_COLS = 20;
+        const GRID_ROWS = 15;
+        const CANVAS_WIDTH = 480;
+        const CANVAS_HEIGHT = 320;
+        
+        // Game State
+        let gameState = 'title'; // title, playing, paused, gameover, levelcomplete
+        let score = 0;
+        let level = 1;
+        let maxLevels = 5;
+        let timeLeft = 30;
+        let perfectStreak = 0;
+        let audioMuted = false;
+        
+        // Input State
+        const inputState = {
+            UP: false, DOWN: false, LEFT: false, RIGHT: false,
+            A: false, B: false, L: false, R: false, START: false
+        };
+        let lastInputState = {};
+        
+        // Audio Context
+        let audioCtx = null;
+        
+        // Grid and Pieces
+        let bentoGrid = [];
+        let bentoSilhouette = [];
+        let availablePieces = [];
+        let placedPieces = [];
+        let currentPiece = null;
+        let pieceIndex = 0;
+        
+        // Timer
+        let lastTime = 0;
+        let timerInterval = null;
+        
+        // Food colors
+        const FOOD_COLORS = {
+            rice: { fill: '#f5f5dc', border: '#d4d4aa', name: 'Rice' },
+            salmon: { fill: '#ff8c69', border: '#e67350', name: 'Salmon' },
+            tuna: { fill: '#dc143c', border: '#b01030', name: 'Tuna' },
+            egg: { fill: '#ffd700', border: '#daa520', name: 'Tamago' },
+            broccoli: { fill: '#228b22', border: '#1a6b1a', name: 'Broccoli' },
+            carrot: { fill: '#ff8c00', border: '#cc7000', name: 'Carrot' },
+            nori: { fill: '#2f4f4f', border: '#1a2f2f', name: 'Nori' },
+            shrimp: { fill: '#ffb6c1', border: '#ff91a4', name: 'Shrimp' }
+        };
+        
+        // Tetromino shapes (food pieces)
+        const TETROMINO_SHAPES = [
+            // I-piece (line)
+            { shape: [[1,1,1,1]], type: 'salmon' },
+            // O-piece (square)
+            { shape: [[1,1],[1,1]], type: 'rice' },
+            // T-piece
+            { shape: [[0,1,0],[1,1,1]], type: 'broccoli' },
+            // L-piece
+            { shape: [[1,0,0],[1,1,1]], type: 'carrot' },
+            // J-piece
+            { shape: [[0,0,1],[1,1,1]], type: 'tuna' },
+            // S-piece
+            { shape: [[0,1,1],[1,1,0]], type: 'shrimp' },
+            // Z-piece
+            { shape: [[1,1,0],[0,1,1]], type: 'egg' },
+            // Small L
+            { shape: [[1,0],[1,1]], type: 'nori' },
+            // Single
+            { shape: [[1]], type: 'rice' },
+            // Domino
+            { shape: [[1,1]], type: 'salmon' }
+        ];
+        
+        // Level configurations (bento box silhouettes)
+        const LEVELS = [
+            { // Level 1: Simple rectangle
+                width: 6, height: 4,
+                silhouette: null, // null means full rectangle
+                pieces: [0, 1, 2, 7]
+            },
+            { // Level 2: L-shape
+                width: 6, height: 5,
+                silhouette: [
+                    [1,1,1,1,1,1],
+                    [1,1,1,1,1,1],
+                    [1,1,1,0,0,0],
+                    [1,1,1,0,0,0],
+                    [1,1,1,0,0,0]
+                ],
+                pieces: [0, 1, 2, 3, 7]
+            },
+            { // Level 3: T-shape
+                width: 7, height: 5,
+                silhouette: [
+                    [0,0,1,1,1,0,0],
+                    [0,0,1,1,1,0,0],
+                    [1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1]
+                ],
+                pieces: [0, 1, 2, 3, 4, 8]
+            },
+            { // Level 4: Cross shape
+                width: 7, height: 7,
+                silhouette: [
+                    [0,0,0,1,0,0,0],
+                    [0,0,0,1,0,0,0],
+                    [1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1],
+                    [0,0,0,1,0,0,0],
+                    [0,0,0,1,0,0,0]
+                ],
+                pieces: [0, 0, 1, 2, 3, 4, 5, 6, 8]
+            },
+            { // Level 5: Complex
+                width: 8, height: 6,
+                silhouette: [
+                    [1,1,1,1,1,1,0,0],
+                    [1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1,1],
+                    [0,0,1,1,1,1,1,1],
+                    [0,0,1,1,1,1,1,1]
+                ],
+                pieces: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            }
+        ];
+        
+        // ============================================
+        // AUDIO SYSTEM
+        // ============================================
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
         }
-        selected = null;
-    }
-}
-
-function gameLoop() {
-    if (gameState === 'paused') return;
-    ctx.clearRect(0, 0, 480, 320);
-    drawGrid();
-    requestAnimationFrame(gameLoop);
-}
-
-function gameOver() {
-    gameState = 'gameover';
-    document.getElementById('gameOver').style.display = 'block';
-    window.parent.postMessage({ type: 'GAME_OVER', score: 10000 - moves * 100 }, '*');
-}
-
-function nextLevel() {
-    level++;
-    document.getElementById('level').textContent = level;
-    createLevel();
-    gameState = 'playing';
-    document.getElementById('gameOver').style.display = 'none';
-}
-
-// Controls
-canvas.addEventListener('click', (e) => handleClick(e.clientX, e.clientY));
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    handleClick(e.touches[0].clientX, e.touches[0].clientY);
-});
-
-// PostMessage API
-window.addEventListener('message', (e) => {
-    switch(e.data.type) {
-        case 'BUTTON_PRESS':
-            const btn = e.data.button;
-            if (!selected) selected = {x: 0, y: 0};
-            if (btn === 'dpad-left') selected.x = Math.max(0, selected.x - 1);
-            if (btn === 'dpad-right') selected.x = Math.min(GRID_SIZE - 1, selected.x + 1);
-            if (btn === 'dpad-up') selected.y = Math.max(0, selected.y - 1);
-            if (btn === 'dpad-down') selected.y = Math.min(GRID_SIZE - 1, selected.y + 1);
-            if (btn === 'a' || btn === 'start') handleClick(
-                OFFSET_X + selected.x * CELL_SIZE + CELL_SIZE/2,
-                OFFSET_Y + selected.y * CELL_SIZE + CELL_SIZE/2
-            );
-            if (btn === 'select') window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'bento-box' }, '*');
-            break;
-        case 'PAUSE': gameState = 'paused'; break;
-        case 'RESUME': gameState = 'playing'; gameLoop(); break;
-        case 'SAVE_STATE': localStorage.setItem('bentoBox_state', JSON.stringify({level, moves})); break;
-        case 'LOAD_STATE':
-            const saved = localStorage.getItem('bentoBox_state');
-            if (saved) { const data = JSON.parse(saved); level = data.level; moves = data.moves; }
-            break;
-    }
-});
-
-createLevel();
-gameLoop();
-</script>
+        
+        function playSound(type) {
+            if (audioMuted || !audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            switch(type) {
+                case 'place':
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'rotate':
+                    osc.frequency.setValueAtTime(330, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(440, audioCtx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.05);
+                    break;
+                case 'levelComplete':
+                    playMelody([523, 659, 784, 1047], [0.1, 0.1, 0.1, 0.3]);
+                    break;
+                case 'timeBonus':
+                    playMelody([880, 1109, 1319], [0.1, 0.1, 0.2]);
+                    break;
+                case 'error':
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.15);
+                    break;
+                case 'tick':
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.03);
+                    break;
+            }
+        }
+        
+        function playMelody(frequencies, durations) {
+            if (audioMuted || !audioCtx) return;
+            let time = audioCtx.currentTime;
+            frequencies.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(freq, time);
+                gain.gain.setValueAtTime(0.2, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + durations[i]);
+                osc.start(time);
+                osc.stop(time + durations[i]);
+                time += durations[i];
+            });
+        }
+        
+        // Background music loop
+        let musicInterval = null;
+        function startBackgroundMusic() {
+            if (musicInterval) clearInterval(musicInterval);
+            let noteIndex = 0;
+            const melody = [262, 330, 392, 330, 262, 330, 392, 494];
+            musicInterval = setInterval(() => {
+                if (!audioMuted && audioCtx && gameState === 'playing') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.setValueAtTime(melody[noteIndex], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.2);
+                    noteIndex = (noteIndex + 1) % melody.length;
+                }
+            }, 400);
+        }
+        
+        function stopBackgroundMusic() {
+            if (musicInterval) {
+                clearInterval(musicInterval);
+                musicInterval = null;
+            }
+        }
+        
+        // ============================================
+        // GAME FUNCTIONS
+        // ============================================
+        
+        function initGame() {
+            loadGameState();
+            gameState = 'title';
+            score = 0;
+            level = 1;
+            perfectStreak = 0;
+        }
+        
+        function startLevel(lvl) {
+            level = lvl;
+            timeLeft = 30;
+            const levelData = LEVELS[(level - 1) % LEVELS.length];
+            
+            // Initialize bento grid
+            bentoGrid = [];
+            bentoSilhouette = [];
+            for (let y = 0; y < levelData.height; y++) {
+                bentoGrid[y] = [];
+                bentoSilhouette[y] = [];
+                for (let x = 0; x < levelData.width; x++) {
+                    bentoGrid[y][x] = null;
+                    if (levelData.silhouette) {
+                        bentoSilhouette[y][x] = levelData.silhouette[y] ? levelData.silhouette[y][x] : 1;
+                    } else {
+                        bentoSilhouette[y][x] = 1;
+                    }
+                }
+            }
+            
+            // Create pieces for this level
+            availablePieces = [];
+            placedPieces = [];
+            levelData.pieces.forEach(pieceIdx => {
+                const shapeData = TETROMINO_SHAPES[pieceIdx];
+                availablePieces.push({
+                    shape: shapeData.shape.map(row => [...row]),
+                    type: shapeData.type,
+                    color: FOOD_COLORS[shapeData.type],
+                    x: 0, y: 0,
+                    placed: false
+                });
+            });
+            
+            // Set first piece as current
+            pieceIndex = 0;
+            currentPiece = availablePieces[0];
+            currentPiece.x = Math.floor(levelData.width / 2) - 1;
+            currentPiece.y = 0;
+            
+            gameState = 'playing';
+            startTimer();
+            startBackgroundMusic();
+        }
+        
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameState === 'playing') {
+                    timeLeft--;
+                    if (timeLeft <= 5 && timeLeft > 0) {
+                        playSound('tick');
+                    }
+                    if (timeLeft <= 0) {
+                        gameOver();
+                    }
+                }
+            }, 1000);
+        }
+        
+        function rotatePiece(piece) {
+            const oldShape = piece.shape;
+            const rows = oldShape.length;
+            const cols = oldShape[0].length;
+            const newShape = [];
+            
+            for (let y = 0; y < cols; y++) {
+                newShape[y] = [];
+                for (let x = 0; x < rows; x++) {
+                    newShape[y][x] = oldShape[rows - 1 - x][y];
+                }
+            }
+            
+            piece.shape = newShape;
+            playSound('rotate');
+        }
+        
+        function flipPieceHorizontal(piece) {
+            piece.shape = piece.shape.map(row => [...row].reverse());
+            playSound('rotate');
+        }
+        
+        function flipPieceVertical(piece) {
+            piece.shape = piece.shape.reverse();
+            playSound('rotate');
+        }
+        
+        function canPlacePiece(piece, px, py) {
+            const levelData = LEVELS[(level - 1) % LEVELS.length];
+            
+            for (let y = 0; y < piece.shape.length; y++) {
+                for (let x = 0; x < piece.shape[y].length; x++) {
+                    if (piece.shape[y][x]) {
+                        const gx = px + x;
+                        const gy = py + y;
+                        
+                        // Check bounds
+                        if (gx < 0 || gx >= levelData.width || gy < 0 || gy >= levelData.height) {
+                            return false;
+                        }
+                        
+                        // Check silhouette
+                        if (!bentoSilhouette[gy] || !bentoSilhouette[gy][gx]) {
+                            return false;
+                        }
+                        
+                        // Check if cell is occupied
+                        if (bentoGrid[gy][gx] !== null) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        
+        function placePiece() {
+            if (!currentPiece) return;
+            
+            if (canPlacePiece(currentPiece, currentPiece.x, currentPiece.y)) {
+                // Place the piece
+                for (let y = 0; y < currentPiece.shape.length; y++) {
+                    for (let x = 0; x < currentPiece.shape[y].length; x++) {
+                        if (currentPiece.shape[y][x]) {
+                            bentoGrid[currentPiece.y + y][currentPiece.x + x] = currentPiece.type;
+                        }
+                    }
+                }
+                
+                currentPiece.placed = true;
+                placedPieces.push(currentPiece);
+                playSound('place');
+                
+                // Move to next piece
+                pieceIndex++;
+                if (pieceIndex < availablePieces.length) {
+                    currentPiece = availablePieces[pieceIndex];
+                    const levelData = LEVELS[(level - 1) % LEVELS.length];
+                    currentPiece.x = Math.floor(levelData.width / 2) - 1;
+                    currentPiece.y = 0;
+                } else {
+                    currentPiece = null;
+                    checkLevelComplete();
+                }
+                
+                score += 10;
+                reportScore(score);
+            } else {
+                playSound('error');
+            }
+        }
+        
+        function checkLevelComplete() {
+            const levelData = LEVELS[(level - 1) % LEVELS.length];
+            let allFilled = true;
+            let perfectFit = true;
+            
+            for (let y = 0; y < levelData.height; y++) {
+                for (let x = 0; x < levelData.width; x++) {
+                    if (bentoSilhouette[y][x]) {
+                        if (bentoGrid[y][x] === null) {
+                            allFilled = false;
+                        }
+                    }
+                }
+            }
+            
+            if (allFilled) {
+                // Check for perfect fit (no empty spaces in silhouette)
+                for (let y = 0; y < levelData.height; y++) {
+                    for (let x = 0; x < levelData.width; x++) {
+                        if (bentoSilhouette[y][x] && bentoGrid[y][x] === null) {
+                            perfectFit = false;
+                        }
+                        if (!bentoSilhouette[y][x] && bentoGrid[y][x] !== null) {
+                            perfectFit = false;
+                        }
+                    }
+                }
+                
+                let bonus = 0;
+                if (perfectFit) {
+                    perfectStreak++;
+                    bonus = 50 * perfectStreak;
+                    score += bonus;
+                    
+                    // Time bonus for 3 perfect fits
+                    if (perfectStreak >= 3) {
+                        timeLeft += 10;
+                        perfectStreak = 0;
+                        playSound('timeBonus');
+                    }
+                } else {
+                    perfectStreak = 0;
+                }
+                
+                score += timeLeft * 2; // Time bonus
+                playSound('levelComplete');
+                reportScore(score);
+                saveGameState();
+                
+                gameState = 'levelcomplete';
+                setTimeout(() => {
+                    if (level < maxLevels) {
+                        startLevel(level + 1);
+                    } else {
+                        gameState = 'victory';
+                    }
+                }, 2000);
+            }
+        }
+        
+        function gameOver() {
+            gameState = 'gameover';
+            stopBackgroundMusic();
+            saveGameState();
+        }
+        
+        function togglePause() {
+            if (gameState === 'playing') {
+                gameState = 'paused';
+                stopBackgroundMusic();
+            } else if (gameState === 'paused') {
+                gameState = 'playing';
+                startBackgroundMusic();
+            }
+        }
+        
+        // ============================================
+        // INPUT HANDLING
+        // ============================================
+        
+        function handleInput() {
+            if (gameState !== 'playing') return;
+            if (!currentPiece) return;
+            
+            const levelData = LEVELS[(level - 1) % LEVELS.length];
+            
+            // Check for button press (not hold)
+            const isPressed = (btn) => inputState[btn] && !lastInputState[btn];
+            
+            if (isPressed('UP')) {
+                if (canPlacePiece(currentPiece, currentPiece.x, currentPiece.y - 1)) {
+                    currentPiece.y--;
+                }
+            }
+            if (isPressed('DOWN')) {
+                if (canPlacePiece(currentPiece, currentPiece.x, currentPiece.y + 1)) {
+                    currentPiece.y++;
+                }
+            }
+            if (isPressed('LEFT')) {
+                if (canPlacePiece(currentPiece, currentPiece.x - 1, currentPiece.y)) {
+                    currentPiece.x--;
+                }
+            }
+            if (isPressed('RIGHT')) {
+                if (canPlacePiece(currentPiece, currentPiece.x + 1, currentPiece.y)) {
+                    currentPiece.x++;
+                }
+            }
+            if (isPressed('A')) {
+                placePiece();
+            }
+            if (isPressed('B')) {
+                rotatePiece(currentPiece);
+            }
+            if (isPressed('L')) {
+                flipPieceHorizontal(currentPiece);
+            }
+            if (isPressed('R')) {
+                flipPieceVertical(currentPiece);
+            }
+            if (isPressed('START')) {
+                togglePause();
+            }
+            
+            // Update last input state
+            Object.keys(inputState).forEach(key => {
+                lastInputState[key] = inputState[key];
+            });
+        }
+        
+        // Keyboard fallback
+        document.addEventListener('keydown', (e) => {
+            initAudio();
+            switch(e.key) {
+                case 'ArrowUp': inputState.UP = true; break;
+                case 'ArrowDown': inputState.DOWN = true; break;
+                case 'ArrowLeft': inputState.LEFT = true; break;
+                case 'ArrowRight': inputState.RIGHT = true; break;
+                case 'z': case 'Z': inputState.A = true; break;
+                case 'x': case 'X': inputState.B = true; break;
+                case 'a': case 'A': inputState.L = true; break;
+                case 's': case 'S': inputState.R = true; break;
+                case 'Enter': inputState.START = true; break;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': inputState.UP = false; lastInputState.UP = false; break;
+                case 'ArrowDown': inputState.DOWN = false; lastInputState.DOWN = false; break;
+                case 'ArrowLeft': inputState.LEFT = false; lastInputState.LEFT = false; break;
+                case 'ArrowRight': inputState.RIGHT = false; lastInputState.RIGHT = false; break;
+                case 'z': case 'Z': inputState.A = false; lastInputState.A = false; break;
+                case 'x': case 'X': inputState.B = false; lastInputState.B = false; break;
+                case 'a': case 'A': inputState.L = false; lastInputState.L = false; break;
+                case 's': case 'S': inputState.R = false; lastInputState.R = false; break;
+                case 'Enter': inputState.START = false; lastInputState.START = false; break;
+            }
+        });
+        
+        // ============================================
+        // RENDERING
+        // ============================================
+        
+        function drawWoodBackground() {
+            // Wood grain background
+            const gradient = ctx.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            gradient.addColorStop(0, '#8B4513');
+            gradient.addColorStop(0.5, '#A0522D');
+            gradient.addColorStop(1, '#8B4513');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Wood grain lines
+            ctx.strokeStyle = 'rgba(101, 67, 33, 0.3)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < CANVAS_WIDTH; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i + Math.sin(i * 0.01) * 20, CANVAS_HEIGHT);
+                ctx.stroke();
+            }
+        }
+        
+        function drawBentoBox() {
+            const levelData = LEVELS[(level - 1) % LEVELS.length];
+            const boxX = 20;
+            const boxY = 60;
+            const cellSize = GRID_SIZE;
+            const boxWidth = levelData.width * cellSize;
+            const boxHeight = levelData.height * cellSize;
+            
+            // Bento box container
+            ctx.fillStyle = '#3d2817';
+            ctx.fillRect(boxX - 4, boxY - 4, boxWidth + 8, boxHeight + 8);
+            
+            // Inner box
+            ctx.fillStyle = '#2a1f1a';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            
+            // Draw silhouette and placed pieces
+            for (let y = 0; y < levelData.height; y++) {
+                for (let x = 0; x < levelData.width; x++) {
+                    const px = boxX + x * cellSize;
+                    const py = boxY + y * cellSize;
+                    
+                    if (bentoSilhouette[y][x]) {
+                        // Silhouette cell
+                        ctx.fillStyle = 'rgba(139, 90, 43, 0.3)';
+                        ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+                        ctx.strokeStyle = 'rgba(139, 90, 43, 0.5)';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+                    }
+                    
+                    // Placed piece
+                    if (bentoGrid[y][x]) {
+                        const color = FOOD_COLORS[bentoGrid[y][x]];
+                        drawFoodCell(px, py, cellSize, color);
+                    }
+                }
+            }
+            
+            // Draw current piece
+            if (currentPiece) {
+                const ghostY = findGhostPosition();
+                
+                // Draw ghost piece
+                ctx.globalAlpha = 0.3;
+                for (let y = 0; y < currentPiece.shape.length; y++) {
+                    for (let x = 0; x < currentPiece.shape[y].length; x++) {
+                        if (currentPiece.shape[y][x]) {
+                            const px = boxX + (currentPiece.x + x) * cellSize;
+                            const py = boxY + (ghostY + y) * cellSize;
+                            ctx.fillStyle = currentPiece.color.fill;
+                            ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+                        }
+                    }
+                }
+                ctx.globalAlpha = 1;
+                
+                // Draw current piece
+                for (let y = 0; y < currentPiece.shape.length; y++) {
+                    for (let x = 0; x < currentPiece.shape[y].length; x++) {
+                        if (currentPiece.shape[y][x]) {
+                            const px = boxX + (currentPiece.x + x) * cellSize;
+                            const py = boxY + (currentPiece.y + y) * cellSize;
+                            drawFoodCell(px, py, cellSize, currentPiece.color);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function findGhostPosition() {
+            if (!currentPiece) return currentPiece.y;
+            
+            let ghostY = currentPiece.y;
+            while (canPlacePiece(currentPiece, currentPiece.x, ghostY + 1)) {
+                ghostY++;
+            }
+            return ghostY;
+        }
+        
+        function drawFoodCell(x, y, size, color) {
+            // Main food block
+            ctx.fillStyle = color.fill;
+            ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+            
+            // Border
+            ctx.strokeStyle = color.border;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 1, y + 1, size - 2, size - 2);
+            
+            // Highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(x + 2, y + 2, size - 4, 3);
+            
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(x + 2, y + size - 5, size - 4, 3);
+        }
+        
+        function drawPiecePreview() {
+            const previewX = 280;
+            const previewY = 70;
+            const cellSize = 12;
+            
+            ctx.fillStyle = '#3d2817';
+            ctx.fillRect(previewX - 5, previewY - 25, 180, 200);
+            
+            ctx.fillStyle = '#f5deb3';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('NEXT PIECES:', previewX, previewY - 10);
+            
+            let py = previewY;
+            for (let i = pieceIndex + 1; i < Math.min(pieceIndex + 5, availablePieces.length); i++) {
+                const piece = availablePieces[i];
+                const color = piece.color;
+                
+                for (let y = 0; y < piece.shape.length; y++) {
+                    for (let x = 0; x < piece.shape[y].length; x++) {
+                        if (piece.shape[y][x]) {
+                            ctx.fillStyle = color.fill;
+                            ctx.fillRect(previewX + x * cellSize, py + y * cellSize, cellSize - 1, cellSize - 1);
+                            ctx.strokeStyle = color.border;
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(previewX + x * cellSize, py + y * cellSize, cellSize - 1, cellSize - 1);
+                        }
+                    }
+                }
+                
+                py += piece.shape.length * cellSize + 15;
+            }
+        }
+        
+        function drawUI() {
+            // Title bar
+            ctx.fillStyle = '#3d2817';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, 50);
+            
+            // Title
+            ctx.fillStyle = '#f5deb3';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('BENTO BOX', 20, 32);
+            
+            // Level
+            ctx.font = '14px sans-serif';
+            ctx.fillText(`Level ${level}/${maxLevels}`, 140, 32);
+            
+            // Score
+            ctx.fillText(`Score: ${score}`, 230, 32);
+            
+            // Timer
+            const timerColor = timeLeft <= 5 ? '#ff4444' : '#f5deb3';
+            ctx.fillStyle = timerColor;
+            ctx.fillText(`Time: ${timeLeft}s`, 340, 32);
+            
+            // Perfect streak
+            if (perfectStreak > 0) {
+                ctx.fillStyle = '#ffd700';
+                ctx.fillText(`★${perfectStreak}`, 420, 32);
+            }
+            
+            // Controls hint
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, CANVAS_HEIGHT - 30, CANVAS_WIDTH, 30);
+            ctx.fillStyle = '#f5deb3';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('D-PAD: Move | A: Place | B: Rotate | L/R: Flip | START: Pause', 20, CANVAS_HEIGHT - 10);
+        }
+        
+        function drawTitleScreen() {
+            drawWoodBackground();
+            
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(40, 40, CANVAS_WIDTH - 80, CANVAS_HEIGHT - 80);
+            
+            ctx.fillStyle = '#f5deb3';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('BENTO BOX', CANVAS_WIDTH / 2, 100);
+            
+            ctx.font = '16px sans-serif';
+            ctx.fillText('Tetromino Puzzle Game', CANVAS_WIDTH / 2, 130);
+            
+            ctx.font = '12px sans-serif';
+            ctx.fillText('Fit food pieces into the bento box!', CANVAS_WIDTH / 2, 160);
+            ctx.fillText('Use D-PAD to move, A to place, B to rotate', CANVAS_WIDTH / 2, 180);
+            
+            ctx.fillStyle = '#90EE90';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('Press A or Z to Start', CANVAS_WIDTH / 2, 230);
+            
+            ctx.textAlign = 'left';
+            
+            if (inputState.A && !lastInputState.A) {
+                startLevel(1);
+            }
+            lastInputState.A = inputState.A;
+        }
+        
+        function drawPauseMenu() {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(100, 80, CANVAS_WIDTH - 200, CANVAS_HEIGHT - 160);
+            
+            ctx.fillStyle = '#f5deb3';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('PAUSED', CANVAS_WIDTH / 2, 120);
+            
+            ctx.font = '14px sans-serif';
+            ctx.fillText('D-PAD: Select | A: Confirm', CANVAS_WIDTH / 2, 150);
+            
+            const menuItems = ['Resume', audioMuted ? 'Unmute' : 'Mute', 'Back to Menu'];
+            let selectedItem = 0;
+            
+            // Simple menu selection
+            if (inputState.UP && !lastInputState.UP) selectedItem = (selectedItem - 1 + menuItems.length) % menuItems.length;
+            if (inputState.DOWN && !lastInputState.DOWN) selectedItem = (selectedItem + 1) % menuItems.length;
+            
+            menuItems.forEach((item, i) => {
+                ctx.fillStyle = i === selectedItem ? '#90EE90' : '#f5deb3';
+                ctx.fillText(item, CANVAS_WIDTH / 2, 190 + i * 30);
+            });
+            
+            ctx.textAlign = 'left';
+            
+            if (inputState.A && !lastInputState.A) {
+                if (selectedItem === 0) togglePause();
+                else if (selectedItem === 1) audioMuted = !audioMuted;
+                else if (selectedItem === 2) {
+                    gameState = 'title';
+                    stopBackgroundMusic();
+                }
+            }
+            
+            lastInputState.UP = inputState.UP;
+            lastInputState.DOWN = inputState.DOWN;
+            lastInputState.A = inputState.A;
+        }
+        
+        function drawGameOver() {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(60, 80, CANVAS_WIDTH - 120, CANVAS_HEIGHT - 160);
+            
+            ctx.fillStyle = '#ff4444';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('TIME\'S UP!', CANVAS_WIDTH / 2, 130);
+            
+            ctx.fillStyle = '#f5deb3';
+            ctx.font = '16px sans-serif';
+            ctx.fillText(`Final Score: ${score}`, CANVAS_WIDTH / 2, 170);
+            
+            ctx.fillStyle = '#90EE90';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Press A to Try Again', CANVAS_WIDTH / 2, 210);
+            
+            ctx.textAlign = 'left';
+            
+            if (inputState.A && !lastInputState.A) {
+                score = 0;
+                perfectStreak = 0;
+                startLevel(1);
+            }
+            lastInputState.A = inputState.A;
+        }
+        
+        function drawLevelComplete() {
+            ctx.fillStyle = 'rgba(0,100,0,0.8)';
+            ctx.fillRect(60, 100, CANVAS_WIDTH - 120, 100);
+            
+            ctx.fillStyle = '#90EE90';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('PERFECT!', CANVAS_WIDTH / 2, 140);
+            
+            if (perfectStreak > 0) {
+                ctx.fillStyle = '#ffd700';
+                ctx.fillText(`Streak: ${perfectStreak}`, CANVAS_WIDTH / 2, 165);
+            }
+            
+            ctx.textAlign = 'left';
+        }
+        
+        function drawVictory() {
+            drawWoodBackground();
+            
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(40, 40, CANVAS_WIDTH - 80, CANVAS_HEIGHT - 80);
+            
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 32px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('MASTER CHEF!', CANVAS_WIDTH / 2, 100);
+            
+            ctx.fillStyle = '#f5deb3';
+            ctx.font = '16px sans-serif';
+            ctx.fillText('All bento boxes completed!', CANVAS_WIDTH / 2, 140);
+            ctx.fillText(`Final Score: ${score}`, CANVAS_WIDTH / 2, 170);
+            
+            ctx.fillStyle = '#90EE90';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Press A to Play Again', CANVAS_WIDTH / 2, 220);
+            
+            ctx.textAlign = 'left';
+            
+            if (inputState.A && !lastInputState.A) {
+                score = 0;
+                perfectStreak = 0;
+                startLevel(1);
+            }
+            lastInputState.A = inputState.A;
+        }
+        
+        function render() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            switch(gameState) {
+                case 'title':
+                    drawTitleScreen();
+                    break;
+                case 'playing':
+                    drawWoodBackground();
+                    drawBentoBox();
+                    drawPiecePreview();
+                    drawUI();
+                    break;
+                case 'paused':
+                    drawWoodBackground();
+                    drawBentoBox();
+                    drawPiecePreview();
+                    drawUI();
+                    drawPauseMenu();
+                    break;
+                case 'gameover':
+                    drawWoodBackground();
+                    drawBentoBox();
+                    drawUI();
+                    drawGameOver();
+                    break;
+                case 'levelcomplete':
+                    drawWoodBackground();
+                    drawBentoBox();
+                    drawPiecePreview();
+                    drawUI();
+                    drawLevelComplete();
+                    break;
+                case 'victory':
+                    drawVictory();
+                    break;
+            }
+        }
+        
+        // ============================================
+        // MAIN LOOP
+        // ============================================
+        
+        function gameLoop() {
+            handleInput();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // ============================================
+        // POSTMESSAGE API
+        // ============================================
+        
+        window.addEventListener('message', (e) => {
+            const {type, button, state} = e.data;
+            if (type === 'button') {
+                inputState[button] = state;
+                initAudio();
+            }
+            if (type === 'mute') audioMuted = true;
+        });
+        
+        function reportScore(score) {
+            parent.postMessage({type: 'score', value: score}, '*');
+        }
+        
+        function saveGameState() {
+            localStorage.setItem('munchboy_save_bentobox', JSON.stringify({
+                score, 
+                level, 
+                timestamp: Date.now()
+            }));
+        }
+        
+        function loadGameState() {
+            const saved = localStorage.getItem('munchboy_save_bentobox');
+            if (saved) {
+                const data = JSON.parse(saved);
+                // Could restore state here if needed
+            }
+        }
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        initGame();
+        gameLoop();
+    </script>
 </body>
 </html>

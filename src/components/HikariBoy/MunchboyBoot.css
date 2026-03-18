@@ -72,16 +72,17 @@
   letter-spacing: -0.5px;
   
   /* Nintendo Pill Style */
-  border: 2px solid #ec008c;
-  border-radius: 20px;
-  padding: 4px 14px;
+  border: 3px solid #ec008c;
+  border-radius: 50px;
+  padding: 6px 20px;
   display: inline-block;
   background: white;
+  box-shadow: 0 4px 10px rgba(236, 0, 140, 0.15);
 
   opacity: 0;
-  margin-top: 15px;
+  margin-top: 25px;
   position: relative;
-  transition: opacity 0.4s ease-out;
+  transition: opacity 0.5s ease-out;
 }
 
 .munchboy-footer.visible {
@@ -139,12 +140,12 @@
 
 .press-start-text {
   position: absolute;
-  bottom: 60px;
+  bottom: 50px;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-weight: 800;
-  color: #111; /* Static black */
-  letter-spacing: 2px;
-  font-size: 14px;
+  font-weight: 900;
+  color: #000000; /* Solid Black */
+  letter-spacing: 3px;
+  font-size: 16px;
   opacity: 0;
   transition: opacity 0.5s;
 }

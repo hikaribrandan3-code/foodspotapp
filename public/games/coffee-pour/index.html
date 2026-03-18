@@ -2,178 +2,970 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Coffee Pour</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Pour - Relaxing Timing Game</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
-        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
-        #gameCanvas { background: #3E2723; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; font-weight: bold; }
-        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2c1810 0%, #4a2c1a 50%, #3d2314 100%);
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            background: #f5e6d3;
+        }
+        
+        #pauseMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 24, 16, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 10;
+        }
+        
+        #pauseMenu h2 {
+            color: #d4a574;
+            font-size: 32px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+        
+        .menuBtn {
+            padding: 12px 40px;
+            font-size: 18px;
+            font-family: 'Georgia', serif;
+            background: linear-gradient(180deg, #d4a574 0%, #b8936a 100%);
+            border: 3px solid #8b6914;
+            border-radius: 8px;
+            color: #2c1810;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 200px;
+        }
+        
+        .menuBtn:hover {
+            background: linear-gradient(180deg, #e5b685 0%, #c9a47a 100%);
+            transform: scale(1.05);
+        }
+        
+        .menuBtn:active {
+            transform: scale(0.98);
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #5c4033;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="480" height="320"></canvas>
-    <div id="ui">SCORE: <span id="score">0</span> | PERFECTS: <span id="perfect">0</span></div>
-    <div id="gameOver">
-        <h2 style="color: #78350F;">BARISTA MASTER!</h2>
-        <button onclick="resetGame()" style="background: #78350F; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">POUR AGAIN</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
+        <div id="pauseMenu">
+            <h2>☕ PAUSED ☕</h2>
+            <button class="menuBtn" id="resumeBtn">Resume</button>
+            <button class="menuBtn" id="muteBtn">Sound: ON</button>
+            <button class="menuBtn" id="backBtn">Back to Menu</button>
+        </div>
     </div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-let gameState = 'playing';
-let score = 0;
-let perfects = 0;
-let cup = { x: 200, y: 200, width: 80, height: 100, fill: 0 };
-let targetFill = 70 + Math.random() * 20;
-let pouring = false;
-let meter = 0;
-let meterSpeed = 2;
-
-function gameLoop() {
-    if (gameState === 'paused') return;
-    
-    ctx.clearRect(0, 0, 480, 320);
-    
-    // Meter background
-    ctx.fillStyle = '#5D4037';
-    ctx.fillRect(40, 40, 400, 30);
-    
-    // Target zone
-    ctx.fillStyle = 'rgba(34, 197, 94, 0.3)';
-    ctx.fillRect(40 + targetFill * 4 - 20, 35, 40, 40);
-    
-    // Target line
-    ctx.strokeStyle = '#22C55E';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(40 + targetFill * 4, 35);
-    ctx.lineTo(40 + targetFill * 4, 75);
-    ctx.stroke();
-    
-    // Meter fill
-    if (pouring) {
-        meter += meterSpeed;
-        if (meter >= 100) {
-            pouring = false;
-            checkResult();
+    <script>
+        // ==================== GAME CONFIGURATION ====================
+        const CANVAS_WIDTH = 480;
+        const CANVAS_HEIGHT = 320;
+        const CUP_WIDTH = 80;
+        const CUP_HEIGHT = 100;
+        const CUP_X = CANVAS_WIDTH / 2 - CUP_WIDTH / 2;
+        const CUP_Y = CANVAS_HEIGHT - CUP_HEIGHT - 30;
+        const TARGET_MIN = 0.65;
+        const TARGET_MAX = 0.85;
+        const POUR_SPEED_FAST = 0.025;
+        const POUR_SPEED_SLOW = 0.008;
+        
+        // ==================== GAME STATE ====================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = 'playing'; // playing, paused, gameover, latteart
+        let inputState = { A: false, B: false, L: false, R: false, START: false };
+        let prevInputState = { A: false, B: false, L: false, R: false, START: false };
+        
+        let fillLevel = 0;
+        let isPouring = false;
+        let pourMode = 'espresso'; // espresso (fast) or milk (slow)
+        let perfectPours = 0;
+        let overflows = 0;
+        let score = 0;
+        let artUnlocked = [];
+        let pourParticles = [];
+        let steamParticles = [];
+        let cupSway = 0;
+        let cupSwayDir = 1;
+        let message = '';
+        let messageTimer = 0;
+        let currentArt = null;
+        let showArtTimer = 0;
+        
+        // Audio context
+        let audioCtx = null;
+        let audioMuted = false;
+        let pourOscillator = null;
+        let pourGain = null;
+        let bgmOscillators = [];
+        
+        // Latte art patterns
+        const latteArtPatterns = [
+            { name: 'Heart', draw: drawHeartArt },
+            { name: 'Rosetta', draw: drawRosettaArt },
+            { name: 'Tulip', draw: drawTulipArt },
+            { name: 'Swan', draw: drawSwanArt }
+        ];
+        
+        // ==================== AUDIO SYSTEM ====================
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
         }
-    }
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(40, 40, meter * 4, 30);
-    
-    // Cup
-    ctx.fillStyle = '#FFF';
-    ctx.fillRect(cup.x, cup.y, cup.width, cup.height);
-    ctx.strokeStyle = '#DDD';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(cup.x, cup.y, cup.width, cup.height);
-    
-    // Coffee in cup
-    if (meter > 0) {
-        ctx.fillStyle = '#3E2723';
-        const fillHeight = (meter / 100) * cup.height * 0.8;
-        ctx.fillRect(cup.x + 5, cup.y + cup.height - fillHeight - 5, cup.width - 10, fillHeight);
-    }
-    
-    // Pour stream
-    if (pouring) {
-        ctx.fillStyle = '#3E2723';
-        ctx.fillRect(cup.x + cup.width/2 - 5, 70, 10, cup.y - 70);
-    }
-    
-    // Mug
-    ctx.font = '60px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('☕', 240, 160);
-    
-    requestAnimationFrame(gameLoop);
-}
-
-function startPour() {
-    if (gameState !== 'playing') return;
-    pouring = true;
-}
-
-function stopPour() {
-    if (!pouring) return;
-    pouring = false;
-    checkResult();
-}
-
-function checkResult() {
-    const diff = Math.abs(meter - targetFill);
-    if (diff < 5) {
-        score += 300;
-        perfects++;
-    } else if (diff < 15) {
-        score += 150;
-    } else if (diff < 25) {
-        score += 50;
-    } else {
-        score += 10;
-    }
-    
-    document.getElementById('score').textContent = score;
-    document.getElementById('perfect').textContent = perfects;
-    window.parent.postMessage({ type: 'SCORE', score: score }, '*');
-    
-    setTimeout(() => {
-        meter = 0;
-        targetFill = 60 + Math.random() * 30;
-    }, 500);
-}
-
-function gameOver() {
-    gameState = 'gameover';
-    document.getElementById('gameOver').style.display = 'block';
-    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
-}
-
-function resetGame() {
-    score = 0;
-    perfects = 0;
-    meter = 0;
-    pouring = false;
-    targetFill = 60 + Math.random() * 30;
-    gameState = 'playing';
-    document.getElementById('gameOver').style.display = 'none';
-    document.getElementById('score').textContent = score;
-    document.getElementById('perfect').textContent = perfects;
-}
-
-// Controls
-canvas.addEventListener('mousedown', startPour);
-canvas.addEventListener('mouseup', stopPour);
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPour(); });
-canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopPour(); });
-
-// PostMessage API
-window.addEventListener('message', (e) => {
-    switch(e.data.type) {
-        case 'BUTTON_PRESS':
-            if (e.data.button === 'a' || e.data.button === 'start') startPour();
-            if (e.data.button === 'b' || e.data.button === 'select') {
-                stopPour();
-                if (e.data.button === 'select') {
-                    window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'coffee-pour' }, '*');
+        
+        function playTone(freq, duration, type = 'sine', vol = 0.3) {
+            if (audioMuted || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+        
+        function startPourSound() {
+            if (audioMuted || !audioCtx || pourOscillator) return;
+            pourOscillator = audioCtx.createOscillator();
+            pourGain = audioCtx.createGain();
+            pourOscillator.type = 'brown';
+            pourOscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
+            pourGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            pourOscillator.connect(pourGain);
+            pourGain.connect(audioCtx.destination);
+            pourOscillator.start();
+        }
+        
+        function stopPourSound() {
+            if (pourOscillator && pourGain) {
+                pourGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                pourOscillator.stop(audioCtx.currentTime + 0.1);
+                pourOscillator = null;
+                pourGain = null;
+            }
+        }
+        
+        function playCompleteSound() {
+            playTone(523.25, 0.15, 'sine', 0.4);
+            setTimeout(() => playTone(659.25, 0.15, 'sine', 0.4), 100);
+            setTimeout(() => playTone(783.99, 0.3, 'sine', 0.4), 200);
+        }
+        
+        function playPerfectSound() {
+            playTone(523.25, 0.1, 'sine', 0.4);
+            setTimeout(() => playTone(659.25, 0.1, 'sine', 0.4), 80);
+            setTimeout(() => playTone(783.99, 0.1, 'sine', 0.4), 160);
+            setTimeout(() => playTone(1046.50, 0.4, 'sine', 0.5), 240);
+        }
+        
+        function playOverflowSound() {
+            playTone(200, 0.3, 'sawtooth', 0.4);
+            setTimeout(() => playTone(150, 0.4, 'sawtooth', 0.4), 150);
+        }
+        
+        function playGameOverSound() {
+            playTone(392, 0.3, 'sawtooth', 0.4);
+            setTimeout(() => playTone(349.23, 0.3, 'sawtooth', 0.4), 300);
+            setTimeout(() => playTone(329.63, 0.5, 'sawtooth', 0.4), 600);
+        }
+        
+        function startBackgroundMusic() {
+            if (audioMuted || !audioCtx) return;
+            // Gentle cafe ambience - jazz chord progression
+            const chords = [
+                [261.63, 329.63, 392.00], // C major
+                [293.66, 349.23, 440.00], // D minor
+                [246.94, 293.66, 349.23], // Bb major
+                [196.00, 246.94, 293.66]  // G minor
+            ];
+            
+            function playChord(chordIndex) {
+                if (audioMuted) return;
+                const chord = chords[chordIndex % chords.length];
+                chord.forEach((freq, i) => {
+                    setTimeout(() => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 2);
+                    }, i * 50);
+                });
+            }
+            
+            let chordIndex = 0;
+            const bgmInterval = setInterval(() => {
+                if (audioMuted || gameState === 'gameover') {
+                    clearInterval(bgmInterval);
+                    return;
+                }
+                playChord(chordIndex);
+                chordIndex++;
+            }, 2500);
+        }
+        
+        // ==================== PARTICLE SYSTEM ====================
+        class PourParticle {
+            constructor(x, y) {
+                this.x = x + (Math.random() - 0.5) * 10;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = 3 + Math.random() * 2;
+                this.size = 3 + Math.random() * 4;
+                this.color = pourMode === 'espresso' ? '#3d2314' : '#f5f5dc';
+                this.life = 1;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.3;
+                this.life -= 0.03;
+            }
+            
+            draw(ctx) {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        class SteamParticle {
+            constructor(x, y) {
+                this.x = x + (Math.random() - 0.5) * 40;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = -0.5 - Math.random() * 0.5;
+                this.size = 5 + Math.random() * 10;
+                this.life = 1;
+            }
+            
+            update() {
+                this.x += this.vx + Math.sin(Date.now() * 0.002 + this.y * 0.1) * 0.3;
+                this.y += this.vy;
+                this.size += 0.1;
+                this.life -= 0.01;
+            }
+            
+            draw(ctx) {
+                ctx.globalAlpha = this.life * 0.3;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // ==================== LATTE ART DRAWING ====================
+        function drawHeartArt(ctx, x, y, scale) {
+            ctx.fillStyle = '#f5f5dc';
+            ctx.beginPath();
+            const size = 25 * scale;
+            ctx.moveTo(x, y + size * 0.3);
+            ctx.bezierCurveTo(x - size, y - size * 0.5, x - size * 1.5, y + size * 0.3, x, y + size);
+            ctx.bezierCurveTo(x + size * 1.5, y + size * 0.3, x + size, y - size * 0.5, x, y + size * 0.3);
+            ctx.fill();
+        }
+        
+        function drawRosettaArt(ctx, x, y, scale) {
+            ctx.strokeStyle = '#f5f5dc';
+            ctx.lineWidth = 3 * scale;
+            ctx.lineCap = 'round';
+            const size = 30 * scale;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                const offset = (i - 2) * 8 * scale;
+                ctx.moveTo(x - size * 0.5, y + offset);
+                ctx.quadraticCurveTo(x, y + offset - 15 * scale, x + size * 0.5, y + offset);
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.moveTo(x, y - size * 0.5);
+            ctx.lineTo(x, y + size * 0.3);
+            ctx.stroke();
+        }
+        
+        function drawTulipArt(ctx, x, y, scale) {
+            ctx.fillStyle = '#f5f5dc';
+            const size = 20 * scale;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                const offsetY = (2 - i) * 12 * scale;
+                const s = size * (1 - i * 0.2);
+                ctx.ellipse(x, y + offsetY, s, s * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function drawSwanArt(ctx, x, y, scale) {
+            ctx.strokeStyle = '#f5f5dc';
+            ctx.lineWidth = 3 * scale;
+            ctx.lineCap = 'round';
+            const size = 30 * scale;
+            // Body
+            ctx.beginPath();
+            ctx.ellipse(x, y + size * 0.2, size * 0.6, size * 0.3, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            // Neck
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.4, y);
+            ctx.quadraticCurveTo(x + size * 0.8, y - size * 0.5, x + size * 0.3, y - size * 0.6);
+            ctx.stroke();
+            // Head
+            ctx.beginPath();
+            ctx.arc(x + size * 0.2, y - size * 0.6, size * 0.15, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        // ==================== DRAWING FUNCTIONS ====================
+        function drawCoffeeShopBackground() {
+            // Wooden counter
+            const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+            gradient.addColorStop(0, '#d4a574');
+            gradient.addColorStop(0.5, '#c49a6c');
+            gradient.addColorStop(1, '#b8936a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Wood grain lines
+            ctx.strokeStyle = 'rgba(139, 105, 20, 0.15)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < CANVAS_HEIGHT; i += 15) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                for (let x = 0; x < CANVAS_WIDTH; x += 20) {
+                    ctx.lineTo(x, i + Math.sin(x * 0.02) * 3);
+                }
+                ctx.stroke();
+            }
+            
+            // Menu board on wall
+            ctx.fillStyle = '#2c1810';
+            ctx.fillRect(20, 30, 100, 80);
+            ctx.strokeStyle = '#8b6914';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(20, 30, 100, 80);
+            
+            // Menu text
+            ctx.fillStyle = '#d4a574';
+            ctx.font = 'bold 12px Georgia';
+            ctx.fillText('MENU', 50, 50);
+            ctx.font = '10px Georgia';
+            ctx.fillText('Espresso $3', 28, 68);
+            ctx.fillText('Latte $4', 28, 82);
+            ctx.fillText('Cappuccino $4', 28, 96);
+            
+            // Coffee beans decoration
+            ctx.fillStyle = '#3d2314';
+            for (let i = 0; i < 8; i++) {
+                const bx = 400 + Math.cos(i * 0.8) * 30;
+                const by = 50 + Math.sin(i * 0.8) * 20;
+                ctx.beginPath();
+                ctx.ellipse(bx, by, 6, 4, i * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#5c4033';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(bx - 3, by);
+                ctx.lineTo(bx + 3, by);
+                ctx.stroke();
+            }
+            
+            // Window light
+            const lightGrad = ctx.createRadialGradient(400, 50, 0, 400, 50, 150);
+            lightGrad.addColorStop(0, 'rgba(255, 250, 240, 0.3)');
+            lightGrad.addColorStop(1, 'rgba(255, 250, 240, 0)');
+            ctx.fillStyle = lightGrad;
+            ctx.fillRect(250, 0, 230, 200);
+        }
+        
+        function drawCup() {
+            const cupX = CUP_X + cupSway;
+            
+            // Cup shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.beginPath();
+            ctx.ellipse(cupX + CUP_WIDTH / 2, CUP_Y + CUP_HEIGHT + 5, CUP_WIDTH / 2 + 5, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Cup body
+            const cupGrad = ctx.createLinearGradient(cupX, CUP_Y, cupX + CUP_WIDTH, CUP_Y);
+            cupGrad.addColorStop(0, '#f5f5f5');
+            cupGrad.addColorStop(0.5, '#ffffff');
+            cupGrad.addColorStop(1, '#e8e8e8');
+            ctx.fillStyle = cupGrad;
+            ctx.beginPath();
+            ctx.moveTo(cupX + 5, CUP_Y);
+            ctx.lineTo(cupX + CUP_WIDTH - 5, CUP_Y);
+            ctx.quadraticCurveTo(cupX + CUP_WIDTH, CUP_Y + CUP_HEIGHT * 0.3, cupX + CUP_WIDTH - 10, CUP_Y + CUP_HEIGHT);
+            ctx.lineTo(cupX + 10, CUP_Y + CUP_HEIGHT);
+            ctx.quadraticCurveTo(cupX, CUP_Y + CUP_HEIGHT * 0.3, cupX + 5, CUP_Y);
+            ctx.fill();
+            
+            // Cup rim
+            ctx.strokeStyle = '#d0d0d0';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(cupX + CUP_WIDTH / 2, CUP_Y, CUP_WIDTH / 2 - 5, 8, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Cup handle
+            ctx.strokeStyle = '#e8e8e8';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.arc(cupX + CUP_WIDTH - 5, CUP_Y + CUP_HEIGHT * 0.4, 15, -Math.PI / 2, Math.PI / 2, false);
+            ctx.stroke();
+            
+            // Coffee liquid
+            if (fillLevel > 0) {
+                const liquidHeight = fillLevel * (CUP_HEIGHT - 15);
+                const liquidY = CUP_Y + CUP_HEIGHT - 10 - liquidHeight;
+                
+                // Liquid color based on mode
+                const liquidColor = pourMode === 'espresso' 
+                    ? `rgb(${61 + fillLevel * 20}, ${35 + fillLevel * 10}, ${20 + fillLevel * 5})`
+                    : `rgb(${245 - fillLevel * 30}, ${245 - fillLevel * 30}, ${220 - fillLevel * 20})`;
+                
+                ctx.fillStyle = liquidColor;
+                ctx.beginPath();
+                ctx.moveTo(cupX + 12, liquidY);
+                ctx.lineTo(cupX + CUP_WIDTH - 12, liquidY);
+                ctx.lineTo(cupX + CUP_WIDTH - 15, CUP_Y + CUP_HEIGHT - 10);
+                ctx.lineTo(cupX + 15, CUP_Y + CUP_HEIGHT - 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Liquid surface
+                ctx.fillStyle = pourMode === 'espresso' 
+                    ? `rgba(${81 + fillLevel * 20}, ${45 + fillLevel * 10}, ${30 + fillLevel * 5}, 0.8)`
+                    : `rgba(${255 - fillLevel * 20}, ${255 - fillLevel * 20}, ${240 - fillLevel * 15}, 0.8)`;
+                ctx.beginPath();
+                ctx.ellipse(cupX + CUP_WIDTH / 2, liquidY, CUP_WIDTH / 2 - 15, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Latte art on surface
+                if (currentArt && fillLevel >= TARGET_MIN) {
+                    const artScale = Math.min(1, (fillLevel - TARGET_MIN) / 0.1);
+                    ctx.save();
+                    ctx.globalAlpha = artScale * 0.9;
+                    currentArt.draw(ctx, cupX + CUP_WIDTH / 2, liquidY + 3, artScale);
+                    ctx.restore();
                 }
             }
-            break;
-        case 'PAUSE': gameState = 'paused'; break;
-        case 'RESUME': gameState = 'playing'; gameLoop(); break;
-        case 'SAVE_STATE': localStorage.setItem('coffeePour_state', JSON.stringify({score, perfects})); break;
-        case 'LOAD_STATE':
-            const saved = localStorage.getItem('coffeePour_state');
-            if (saved) { const data = JSON.parse(saved); score = data.score; perfects = data.perfects; }
-            break;
-    }
-});
-
-gameLoop();
-</script>
+            
+            // Target zone indicator
+            const targetY = CUP_Y + CUP_HEIGHT - 10 - TARGET_MIN * (CUP_HEIGHT - 15);
+            ctx.strokeStyle = 'rgba(76, 175, 80, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(cupX + 5, targetY);
+            ctx.lineTo(cupX + CUP_WIDTH - 5, targetY);
+            ctx.stroke();
+            
+            const targetYMax = CUP_Y + CUP_HEIGHT - 10 - TARGET_MAX * (CUP_HEIGHT - 15);
+            ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
+            ctx.beginPath();
+            ctx.moveTo(cupX + 5, targetYMax);
+            ctx.lineTo(cupX + CUP_WIDTH - 5, targetYMax);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Target zone label
+            ctx.fillStyle = 'rgba(76, 175, 80, 0.8)';
+            ctx.font = '10px Arial';
+            ctx.fillText('TARGET', cupX + CUP_WIDTH + 5, (targetY + targetYMax) / 2);
+        }
+        
+        function drawPourStream() {
+            if (!isPouring) return;
+            
+            const cupX = CUP_X + cupSway;
+            const pourX = cupX + CUP_WIDTH / 2;
+            const liquidY = CUP_Y + CUP_HEIGHT - 10 - fillLevel * (CUP_HEIGHT - 15);
+            
+            // Pour stream
+            const streamColor = pourMode === 'espresso' ? '#3d2314' : '#f5f5dc';
+            const streamWidth = pourMode === 'espresso' ? 8 : 12;
+            
+            const streamGrad = ctx.createLinearGradient(pourX - streamWidth/2, 0, pourX + streamWidth/2, 0);
+            streamGrad.addColorStop(0, streamColor);
+            streamGrad.addColorStop(0.5, pourMode === 'espresso' ? '#5d4334' : '#ffffff');
+            streamGrad.addColorStop(1, streamColor);
+            
+            ctx.fillStyle = streamGrad;
+            ctx.beginPath();
+            ctx.moveTo(pourX - streamWidth/2, 0);
+            ctx.lineTo(pourX + streamWidth/2, 0);
+            ctx.lineTo(pourX + streamWidth/3, liquidY);
+            ctx.lineTo(pourX - streamWidth/3, liquidY);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Pour source glow
+            const glowGrad = ctx.createRadialGradient(pourX, 15, 0, pourX, 15, 20);
+            glowGrad.addColorStop(0, pourMode === 'espresso' ? 'rgba(61, 35, 20, 0.5)' : 'rgba(245, 245, 220, 0.5)');
+            glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(pourX, 15, 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawUI() {
+            // Score panel
+            ctx.fillStyle = 'rgba(44, 24, 16, 0.9)';
+            ctx.fillRect(10, 10, 140, 80);
+            ctx.strokeStyle = '#d4a574';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(10, 10, 140, 80);
+            
+            ctx.fillStyle = '#d4a574';
+            ctx.font = 'bold 14px Georgia';
+            ctx.fillText('SCORE: ' + score, 20, 30);
+            
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillText('★ Perfect: ' + perfectPours, 20, 50);
+            
+            ctx.fillStyle = '#f44336';
+            ctx.fillText('✕ Overflows: ' + overflows + '/3', 20, 70);
+            
+            // Mode indicator
+            ctx.fillStyle = 'rgba(44, 24, 16, 0.9)';
+            ctx.fillRect(CANVAS_WIDTH - 110, 10, 100, 40);
+            ctx.strokeStyle = '#d4a574';
+            ctx.strokeRect(CANVAS_WIDTH - 110, 10, 100, 40);
+            
+            ctx.fillStyle = pourMode === 'espresso' ? '#8B4513' : '#F5F5DC';
+            ctx.font = 'bold 12px Georgia';
+            ctx.fillText(pourMode === 'espresso' ? '☕ ESPRESSO' : '🥛 MILK', CANVAS_WIDTH - 100, 35);
+            
+            // Fill meter
+            ctx.fillStyle = 'rgba(44, 24, 16, 0.9)';
+            ctx.fillRect(CANVAS_WIDTH - 40, 60, 30, 150);
+            ctx.strokeStyle = '#d4a574';
+            ctx.strokeRect(CANVAS_WIDTH - 40, 60, 30, 150);
+            
+            // Fill level
+            const meterHeight = fillLevel * 140;
+            const meterColor = fillLevel > 1 ? '#f44336' : (fillLevel >= TARGET_MIN && fillLevel <= TARGET_MAX ? '#4CAF50' : '#d4a574');
+            ctx.fillStyle = meterColor;
+            ctx.fillRect(CANVAS_WIDTH - 35, 205 - meterHeight, 20, meterHeight);
+            
+            // Target zone on meter
+            const targetMinY = 205 - TARGET_MAX * 140;
+            const targetMaxY = 205 - TARGET_MIN * 140;
+            ctx.fillStyle = 'rgba(76, 175, 80, 0.3)';
+            ctx.fillRect(CANVAS_WIDTH - 38, targetMinY, 26, targetMaxY - targetMinY);
+            
+            // Message
+            if (messageTimer > 0) {
+                messageTimer--;
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(CANVAS_WIDTH/2 - 100, CANVAS_HEIGHT/2 - 30, 200, 60);
+                ctx.strokeStyle = message.includes('Perfect') ? '#4CAF50' : (message.includes('Overflow') ? '#f44336' : '#d4a574');
+                ctx.lineWidth = 3;
+                ctx.strokeRect(CANVAS_WIDTH/2 - 100, CANVAS_HEIGHT/2 - 30, 200, 60);
+                
+                ctx.fillStyle = message.includes('Perfect') ? '#4CAF50' : (message.includes('Overflow') ? '#f44336' : '#d4a574');
+                ctx.font = 'bold 20px Georgia';
+                ctx.textAlign = 'center';
+                ctx.fillText(message, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 8);
+                ctx.textAlign = 'left';
+                ctx.restore();
+            }
+            
+            // Controls hint
+            ctx.fillStyle = 'rgba(44, 24, 16, 0.8)';
+            ctx.font = '11px Arial';
+            ctx.fillText('Hold A: Pour | B: Done | L/R: Mode', 10, CANVAS_HEIGHT - 10);
+        }
+        
+        function drawGameOver() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            ctx.fillStyle = '#f44336';
+            ctx.font = 'bold 36px Georgia';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 40);
+            
+            ctx.fillStyle = '#d4a574';
+            ctx.font = '20px Georgia';
+            ctx.fillText('Too many overflows!', CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px Georgia';
+            ctx.fillText('Final Score: ' + score, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 40);
+            ctx.fillText('Perfect Pours: ' + perfectPours, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 65);
+            
+            ctx.fillStyle = '#888';
+            ctx.font = '14px Arial';
+            ctx.fillText('Press B to restart', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 100);
+            ctx.textAlign = 'left';
+        }
+        
+        function drawLatteArtUnlock() {
+            ctx.fillStyle = 'rgba(44, 24, 16, 0.95)';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            ctx.fillStyle = '#d4a574';
+            ctx.font = 'bold 28px Georgia';
+            ctx.textAlign = 'center';
+            ctx.fillText('☕ LATTE ART UNLOCKED! ☕', CANVAS_WIDTH/2, 50);
+            
+            // Draw unlocked art
+            if (currentArt) {
+                ctx.save();
+                ctx.translate(CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 10);
+                ctx.scale(2.5, 2.5);
+                
+                // Cup background
+                ctx.fillStyle = '#3d2314';
+                ctx.beginPath();
+                ctx.ellipse(0, 20, 50, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Art
+                currentArt.draw(ctx, 0, 5, 1.5);
+                ctx.restore();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 24px Georgia';
+                ctx.fillText(currentArt.name, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 90);
+            }
+            
+            ctx.fillStyle = '#888';
+            ctx.font = '14px Arial';
+            ctx.fillText('Press B to continue', CANVAS_WIDTH/2, CANVAS_HEIGHT - 30);
+            ctx.textAlign = 'left';
+        }
+        
+        // ==================== GAME LOGIC ====================
+        function resetCup() {
+            fillLevel = 0;
+            isPouring = false;
+            currentArt = null;
+            pourParticles = [];
+            stopPourSound();
+        }
+        
+        function completePour() {
+            stopPourSound();
+            isPouring = false;
+            
+            if (fillLevel > 1) {
+                // Overflow
+                overflows++;
+                message = 'Overflow!';
+                messageTimer = 90;
+                playOverflowSound();
+                if (overflows >= 3) {
+                    gameState = 'gameover';
+                    playGameOverSound();
+                    reportScore(score);
+                    saveGameState();
+                }
+            } else if (fillLevel >= TARGET_MIN && fillLevel <= TARGET_MAX) {
+                // Perfect pour
+                perfectPours++;
+                score += 100;
+                message = 'Perfect Pour!';
+                messageTimer = 90;
+                playPerfectSound();
+                
+                // Check for latte art unlock
+                if (perfectPours % 3 === 0) {
+                    const availableArt = latteArtPatterns.filter(a => !artUnlocked.includes(a.name));
+                    if (availableArt.length > 0) {
+                        currentArt = availableArt[Math.floor(Math.random() * availableArt.length)];
+                        artUnlocked.push(currentArt.name);
+                        gameState = 'latteart';
+                        showArtTimer = 180;
+                    }
+                }
+            } else if (fillLevel > 0) {
+                // Good but not perfect
+                score += Math.floor(fillLevel * 50);
+                message = fillLevel < TARGET_MIN ? 'Too little!' : 'Too much!';
+                messageTimer = 60;
+                playCompleteSound();
+            }
+            
+            if (gameState === 'playing') {
+                setTimeout(resetCup, messageTimer > 0 ? messageTimer * 16 + 500 : 500);
+            }
+            
+            saveGameState();
+        }
+        
+        function update() {
+            if (gameState !== 'playing') return;
+            
+            // Handle input
+            if (inputState.A && !prevInputState.A) {
+                initAudio();
+                startBackgroundMusic();
+            }
+            
+            // Pouring
+            if (inputState.A) {
+                if (!isPouring) {
+                    isPouring = true;
+                    startPourSound();
+                }
+                const pourSpeed = pourMode === 'espresso' ? POUR_SPEED_FAST : POUR_SPEED_SLOW;
+                fillLevel += pourSpeed;
+                
+                // Add pour particles
+                const cupX = CUP_X + cupSway;
+                const liquidY = CUP_Y + CUP_HEIGHT - 10 - Math.min(fillLevel, 1) * (CUP_HEIGHT - 15);
+                for (let i = 0; i < 3; i++) {
+                    pourParticles.push(new PourParticle(cupX + CUP_WIDTH / 2, liquidY));
+                }
+                
+                // Add steam when hot espresso pours
+                if (pourMode === 'espresso' && Math.random() < 0.1) {
+                    steamParticles.push(new SteamParticle(cupX + CUP_WIDTH / 2, liquidY));
+                }
+            } else if (isPouring) {
+                isPouring = false;
+                stopPourSound();
+            }
+            
+            // Mode switching
+            if (inputState.L && !prevInputState.L) {
+                pourMode = 'espresso';
+            }
+            if (inputState.R && !prevInputState.R) {
+                pourMode = 'milk';
+            }
+            
+            // Complete pour
+            if (inputState.B && !prevInputState.B) {
+                completePour();
+            }
+            
+            // Cup sway animation
+            cupSway += cupSwayDir * 0.3;
+            if (Math.abs(cupSway) > 3) cupSwayDir *= -1;
+            
+            // Update particles
+            pourParticles = pourParticles.filter(p => {
+                p.update();
+                return p.life > 0;
+            });
+            
+            steamParticles = steamParticles.filter(p => {
+                p.update();
+                return p.life > 0;
+            });
+            
+            // Save input state
+            prevInputState = { ...inputState };
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            drawCoffeeShopBackground();
+            drawPourStream();
+            drawCup();
+            
+            // Draw particles
+            pourParticles.forEach(p => p.draw(ctx));
+            steamParticles.forEach(p => p.draw(ctx));
+            
+            drawUI();
+            
+            if (gameState === 'gameover') {
+                drawGameOver();
+            } else if (gameState === 'latteart') {
+                drawLatteArtUnlock();
+            }
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // ==================== POSTMESSAGE API ====================
+        window.addEventListener('message', (e) => {
+            const { type, button, state } = e.data;
+            if (type === 'button') {
+                inputState[button] = state;
+                if (button === 'START' && state && !prevInputState.START) {
+                    togglePause();
+                }
+            }
+            if (type === 'mute') {
+                audioMuted = true;
+                updateMuteButton();
+            }
+        });
+        
+        function reportScore(score) {
+            parent.postMessage({ type: 'score', value: score }, '*');
+        }
+        
+        function saveGameState() {
+            localStorage.setItem('munchboy_save_coffeepour', JSON.stringify({
+                score,
+                artUnlocked,
+                perfectPours,
+                overflows,
+                timestamp: Date.now()
+            }));
+        }
+        
+        function loadGameState() {
+            const saved = localStorage.getItem('munchboy_save_coffeepour');
+            if (saved) {
+                const data = JSON.parse(saved);
+                score = data.score || 0;
+                artUnlocked = data.artUnlocked || [];
+                perfectPours = data.perfectPours || 0;
+                overflows = data.overflows || 0;
+            }
+        }
+        
+        // ==================== PAUSE MENU ====================
+        const pauseMenu = document.getElementById('pauseMenu');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const backBtn = document.getElementById('backBtn');
+        
+        function togglePause() {
+            if (gameState === 'playing') {
+                gameState = 'paused';
+                pauseMenu.style.display = 'flex';
+                stopPourSound();
+            } else if (gameState === 'paused') {
+                gameState = 'playing';
+                pauseMenu.style.display = 'none';
+            }
+        }
+        
+        function updateMuteButton() {
+            muteBtn.textContent = audioMuted ? 'Sound: OFF' : 'Sound: ON';
+        }
+        
+        resumeBtn.addEventListener('click', () => {
+            gameState = 'playing';
+            pauseMenu.style.display = 'none';
+        });
+        
+        muteBtn.addEventListener('click', () => {
+            audioMuted = !audioMuted;
+            updateMuteButton();
+            if (!audioMuted) {
+                initAudio();
+                startBackgroundMusic();
+            }
+        });
+        
+        backBtn.addEventListener('click', () => {
+            parent.postMessage({ type: 'navigate', to: 'selector' }, '*');
+        });
+        
+        // Keyboard controls for testing
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'a' || e.key === 'A') inputState.A = true;
+            if (e.key === 'b' || e.key === 'B') {
+                inputState.B = true;
+                if (gameState === 'gameover' || gameState === 'latteart') {
+                    if (gameState === 'gameover') {
+                        score = 0;
+                        perfectPours = 0;
+                        overflows = 0;
+                        artUnlocked = [];
+                    }
+                    gameState = 'playing';
+                    resetCup();
+                }
+            }
+            if (e.key === 'l' || e.key === 'L') inputState.L = true;
+            if (e.key === 'r' || e.key === 'R') inputState.R = true;
+            if (e.key === 'Enter') {
+                inputState.START = true;
+                togglePause();
+            }
+            initAudio();
+            startBackgroundMusic();
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'a' || e.key === 'A') inputState.A = false;
+            if (e.key === 'b' || e.key === 'B') inputState.B = false;
+            if (e.key === 'l' || e.key === 'L') inputState.L = false;
+            if (e.key === 'r' || e.key === 'R') inputState.R = false;
+            if (e.key === 'Enter') inputState.START = false;
+        });
+        
+        // ==================== INITIALIZATION ====================
+        loadGameState();
+        gameLoop();
+    </script>
 </body>
 </html>

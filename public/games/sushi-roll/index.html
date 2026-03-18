@@ -2,197 +2,999 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Sushi Roll</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sushi Platter - Multitasking Order Game</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
-        body { background: #2d1f3d; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: monospace; }
-        #gameCanvas { background: linear-gradient(180deg, #1a1a2e 0%, #2d1f3d 100%); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        #ui { position: absolute; top: 10px; left: 0; right: 0; text-align: center; color: #10B981; font-weight: bold; font-size: 14px; }
-        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white; display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+        }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="480" height="320"></canvas>
-    <div id="ui">SCORE: <span id="score">0</span> | COMBO: <span id="combo">0</span></div>
-    <div id="gameOver">
-        <h2 style="color: #10B981;">SUSHI MASTER!</h2>
-        <p>Final Score: <span id="finalScore">0</span></p>
-        <button onclick="resetGame()" style="background: #10B981; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer;">ROLL AGAIN</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
     </div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-let gameState = 'playing';
-let score = 0;
-let combo = 0;
-let notes = [];
-let hitZone = { y: 250, height: 40 };
-
-const BEATS = ['🍣', '🍤', '🥢', '🍙', '🍥'];
-const COLORS = ['#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#FCD34D'];
-
-class Note {
-    constructor(lane) {
-        this.lane = lane;
-        this.x = 80 + lane * 80;
-        this.y = -50;
-        this.speed = 3 + Math.random() * 2;
-        this.emoji = BEATS[Math.floor(Math.random() * BEATS.length)];
-        this.color = COLORS[lane % COLORS.length];
-        this.hit = false;
-    }
-
-    update() {
-        this.y += this.speed;
-    }
-
-    draw() {
-        ctx.font = '40px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(this.emoji, this.x, this.y);
+    <script>
+        // ==================== GAME CONFIGURATION ====================
+        const CANVAS_WIDTH = 480;
+        const CANVAS_HEIGHT = 320;
+        const GAME_DURATION = 60; // seconds
         
-        // Glow effect
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 10;
-        ctx.fillText(this.emoji, this.x, this.y);
-        ctx.shadowBlur = 0;
-    }
-}
-
-function drawLane() {
-    // Lane background
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    for (let i = 0; i < 5; i++) {
-        ctx.fillRect(40 + i * 80, 0, 80, 320);
-    }
-    
-    // Hit zone
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
-    ctx.fillRect(0, hitZone.y, 480, hitZone.height);
-    ctx.strokeStyle = '#10B981';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(0, hitZone.y, 480, hitZone.height);
-    
-    // Lane labels
-    ctx.font = '20px Arial';
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.textAlign = 'center';
-    for (let i = 0; i < 5; i++) {
-        ctx.fillText(['A','S','D','F','G'][i], 80 + i * 80, 290);
-    }
-}
-
-function spawnNote() {
-    if (gameState !== 'playing') return;
-    notes.push(new Note(Math.floor(Math.random() * 5)));
-    setTimeout(spawnNote, 800 - Math.min(400, combo * 10));
-}
-
-function hitLane(lane) {
-    if (gameState !== 'playing') return;
-    
-    const hitNote = notes.find(n => n.lane === lane && !n.hit && Math.abs(n.y - hitZone.y - 20) < 30);
-    
-    if (hitNote) {
-        hitNote.hit = true;
-        const accuracy = Math.abs(hitNote.y - hitZone.y - 20);
+        // Boat positions
+        const BOATS = [
+            { x: 80, y: 260, width: 100, height: 40 },
+            { x: 190, y: 260, width: 100, height: 40 },
+            { x: 300, y: 260, width: 100, height: 40 }
+        ];
         
-        if (accuracy < 10) {
-            score += 100 + combo * 10;
-            combo++;
-        } else {
-            score += 50;
-            combo = Math.max(0, combo - 1);
+        // Ingredient types
+        const INGREDIENTS = {
+            RICE: { name: 'Rice', color: '#F5F5F5', emoji: '', good: true },
+            SALMON: { name: 'Salmon', color: '#FF6B6B', emoji: '', good: true },
+            TUNA: { name: 'Tuna', color: '#C0392B', emoji: '', good: true },
+            SHRIMP: { name: 'Shrimp', color: '#FF9999', emoji: '', good: true },
+            EGG: { name: 'Egg', color: '#FFD93D', emoji: '', good: true },
+            CUCUMBER: { name: 'Cucumber', color: '#2ECC71', emoji: '', good: true },
+            WASABI: { name: 'Wasabi', color: '#7CB342', emoji: '', good: true },
+            GINGER: { name: 'Ginger', color: '#FFB6C1', emoji: '', good: true },
+            FISHBONE: { name: 'Fishbone', color: '#95A5A6', emoji: '', good: false },
+            TRASH: { name: 'Trash', color: '#5D4037', emoji: '', good: false },
+            BUG: { name: 'Bug', color: '#2C3E50', emoji: '', good: false }
+        };
+        
+        // Order recipes
+        const RECIPES = [
+            { name: 'Salmon Nigiri', ingredients: ['RICE', 'SALMON'] },
+            { name: 'Tuna Nigiri', ingredients: ['RICE', 'TUNA'] },
+            { name: 'Shrimp Nigiri', ingredients: ['RICE', 'SHRIMP'] },
+            { name: 'Tamago Nigiri', ingredients: ['RICE', 'EGG'] },
+            { name: 'Kappa Maki', ingredients: ['RICE', 'CUCUMBER'] },
+            { name: 'Salmon Roll', ingredients: ['RICE', 'SALMON', 'CUCUMBER'] },
+            { name: 'Spicy Tuna', ingredients: ['RICE', 'TUNA', 'WASABI'] },
+            { name: 'Deluxe Platter', ingredients: ['RICE', 'SALMON', 'WASABI', 'GINGER'] }
+        ];
+
+        // ==================== AUDIO SYSTEM ====================
+        const AudioSys = {
+            ctx: null,
+            muted: false,
+            
+            init() {
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    console.log('Audio not supported');
+                }
+            },
+            
+            playTone(freq, duration, type = 'sine', vol = 0.3) {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            
+            playCatch() {
+                this.playTone(880, 0.1, 'sine', 0.2);
+                setTimeout(() => this.playTone(1100, 0.15, 'sine', 0.2), 50);
+            },
+            
+            playOrderComplete() {
+                this.playTone(523, 0.1, 'sine', 0.3);
+                setTimeout(() => this.playTone(659, 0.1, 'sine', 0.3), 100);
+                setTimeout(() => this.playTone(784, 0.2, 'sine', 0.3), 200);
+                setTimeout(() => this.playTone(1047, 0.4, 'sine', 0.3), 300);
+            },
+            
+            playToss() {
+                this.playTone(200, 0.15, 'sawtooth', 0.3);
+                setTimeout(() => this.playTone(150, 0.2, 'sawtooth', 0.2), 100);
+            },
+            
+            playTick() {
+                this.playTone(800, 0.05, 'square', 0.15);
+            },
+            
+            playBadCatch() {
+                this.playTone(150, 0.3, 'sawtooth', 0.4);
+            },
+            
+            playBackground() {
+                // Simple ambient loop - played every few seconds
+                if (this.muted || !this.ctx) return;
+                const notes = [330, 392, 440, 494, 523, 494, 440, 392];
+                let i = 0;
+                const playNext = () => {
+                    if (this.muted || !this.ctx) return;
+                    this.playTone(notes[i], 0.3, 'sine', 0.08);
+                    i = (i + 1) % notes.length;
+                    setTimeout(playNext, 400);
+                };
+                playNext();
+            }
+        };
+
+        // ==================== GAME STATE ====================
+        const Game = {
+            canvas: null,
+            ctx: null,
+            state: 'TITLE', // TITLE, PLAYING, PAUSED, GAMEOVER
+            score: 0,
+            ordersCompleted: 0,
+            timeRemaining: GAME_DURATION,
+            lastTime: 0,
+            tickTimer: 0,
+            
+            // Game objects
+            ingredients: [],
+            boats: [],
+            currentOrder: null,
+            orderProgress: [],
+            catcherX: 240,
+            selectedBoat: 1,
+            
+            // Spawning
+            spawnTimer: 0,
+            spawnInterval: 1500,
+            
+            // Particles
+            particles: [],
+            
+            // Floating texts
+            floatingTexts: [],
+            
+            init() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Initialize boats
+                this.boats = BOATS.map((b, i) => ({
+                    ...b,
+                    ingredients: [],
+                    id: i
+                }));
+                
+                // Generate first order
+                this.generateOrder();
+                
+                // Start background music
+                AudioSys.init();
+                AudioSys.playBackground();
+                
+                // Start game loop
+                requestAnimationFrame((t) => this.loop(t));
+            },
+            
+            generateOrder() {
+                const recipe = RECIPES[Math.floor(Math.random() * RECIPES.length)];
+                this.currentOrder = {
+                    name: recipe.name,
+                    ingredients: [...recipe.ingredients],
+                    collected: []
+                };
+                this.orderProgress = [];
+            },
+            
+            spawnIngredient() {
+                const keys = Object.keys(INGREDIENTS);
+                // 70% chance for good ingredients, 30% for bad
+                let type;
+                if (Math.random() < 0.7) {
+                    const goodKeys = keys.filter(k => INGREDIENTS[k].good);
+                    type = goodKeys[Math.floor(Math.random() * goodKeys.length)];
+                } else {
+                    const badKeys = keys.filter(k => !INGREDIENTS[k].good);
+                    type = badKeys[Math.floor(Math.random() * badKeys.length)];
+                }
+                
+                this.ingredients.push({
+                    type: type,
+                    x: Math.random() * (CANVAS_WIDTH - 100) + 50,
+                    y: -30,
+                    vy: 1.5 + Math.random() * 1.5,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    rotation: 0,
+                    rotSpeed: (Math.random() - 0.5) * 0.1,
+                    caught: false
+                });
+            },
+            
+            createParticles(x, y, color, count = 8) {
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 * i) / count;
+                    this.particles.push({
+                        x, y,
+                        vx: Math.cos(angle) * 3,
+                        vy: Math.sin(angle) * 3,
+                        life: 1,
+                        color
+                    });
+                }
+            },
+            
+            createFloatingText(x, y, text, color) {
+                this.floatingTexts.push({
+                    x, y,
+                    text,
+                    color,
+                    life: 1,
+                    vy: -1
+                });
+            },
+            
+            update(dt) {
+                if (this.state !== 'PLAYING') return;
+                
+                // Timer
+                this.timeRemaining -= dt / 1000;
+                this.tickTimer += dt;
+                if (this.tickTimer >= 1000 && this.timeRemaining > 0) {
+                    this.tickTimer = 0;
+                    AudioSys.playTick();
+                }
+                
+                if (this.timeRemaining <= 0) {
+                    this.gameOver();
+                    return;
+                }
+                
+                // Spawn ingredients
+                this.spawnTimer += dt;
+                if (this.spawnTimer >= this.spawnInterval) {
+                    this.spawnIngredient();
+                    this.spawnTimer = 0;
+                    // Gradually increase difficulty
+                    this.spawnInterval = Math.max(600, 1500 - this.ordersCompleted * 50);
+                }
+                
+                // Update ingredients
+                this.ingredients = this.ingredients.filter(ing => {
+                    ing.y += ing.vy;
+                    ing.x += ing.vx;
+                    ing.rotation += ing.rotSpeed;
+                    
+                    // Remove if off screen
+                    if (ing.y > CANVAS_HEIGHT + 30) {
+                        return false;
+                    }
+                    return true;
+                });
+                
+                // Update particles
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.2; // gravity
+                    p.life -= 0.03;
+                    return p.life > 0;
+                });
+                
+                // Update floating texts
+                this.floatingTexts = this.floatingTexts.filter(t => {
+                    t.y += t.vy;
+                    t.life -= 0.02;
+                    return t.life > 0;
+                });
+                
+                // Check order completion
+                this.checkOrderCompletion();
+            },
+            
+            checkOrderCompletion() {
+                if (!this.currentOrder) return;
+                
+                // Check each boat
+                for (let boat of this.boats) {
+                    const boatIngredients = boat.ingredients.map(i => i.type);
+                    const required = this.currentOrder.ingredients;
+                    
+                    // Check if boat has all required ingredients
+                    let hasAll = true;
+                    const used = [];
+                    for (let req of required) {
+                        const idx = boatIngredients.findIndex(i => i === req);
+                        if (idx === -1 || used.includes(idx)) {
+                            hasAll = false;
+                            break;
+                        }
+                        used.push(idx);
+                    }
+                    
+                    if (hasAll && boatIngredients.length === required.length) {
+                        // Order complete!
+                        this.completeOrder(boat);
+                        break;
+                    }
+                }
+            },
+            
+            completeOrder(boat) {
+                // Clear boat
+                boat.ingredients = [];
+                
+                // Score
+                const points = this.currentOrder.ingredients.length * 100;
+                this.score += points;
+                this.ordersCompleted++;
+                
+                // Effects
+                AudioSys.playOrderComplete();
+                this.createParticles(boat.x + boat.width/2, boat.y, '#FFD700', 15);
+                this.createFloatingText(boat.x + boat.width/2, boat.y - 20, `+${points}`, '#FFD700');
+                
+                // Generate new order
+                this.generateOrder();
+                
+                // Save state
+                this.saveGameState();
+                this.reportScore();
+            },
+            
+            catchIngredient() {
+                // Find ingredient near catcher
+                const catchRange = 40;
+                const catcherY = 200;
+                
+                for (let i = this.ingredients.length - 1; i >= 0; i--) {
+                    const ing = this.ingredients[i];
+                    const dx = ing.x - this.catcherX;
+                    const dy = ing.y - catcherY;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < catchRange) {
+                        const ingredientData = INGREDIENTS[ing.type];
+                        
+                        if (!ingredientData.good) {
+                            // Bad ingredient - can't catch
+                            AudioSys.playBadCatch();
+                            this.createFloatingText(ing.x, ing.y, 'NO!', '#FF4444');
+                            return;
+                        }
+                        
+                        // Add to selected boat
+                        const boat = this.boats[this.selectedBoat];
+                        if (boat.ingredients.length < 5) {
+                            boat.ingredients.push({ type: ing.type });
+                            this.ingredients.splice(i, 1);
+                            AudioSys.playCatch();
+                            this.createParticles(ing.x, ing.y, ingredientData.color, 6);
+                        }
+                        return;
+                    }
+                }
+            },
+            
+            tossIngredient() {
+                // Remove last ingredient from selected boat
+                const boat = this.boats[this.selectedBoat];
+                if (boat.ingredients.length > 0) {
+                    const removed = boat.ingredients.pop();
+                    AudioSys.playToss();
+                    this.createParticles(
+                        boat.x + boat.width/2, 
+                        boat.y, 
+                        INGREDIENTS[removed.type].color, 
+                        5
+                    );
+                }
+            },
+            
+            switchBoat(dir) {
+                this.selectedBoat += dir;
+                if (this.selectedBoat < 0) this.selectedBoat = 2;
+                if (this.selectedBoat > 2) this.selectedBoat = 0;
+            },
+            
+            moveCatcher(dir) {
+                this.catcherX += dir * 8;
+                this.catcherX = Math.max(30, Math.min(CANVAS_WIDTH - 30, this.catcherX));
+            },
+            
+            start() {
+                this.state = 'PLAYING';
+                this.score = 0;
+                this.ordersCompleted = 0;
+                this.timeRemaining = GAME_DURATION;
+                this.ingredients = [];
+                this.boats.forEach(b => b.ingredients = []);
+                this.generateOrder();
+                AudioSys.init();
+            },
+            
+            pause() {
+                if (this.state === 'PLAYING') {
+                    this.state = 'PAUSED';
+                } else if (this.state === 'PAUSED') {
+                    this.state = 'PLAYING';
+                }
+            },
+            
+            gameOver() {
+                this.state = 'GAMEOVER';
+                this.saveGameState();
+                this.reportScore();
+            },
+            
+            saveGameState() {
+                const data = {
+                    score: this.score,
+                    ordersCompleted: this.ordersCompleted,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('munchboy_save_sushiplatter', JSON.stringify(data));
+            },
+            
+            reportScore() {
+                if (window.parent !== window) {
+                    parent.postMessage({type: 'score', value: this.score}, '*');
+                }
+            },
+            
+            draw() {
+                const ctx = this.ctx;
+                
+                // Clear
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                // Draw background - Japanese restaurant
+                this.drawBackground(ctx);
+                
+                if (this.state === 'TITLE') {
+                    this.drawTitle(ctx);
+                    return;
+                }
+                
+                if (this.state === 'GAMEOVER') {
+                    this.drawGameOver(ctx);
+                    return;
+                }
+                
+                // Draw order panel
+                this.drawOrderPanel(ctx);
+                
+                // Draw boats
+                this.drawBoats(ctx);
+                
+                // Draw catcher
+                this.drawCatcher(ctx);
+                
+                // Draw ingredients
+                this.drawIngredients(ctx);
+                
+                // Draw particles
+                this.drawParticles(ctx);
+                
+                // Draw floating texts
+                this.drawFloatingTexts(ctx);
+                
+                // Draw HUD
+                this.drawHUD(ctx);
+                
+                // Draw pause menu
+                if (this.state === 'PAUSED') {
+                    this.drawPauseMenu(ctx);
+                }
+            },
+            
+            drawBackground(ctx) {
+                // Wooden counter texture
+                ctx.fillStyle = '#3E2723';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                // Wood grain lines
+                ctx.strokeStyle = '#4E342E';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < CANVAS_HEIGHT; i += 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, i);
+                    ctx.lineTo(CANVAS_WIDTH, i);
+                    ctx.stroke();
+                }
+                
+                // Tatami mat border
+                ctx.fillStyle = '#D4C4A8';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, 30);
+                ctx.fillRect(0, CANVAS_HEIGHT - 30, CANVAS_WIDTH, 30);
+                
+                // Decorative pattern
+                ctx.strokeStyle = '#8B7355';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < CANVAS_WIDTH; i += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i, 30);
+                    ctx.moveTo(i, CANVAS_HEIGHT - 30);
+                    ctx.lineTo(i, CANVAS_HEIGHT);
+                    ctx.stroke();
+                }
+            },
+            
+            drawTitle(ctx) {
+                // Title background
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(40, 60, 400, 200);
+                
+                // Title
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 42px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#FF6B6B';
+                ctx.shadowBlur = 10;
+                ctx.fillText('SUSHI PLATTER', CANVAS_WIDTH/2, 120);
+                ctx.shadowBlur = 0;
+                
+                // Subtitle
+                ctx.fillStyle = '#FFF';
+                ctx.font = '16px "Segoe UI", sans-serif';
+                ctx.fillText('Catch ingredients to complete orders!', CANVAS_WIDTH/2, 155);
+                
+                // Instructions
+                ctx.font = '12px "Segoe UI", sans-serif';
+                ctx.fillStyle = '#AAA';
+                ctx.fillText('D-PAD: Move Catcher  |  A: Catch  |  B: Toss  |  L/R: Switch Boat', CANVAS_WIDTH/2, 190);
+                
+                // Press start
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 18px "Segoe UI", sans-serif';
+                if (Math.floor(Date.now() / 500) % 2 === 0) {
+                    ctx.fillText('Press START to Begin', CANVAS_WIDTH/2, 240);
+                }
+            },
+            
+            drawOrderPanel(ctx) {
+                // Panel background
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(5, 35, 130, 140);
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(5, 35, 130, 140);
+                
+                // Title
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 12px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('CURRENT ORDER', 70, 52);
+                
+                if (this.currentOrder) {
+                    // Order name
+                    ctx.fillStyle = '#FFF';
+                    ctx.font = '10px "Segoe UI", sans-serif';
+                    ctx.fillText(this.currentOrder.name, 70, 70);
+                    
+                    // Required ingredients
+                    let y = 90;
+                    for (let ing of this.currentOrder.ingredients) {
+                        const data = INGREDIENTS[ing];
+                        const hasIt = this.boats[this.selectedBoat].ingredients.some(
+                            i => i.type === ing
+                        );
+                        
+                        ctx.fillStyle = hasIt ? '#2ECC71' : '#FFF';
+                        ctx.font = '11px "Segoe UI", sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(`${data.emoji} ${data.name}`, 15, y);
+                        y += 18;
+                    }
+                }
+            },
+            
+            drawBoats(ctx) {
+                for (let i = 0; i < this.boats.length; i++) {
+                    const boat = this.boats[i];
+                    const isSelected = i === this.selectedBoat;
+                    
+                    // Selection highlight
+                    if (isSelected) {
+                        ctx.fillStyle = 'rgba(255,215,0,0.3)';
+                        ctx.fillRect(boat.x - 5, boat.y - 5, boat.width + 10, boat.height + 10);
+                    }
+                    
+                    // Boat body
+                    ctx.fillStyle = '#8D6E63';
+                    ctx.beginPath();
+                    ctx.moveTo(boat.x, boat.y);
+                    ctx.lineTo(boat.x + 10, boat.y + boat.height);
+                    ctx.lineTo(boat.x + boat.width - 10, boat.y + boat.height);
+                    ctx.lineTo(boat.x + boat.width, boat.y);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Boat rim
+                    ctx.strokeStyle = '#5D4037';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    // Boat interior
+                    ctx.fillStyle = '#A1887F';
+                    ctx.fillRect(boat.x + 10, boat.y + 10, boat.width - 20, boat.height - 15);
+                    
+                    // Boat number
+                    ctx.fillStyle = isSelected ? '#FFD700' : '#5D4037';
+                    ctx.font = 'bold 14px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${i + 1}`, boat.x + boat.width/2, boat.y + boat.height - 5);
+                    
+                    // Draw ingredients in boat
+                    for (let j = 0; j < boat.ingredients.length; j++) {
+                        const ing = boat.ingredients[j];
+                        const data = INGREDIENTS[ing.type];
+                        const ix = boat.x + 15 + (j % 3) * 30;
+                        const iy = boat.y + 5 + Math.floor(j / 3) * 15;
+                        
+                        ctx.fillStyle = data.color;
+                        ctx.beginPath();
+                        ctx.arc(ix, iy, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        
+                        ctx.font = '12px "Segoe UI", sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(data.emoji, ix, iy + 4);
+                    }
+                }
+            },
+            
+            drawCatcher(ctx) {
+                const y = 200;
+                
+                // Catcher bowl
+                ctx.fillStyle = '#607D8B';
+                ctx.beginPath();
+                ctx.arc(this.catcherX, y, 20, 0, Math.PI, false);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#455A64';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Handle
+                ctx.strokeStyle = '#455A64';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(this.catcherX - 20, y);
+                ctx.lineTo(this.catcherX - 30, y - 10);
+                ctx.stroke();
+                
+                // Glow effect
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 10;
+                ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            },
+            
+            drawIngredients(ctx) {
+                for (let ing of this.ingredients) {
+                    const data = INGREDIENTS[ing.type];
+                    
+                    ctx.save();
+                    ctx.translate(ing.x, ing.y);
+                    ctx.rotate(ing.rotation);
+                    
+                    // Ingredient body
+                    ctx.fillStyle = data.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Border
+                    ctx.strokeStyle = data.good ? '#2ECC71' : '#E74C3C';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Emoji
+                    ctx.font = '16px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(data.emoji, 0, 5);
+                    
+                    ctx.restore();
+                }
+            },
+            
+            drawParticles(ctx) {
+                for (let p of this.particles) {
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            },
+            
+            drawFloatingTexts(ctx) {
+                for (let t of this.floatingTexts) {
+                    ctx.globalAlpha = t.life;
+                    ctx.fillStyle = t.color;
+                    ctx.font = 'bold 16px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(t.text, t.x, t.y);
+                    ctx.globalAlpha = 1;
+                }
+            },
+            
+            drawHUD(ctx) {
+                // Score
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(CANVAS_WIDTH - 150, 5, 145, 50);
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(CANVAS_WIDTH - 150, 5, 145, 50);
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 14px "Segoe UI", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(`SCORE: ${this.score}`, CANVAS_WIDTH - 140, 25);
+                ctx.fillStyle = '#FFF';
+                ctx.fillText(`ORDERS: ${this.ordersCompleted}`, CANVAS_WIDTH - 140, 45);
+                
+                // Timer
+                const timerColor = this.timeRemaining < 10 ? '#E74C3C' : '#2ECC71';
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(CANVAS_WIDTH/2 - 40, 5, 80, 30);
+                ctx.strokeStyle = timerColor;
+                ctx.strokeRect(CANVAS_WIDTH/2 - 40, 5, 80, 30);
+                
+                ctx.fillStyle = timerColor;
+                ctx.font = 'bold 18px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(Math.ceil(this.timeRemaining).toString(), CANVAS_WIDTH/2, 26);
+            },
+            
+            drawPauseMenu(ctx) {
+                // Overlay
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                // Menu box
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(140, 80, 200, 160);
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(140, 80, 200, 160);
+                
+                // Title
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 24px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('PAUSED', CANVAS_WIDTH/2, 110);
+                
+                // Menu items
+                ctx.font = '16px "Segoe UI", sans-serif';
+                ctx.fillStyle = '#FFF';
+                ctx.fillText('A - Resume', CANVAS_WIDTH/2, 145);
+                ctx.fillText(`B - Mute: ${AudioSys.muted ? 'ON' : 'OFF'}`, CANVAS_WIDTH/2, 175);
+                ctx.fillText('START - Back to Menu', CANVAS_WIDTH/2, 205);
+            },
+            
+            drawGameOver(ctx) {
+                // Overlay
+                ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                // Game Over box
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(90, 60, 300, 200);
+                ctx.strokeStyle = '#E74C3C';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(90, 60, 300, 200);
+                
+                // Title
+                ctx.fillStyle = '#E74C3C';
+                ctx.font = 'bold 32px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('TIME\'S UP!', CANVAS_WIDTH/2, 100);
+                
+                // Stats
+                ctx.fillStyle = '#FFF';
+                ctx.font = '18px "Segoe UI", sans-serif';
+                ctx.fillText(`Final Score: ${this.score}`, CANVAS_WIDTH/2, 140);
+                ctx.fillText(`Orders Completed: ${this.ordersCompleted}`, CANVAS_WIDTH/2, 170);
+                
+                // Rating
+                let rating = 'Novice Chef';
+                if (this.ordersCompleted >= 3) rating = 'Apprentice Chef';
+                if (this.ordersCompleted >= 6) rating = 'Sushi Chef';
+                if (this.ordersCompleted >= 10) rating = 'Master Chef';
+                if (this.ordersCompleted >= 15) rating = 'SUSHI LEGEND';
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 16px "Segoe UI", sans-serif';
+                ctx.fillText(`Rank: ${rating}`, CANVAS_WIDTH/2, 200);
+                
+                // Restart prompt
+                ctx.fillStyle = '#2ECC71';
+                ctx.font = '14px "Segoe UI", sans-serif';
+                if (Math.floor(Date.now() / 500) % 2 === 0) {
+                    ctx.fillText('Press START to Play Again', CANVAS_WIDTH/2, 240);
+                }
+            },
+            
+            loop(timestamp) {
+                const dt = timestamp - this.lastTime;
+                this.lastTime = timestamp;
+                
+                this.update(dt);
+                this.draw();
+                
+                requestAnimationFrame((t) => this.loop(t));
+            }
+        };
+
+        // ==================== INPUT HANDLING ====================
+        const inputState = {};
+        let lastInputTime = {};
+        
+        window.addEventListener('message', (e) => {
+            const {type, button, state} = e.data;
+            
+            if (type === 'button') {
+                const prevState = inputState[button];
+                inputState[button] = state;
+                
+                // Button press (not hold)
+                if (state && !prevState) {
+                    handleButtonPress(button);
+                }
+            }
+            
+            if (type === 'mute') {
+                AudioSys.muted = true;
+            }
+        });
+        
+        function handleButtonPress(button) {
+            const now = Date.now();
+            if (lastInputTime[button] && now - lastInputTime[button] < 150) return;
+            lastInputTime[button] = now;
+            
+            switch (Game.state) {
+                case 'TITLE':
+                    if (button === 'START') {
+                        Game.start();
+                    }
+                    break;
+                    
+                case 'PLAYING':
+                    switch (button) {
+                        case 'LEFT':
+                            Game.moveCatcher(-1);
+                            break;
+                        case 'RIGHT':
+                            Game.moveCatcher(1);
+                            break;
+                        case 'A':
+                            Game.catchIngredient();
+                            break;
+                        case 'B':
+                            Game.tossIngredient();
+                            break;
+                        case 'L':
+                            Game.switchBoat(-1);
+                            break;
+                        case 'R':
+                            Game.switchBoat(1);
+                            break;
+                        case 'START':
+                            Game.pause();
+                            break;
+                    }
+                    break;
+                    
+                case 'PAUSED':
+                    switch (button) {
+                        case 'A':
+                            Game.pause();
+                            break;
+                        case 'B':
+                            AudioSys.muted = !AudioSys.muted;
+                            break;
+                        case 'START':
+                            Game.state = 'TITLE';
+                            break;
+                    }
+                    break;
+                    
+                case 'GAMEOVER':
+                    if (button === 'START') {
+                        Game.start();
+                    }
+                    break;
+            }
         }
         
-        window.parent.postMessage({ type: 'SCORE', score: score }, '*');
-        notes = notes.filter(n => n !== hitNote);
-    } else {
-        combo = 0;
-    }
-    
-    document.getElementById('score').textContent = score;
-    document.getElementById('combo').textContent = combo;
-}
-
-function gameLoop() {
-    if (gameState === 'paused') return;
-    
-    ctx.clearRect(0, 0, 480, 320);
-    
-    drawLane();
-    
-    // Update and draw notes
-    notes = notes.filter(n => {
-        n.update();
-        n.draw();
+        // Keyboard fallback for testing
+        window.addEventListener('keydown', (e) => {
+            const keyMap = {
+                'ArrowLeft': 'LEFT',
+                'ArrowRight': 'RIGHT',
+                'ArrowUp': 'UP',
+                'ArrowDown': 'DOWN',
+                'z': 'A',
+                'x': 'B',
+                'a': 'L',
+                's': 'R',
+                'Enter': 'START'
+            };
+            
+            const button = keyMap[e.key];
+            if (button) {
+                inputState[button] = true;
+                handleButtonPress(button);
+            }
+        });
         
-        // Missed note
-        if (n.y > 320 && !n.hit) {
-            combo = 0;
-            document.getElementById('combo').textContent = combo;
-            return false;
-        }
-        return n.y < 350;
-    });
-    
-    requestAnimationFrame(gameLoop);
-}
-
-function gameOver() {
-    gameState = 'gameover';
-    document.getElementById('finalScore').textContent = score;
-    document.getElementById('gameOver').style.display = 'block';
-    window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
-}
-
-function resetGame() {
-    score = 0;
-    combo = 0;
-    notes = [];
-    gameState = 'playing';
-    document.getElementById('gameOver').style.display = 'none';
-    document.getElementById('score').textContent = score;
-    document.getElementById('combo').textContent = combo;
-    spawnNote();
-}
-
-// Controls
-const keyMap = { 'KeyA': 0, 'KeyS': 1, 'KeyD': 2, 'KeyF': 3, 'KeyG': 4 };
-document.addEventListener('keydown', (e) => {
-    if (keyMap[e.code] !== undefined) hitLane(keyMap[e.code]);
-});
-
-// Touch controls
-const laneWidth = 96;
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const x = (touch.clientX - rect.left) * (480 / rect.width);
-    const lane = Math.floor(x / laneWidth);
-    if (lane >= 0 && lane < 5) hitLane(lane);
-});
-
-// PostMessage API
-window.addEventListener('message', (e) => {
-    switch(e.data.type) {
-        case 'PAUSE': gameState = 'paused'; break;
-        case 'RESUME': gameState = 'playing'; gameLoop(); break;
-        case 'SAVE_STATE': localStorage.setItem('sushiRoll_state', JSON.stringify({score, combo})); break;
-        case 'LOAD_STATE':
-            const saved = localStorage.getItem('sushiRoll_state');
-            if (saved) { const data = JSON.parse(saved); score = data.score; combo = data.combo; }
-            break;
-    }
-});
-
-// Start
-spawnNote();
-gameLoop();
-</script>
+        window.addEventListener('keyup', (e) => {
+            const keyMap = {
+                'ArrowLeft': 'LEFT',
+                'ArrowRight': 'RIGHT',
+                'ArrowUp': 'UP',
+                'ArrowDown': 'DOWN',
+                'z': 'A',
+                'x': 'B',
+                'a': 'L',
+                's': 'R',
+                'Enter': 'START'
+            };
+            
+            const button = keyMap[e.key];
+            if (button) {
+                inputState[button] = false;
+            }
+        });
+        
+        // ==================== INITIALIZATION ====================
+        window.onload = () => {
+            Game.init();
+        };
+        
+        // Resume audio context on first interaction
+        document.addEventListener('click', () => {
+            if (AudioSys.ctx && AudioSys.ctx.state === 'suspended') {
+                AudioSys.ctx.resume();
+            }
+        }, { once: true });
+    </script>
 </body>
 </html>

@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taco Tower - Physics Stacking Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a0a00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(255, 140, 0, 0.5);
+        }
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+        }
+        #controls {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffcc00;
+            font-size: 10px;
+            text-align: center;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
+        <div id="controls">D-PAD: Move | A: Drop | B: Squish | L/R: Tilt | START: Pause</div>
+    </div>
+
+    <script>
+        // ============================================
+        // TACO TOWER - Physics Stacking Game
+        // ============================================
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game constants
+        const GAME_WIDTH = 480;
+        const GAME_HEIGHT = 320;
+        const GRAVITY = 0.3;
+        const MAX_TILT = 50; // degrees - game over threshold
+        const BASE_WIDTH = 80;
+        const SHELL_HEIGHT = 25;
+        const FILLING_HEIGHT = 8;
+        
+        // Filling types with weights
+        const FILLINGS = {
+            MEAT: { name: 'Meat', weight: 3, color: '#8B4513', width: 50 },
+            CHEESE: { name: 'Cheese', weight: 2, color: '#FFD700', width: 45 },
+            LETTUCE: { name: 'Lettuce', weight: 1, color: '#32CD32', width: 55 },
+            SALSA: { name: 'Salsa', weight: 0.5, color: '#FF4500', width: 40 }
+        };
+        
+        // Audio context
+        let audioCtx = null;
+        let audioMuted = false;
+        
+        // Game state
+        let gameState = 'title'; // title, playing, paused, gameover
+        let score = 0;
+        let height = 0;
+        let tower = [];
+        let currentShell = null;
+        let currentFilling = null;
+        let fallingItems = [];
+        let particles = [];
+        let cameraY = 0;
+        let towerTilt = 0;
+        let stability = 100;
+        let gameTime = 0;
+        let selectedFilling = 'MEAT';
+        let shellX = GAME_WIDTH / 2;
+        let shellSpeed = 2;
+        let squishPower = 0;
+        let tiltOffset = 0;
+        
+        // Input state
+        const inputState = {
+            'UP': false,
+            'DOWN': false,
+            'LEFT': false,
+            'RIGHT': false,
+            'A': false,
+            'B': false,
+            'X': false,
+            'Y': false,
+            'L': false,
+            'R': false,
+            'START': false,
+            'SELECT': false
+        };
+        
+        // Menu state
+        let menuSelection = 0;
+        const menuOptions = ['Resume', 'Mute Audio', 'Back to Selector'];
+        
+        // ============================================
+        // AUDIO SYSTEM
+        // ============================================
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function playSound(type) {
+            if (audioMuted || !audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            switch(type) {
+                case 'drop':
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                    break;
+                    
+                case 'squish':
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                    break;
+                    
+                case 'creak':
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(80, now);
+                    osc.frequency.linearRampToValueAtTime(60, now + 0.3);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                    break;
+                    
+                case 'collapse':
+                    osc.type = 'square';
+                    for (let i = 0; i < 5; i++) {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(100 - i * 15, now + i * 0.05);
+                        g.gain.setValueAtTime(0.3, now + i * 0.05);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.05 + 0.2);
+                        o.start(now + i * 0.05);
+                        o.stop(now + i * 0.05 + 0.2);
+                    }
+                    break;
+                    
+                case 'select':
+                    osc.frequency.setValueAtTime(800, now);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                    break;
+                    
+                case 'confirm':
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                    break;
+            }
+        }
+        
+        // Background music (simple loop)
+        let musicOsc = null;
+        let musicGain = null;
+        let musicInterval = null;
+        
+        function startMusic() {
+            if (audioMuted || !audioCtx) return;
+            
+            const notes = [220, 261.63, 329.63, 392, 440, 392, 329.63, 261.63];
+            let noteIndex = 0;
+            
+            musicInterval = setInterval(() => {
+                if (audioMuted || gameState === 'paused') return;
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(notes[noteIndex], audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.4);
+                
+                noteIndex = (noteIndex + 1) % notes.length;
+            }, 400);
+        }
+        
+        function stopMusic() {
+            if (musicInterval) {
+                clearInterval(musicInterval);
+                musicInterval = null;
+            }
+        }
+        
+        // ============================================
+        // PHYSICS CLASSES
+        // ============================================
+        
+        class TacoShell {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = BASE_WIDTH;
+                this.height = SHELL_HEIGHT;
+                this.vx = 0;
+                this.vy = 0;
+                this.settled = false;
+                this.fillings = [];
+                this.tilt = 0;
+                this.color = '#DAA520';
+            }
+            
+            update() {
+                if (!this.settled) {
+                    this.vy += GRAVITY;
+                    this.y += this.vy;
+                    this.x += this.vx;
+                    
+                    // Check collision with tower
+                    const groundY = GAME_HEIGHT - 30 - cameraY;
+                    let collisionY = groundY;
+                    
+                    for (let shell of tower) {
+                        if (Math.abs(this.x - shell.x) < (this.width + shell.width) / 2) {
+                            collisionY = Math.min(collisionY, shell.y - shell.height / 2);
+                        }
+                    }
+                    
+                    if (this.y + this.height / 2 >= collisionY) {
+                        this.y = collisionY - this.height / 2;
+                        this.vy = 0;
+                        this.vx = 0;
+                        this.settled = true;
+                        this.onLand();
+                    }
+                }
+            }
+            
+            onLand() {
+                playSound('drop');
+                createParticles(this.x, this.y + this.height / 2, this.color, 5);
+                
+                // Add to tower
+                tower.push(this);
+                currentShell = null;
+                
+                // Calculate new tilt
+                calculateTowerPhysics();
+                
+                // Score
+                score += 10;
+                height = Math.max(height, tower.length);
+                
+                // Spawn new shell
+                setTimeout(spawnShell, 500);
+            }
+            
+            draw(ctx, offsetX, offsetY) {
+                const drawX = this.x + offsetX;
+                const drawY = this.y + offsetY;
+                
+                ctx.save();
+                ctx.translate(drawX, drawY);
+                ctx.rotate(this.tilt * Math.PI / 180);
+                
+                // Shell body (U shape)
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(-this.width / 2, -this.height / 2);
+                ctx.quadraticCurveTo(-this.width / 2, this.height / 2, 0, this.height / 2);
+                ctx.quadraticCurveTo(this.width / 2, this.height / 2, this.width / 2, -this.height / 2);
+                ctx.lineTo(this.width / 2 - 5, -this.height / 2);
+                ctx.quadraticCurveTo(0, this.height / 2 - 5, -this.width / 2 + 5, -this.height / 2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Shell texture
+                ctx.strokeStyle = '#B8860B';
+                ctx.lineWidth = 1;
+                for (let i = -this.width / 2 + 8; i < this.width / 2 - 8; i += 8) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, -this.height / 2 + 3);
+                    ctx.lineTo(i + 3, this.height / 2 - 5);
+                    ctx.stroke();
+                }
+                
+                // Draw fillings
+                this.fillings.forEach((filling, i) => {
+                    const fy = -this.height / 2 - (i + 1) * FILLING_HEIGHT + 3;
+                    filling.draw(ctx, 0, fy);
+                });
+                
+                ctx.restore();
+            }
+            
+            getTotalWeight() {
+                let weight = 2; // Shell weight
+                this.fillings.forEach(f => weight += f.weight);
+                return weight;
+            }
+            
+            getCenterOfMass() {
+                let totalWeight = this.getTotalWeight();
+                let moment = this.x * 2; // Shell moment
+                this.fillings.forEach(f => {
+                    moment += (this.x + f.offsetX) * f.weight;
+                });
+                return moment / totalWeight;
+            }
+        }
+        
+        class Filling {
+            constructor(type, x, y) {
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.data = FILLINGS[type];
+                this.width = this.data.width;
+                this.height = FILLING_HEIGHT;
+                this.vx = 0;
+                this.vy = 0;
+                this.settled = false;
+                this.offsetX = 0;
+                this.weight = this.data.weight;
+            }
+            
+            update() {
+                if (!this.settled) {
+                    this.vy += GRAVITY;
+                    this.y += this.vy;
+                    this.x += this.vx;
+                    
+                    // Check collision with current shell
+                    if (currentShell) {
+                        const shellTop = currentShell.y - currentShell.height / 2 - currentShell.fillings.length * FILLING_HEIGHT;
+                        
+                        if (this.y + this.height / 2 >= shellTop &&
+                            Math.abs(this.x - currentShell.x) < (this.width + currentShell.width) / 2 - 5) {
+                            this.y = shellTop - this.height / 2;
+                            this.vy = 0;
+                            this.vx = 0;
+                            this.settled = true;
+                            this.onLand(currentShell);
+                        }
+                    }
+                    
+                    // Remove if off screen
+                    if (this.y > GAME_HEIGHT + 50) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            
+            onLand(shell) {
+                playSound('squish');
+                createParticles(this.x, this.y + this.height / 2, this.data.color, 3);
+                
+                this.offsetX = this.x - shell.x;
+                shell.fillings.push(this);
+                currentFilling = null;
+                
+                // Recalculate physics
+                calculateTowerPhysics();
+                
+                // Score based on weight
+                score += Math.floor(this.weight * 5);
+            }
+            
+            draw(ctx, x, y) {
+                ctx.fillStyle = this.data.color;
+                
+                if (this.type === 'MEAT') {
+                    // Chunky meat
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Texture
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(x - 10, y - 2, 6, 4);
+                    ctx.fillRect(x + 5, y - 1, 5, 3);
+                } else if (this.type === 'CHEESE') {
+                    // Shredded cheese strips
+                    for (let i = -this.width / 2 + 3; i < this.width / 2 - 3; i += 5) {
+                        ctx.fillRect(x + i, y - this.height / 2 + 1, 3, this.height - 2);
+                    }
+                } else if (this.type === 'LETTUCE') 
+{
+                    // Leafy lettuce
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        const lx = x + (i - 2) * 8;
+                        const ly = y + Math.sin(i * 1.5) * 3;
+                        if (i === 0) ctx.moveTo(lx, ly);
+                        else ctx.lineTo(lx, ly);
+                    }
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = this.data.color;
+                    ctx.stroke();
+                } else if (this.type === 'SALSA') {
+                    // Liquid salsa
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, this.width / 2, this.height / 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Highlight
+                    ctx.fillStyle = '#FF6666';
+                    ctx.beginPath();
+                    ctx.ellipse(x - 5, y - 1, this.width / 4, this.height / 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.color = color;
+                this.life = 1;
+                this.size = Math.random() * 4 + 2;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1;
+                this.life -= 0.03;
+                return this.life > 0;
+            }
+            
+            draw(ctx, offsetX, offsetY) {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x + offsetX - this.size / 2, this.y + offsetY - this.size / 2, this.size, this.size);
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // ============================================
+        // GAME FUNCTIONS
+        // ============================================
+        
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+        
+        function spawnShell() {
+            if (gameState !== 'playing') return;
+            currentShell = new TacoShell(shellX, -30);
+            currentFilling = null;
+        }
+        
+        function dropFilling() {
+            if (!currentShell || currentFilling) return;
+            
+            const types = Object.keys(FILLINGS);
+            const type = types[Math.floor(Math.random() * types.length)];
+            currentFilling = new Filling(type, shellX, -20);
+            fallingItems.push(currentFilling);
+        }
+        
+        function squishTower() {
+            playSound('squish');
+            squishPower = 10;
+            
+            // Compress tower slightly and improve stability
+            tower.forEach((shell, i) => {
+                shell.y += 2;
+            });
+            
+            // Reduce tilt
+            towerTilt *= 0.7;
+            stability = Math.min(100, stability + 15);
+            
+            createParticles(GAME_WIDTH / 2, GAME_HEIGHT - 30 - cameraY, '#DAA520', 8);
+        }
+        
+        function tiltTower(direction) {
+            // Risky move - tilt the tower
+            tiltOffset += direction * 2;
+            towerTilt += direction * 3;
+            stability -= 5;
+        }
+        
+        function calculateTowerPhysics() {
+            if (tower.length === 0) return;
+            
+            // Calculate center of mass for entire tower
+            let totalWeight = 0;
+            let totalMoment = 0;
+            
+            tower.forEach(shell => {
+                const weight = shell.getTotalWeight();
+                const com = shell.getCenterOfMass();
+                totalWeight += weight;
+                totalMoment += com * weight;
+            });
+            
+            const centerOfMass = totalMoment / totalWeight;
+            const baseCenter = GAME_WIDTH / 2 + tiltOffset;
+            
+            // Calculate tilt based on how far COM is from base center
+            const offset = centerOfMass - baseCenter;
+            const heightFactor = tower.length * SHELL_HEIGHT;
+            
+            towerTilt = Math.atan2(offset, heightFactor) * 180 / Math.PI;
+            
+            // Calculate stability
+            const tiltRatio = Math.abs(towerTilt) / MAX_TILT;
+            stability = Math.max(0, 100 - tiltRatio * 100);
+            
+            // Apply tilt to each shell (cumulative)
+            let cumulativeTilt = 0;
+            tower.forEach((shell, i) => {
+                cumulativeTilt += towerTilt * 0.1 * (i + 1) / tower.length;
+                shell.tilt = cumulativeTilt;
+            });
+            
+            // Check for game over
+            if (Math.abs(towerTilt) > MAX_TILT) {
+                gameOver();
+            }
+            
+            // Play warning sound if unstable
+            if (stability < 30 && Math.random() < 0.05) {
+                playSound('creak');
+            }
+        }
+        
+        function gameOver() {
+            gameState = 'gameover';
+            playSound('collapse');
+            stopMusic();
+            
+            // Create collapse particles
+            tower.forEach(shell => {
+                createParticles(shell.x, shell.y, shell.color, 5);
+                shell.fillings.forEach(f => {
+                    createParticles(shell.x + f.offsetX, shell.y, f.data.color, 2);
+                });
+            });
+            
+            reportScore(score);
+            saveGameState();
+        }
+        
+        function resetGame() {
+            tower = [];
+            fallingItems = [];
+            particles = [];
+            currentShell = null;
+            currentFilling = null;
+            score = 0;
+            height = 0;
+            cameraY = 0;
+            towerTilt = 0;
+            stability = 100;
+            tiltOffset = 0;
+            squishPower = 0;
+            gameTime = 0;
+            
+            spawnShell();
+        }
+        
+        // ============================================
+        // INPUT HANDLING
+        // ============================================
+        
+        // PostMessage API
+        window.addEventListener('message', (e) => {
+            const {type, button, state} = e.data;
+            if (type === 'button') {
+                inputState[button] = state;
+                
+                // Handle button presses
+                if (state) {
+                    handleButtonPress(button);
+                }
+            }
+            if (type === 'mute') audioMuted = true;
+        });
+        
+        // Keyboard fallback
+        window.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft': inputState.LEFT = true; break;
+                case 'ArrowRight': inputState.RIGHT = true; break;
+                case 'ArrowUp': inputState.UP = true; break;
+                case 'ArrowDown': inputState.DOWN = true; break;
+                case 'z': case 'Z': inputState.A = true; handleButtonPress('A'); break;
+                case 'x': case 'X': inputState.B = true; handleButtonPress('B'); break;
+                case 'a': case 'A': inputState.L = true; handleButtonPress('L'); break;
+                case 's': case 'S': inputState.R = true; handleButtonPress('R'); break;
+                case 'Enter': inputState.START = true; handleButtonPress('START'); break;
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft': inputState.LEFT = false; break;
+                case 'ArrowRight': inputState.RIGHT = false; break;
+                case 'ArrowUp': inputState.UP = false; break;
+                case 'ArrowDown': inputState.DOWN = false; break;
+                case 'z': case 'Z': inputState.A = false; break;
+                case 'x': case 'X': inputState.B = false; break;
+                case 'a': case 'A': inputState.L = false; break;
+                case 's': case 'S': inputState.R = false; break;
+                case 'Enter': inputState.START = false; break;
+            }
+        });
+        
+        function handleButtonPress(button) {
+            initAudio();
+            
+            if (gameState === 'title') {
+                if (button === 'A' || button === 'START') {
+                    gameState = 'playing';
+                    resetGame();
+                    startMusic();
+                    playSound('confirm');
+                }
+                return;
+            }
+            
+            if (gameState === 'gameover') {
+                if (button === 'A' || button === 'START') {
+                    gameState = 'title';
+                    playSound('confirm');
+                }
+                return;
+            }
+            
+            if (gameState === 'paused') {
+                if (button === 'UP') {
+                    menuSelection = (menuSelection - 1 + menuOptions.length) % menuOptions.length;
+                    playSound('select');
+                } else if (button === 'DOWN') {
+                    menuSelection = (menuSelection + 1) % menuOptions.length;
+                    playSound('select');
+                } else if (button === 'A') {
+                    handleMenuSelect();
+                } else if (button === 'START') {
+                    gameState = 'playing';
+                    playSound('confirm');
+                }
+                return;
+            }
+            
+            if (gameState === 'playing') {
+                switch(button) {
+                    case 'A':
+                        dropFilling();
+                        break;
+                    case 'B':
+                        squishTower();
+                        break;
+                    case 'L':
+                        tiltTower(-1);
+                        break;
+                    case 'R':
+                        tiltTower(1);
+                        break;
+                    case 'START':
+                        gameState = 'paused';
+                        menuSelection = 0;
+                        playSound('select');
+                        break;
+                }
+            }
+        }
+        
+        function handleMenuSelect() {
+            switch(menuSelection) {
+                case 0: // Resume
+                    gameState = 'playing';
+                    playSound('confirm');
+                    break;
+                case 1: // Mute toggle
+                    audioMuted = !audioMuted;
+                    menuOptions[1] = audioMuted ? 'Unmute Audio' : 'Mute Audio';
+                    if (!audioMuted) startMusic();
+                    else stopMusic();
+                    playSound('confirm');
+                    break;
+                case 2: // Back to selector
+                    parent.postMessage({type: 'navigate', to: 'selector'}, '*');
+                    break;
+            }
+        }
+        
+        // ============================================
+        // RENDERING
+        // ============================================
+        
+        function drawBackground() {
+            // Mexican kitchen gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+            gradient.addColorStop(0, '#8B4513');
+            gradient.addColorStop(0.5, '#A0522D');
+            gradient.addColorStop(1, '#CD853F');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Tile pattern
+            ctx.fillStyle = 'rgba(139, 69, 19, 0.3)';
+            for (let y = 0; y < GAME_HEIGHT; y += 40) {
+                for (let x = 0; x < GAME_WIDTH; x += 40) {
+                    if ((x / 40 + y / 40) % 2 === 0) {
+                        ctx.fillRect(x, y, 40, 40);
+                    }
+                }
+            }
+            
+            // Counter top
+            ctx.fillStyle = '#DEB887';
+            ctx.fillRect(0, GAME_HEIGHT - 30, GAME_WIDTH, 30);
+            ctx.fillStyle = '#D2691E';
+            ctx.fillRect(0, GAME_HEIGHT - 35, GAME_WIDTH, 5);
+        }
+        
+        function drawUI() {
+            // Score display
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(5, 5, 100, 50);
+            ctx.strokeStyle = '#FF8C00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(5, 5, 100, 50);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 12px Courier New';
+            ctx.fillText('SCORE', 10, 18);
+            ctx.font = 'bold 16px Courier New';
+            ctx.fillText(score.toString().padStart(6, '0'), 10, 35);
+            ctx.font = '10px Courier New';
+            ctx.fillText(`Height: ${height}`, 10, 48);
+            
+            // Stability meter
+            const meterX = GAME_WIDTH - 110;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(meterX, 5, 105, 40);
+            ctx.strokeStyle = '#FF8C00';
+            ctx.strokeRect(meterX, 5, 105, 40);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 10px Courier New';
+            ctx.fillText('STABILITY', meterX + 5, 18);
+            
+            // Stability bar
+            const barWidth = 95;
+            const stabilityWidth = (stability / 100) * barWidth;
+            
+            let stabilityColor = '#00FF00';
+            if (stability < 50) stabilityColor = '#FFFF00';
+            if (stability < 25) stabilityColor = '#FF0000';
+            
+            ctx.fillStyle = '#333';
+            ctx.fillRect(meterX + 5, 25, barWidth, 15);
+            ctx.fillStyle = stabilityColor;
+            ctx.fillRect(meterX + 5, 25, stabilityWidth, 15);
+            ctx.strokeStyle = '#FFF';
+            ctx.strokeRect(meterX + 5, 25, barWidth, 15);
+            
+            // Tilt indicator
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(GAME_WIDTH / 2 - 40, 5, 80, 25);
+            ctx.strokeStyle = '#FF8C00';
+            ctx.strokeRect(GAME_WIDTH / 2 - 40, 5, 80, 25);
+            
+            ctx.fillStyle = Math.abs(towerTilt) > 40 ? '#FF0000' : '#FFD700';
+            ctx.font = 'bold 12px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(`TILT: ${towerTilt.toFixed(1)}°`, GAME_WIDTH / 2, 22);
+            ctx.textAlign = 'left';
+            
+            // Controls hint
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(5, GAME_HEIGHT - 50, 200, 18);
+            ctx.fillStyle = '#AAA';
+            ctx.font = '9px Courier New';
+            ctx.fillText('A:Drop B:Squish L/R:Tilt', 8, GAME_HEIGHT - 38);
+        }
+        
+        function drawTitle() {
+            drawBackground();
+            
+            // Title
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 36px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('TACO TOWER', GAME_WIDTH / 2, 80);
+            
+            // Decorative tacos
+            ctx.font = '24px Arial';
+            ctx.fillText('🌮', GAME_WIDTH / 2 - 100, 85);
+            ctx.fillText('🌮', GAME_WIDTH / 2 + 100, 85);
+            
+            // Subtitle
+            ctx.fillStyle = '#FFA500';
+            ctx.font = 'bold 14px Courier New';
+            ctx.fillText('Physics Stacking Game', GAME_WIDTH / 2, 110);
+            
+            // Instructions
+            ctx.fillStyle = '#DDD';
+            ctx.font = '11px Courier New';
+            ctx.textAlign = 'left';
+            ctx.fillText('Stack taco shells as high as you can!', 80, 150);
+            ctx.fillText('Fillings have different weights:', 80, 170);
+            ctx.fillText('  Meat (heavy)  Cheese (medium)', 80, 185);
+            ctx.fillText('  Lettuce (light)  Salsa (liquid)', 80, 200);
+            ctx.fillText('Keep tilt under 50° or tower collapses!', 80, 220);
+            
+            // Press start
+            if (Math.floor(Date.now() / 500) % 2 === 0) {
+                ctx.fillStyle = '#00FF00';
+                ctx.font = 'bold 14px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText('Press A or START to Begin', GAME_WIDTH / 2, 260);
+            }
+            
+            ctx.textAlign = 'left';
+        }
+        
+        function drawPauseMenu() {
+            // Semi-transparent overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Menu box
+            const menuWidth = 200;
+            const menuHeight = 150;
+            const menuX = (GAME_WIDTH - menuWidth) / 2;
+            const menuY = (GAME_HEIGHT - menuHeight) / 2;
+            
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(menuX, menuY, menuWidth, menuHeight);
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(menuX, menuY, menuWidth, menuHeight);
+            
+            // Title
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 18px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('PAUSED', GAME_WIDTH / 2, menuY + 30);
+            
+            // Menu options
+            ctx.font = '14px Courier New';
+            menuOptions.forEach((option, i) => {
+                const y = menuY + 60 + i * 25;
+                if (i === menuSelection) {
+                    ctx.fillStyle = '#00FF00';
+                    ctx.fillText('> ' + option + ' <', GAME_WIDTH / 2, y);
+                } else {
+                    ctx.fillStyle = '#DDD';
+                    ctx.fillText(option, GAME_WIDTH / 2, y);
+                }
+            });
+            
+            ctx.textAlign = 'left';
+        }
+        
+        function drawGameOver() {
+            // Semi-transparent overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Game Over text
+            ctx.fillStyle = '#FF0000';
+            ctx.font = 'bold 32px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('TOWER COLLAPSED!', GAME_WIDTH / 2, 100);
+            
+            // Final score
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 20px Courier New';
+            ctx.fillText('FINAL SCORE', GAME_WIDTH / 2, 150);
+            ctx.font = 'bold 28px Courier New';
+            ctx.fillText(score.toString().padStart(6, '0'), GAME_WIDTH / 2, 185);
+            
+            ctx.font = '16px Courier New';
+            ctx.fillText(`Height Reached: ${height} tacos`, GAME_WIDTH / 2, 215);
+            
+            // Press to continue
+            if (Math.floor(Date.now() / 500) % 2 === 0) {
+                ctx.fillStyle = '#00FF00';
+                ctx.font = 'bold 14px Courier New';
+                ctx.fillText('Press A or START to Continue', GAME_WIDTH / 2, 260);
+            }
+            
+            ctx.textAlign = 'left';
+        }
+        
+        // ============================================
+        // MAIN GAME LOOP
+        // ============================================
+        
+        function update() {
+            if (gameState !== 'playing') return;
+            
+            gameTime++;
+            
+            // Handle movement input
+            if (inputState.LEFT) {
+                shellX = Math.max(50, shellX - shellSpeed);
+            }
+            if (inputState.RIGHT) {
+                shellX = Math.min(GAME_WIDTH - 50, shellX + shellSpeed);
+            }
+            
+            // Update current shell position
+            if (currentShell && !currentShell.settled) {
+                currentShell.x = shellX;
+            }
+            
+            // Decay squish power
+            if (squishPower > 0) squishPower *= 0.9;
+            
+            // Decay tilt offset
+            tiltOffset *= 0.98;
+            
+            // Update falling items
+            fallingItems = fallingItems.filter(item => {
+                const alive = item.update();
+                if (!alive || item.settled) {
+                    return false;
+                }
+                return true;
+            });
+            
+            // Update current shell
+            if (currentShell) {
+                currentShell.update();
+            }
+            
+            // Update particles
+            particles = particles.filter(p => p.update());
+            
+            // Recalculate physics
+            if (gameTime % 10 === 0) {
+                calculateTowerPhysics();
+            }
+            
+            // Update camera to follow tower
+            const targetCameraY = Math.max(0, (tower.length - 5) * SHELL_HEIGHT);
+            cameraY += (targetCameraY - cameraY) * 0.1;
+        }
+        
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            if (gameState === 'title') {
+                drawTitle();
+                return;
+            }
+            
+            drawBackground();
+            
+            // Calculate camera offset
+            const offsetY = cameraY;
+            
+            // Draw tower
+            tower.forEach(shell => {
+                shell.draw(ctx, 0, offsetY);
+            });
+            
+            // Draw falling items
+            fallingItems.forEach(item => {
+                item.draw(ctx, item.x, item.y + offsetY);
+            });
+            
+            // Draw current shell
+            if (currentShell) {
+                // Ghost shell at drop position
+                ctx.globalAlpha = 0.3;
+                ctx.strokeStyle = '#FFD700';
+                ctx.setLineDash([5, 5]);
+                ctx.strokeRect(shellX - BASE_WIDTH / 2, currentShell.y + offsetY - SHELL_HEIGHT / 2, BASE_WIDTH, SHELL_HEIGHT);
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+                
+                currentShell.draw(ctx, 0, offsetY);
+            }
+            
+            // Draw particles
+            particles.forEach(p => p.draw(ctx, 0, offsetY));
+            
+            // Draw UI
+            drawUI();
+            
+            // Draw pause menu
+            if (gameState === 'paused') {
+                drawPauseMenu();
+            }
+            
+            // Draw game over
+            if (gameState === 'gameover') {
+                drawGameOver();
+            }
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // ============================================
+        // REQUIRED API FUNCTIONS
+        // ============================================
+        
+        function reportScore(score) {
+            parent.postMessage({type: 'score', value: score}, '*');
+        }
+        
+        function saveGameState() {
+            localStorage.setItem('munchboy_save_tacotower', JSON.stringify({
+                score: score,
+                height: height,
+                timestamp: Date.now()
+            }));
+        }
+        
+        function loadGameState() {
+            const saved = localStorage.getItem('munchboy_save_tacotower');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            return null;
+        }
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        // Load saved state
+        const savedState = loadGameState();
+        if (savedState) {
+            console.log('Loaded saved state:', savedState);
+        }
+        
+        // Start game loop
+        gameLoop();
+        
+        // Initial draw
+        drawTitle();
+    </script>
+</body>
+</html>
