@@ -51,11 +51,6 @@ const GAMES = [
   { id: 'ingredient-match', name: 'Ingredient Match', cover: '/games/ingredient-match/cover.png', url: '/games/ingredient-match/index.html' },
   { id: 'perfect-steak', name: 'Perfect Steak', cover: '/games/perfect-steak/cover.png', url: '/games/perfect-steak/index.html' },
   { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', url: '/games/taco-tower/index.html' },
-  // GBA Homebrew Games (with music)
-  { id: 'luminesweeper', name: 'Luminesweeper', cover: '/games/luminesweeper/cover.svg', url: '/games/luminesweeper/index.html' },
-  { id: 'bulletgba', name: 'BulletGBA', cover: '/games/bulletgba/cover.svg', url: '/games/bulletgba/index.html' },
-  { id: 'gorf', name: 'Gorf', cover: '/games/gorf/cover.svg', url: '/games/gorf/index.html' },
-  { id: 'ucity', name: 'μCity', cover: '/games/ucity/cover.svg', url: '/games/ucity/index.html' },
 ];
 
 export function HikariBoy({ 
