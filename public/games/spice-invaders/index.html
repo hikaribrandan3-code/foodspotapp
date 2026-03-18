@@ -16,7 +16,7 @@
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H,SCALE;
-function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;SCALE=W/320;}
+function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;SCALE=H/480;}
 resize();
 window.addEventListener('resize',resize);
 
@@ -584,10 +584,14 @@ class Game{
   setupInput(){
     window.addEventListener('message',e=>{
       const{type,button,state}=e.data;
-      if(type==='BUTTON_PRESS'||type==='BUTTON_RELEASE'){
-        const isDown=(state!==undefined)?state:(type==='BUTTON_PRESS');
-        const map={'dpad-left':'LEFT','dpad-right':'RIGHT','dpad-up':'UP','dpad-down':'DOWN','a':'A','b':'B','l':'L','r':'R','start':'START','select':'SELECT'};
-        const g=map[button];if(g){const was=this.inp[g];this.inp[g]=isDown;if(isDown&&!was)this.inp[g+'_PRESSED']=true;}
+      if(type==='BUTTON_PRESS'){
+        const map={'dpad-left':'LEFT','dpad-right':'RIGHT','dpad-up':'UP','dpad-down':'DOWN','a':'A','b':'B','start':'START'};
+        const g=map[button];
+        if(g){this.inp[g]=true;this.inp[g+'_PRESSED']=true;}
+      }else if(type==='BUTTON_RELEASE'){
+        const map={'dpad-left':'LEFT','dpad-right':'RIGHT','dpad-up':'UP','dpad-down':'DOWN','a':'A','b':'B','start':'START'};
+        const g=map[button];
+        if(g){this.inp[g]=false;}
       }
     });
     window.addEventListener('keydown',e=>{
@@ -764,9 +768,9 @@ class Game{
 
   draw(){
     ctx.save();ctx.clearRect(0,0,W,H);
-    // Anchor to bottom so ship is always visible, top can be cut off
-    const oy=H-BH*SCALE;
-    ctx.translate(0,oy);ctx.scale(SCALE,SCALE);
+    // Scale to fit full height, center horizontally
+    const ox=(W-BW*SCALE)/2;
+    ctx.translate(ox,0);ctx.scale(SCALE,SCALE);
     this.shake.apply(ctx);
     this.nebula.draw(ctx);this.stars.draw(ctx,this.frame);
     switch(this.state){
