@@ -1219,6 +1219,9 @@ function Home({ config: configProp }) {
                     onClose={() => setShowArcade(false)}
                     controllerColor={tenantData?.primary_color || '#8B5CF6'}
                     userId={tenantData?.business_name || 'guest'}
+                    munchboyShellColor={tenantData?.munchboy_shell_color}
+                    munchboyAColor={tenantData?.munchboy_a_color}
+                    munchboyBColor={tenantData?.munchboy_b_color}
                 />
             )}
         </div>

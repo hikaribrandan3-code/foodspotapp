@@ -42,7 +42,10 @@ const GAMES = [
 
 export function HikariBoy({ 
   onClose, 
-  foodReady = false
+  foodReady = false,
+  munchboyShellColor,
+  munchboyAColor,
+  munchboyBColor
 }) {
   const [isBooting, setIsBooting] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
@@ -55,16 +58,15 @@ export function HikariBoy({
   useEffect(() => {
     document.body.classList.add('hikariboy-active');
     
-    // Apply tenant Munchboy colors from localStorage (set by TenantContext)
-    const tenant = JSON.parse(localStorage.getItem('tenant') || '{}');
-    if (tenant.munchboy_shell_color) {
-      document.documentElement.style.setProperty('--shell-color', tenant.munchboy_shell_color);
+    // Apply tenant Munchboy colors from props (passed from parent)
+    if (munchboyShellColor) {
+      document.documentElement.style.setProperty('--shell-color', munchboyShellColor);
     }
-    if (tenant.munchboy_a_color) {
-      document.documentElement.style.setProperty('--button-a-color', tenant.munchboy_a_color);
+    if (munchboyAColor) {
+      document.documentElement.style.setProperty('--button-a-color', munchboyAColor);
     }
-    if (tenant.munchboy_b_color) {
-      document.documentElement.style.setProperty('--button-b-color', tenant.munchboy_b_color);
+    if (munchboyBColor) {
+      document.documentElement.style.setProperty('--button-b-color', munchboyBColor);
     }
     
     const authSelectors = [

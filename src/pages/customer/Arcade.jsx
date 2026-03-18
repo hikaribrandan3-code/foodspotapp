@@ -8,7 +8,7 @@ import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
  */
 const Arcade = () => {
     const navigate = useNavigate()
-    const { slug: tenantSlug } = useTenant()
+    const { slug: tenantSlug, tenantData } = useTenant()
 
     const handleClose = useCallback(() => {
         const homePath = tenantSlug ? `/${tenantSlug}/home` : '/home'
@@ -25,7 +25,10 @@ const Arcade = () => {
         }}>
             <HikariBoy 
                 onClose={handleClose}
-                controllerColor="#8B5CF6"
+                controllerColor={tenantData?.primary_color || '#8B5CF6'}
+                munchboyShellColor={tenantData?.munchboy_shell_color}
+                munchboyAColor={tenantData?.munchboy_a_color}
+                munchboyBColor={tenantData?.munchboy_b_color}
             />
         </div>
     )
