@@ -16,7 +16,7 @@
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H,SCALE;
-function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;const scaleH=H/480,scaleW=W/320;SCALE=Math.max(scaleH,scaleW*0.65);}
+function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;const scaleH=H/480,scaleW=W/320;SCALE=Math.max(scaleH,scaleW*0.88);}
 resize();
 window.addEventListener('resize',resize);
 
@@ -604,8 +604,7 @@ class Game{
       const map={'ArrowLeft':'LEFT','ArrowRight':'RIGHT','ArrowUp':'UP','ArrowDown':'DOWN','z':'A','Z':'A','x':'B','X':'B','a':'L','A':'L','s':'R','S':'R','Enter':'START',' ':'A'};
       const g=map[e.key];if(g){this.inp[g]=false;if(g==='A')this._zHeld=false;if(g==='LEFT')this._lHeld=false;if(g==='RIGHT')this._rHeld=false;}
     });
-    canvas.addEventListener('touchstart',e=>{this.inp.A=true;this.inp.A_PRESSED=true;const t=e.touches[0];if(t.clientX<W/2)this.inp.LEFT=true;else this.inp.RIGHT=true;e.preventDefault();},{passive:false});
-    canvas.addEventListener('touchend',()=>{this.inp.A=false;this.inp.LEFT=false;this.inp.RIGHT=false;});
+    // Touch disabled - use d-pad buttons only
   }
 
   start(){
