@@ -76,25 +76,19 @@
 - **Display:** Single large cover image (full screen)
 - **Browse:** Left/Right D-pad arrows with pulse animation
 - **Launch:** A or START button
-- **Counter:** "1 / 11" position indicator
-- **Covers:** SVG placeholders (replace with PNG when available)
+- **Counter:** "1 / 5" position indicator
+- **Covers:** PNG covers for all games
 
-### 11 Food Games (Reduced from 16)
-| # | Game | Status | Exit Button |
-|---|------|--------|-------------|
-| 1 | Burger Stack | ✅ Complete | ✅ SELECT |
-| 2 | Food Fight | ✅ Complete | ✅ SELECT |
-| 3 | Fry Catch | ✅ Complete | ✅ SELECT |
-| 4 | Taco Tower | ✅ Complete | ✅ SELECT |
-| 5 | Bubble Tea | ✅ Complete | ✅ SELECT |
-| 6 | Hotdog Dash | ✅ Complete | ✅ SELECT |
-| 7 | Coffee Pour | ✅ Complete | ✅ SELECT |
-| 8 | Steak Flip | ✅ Complete | ✅ SELECT |
-| 9 | Spice Invaders | ✅ Complete | ✅ SELECT |
-| 10 | Fruit Slice | ✅ Complete | ✅ SELECT |
-| 11 | Bento Box | ✅ Complete | ✅ SELECT |
+### 5 Curated Food Games (Final Selection)
+| # | Game | Status | Exit Button | Notes |
+|---|------|--------|-------------|-------|
+| 1 | Food Fight | ✅ Complete | ✅ SELECT | 150 HP, 15% zoom, pixel-art menu |
+| 2 | Spice Invaders | ✅ Complete | ✅ SELECT | Space invaders clone |
+| 3 | Burger Stack | ✅ Complete | ✅ SELECT | Stacking game |
+| 4 | Hotdog Dash | ✅ Complete | ✅ SELECT | Runner game |
+| 5 | Bubble Tea | ✅ Complete | ✅ SELECT | Timing game |
 
-**Removed:** Pizza Slice, Sushi Roll, Condiment Blast, Donut Roll, Ice Cream (quality audit)
+**Removed (11 games):** Fruit Slice, Fry Catch, Taco Tower, Coffee Pour, Steak Flip, Bento Box, Pizza Slice, Sushi Roll, Condiment Blast, Donut Roll, Ice Cream, Ingredient Match (reduced for quality + load time)
 
 ### Controls
 | Button | Selector Mode | Game Mode |
