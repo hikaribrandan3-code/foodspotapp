@@ -116,6 +116,7 @@
   border: none;
   background: #000;
   transition: opacity 0.3s ease;
+  display: block;
 }
 
 /* Loading Spinner */

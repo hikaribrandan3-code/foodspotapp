@@ -553,7 +553,7 @@ function drawFighter(f,preview=false){
   
   // SPRITE HEAD (replaces dHead)
   const animFrame=getAnimFrame(f);
-  const spriteDrawn=drawSprite(f.ci,animFrame,cx,by+50,f.dir,2.5);
+  const spriteDrawn=drawSprite(f.ci,animFrame,cx,by+55,f.dir,4.5);
   
   // Fallback to old drawing if sprites not loaded
   if(!spriteDrawn){
@@ -794,7 +794,7 @@ function drawCharSel(){
     // sprite portrait (replaces emoji)
     ctx.save();
     if(sel){ctx.shadowColor=c.color;ctx.shadowBlur=14;}
-    const spriteDrawn=drawSprite(i,'idle',cx2+cw/2,cy2+42,1,1.2);
+    const spriteDrawn=drawSprite(i,'idle',cx2+cw/2,cy2+48,1,2.2);
     if(!spriteDrawn){
       ctx.font='40px serif';ctx.textAlign='center';ctx.fillText(EMOJIS[i],cx2+cw/2,cy2+50);
     }
