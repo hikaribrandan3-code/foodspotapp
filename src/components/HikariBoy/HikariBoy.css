@@ -88,6 +88,7 @@
   touch-action: manipulation pan-y;
   user-select: none;
   -webkit-user-select: none;
+  gap: 0;
 }
 
 /* Prevent zoom on all interactive elements */
@@ -106,6 +107,7 @@
   overflow: hidden;
   width: 100%;
   min-height: 0;
+  margin-bottom: 0;
 }
 
 .hb-game-frame {
@@ -285,6 +287,7 @@
   min-height: 315px;
   /* Outer shell shadow */
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  margin-top: 0;
 }
 
 /* Noise overlay */
