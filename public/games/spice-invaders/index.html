@@ -16,7 +16,7 @@
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H,SCALE;
-function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;SCALE=H/480;}
+function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;const scaleH=H/480,scaleW=W/320;SCALE=Math.max(scaleH,scaleW*0.65);}
 resize();
 window.addEventListener('resize',resize);
 
@@ -641,8 +641,7 @@ class Game{
 
   update(){
     this.frame++;
-    if(this._lHeld)this.inp.LEFT=true;
-    if(this._rHeld)this.inp.RIGHT=true;
+    // _lHeld and _rHeld removed - was causing d-pad drift
     if(this._zHeld)this.inp.A_PRESSED=true;
     this.nebula.update();this.stars.update();
     if(this.waveIntro&&!this.waveIntro.done)this.waveIntro.update();
