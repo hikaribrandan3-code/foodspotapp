@@ -764,7 +764,9 @@ class Game{
 
   draw(){
     ctx.save();ctx.clearRect(0,0,W,H);
-    ctx.scale(SCALE,SCALE);
+    // Anchor to bottom so ship is always visible, top can be cut off
+    const oy=H-BH*SCALE;
+    ctx.translate(0,oy);ctx.scale(SCALE,SCALE);
     this.shake.apply(ctx);
     this.nebula.draw(ctx);this.stars.draw(ctx,this.frame);
     switch(this.state){
