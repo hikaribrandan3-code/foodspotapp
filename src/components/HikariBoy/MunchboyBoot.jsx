@@ -53,15 +53,15 @@ export default function MunchboyBoot({ onComplete }) {
       playGbaChime();
       setRainbowActive(true);
       setShowFooter(true);
-    }, 1000);
+    }, 1800);
     
     const pressStartTimer = setTimeout(() => {
       setShowPressStart(true);
-    }, 2500);
+    }, 3500);
     
     const autoContinueTimer = setTimeout(() => {
       onComplete?.();
-    }, 5000); // Auto-continue after 5 seconds
+    }, 6500); // Auto-continue after 6.5 seconds
     
     return () => {
       clearTimeout(dropTimer);
@@ -84,7 +84,7 @@ export default function MunchboyBoot({ onComplete }) {
           <span
             key={i}
             className={`munch-letter l-${letter} ${lettersDropped ? 'dropped' : ''}`}
-            style={{ transitionDelay: `${i * 80}ms` }}
+            style={{ transitionDelay: `${i * 150}ms` }}
           >
             {letter}
           </span>
