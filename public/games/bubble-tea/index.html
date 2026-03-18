@@ -993,17 +993,26 @@ function drawAnimeTitle(t){
   // WIDER horizontal spread for BUBBLE TEA
   cx.scale(1.15, 1);
   
-  // Milk tea gradient (browns!)
+  // COLORFUL gradient (hot pink to orange to purple) - NOT brown!
   const grad=cx.createLinearGradient(W/2-R*8,titleY-R*1.8,W/2+R*8,titleY+R*1.8);
-  grad.addColorStop(0,'#8B4513'); grad.addColorStop(.25,'#D2691E'); grad.addColorStop(.5,'#F4A460'); grad.addColorStop(.75,'#D2691E'); grad.addColorStop(1,'#8B4513');
+  grad.addColorStop(0,'#FF006E'); // hot pink
+  grad.addColorStop(.3,'#FF6B35'); // orange
+  grad.addColorStop(.5,'#FF1493'); // deep pink
+  grad.addColorStop(.7,'#9D4EDD'); // purple
+  grad.addColorStop(1,'#FF006E'); // hot pink
   
   // PINK GLOW behind text
-  cx.shadowColor='#FF1493'; cx.shadowBlur=25;
+  cx.shadowColor='#FF1493'; cx.shadowBlur=30;
   
-  // MASSIVE outline
-  cx.strokeStyle='#FFF'; cx.lineWidth=14; cx.lineJoin='round';
+  // THICK WHITE OUTLINE - multiple passes for extra thickness
+  cx.strokeStyle='#FFF'; cx.lineWidth=20; cx.lineJoin='round';
   cx.strokeText('BUBBLE TEA',W/2/1.15,titleY+bounce1);
-  cx.strokeStyle='#FF69B4'; cx.lineWidth=7;
+  cx.strokeStyle='#FFF'; cx.lineWidth=14; 
+  cx.strokeText('BUBBLE TEA',W/2/1.15,titleY+bounce1);
+  cx.strokeStyle='#FFF'; cx.lineWidth=8; 
+  cx.strokeText('BUBBLE TEA',W/2/1.15,titleY+bounce1);
+  // Inner pink outline
+  cx.strokeStyle='#FF1493'; cx.lineWidth=4;
   cx.strokeText('BUBBLE TEA',W/2/1.15,titleY+bounce1);
   cx.fillStyle=grad;
   cx.fillText('BUBBLE TEA',W/2/1.15,titleY+bounce1);
