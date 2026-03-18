@@ -7,7 +7,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-#c{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+#c{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100%;height:100%;max-width:100vw;max-height:100vh}
 </style>
 </head>
 <body><canvas id="c"></canvas>
@@ -32,7 +32,7 @@ C.addEventListener('touchend',e=>{e.preventDefault();[...e.changedTouches].forEa
 const keys={};
 document.addEventListener('keydown',e=>{keys[e.key]=true;handleKey(e.key);});
 document.addEventListener('keyup',e=>keys[e.key]=false);
-function getIn(){return{left:!!(keys['a']||keys['A']||keys['ArrowLeft']||vb.left),right:!!(keys['d']||keys['D']||keys['ArrowRight']||vb.right),jump:!!(keys['w']||keys['W']||keys['ArrowUp']||keys[' ']||vb.jump),atk:!!(keys['j']||keys['J']||vb.a),b:!!(keys['k']||keys['K']||vb.b)};}
+function getIn(){return{left:!!(keys['a']||keys['A']||keys['ArrowLeft']||vb.left||emuButtons.left),right:!!(keys['d']||keys['D']||keys['ArrowRight']||vb.right||emuButtons.right),jump:!!(keys['w']||keys['W']||keys['ArrowUp']||keys[' ']||vb.jump||emuButtons.up||emuButtons.b),atk:!!(keys['j']||keys['J']||vb.a||emuButtons.a||emuButtons.start),b:!!(keys['k']||keys['K']||vb.b||emuButtons.select)};}
 
 // ── ANNOUNCER ──────────────────────────────────────────────────────────
 let ann={text:'',life:0,ml:0,color:'#fff',size:48};
@@ -723,17 +723,40 @@ function handleKey(k){
     if(k==='j'||k==='J'||k==='Enter'||k===' ')state='charsel';
   }
 }
+// Handle emulator D-pad for menus
+function handleEmuMenu(){
+  if(state==='menu'||state==='charsel'||state==='matchend'){
+    if(emuButtons.left){handleKey('ArrowLeft');emuButtons.left=0;}
+    if(emuButtons.right){handleKey('ArrowRight');emuButtons.right=0;}
+    if(emuButtons.up){handleKey('ArrowUp');emuButtons.up=0;}
+    if(emuButtons.down){handleKey('ArrowDown');emuButtons.down=0;}
+    if(emuButtons.a||emuButtons.start){handleKey('j');emuButtons.a=0;emuButtons.start=0;}
+  }
+}
 
 // ── PAUSE / RESUME ─────────────────────────────────────────────────────
 let gameState='playing';
+// Emulator button mapping
+const emuButtons={up:0,down:0,left:0,right:0,a:0,b:0,start:0,select:0};
 window.addEventListener('message',(e)=>{
   if(e.data.type==='PAUSE')gameState='paused';
   if(e.data.type==='RESUME')gameState='playing';
   if(e.data.type==='BUTTON_PRESS'){
-    if(e.data.button==='start'){
+    const btn=e.data.button;
+    if(btn==='start'){
       if(gameState==='playing')gameState='paused';
       else if(gameState==='paused')gameState='playing';
+      // Also use START as "J/Attack" in menus
+      emuButtons.start=1;
+      setTimeout(()=>emuButtons.start=0,100);
     }
+    if(btn==='a'){emuButtons.a=1;setTimeout(()=>emuButtons.a=0,100);}
+    if(btn==='b'){emuButtons.b=1;setTimeout(()=>emuButtons.b=0,100);}
+    if(btn==='dpad-up'){emuButtons.up=1;setTimeout(()=>emuButtons.up=0,100);}
+    if(btn==='dpad-down'){emuButtons.down=1;setTimeout(()=>emuButtons.down=0,100);}
+    if(btn==='dpad-left'){emuButtons.left=1;setTimeout(()=>emuButtons.left=0,100);}
+    if(btn==='dpad-right'){emuButtons.right=1;setTimeout(()=>emuButtons.right=0,100);}
+    if(btn==='select'){emuButtons.select=1;setTimeout(()=>emuButtons.select=0,100);}
   }
 });
 
@@ -751,6 +774,7 @@ function loop(){
   }
   ctx.clearRect(0,0,GW,GH);
   if(shake>0){ctx.save();ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake=Math.max(0,shake-1);}
+  handleEmuMenu();
   if(state==='menu')drawMenu();
   else if(state==='charsel')drawCharSel();
   else if(state==='fight'){
