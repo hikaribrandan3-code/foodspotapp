@@ -120,6 +120,7 @@
   justify-content: center;
   font-size: clamp(40px, 10vw, 64px);
   font-weight: 900;
+  font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .rainbow-sweep-footer {
