@@ -49,6 +49,7 @@ export function HikariBoy({
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [gameLoading, setGameLoading] = useState(false);
   const gameFrameRef = useRef(null);
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
@@ -105,6 +106,13 @@ export function HikariBoy({
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // Set loading state when switching games
+  useEffect(() => {
+    if (currentGame) {
+      setGameLoading(true);
+    }
+  }, [currentGame]);
 
   const handleButtonPress = (button) => {
     // ⚡ HEAVY HAPTICS: 50-80ms bursts for retro tactile feel
@@ -170,12 +178,20 @@ export function HikariBoy({
           />
         ) : (
           <>
+            {gameLoading && (
+              <div className="hb-loading">
+                <div className="hb-spinner"></div>
+                <span className="hb-loading-text">LOADING {currentGame.name.toUpperCase()}...</span>
+              </div>
+            )}
             <iframe
               ref={gameFrameRef}
               src={currentGame.url}
               title={currentGame.name}
               className="hb-game-frame"
               sandbox="allow-scripts allow-same-origin"
+              onLoad={() => setGameLoading(false)}
+              style={{ opacity: gameLoading ? 0 : 1 }}
             />
             {isPaused && (
               <div className="hb-pause-overlay">
@@ -311,6 +327,17 @@ function GameSelector({ games, selectedIndex }) {
     setImgSrc(selectedGame.cover);
     setHasError(false);
   }, [selectedIndex, selectedGame]);
+  
+  // Preload adjacent game covers for smoother navigation
+  useEffect(() => {
+    const nextIdx = (selectedIndex + 1) % games.length;
+    const prevIdx = (selectedIndex - 1 + games.length) % games.length;
+    
+    [nextIdx, prevIdx].forEach(idx => {
+      const img = new Image();
+      img.src = games[idx].cover;
+    });
+  }, [selectedIndex, games]);
   
   const handleError = () => {
     if (!hasError && selectedGame.fallback) {
