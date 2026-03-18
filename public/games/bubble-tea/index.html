@@ -719,7 +719,7 @@ function drawUI(t){
   cx.save(); cx.translate(W/2,barH*.42); cx.scale(sc,sc);
   cx.font=`bold ${Math.round(R*1.3)}px Arial Rounded MT Bold,Arial`; cx.textAlign='center'; cx.textBaseline='middle';
   cx.shadowColor='#FF00CC'; cx.shadowBlur=8; cx.fillStyle='#FFF'; cx.fillText(score,0,0); cx.restore();
-  cx.save(); cx.translate(W/2,barH*.8); cx.font=`bold ${Math.round(R*.75)}px Arial Rounded MT Bold,Arial`; cx.textAlign='center'; cx.fillStyle='#FFFFFF'; cx.shadowColor='#FF1493'; cx.shadowBlur=4; cx.fillText(`BEST ${hiScore}`,0,0); cx.restore();
+  cx.save(); cx.translate(W/2,barH*.8); cx.font=`bold ${Math.round(R*.77)}px Arial Rounded MT Bold,Arial`; cx.textAlign='center'; cx.fillStyle='#FFFFFF'; cx.shadowColor='#FF1493'; cx.shadowBlur=4; cx.fillText(`BEST ${hiScore}`,0,0); cx.restore();
   // level badge
   const lbx=W-pad*1.5, lby=barH*.5;
   const lbsc=lvlBadgePop>0?1+lvlBadgePop*.4:1;
