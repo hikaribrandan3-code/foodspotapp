@@ -231,23 +231,7 @@
   align-items: center;
 }
 
-/* foodspot branding between L and R - 90s Arcade Style */
-.hb-brand-shoulder {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 14px;
-  font-weight: 400;
-  color: #FFFFFF;
-  letter-spacing: 2px;
-  text-transform: lowercase;
-  user-select: none;
-  z-index: 3;
-  text-shadow: 
-    2px 2px 0px #000,
-    -1px -1px 0px #000,
-    1px -1px 0px #000,
-    -1px 1px 0px #000,
-    1px 1px 0px #000;
-}
+/* Branding removed from shoulder area - moved to controller body */
 
 /* The "well" background behind buttons */
 .hb-shoulders::before {
@@ -315,6 +299,31 @@
     inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* ========== BRANDING ROW ========== */
+.hb-branding-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+  flex: 0 0 auto;
+}
+
+.hb-brand-foodspot {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  font-weight: 400;
+  color: #FFFFFF;
+  letter-spacing: 3px;
+  text-transform: lowercase;
+  user-select: none;
+  text-shadow: 
+    2px 2px 0px #000,
+    -1px -1px 0px #000,
+    1px -1px 0px #000,
+    -1px 1px 0px #000,
+    1px 1px 0px #000;
+}
+
 /* ========== MAIN CONTROLS ROW ========== */
 .hb-controls-main {
   display: flex;
@@ -325,7 +334,7 @@
   min-height: 0;
 }
 
-/* ========== D-PAD — CROSS WITH BLACK OUTLINE & CENTER CIRCLE ========== */
+/* ========== D-PAD — SINGLE MOLDED CROSS (Game Boy Style) ========== */
 .hb-dpad {
   width: var(--dpad-size);
   height: var(--dpad-size);
@@ -334,72 +343,94 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
   z-index: 2;
 }
 
+/* Single molded cross shape using SVG background */
 .dpad-cross {
-  position: relative;
+  position: absolute;
   width: 100%;
   height: 100%;
+  background-color: var(--button-gray);
+  /* Cross shape using clip-path - works in all modern browsers */
+  clip-path: polygon(
+    35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 
+    65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%
+  );
+  border-radius: 2px;
+  /* Single unified shadow for the whole cross */
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
 }
 
-/* Horizontal arm with black outline */
+/* Cross outline using pseudo-element */
 .dpad-cross::before {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 0;
-  transform: translateY(-50%);
-  width: 100%;
-  height: 38%;
-  background: var(--button-gray);
-  border-radius: 6px;
-  border: 3px solid #1a1a1a;
-  box-shadow:
-    inset 0 1px 1.5px rgba(255,255,255,0.4),
-    inset 0 -1px 1px rgba(0,0,0,0.2),
-    0 2px 5px rgba(0,0,0,0.3);
-  z-index: 1;
+  inset: 0;
+  background: #1a1a1a;
+  clip-path: polygon(
+    35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 
+    65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%,
+    35% 35%, 0% 35%, 0% 65%, 35% 65%, 35% 100%, 65% 100%,
+    65% 65%, 100% 65%, 100% 35%, 65% 35%, 65% 0%, 35% 0%,
+    35% 35%, 35% 31%, 31% 31%, 31% 69%, 35% 69%, 35% 65%,
+    65% 65%, 65% 69%, 69% 69%, 69% 31%, 65% 31%, 65% 35%
+  );
 }
 
-/* Vertical arm with black outline - same z-index to prevent overlapping seam */
+/* Inner cross face - the actual button surface */
 .dpad-cross::after {
   content: '';
   position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translateX(-50%);
-  width: 38%;
-  height: 100%;
+  inset: 3px;
   background: var(--button-gray);
-  border-radius: 6px;
-  border: 3px solid #1a1a1a;
-  box-shadow:
-    inset 1px 0 1.5px rgba(255,255,255,0.4),
-    inset -1px 0 1px rgba(0,0,0,0.2),
-    0 2px 5px rgba(0,0,0,0.3);
-  z-index: 1;
+  clip-path: polygon(
+    35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 
+    65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%
+  );
+  border-radius: 2px;
+  /* Subtle highlight for molded plastic look */
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.4);
 }
 
-/* Center circle in D-pad with black outline */
+/* Center pivot point - molded indentation */
 .dpad-center {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 28%;
-  height: 28%;
+  width: 24%;
+  height: 24%;
   background: var(--button-gray);
-  border: 3px solid #1a1a1a;
   border-radius: 50%;
-  z-index: 3;
+  z-index: 2;
+  /* Subtle inner shadow for molded look - no border for seamless effect */
   box-shadow:
-    inset 0 1px 2px rgba(255,255,255,0.5),
-    0 1px 2px rgba(0,0,0,0.2);
+    inset 0 2px 4px rgba(0,0,0,0.12),
+    0 1px 1px rgba(255,255,255,0.3);
+}
+
+/* Center cross grooves - subtle molded lines */
+.dpad-center::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 20%;
+  transform: translateY(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08), transparent);
+}
+
+.dpad-center::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 20%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 60%;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.08), transparent);
 }
 
 /* Directional hit-boxes with larger triangle arrows */

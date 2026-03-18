@@ -199,17 +199,21 @@ export function HikariBoy({
 
       {/* Controller (45%) — SHELL COLOR */}
       <div className="hb-controller">
-        {/* Shoulder Buttons with foodspot branding between */}
+        {/* Shoulder Buttons */}
         <div className="hb-shoulders">
           <button 
             className="shoulder-l"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
           >L</button>
-          <span className="hb-brand-shoulder">foodspot</span>
           <button 
             className="shoulder-r"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.R : BUTTONS.START); }}
           >R</button>
+        </div>
+
+        {/* Branding Row - between shoulders and controls */}
+        <div className="hb-branding-row">
+          <span className="hb-brand-foodspot">foodspot</span>
         </div>
 
         {/* Main Controls: D-Pad (left) + A/B (right) */}
