@@ -11,6 +11,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import './HikariBoy.css';
+import GbaBoot from './GbaBoot';
 
 const BUTTONS = {
   DPAD_UP: 'dpad-up',
@@ -54,6 +55,7 @@ export function HikariBoy({
   onClose, 
   foodReady = false
 }) {
+  const [gbaBootComplete, setGbaBootComplete] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -236,32 +238,36 @@ export function HikariBoy({
   };
 
   return (
-    <div className="hikariboy-emulator">
-      {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
-      <div className="hb-screen">
-        {isBooting ? (
-          <div className="munchboy-boot" onClick={startBootSequence}>
-            <div className="munchboy-container">
-              <span className={`munch-letter l-M ${lettersDropped ? 'dropped' : ''}`}>M</span>
-              <span className={`munch-letter l-U ${lettersDropped ? 'dropped' : ''}`}>U</span>
-              <span className={`munch-letter l-N ${lettersDropped ? 'dropped' : ''}`}>N</span>
-              <span className={`munch-letter l-C ${lettersDropped ? 'dropped' : ''}`}>C</span>
-              <span className={`munch-letter l-H ${lettersDropped ? 'dropped' : ''}`}>H</span>
-              <span className={`munch-letter l-B ${lettersDropped ? 'dropped' : ''}`}>B</span>
-              <span className={`munch-letter l-O ${lettersDropped ? 'dropped' : ''}`}>O</span>
-              <span className={`munch-letter l-Y ${lettersDropped ? 'dropped' : ''}`}>Y</span>
+    <>
+      {!gbaBootComplete && (
+        <GbaBoot onComplete={() => setGbaBootComplete(true)} />
+      )}
+      <div className="hikariboy-emulator">
+        {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
+        <div className="hb-screen">
+          {isBooting ? (
+            <div className="munchboy-boot" onClick={startBootSequence}>
+              <div className="munchboy-container">
+                <span className={`munch-letter l-M ${lettersDropped ? 'dropped' : ''}`}>M</span>
+                <span className={`munch-letter l-U ${lettersDropped ? 'dropped' : ''}`}>U</span>
+                <span className={`munch-letter l-N ${lettersDropped ? 'dropped' : ''}`}>N</span>
+                <span className={`munch-letter l-C ${lettersDropped ? 'dropped' : ''}`}>C</span>
+                <span className={`munch-letter l-H ${lettersDropped ? 'dropped' : ''}`}>H</span>
+                <span className={`munch-letter l-B ${lettersDropped ? 'dropped' : ''}`}>B</span>
+                <span className={`munch-letter l-O ${lettersDropped ? 'dropped' : ''}`}>O</span>
+                <span className={`munch-letter l-Y ${lettersDropped ? 'dropped' : ''}`}>Y</span>
+              </div>
+              <div className={`munch-footer ${lettersDropped ? 'visible' : ''}`}>
+                foodspot mobile
+              </div>
+              {bootPhase === 'intro' && (
+                <div className="munch-hint">TAP SCREEN OR PRESS A</div>
+              )}
+              {showPressStart && (
+                <div className="munch-press-start">PRESS START</div>
+              )}
             </div>
-            <div className={`munch-footer ${lettersDropped ? 'visible' : ''}`}>
-              foodspot mobile
-            </div>
-            {bootPhase === 'intro' && (
-              <div className="munch-hint">TAP SCREEN OR PRESS A</div>
-            )}
-            {showPressStart && (
-              <div className="munch-press-start">PRESS START</div>
-            )}
-          </div>
-        ) : !currentGame ? (
+          ) : !currentGame ? (
           <GameSelector 
             games={GAMES} 
             selectedIndex={selectedIndex}
@@ -399,6 +405,7 @@ export function HikariBoy({
         <div className="hb-sparkle">✦</div>
       </div>
     </div>
+    </>
   );
 }
 
