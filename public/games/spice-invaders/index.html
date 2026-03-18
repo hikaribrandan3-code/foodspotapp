@@ -640,8 +640,7 @@ class Game{
 
   update(){
     this.frame++;
-    // _lHeld and _rHeld removed - was causing d-pad drift
-    if(this._zHeld)this.inp.A_PRESSED=true;
+    // Keyboard override flags removed - was causing auto-move with d-pad
     this.nebula.update();this.stars.update();
     if(this.waveIntro&&!this.waveIntro.done)this.waveIntro.update();
     switch(this.state){
@@ -766,10 +765,17 @@ class Game{
 
   draw(){
     ctx.save();ctx.clearRect(0,0,W,H);
-    // Scale to fill full width and height (no black bars, slight stretch)
-    ctx.scale(W/320, H/480);
-    // Center the gameplay area
-    ctx.translate(0,0);
+    // Reduced stretch by 8% - use average of width and height scale
+    const scaleX=W/320*0.92,scaleY=H/480;
+    const finalScale=(scaleX+scaleY)/2;
+    const gameW=320*finalScale,gameH=480*finalScale;
+    const offX=(W-gameW)/2,offY=(H-gameH)/2;
+    // Draw border matching emulator shell (dark pink/purple gradient)
+    const borderGrad=ctx.createLinearGradient(0,0,0,H);
+    borderGrad.addColorStop(0,'#2d1b4e');borderGrad.addColorStop(0.5,'#1a0f2e');borderGrad.addColorStop(1,'#2d1b4e');
+    ctx.fillStyle=borderGrad;ctx.fillRect(0,0,W,H);
+    // Draw gameplay centered with reduced stretch
+    ctx.translate(offX,offY);ctx.scale(finalScale,finalScale);
     this.shake.apply(ctx);
     this.nebula.draw(ctx);this.stars.draw(ctx,this.frame);
     switch(this.state){
