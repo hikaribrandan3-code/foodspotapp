@@ -12,6 +12,9 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:no
 </head>
 <body><canvas id="c"></canvas>
 <script>
+// Error handling
+window.onerror=function(msg,url,line,col,err){document.body.innerHTML='<div style="background:#000;color:#f00;padding:20px;font:14px monospace;white-space:pre-wrap;word-break:break-all;"><h2>GAME ERROR</h2><b>'+msg+'</b><br>Line: '+line+'<br>Stack: '+(err&&err.stack||'N/A')+'</div>';};
+try{
 const C=document.getElementById('c'),ctx=C.getContext('2d');
 const GW=800,GH=500,GFL=278,CHF=24; // CHF = 0.4s @60fps
 C.width=GW;C.height=GH;
@@ -773,6 +776,7 @@ function loop(){
   if(shake>0)ctx.restore();
 }
 loop();
+}catch(e){window.onerror(e.message,null,null,null,e);}
 </script>
 </body>
 </html>
