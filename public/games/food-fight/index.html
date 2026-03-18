@@ -352,8 +352,8 @@ function drawSpfx(){
         for(let i=0;i<4;i++){const a=frame*.2+i*1.57,rd=s.r*.55;ctx.fillStyle='rgba(249,199,79,.6)';ctx.fillRect(s.x+Math.cos(a)*rd-3,s.y-i*30+Math.sin(frame*.3+i)*10-3,6,6);}
         break;}
       case 'inferno':{
+        const cols=['rgba(255,60,0,','rgba(255,140,0,','rgba(255,220,0,','rgba(255,255,180,'];
         [s.r*1.3,s.r*1.0,s.r*.65,s.r*.3].forEach((r,i)=>{
-          const cols=['rgba(255,60,0,','rgba(255,140,0,','rgba(255,220,0,','rgba(255,255,180,';
           ctx.globalAlpha=al*(1-i*.22)*.8;ctx.fillStyle=cols[i]+(al*.8-i*.15)+')';
           ctx.shadowColor='#ff5500';ctx.shadowBlur=24;
           ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);ctx.fill();
