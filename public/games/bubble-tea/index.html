@@ -969,103 +969,74 @@ function drawChibiMascot(t,x,y,scale){
 }
 
 function drawAnimeTitle(t){
-  const titleY=H*.14;
+  // LOWER - 10% down from .14 to .24
+  const titleY=H*.24;
   
-  // Background glow behind title
-  const tg=cx.createRadialGradient(W/2,titleY,0,W/2,titleY,W*.7);
-  tg.addColorStop(0,'rgba(255,105,180,.6)'); tg.addColorStop(.5,'rgba(255,20,147,.3)'); tg.addColorStop(1,'transparent');
-  cx.fillStyle=tg; cx.fillRect(0,0,W,H*.4);
+  // BIGGER glow
+  const tg=cx.createRadialGradient(W/2,titleY,0,W/2,titleY,W*.8);
+  tg.addColorStop(0,'rgba(255,105,180,.7)'); tg.addColorStop(.4,'rgba(255,20,147,.4)'); tg.addColorStop(1,'transparent');
+  cx.fillStyle=tg; cx.fillRect(0,0,W,H*.5);
   
   cx.textAlign='center'; cx.textBaseline='middle';
   
-  const bounce1=Math.sin(t*.003)*R*.1;
+  const bounce1=Math.sin(t*.003)*R*.15;
   
-  // BUBBLE TEA text with MILK TEA colors
-  const fs1=Math.round(R*2);
+  // WAY BIGGER - BUBBLE TEA text (was R*2, now R*3.2)
+  const fs1=Math.round(R*3.2);
   cx.font=`900 ${fs1}px Arial Black,Arial`;
   
   // Milk tea gradient (browns!)
-  const grad=cx.createLinearGradient(W/2-R*5,titleY-R,W/2+R*5,titleY+R);
+  const grad=cx.createLinearGradient(W/2-R*7,titleY-R*1.5,W/2+R*7,titleY+R*1.5);
   grad.addColorStop(0,'#8B4513'); grad.addColorStop(.25,'#D2691E'); grad.addColorStop(.5,'#F4A460'); grad.addColorStop(.75,'#D2691E'); grad.addColorStop(1,'#8B4513');
   
-  // Thick white outline
-  cx.strokeStyle='#FFF'; cx.lineWidth=7; cx.lineJoin='round';
+  // MASSIVE outline
+  cx.strokeStyle='#FFF'; cx.lineWidth=12; cx.lineJoin='round';
   cx.strokeText('BUBBLE TEA',W/2,titleY+bounce1);
-  cx.strokeStyle='#FF1493'; cx.lineWidth=3;
+  cx.strokeStyle='#FF1493'; cx.lineWidth=6;
   cx.strokeText('BUBBLE TEA',W/2,titleY+bounce1);
   cx.fillStyle=grad;
   cx.fillText('BUBBLE TEA',W/2,titleY+bounce1);
   
-  // BOBA pearls decorating the text
-  const textWidth=R*9;
+  // BOBA pearls decorating the text - BIGGER
+  const textWidth=R*12;
   for(let i=0;i<5;i++){
-    const px=W/2-textWidth/2+i*(textWidth/4), py=titleY+R*.8;
+    const px=W/2-textWidth/2+i*(textWidth/4), py=titleY+R*1.2;
     // Pearl
-    const pg=cx.createRadialGradient(px-R*.08,py-R*.08,0,px,py,R*.18);
+    const pg=cx.createRadialGradient(px-R*.1,py-R*.1,0,px,py,R*.25);
     pg.addColorStop(0,'#5D3A1A'); pg.addColorStop(1,'#1A0F08');
-    cx.fillStyle=pg; cx.beginPath(); cx.arc(px,py,R*.18,0,Math.PI*2); cx.fill();
-    cx.fillStyle='rgba(255,255,255,.4)'; cx.beginPath(); cx.arc(px-R*.05,py-R*.05,R*.06,0,Math.PI*2); cx.fill();
+    cx.fillStyle=pg; cx.beginPath(); cx.arc(px,py,R*.25,0,Math.PI*2); cx.fill();
+    cx.fillStyle='rgba(255,255,255,.4)'; cx.beginPath(); cx.arc(px-R*.08,py-R*.08,R*.08,0,Math.PI*2); cx.fill();
   }
   
-  // BLAST! text - PINK/PURPLE explosion style
-  const fs2=Math.round(R*2.8);
+  // WAY BIGGER BLAST! (was R*2.8, now R*4.5 - IN YOUR FACE!)
+  const fs2=Math.round(R*4.5);
   cx.font=`900 ${fs2}px Arial Black,Arial`;
   
-  const blastScale=1+Math.sin(t*.008)*.05;
-  cx.save(); cx.translate(W/2,titleY+R*3.2); cx.scale(blastScale,blastScale);
+  const blastScale=1+Math.sin(t*.008)*.06;
+  cx.save(); cx.translate(W/2,titleY+R*4.5); cx.scale(blastScale,blastScale);
   
-  // Explosion outline
-  cx.strokeStyle='#FFF'; cx.lineWidth=10; cx.lineJoin='round';
+  // MASSIVE Explosion outline
+  cx.strokeStyle='#FFF'; cx.lineWidth=16; cx.lineJoin='round';
   cx.strokeText('BLAST!',0,0);
-  cx.strokeStyle='#FFD700'; cx.lineWidth=5;
+  cx.strokeStyle='#FFD700'; cx.lineWidth=8;
   cx.strokeText('BLAST!',0,0);
   // Fill
-  const blastGrad=cx.createLinearGradient(0,-R*2,0,R*2);
+  const blastGrad=cx.createLinearGradient(0,-R*3,0,R*3);
   blastGrad.addColorStop(0,'#FF1493'); blastGrad.addColorStop(.5,'#FF69B4'); blastGrad.addColorStop(1,'#C71585');
   cx.fillStyle=blastGrad;
   cx.fillText('BLAST!',0,0);
   // Shine
-  cx.fillStyle='#FFF'; cx.globalAlpha=.25;
-  cx.fillText('BLAST!',0,-R*.1);
+  cx.fillStyle='#FFF'; cx.globalAlpha=.3;
+  cx.fillText('BLAST!',0,-R*.15);
   cx.restore();
   
-  // Decorative BOBA CUPS on sides
-  cx.globalAlpha=1;
-  const rot1=t*.002;
-  
-  // Left cup
-  cx.save(); cx.translate(W*.1,titleY+R*2.5); cx.rotate(rot1);
-  cx.fillStyle='#FF69B4'; cx.strokeStyle='#FFF'; cx.lineWidth=2;
-  cx.beginPath(); cx.moveTo(-R*.5,0); cx.lineTo(-R*.3,R*1); cx.quadraticCurveTo(0,R*1.2,R*.3,R*1); cx.lineTo(R*.5,0); cx.closePath(); cx.fill(); cx.stroke();
-  cx.fillStyle='#8B4513'; // tea color
-  cx.beginPath(); cx.moveTo(-R*.4,R*.2); cx.lineTo(-R*.25,R*.9); cx.quadraticCurveTo(0,R*1,R*.25,R*.9); cx.lineTo(R*.4,R*.2); cx.closePath(); cx.fill();
-  // Lid
-  cx.fillStyle='#FFB6C1'; cx.beginPath(); cx.ellipse(0,0,R*.55,R*.2,0,0,Math.PI*2); cx.fill(); cx.stroke();
-  // Straw
-  cx.strokeStyle='#32CD32'; cx.lineWidth=3; cx.beginPath(); cx.moveTo(R*.15,-R*.1); cx.lineTo(R*.3,-R*.8); cx.stroke();
-  // Pearls
-  cx.fillStyle='#2F1810'; cx.beginPath(); cx.arc(-R*.1,R*1,R*.12,0,Math.PI*2); cx.fill();
-  cx.beginPath(); cx.arc(R*.15,R*.95,R*.1,0,Math.PI*2); cx.fill();
-  cx.restore();
-  
-  // Right cup
-  cx.save(); cx.translate(W*.9,titleY+R*2.5); cx.rotate(-rot1);
-  cx.fillStyle='#00CED1'; cx.strokeStyle='#FFF'; cx.lineWidth=2;
-  cx.beginPath(); cx.moveTo(-R*.5,0); cx.lineTo(-R*.3,R*1); cx.quadraticCurveTo(0,R*1.2,R*.3,R*1); cx.lineTo(R*.5,0); cx.closePath(); cx.fill(); cx.stroke();
-  cx.fillStyle='#D2691E'; // tea color
-  cx.beginPath(); cx.moveTo(-R*.4,R*.2); cx.lineTo(-R*.25,R*.9); cx.quadraticCurveTo(0,R*1,R*.25,R*.9); cx.lineTo(R*.4,R*.2); cx.closePath(); cx.fill();
-  cx.fillStyle='#87CEEB'; cx.beginPath(); cx.ellipse(0,0,R*.55,R*.2,0,0,Math.PI*2); cx.fill(); cx.stroke();
-  cx.strokeStyle='#FFD700'; cx.lineWidth=3; cx.beginPath(); cx.moveTo(-R*.15,-R*.1); cx.lineTo(-R*.3,-R*.8); cx.stroke();
-  cx.fillStyle='#2F1810'; cx.beginPath(); cx.arc(R*.1,R*1,R*.12,0,Math.PI*2); cx.fill();
-  cx.restore();
-  
-  // Sparkles around title
-  const sparklePos=[[.05,.8],[.15,.3],[.85,.3],[.95,.8]];
+  // Sparkles around title - BIGGER
+  const sparklePos=[[.08,1.2],[.18,.5],[.82,.5],[.92,1.2]];
   sparklePos.forEach(([rx,ry],i)=>{
     if(Math.sin(t*.003+i)>0){
       cx.save(); cx.translate(W*rx,titleY+R*ry); cx.rotate(t*.002+i);
-      cx.fillStyle='#FFF'; cx.shadowColor='#FFD700'; cx.shadowBlur=10;
-      drawStar(0,0,4,R*.2,R*.08);
+      cx.fillStyle='#FFF'; cx.shadowColor='#FFD700'; cx.shadowBlur=15;
+      drawStar(0,0,4,R*.35,R*.15);
       cx.restore();
     }
   });
@@ -1078,8 +1049,8 @@ function drawSplash(t){
   // Sparkles everywhere
   sparklesArr.forEach(sp=>{ sp.update(); sp.draw(); });
   
-  // Draw chibi mascot (big and center-bottom)
-  drawChibiMascot(t,W/2,H*.65,1.3);
+  // Draw chibi mascot - WAY BIGGER (was 1.3 scale, now 2.2!)
+  drawChibiMascot(t,W/2,H*.72,2.2);
   
   // Floating boba friends in background
   const floatY=H*.78+Math.sin(t*.001)*R*.5;
@@ -1103,20 +1074,20 @@ function drawSplash(t){
   cx.fillText(`★ BEST: ${hiScore} ★`,bx,by);
   cx.restore();
   
-  // PRESS START with anime style
+  // PRESS START - NO ARROWS, clean style
   const pulse=(Math.sin(t*.005)+1)/2;
-  const by2=H*.92;
+  const by2=H*.94;
   cx.save();
   cx.globalAlpha=.7+pulse*.3;
   // Glow
-  const gg=cx.createRadialGradient(W/2,by2,0,W/2,by2,R*4);
-  gg.addColorStop(0,`rgba(255,215,0,${.5+pulse*.3})`); gg.addColorStop(1,'transparent');
-  cx.fillStyle=gg; cx.fillRect(W/2-R*4,by2-R, R*8, R*2);
-  // Text
-  cx.font=`bold ${Math.round(R*1.3)}px Arial Black,Arial`; cx.textAlign='center'; cx.textBaseline='middle';
-  cx.strokeStyle='#FF1493'; cx.lineWidth=4; cx.strokeText('▶ PRESS START ◀',W/2,by2);
-  cx.fillStyle='#FFF'; cx.fillText('▶ PRESS START ◀',W/2,by2);
-  cx.fillStyle='#FFD700'; cx.globalAlpha=pulse; cx.fillText('▶ PRESS START ◀',W/2,by2);
+  const gg=cx.createRadialGradient(W/2,by2,0,W/2,by2,R*5);
+  gg.addColorStop(0,`rgba(255,105,180,${.6+pulse*.4})`); gg.addColorStop(1,'transparent');
+  cx.fillStyle=gg; cx.fillRect(W/2-R*5,by2-R*1.5, R*10, R*3);
+  // Text - NO WACK ARROWS
+  cx.font=`bold ${Math.round(R*1.5)}px Arial Black,Arial`; cx.textAlign='center'; cx.textBaseline='middle';
+  cx.strokeStyle='#FF1493'; cx.lineWidth=5; cx.strokeText('PRESS START',W/2,by2);
+  cx.fillStyle='#FFF'; cx.fillText('PRESS START',W/2,by2);
+  cx.fillStyle='#FF69B4'; cx.globalAlpha=pulse; cx.fillText('PRESS START',W/2,by2);
   cx.restore();
 }
 function drawPause(){
