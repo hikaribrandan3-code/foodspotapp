@@ -11,6 +11,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import './HikariBoy.css';
+import MunchboyBoot from './MunchboyBoot';
 
 const BUTTONS = {
   DPAD_UP: 'dpad-up',
@@ -159,14 +160,16 @@ export function HikariBoy({
     }
   };
 
+  const handleBootComplete = () => {
+    setIsBooting(false);
+  };
+
   return (
     <div className="hikariboy-emulator">
       {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
       <div className="hb-screen">
         {isBooting ? (
-          <div className="hb-boot">
-            <div className="boot-logo">foodspot</div>
-          </div>
+          <MunchboyBoot onComplete={handleBootComplete} />
         ) : !currentGame ? (
           <GameSelector 
             games={GAMES} 
