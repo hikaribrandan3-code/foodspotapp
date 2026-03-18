@@ -65,7 +65,7 @@ export default function MunchboyBoot({ onComplete }) {
     // slowing it down by ~0.3s overall (from 80ms to 110ms)
     const SHAKE_DELAY = 770; 
     const CHIME_DELAY = SHAKE_DELAY + 400; // 1170ms
-    const FINISH_DELAY = CHIME_DELAY + 1500; // 2670ms
+    const FINISH_DELAY = CHIME_DELAY + 750; // Speed up "PRESS START" by 2x
 
     const shakeTimer = setTimeout(() => {
       setShake(true);
