@@ -721,9 +721,31 @@ function handleKey(k){
   }
 }
 
+// ── PAUSE / RESUME ─────────────────────────────────────────────────────
+let gameState='playing';
+window.addEventListener('message',(e)=>{
+  if(e.data.type==='PAUSE')gameState='paused';
+  if(e.data.type==='RESUME')gameState='playing';
+  if(e.data.type==='BUTTON_PRESS'){
+    if(e.data.button==='start'){
+      if(gameState==='playing')gameState='paused';
+      else if(gameState==='paused')gameState='playing';
+    }
+  }
+});
+
 // ── MAIN LOOP ──────────────────────────────────────────────────────────
 function loop(){
   requestAnimationFrame(loop);frame++;
+  if(gameState==='paused'){
+    // Draw pause overlay but keep loop alive
+    ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,GW,GH);
+    ctx.fillStyle='#FFD700';ctx.font='bold 32px monospace';ctx.textAlign='center';
+    ctx.fillText('PAUSED',GW/2,GH/2);
+    ctx.font='14px monospace';ctx.fillStyle='#fff';
+    ctx.fillText('Press START to Resume',GW/2,GH/2+40);
+    return;
+  }
   ctx.clearRect(0,0,GW,GH);
   if(shake>0){ctx.save();ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake=Math.max(0,shake-1);}
   if(state==='menu')drawMenu();
