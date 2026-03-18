@@ -31,15 +31,13 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 7 games (clean & focused)
+// 4 CURATED GAMES - Premium selection only
 const GAMES = [
   { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
   { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
-  { id: 'hot-dog-dash', name: 'Hot Dog Dash', cover: '/games/hot-dog-dash/cover.png', url: '/games/hot-dog-dash/index.html' },
   { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
-  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
-  { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
+]
 ];
 
 export function HikariBoy({ 
@@ -50,6 +48,7 @@ export function HikariBoy({
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [gameLoading, setGameLoading] = useState(false);
   const gameFrameRef = useRef(null);
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
@@ -314,14 +313,8 @@ function GameSelector({ games, selectedIndex }) {
   }, [selectedIndex, selectedGame]);
   
   const handleError = () => {
-    if (!hasError && selectedGame.fallback) {
-      // Try fallback SVG
-      setImgSrc(selectedGame.fallback);
-      setHasError(true);
-    } else {
-      // No fallback, show text
-      setHasError(true);
-    }
+    // Show text fallback on image error
+    setHasError(true);
   };
   
   return (
