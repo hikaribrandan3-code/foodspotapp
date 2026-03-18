@@ -31,22 +31,31 @@ const BUTTONS = {
   R: 'r'
 };
 
-// 15 GAMES with cover paths (11 food + 4 GBA homebrew)
-// PNG covers preferred, SVG fallback for missing PNGs
+// 19 GAMES with cover paths (15 food + 4 GBA homebrew)
+// All new games have music and high-quality cover.png images
 const GAMES = [
-  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', fallback: '/games/burger-stack/cover.svg', url: '/games/burger-stack/index.html' },
-  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', fallback: '/games/food-fight/cover.svg', url: '/games/food-fight/index.html' },
-  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', fallback: '/games/fry-catch/cover.svg', url: '/games/fry-catch/index.html' },
-  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', fallback: '/games/bubble-tea/cover.svg', url: '/games/bubble-tea/index.html' },
-  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', fallback: '/games/coffee-pour/cover.svg', url: '/games/coffee-pour/index.html' },
-  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', fallback: '/games/spice-invaders/cover.svg', url: '/games/spice-invaders/index.html' },
-  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', fallback: '/games/fruit-slice/cover.svg', url: '/games/fruit-slice/index.html' },
-  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', fallback: '/games/bento-box/cover.svg', url: '/games/bento-box/index.html' },
-  // GBA Homebrew Games (with music) - SVG only for now
-  { id: 'luminesweeper', name: 'Luminesweeper', cover: '/games/luminesweeper/cover.svg', fallback: null, url: '/games/luminesweeper/index.html' },
-  { id: 'bulletgba', name: 'BulletGBA', cover: '/games/bulletgba/cover.svg', fallback: null, url: '/games/bulletgba/index.html' },
-  { id: 'gorf', name: 'Gorf', cover: '/games/gorf/cover.svg', fallback: null, url: '/games/gorf/index.html' },
-  { id: 'ucity', name: 'μCity', cover: '/games/ucity/cover.svg', fallback: null, url: '/games/ucity/index.html' },
+  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
+  { id: 'food-fight', name: 'Food Fight', cover: '/games/food-fight/cover.png', url: '/games/food-fight/index.html' },
+  { id: 'fry-catch', name: 'Fry Catch', cover: '/games/fry-catch/cover.png', url: '/games/fry-catch/index.html' },
+  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
+  { id: 'coffee-pour', name: 'Coffee Pour', cover: '/games/coffee-pour/cover.png', url: '/games/coffee-pour/index.html' },
+  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
+  { id: 'fruit-slice', name: 'Fruit Slice', cover: '/games/fruit-slice/cover.png', url: '/games/fruit-slice/index.html' },
+  { id: 'bento-box', name: 'Bento Box', cover: '/games/bento-box/cover.png', url: '/games/bento-box/index.html' },
+  { id: 'condiment-blast', name: 'Condiment Blast', cover: '/games/condiment-blast/cover.png', url: '/games/condiment-blast/index.html' },
+  { id: 'donut-roll', name: 'Donut Roll', cover: '/games/donut-roll/cover.png', url: '/games/donut-roll/index.html' },
+  { id: 'ice-cream', name: 'Ice Cream', cover: '/games/ice-cream/cover.png', url: '/games/ice-cream/index.html' },
+  { id: 'sushi-roll', name: 'Sushi Roll', cover: '/games/sushi-roll/cover.png', url: '/games/sushi-roll/index.html' },
+  // NEW GAMES (with music!)
+  { id: 'hot-dog-dash', name: 'Hot Dog Dash', cover: '/games/hot-dog-dash/cover.png', url: '/games/hot-dog-dash/index.html' },
+  { id: 'ingredient-match', name: 'Ingredient Match', cover: '/games/ingredient-match/cover.png', url: '/games/ingredient-match/index.html' },
+  { id: 'perfect-steak', name: 'Perfect Steak', cover: '/games/perfect-steak/cover.png', url: '/games/perfect-steak/index.html' },
+  { id: 'taco-tower', name: 'Taco Tower', cover: '/games/taco-tower/cover.png', url: '/games/taco-tower/index.html' },
+  // GBA Homebrew Games (with music)
+  { id: 'luminesweeper', name: 'Luminesweeper', cover: '/games/luminesweeper/cover.svg', url: '/games/luminesweeper/index.html' },
+  { id: 'bulletgba', name: 'BulletGBA', cover: '/games/bulletgba/cover.svg', url: '/games/bulletgba/index.html' },
+  { id: 'gorf', name: 'Gorf', cover: '/games/gorf/cover.svg', url: '/games/gorf/index.html' },
+  { id: 'ucity', name: 'μCity', cover: '/games/ucity/cover.svg', url: '/games/ucity/index.html' },
 ];
 
 export function HikariBoy({ 
