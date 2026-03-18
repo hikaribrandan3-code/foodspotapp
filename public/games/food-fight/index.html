@@ -300,7 +300,7 @@ function drawSpfx(){
           ctx.fillStyle=CH[s.ci].color+'99';ctx.fillRect(cl.x+10,cl.y+38,38,36);
           ctx.fillStyle=CH[s.ci].body+'99';ctx.fillRect(cl.x+10,cl.y+38,38,20);
           ctx.font='24px serif';ctx.textAlign='center';ctx.globalAlpha=al*.8;
-          ctx.fillText(['🥒','🍅','🥟','🥕','��','🍩','🌮','🍣','🌶️'][s.ci],cl.x+29,cl.y+26);
+          ctx.fillText(['🥒','🍅','🥟','🥕','🥔','🍩','🌮','🍣','🌶️'][s.ci],cl.x+29,cl.y+26);
           // ghost glow ring
           ctx.strokeStyle=CH[s.ci].color;ctx.lineWidth=2;ctx.shadowColor=CH[s.ci].color;ctx.shadowBlur=14;ctx.globalAlpha=al*.5;
           ctx.beginPath();ctx.ellipse(cl.x+29,cl.y+65,26,46,0,0,Math.PI*2);ctx.stroke();
