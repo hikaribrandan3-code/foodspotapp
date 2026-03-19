@@ -768,7 +768,7 @@ function drawUI(){
   ctx.fillStyle=feverMode?'hsl('+feverHue+',100%,68%)':'#FFD700';ctx.font='bold 11px Arial Black';ctx.textAlign='center';ctx.fillText('SCORE',W/2,25);
   ctx.fillStyle='#fff';ctx.font='900 30px Arial Black';ctx.fillText(score,W/2,54);ctx.textAlign='left';
   panel(W/2-44,76,88,25,13);ctx.fillStyle='#FFD0A0';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText(level===1?'🍳 PREP':level===2?'🔥 RUSH':'⚡ CHAOS',W/2,92);ctx.textAlign='left';
-  btn(14,14,muted?'🔇':'🔊');if(gs==='playing'||gs==='paused')btn(W-60,14,gs==='paused'?'▶':'⏸');
+  btn(14,14,muted?'🔇':'🔊');
   if(combo>1&&gs==='playing'){var ci=Math.min(Math.floor(combo/3),CBC.length-1);panel(W/2-68,106,136,30,9);ctx.fillStyle=CBC[ci];ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='900 18px Arial Black';ctx.textAlign='center';ctx.strokeText('COMBO ×'+combo,W/2,126);ctx.fillText('COMBO ×'+combo,W/2,126);ctx.textAlign='left';}
   if(comboT>0){var a=Math.min(1,comboT/20);ctx.save();ctx.globalAlpha=a;ctx.font='900 36px Arial Black';ctx.textAlign='center';ctx.strokeStyle='#000';ctx.lineWidth=7;ctx.strokeText(comboCallout,W/2,H*.46);ctx.fillStyle='#FF6600';ctx.fillText(comboCallout,W/2,H*.46);ctx.restore();ctx.textAlign='left';}
   if(pendingSlowMo&&slowMoTimer>0){ctx.fillStyle='rgba(130,200,255,.75)';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText('❄️ SLOW '+Math.ceil(slowMoTimer/60)+'s',W/2,110);ctx.textAlign='left';}
@@ -806,11 +806,11 @@ function drawDashedLine(x,y,len,col){
 // ── GAME OVER / RECEIPT ──
 function drawGO(){
   ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(0,0,W,H);
-  var rw=272,teeth=14,tw=rw/teeth;
+  var rw=190,teeth=14,tw=rw/teeth;
   var shownLayers=Math.min(stackH,8);
   var extraLines=(stackH>8?1:0)+(maxCombo>1?1:0);
-  var rh=Math.min(H-40,148+shownLayers*13+extraLines*14+200);
-  var rx=W/2-rw/2,ry=Math.max(8,H/2-rh/2-10);
+  var rh=Math.min(H-40,104+shownLayers*9+extraLines*10+140);
+  var rx=W/2-rw/2,ry=Math.max(8,H/2-rh/2-10)+20;
 
   // shadow
   ctx.save();
@@ -835,59 +835,61 @@ function drawGO(){
   var cy2=ry+28;
 
   // header
-  ctx.font='32px Arial';ctx.textAlign='center';ctx.fillText('🍔',W/2,cy2+28);cy2+=40;
-  ctx.font='900 20px Arial Black';ctx.textAlign='center';
-  ctx.strokeStyle='#000';ctx.lineWidth=6;ctx.strokeText('BURGER STACK',W/2,cy2);
-  ctx.fillStyle='#fff';ctx.fillText('BURGER STACK',W/2,cy2);cy2+=16;
-  ctx.font='bold 8px Arial';ctx.fillStyle='#999';ctx.fillText('渋谷区  •  @foodspotmobile  •  営業中',W/2,cy2);cy2+=10;
-  drawWavyLine(rx+12,cy2,rw-24,'#ffb8c6',2);cy2+=10;
+  ctx.font='22px Arial';ctx.textAlign='center';ctx.fillText('🍔',W/2,cy2+20);cy2+=28;
+  ctx.save();ctx.translate(W/2,cy2);ctx.scale(1.3,1);
+  ctx.font='900 16px Arial Black';ctx.textAlign='center';
+  ctx.strokeStyle='#000';ctx.lineWidth=5;ctx.strokeText('BURGER STACK',0,0);
+  ctx.fillStyle='#FF3860';ctx.fillText('BURGER STACK',0,0);
+  ctx.restore();cy2+=12;
+  ctx.font='bold 6px Arial';ctx.fillStyle='#999';ctx.fillText('渋谷区  •  @foodspotmobile  •  営業中',W/2,cy2);cy2+=8;
+  drawWavyLine(rx+8,cy2,rw-16,'#ffb8c6',1.5);cy2+=7;
 
   // order info
-  ctx.font='bold 8px Arial';ctx.fillStyle='#bbb';ctx.textAlign='left';
-  ctx.fillText('注文番号: #'+((score*7+42)%9000+1000),rx+34,cy2);
-  ctx.textAlign='right';ctx.fillText(new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),rx+rw-10,cy2);cy2+=12;
-  drawDashedLine(rx+12,cy2,rw-24,'#ddd');cy2+=10;
+  ctx.font='bold 6px Arial';ctx.fillStyle='#bbb';ctx.textAlign='left';
+  ctx.fillText('注文番号: #'+((score*7+42)%9000+1000),rx+24,cy2);
+  ctx.textAlign='right';ctx.fillText(new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),rx+rw-7,cy2);cy2+=9;
+  drawDashedLine(rx+8,cy2,rw-16,'#ddd');cy2+=7;
 
   // items
-  ctx.font='800 8px Arial Black';ctx.fillStyle='#333';ctx.textAlign='left';ctx.fillText('品名  ITEM',rx+34,cy2);
-  ctx.textAlign='right';ctx.fillText('¥ YEN',rx+rw-10,cy2);cy2+=12;
+  ctx.font='600 6px Arial Black';ctx.fillStyle='#333';ctx.textAlign='left';ctx.fillText('品名  ITEM',rx+24,cy2);
+  ctx.textAlign='right';ctx.fillText('¥ YEN',rx+rw-7,cy2);cy2+=9;
   var ingPrices=[100,300,150,80,120,90,280,100];
   for(var i=0;i<shownLayers;i++){
     var ing=ING[i%ING.length],price=ingPrices[i%ingPrices.length];
-    ctx.fillStyle=ing.c;ctx.beginPath();ctx.arc(rx+38,cy2-4,4,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;ctx.stroke();
-    ctx.font='bold 9px Arial';ctx.fillStyle='#333';ctx.textAlign='left';ctx.fillText(ing.n,rx+46,cy2);
-    ctx.textAlign='right';ctx.fillStyle='#555';ctx.fillText('¥'+price,rx+rw-10,cy2);cy2+=13;
+    ctx.fillStyle=ing.c;ctx.beginPath();ctx.arc(rx+27,cy2-3,3,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=.7;ctx.stroke();
+    ctx.font='bold 6px Arial';ctx.fillStyle='#333';ctx.textAlign='left';ctx.fillText(ing.n,rx+32,cy2);
+    ctx.textAlign='right';ctx.fillStyle='#555';ctx.fillText('¥'+price,rx+rw-7,cy2);cy2+=9;
   }
-  if(stackH>8){ctx.font='italic 8px Arial';ctx.fillStyle='#aaa';ctx.textAlign='center';ctx.fillText('...and '+(stackH-8)+' more layers',W/2,cy2);cy2+=12;}
+  if(stackH>8){ctx.font='italic 6px Arial';ctx.fillStyle='#aaa';ctx.textAlign='center';ctx.fillText('...and '+(stackH-8)+' more layers',W/2,cy2);cy2+=8;}
   drawDashedLine(rx+12,cy2,rw-24,'#ddd');cy2+=10;
 
   if(maxCombo>1){
-    ctx.font='800 9px Arial Black';ctx.fillStyle='#ff4757';ctx.textAlign='left';
-    ctx.fillText('🔥 COMBO ×'+maxCombo,rx+34,cy2);
-    ctx.textAlign='right';ctx.fillText('+¥'+(maxCombo*50),rx+rw-10,cy2);cy2+=14;
+    ctx.font='600 6px Arial Black';ctx.fillStyle='#ff4757';ctx.textAlign='left';
+    ctx.fillText('🔥 COMBO ×'+maxCombo,rx+24,cy2);
+    ctx.textAlign='right';ctx.fillText('+¥'+(maxCombo*50),rx+rw-7,cy2);cy2+=9;
   }
 
-  drawWavyLine(rx+12,cy2,rw-24,'#ffb8c6',2);cy2+=10;
-  ctx.fillStyle='#fff0f3';ctx.strokeStyle='#ff4757';ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.roundRect(rx+16,cy2-2,rw-32,32,8);ctx.fill();ctx.stroke();
-  ctx.font='bold 11px Arial';ctx.fillStyle='#ff4757';ctx.textAlign='left';ctx.fillText('合計  TOTAL',rx+24,cy2+14);
-  ctx.font='900 20px Arial Black';ctx.fillStyle='#ff4757';ctx.textAlign='right';ctx.fillText('¥'+(score*10),rx+rw-20,cy2+18);cy2+=42;
+  drawWavyLine(rx+8,cy2,rw-16,'#ffb8c6',1.5);cy2+=7;
+  ctx.fillStyle='#fff0f3';ctx.strokeStyle='#ff4757';ctx.lineWidth=2;
+  ctx.beginPath();ctx.roundRect(rx+11,cy2-1,rw-22,22,6);ctx.fill();ctx.stroke();
+  ctx.font='bold 8px Arial';ctx.fillStyle='#ff4757';ctx.textAlign='left';ctx.fillText('合計  TOTAL',rx+17,cy2+10);
+  ctx.font='900 14px Arial Black';ctx.fillStyle='#ff4757';ctx.textAlign='right';ctx.fillText('¥'+(score*10),rx+rw-14,cy2+13);cy2+=29;
 
   var stars=score>=50?5:score>=25?4:score>=10?3:score>=5?2:1;
-  for(var i=0;i<5;i++){ctx.font='18px Arial';ctx.textAlign='center';ctx.fillStyle=i<stars?'#FFD700':'#ddd';ctx.fillText('★',W/2-40+i*20,cy2);}cy2+=18;
+  for(var i=0;i<5;i++){ctx.font='13px Arial';ctx.textAlign='center';ctx.fillStyle=i<stars?'#FFD700':'#ddd';ctx.fillText('★',W/2-28+i*14,cy2);}cy2+=12;
 
   var comments=['またのお越しを！','最高でした！ 神業！✨','まあまあ...練習して','料理学校に戻れ！😤','伝説の料理人！👑'];
-  ctx.font='bold 9px Arial';ctx.fillStyle='#666';ctx.textAlign='center';ctx.fillText(comments[Math.min(stars-1,4)],W/2,cy2+10);cy2+=22;
+  ctx.font='bold 6px Arial';ctx.fillStyle='#666';ctx.textAlign='center';ctx.fillText(comments[Math.min(stars-1,4)],W/2,cy2+7);cy2+=15;
 
-  ctx.fillStyle='#f0ede4';ctx.strokeStyle='#222';ctx.lineWidth=2;
-  ctx.beginPath();ctx.roundRect(rx+16,cy2,rw-32,30,4);ctx.fill();ctx.stroke();
-  ctx.font='900 18px Arial Black';ctx.fillStyle='#222';ctx.textAlign='center';ctx.fillText('TRY AGAIN',W/2,cy2+21);
+  ctx.fillStyle='#f0ede4';ctx.strokeStyle='#222';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(rx+11,cy2,rw-22,21,3);ctx.fill();ctx.stroke();
+  ctx.font='900 13px Arial Black';ctx.fillStyle='#222';ctx.textAlign='center';ctx.fillText('TRY AGAIN',W/2,cy2+15);
 
   if(score>=highScore&&score>0){
-    ctx.save();ctx.translate(rx+rw-48,ry+76);ctx.rotate(.22);
-    ctx.strokeStyle='#ff4757';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,26,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(0,0,22,0,Math.PI*2);ctx.stroke();
-    ctx.fillStyle='#ff4757';ctx.font='900 8px Arial Black';ctx.textAlign='center';ctx.fillText('NEW',0,-4);ctx.fillText('RECORD',0,6);ctx.fillText('!!',0,16);ctx.restore();
+    ctx.save();ctx.translate(rx+rw-34,ry+53);ctx.rotate(.22);
+    ctx.strokeStyle='#ff4757';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(0,0,15,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='#ff4757';ctx.font='900 6px Arial Black';ctx.textAlign='center';ctx.fillText('NEW',0,-3);ctx.fillText('RECORD',0,4);ctx.fillText('!!',0,11);ctx.restore();
   }
   ctx.restore();
   ctx.textAlign='left';
