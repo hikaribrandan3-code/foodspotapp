@@ -49,8 +49,9 @@ export function HikariBoy({
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [gameLoading, setGameLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const gameFrameRef = useRef(null);
+  const loaderStartRef = useRef(0);
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
   useEffect(() => {
@@ -123,15 +124,32 @@ export function HikariBoy({
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Set loading state when switching games
+  // Launch game with instant loader overlay
+  const launchGame = (game) => {
+    // INSTANT: Show loader overlay on this frame
+    setShowLoader(true);
+    loaderStartRef.current = Date.now();
+
+    // Small delay so loader renders before heavy iframe work
+    setTimeout(() => {
+      setCurrentGame(game);
+    }, 50);
+  };
+
+  // Hide loader when game iframe loads (minimum 400ms for perception)
+  const handleGameLoad = () => {
+    const elapsed = Date.now() - loaderStartRef.current;
+    const remaining = Math.max(0, 400 - elapsed);
+    setTimeout(() => setShowLoader(false), remaining);
+  };
+
+  // Fallback: hide loader after 3 seconds max
   useEffect(() => {
-    if (currentGame) {
-      setGameLoading(true);
-      // Fallback: hide loader after 2 seconds max (iframe onLoad unreliable)
-      const timer = setTimeout(() => setGameLoading(false), 2000);
+    if (showLoader) {
+      const timer = setTimeout(() => setShowLoader(false), 3000);
       return () => clearTimeout(timer);
     }
-  }, [currentGame]);
+  }, [showLoader]);
 
   const handleButtonPress = (button) => {
     // ⚡ HEAVY HAPTICS: 50-80ms bursts for retro tactile feel
@@ -172,7 +190,7 @@ export function HikariBoy({
         setSelectedIndex(prev => prev < GAMES.length - 1 ? prev + 1 : 0);
       }
       if (button === BUTTONS.A || button === BUTTONS.START) {
-        setCurrentGame(GAMES[selectedIndex]);
+        launchGame(GAMES[selectedIndex]);
       }
       if (button === BUTTONS.MENU) {
         onClose?.();
@@ -197,11 +215,21 @@ export function HikariBoy({
           />
         ) : (
           <>
-            {gameLoading && (
-              <div className="hb-loading">
-                <div className="hb-spinner"></div>
-                <span className="hb-loading-text">LOADING {currentGame.name.toUpperCase()}...</span>
-              </div>
+            {showLoader && (
+              <iframe
+                src="/games/loading.html"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  zIndex: 1000,
+                  background: '#fff'
+                }}
+                title="Loading"
+              />
             )}
             <iframe
               ref={gameFrameRef}
@@ -209,8 +237,8 @@ export function HikariBoy({
               title={currentGame.name}
               className="hb-game-frame"
               sandbox="allow-scripts allow-same-origin"
-              onLoad={() => setGameLoading(false)}
-              style={{ opacity: gameLoading ? 0 : 1 }}
+              onLoad={handleGameLoad}
+              style={{ opacity: showLoader ? 0 : 1 }}
             />
             {isPaused && (
               <div className="hb-pause-overlay">
