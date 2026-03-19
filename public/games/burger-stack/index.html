@@ -868,9 +868,9 @@ function drawGO(){
 
   // header
   ctx.font='32px Arial';ctx.textAlign='center';ctx.fillText('🍔',W/2,cy2+28);cy2+=40;
-  ctx.font='900 18px Arial Black';ctx.textAlign='center';
-  ctx.strokeStyle='#222';ctx.lineWidth=5;ctx.strokeText('BURGER STACK',W/2,cy2);
-  ctx.fillStyle='#222';ctx.fillText('BURGER STACK',W/2,cy2);cy2+=16;
+  ctx.font='900 20px Arial Black';ctx.textAlign='center';
+  ctx.strokeStyle='#000';ctx.lineWidth=6;ctx.strokeText('BURGER STACK',W/2,cy2);
+  ctx.fillStyle='#fff';ctx.fillText('BURGER STACK',W/2,cy2);cy2+=16;
   ctx.font='bold 8px Arial';ctx.fillStyle='#999';ctx.fillText('渋谷区  •  @foodspotmobile  •  営業中',W/2,cy2);cy2+=10;
   drawWavyLine(rx+12,cy2,rw-24,'#ffb8c6',2);cy2+=10;
 
@@ -914,7 +914,7 @@ function drawGO(){
 
   ctx.fillStyle='#f0ede4';ctx.strokeStyle='#222';ctx.lineWidth=2;
   ctx.beginPath();ctx.roundRect(rx+16,cy2,rw-32,30,4);ctx.fill();ctx.stroke();
-  ctx.font='900 13px Arial Black';ctx.fillStyle='#222';ctx.textAlign='center';ctx.fillText('TRY AGAIN',W/2,cy2+19);
+  ctx.font='900 18px Arial Black';ctx.fillStyle='#222';ctx.textAlign='center';ctx.fillText('TRY AGAIN',W/2,cy2+21);
 
   if(score>=highScore&&score>0){
     ctx.save();ctx.translate(rx+rw-48,ry+76);ctx.rotate(.22);
