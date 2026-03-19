@@ -469,7 +469,7 @@ function drawUI(t){
   cx.font=`900 ${bfs}px Arial Black,Arial`;cx.textAlign='center';cx.textBaseline='middle';
   const bw2=cx.measureText(bestTxt).width,rg=cx.createLinearGradient(-bw2/2,0,bw2/2,0);
   rainbowCols.forEach((c,i)=>rg.addColorStop(i/(rainbowCols.length-1),c));
-  cx.shadowColor='#FFD700';cx.shadowBlur=14+pulse2*18;cx.strokeStyle='rgba(0,0,0,0.9)';cx.lineWidth=7;cx.lineJoin='round';cx.strokeText(bestTxt,0,0);cx.strokeStyle='#FF00CC';cx.lineWidth=3;cx.strokeText(bestTxt,0,0);cx.fillStyle=rg;cx.fillText(bestTxt,0,0);cx.fillStyle=`rgba(255,255,255,${pulse2*.35})`;cx.fillText(bestTxt,0,-1);cx.restore();
+  cx.shadowColor='#FFD700';cx.shadowBlur=14+pulse2*18;cx.strokeStyle='rgba(0,0,0,0.9)';cx.lineWidth=5;cx.lineJoin='round';cx.strokeText(bestTxt,0,0);cx.fillStyle=rg;cx.fillText(bestTxt,0,0);cx.fillStyle=`rgba(255,255,255,${pulse2*.35})`;cx.fillText(bestTxt,0,-1);cx.restore();
   // LEVEL BADGE
   const lbx=W-pad*3.2,lby=barH*.52,lbsc=lvlBadgePop>0?1+lvlBadgePop*.6:1,lvlPulse=1+Math.sin(t*.008)*.09;
   if(lvlBadgePop>0)lvlBadgePop=Math.max(0,lvlBadgePop-.07);
