@@ -1,411 +1,417 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>BURGER STACK</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;display:flex;justify-content:center;align-items:flex-start;font-family:'Arial Black',Arial,sans-serif}
-#gc{position:relative;width:390px;height:844px;transform-origin:top left}
-canvas{display:block;width:100%;height:100%;touch-action:none}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Burger Stack</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { 
+            background: #1a1a2e; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden;
+            font-family: 'Arial Black', Arial, sans-serif;
+        }
+        #gameCanvas { 
+            background: linear-gradient(180deg, #2d1b4e 0%, #1a1a2e 100%);
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        .score { font-size: 32px; margin-bottom: 5px; }
+        .high { font-size: 14px; color: #ffd700; }
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-<div id="gc"><canvas id="C"></canvas></div>
+    <canvas id="gameCanvas"></canvas>
+    <div class="ui">
+        <div class="score" id="score">0</div>
+        <div class="high">BEST: <span id="high">0</></div>
+    </div>
+    <div class="controls" id="controls">TAP to stack | START for menu</div>
+
 <script>
-(function(){
-const gc=document.getElementById('gc');
-function rs(){
-const s=Math.min((window.innerHeight*.56)/844,window.innerWidth/390);
-gc.style.transform=`scale(${s})`;
-gc.style.transformOrigin='top left';
-gc.style.marginLeft=`${(window.innerWidth-390*s)/2}px`;
-}
-rs();
-window.addEventListener('resize',rs);
-})();
+// ─── HIKARIBOY SETUP ─────────────────────────────────────────────
+const isHikariBoy = window.parent !== window;
+const SAFE_H = isHikariBoy ? window.innerHeight * 0.53 : window.innerHeight;
 
-const isHikariBoy=window.parent!==window;
-const SAFE_H=isHikariBoy?844*0.53:844;
-const CAM_SHIFT=isHikariBoy?-844*0.06:0;
-const W=390,H=844;
-const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
-canvas.width=W*dpr;
-canvas.height=H*dpr;
-ctx.scale(dpr,dpr);
+// ─── GAME SETUP ──────────────────────────────────────────────────
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-const COUNTER_Y=isHikariBoy?H*0.44:H*0.58;
-const RIVAL_Y_BASE=isHikariBoy?COUNTER_Y-110:COUNTER_Y-130;
-const MASCOT_Y_BASE=isHikariBoy?COUNTER_Y-10:COUNTER_Y-14;
-const FEVER_BAR_Y=isHikariBoy?COUNTER_Y-26:COUNTER_Y-18;
-const CROWD_VISIBLE=!isHikariBoy;
-const BH=38,INIT_BW=190,PERF=5,DROP_SPD=22,LVL1=20,LVL2=50,SNAP_PX=12,TRAIL_LEN=6;
+// Responsive sizing
+let W, H, scale;
+function resize() {
+    W = Math.min(390, window.innerWidth - 20);
+    H = isHikariBoy ? Math.min(447, window.innerHeight * 0.53) : Math.min(844, window.innerHeight - 40);
+    canvas.width = W;
+    canvas.height = H;
+    scale = W / 390;
+}
+resize();
+window.addEventListener('resize', resize);
 
-let gs=isHikariBoy?'countdown':'start';
-let score=0,stackH=0,combo=0,maxCombo=0,streak=0,comboCallout='',comboT=0,level=1;
-let stack=[],cur=null,dropping=null,slices=[],parts=[],floats=[],coins=[],steams=[],fworks=[];
-let camY=0,tgtCam=0,curSpd=2.4,flash=0,flashCol='255,255,100',shakeAmt=0,shakeOff=0;
-let ticketIngredients=[];
-let failPhase=0,failTimer=0,fallBlocks=[],cdVal=3,cdTimer=null,bgTime=0;
-let mascot='normal',mascotT=0;
-let feverMode=false,feverTimer=0,feverHue=0;
-let slotActive=false,slotTimer=0,slotVals=[0,1,2],slotTarget=[0,0,0];
-let slotDone=[false,false,false],slotRewardIdx=0,nextSlotScore=10;
-let pendingWideBlock=false,pendingSlowMo=false,slowMoTimer=0;
-let milestoneActive=false,milestoneTimer=0;
-const MILESTONES=[10,25,50,100,200];let mIdx=0;
-let highScore=parseInt(localStorage.getItem('bs_hi')||'0');
-let ghostAlpha=0,spawnWobble=0,burstTimer=0,burstMult=1,trailPos=[];
-let dangerPulse=0,dangerActive=false,shrinkWarnTimer=0;
-let punchScale=1,punchT=0;
-let swayPhase=0;
-let titleFrame=0,titleInitDone=false;
-let speedLinesActive=0,speedLinesTimer=0;
-let kanjiFloats=[],dmgNumbers=[],scoreTickers=[];
-let reactionBox={active:false,name:'',emoji:'',timer:0};
-let impactFrameTimer=0,impactFrameStyle=0;
-let auraPhase=0,halftonePhase=0,halftoneOffset=0;
-let bgKanjiTimer=0,bgKanjis=[];
-let flameLicks=[],smokeRings=[];
-let beatInterval=60/155,lastBeatTime=0,curBPM=155;
+// ─── GAME STATE ──────────────────────────────────────────────────
+let gameState = isHikariBoy ? 'playing' : 'start'; // Auto-start in HikariBoy
+let score = 0;
+let highScore = parseInt(localStorage.getItem('burgerStack_high')) || 0;
+let ingredients = [];
+let currentIngredient = null;
+let falling = false;
+let camera = 0;
+let targetCamera = 0;
 
-let AC=null,muted=false;
-const MEL=[784,880,988,1047,880,784,659,784,880,988,1047,1175,1047,880,784,0,659,784,880,988,880,784,659,587,659,784,880,784,659,587,523,0,784,1047,988,880,784,880,1047,988,880,784,659,784,880,784,659,0,523,659,784,880,988,1047,1175,1047,880,988,1047,988,880,784,784,0];
-const BASS=[262,0,330,0,262,0,330,0,294,0,370,0,294,0,370,0,247,0,311,0,247,0,311,0,262,0,330,0,262,0,330,0,262,0,330,0,392,0,330,0,294,0,370,0,294,0,370,0,220,0,277,0,349,0,440,0,262,0,330,0,262,0,0,0];
-let mi=0,bi=0,mnt=0,bnt=0,musT=null;
-
-function initAC(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();}}
-function startMusic(bpm=155){
-curBPM=bpm;beatInterval=60/bpm;stopMusic();if(!AC)return;
-const B=60/bpm;mnt=AC.currentTime+0.05;bnt=AC.currentTime+0.05;mi=0;bi=0;lastBeatTime=AC.currentTime;
-function sch(){
-while(mnt<AC.currentTime+0.4){
-if(!muted&&MEL[mi%MEL.length]){
-const o=AC.createOscillator(),g=AC.createGain();
-o.connect(g);g.connect(AC.destination);
-o.type='sine';o.frequency.value=MEL[mi%MEL.length];
-g.gain.setValueAtTime(0.07,mnt);
-g.gain.exponentialRampToValueAtTime(0.001,mnt+B*0.7);
-o.start(mnt);o.stop(mnt+B);
-}
-mi++;mnt+=B;
-}
-while(bnt<AC.currentTime+0.4){
-if(!muted&&BASS[bi%BASS.length]){
-const o=AC.createOscillator(),g=AC.createGain();
-o.connect(g);g.connect(AC.destination);
-o.type='triangle';o.frequency.value=BASS[bi%BASS.length];
-g.gain.setValueAtTime(0.06,bnt);
-g.gain.exponentialRampToValueAtTime(0.001,bnt+B*1.4);
-o.start(bnt);o.stop(bnt+B*2);
-}
-bi++;bnt+=B;
-}
-musT=setTimeout(sch,80);
-}
-sch();
-}
-function stopMusic(){if(musT)clearTimeout(musT);musT=null;}
-function sfx(f,d,tp='square',v=0.22,f2=null){
-if(!AC||muted)return;
-const o=AC.createOscillator(),g=AC.createGain();
-o.connect(g);g.connect(AC.destination);
-o.type=tp;o.frequency.value=f;
-if(f2)o.frequency.exponentialRampToValueAtTime(f2,AC.currentTime+d);
-g.gain.setValueAtTime(v,AC.currentTime);
-g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);
-o.start();o.stop(AC.currentTime+d);
-}
-
-const sndDrop=()=>{sfx(180,0.05,'sine',0.3);setTimeout(()=>sfx(120,0.08,'sine',0.2),40);};
-const sndPerfect=()=>{sfx(880,0.06,'sine',0.25);setTimeout(()=>sfx(1100,0.06,'sine',0.25),60);setTimeout(()=>sfx(1320,0.15,'sine',0.3),120);};
-const sndSlice=()=>sfx(200,0.15,'sawtooth',0.2,80);
-const sndOver=()=>{sfx(300,0.15,'square',0.3);setTimeout(()=>sfx(220,0.15,'square',0.3),160);setTimeout(()=>sfx(150,0.3,'square',0.3),320);};
-const sndFever=()=>[880,1100,1320,1760].forEach((f,i)=>setTimeout(()=>sfx(f,0.08,'square',0.3),i*60));
-const sndMile=()=>[1047,1319,1568,2093].forEach((f,i)=>setTimeout(()=>sfx(f,0.18,'sine',0.35),i*90));
-const sndCoin=()=>{sfx(800,0.06,'square',0.15);setTimeout(()=>sfx(1200,0.08,'square',0.15),50);};
-const sndSlot=()=>sfx(400,0.05,'square',0.2);
-const sndSlotWin=()=>[523,784,1047,784,1047,1568].forEach((f,i)=>setTimeout(()=>sfx(f,0.1,'square',0.25),i*70));
-const sndDanger=()=>sfx(160,0.12,'sawtooth',0.18,80);
-function vibe(pat){try{if(navigator.vibrate)navigator.vibrate(pat);}catch(e){}}
-function rnd(a,b){return a+Math.random()*(b-a);}
-
-const ING=[
-{n:'Bun',c:'#FF9A3C',h:'#FFE08A',s:'#B05800',bun:true,seeds:false},
-{n:'Patty',c:'#8B4513',h:'#C06030',s:'#3D1A00',patty:true},
-{n:'Cheese',c:'#FFD600',h:'#FFF07A',s:'#C09000',cheese:true},
-{n:'Lettuce',c:'#00D44A',h:'#80FF80',s:'#007020',lettuce:true},
-{n:'Tomato',c:'#FF2020',h:'#FF7070',s:'#990000',tomato:true},
-{n:'Onion',c:'#E040FB',h:'#F0A0FF',s:'#8000A0',onion:true},
-{n:'Patty2',c:'#7B3F1E',h:'#AA6030',s:'#3D1A00',patty:true},
-{n:'BunTop',c:'#FFBC42',h:'#FFE090',s:'#A05800',bun:true,seeds:true}
+// Ingredient types
+const types = [
+    { name: 'bun', color: '#f4a460', height: 30, radius: 80 },
+    { name: 'patty', color: '#8b4513', height: 25, radius: 78 },
+    { name: 'cheese', color: '#ffd700', height: 8, radius: 82 },
+    { name: 'lettuce', color: '#32cd32', height: 12, radius: 85 },
+    { name: 'tomato', color: '#ff6347', height: 15, radius: 75 },
+    { name: 'onion', color: '#dda0dd', height: 10, radius: 80 },
+    { name: 'pickle', color: '#228b22', height: 8, radius: 72 },
+    { name: 'bun_top', color: '#f4a460', height: 35, radius: 80 }
 ];
+let currentTypeIndex = 0;
 
-const CROWD=Array.from({length:9},(_,i)=>({x:30+i*(W-60)/8,phase:rnd(0,Math.PI*2),state:'idle',stateT:0,col:['#FF6B6B','#FFE66D','#4ECDC4','#FF8B94','#A8E6CF','#FFD700','#C9B1FF','#FF9AA2'][Math.floor(Math.random()*8)],hat:Math.random()>0.6}));
-let rival={speech:'',speechT:0,bobPhase:0,reactT:0,angry:false};
-const R_GOOD=["Not bad...","Hmph, lucky!","I've seen better!","Acceptable."];
-const R_BAD=["Ha! Too slow!","Sloppy work!","My grandma stacks better!","FAIL!"];
-const R_FEVER=["WHAT?!","Cheat code!","IMPOSSIBLE!","Stop it!"];
-const R_OVER=["1 star!","Pathetic!","Closed forever!","Try culinary school!"];
-function rivalSay(arr){rival.speech=arr[Math.floor(Math.random()*arr.length)];rival.speechT=90;}
+// ─── AUDIO ───────────────────────────────────────────────────────
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(freq, duration, type = 'sine') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    osc.type = type;
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+const sounds = {
+    drop: () => { playSound(200, 0.1, 'square'); playSound(150, 0.15, 'sawtooth'); },
+    perfect: () => { playSound(880, 0.1); playSound(1100, 0.1); playSound(1320, 0.2); },
+    slice: () => playSound(300, 0.15, 'sawtooth'),
+    gameover: () => { playSound(300, 0.2); setTimeout(() => playSound(200, 0.3), 200); }
+};
 
-function update(){
-bgTime+=0.004;
-if(slowMoTimer>0){slowMoTimer--;if(slowMoTimer===0)pendingSlowMo=false;}
-if(punchT>0){punchT--;punchScale+=(1-punchScale)*0.35;}else punchScale=1;
-if(burstTimer>0){burstTimer--;if(burstTimer===0)burstMult=1;}
-if(shrinkWarnTimer>0)shrinkWarnTimer--;
-if(gs==='slot'){slotTimer++;const stops=[38,68,98];for(let i=0;i<3;i++){if(!slotDone[i]){if(slotTimer<stops[i])slotVals[i]=(slotVals[i]+0.45)%5;else{slotVals[i]=slotTarget[i];slotDone[i]=true;sndCoin();}}}if(slotDone[2]&&slotTimer>118)applySlotReward();updateParticles();return;}
-if(milestoneActive){milestoneTimer--;if(milestoneTimer<=0)milestoneActive=false;updateParticles();return;}
-if(failPhase>0){
-const el=Date.now()-failTimer;
-if(failPhase===1){shakeOff=Math.sin(el*0.05)*12*(1-el/300);if(el>300){failPhase=2;shakeOff=0;}}
-else if(failPhase===2){fallBlocks.forEach(b=>{b.vy+=0.65;b.x+=b.vx;b.y+=b.vy;b.r+=b.rs;});if(el>900)failPhase=3;}
-else if(failPhase===3){if(el>1400){gs='gameover';failPhase=0;fallBlocks=[];}}
-updateParticles();return;
-}
-if(comboT>0)comboT--;
-if(gs!=='playing'&&gs!=='countdown'){updateParticles();return;}
-camY+=(tgtCam-camY)*0.1;
-shakeAmt*=0.85;
-shakeOff=shakeAmt>0.3?(Math.random()-0.5)*shakeAmt*2:0;
-swayPhase+=0.018;
-if(feverMode){
-feverTimer--;
-if(feverTimer<=0){
-feverMode=false;
-setMascot('happy',60);
-stopMusic();
-startMusic(155+(level-1)*10);
-ftxt(W/2,SAFE_H*0.45,'Fever over...','#aaa',18);
-}
-}
-for(let i=slices.length-1;i>=0;i--){
-const s=slices[i];
-s.vy+=0.5;s.x+=s.vx;s.y+=s.vy;s.r+=s.rs;s.alpha-=0.024;
-if(s.alpha<=0)slices.splice(i,1);
-}
-if(flash>0)flash-=0.05;
-updateParticles();
-if(gs!=='playing')return;
-if(cur){
-cur.age=(cur.age||0)+1;
-if(spawnWobble>0.01)spawnWobble*=0.82;else spawnWobble=0;
-if(cur.x<=12||cur.x+cur.width>=W-12)setMascot('scared',18);
-const spd=cur.speed*(burstTimer>0?burstMult:1)*(pendingSlowMo&&slowMoTimer>0?0.42:1);
-cur.x+=cur.dir*spd;
-if(cur.x<=0){cur.x=0;cur.dir=1;}
-else if(cur.x+cur.width>=W){cur.x=W-cur.width;cur.dir=-1;}
-trailPos.unshift({x:cur.x,y:cur.y});
-if(trailPos.length>TRAIL_LEN)trailPos.pop();
-}
-if(dropping){
-const top=stack[stack.length-1];
-dropping.y+=DROP_SPD;
-if(dropping.y>=top.y-BH){
-dropping.y=top.y-BH;
-placeBlock();
-}
-}
-}
-
-function updateParticles(){
-parts=parts.filter(p=>{p.update();return p.life>0;});
-floats=floats.filter(f=>{f.update();return f.life>0;});
-coins=coins.filter(c=>{c.update();return c.life>0;});
-fworks=fworks.filter(f=>{f.update();return !f.done;});
-}
-
-function render(){
-ctx.save();
-if(punchScale!==1){ctx.translate(W/2,SAFE_H/2);ctx.scale(punchScale,punchScale);ctx.translate(-W/2,-SAFE_H/2);}
-if(CAM_SHIFT!==0)ctx.translate(0,CAM_SHIFT);
-drawBG();
-if(flash>0){ctx.fillStyle=`rgba(${flashCol},${flash*0.22})`;ctx.fillRect(0,0,W,H);}
-if(feverMode){ctx.fillStyle=`rgba(255,80,0,${0.045+0.025*Math.sin(feverHue*0.1)})`;ctx.fillRect(0,0,W,H);}
-ctx.save();
-ctx.translate(shakeOff,camY);
-const swayMax=Math.min(22,stackH*0.28),sway=Math.sin(swayPhase)*swayMax;
-ctx.save();ctx.translate(sway,0);
-for(const b of stack)drawIng(b);
-ctx.restore();
-if(dropping)drawIng(dropping);
-if(cur&&gs==='playing'){
-const top=stack[stack.length-1];
-ctx.fillStyle='rgba(255,200,100,0.1)';ctx.fillRect(cur.x,top.y-BH,cur.width,BH);
-const wobbleRot=Math.sin(spawnWobble)*spawnWobble*0.22;
-drawIng(cur,wobbleRot);
-const arrowCol=shrinkWarnTimer>0?`rgba(255,${Math.sin(Date.now()*0.04)*80+80},0,0.9)`:'rgba(140,70,0,0.7)';
-ctx.fillStyle=arrowCol;ctx.font='bold 20px Arial';ctx.textAlign='center';
-ctx.fillText('▼',cur.x+cur.width/2,cur.y-cur.height/2-12);
-ctx.textAlign='left';
-}
-for(const s of slices){
-ctx.save();
-ctx.globalAlpha=s.alpha;
-ctx.translate(s.x+s.width/2,s.y+s.height/2);
-ctx.rotate(s.r);
-ctx.fillStyle=s.col;
-ctx.fillRect(-s.width/2,-s.height/2,s.width,s.height);
-ctx.restore();
-}
-for(const b of fallBlocks){
-ctx.save();
-ctx.translate(b.x+b.width/2,b.y+b.height/2);
-ctx.rotate(b.r);
-ctx.fillStyle=ING[b.ii%ING.length].c;
-ctx.fillRect(-b.width/2,-b.height/2,b.width,b.height);
-ctx.restore();
-}
-ctx.restore();
-drawMascot();drawRival();
-drawTVOverlay();drawReactionBox();
-drawUI();
-if(gs==='slot')drawSlot();
-if(milestoneActive)drawMileBanner();
-if(failPhase===3)drawGO(true);
-if(gs==='start')drawStart();
-else if(gs==='countdown')drawCD();
-else if(gs==='paused')drawPause();
-else if(gs==='gameover')drawGO(false);
-if(isHikariBoy){
-ctx.fillStyle='rgba(0,200,255,0.18)';
-ctx.beginPath();ctx.roundRect(W/2-38,SAFE_H-14,76,12,4);ctx.fill();
-ctx.fillStyle='rgba(0,200,255,0.7)';ctx.font='bold 7px Arial';ctx.textAlign='center';
-ctx.fillText('▲ SAFE ZONE ▲',W/2,SAFE_H-5);
-ctx.textAlign='left';
-}
-ctx.restore();
-}
-
-// Input handlers
-function handleInput(){
-initAC();
-if(AC&&AC.state==='suspended')AC.resume();
-if(gs==='start')startCD();
-else if(gs==='playing')dropBlock();
-else if(gs==='paused'){gs='playing';startMusic(feverMode?192:curBPM);}
-else if(gs==='gameover')gs='start';
-}
-
-window.addEventListener('message',e=>{
-if(e.data?.type==='BUTTON_PRESS'){
-const btn=e.data.button;
-if(btn==='start'){
-initAC();
-if(gs==='start'||gs==='countdown')startCD();
-else if(gs==='playing'){gs='paused';stopMusic();}
-else if(gs==='paused'){gs='playing';startMusic(feverMode?192:curBPM);}
-else if(gs==='gameover')gs='start';
-}
-if(btn==='a'){
-initAC();
-if(gs==='start')startCD();
-else if(gs==='playing')dropBlock();
-else if(gs==='gameover')gs='start';
-}
-if(btn==='select'&&isHikariBoy){
-window.parent.postMessage({type:'GAME_EXIT',gameId:'burger-stack'},'*');
-}
-}
+// ─── HIKARIBOY BUTTON SUPPORT ────────────────────────────────────
+window.addEventListener('message', (e) => {
+    if (e.data?.type !== 'BUTTON_PRESS') return;
+    const btn = e.data.button;
+    
+    // START - pause/menu
+    if (btn === 'start') {
+        if (gameState === 'start') {
+            startGame();
+        } else if (gameState === 'playing') {
+            gameState = 'paused';
+        } else if (gameState === 'paused') {
+            gameState = 'playing';
+        } else if (gameState === 'gameover') {
+            startGame();
+        }
+        return;
+    }
+    
+    // A button - drop ingredient
+    if (btn === 'a') {
+        if (gameState === 'start') startGame();
+        else if (gameState === 'playing' && !falling) dropIngredient();
+        else if (gameState === 'gameover') startGame();
+        return;
+    }
+    
+    // SELECT - exit (HikariBoy only)
+    if (btn === 'select' && isHikariBoy) {
+        window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'burger-stack' }, '*');
+        return;
+    }
 });
 
-function startCD(){
-gs='countdown';
-cdVal=3;
-resetGame();
-sfx(880,0.12,'sine',0.3);
-if(cdTimer)clearInterval(cdTimer);
-cdTimer=setInterval(()=>{
-cdVal--;
-if(cdVal>0)sfx(880,0.12,'sine',0.3);
-else{
-clearInterval(cdTimer);
-[1047,1319,1568,2093].forEach((f,i)=>setTimeout(()=>sfx(f,0.15,'sine',0.35),i*80));
-gs='playing';
-startMusic();
+// ─── INPUT ───────────────────────────────────────────────────────
+function handleInput(e) {
+    e.preventDefault();
+    if (gameState === 'start') startGame();
+    else if (gameState === 'playing' && !falling) dropIngredient();
+    else if (gameState === 'gameover') startGame();
 }
-},1000);
+canvas.addEventListener('pointerdown', handleInput);
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') handleInput(e);
+});
+
+// ─── GAME LOGIC ──────────────────────────────────────────────────
+function startGame() {
+    score = 0;
+    ingredients = [];
+    currentIngredient = null;
+    falling = false;
+    camera = 0;
+    targetCamera = 0;
+    currentTypeIndex = 0;
+    document.getElementById('score').textContent = score;
+    document.getElementById('high').textContent = highScore;
+    gameState = 'playing';
+    
+    // Base bun
+    ingredients.push({
+        x: W/2 - 80,
+        y: H - 100,
+        width: 160,
+        height: 30,
+        color: types[0].color,
+        type: 0
+    });
+    
+    spawnIngredient();
 }
 
-function dropBlock(){
-if(!cur||dropping||gs!=='playing')return;
-if(AC){
-const now=AC.currentTime;
-const bp=((now-lastBeatTime)%beatInterval)/beatInterval;
-if(bp>0.85){
-const delay=(1-bp)*beatInterval*1000;
-setTimeout(()=>{
-if(cur&&gs==='playing'){
-dropping={...cur};cur=null;sndDrop();
-if(dropping.width<INIT_BW*0.5)setMascot('scared');
-}
-},delay);
-return;
-}
-}
-dropping={...cur};cur=null;sndDrop();
-if(dropping.width<INIT_BW*0.5)setMascot('scared');
+function spawnIngredient() {
+    const type = types[currentTypeIndex % types.length];
+    const prev = ingredients[ingredients.length - 1];
+    currentIngredient = {
+        x: Math.random() * (W - type.radius * 2) + type.radius,
+        y: 120 + camera,
+        targetY: prev ? prev.y - type.height - 5 : H - 100,
+        width: prev ? prev.width : type.radius * 2,
+        height: type.height,
+        color: type.color,
+        type: currentTypeIndex % types.length,
+        speed: 2 + score * 0.1,
+        direction: Math.random() > 0.5 ? 1 : -1
+    };
+    currentTypeIndex++;
 }
 
-function resetGame(){
-score=0;stackH=0;streak=0;combo=0;maxCombo=0;comboCallout='';comboT=0;level=1;
-curSpd=2.4;camY=0;tgtCam=0;stack=[];slices=[];parts=[];floats=[];coins=[];steams=[];fworks=[];
-smokeRings=[];flameLicks=[];ticketIngredients=[];
-cur=null;dropping=null;flash=0;shakeAmt=0;shakeOff=0;failPhase=0;failTimer=0;fallBlocks=[];
-mascot='normal';mascotT=0;feverMode=false;feverTimer=0;feverHue=0;
-slotActive=false;slotTimer=0;pendingWideBlock=false;pendingSlowMo=false;slowMoTimer=0;nextSlotScore=10;
-milestoneActive=false;milestoneTimer=0;mIdx=0;punchScale=1;punchT=0;
-trailPos=[];burstTimer=0;burstMult=1;spawnWobble=0;dangerActive=false;dangerPulse=0;shrinkWarnTimer=0;
-kanjiFloats=[];dmgNumbers=[];scoreTickers=[];reactionBox={active:false};
-speedLinesActive=0;impactFrameTimer=0;auraPhase=0;bgKanjiTimer=0;bgKanjis=[];
-titleFrame=0;titleInitDone=false;
-CROWD.forEach(c=>{c.state='idle';c.stateT=0;});
-rival.speech='';rival.speechT=0;rival.reactT=0;rival.angry=false;swayPhase=0;
-const cY=COUNTER_Y-24-BH-8;
-stack.push({x:(W-INIT_BW)/2,y:cY,width:INIT_BW,height:BH,ii:0,glow:0,squash:0});
-spawnBlock();
+function dropIngredient() {
+    if (!currentIngredient || falling) return;
+    falling = true;
+    sounds.drop();
 }
 
-function spawnBlock(){
-const top=stack[stack.length-1],ii=stack.length%ING.length;
-let spd=Math.min(7.5,curSpd+(level-1)*0.32);
-if(pendingSlowMo&&slowMoTimer>0)spd*=0.42;
-if(burstTimer>0)spd*=burstMult;
-let bw=top.width;
-if(pendingWideBlock){bw=Math.min(INIT_BW,bw*1.45);pendingWideBlock=false;}
-cur={x:0,y:top.y-BH-95,width:bw,height:BH,ii,dir:1,speed:spd,glow:0,squash:0,age:0};
-tgtCam=Math.max(0,(stack.length*BH)-500+290);
-trailPos=[];spawnWobble=Math.PI*0.6;
-if(bw<INIT_BW*0.45){shrinkWarnTimer=40;sndDanger();vibe([20,10,20]);}
-dangerActive=bw<INIT_BW*0.5;
+function update() {
+    // Camera smoothing
+    camera += (targetCamera - camera) * 0.1;
+    
+    if (gameState !== 'playing') return;
+    
+    // Move current ingredient
+    if (currentIngredient && !falling) {
+        currentIngredient.x += currentIngredient.speed * currentIngredient.direction;
+        if (currentIngredient.x <= 0 || currentIngredient.x + currentIngredient.width >= W) {
+            currentIngredient.direction *= -1;
+        }
+    }
+    
+    // Falling
+    if (falling && currentIngredient) {
+        const prev = ingredients[ingredients.length - 1];
+        const dropSpeed = 8;
+        currentIngredient.y += dropSpeed;
+        
+        if (currentIngredient.y >= currentIngredient.targetY) {
+            // Check alignment
+            const overlap = Math.max(0, 
+                Math.min(currentIngredient.x + currentIngredient.width, prev.x + prev.width) -
+                Math.max(currentIngredient.x, prev.x)
+            );
+            
+            if (overlap < 10) {
+                // Missed - game over
+                sounds.gameover();
+                gameState = 'gameover';
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('burgerStack_high', highScore);
+                }
+                window.parent.postMessage({ type: 'GAME_OVER', score: score }, '*');
+                return;
+            }
+            
+            // Calculate slice
+            const leftDiff = currentIngredient.x - prev.x;
+            const rightDiff = (currentIngredient.x + currentIngredient.width) - (prev.x + prev.width);
+            
+            if (Math.abs(leftDiff) > 5 || Math.abs(rightDiff) > 5) {
+                sounds.slice();
+                // Trim the ingredient
+                if (leftDiff < 0) {
+                    currentIngredient.width += leftDiff;
+                    currentIngredient.x = prev.x;
+                }
+                if (rightDiff > 0) {
+                    currentIngredient.width -= rightDiff;
+                }
+            } else {
+                sounds.perfect();
+                currentIngredient.x = prev.x;
+                currentIngredient.width = prev.width;
+            }
+            
+            // Lock in place
+            currentIngredient.y = currentIngredient.targetY;
+            ingredients.push({...currentIngredient});
+            score++;
+            document.getElementById('score').textContent = score;
+            
+            // Report score
+            window.parent.postMessage({ type: 'SCORE', score: score }, '*');
+            
+            // Camera follow
+            if (ingredients.length > 5) {
+                targetCamera += currentIngredient.height + 5;
+            }
+            
+            falling = false;
+            spawnIngredient();
+        }
+    }
 }
 
-// Stub functions for missing pieces
-function drawBG(){ctx.fillStyle='#1a0a1a';ctx.fillRect(0,0,W,SAFE_H);}
-function drawIng(){}
-function drawMascot(){}
-function drawRival(){}
-function drawTVOverlay(){}
-function drawReactionBox(){}
-function drawUI(){}
-function drawSlot(){}
-function drawMileBanner(){}
-function drawGO(){}
-function drawStart(){ctx.fillStyle='#000';ctx.fillRect(0,0,W,SAFE_H);ctx.fillStyle='#fff';ctx.font='20px Arial';ctx.fillText('BURGER STACK',W/2-60,SAFE_H/2);}
-function drawCD(){drawStart();}
-function drawPause(){drawStart();}
-function applySlotReward(){slotActive=false;gs='playing';spawnBlock();}
-function setMascot(){}
-function ftxt(){}
-function placeBlock(){}
-function triggerFail(){gs='gameover';}
+// ─── RENDER ──────────────────────────────────────────────────────
+function draw() {
+    // Clear
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, W, H);
+    
+    // Background gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#2d1b4e');
+    grad.addColorStop(1, '#1a1a2e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    
+    // Draw ingredients (with camera offset)
+    ctx.save();
+    ctx.translate(0, -camera);
+    
+    ingredients.forEach((ing, i) => {
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(ing.x + 3, ing.y + 3, ing.width, ing.height);
+        
+        // Ingredient
+        ctx.fillStyle = ing.color;
+        ctx.fillRect(ing.x, ing.y, ing.width, ing.height);
+        
+        // Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(ing.x, ing.y, ing.width, ing.height * 0.3);
+        
+        // Border
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(ing.x, ing.y, ing.width, ing.height);
+    });
+    
+    // Draw current ingredient
+    if (currentIngredient && gameState === 'playing') {
+        // Guide line
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(currentIngredient.x + currentIngredient.width/2, currentIngredient.y);
+        ctx.lineTo(currentIngredient.x + currentIngredient.width/2, currentIngredient.targetY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Ingredient
+        ctx.fillStyle = currentIngredient.color;
+        ctx.fillRect(currentIngredient.x, currentIngredient.y, currentIngredient.width, currentIngredient.height);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(currentIngredient.x, currentIngredient.y, currentIngredient.width, currentIngredient.height * 0.3);
+        ctx.strokeStyle = falling ? '#ff0' : '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(currentIngredient.x, currentIngredient.y, currentIngredient.width, currentIngredient.height);
+    }
+    
+    ctx.restore();
+    
+    // UI overlays
+    if (gameState === 'start') {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('BURGER STACK', W/2, H/2 - 40);
+        ctx.font = '16px Arial';
+        ctx.fillText(isHikariBoy ? 'Press START to play' : 'Tap to start', W/2, H/2 + 20);
+        ctx.textAlign = 'left';
+    } else if (gameState === 'paused') {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSED', W/2, H/2);
+        ctx.textAlign = 'left';
+    } else if (gameState === 'gameover') {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#ff3860';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', W/2, H/2 - 40);
+        ctx.fillStyle = '#fff';
+        ctx.font = '24px Arial';
+        ctx.fillText('Score: ' + score, W/2, H/2 + 10);
+        if (score === highScore && score > 0) {
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '18px Arial';
+            ctx.fillText('NEW HIGH SCORE!', W/2, H/2 + 40);
+        }
+        ctx.fillStyle = '#aaa';
+        ctx.font = '14px Arial';
+        ctx.fillText(isHikariBoy ? 'Press START to restart' : 'Tap to restart', W/2, H/2 + 80);
+        ctx.textAlign = 'left';
+    }
+    
+    // Safe zone indicator (HikariBoy only)
+    if (isHikariBoy) {
+        ctx.fillStyle = 'rgba(0,200,255,0.15)';
+        ctx.fillRect(0, H - 5, W, 5);
+    }
+}
 
-// Init
-if(isHikariBoy){initAC();startCD();}
-setInterval(update,1000/60);
-render();
+// ─── LOOP ────────────────────────────────────────────────────────
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+document.getElementById('high').textContent = highScore;
+if (isHikariBoy) {
+    document.getElementById('controls').textContent = 'A=drop | START=menu | SELECT=exit';
+    startGame(); // Auto-start in HikariBoy
+} else {
+    document.getElementById('controls').textContent = 'TAP to stack | SPACE to pause';
+}
+loop();
 </script>
 </body>
 </html>
