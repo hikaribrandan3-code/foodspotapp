@@ -769,7 +769,7 @@ function drawUI(){
   ctx.fillStyle='#fff';ctx.font='900 30px Arial Black';ctx.fillText(score,W/2,54);ctx.textAlign='left';
   panel(W/2-44,76,88,25,13);ctx.fillStyle='#FFD0A0';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText(level===1?'🍳 PREP':level===2?'🔥 RUSH':'⚡ CHAOS',W/2,92);ctx.textAlign='left';
   btn(14,14,muted?'🔇':'🔊');
-  if(combo>1&&gs==='playing'){var ci=Math.min(Math.floor(combo/3),CBC.length-1);panel(W/2-68,106,136,30,9);ctx.fillStyle=CBC[ci];ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='900 18px Arial Black';ctx.textAlign='center';ctx.strokeText('COMBO ×'+combo,W/2,126);ctx.fillText('COMBO ×'+combo,W/2,126);ctx.textAlign='left';}
+  if(combo>1&&gs==='playing'){var ci=Math.min(Math.floor(combo/3),CBC.length-1);panel(W/2-88,106,136,30,9);ctx.fillStyle=CBC[ci];ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='900 18px Arial Black';ctx.textAlign='center';ctx.strokeText('COMBO ×'+combo,W/2-20,126);ctx.fillText('COMBO ×'+combo,W/2-20,126);ctx.textAlign='left';}
   if(comboT>0){var a=Math.min(1,comboT/20);ctx.save();ctx.globalAlpha=a;ctx.font='900 36px Arial Black';ctx.textAlign='center';ctx.strokeStyle='#000';ctx.lineWidth=7;ctx.strokeText(comboCallout,W/2,H*.46);ctx.fillStyle='#FF6600';ctx.fillText(comboCallout,W/2,H*.46);ctx.restore();ctx.textAlign='left';}
   if(pendingSlowMo&&slowMoTimer>0){ctx.fillStyle='rgba(130,200,255,.75)';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText('❄️ SLOW '+Math.ceil(slowMoTimer/60)+'s',W/2,110);ctx.textAlign='left';}
   if(gs==='playing'&&!feverMode&&combo<=1){var till=nextSlotScore-score;if(till<=5&&till>0){ctx.fillStyle='rgba(255,215,0,.8)';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText('🔔 SPECIAL IN '+till,W/2,110);ctx.textAlign='left';}}
@@ -810,7 +810,7 @@ function drawGO(){
   var shownLayers=Math.min(stackH,8);
   var extraLines=(stackH>8?1:0)+(maxCombo>1?1:0);
   var rh=Math.min(H-40,104+shownLayers*9+extraLines*10+140);
-  var rx=W/2-rw/2,ry=Math.max(8,H/2-rh/2-10)+20;
+  var rx=W/2-rw/2,ry=Math.max(8,H/2-rh/2-10)-10;
 
   // shadow
   ctx.save();
