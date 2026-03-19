@@ -990,6 +990,19 @@ function drawAnimeTitle(t){
   const fs1=Math.round(R*3.84);
   cx.font=`900 ${fs1}px Arial Black,Arial`;
   
+  // JAPANESE KANJI - タピオカ (Tapioca) above title
+  const kanjiY=titleY-R*2.2;
+  cx.save();
+  cx.font=`bold ${Math.round(R*1.4)}px Arial`; 
+  cx.fillStyle='#FFF';
+  cx.strokeStyle='#FF1493';
+  cx.lineWidth=3;
+  cx.shadowColor='#FF1493';
+  cx.shadowBlur=15;
+  cx.strokeText('タピオカ',W/2/1.15,kanjiY+bounce1);
+  cx.fillText('タピオカ',W/2/1.15,kanjiY+bounce1);
+  cx.restore();
+  
   // WIDER horizontal spread for BUBBLE TEA
   cx.scale(1.15, 1);
   
@@ -1098,7 +1111,7 @@ function drawSplash(t){
   cx.fillText(`★ BEST: ${hiScore} ★`,bx,by);
   cx.restore();
   
-  // PRESS START - NO ARROWS, clean style
+  // PRESS START with Japanese スタート - NO ARROWS, clean style
   const pulse=(Math.sin(t*.005)+1)/2;
   const by2=H*.94;
   cx.save();
@@ -1107,11 +1120,18 @@ function drawSplash(t){
   const gg=cx.createRadialGradient(W/2,by2,0,W/2,by2,R*5);
   gg.addColorStop(0,`rgba(255,105,180,${.6+pulse*.4})`); gg.addColorStop(1,'transparent');
   cx.fillStyle=gg; cx.fillRect(W/2-R*5,by2-R*1.5, R*10, R*3);
-  // Text - NO WACK ARROWS
+  // English Text
   cx.font=`bold ${Math.round(R*1.5)}px Arial Black,Arial`; cx.textAlign='center'; cx.textBaseline='middle';
-  cx.strokeStyle='#FF1493'; cx.lineWidth=5; cx.strokeText('PRESS START',W/2,by2);
-  cx.fillStyle='#FFF'; cx.fillText('PRESS START',W/2,by2);
-  cx.fillStyle='#FF69B4'; cx.globalAlpha=pulse; cx.fillText('PRESS START',W/2,by2);
+  cx.strokeStyle='#FF1493'; cx.lineWidth=5; cx.strokeText('PRESS START',W/2,by2-R*.5);
+  cx.fillStyle='#FFF'; cx.fillText('PRESS START',W/2,by2-R*.5);
+  cx.fillStyle='#FF69B4'; cx.globalAlpha=pulse; cx.fillText('PRESS START',W/2,by2-R*.5);
+  // Japanese スタート (Start)
+  cx.font=`bold ${Math.round(R*.9)}px Arial`; 
+  cx.fillStyle='#FFD700';
+  cx.shadowColor='#FF1493';
+  cx.shadowBlur=8;
+  cx.globalAlpha=1;
+  cx.fillText('スタート',W/2,by2+R*.9);
   cx.restore();
 }
 function drawPause(){
