@@ -13,7 +13,7 @@ const FEVER_BAR_Y=isHikariBoy?COUNTER_Y-26:COUNTER_Y-18;
 const CROWD_VISIBLE=!isHikariBoy;
 const BH=38,INIT_BW=190,PERF=5,DROP_SPD=22,LVL1=20,LVL2=50,SNAP_PX=12,TRAIL_LEN=6;
 // ═══ ALL STATE — declared once ═══
-let gs='start',score=0,stackH=0,combo=0,maxCombo=0,streak=0,comboCallout='',comboT=0,level=1;
+let gs=isHikariBoy?'countdown':'start',score=0,stackH=0,combo=0,maxCombo=0,streak=0,comboCallout='',comboT=0,level=1;
 let stack=[],cur=null,dropping=null,slices=[],parts=[],floats=[],coins=[],steams=[],fworks=[];
 let camY=0,tgtCam=0,curSpd=2.4,flash=0,flashCol='255,255,100',shakeAmt=0,shakeOff=0;
 let ticketIngredients=[];
@@ -1125,5 +1125,6 @@ if(!isFail){const p=.45+Math.sin(Date.now()/350).45;ctx.fillStyle=rgba(255,240,1
 ctx.textAlign='left';
 }
 function loop(){update();render();requestAnimationFrame(loop);}
+if(isHikariBoy&&gs==='countdown')startCD();
 loop();
 </script>

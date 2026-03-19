@@ -9,6 +9,7 @@
 <body><canvas id="gc"></canvas>
 <script>
 // ── SETUP ────────────────────────────────────────────────────────
+const isHikariBoy = window.parent !== window;
 const cv = document.getElementById('gc');
 const cx = cv.getContext('2d');
 let W,H,R,NC,ROWS=16,GX,GY,CNX,CNY,SC;
@@ -127,7 +128,7 @@ let grid=[],parts=[],rings=[],confettiArr=[],ftexts=[],sparkArr=[],lbolts=[],sho
 let proj=null,curBoba=null,nxtBoba=null;
 let aimAngle=-Math.PI/2,aimPts=[];
 let score=0,hiScore=0,shots=0,ceilOff=0,lives=3,lvl=1,combo=0;
-let gameState='splash';
+let gameState = isHikariBoy ? 'playing' : 'splash';
 let shkX=0,shkY=0,shkT=0;
 let arcDotT=0;
 const CI_BASE=8; let cInt=CI_BASE;
@@ -1319,7 +1320,9 @@ function loop(t){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
-resize(); initOrbs(); requestAnimationFrame(loop);
+resize(); initOrbs(); 
+if(isHikariBoy) { resetGame(); initAudio(); startMusic(); }
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
