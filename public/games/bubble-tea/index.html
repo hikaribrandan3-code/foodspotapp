@@ -465,7 +465,7 @@ function drawUI(t){
   // BEST - Rainbow Arcade
   cx.save();cx.translate(W/2,barH*.82);
   const btxt=`BEST ${hiScore}`;
-  cx.font=`900 ${Math.round(R*1.1)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
+  cx.font=`900 ${Math.round(R*1.16)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
   const tw=cx.measureText(btxt).width;
   const bg=cx.createLinearGradient(-tw/2,0,tw/2,0);
   bg.addColorStop(0,'#FF6EB4');bg.addColorStop(.5,'#FFE040');bg.addColorStop(1,'#00E5A0');
