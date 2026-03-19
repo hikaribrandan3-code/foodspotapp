@@ -568,17 +568,30 @@ class Game{
   }
 
   setupInput(){
-    // HikariBoy message handler - using Food Fight pattern (auto-clear)
+    this.inputTimeouts={};
+    // HikariBoy message handler - continuous movement while holding d-pad
     window.addEventListener('message',e=>{
       const{type,button}=e.data;
+      const map={'dpad-left':'LEFT','dpad-right':'RIGHT','dpad-up':'UP','dpad-down':'DOWN','a':'A','b':'B','start':'START'};
+      
       if(type==='BUTTON_PRESS'){
-        if(button==='dpad-left'){this.inp.LEFT=1;setTimeout(()=>this.inp.LEFT=0,150);}
-        if(button==='dpad-right'){this.inp.RIGHT=1;setTimeout(()=>this.inp.RIGHT=0,150);}
-        if(button==='dpad-up'){this.inp.UP=1;setTimeout(()=>this.inp.UP=0,150);}
-        if(button==='dpad-down'){this.inp.DOWN=1;setTimeout(()=>this.inp.DOWN=0,150);}
-        if(button==='a'){this.inp.A=1;this.inp.A_PRESSED=true;setTimeout(()=>this.inp.A=0,150);}
-        if(button==='b'){this.inp.B=1;this.inp.B_PRESSED=true;setTimeout(()=>this.inp.B=0,150);}
-        if(button==='start'){this.inp.START=1;this.inp.START_PRESSED=true;setTimeout(()=>this.inp.START=0,150);}
+        // Cancel existing timeout for this button
+        if(this.inputTimeouts[button]){clearTimeout(this.inputTimeouts[button]);}
+        
+        const g=map[button];if(!g)return;
+        this.inp[g]=1;
+        // Only set _PRESSED for action buttons, not d-pad
+        if(g!=='LEFT'&&g!=='RIGHT'&&g!=='UP'&&g!=='DOWN'){this.inp[g+'_PRESSED']=true;}
+        
+        // Start new safety timeout - resets if no new press arrives
+        this.inputTimeouts[button]=setTimeout(()=>{this.inp[g]=0;},200);
+      }
+      
+      if(type==='BUTTON_RELEASE'){
+        const g=map[button];if(!g)return;
+        this.inp[g]=0;
+        // Clear safety timeout since we got proper release
+        if(this.inputTimeouts[button]){clearTimeout(this.inputTimeouts[button]);}
       }
     });
     // Keyboard for testing only - remove conflicting keybinds
