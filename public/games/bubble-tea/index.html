@@ -828,13 +828,14 @@ function loop(t){
     if(proj&&gameState==='playing'){proj.update();if(proj.stopped)onStop();else proj.draw(t);}
     if(gameState==='playing')cannonCharge=Math.max(0,cannonCharge-.008);
   }
-  shockwaves=shockwaves.filter(s=>{s.update();s.draw();return s.life>0;});
-  lbolts=lbolts.filter(b=>{b.update();b.draw();return b.life>0;});
-  rings=rings.filter(r=>{r.update();r.draw();return r.life>0;});
-  parts=parts.filter(p=>{p.update();p.draw();return p.life>0;});
-  confettiArr=confettiArr.filter(c=>{c.update();c.draw();return c.life>0;});
-  sparkArr=sparkArr.filter(s=>{s.update();s.draw();return s.life>0;});
-  ftexts=ftexts.filter(f=>{f.update();f.draw();return f.life>0;});
+  // Optimized particle loops - iterate backwards to avoid array mutation issues
+  for(let i=shockwaves.length-1;i>=0;i--){shockwaves[i].update();shockwaves[i].draw();if(shockwaves[i].life<=0)shockwaves.splice(i,1);}
+  for(let i=lbolts.length-1;i>=0;i--){lbolts[i].update();lbolts[i].draw();if(lbolts[i].life<=0)lbolts.splice(i,1);}
+  for(let i=rings.length-1;i>=0;i--){rings[i].update();rings[i].draw();if(rings[i].life<=0)rings.splice(i,1);}
+  for(let i=parts.length-1;i>=0;i--){parts[i].update();parts[i].draw();if(parts[i].life<=0)parts.splice(i,1);}
+  for(let i=confettiArr.length-1;i>=0;i--){confettiArr[i].update();confettiArr[i].draw();if(confettiArr[i].life<=0)confettiArr.splice(i,1);}
+  for(let i=sparkArr.length-1;i>=0;i--){sparkArr[i].update();sparkArr[i].draw();if(sparkArr[i].life<=0)sparkArr.splice(i,1);}
+  for(let i=ftexts.length-1;i>=0;i--){ftexts[i].update();ftexts[i].draw();if(ftexts[i].life<=0)ftexts.splice(i,1);}
   if(mascot){mascot.update();mascot.draw();if(mascot.life<=0)mascot=null;}
   drawNextPreview();drawComboStack(t);drawUI(t);
   if(gameState==='paused')drawPause();
