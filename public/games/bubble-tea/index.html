@@ -2,13 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=no">
 <title>Bubble Tea Blast</title>
 <!-- v3.0 - cache bust -->
 <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a0030;display:flex;justify-content:center;align-items:center;width:100vw;height:100vh;overflow:hidden;touch-action:none}#gc{display:block;touch-action:none}</style>
 </head>
 <body><canvas id="gc"></canvas>
 <script>
+// Prevent pinch zoom and double-tap zoom
+document.addEventListener('gesturestart',e=>e.preventDefault());
+document.addEventListener('gesturechange',e=>e.preventDefault());
+document.addEventListener('gestureend',e=>e.preventDefault());
+document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+document.addEventListener('dblclick',e=>e.preventDefault());
+
 const isHikariBoy = window.parent !== window;
 const cv = document.getElementById('gc');
 const cx = cv.getContext('2d');
