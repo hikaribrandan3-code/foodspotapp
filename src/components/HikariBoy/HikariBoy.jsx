@@ -33,7 +33,7 @@ const BUTTONS = {
 
 // Curated game library - 3 games for launch
 const GAMES = [
-  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.jpg', url: '/games/burger-stack/index.html' },
+  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
   { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.jpg', url: '/games/bubble-tea/index.html' },
 ];
