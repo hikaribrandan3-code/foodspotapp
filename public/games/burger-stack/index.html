@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Burger Stack</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;width:100vw;height:100vh;overflow:hidden;touch-action:none}#C{display:block;touch-action:none}</style>
+</head>
+<body>
+<canvas id="C"></canvas>
+<script>
 const isHikariBoy=window.parent!==window;
 const SAFE_H=isHikariBoy?844*.53:844;
 const CAM_SHIFT=isHikariBoy?-844*.06:0;
@@ -1128,3 +1138,5 @@ function loop(){update();render();requestAnimationFrame(loop);}
 if(isHikariBoy&&gs==='countdown')startCD();
 loop();
 </script>
+</body>
+</html>
