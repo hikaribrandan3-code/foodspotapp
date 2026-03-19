@@ -506,30 +506,16 @@ function drawBossBar(cx,boss,frame){
 
 // ── HUD ────────────────────────────────────────────────────────────────────
 function drawHUD(cx,player,score,wave,hasBoss,frame){
-  cx.fillStyle='#fff';cx.font='bold 13px Courier New';cx.textAlign='left';cx.fillText(`SCORE: ${score}`,10,BH-60);
-  if(!hasBoss){cx.textAlign='right';cx.fillText(`WAVE ${wave}`,BW-10,BH-60);}
-  const bw=140,bh=13,bx=10,by=BH-35,ratio=player.spice/MAX_SPICE;
+  // SPICE bar moved to top (below the wave/score banner)
+  const bw=140,bh=10,bx=10,by=38,ratio=player.spice/MAX_SPICE;
   cx.fillStyle='#111';cx.fillRect(bx,by,bw,bh);
   const sc=ratio>0.5?'#00ff44':ratio>0.25?'#ffcc00':'#ff2200';
   if(ratio<0.25){cx.shadowBlur=8;cx.shadowColor='#ff0000';}
   cx.fillStyle=sc;cx.fillRect(bx,by,bw*ratio,bh);cx.shadowBlur=0;
   cx.strokeStyle='rgba(255,255,255,0.5)';cx.lineWidth=1.5;cx.strokeRect(bx,by,bw,bh);
   cx.fillStyle='#ccc';cx.font='9px Courier New';cx.textAlign='left';cx.fillText('SPICE',bx,by-3);
-  const wc={chili:'#ffaa44',spread:'#ffaa00',pierce:'#00ffff'};
-  // show all unlocked weapons, highlight active
-  const weapons=player.unlockedWeapons;
-  weapons.forEach((w,i)=>{
-    const active=w===player.weapon;
-    cx.fillStyle=active?wc[w]:'#555';
-    cx.shadowBlur=active?8:0;cx.shadowColor=wc[w]||'#fff';
-    cx.font=`${active?'bold ':' '}11px Courier New`;cx.textAlign='right';
-    const label=w.toUpperCase().slice(0,3)+(active&&player.weaponTimer>0?` ${Math.ceil(player.weaponTimer/60)}s`:'');
-    cx.fillText(label,BW-10,BH-22-i*16);
-  });
-  cx.shadowBlur=0;
-  cx.fillStyle='#555';cx.font='9px Courier New';cx.textAlign='right';
-  if(weapons.length>1)cx.fillText('[B] swap',BW-10,BH-22-weapons.length*16);
-  if(player.shielded){cx.fillStyle='#00ccff';cx.shadowBlur=6;cx.shadowColor='#00ccff';cx.fillText('🛡',BW-10,BH-52);cx.shadowBlur=0;}
+  // Shield indicator at top right
+  if(player.shielded){cx.fillStyle='#00ccff';cx.shadowBlur=6;cx.shadowColor='#00ccff';cx.fillText('🛡',BW-10,45);cx.shadowBlur=0;}
 }
 
 // ── TITLE FORMATION ────────────────────────────────────────────────────────
