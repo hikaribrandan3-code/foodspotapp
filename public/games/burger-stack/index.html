@@ -17,39 +17,22 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
 <script>
 const isHikariBoy=window.parent!==window;
 const GAME_W=390,GAME_H=520;
-const canvas=document.getElementById('C'),ctx=canvas.getContext('2d');
-let scale=1,offsetX=0,offsetY=0;
-
 (function(){
+  const gc=document.getElementById('gc'),cvs=document.getElementById('C');
   function rs(){
-    const winW=window.innerWidth,winH=window.innerHeight;
-    const gameAspect=GAME_W/GAME_H;
-    const winAspect=winW/winH;
-    
-    if(winAspect>gameAspect){
-      // Window is wider - fit to height, black bars on sides
-      scale=winH/GAME_H;
-      offsetX=(winW-GAME_W*scale)/2;
-      offsetY=0;
-    }else{
-      // Window is taller - fit to width, black bars top/bottom
-      scale=winW/GAME_W;
-      offsetX=0;
-      offsetY=(winH-GAME_H*scale)/2;
-    }
-    
-    canvas.width=winW;
-    canvas.height=winH;
-    
-    // Clear and reset transform
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.translate(offsetX,offsetY);
-    ctx.scale(scale,scale);
+    const s=Math.min(window.innerHeight/GAME_H,window.innerWidth/GAME_W);
+    const w=GAME_W*s,h=GAME_H*s;
+    gc.style.width=w+'px';gc.style.height=h+'px';
+    gc.style.position='absolute';
+    gc.style.left=((window.innerWidth-w)/2)+'px';
+    gc.style.top='0';
   }
   rs();window.addEventListener('resize',rs);
 })();
-
 const W=GAME_W,H=GAME_H;
+const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
+canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+ctx.scale(dpr,dpr);
 const COUNTER_Y=Math.round(H*0.60);
 const BH=38,INIT_BW=190,PERF=5,DROP_SPD=22,SNAP_PX=12,TRAIL_LEN=6,LVL1=20,LVL2=50;
 
