@@ -569,29 +569,34 @@ class Game{
 
   setupInput(){
     this.inputTimeouts={};
-    // HikariBoy message handler - continuous movement while holding d-pad
+    // HikariBoy message handler - trust BUTTON_RELEASE for d-pad
     window.addEventListener('message',e=>{
       const{type,button}=e.data;
       const map={'dpad-left':'LEFT','dpad-right':'RIGHT','dpad-up':'UP','dpad-down':'DOWN','a':'A','b':'B','start':'START'};
+      const g=map[button];if(!g)return;
       
       if(type==='BUTTON_PRESS'){
-        // Cancel existing timeout for this button
-        if(this.inputTimeouts[button]){clearTimeout(this.inputTimeouts[button]);}
-        
-        const g=map[button];if(!g)return;
-        this.inp[g]=1;
-        // Only set _PRESSED for action buttons, not d-pad
-        if(g!=='LEFT'&&g!=='RIGHT'&&g!=='UP'&&g!=='DOWN'){this.inp[g+'_PRESSED']=true;}
-        
-        // Start new safety timeout - resets if no new press arrives
-        this.inputTimeouts[button]=setTimeout(()=>{this.inp[g]=0;},200);
+        if(g==='LEFT'||g==='RIGHT'||g==='UP'||g==='DOWN'){
+          // D-PAD: No timeout, trust BUTTON_RELEASE only
+          this.inp[g]=1;
+        }else{
+          // A, B, START: Use timeout safety net
+          if(this.inputTimeouts[button]){clearTimeout(this.inputTimeouts[button]);}
+          this.inp[g]=1;
+          this.inp[g+'_PRESSED']=true;
+          this.inputTimeouts[button]=setTimeout(()=>{this.inp[g]=0;},200);
+        }
       }
       
       if(type==='BUTTON_RELEASE'){
-        const g=map[button];if(!g)return;
-        this.inp[g]=0;
-        // Clear safety timeout since we got proper release
-        if(this.inputTimeouts[button]){clearTimeout(this.inputTimeouts[button]);}
+        if(g==='LEFT'||g==='RIGHT'||g==='UP'||g==='DOWN'){
+          // D-PAD: Stop immediately on release
+          this.inp[g]=0;
+        }else{
+          // A, B, START: Clear and cancel timeout
+          this.inp[g]=0;
+          if(this.inputTimeouts[button]){clearTimeout(this.inputTimeouts[button]);}
+        }
       }
     });
     // Keyboard for testing only - remove conflicting keybinds
