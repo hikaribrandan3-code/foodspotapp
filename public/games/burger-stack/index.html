@@ -810,7 +810,7 @@ function drawGO(){
   var shownLayers=Math.min(stackH,8);
   var extraLines=(stackH>8?1:0)+(maxCombo>1?1:0);
   var rh=Math.min(H-40,104+shownLayers*9+extraLines*10+140);
-  var rx=W/2-rw/2-40,ry=Math.max(8,H/2-rh/2-10)-50;
+  var rx=W/2-rw/2,ry=Math.max(8,H/2-rh/2-10)-30;
 
   // shadow
   ctx.save();
