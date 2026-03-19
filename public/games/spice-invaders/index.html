@@ -459,12 +459,22 @@ class Boss{
     const base=type==='chili'?80:120;
     this.hp=this.maxHp=base+wave*4;
     this.targetX=this.x;this.mt=0;this.st=0;this.flash=0;
+    // 3 glowing orbs must be destroyed before core is exposed
+    this.orbs=[
+      {x:-35,y:-25,hp:15,alive:true},
+      {x:35,y:-25,hp:15,alive:true},
+      {x:0,y:30,hp:15,alive:true}
+    ];
+    this.coreExposed=false;
   }
   update(px,py,dt){
     if(this.flash>0)this.flash-=dt;
     this.mt+=dt;if(this.mt>100){this.mt=0;this.targetX=70+Math.random()*(BW-140);}
     this.x+=(this.targetX-this.x)*0.025;
-    this.st+=dt;const interval=this.hp<this.maxHp*0.5?28:48;
+    // Check if all orbs destroyed
+    if(!this.coreExposed&&this.orbs.every(o=>!o.alive)){this.coreExposed=true;this.flash=20;}
+    this.st+=dt;
+    const interval=this.coreExposed?(this.hp<this.maxHp*0.3?20:35):50;
     if(this.st>interval){this.st=0;return this.fire(px,py);}
     return null;
   }
@@ -474,13 +484,42 @@ class Boss{
     else{const t=Date.now()*0.002;for(let i=0;i<6;i++){const a=t+i*Math.PI/3;b.push({x:this.x,y:this.y+40,vx:Math.cos(a)*3,vy:Math.sin(a)*3});}}
     return b;
   }
-  hit(d){this.hp-=d;this.flash=8;return this.hp<=0;}
-  draw(cx,frame){Spr.boss(cx,this.x,this.y,this.type,this.hp,this.maxHp,frame);}
+  hit(d,bx,by){
+    // Check if hitting an orb first
+    if(!this.coreExposed){
+      for(let o of this.orbs){
+        if(o.alive){
+          const dx=bx-(this.x+o.x),dy=by-(this.y+o.y);
+          if(dx*dx+dy*dy<400){o.hp-=d;o.flash=5;if(o.hp<=0){o.alive=false;this.flash=10;}return false;}
+        }
+      }
+      return false; // Can't damage boss while orbs alive
+    }
+    this.hp-=d;this.flash=8;return this.hp<=0;
+  }
+  draw(cx,frame){
+    Spr.boss(cx,this.x,this.y,this.type,this.hp,this.maxHp,frame);
+    // Draw orbs
+    if(!this.coreExposed){
+      for(let o of this.orbs){
+        if(o.alive){
+          const ox=this.x+o.x,oy=this.y+o.y;
+          const pulse=Math.sin(frame*0.1)*3;
+          cx.shadowBlur=15+pulse;cx.shadowColor='#ff00ff';
+          cx.fillStyle=o.flash>0?'#ffffff':'#ff00ff';
+          if(o.flash>0)o.flash--;
+          cx.beginPath();cx.arc(ox,oy,10,0,Math.PI*2);cx.fill();
+          cx.fillStyle='#fff';cx.beginPath();cx.arc(ox-3,oy-3,3,0,Math.PI*2);cx.fill();
+          cx.shadowBlur=0;
+        }
+      }
+    }
+  }
 }
 
 // ── WAVE INTRO ─────────────────────────────────────────────────────────────
 class WaveIntro{
-  constructor(wave,isBoss){this.wave=wave;this.isBoss=isBoss;this.t=0;this.done=false;}
+  constructor(wave,isBoss,modifier){this.wave=wave;this.isBoss=isBoss;this.modifier=modifier;this.t=0;this.done=false;}
   update(){this.t++;if(this.t>120)this.done=true;}
   draw(cx){
     const si=Math.min(1,this.t/30),fo=this.t>90?(1-(this.t-90)/30):1,al=si*fo;
@@ -497,8 +536,16 @@ class WaveIntro{
       cx.fillText(getBossType(this.wave)==='chili'?'CHILI OVERLORD':'GARLIC EMPEROR',BW/2,BH/2+28);
     }else{
       cx.fillStyle='#ff6600';cx.shadowBlur=15;cx.shadowColor='#ff6600';
-      cx.font='bold 34px Courier New';cx.fillText(`WAVE ${this.wave}`,BW/2,BH/2+2);
-      cx.shadowBlur=0;cx.fillStyle='#ffcc00';cx.font='14px Courier New';cx.fillText('ENDLESS',BW/2,BH/2+26);
+      cx.font='bold 34px Courier New';cx.fillText(`WAVE ${this.wave}`,BW/2,BH/2-5);
+      cx.shadowBlur=0;
+      // Show modifier if not normal
+      if(this.modifier&&this.modifier!=='normal'){
+        const modColors={fast:'#00ffff',tanky:'#ff6600',swarm:'#ff00ff'};
+        cx.fillStyle=modColors[this.modifier]||'#ffcc00';cx.font='bold 18px Courier New';
+        cx.fillText(this.modifier.toUpperCase(),BW/2,BH/2+22);
+      }else{
+        cx.fillStyle='#ffcc00';cx.font='14px Courier New';cx.fillText('NORMAL',BW/2,BH/2+22);
+      }
     }
     cx.globalAlpha=1;cx.restore();
   }
@@ -639,17 +686,27 @@ class Game{
     this.enemies=[];this.boss=null;this.bullets=[];this.eBullets=[];
     this.fmtX=0;this.fmtDir=1;this.fmtY=0;
     const boss=isBossWave(this.wave);
-    this.waveIntro=new WaveIntro(this.wave,boss);
+    this.waveIntro=new WaveIntro(this.wave,boss,this.modifier);
+    // Every 3rd wave has a modifier
+    const modifiers=['normal','fast','tanky','swarm'];
+    this.modifier=modifiers[Math.floor((this.wave-1)/3)%4];
     if(boss){
       this.boss=new Boss(getBossType(this.wave),this.wave);
       this.audio.bossWarn();
     }else{
       const types=['pepper','onion','carrot','broccoli','mushroom','tomato'];
-      const rows=Math.min(5,2+Math.floor(this.wave/4));
-      const cols=Math.min(8,4+Math.floor(this.wave/3));
+      let rows=Math.min(5,2+Math.floor(this.wave/4));
+      let cols=Math.min(8,4+Math.floor(this.wave/3));
+      // Apply swarm modifier
+      if(this.modifier==='swarm'){rows=Math.min(6,rows+1);cols=Math.min(10,cols+2);}
       const sx=Math.min(44,(BW-40)/cols);
-      for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)
-        this.enemies.push(new Enemy(20+c*sx+sx/2,55+r*34,types[(r+this.wave)%types.length],this.wave,false));
+      for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+        const e=new Enemy(20+c*sx+sx/2,55+r*34,types[(r+this.wave)%types.length],this.wave,false);
+        // Apply modifiers
+        if(this.modifier==='fast'){e.cd=Math.max(20,e.cd*0.6);}
+        if(this.modifier==='tanky'){e.hp=e.maxHp=Math.floor(e.hp*1.8);}
+        this.enemies.push(e);
+      }
     }
     const count=1+Math.floor(Math.random()*2);
     for(let i=0;i<count;i++){
