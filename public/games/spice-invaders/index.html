@@ -935,7 +935,18 @@ class Game{
   loop(){this.update();this.draw();requestAnimationFrame(()=>this.loop());}
 }
 
-window.onload=()=>new Game();
+// HikariBoy auto-start
+const isHikariBoy = window.parent !== window;
+
+window.onload = () => {
+  const game = new Game();
+  if (isHikariBoy) {
+    // Auto-start for HikariBoy - skip title screen
+    setTimeout(() => {
+      game.start();
+    }, 100);
+  }
+};
 </script>
 </body>
 </html>
