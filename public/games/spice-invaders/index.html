@@ -154,9 +154,9 @@ class Starfield{
 
 // ── SCREEN SHAKE ───────────────────────────────────────────────────────────
 class Shake{
-  constructor(){this.t=0;this.mag=0;}
-  trigger(m,d){this.mag=m;this.t=d;}
-  apply(cx){if(this.t<=0)return;cx.translate((Math.random()*2-1)*this.mag*(this.t/18),(Math.random()*2-1)*this.mag*(this.t/18));this.t--;this.mag*=0.9;}
+  constructor(){this.t=0;this.mag=0;this.freeze=0;}
+  trigger(m,d,f=0){this.mag=m;this.t=d;this.freeze=f;}
+  apply(cx){if(this.t<=0&&this.freeze<=0)return;cx.translate((Math.random()*2-1)*this.mag*(this.t/18),(Math.random()*2-1)*this.mag*(this.t/18));if(this.freeze>0){this.freeze--;return;}this.t--;this.mag*=0.9;}
 }
 
 // ── SPRITES ────────────────────────────────────────────────────────────────
@@ -355,10 +355,16 @@ class Player{
     this.unlockedWeapons=['chili'];
     this.cooldown=0;this.invuln=0;this.shielded=false;
     this.trail=[];
+    this.vx=0;
   }
   update(inp,dt){
-    if(inp.LEFT===1&&this.x>18)this.x-=PLAYER_SPEED;
-    if(inp.RIGHT===1&&this.x<BW-18)this.x+=PLAYER_SPEED;
+    // Velocity smoothing for fluid movement
+    const targetSpeed=inp.LEFT===1?-PLAYER_SPEED:inp.RIGHT===1?PLAYER_SPEED:0;
+    this.vx+=(targetSpeed-this.vx)*0.3;
+    this.x+=this.vx;
+    // Clamp to screen bounds
+    if(this.x<18){this.x=18;this.vx=0;}
+    if(this.x>BW-18){this.x=BW-18;this.vx=0;}
     this.trail.push({x:this.x,y:this.y,life:1});
     if(this.trail.length>18)this.trail.shift();
     this.trail.forEach(t=>t.life-=0.06);
@@ -727,8 +733,8 @@ class Game{
       if(this.boss){
         const dx=b.x-this.boss.x,dy=b.y-this.boss.y;
         if(dx*dx+dy*dy<2500){
-          if(this.boss.hit(b.dmg)){this.boom(this.boss.x,this.boss.y,60);this.score+=1000;this.boss=null;this.shake.trigger(12,22);this.audio.explode();}
-          else this.shake.trigger(4,8);
+          if(this.boss.hit(b.dmg)){this.boom(this.boss.x,this.boss.y,60);this.score+=1000;this.boss=null;this.shake.trigger(12,22,3);this.audio.explode();}
+          else this.shake.trigger(4,8,1);
           hit=!b.pierce;
         }
       }
@@ -742,7 +748,7 @@ class Game{
               this.popups.push(new Popup(e.x,e.y,sc));
               if(Math.random()<0.25)this.drops.push({x:e.x,y:e.y});
               if(e.splittable())[-18,18].forEach(ox=>this.enemies.push(new Enemy(e.x+ox,e.y,e.type,this.wave,true)));
-              this.enemies.splice(i,1);this.audio.explode();this.shake.trigger(3,6);
+              this.enemies.splice(i,1);this.audio.explode();this.shake.trigger(3,6,e.small?0:2);
             }
             hit=!b.pierce;break;
           }
@@ -755,7 +761,7 @@ class Game{
       const dx=b.x-this.player.x,dy=b.y-this.player.y;
       if(dx*dx+dy*dy<324){
         if(this.player.hit(14)){if(this.score>this.highScore){this.highScore=this.score;localStorage.setItem('si_hs',this.highScore);}this.state='gameover';this.audio.gameOver();}
-        else this.shake.trigger(6,12);
+        else this.shake.trigger(6,12,0);
         return false;
       }
       return b.y<BH+20&&b.x>-20&&b.x<BW+20;
@@ -763,7 +769,7 @@ class Game{
   }
 
   triggerBomb(){
-    this.bombFx={x:BW/2,y:BH/2,p:0};this.audio.bomb();this.shake.trigger(14,28);
+    this.bombFx={x:BW/2,y:BH/2,p:0};this.audio.bomb();this.shake.trigger(14,28,5);
     this.enemies.forEach(e=>{this.boom(e.x,e.y,22);this.score+=Math.floor(e.score()/2);});
     this.enemies=[];
     if(this.boss&&this.boss.hit(30)){this.boom(this.boss.x,this.boss.y,60);this.score+=500;this.boss=null;}
