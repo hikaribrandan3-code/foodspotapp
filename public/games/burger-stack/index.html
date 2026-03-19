@@ -7,8 +7,8 @@
 <title>BURGER STACK</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;display:flex;justify-content:center;align-items:flex-start;font-family:'Arial Black',Arial,sans-serif;}
-#gc{position:relative;transform-origin:top center;margin:0 auto;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;position:relative;font-family:'Arial Black',Arial,sans-serif;}
+#gc{position:absolute;transform-origin:top center;top:0;left:0;}
 canvas{display:block;touch-action:none;}
 </style>
 </head>
@@ -18,8 +18,15 @@ canvas{display:block;touch-action:none;}
 const isHikariBoy=window.parent!==window;
 const GAME_W=390,GAME_H=520;
 (function(){
-  const gc=document.getElementById('gc');
-  function rs(){const s=Math.min(window.innerHeight/GAME_H,window.innerWidth/GAME_W);gc.style.width=(GAME_W*s)+'px';gc.style.height=(GAME_H*s)+'px';}
+  const gc=document.getElementById('gc'),cvs=document.getElementById('C');
+  function rs(){
+    const s=Math.min(window.innerHeight/GAME_H,window.innerWidth/GAME_W);
+    const w=GAME_W*s,h=GAME_H*s;
+    gc.style.width=w+'px';gc.style.height=h+'px';
+    gc.style.position='absolute';
+    gc.style.left=((window.innerWidth-w)/2)+'px';
+    gc.style.top='0';
+  }
   rs();window.addEventListener('resize',rs);
 })();
 const W=GAME_W,H=GAME_H;
