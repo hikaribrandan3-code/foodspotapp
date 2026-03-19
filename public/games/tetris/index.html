@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Javascript Tetris</title>
   <style>
+    * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+    html, body { position: fixed; overflow: hidden; width: 100%; height: 100%; }
     body      { font-family: Helvetica, sans-serif; }
     #tetris   { margin: 1em auto; padding: 1em; border: 4px solid black; border-radius: 10px; background-color: #F8F8F8; }
     #stats    { display: inline-block; vertical-align: top; }
@@ -40,6 +43,13 @@
 
   <script src="stats.js"></script>
   <script>
+    // Prevent pinch zoom and double-tap zoom
+    document.addEventListener('gesturestart',function(e){e.preventDefault();});
+    document.addEventListener('gesturechange',function(e){e.preventDefault();});
+    document.addEventListener('gestureend',function(e){e.preventDefault();});
+    document.addEventListener('touchstart',function(e){if(e.touches.length>1)e.preventDefault();},{passive:false});
+    document.addEventListener('dblclick',function(e){e.preventDefault();});
+    var lastTouchEnd=0;document.addEventListener('touchend',function(e){var now=Date.now();if(now-lastTouchEnd<=300)e.preventDefault();lastTouchEnd=now;},false);
 
     //-------------------------------------------------------------------------
     // base helper methods

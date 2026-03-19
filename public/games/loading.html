@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUNCHBOY - Loading</title>
+<style>
+:root { --gbc-red: #ff1a1a; --gbc-blue: #1a1aff; --gbc-yellow: #ffeb3b; --gbc-green: #00e676; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { width: 100vw; height: 100vh; background: #000; display: flex; justify-content: center; align-items: center; font-family: 'Courier New', monospace; overflow: hidden; }
+.screen { width: 390px; height: 447px; background: #fff; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
+.screen::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 4px); pointer-events: none; z-index: 100; }
+.logo { font-size: 52px; font-weight: 900; font-style: italic; display: flex; font-family: 'Arial Black', Arial, sans-serif; letter-spacing: -3px; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.15)); animation: logoPop 0.5s ease-out; margin-bottom: 60px; }
+@keyframes logoPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.letter { display: inline-block; transform: skew(-8deg); }
+.letter:nth-child(1) { color: var(--gbc-blue); }
+.letter:nth-child(2) { color: var(--gbc-red); }
+.letter:nth-child(3) { color: var(--gbc-green); }
+.letter:nth-child(4) { color: var(--gbc-yellow); }
+.letter:nth-child(5) { color: var(--gbc-blue); }
+.letter:nth-child(6) { color: var(--gbc-red); }
+.letter:nth-child(7) { color: var(--gbc-green); }
+.letter:nth-child(8) { color: var(--gbc-yellow); }
+.track { position: relative; width: 100%; height: 60px; overflow: hidden; margin-bottom: 20px; }
+.runner { position: absolute; display: flex; align-items: center; gap: 20px; animation: run 3s linear infinite; will-change: transform; }
+@keyframes run { from { transform: translateX(-200px); } to { transform: translateX(390px); } }
+.food { font-size: 32px; animation: hop 0.35s infinite alternate; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.1)); }
+.lead { font-size: 38px; animation: hop 0.35s infinite alternate; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.1)); }
+@keyframes hop { to { transform: translateY(-12px); } }
+.loading-label { color: #000; font-size: 14px; letter-spacing: 4px; font-weight: bold; animation: blink 0.9s steps(1) infinite; margin-top: 10px; }
+@keyframes blink { 50% { opacity: 0; } }
+.dots { display: flex; gap: 8px; margin-top: 15px; }
+.dot { width: 8px; height: 8px; background: #000; border-radius: 50%; animation: dotPulse 0.6s infinite alternate; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse { to { opacity: 0.3; transform: scale(0.8); } }
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="logo">
+    <span class="letter">M</span><span class="letter">U</span><span class="letter">N</span><span class="letter">C</span>
+    <span class="letter">H</span><span class="letter">B</span><span class="letter">O</span><span class="letter">Y</span>
+  </div>
+  <div class="track">
+    <div class="runner">
+      <span class="lead">🍟</span><span class="food">🍔</span><span class="food">🍕</span><span class="food">🌮</span><span class="food">🍩</span>
+    </div>
+  </div>
+  <div class="loading-label">NOW LOADING</div>
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+<script>
+setTimeout(() => { if (window.parent !== window) window.parent.postMessage({type: 'LOADER_DONE'}, '*'); }, 1500);
+</script>
+</body>
+</html>

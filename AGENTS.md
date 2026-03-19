@@ -125,6 +125,51 @@ Skills provide your tools. When you need one, check its `SKILL.md`. Keep local n
 - **Discord links:** Wrap multiple links in `<>` to suppress embeds: `<https://example.com>`
 - **WhatsApp:** No headers — use **bold** or CAPS for emphasis
 
+## 🎮 HikariBoy Game Development
+
+When building games for HikariBoy emulator, use these **exact dimensions** to avoid sizing fights:
+
+### Top Half (Game Screen) Dimensions
+```
+Width:  390-414 CSS pixels
+Height: 450-520 CSS pixels (~55-60% of phone height)
+Aspect: ~9:10.5 to 9:11 (tall portrait)
+```
+
+### Recommended Base Canvas
+```javascript
+const GAME_WIDTH = 390;
+const GAME_HEIGHT = 520;  // or 480 for slightly shorter
+
+// Responsive scaling (no black bars):
+const SCALE = Math.min(
+    window.innerWidth / GAME_WIDTH, 
+    window.innerHeight * 0.6 / GAME_HEIGHT
+);
+```
+
+### Key Points
+- **Don't use 320×480** - too narrow, causes side bars
+- **Don't use 16:9** - HikariBoy is portrait mode
+- **Target ~390×520** - fills the top game area perfectly
+- **Scale by height × 0.6** - leaves room for emulator buttons below
+
+### Button Mapping
+```javascript
+// HikariBoy message event buttons:
+'dpad-left'  → move left
+'dpad-right' → move right
+'dpad-up'    → (game-specific)
+'dpad-down'  → (game-specific)
+'a'          → primary action (shoot/jump)
+'b'          → secondary action (swap weapon)
+'start'      → start game / pause
+'select'     → (optional menu)
+```
+
+### Files Location
+Games go in: `/public/games/GAME-NAME/index.html`
+
 ## 💓 Heartbeats - Be Proactive!
 
 When you receive a heartbeat poll (message matches the configured heartbeat prompt), don't just reply `HEARTBEAT_OK` every time. Use heartbeats productively!
