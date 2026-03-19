@@ -15,6 +15,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
 <div id="gc"><canvas id="C"></canvas></div>
 <script>
 const isHikariBoy=window.parent!==window;
+const GAME_H=460; // Cut off below REC line - define BEFORE use
 (function(){
   const gc=document.getElementById('gc');
   function rs(){
@@ -26,7 +27,6 @@ const isHikariBoy=window.parent!==window;
   }
   rs();window.addEventListener('resize',rs);
 })();
-const GAME_H=460; // Cut off below REC line
 const SAFE_H=isHikariBoy?GAME_H:844;
 const CAM_SHIFT=0;
 const W=390,H=844;
