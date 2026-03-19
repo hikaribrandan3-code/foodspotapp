@@ -462,15 +462,7 @@ function drawUI(t){
   // SCORE
   const sc=scoreBounce>0?1+scoreBounce*.3:1;if(scoreBounce>0)scoreBounce=Math.max(0,scoreBounce-.08);
   cx.save();cx.translate(W/2,barH*.42);cx.scale(sc,sc);cx.font=`bold ${Math.round(R*1.3)}px Arial Rounded MT Bold,Arial`;cx.textAlign='center';cx.textBaseline='middle';cx.shadowColor='#FF00CC';cx.shadowBlur=8;cx.fillStyle='#FFF';cx.fillText(score,0,0);cx.restore();
-  // BEST
-  cx.save();cx.translate(W/2,barH*.82);
-  const pulse2=(Math.sin(t*.006)+1)/2,scl2=1+pulse2*.08;cx.scale(scl2,scl2);
-  const rainbowCols=['#FF6EB4','#FFE040','#00E5A0','#29B6F6','#CE93D8'];
-  const bestTxt=`👑 BEST: ${hiScore} 👑`,bfs=Math.round(R*1.05);
-  cx.font=`900 ${bfs}px Arial Black,Arial`;cx.textAlign='center';cx.textBaseline='middle';
-  const bw2=cx.measureText(bestTxt).width,rg=cx.createLinearGradient(-bw2/2,0,bw2/2,0);
-  rainbowCols.forEach((c,i)=>rg.addColorStop(i/(rainbowCols.length-1),c));
-  cx.shadowColor='#FFD700';cx.shadowBlur=14+pulse2*18;cx.fillStyle=rg;cx.fillText(bestTxt,0,0);cx.restore();
+  // BEST - REMOVED
   // LEVEL BADGE
   const lbx=W-pad*3.2,lby=barH*.52,lbsc=lvlBadgePop>0?1+lvlBadgePop*.6:1,lvlPulse=1+Math.sin(t*.008)*.09;
   if(lvlBadgePop>0)lvlBadgePop=Math.max(0,lvlBadgePop-.07);
