@@ -428,12 +428,17 @@ class Enemy{
     if(this.flash>0)this.flash-=dt;
     if(!this.breaking){
       this.x=this.fx+ox;this.y=this.fy+oy;
+      // Enemy type-specific behaviors
+      if(this.type==='pepper'){this.fx+=Math.sin(this.y*0.05)*0.5;} // wavy movement
+      if(this.type==='onion'){this.cd=Math.max(30,this.cd-1);} // shoots faster
       if(Math.random()<0.0015){this.breaking=true;const a=Math.atan2(py-this.y,px-this.x);this.bx=Math.cos(a)*2;this.by=Math.sin(a)*2;}
     }else{
       this.x+=this.bx;this.y+=this.by;this.bt+=dt;
+      if(this.type==='carrot'){this.by+=0.1;} // accelerates when diving
       if(this.bt>180||this.y>BH+30){this.breaking=false;this.bt=0;}
     }
     this.cd-=dt;
+    if(this.type==='tomato'&&this.cd<=20&&Math.random()<0.02){this.flash=5;} // blinks before shooting
     if(this.cd<=0&&!this.breaking&&this.y>0){this.cd=100+Math.random()*150;if(Math.random()<0.25)return this.fire(px,py);}
     return null;
   }
