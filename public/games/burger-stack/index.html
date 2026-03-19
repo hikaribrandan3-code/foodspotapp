@@ -31,7 +31,7 @@ const GAME_W=448,GAME_H=520; // 390 * 1.15 = 448.5 rounded down
 })();
 const W=GAME_W,H=GAME_H;
 const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
-canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';canvas.style.margin='0 auto';canvas.style.display='block';
+canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width='100%';canvas.style.height='100%';
 ctx.scale(dpr,dpr);
 const COUNTER_Y=Math.round(H*0.60);
 const BH=38,INIT_BW=190,PERF=5,DROP_SPD=22,SNAP_PX=12,TRAIL_LEN=6,LVL1=20,LVL2=50;
