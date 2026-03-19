@@ -31,11 +31,12 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 3 games for launch
+// Curated game library - 4 games
 const GAMES = [
   { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.png', url: '/games/burger-stack/index.html' },
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.png', url: '/games/spice-invaders/index.html' },
-  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.jpg', url: '/games/bubble-tea/index.html' },
+  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.png', url: '/games/bubble-tea/index.html' },
+  { id: 'picu-sweets', name: 'Picu Sweets', cover: '/games/picu-sweets/cover.svg', url: '/games/picu-sweets/index.html' },
 ];
 
 export function HikariBoy({ 
