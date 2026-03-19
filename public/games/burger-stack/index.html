@@ -20,8 +20,8 @@ const isHikariBoy=window.parent!==window;
   function rs(){const maxH=isHikariBoy?window.innerHeight:window.innerHeight*.56;const s=Math.min(maxH/844,window.innerWidth/390);gc.style.transform=`scale(${s})`;gc.style.transformOrigin='top left';gc.style.marginLeft=`${(window.innerWidth-390*s)/2}px`;}
   rs();window.addEventListener('resize',rs);
 })();
-const SAFE_H=isHikariBoy?844*.53:844;
-const CAM_SHIFT=isHikariBoy?-844*.06:0;
+const SAFE_H=isHikariBoy?844:844;
+const CAM_SHIFT=0;
 const W=390,H=844;
 const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
 canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);
