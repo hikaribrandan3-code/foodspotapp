@@ -465,7 +465,7 @@ function drawUI(t){
   cx.save();cx.translate(W/2,barH*.82);
   const pulse2=(Math.sin(t*.006)+1)/2,scl2=1+pulse2*.08;cx.scale(scl2,scl2);
   const rainbowCols=['#FF6EB4','#FFE040','#00E5A0','#29B6F6','#CE93D8'];
-  const bestTxt=`👑 BEST: ${hiScore} 👑`,bfs=Math.round(R*1.05);
+  const bestTxt=`HI: ${hiScore}`,bfs=Math.round(R*1.05);
   cx.font=`900 ${bfs}px Arial Black,Arial`;cx.textAlign='center';cx.textBaseline='middle';
   const bw2=cx.measureText(bestTxt).width,rg=cx.createLinearGradient(-bw2/2,0,bw2/2,0);
   rainbowCols.forEach((c,i)=>rg.addColorStop(i/(rainbowCols.length-1),c));
