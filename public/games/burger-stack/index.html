@@ -8,7 +8,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;display:flex;justify-content:center;align-items:flex-start;font-family:'Arial Black',Arial,sans-serif;}
-#gc{position:relative;transform-origin:top left;}
+#gc{position:absolute;left:50%;transform-origin:top left;transform:translateX(-50%);}
 canvas{display:block;touch-action:none;}
 </style>
 </head>
@@ -19,7 +19,7 @@ const isHikariBoy=window.parent!==window;
 const GAME_W=390,GAME_H=520;
 (function(){
   const gc=document.getElementById('gc');
-  function rs(){const s=Math.min(window.innerHeight/GAME_H,window.innerWidth/GAME_W);gc.style.width=(GAME_W*s)+'px';gc.style.height=(GAME_H*s)+'px';gc.style.marginLeft=((window.innerWidth-GAME_W*s)/2)+'px';}
+  function rs(){const s=Math.min(window.innerHeight/GAME_H,window.innerWidth/GAME_W);gc.style.width=(GAME_W*s)+'px';gc.style.height=(GAME_H*s)+'px';}
   rs();window.addEventListener('resize',rs);
 })();
 const W=GAME_W,H=GAME_H;
