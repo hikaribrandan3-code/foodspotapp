@@ -764,7 +764,7 @@ var CBC=['#fff','#ffff00','#ffa500','#ff4500','#ff00ff','#00ffff'];
 function panel(x,y,w,h,r){r=r||10;ctx.fillStyle='rgba(60,30,10,.88)';ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();ctx.strokeStyle=feverMode?'hsl('+feverHue+',100%,60%)':'rgba(200,150,80,.7)';ctx.lineWidth=feverMode?2.5:2;if(feverMode){ctx.shadowColor='hsl('+feverHue+',100%,60%)';ctx.shadowBlur=10;}ctx.stroke();ctx.shadowBlur=0;}
 function btn(x,y,ic){var sz=46;panel(x,y,sz,sz,11);ctx.fillStyle='#fff';ctx.font='24px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ic,x+sz/2,y+sz/2);ctx.textBaseline='alphabetic';ctx.textAlign='left';}
 function drawUI(){
-  panel(W/2-104,8,208,64,13);
+  panel(W/2-83,8,166,64,13);
   ctx.fillStyle=feverMode?'hsl('+feverHue+',100%,68%)':'#FFD700';ctx.font='bold 11px Arial Black';ctx.textAlign='center';ctx.fillText('SCORE',W/2,25);
   ctx.fillStyle='#fff';ctx.font='900 30px Arial Black';ctx.fillText(score,W/2,54);ctx.textAlign='left';
   panel(W/2-44,76,88,25,13);ctx.fillStyle='#FFD0A0';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText(level===1?'🍳 PREP':level===2?'🔥 RUSH':'⚡ CHAOS',W/2,92);ctx.textAlign='left';
@@ -776,7 +776,7 @@ function drawUI(){
 }
 function drawSlot(){
   ctx.fillStyle='rgba(0,0,0,.82)';ctx.fillRect(0,0,W,H);
-  var slotY=H/2-70;panel(W/2-130,slotY,188,140,14);
+  var slotY=H/2-70;panel(W/2-175,slotY,188,140,14);
   ctx.fillStyle='#FFD700';ctx.font='900 14px Arial Black';ctx.textAlign='center';ctx.fillText("🔔 CHEF'S SPECIAL!",W/2,slotY+24);ctx.textAlign='left';
   var rW=45,rH=49,gap=6,sx=W/2-(rW*3+gap*2)/2;
   for(var i=0;i<3;i++){var rx=sx+i*(rW+gap),ry=slotY+34;ctx.fillStyle='rgba(255,255,255,.1)';ctx.beginPath();ctx.roundRect(rx,ry,rW,rH,6);ctx.fill();ctx.strokeStyle=slotDone[i]?'#FFD700':'rgba(255,255,255,.3)';ctx.lineWidth=1.5;ctx.stroke();if(slotDone[i]){ctx.fillStyle='rgba(255,215,0,.15)';ctx.beginPath();ctx.roundRect(rx,ry,rW,rH,6);ctx.fill();}ctx.font=(slotDone[i]?29:25)+'px Arial';ctx.textAlign='center';ctx.fillText(SLOT_EMO[Math.floor(slotVals[i])%5],rx+rW/2,ry+rH*.72);}
