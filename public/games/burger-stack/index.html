@@ -14,7 +14,7 @@ const SAFE_H=isHikariBoy?844*.53:844;
 const CAM_SHIFT=isHikariBoy?-844*.06:0;
 const W=390,H=844;
 const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
-canvas.width=Wdpr;canvas.height=Hdpr;ctx.scale(dpr,dpr);
+canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);
 // ═══ LAYOUT CONSTANTS ═══
 const COUNTER_Y=isHikariBoy?H*.44:H*.58;
 const RIVAL_Y_BASE=isHikariBoy?COUNTER_Y-110:COUNTER_Y-130;
@@ -854,7 +854,7 @@ if(pendingSlowMo&&slowMoTimer>0){ctx.fillStyle='rgba(130,200,255,.75)';ctx.font=
 if(gs==='playing'&&!feverMode&&combo<=1){const till=nextSlotScore-score;if(till<=5&&till>0){ctx.fillStyle='rgba(255,215,0,.8)';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText(🔔 SPECIAL IN ${till},W/2,110);ctx.textAlign='left';}}
 if(isHikariBoy){ctx.fillStyle='rgba(0,200,255,.18)';ctx.beginPath();ctx.roundRect(W/2-38,H*.53-14,76,12,4);ctx.fill();ctx.fillStyle='rgba(0,200,255,.7)';ctx.font='bold 7px Arial';ctx.textAlign='center';ctx.fillText('▲ SAFE ZONE ▲',W/2,H*.53-5);ctx.textAlign='left';}
 }
-function drawSlot(){ctx.fillStyle='rgba(0,0,0,.82)';ctx.fillRect(0,0,W,SAFE_H);const slotY=isHikariBoy?SAFE_H*.32:SAFE_H*.38;panel(W/2-134,slotY,268,200,18);ctx.fillStyle='#FFD700';ctx.font='900 20px Arial Black';ctx.textAlign='center';ctx.fillText("🔔 CHEF'S SPECIAL!",W/2,slotY+34);ctx.textAlign='left';const rW=64,rH=70,gap=8,sx=W/2-(rW3+gap2)/2;for(let i=0;i<3;i++){const rx=sx+i*(rW+gap),ry=slotY+48;ctx.fillStyle='rgba(255,255,255,.1)';ctx.beginPath();ctx.roundRect(rx,ry,rW,rH,8);ctx.fill();ctx.strokeStyle=slotDone[i]?'#FFD700':'rgba(255,255,255,.3)';ctx.lineWidth=2;ctx.stroke();if(slotDone[i]){ctx.fillStyle='rgba(255,215,0,.15)';ctx.beginPath();ctx.roundRect(rx,ry,rW,rH,8);ctx.fill();}ctx.font=${slotDone[i]?42:36}px Arial;ctx.textAlign='center';ctx.fillText(SLOT_EMO[Math.floor(slotVals[i])%5],rx+rW/2,ry+rH*.72);}ctx.textAlign='left';if(slotDone[2]){ctx.fillStyle='#FFD700';ctx.font='900 17px Arial Black';ctx.textAlign='center';ctx.fillText(SLOT_TXT[slotRewardIdx],W/2,slotY+148);ctx.textAlign='left';}else{ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.fillText('Spinning...',W/2,slotY+148);ctx.textAlign='left';}}
+function drawSlot(){ctx.fillStyle='rgba(0,0,0,.82)';ctx.fillRect(0,0,W,SAFE_H);const slotY=isHikariBoy?SAFE_H*.32:SAFE_H*.38;panel(W/2-134,slotY,268,200,18);ctx.fillStyle='#FFD700';ctx.font='900 20px Arial Black';ctx.textAlign='center';ctx.fillText("🔔 CHEF'S SPECIAL!",W/2,slotY+34);ctx.textAlign='left';const rW=64,rH=70,gap=8,sx=W/2-(rW*3+gap*2)/2;for(let i=0;i<3;i++){const rx=sx+i*(rW+gap),ry=slotY+48;ctx.fillStyle='rgba(255,255,255,.1)';ctx.beginPath();ctx.roundRect(rx,ry,rW,rH,8);ctx.fill();ctx.strokeStyle=slotDone[i]?'#FFD700':'rgba(255,255,255,.3)';ctx.lineWidth=2;ctx.stroke();if(slotDone[i]){ctx.fillStyle='rgba(255,215,0,.15)';ctx.beginPath();ctx.roundRect(rx,ry,rW,rH,8);ctx.fill();}ctx.font=${slotDone[i]?42:36}px Arial;ctx.textAlign='center';ctx.fillText(SLOT_EMO[Math.floor(slotVals[i])%5],rx+rW/2,ry+rH*.72);}ctx.textAlign='left';if(slotDone[2]){ctx.fillStyle='#FFD700';ctx.font='900 17px Arial Black';ctx.textAlign='center';ctx.fillText(SLOT_TXT[slotRewardIdx],W/2,slotY+148);ctx.textAlign='left';}else{ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.fillText('Spinning...',W/2,slotY+148);ctx.textAlign='left';}}
 function drawMileBanner(){const a=Math.min(1,milestoneTimer/20);ctx.save();ctx.globalAlpha=a;ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(0,SAFE_H*.22,W,90);ctx.fillStyle='#FFD700';ctx.font='900 26px Arial Black';ctx.textAlign='center';ctx.shadowColor='#FFD700';ctx.shadowBlur=20;ctx.fillText(🔔 ${MILESTONES[mIdx-1]} LAYERS! 🔔,W/2,SAFE_H*.22+54);ctx.shadowBlur=0;ctx.restore();ctx.textAlign='left';}
 function overlay(a=.87){ctx.fillStyle=rgba(20,10,0,${a});ctx.fillRect(0,0,W,SAFE_H);}
 function bigTxt(t,y,c1,c2,sz=44){ctx.font=900 ${sz}px Arial Black;ctx.textAlign='center';ctx.strokeStyle='#000';ctx.lineWidth=8;ctx.strokeText(t,W/2,y);const g=ctx.createLinearGradient(W/2-90,0,W/2+90,0);g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillText(t,W/2,y);ctx.textAlign='left';}
@@ -866,7 +866,7 @@ const scx=W/2,scy=SAFE_H*.44;
 ctx.save();
 for(let i=0;i<48;i++){
 const a=i/48Math.PI2;
-const inner=rnd(60,90),outer=rnd(W*.6,W1.1);
+const inner=rnd(60,90),outer=rnd(W*.6,W*1.1);
 const hue=(i/48360+Date.now()*.04)%360;
 ctx.strokeStyle=hsla(${hue},100%,65%,.18);ctx.lineWidth=rnd(1,4);
 ctx.beginPath();ctx.moveTo(scx+Math.cos(a)*inner,scy+Math.sin(a)*inner);
