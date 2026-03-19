@@ -442,7 +442,12 @@ class Enemy{
     if(this.cd<=0&&!this.breaking&&this.y>0){this.cd=100+Math.random()*150;if(Math.random()<0.25)return this.fire(px,py);}
     return null;
   }
-  fire(px,py){const a=Math.atan2(py-this.y,px-this.x);return{x:this.x,y:this.y+14,vx:Math.cos(a)*3.3,vy:Math.sin(a)*3.3};}
+  fire(px,py){
+    // Homing bullets toward player
+    const angle=Math.atan2(py-this.y,px-this.x);
+    const speed=3.5;
+    return{x:this.x,y:this.y+14,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed};
+  }
   hit(d){this.hp-=d;this.flash=8;return this.hp<=0;}
   draw(cx,frame){Spr.enemy(cx,this.x,this.y,this.type,frame,this.flash>0,this.small);}
 }
