@@ -136,10 +136,10 @@ export function HikariBoy({
     }, 50);
   };
 
-  // Hide loader when game iframe loads (minimum 400ms for perception)
+  // Hide loader when game iframe loads (minimum 2500ms to let animation play)
   const handleGameLoad = () => {
     const elapsed = Date.now() - loaderStartRef.current;
-    const remaining = Math.max(0, 400 - elapsed);
+    const remaining = Math.max(0, 2500 - elapsed);
     setTimeout(() => setShowLoader(false), remaining);
   };
 
