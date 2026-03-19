@@ -17,11 +17,18 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
 const isHikariBoy=window.parent!==window;
 (function(){
   const gc=document.getElementById('gc');
-  function rs(){const maxH=isHikariBoy?window.innerHeight:window.innerHeight*.56;const s=Math.min(maxH/844,window.innerWidth/390);gc.style.transform=`scale(${s})`;gc.style.transformOrigin='top left';gc.style.marginLeft=`${(window.innerWidth-390*s)/2}px`;}
+  function rs(){
+    const targetH=isHikariBoy?window.innerHeight:window.innerHeight*.56;
+    const s=Math.min(targetH/GAME_H,window.innerWidth/390);
+    gc.style.width=(390*s)+'px';
+    gc.style.height=(GAME_H*s)+'px';
+    gc.style.marginLeft=`${(window.innerWidth-390*s)/2}px`;
+  }
   rs();window.addEventListener('resize',rs);
 })();
-const SAFE_H=isHikariBoy?844*.53:844;
-const CAM_SHIFT=isHikariBoy?-844*.06:0;
+const GAME_H=460; // Cut off below REC line
+const SAFE_H=isHikariBoy?GAME_H:844;
+const CAM_SHIFT=0;
 const W=390,H=844;
 const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
 canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);
@@ -274,7 +281,7 @@ function drawTVOverlay(){
   const ts=`${String(Math.floor(bgTime/60)|0).padStart(2,'0')}:${String(Math.floor(bgTime)%60).padStart(2,'0')}`;
   ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.roundRect(6,SAFE_H-22,90,16,3);ctx.fill();
   ctx.fillStyle='#ddd';ctx.font='bold 9px Arial';ctx.fillText(`● REC  ${ts}`,10,SAFE_H-10);
-  if(gs==='playing'&&score<3){ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(0,SAFE_H-42,W,20);ctx.fillStyle='#FFD700';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.fillText('🍳 BURGER STACK CHAMPIONSHIP — LIVE FROM TOKYO 🍳',W/2,SAFE_H-28);}
+
   ctx.textAlign='left';ctx.restore();
 }
 
