@@ -14,13 +14,12 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
 <body>
 <div id="gc"><canvas id="C"></canvas></div>
 <script>
+const isHikariBoy=window.parent!==window;
 (function(){
   const gc=document.getElementById('gc');
-  function rs(){const s=Math.min((window.innerHeight*.56)/844,window.innerWidth/390);gc.style.transform=`scale(${s})`;gc.style.transformOrigin='top left';gc.style.marginLeft=`${(window.innerWidth-390*s)/2}px`;}
+  function rs(){const maxH=isHikariBoy?window.innerHeight:window.innerHeight*.56;const s=Math.min(maxH/844,window.innerWidth/390);gc.style.transform=`scale(${s})`;gc.style.transformOrigin='top left';gc.style.marginLeft=`${(window.innerWidth-390*s)/2}px`;}
   rs();window.addEventListener('resize',rs);
 })();
-
-const isHikariBoy=window.parent!==window;
 const SAFE_H=isHikariBoy?844*.53:844;
 const CAM_SHIFT=isHikariBoy?-844*.06:0;
 const W=390,H=844;
