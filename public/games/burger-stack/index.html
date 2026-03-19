@@ -778,7 +778,7 @@ function drawSlot(){
   ctx.fillStyle='rgba(0,0,0,.82)';ctx.fillRect(0,0,W,H);
   var slotY=H/2-70;panel(W/2-94,slotY,188,140,14);
   ctx.fillStyle='#FFD700';ctx.font='900 14px Arial Black';ctx.textAlign='center';ctx.fillText("🔔 CHEF'S SPECIAL!",W/2,slotY+24);ctx.textAlign='left';
-  var rW=45,rH=49,gap=6,sx=W/2-(rW*3+gap*2)/2;
+  var rW=45,rH=49,gap=6,sx=W/2-94+(188-147)/2;
   for(var i=0;i<3;i++){var rx=sx+i*(rW+gap),ry=slotY+34;ctx.fillStyle='rgba(255,255,255,.1)';ctx.beginPath();ctx.roundRect(rx,ry,rW,rH,6);ctx.fill();ctx.strokeStyle=slotDone[i]?'#FFD700':'rgba(255,255,255,.3)';ctx.lineWidth=1.5;ctx.stroke();if(slotDone[i]){ctx.fillStyle='rgba(255,215,0,.15)';ctx.beginPath();ctx.roundRect(rx,ry,rW,rH,6);ctx.fill();}ctx.font=(slotDone[i]?29:25)+'px Arial';ctx.textAlign='center';ctx.fillText(SLOT_EMO[Math.floor(slotVals[i])%5],rx+rW/2,ry+rH*.72);}
   ctx.textAlign='left';
   if(slotDone[2]){ctx.fillStyle='#FFD700';ctx.font='900 12px Arial Black';ctx.textAlign='center';ctx.fillText(SLOT_TXT[slotRewardIdx],W/2,slotY+104);ctx.textAlign='left';}
