@@ -14,7 +14,7 @@ const SAFE_H=isHikariBoy?844*.53:844;
 const CAM_SHIFT=isHikariBoy?-844*.06:0;
 const W=390,H=844;
 const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
-canvas.width=Wdpr;canvas.height=Hdpr;ctx.scale(dpr,dpr);
+canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);
 // ═══ LAYOUT CONSTANTS ═══
 const COUNTER_Y=isHikariBoy?H*.44:H*.58;
 const RIVAL_Y_BASE=isHikariBoy?COUNTER_Y-110:COUNTER_Y-130;
