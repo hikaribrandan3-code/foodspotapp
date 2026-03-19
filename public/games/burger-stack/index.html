@@ -15,26 +15,16 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
 <div id="gc"><canvas id="C"></canvas></div>
 <script>
 const isHikariBoy=window.parent!==window;
-const gc=document.getElementById('gc');
-let W,H,SCALE,OFFSET_X,OFFSET_Y;
-function resize(){
-  W=window.innerWidth;
-  H=window.innerHeight;
-  // Scale to fit full height (like Bubble Tea)
-  SCALE=Math.min(W/390,H/844);
-  // Center horizontally
-  OFFSET_X=(W-390*SCALE)/2;
-  OFFSET_Y=0;
-  gc.style.width=(390*SCALE)+'px';
-  gc.style.height=(844*SCALE)+'px';
-  gc.style.marginLeft=OFFSET_X+'px';
-}
-resize();
-window.addEventListener('resize',resize);
-const SAFE_H=844;
-const CAM_SHIFT=0;
+(function(){
+  const gc=document.getElementById('gc');
+  function rs(){const maxH=isHikariBoy?window.innerHeight:window.innerHeight*.56;const s=Math.min(maxH/844,window.innerWidth/390);gc.style.transform=`scale(${s})`;gc.style.transformOrigin='top left';gc.style.marginLeft=`${(window.innerWidth-390*s)/2}px`;}
+  rs();window.addEventListener('resize',rs);
+})();
+const SAFE_H=isHikariBoy?844*.53:844;
+const CAM_SHIFT=isHikariBoy?-844*.06:0;
+const W=390,H=844;
 const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
-canvas.width=390*dpr;canvas.height=844*dpr;ctx.scale(dpr,dpr);
+canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);
 
 // ═══ LAYOUT CONSTANTS ═══
 const COUNTER_Y=isHikariBoy?H*.44:H*.58;
