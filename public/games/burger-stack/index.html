@@ -581,7 +581,7 @@ function drawGO(){
   // ── GAME OVER text slam ──
   var goAlpha=Math.min(1,goTimer/10);
   var goSc=goTimer<6?1+(6-goTimer)/6*0.55:1;
-  ctx.save();ctx.globalAlpha=goAlpha;ctx.translate(W/2,SPLIT_Y*.18);ctx.scale(goSc,goSc);
+  ctx.save();ctx.globalAlpha=goAlpha;ctx.translate(W/2,SPLIT_Y*.28);ctx.scale(goSc,goSc);
   ctx.font='900 44px Arial Black';ctx.textAlign='center';
   ctx.shadowColor='#FF3860';ctx.shadowBlur=32;
   ctx.strokeStyle='#000';ctx.lineWidth=13;ctx.strokeText('GAME OVER',0,0);
@@ -662,24 +662,6 @@ function drawGO(){
   var ingPrices=[100,300,150,80,120,90,280,100];
   var shownLayers=Math.min(stackH,7);
 
-  // section header
-  ctx.font='900 9px Arial Black';ctx.textAlign='center';
-  ctx.fillStyle='rgba(255,154,60,0)';ctx.fillRect(0,ry-2,W,18);
-  var hdG=ctx.createLinearGradient(0,0,W,0);hdG.addColorStop(0,'rgba(255,56,96,0)');hdG.addColorStop(0.3,'#FF9A3C');hdG.addColorStop(0.7,'#FFD700');hdG.addColorStop(1,'rgba(255,56,96,0)');
-  ctx.fillStyle=hdG;ctx.fillText('── ORDER BREAKDOWN ──',W/2,ry+10);ry+=22;
-
-  // item rows
-  for(var i=0;i<shownLayers;i++){
-    var ing=ING[i%ING.length],price=ingPrices[i%ingPrices.length];
-    ctx.fillStyle=i%2===0?'rgba(255,100,40,.055)':'rgba(200,0,80,.04)';ctx.fillRect(10,ry-7,W-20,15);
-    // glowing swatch
-    ctx.save();ctx.shadowColor=ing.c;ctx.shadowBlur=8;ctx.fillStyle=ing.c;ctx.beginPath();ctx.roundRect(18,ry-4,11,11,2);ctx.fill();ctx.restore();
-    ctx.font='bold 9px Arial Black';ctx.textAlign='left';ctx.fillStyle='#FFE0B0';ctx.fillText(ing.n.toUpperCase(),34,ry+5);
-    ctx.font='900 9px Arial Black';ctx.textAlign='right';ctx.fillStyle=ing.c;ctx.fillText('¥'+price,W-16,ry+5);
-    ry+=15;
-  }
-  if(stackH>7){ctx.font='italic 8px Arial';ctx.fillStyle='rgba(255,180,80,.5)';ctx.textAlign='center';ctx.fillText('+ '+(stackH-7)+' more layers 🔥',W/2,ry+4);ry+=13;}
-
   // combo highlight row
   if(maxCombo>1){
     ctx.save();
@@ -688,10 +670,6 @@ function drawGO(){
     ctx.font='900 9px Arial Black';ctx.textAlign='left';ctx.fillStyle='#FF3860';ctx.shadowColor='#FF3860';ctx.shadowBlur=8;ctx.fillText('🔥 BEST COMBO  ×'+maxCombo,18,ry+5);
     ctx.textAlign='right';ctx.fillStyle='#FF9A3C';ctx.fillText('+¥'+(maxCombo*50),W-16,ry+5);ctx.shadowBlur=0;ctx.restore();ry+=16;
   }
-
-  // divider
-  var dG2=ctx.createLinearGradient(0,0,W,0);dG2.addColorStop(0,'rgba(255,154,60,0)');dG2.addColorStop(0.5,'rgba(255,154,60,0.55)');dG2.addColorStop(1,'rgba(255,154,60,0)');
-  ctx.strokeStyle=dG2;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(18,ry+3);ctx.lineTo(W-18,ry+3);ctx.stroke();ry+=10;
 
   // total row
   var totG=ctx.createLinearGradient(12,0,W-12,0);totG.addColorStop(0,'rgba(255,56,96,.0)');totG.addColorStop(0.5,'rgba(255,56,96,.2)');totG.addColorStop(1,'rgba(255,56,96,.0)');
