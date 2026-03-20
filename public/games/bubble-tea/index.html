@@ -724,11 +724,11 @@ function drawUI(t){
   hexFill.addColorStop(0,'#1E0040');hexFill.addColorStop(1,'#0A0018');
   cx.fillStyle=hexFill;hexPath(R*2.1);cx.fill();
   cx.strokeStyle=`rgba(255,255,255,0.08)`;cx.lineWidth=1.5;hexPath(R*1.85);cx.stroke();
-  cx.shadowColor='#FF1493';cx.shadowBlur=10;cx.fillStyle=hexCols[0];cx.font=`900 ${Math.round(R*.82)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
+  cx.shadowColor='#FF1493';cx.shadowBlur=10;cx.fillStyle=hexCols[0];cx.font=`900 ${Math.round(R*1.1)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
   cx.strokeStyle='rgba(0,0,0,0.6)';cx.lineWidth=5;cx.strokeText('LV',0,-R*.62);
   cx.fillText('LV',0,-R*.62);cx.shadowBlur=0;
   // Level number
-  cx.font=`900 ${Math.round(R*1.22)}px Arial Black`;
+  cx.font=`900 ${Math.round(R*1.6)}px Arial Black`;
   cx.strokeStyle='rgba(0,0,0,0.9)';cx.lineWidth=8;cx.lineJoin='round';cx.strokeText(`${lvl}`,0,R*.48);
   const lvlG=cx.createLinearGradient(0,-R*.6,0,R*1.1);
   lvlG.addColorStop(0,'#FFF');lvlG.addColorStop(.45,hexCols[0]);lvlG.addColorStop(1,hexCols[1]);
@@ -780,7 +780,7 @@ function drawUI(t){
   cx.beginPath();cx.roundRect(wbX,wbY,wbW,wbH,R*.45);cx.stroke();cx.shadowBlur=0;
   // WAVE label
   const wbCY=wbY+wbH*.5;
-  cx.font=`900 ${Math.round(R*.72)}px Arial Black`;cx.textAlign='left';cx.textBaseline='middle';
+  cx.font=`900 ${Math.round(R*.95)}px Arial Black`;cx.textAlign='left';cx.textBaseline='middle';
   cx.fillStyle='rgba(255,180,80,0.85)';cx.fillText('WAVE',wbX+R*.6,wbCY);
   // Progress dots
   const dotStartX=wbX+R*5.2;
