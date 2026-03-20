@@ -601,8 +601,8 @@ function drawGO(){
   // ── SCORE COUNT-UP ──
   var scAlpha=Math.min(1,goTimer/18);var scSc=scoreProgress<1?1+(1-scoreProgress)*.28:1;
   ctx.save();ctx.globalAlpha=scAlpha;ctx.translate(W/2,SPLIT_Y*.48);ctx.scale(scSc,scSc);
-  ctx.font='bold 11px Arial Black';ctx.textAlign='center';ctx.fillStyle='rgba(255,200,80,.65)';ctx.fillText('S C O R E',0,0);
-  ctx.translate(0,58);ctx.font='900 57px Arial Black';ctx.textAlign='center';
+  ctx.font='bold 14px Arial Black';ctx.textAlign='center';ctx.fillStyle='rgba(255,200,80,.65)';ctx.fillText('S C O R E',0,0);
+  ctx.translate(0,48);ctx.font='900 57px Arial Black';ctx.textAlign='center';
   ctx.strokeStyle='#000';ctx.lineWidth=11;ctx.strokeText(displayScore,0,0);
   var sg=ctx.createLinearGradient(-90,-58,90,0);sg.addColorStop(0,'#FFD700');sg.addColorStop(0.45,'#FF9A3C');sg.addColorStop(1,'#FF3860');
   ctx.fillStyle=sg;ctx.shadowColor='#FFD700';ctx.shadowBlur=22;ctx.fillText(displayScore,0,0);ctx.shadowBlur=0;ctx.restore();
