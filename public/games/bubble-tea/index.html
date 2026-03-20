@@ -51,7 +51,7 @@ window.addEventListener('message',(e)=>{
   const {type,button}=e.data; if(type!=='BUTTON_PRESS') return;
   if(button==='start'){
     if(gameState==='splash'){gameState='playing';resetGame();initAudio();startMusic();}
-    else if(gameState==='playing') gameState='paused';
+    else if(gameState==='playing'){gameState='paused';pauseSelection=0;}
     else if(gameState==='paused'){gameState='playing';startMusic();}
     return;
   }
@@ -59,12 +59,14 @@ window.addEventListener('message',(e)=>{
   if(button==='a'){
     if(gameState==='gameover'){resetGame();startMusic();}
     else if(gameState==='levelcomplete'&&lcTimer>60){lvlUp();gameState='playing';resize();initGrid();spawnBoba();calcAim();}
-    else if(gameState==='paused'){gameState='playing';startMusic();}
+    else if(gameState==='paused'){if(pauseSelection===0){gameState='playing';startMusic();}else{resetGame();startMusic();gameState='playing';}}
     else if(gameState==='playing'){cannonCharge=Math.min(cannonCharge+.3,1);fire();}
     return;
   }
   if(button==='dpad-left'){if(gameState==='playing'){aimAngle=Math.max(-Math.PI+.15,aimAngle-.12);calcAim();}}
   if(button==='dpad-right'){if(gameState==='playing'){aimAngle=Math.min(-.15,aimAngle+.12);calcAim();}}
+  if(button==='dpad-down'){if(gameState==='paused'){pauseSelection=1;}}
+  if(button==='dpad-up'){if(gameState==='paused'){pauseSelection=0;}}
 });
 
 // ── PALETTE ──────────────────────────────────────────────────────
@@ -112,7 +114,7 @@ let flashAlpha=0,flashCol='#FFF';
 let livesAnim=[1,1,1];
 let scoreBounce=0,lvlBadgePop=0;
 // NEW
-let getReadyTimer=0;
+let getReadyTimer=0;let pauseSelection=0;
 let beatTimer=0,beatPulse=0;
 let shotsThisLevel=0;
 let comboStack=[];
@@ -989,7 +991,7 @@ function drawPause(){
   const pg=cx.createLinearGradient(px,py,px+pw,py+ph);pg.addColorStop(0,'#3D006A');pg.addColorStop(1,'#7B0080');cx.fillStyle=pg;cx.beginPath();cx.roundRect(px,py,pw,ph,R*.9);cx.fill();cx.strokeStyle='rgba(255,255,255,0.4)';cx.lineWidth=2.5;cx.stroke();
   cx.fillStyle='#FFF';cx.textAlign='center';cx.font=`bold ${Math.round(R*1.5)}px Arial Rounded MT Bold,Arial`;cx.fillText('⏸ PAUSED',W/2,py+R*2.8);
   cx.font=`${Math.round(R*.95)}px Arial`;cx.fillStyle='rgba(255,220,255,0.9)';cx.fillText(`Score: ${score}`,W/2,py+R*4.8);cx.fillText(`Level: ${lvl}`,W/2,py+R*6.2);
-  [['▶ RESUME',py+R*8.5,'#FF6EB4'],['↺ RESTART',py+R*11,'#C084FC']].forEach(([label,by,col])=>{const bw=pw*.7,bx=W/2-bw/2;const bg=cx.createLinearGradient(bx,by-R,bx+bw,by+R);bg.addColorStop(0,col);bg.addColorStop(1,'#7B0080');cx.fillStyle=bg;cx.beginPath();cx.roundRect(bx,by-R*.9,bw,R*1.8,R*.6);cx.fill();cx.fillStyle='#FFF';cx.font=`bold ${Math.round(R*.9)}px Arial Rounded MT Bold,Arial`;cx.fillText(label,W/2,by+R*.4);});
+  [['▶ RESUME',py+R*8.5,'#FF6EB4'],['↺ RESTART',py+R*11,'#C084FC']].forEach(([label,by,col],idx)=>{const bw=pw*.7,bx=W/2-bw/2;const bg=cx.createLinearGradient(bx,by-R,bx+bw,by+R);bg.addColorStop(0,col);bg.addColorStop(1,'#7B0080');cx.fillStyle=bg;cx.beginPath();cx.roundRect(bx,by-R*.9,bw,R*1.8,R*.6);cx.fill();if(gameState==='paused'&&pauseSelection===idx){cx.strokeStyle='#FFF';cx.lineWidth=3;cx.stroke();}cx.fillStyle='#FFF';cx.font=`bold ${Math.round(R*.9)}px Arial Rounded MT Bold,Arial`;cx.fillText(label,W/2,by+R*.4);});
   cx.restore();
 }
 function drawGameOver(){
