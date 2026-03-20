@@ -46,7 +46,7 @@ let gs=isHikariBoy?'countdown':'start';
 let score=0,stackH=0,combo=0,maxCombo=0,streak=0,comboCallout='',comboT=0,level=1;
 let stack=[],cur=null,dropping=null,slices=[],parts=[],floats=[],coins=[],steams=[];
 let camOffset=0,targetCamOffset=0;
-let curSpd=2.4,flash=0,flashCol='255,255,100',shakeAmt=0,shakeOff=0;
+let curSpd=2.64,flash=0,flashCol='255,255,100',shakeAmt=0,shakeOff=0;
 let ticketIngredients=[];
 let failPhase=0,failTimer=0,fallBlocks=[],cdVal=3,cdTimer=null,bgTime=0;
 let feverMode=false,feverTimer=0,feverHue=0;
@@ -379,7 +379,7 @@ function drawTrail(){
 function computeCam(){if(!stack.length)return 0;var topY=stack[stack.length-1].y,TARGET=Math.round(H*.30);return Math.max(0,TARGET-topY);}
 function resetGame(){
   score=0;stackH=0;streak=0;combo=0;maxCombo=0;comboCallout='';comboT=0;level=1;
-  curSpd=2.4;camOffset=0;targetCamOffset=0;stack=[];slices=[];parts=[];floats=[];coins=[];steams=[];
+  curSpd=2.64;camOffset=0;targetCamOffset=0;stack=[];slices=[];parts=[];floats=[];coins=[];steams=[];
   smokeRings=[];flameLicks=[];ticketIngredients=[];drizzles=[];
   cur=null;dropping=null;flash=0;shakeAmt=0;shakeOff=0;failPhase=0;failTimer=0;fallBlocks=[];
   feverMode=false;feverTimer=0;feverHue=0;chromaIntensity=0;
