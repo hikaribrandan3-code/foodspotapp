@@ -28,7 +28,7 @@ resize();
 window.addEventListener('resize',resize);
 
 const BW=320,BH=480;
-const PLAYER_SPEED=8.5,BULLET_SPEED=13,MAX_SPICE=100,GARLIC_BOMBS_MAX=3,BOSS_EVERY=3;
+const PLAYER_SPEED=12.8,BULLET_SPEED=19.5,MAX_SPICE=100,GARLIC_BOMBS_MAX=3,BOSS_EVERY=3;
 function isBossWave(w){return w%BOSS_EVERY===0;}
 function getBossType(w){return(Math.floor(w/BOSS_EVERY)%2===1)?'chili':'garlic';}
 
@@ -497,7 +497,7 @@ class Player{
   }
   update(inp,dt,frame){
     const targetSpeed=inp.LEFT===1?-PLAYER_SPEED:inp.RIGHT===1?PLAYER_SPEED:0;
-    this.vx+=(targetSpeed-this.vx)*0.85;
+    this.vx+=(targetSpeed-this.vx)*0.92;
     this.x=Math.max(18,Math.min(BW-18,this.x+this.vx));
     if(frame%2===0){this.trail.push({x:this.x,y:this.y,life:1});if(this.trail.length>10)this.trail.shift();}
     this.trail.forEach(t=>t.life-=0.08);
@@ -652,7 +652,7 @@ class Enemy{
     const base={pepper:1,onion:2,carrot:1,broccoli:2,mushroom:2,tomato:1};
     this.hp=this.maxHp=small?1:(base[type]||1)+Math.floor(wave/4);
     this.cd=Math.random()*30;this.breaking=false;this.bx=0;this.by=0;this.bt=0;this.flash=0;
-    this._fireChance=0.18;this._fireSpeed=3.5;
+    this._fireChance=0.27;this._fireSpeed=5.2;
     this._zigzag=0;// jalapeño zigzag phase
   }
   score(){return(({pepper:10,onion:20,carrot:10,broccoli:30,mushroom:20,tomato:15}[this.type]||10))*(this.small?0.5:1);}
@@ -913,10 +913,10 @@ class Game{
       const types=['pepper','jalapeno','onion','carrot','broccoli','mushroom','tomato'];
       const w=this.wave;
       let rows,cols,fireChance,fireSpeed,enemyHpMult;
-      if(w===1){rows=2;cols=4;fireChance=0.035;fireSpeed=1.0;enemyHpMult=0.5;}
-      else if(w===2){rows=2;cols=6;fireChance=0.058;fireSpeed=1.3;enemyHpMult=0.55;}
-      else if(w===3){rows=3;cols=7;fireChance=0.07;fireSpeed=1.5;enemyHpMult=0.6;}
-      else{rows=Math.min(6,2+Math.floor((w-1)/2));cols=Math.min(9,4+Math.floor((w-1)*0.7));fireChance=Math.min(0.35,0.18+(w-1)*0.02);fireSpeed=Math.min(3.2,2.1+(w-1)*0.1);enemyHpMult=Math.min(2.5,0.85+(w-1)*0.12);}
+      if(w===1){rows=2;cols=4;fireChance=0.052;fireSpeed=1.5;enemyHpMult=0.5;}
+      else if(w===2){rows=2;cols=6;fireChance=0.087;fireSpeed=2.0;enemyHpMult=0.55;}
+      else if(w===3){rows=3;cols=7;fireChance=0.105;fireSpeed=2.3;enemyHpMult=0.6;}
+      else{rows=Math.min(6,2+Math.floor((w-1)/2));cols=Math.min(9,4+Math.floor((w-1)*0.7));fireChance=Math.min(0.52,0.27+(w-1)*0.03);fireSpeed=Math.min(4.8,3.2+(w-1)*0.15);enemyHpMult=Math.min(2.5,0.85+(w-1)*0.12);}
       if(this.modifier==='swarm'){rows=Math.min(7,rows+1);cols=Math.min(10,cols+2);}
       const sx=Math.min(34,(BW-24)/cols);
       const startY=w===1?25:w===2?35:40;
@@ -934,7 +934,7 @@ class Game{
     for(let i=0;i<1+Math.floor(Math.random()*2);i++){
       setTimeout(()=>{
         if(this.state!=='playing')return;
-        this.powerups.push({x:30+Math.random()*(BW-60),y:-20,type:PU_TYPES[Math.floor(Math.random()*PU_TYPES.length)],vy:0.8+Math.random()*0.4});
+        this.powerups.push({x:30+Math.random()*(BW-60),y:-20,type:PU_TYPES[Math.floor(Math.random()*PU_TYPES.length)],vy:1.2+Math.random()*0.6});
       },3000+i*4000);
     }
   }
