@@ -324,18 +324,6 @@
   position: relative;
 }
 
-.hb-controller > .hb-shoulders::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.12);
-  filter: blur(2px);
-  z-index: 4;
-}
-
 /* ========== SHOULDER BUTTONS (L / R) — 3D LIGHT GRAY ========== */
 .hb-shoulders {
   position: relative;
@@ -663,11 +651,11 @@
 
 /* A button — customizable color */
 .btn-a {
-  width: var(--action-b-size);
-  height: var(--action-b-size);
+  width: var(--action-a-size);
+  height: var(--action-a-size);
   font-size: calc(28px * var(--btn-scale));
-  top: 0;
-  right: 0;
+  top: 7px;
+  right: 7px;
   background: radial-gradient(circle at 35% 35%, var(--button-a-color) 0%, var(--button-a-color) 40%, var(--button-gray-dark) 100%);
   border-color: var(--button-a-outline);
 }
@@ -677,8 +665,8 @@
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(28px * var(--btn-scale));
-  bottom: 12px;
-  left: 12px;
+  bottom: 19px;
+  left: 19px;
   background: radial-gradient(circle at 35% 35%, var(--button-b-color) 0%, var(--button-b-color) 40%, var(--button-gray-dark) 100%);
   border-color: var(--button-b-outline);
 }
