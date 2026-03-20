@@ -517,7 +517,7 @@ function placeBlock(){
   }
   var pts=1+Math.floor(combo/3);score+=pts;scoreTickers.push(new ScoreTicker(pts,d.x+d.width/2-32,d.y+camOffset-30));dmgNumbers.push(new DamageNumber(d.x+d.width/2+rnd(-20,20),d.y+camOffset-18,pts,pts>=4?'#FF3860':pts>=2?'#FF9A3C':'#FFD700'));stackH=stack.length-1;
   var oL=level;if(score>LVL2)level=3;else if(score>LVL1)level=2;if(level!==oL){triggerLvlUp(level===2?'🔥 RUSH HOUR!':'⚡ TOTAL CHAOS!');stopMusic();startMusic(feverMode?192:155+(level-1)*12);triggerSpeedLines(20);}
-  curSpd=Math.min(8.0,2.52+(score*.08));if(stack[stack.length-1].width<5){triggerFail();return;}checkMilestone();if(score>=nextSlotScore&&!feverMode){startSlot();return;}dropping=null;spawnBlock();
+  curSpd=Math.min(8.0,2.52+(score*.08));checkMilestone();if(score>=nextSlotScore&&!feverMode){startSlot();return;}dropping=null;spawnBlock();
 }
 function triggerFail(){
   sndOver();failPhase=1;failTimer=Date.now();shakeAmt=15;stopMusic();feverMode=false;chromaIntensity=0;vibe([50,30,50,30,100]);triggerImpactFrame(1);
