@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>SPICE INVADERS</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;touch-action:none;-webkit-user-select:none;user-select:none;}
@@ -913,9 +913,9 @@ class Game{
       const types=['pepper','jalapeno','onion','carrot','broccoli','mushroom','tomato'];
       const w=this.wave;
       let rows,cols,fireChance,fireSpeed,enemyHpMult;
-      if(w===1){rows=2;cols=4;fireChance=0.03;fireSpeed=1.0;enemyHpMult=0.5;}
-      else if(w===2){rows=2;cols=6;fireChance=0.05;fireSpeed=1.3;enemyHpMult=0.55;}
-      else if(w===3){rows=3;cols=7;fireChance=0.06;fireSpeed=1.5;enemyHpMult=0.6;}
+      if(w===1){rows=2;cols=4;fireChance=0.035;fireSpeed=1.0;enemyHpMult=0.5;}
+      else if(w===2){rows=2;cols=6;fireChance=0.058;fireSpeed=1.3;enemyHpMult=0.55;}
+      else if(w===3){rows=3;cols=7;fireChance=0.07;fireSpeed=1.5;enemyHpMult=0.6;}
       else{rows=Math.min(6,2+Math.floor((w-1)/2));cols=Math.min(9,4+Math.floor((w-1)*0.7));fireChance=Math.min(0.35,0.18+(w-1)*0.02);fireSpeed=Math.min(3.2,2.1+(w-1)*0.1);enemyHpMult=Math.min(2.5,0.85+(w-1)*0.12);}
       if(this.modifier==='swarm'){rows=Math.min(7,rows+1);cols=Math.min(10,cols+2);}
       const sx=Math.min(34,(BW-24)/cols);
