@@ -904,7 +904,7 @@ function drawLevelComplete(t){
   cx.fillStyle='rgba(255,200,80,0.85)';cx.fillText('★  SCORE  ★',cx2,scPanelY+R*.95);
   // Score number — huge, colored
   cx.font=`900 ${Math.round(R*2.5)}px Arial Black`;
-  cx.strokeStyle='#000';cx.lineWidth=10;cx.lineJoin='round';cx.strokeText(`${lcScDisp}`,cx2,scPanelY+scPanelH*.72);
+  cx.strokeStyle='#000';cx.lineWidth=4;cx.lineJoin='round';cx.strokeText(`${lcScDisp}`,cx2,scPanelY+scPanelH*.72);
   const snG=cx.createLinearGradient(0,scPanelY+R*.8,0,scPanelY+scPanelH);
   snG.addColorStop(0,'#FFFFFF');snG.addColorStop(.3,'#FFE040');snG.addColorStop(.7,'#FF8C00');snG.addColorStop(1,'#FF4400');
   cx.fillStyle=snG;cx.shadowColor='#FF8C00';cx.shadowBlur=5;cx.fillText(`${lcScDisp}`,cx2,scPanelY+scPanelH*.72);
