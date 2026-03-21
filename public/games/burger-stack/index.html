@@ -448,7 +448,7 @@ function startCD(){
 function dropBlock(){
   if(!cur||dropping||gs!=='playing')return;var top=stack[stack.length-1];
   if(Math.abs(cur.x-top.x)<=SNAP_PX)cur.x=top.x;
-  dropping=Object.assign({},cur);dropping.y=cur.y;instantDropFrames=3;cur=null;sndDrop();vibe(40);
+  dropping=Object.assign({},cur);dropping.y=cur.y;instantDropFrames = (pendingSlowMo && slowMoTimer > 0) ? 8 : 3;cur=null;sndDrop();vibe(40);
 }
 
 function update(){
@@ -497,7 +497,10 @@ function updateParticles(){
 }
 function placeBlock(){
   var top=stack[stack.length-1],d=dropping;var ol=Math.max(d.x,top.x),or2=Math.min(d.x+d.width,top.x+top.width),ow=or2-ol;
-  if(ow<=0){triggerFail();return;}
+  if(ow < 2){
+  triggerFail();
+  return;
+}
   var isPerfect=Math.abs(d.x-top.x)<=PERF&&Math.abs(d.width-top.width)<=PERF,col=ING[d.ii%ING.length].c;
   ticketIngredients.push(d.ii%ING.length);for(var i=0;i<5;i++)parts.push(new FoodBit(d.x+rnd(0,d.width),d.y+camOffset,col));
   if(isPerfect){
@@ -517,7 +520,11 @@ function placeBlock(){
   }
   var pts=1+Math.floor(combo/3);score+=pts;scoreTickers.push(new ScoreTicker(pts,d.x+d.width/2-32,d.y+camOffset-30));dmgNumbers.push(new DamageNumber(d.x+d.width/2+rnd(-20,20),d.y+camOffset-18,pts,pts>=4?'#FF3860':pts>=2?'#FF9A3C':'#FFD700'));stackH=stack.length-1;
   var oL=level;if(score>LVL2)level=3;else if(score>LVL1)level=2;if(level!==oL){triggerLvlUp(level===2?'🔥 RUSH HOUR!':'⚡ TOTAL CHAOS!');stopMusic();startMusic(feverMode?192:155+(level-1)*12);triggerSpeedLines(20);}
-  curSpd=Math.min(8.0,2.52+(score*.08));checkMilestone();if(score>=nextSlotScore&&!feverMode){startSlot();return;}dropping=null;spawnBlock();
+  curSpd=Math.min(8.0,2.52+(score*.08));checkMilestone();if(score>=nextSlotScore&&!feverMode){
+  startSlot();
+  return;
+}
+dropping=null;spawnBlock();
 }
 function triggerFail(){
   sndOver();failPhase=1;failTimer=Date.now();shakeAmt=15;stopMusic();feverMode=false;chromaIntensity=0;vibe([50,30,50,30,100]);triggerImpactFrame(1);
