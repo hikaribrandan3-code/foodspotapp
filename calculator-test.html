@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS Calculator Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Mock Owner Mode Layout */
+        .mock-app {
+            flex: 1;
+            padding: 20px;
+            max-width: 414px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .mock-header {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .mock-card {
+            background: #252542;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .mock-card h3 {
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .mock-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .mock-stat {
+            background: #1a1a2e;
+            padding: 16px;
+            border-radius: 12px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .mock-stat .number {
+            font-size: 28px;
+            font-weight: 600;
+            color: #FF9F0A;
+        }
+
+        .mock-stat .label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* Tab Switcher */
+        .tab-switcher {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .tab-btn {
+            background: #333;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            background: #FF9F0A;
+        }
+
+        .tab-btn.ai-tab {
+            opacity: 0.5;
+        }
+
+        /* Floating Icon Button */
+        .calc-floating-icon {
+            position: fixed;
+            right: 20px;
+            bottom: 35%;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: #1C1C1E;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .calc-floating-icon:hover {
+            transform: scale(1.05);
+        }
+
+        .calc-floating-icon:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .calc-floating-icon.hidden {
+            display: none;
+        }
+
+        /* Mini Calculator Icon */
+        .mini-calc {
+            width: 32px;
+            height: 32px;
+            background: #1C1C1E;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .mini-screen {
+            width: 24px;
+            height: 10px;
+            background: #000;
+            border-radius: 2px;
+        }
+
+        .mini-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .mini-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .mini-dot.gray {
+            background: #636366;
+        }
+
+        .mini-dot.orange {
+            background: #FF9F0A;
+        }
+
+        /* Overlay */
+        .calc-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .calc-overlay.open {
+            display: flex;
+        }
+
+        /* Calculator Container */
+        .calc-container {
+            width: 100%;
+            max-width: 400px;
+            background: #000;
+            border-radius: 20px 20px 0 0;
+            padding: 16px 20px 40px;
+            animation: slideUp 0.25s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        /* Header */
+        .calc-header {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .calc-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #333;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+
+        .calc-close:hover {
+            background: #444;
+        }
+
+        .calc-close:active {
+            background: #555;
+        }
+
+        /* Display */
+        .calc-display {
+            height: 100px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 0 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .calc-display span {
+            color: #fff;
+            font-size: 64px;
+            font-weight: 300;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            transition: font-size 0.2s;
+        }
+
+        .calc-display span.small {
+            font-size: 44px;
+        }
+
+        /* Button Grid */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        /* Buttons */
+        .calc-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: none;
+            font-size: 28px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: filter 0.1s, transform 0.05s;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            user-select: none;
+        }
+
+        .calc-btn:active {
+            filter: brightness(1.3);
+            transform: scale(0.92);
+        }
+
+        /* Number buttons (dark gray) */
+        .calc-btn.number {
+            background: #333333;
+            color: #fff;
+        }
+
+        .calc-btn.number:hover {
+            background: #3d3d3d;
+        }
+
+        /* Function buttons (light gray) */
+        .calc-btn.function {
+            background: #A5A5A5;
+            color: #000;
+            font-size: 24px;
+        }
+
+        .calc-btn.function:hover {
+            background: #b5b5b5;
+        }
+
+        /* Operator buttons (orange) */
+        .calc-btn.operator {
+            background: #FF9F0A;
+            color: #fff;
+            font-size: 32px;
+        }
+
+        .calc-btn.operator:hover {
+            background: #ffb340;
+        }
+
+        .calc-btn.operator.active {
+            background: #fff;
+            color: #FF9F0A;
+        }
+
+        /* Zero button (double width) */
+        .calc-btn.zero {
+            grid-column: span 2;
+            aspect-ratio: 2.1 / 1;
+            border-radius: 50px;
+            text-align: left;
+            padding-left: 28px;
+        }
+
+        /* AC button special */
+        .calc-btn.ac-btn {
+            background: #A5A5A5;
+            color: #000;
+        }
+
+        /* Footer note */
+        .footer-note {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 375px) {
+            .calc-container {
+                max-width: 100%;
+                padding: 12px 16px 32px;
+            }
+            
+            .calc-btn {
+                font-size: 24px;
+            }
+            
+            .calc-btn.function {
+                font-size: 20px;
+            }
+            
+            .calc-btn.operator {
+                font-size: 28px;
+            }
+            
+            .calc-display span {
+                font-size: 52px;
+            }
+            
+            .calc-display span.small {
+                font-size: 38px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mock Owner Mode UI -->
+    <div class="mock-app">
+        <h1 class="mock-header">Owner Dashboard</h1>
+        
+        <div class="tab-switcher">
+            <button class="tab-btn active" data-tab="home">Home</button>
+            <button class="tab-btn" data-tab="menu">Menu</button>
+            <button class="tab-btn" data-tab="orders">Orders</button>
+            <button class="tab-btn" data-tab="analytics">Analytics</button>
+            <button class="tab-btn ai-tab" data-tab="ai">AI</button>
+            <button class="tab-btn" data-tab="settings">Settings</button>
+        </div>
+
+        <div class="mock-card">
+            <h3>Today's Sales</h3>
+            <div class="mock-stats">
+                <div class="mock-stat">
+                    <div class="number">$1,247</div>
+                    <div class="label">Revenue</div>
+                </div>
+                <div class="mock-stat">
+                    <div class="number">42</div>
+                    <div class="label">Orders</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mock-card">
+            <h3>Quick Actions</h3>
+            <p style="color: #888; line-height: 1.6;">
+                Need to calculate margins? Inventory counts? 
+                Use the floating calculator on the right side.
+            </p>
+        </div>
+
+        <div class="mock-card">
+            <h3>Recent Activity</h3>
+            <p style="color: #888;">• Order #1284 - $32.50<br>• Order #1283 - $18.00<br>• Order #1282 - $45.00</p>
+        </div>
+    </div>
+
+    <!-- Floating Calculator Icon -->
+    <button class="calc-floating-icon" id="calcIcon" aria-label="Open calculator">
+        <div class="mini-calc">
+            <div class="mini-screen"></div>
+            <div class="mini-buttons">
+                <span class="mini-dot gray"></span>
+                <span class="mini-dot orange"></span>
+            </div>
+        </div>
+    </button>
+
+    <!-- Calculator Overlay -->
+    <div class="calc-overlay" id="calcOverlay">
+        <div class="calc-container" id="calcContainer">
+            <div class="calc-header">
+                <button class="calc-close" id="calcClose" aria-label="Close calculator">✕</button>
+            </div>
+            
+            <div class="calc-display">
+                <span id="display">0</span>
+            </div>
+            
+            <div class="calc-grid">
+                <!-- Row 1 -->
+                <button class="calc-btn function ac-btn" data-action="clear">AC</button>
+                <button class="calc-btn function" data-action="toggle-sign">+/-</button>
+                <button class="calc-btn function" data-action="percent">%</button>
+                <button class="calc-btn operator" data-action="op" data-op="÷">÷</button>
+                
+                <!-- Row 2 -->
+                <button class="calc-btn number" data-num="7">7</button>
+                <button class="calc-btn number" data-num="8">8</button>
+                <button class="calc-btn number" data-num="9">9</button>
+                <button class="calc-btn operator" data-action="op" data-op="×">×</button>
+                
+                <!-- Row 3 -->
+                <button class="calc-btn number" data-num="4">4</button>
+                <button class="calc-btn number" data-num="5">5</button>
+                <button class="calc-btn number" data-num="6">6</button>
+                <button class="calc-btn operator" data-action="op" data-op="−">−</button>
+                
+                <!-- Row 4 -->
+                <button class="calc-btn number" data-num="1">1</button>
+                <button class="calc-btn number" data-num="2">2</button>
+                <button class="calc-btn number" data-num="3">3</button>
+                <button class="calc-btn operator" data-action="op" data-op="+">+</button>
+                
+                <!-- Row 5 -->
+                <button class="calc-btn number zero" data-num="0">0</button>
+                <button class="calc-btn number" data-action="decimal">.</button>
+                <button class="calc-btn operator" data-action="equals">=</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">Tap the floating calculator icon → Test the iOS replica</div>
+
+    <script>
+        // Calculator State
+        let display = '0';
+        let previousValue = null;
+        let operation = null;
+        let waitingForOperand = false;
+        let shouldResetDisplay = false;
+
+        const displayEl = document.getElementById('display');
+        const calcOverlay = document.getElementById('calcOverlay');
+        const calcIcon = document.getElementById('calcIcon');
+        const calcClose = document.getElementById('calcClose');
+        const acBtn = document.querySelector('[data-action="clear"]');
+
+        // Update display
+        function updateDisplay() {
+            displayEl.textContent = display;
+            // Shrink font for long numbers
+            if (display.length > 9) {
+                displayEl.classList.add('small');
+            } else {
+                displayEl.classList.remove('small');
+            }
+            // Update AC button text
+            if (display !== '0' || previousValue !== null) {
+                acBtn.textContent = 'C';
+            } else {
+                acBtn.textContent = 'AC';
+            }
+        }
+
+        // Input number
+        function inputNumber(num) {
+            if (waitingForOperand) {
+                display = String(num);
+                waitingForOperand = false;
+            } else {
+                display = display === '0' ? String(num) : display + num;
+            }
+            // Limit length
+            if (display.length > 12) {
+                display = display.slice(0, 12);
+            }
+            updateDisplay();
+        }
+
+        // Input decimal
+        function inputDecimal() {
+            if (waitingForOperand) {
+                display = '0.';
+                waitingForOperand = false;
+            } else if (!display.includes('.')) {
+                display = display + '.';
+            }
+            updateDisplay();
+        }
+
+        // Clear
+        function clear() {
+            if (display !== '0') {
+                display = '0';
+            } else {
+                previousValue = null;
+                operation = null;
+                waitingForOperand = false;
+            }
+            updateDisplay();
+        }
+
+        // Toggle sign
+        function toggleSign() {
+            const value = parseFloat(display);
+            display = String(value * -1);
+            updateDisplay();
+        }
+
+        // Percentage
+        function percentage() {
+            const value = parseFloat(display);
+            display = String(value / 100);
+            updateDisplay();
+        }
+
+        // Perform operation
+        function performOperation(op) {
+            const value = parseFloat(display);
+            
+            // Highlight active operator
+            document.querySelectorAll('.calc-btn.operator').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            if (previousValue === null) {
+                previousValue = value;
+            } else if (operation) {
+                const result = calculate(previousValue, value, operation);
+                display = formatResult(result);
+                previousValue = result;
+                updateDisplay();
+            }
+
+            waitingForOperand = true;
+            operation = op;
+        }
+
+        // Calculate
+        function calculate(a, b, op) {
+            switch (op) {
+                case '+': return a + b;
+                case '−': return a - b;
+                case '×': return a * b;
+                case '÷': return b !== 0 ? a / b : 0;
+                default: return b;
+            }
+        }
+
+        // Format result
+        function formatResult(result) {
+            if (Number.isInteger(result)) {
+                return String(result);
+            }
+            const formatted = result.toFixed(8);
+            return String(parseFloat(formatted));
+        }
+
+        // Execute
+        function execute() {
+            const value = parseFloat(display);
+            if (previousValue !== null && operation) {
+                const result = calculate(previousValue, value, operation);
+                display = formatResult(result);
+                previousValue = null;
+                operation = null;
+                waitingForOperand = true;
+                
+                // Remove active state from operators
+                document.querySelectorAll('.calc-btn.operator').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                updateDisplay();
+            }
+        }
+
+        // Button click handlers
+        document.querySelectorAll('.calc-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const num = e.target.dataset.num;
+                const action = e.target.dataset.action;
+                const op = e.target.dataset.op;
+
+                if (num !== undefined) {
+                    inputNumber(parseInt(num));
+                } else if (action === 'decimal') {
+                    inputDecimal();
+                } else if (action === 'clear') {
+                    clear();
+                } else if (action === 'toggle-sign') {
+                    toggleSign();
+                } else if (action === 'percent') {
+                    percentage();
+                } else if (action === 'op') {
+                    performOperation(op);
+                } else if (action === 'equals') {
+                    execute();
+                }
+            });
+        });
+
+        // Open/close calculator
+        calcIcon.addEventListener('click', () => {
+            calcOverlay.classList.add('open');
+        });
+
+        calcClose.addEventListener('click', () => {
+            calcOverlay.classList.remove('open');
+        });
+
+        calcOverlay.addEventListener('click', (e) => {
+            if (e.target === calcOverlay) {
+                calcOverlay.classList.remove('open');
+            }
+        });
+
+        // Tab switching (demo)
+        document.querySelectorAll('.tab-btn').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const tabName = tab.dataset.tab;
+                if (tabName === 'ai') {
+                    calcIcon.classList.add('hidden');
+                } else {
+                    calcIcon.classList.remove('hidden');
+                }
+            });
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (!calcOverlay.classList.contains('open')) return;
+
+            if (e.key >= '0' && e.key <= '9') inputNumber(parseInt(e.key));
+            if (e.key === '.') inputDecimal();
+            if (e.key === 'Enter' || e.key === '=') execute();
+            if (e.key === 'Escape') calcOverlay.classList.remove('open');
+            if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+                const opMap = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+                const op = opMap[e.key];
+                performOperation(op);
+            }
+        });
+    </script>
+</body>
+</html>

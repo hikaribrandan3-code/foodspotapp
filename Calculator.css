@@ -1,0 +1,228 @@
+/* Calculator.css - iOS Calculator Replica */
+
+/* Floating Icon Button */
+.calc-floating-icon {
+  position: fixed;
+  right: 20px;
+  bottom: 35%;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: #1C1C1E;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.calc-floating-icon:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Mini Calculator Icon */
+.mini-calc {
+  width: 32px;
+  height: 32px;
+  background: #1C1C1E;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mini-screen {
+  width: 24px;
+  height: 10px;
+  background: #000;
+  border-radius: 2px;
+}
+
+.mini-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.mini-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.mini-dot.gray {
+  background: #636366;
+}
+
+.mini-dot.orange {
+  background: #FF9F0A;
+}
+
+/* Overlay */
+.calc-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Calculator Container */
+.calc-container {
+  width: 100%;
+  max-width: 400px;
+  background: #000;
+  border-radius: 20px 20px 0 0;
+  padding: 16px 20px 40px;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.calc-header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+.calc-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #333;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+}
+
+.calc-close:active {
+  background: #555;
+}
+
+/* Display */
+.calc-display {
+  height: 100px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 12px;
+  margin-bottom: 16px;
+}
+
+.calc-display span {
+  color: #fff;
+  font-size: 64px;
+  font-weight: 300;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+}
+
+.calc-display-small {
+  font-size: 44px !important;
+}
+
+/* Button Grid */
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* Buttons */
+.calc-btn {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: none;
+  font-size: 28px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: filter 0.1s, transform 0.05s;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+}
+
+.calc-btn:active {
+  filter: brightness(1.3);
+  transform: scale(0.95);
+}
+
+/* Number buttons (dark gray) */
+.calc-btn.number {
+  background: #333333;
+  color: #fff;
+}
+
+/* Function buttons (light gray) */
+.calc-btn.function {
+  background: #A5A5A5;
+  color: #000;
+  font-size: 24px;
+}
+
+/* Operator buttons (orange) */
+.calc-btn.operator {
+  background: #FF9F0A;
+  color: #fff;
+  font-size: 32px;
+}
+
+/* Zero button (double width) */
+.calc-btn.zero {
+  grid-column: span 2;
+  aspect-ratio: 2.1 / 1;
+  border-radius: 50px;
+  text-align: left;
+  padding-left: 28px;
+}
+
+/* Active operator state */
+.calc-btn.operator.active {
+  background: #fff;
+  color: #FF9F0A;
+}
+
+/* Responsive adjustments */
+@media (max-width: 375px) {
+  .calc-container {
+    max-width: 100%;
+    padding: 12px 16px 32px;
+  }
+  
+  .calc-btn {
+    font-size: 24px;
+  }
+  
+  .calc-btn.function {
+    font-size: 20px;
+  }
+  
+  .calc-btn.operator {
+    font-size: 28px;
+  }
+  
+  .calc-display span {
+    font-size: 52px;
+  }
+}
