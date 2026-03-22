@@ -83,6 +83,7 @@ const COL_LIGHTNING={name:'lightning',c:'#FFFFAA',hi:'#FFFFFF',lo:'#FFD700',out:
 const COL_BOMB={name:'bomb',c:'#FF3300',hi:'#FF7744',lo:'#AA0000',out:'#440000',wv:'#FF5500',fc:'#FF0000'};
 const COL_FIREBALL={name:'fireball',c:'#FF7700',hi:'#FFCC44',lo:'#CC3300',out:'#661100',wv:'#FF9900',fc:'#330800'};
 const COL_FREEZE={name:'freeze',c:'#88EEFF',hi:'#DDFAFF',lo:'#0099CC',out:'#003366',wv:'#BBFAFF',fc:'#002244'};
+const MAX_COLORS_START=3;
 let actPal=[...PALETTE.slice(0,MAX_COLORS_START)];
 
 function rndCol(){
@@ -123,7 +124,6 @@ let dangerFlash=0;
 let rayAngle=0;
 let paralaxA=[],paralaxB=[];
 const isMobile=navigator.maxTouchPoints>0;
-const MAX_COLORS_START=3;
 let lastFrameTime=0;
 
 try{hiScore=parseInt(localStorage.getItem('bbt_hi')||'0');}catch(e){}
