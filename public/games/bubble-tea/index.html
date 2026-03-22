@@ -83,15 +83,16 @@ const COL_LIGHTNING={name:'lightning',c:'#FFFFAA',hi:'#FFFFFF',lo:'#FFD700',out:
 const COL_BOMB={name:'bomb',c:'#FF3300',hi:'#FF7744',lo:'#AA0000',out:'#440000',wv:'#FF5500',fc:'#FF0000'};
 const COL_FIREBALL={name:'fireball',c:'#FF7700',hi:'#FFCC44',lo:'#CC3300',out:'#661100',wv:'#FF9900',fc:'#330800'};
 const COL_FREEZE={name:'freeze',c:'#88EEFF',hi:'#DDFAFF',lo:'#0099CC',out:'#003366',wv:'#BBFAFF',fc:'#002244'};
-let actPal=[...PALETTE.slice(0,4)];
+let actPal=[...PALETTE.slice(0,MAX_COLORS_START)];
 
 function rndCol(){
   const r=Math.random();
-  if(r<.06) return COL_LIGHTNING;
-  if(r<.11) return COL_RAINBOW;
-  if(r<.15) return COL_BOMB;
-  if(r<.19) return COL_FIREBALL;
-  if(r<.23) return COL_FREEZE;
+  // Power-ups only 5% chance (was 23%)
+  if(r<.01) return COL_LIGHTNING;
+  if(r<.02) return COL_RAINBOW;
+  if(r<.03) return COL_BOMB;
+  if(r<.04) return COL_FIREBALL;
+  if(r<.05) return COL_FREEZE;
   return actPal[Math.floor(Math.random()*actPal.length)];
 }
 
@@ -99,7 +100,7 @@ function rndCol(){
 let grid=[],parts=[],rings=[],confettiArr=[],ftexts=[],sparkArr=[],lbolts=[],shockwaves=[];
 let proj=null,curBoba=null,nxtBoba=null,nxt2Boba=null;
 let aimAngle=-Math.PI/2,aimPts=[];
-let score=0,hiScore=0,shots=0,ceilOff=0,lives=3,lvl=1,combo=0;
+let score=0,hiScore=0,shots=0,ceilOff=0,lives=3,lvl=1,combo=0,consecutiveMisses=0;
 let gameState=isHikariBoy?'playing':'splash';
 let shkX=0,shkY=0,shkT=0;
 let arcDotT=0;
@@ -122,6 +123,7 @@ let dangerFlash=0;
 let rayAngle=0;
 let paralaxA=[],paralaxB=[];
 const isMobile=navigator.maxTouchPoints>0;
+const MAX_COLORS_START=3;
 let lastFrameTime=0;
 
 try{hiScore=parseInt(localStorage.getItem('bbt_hi')||'0');}catch(e){}
@@ -450,7 +452,8 @@ function updPos(){for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++
 function updateLowestRow(){trackedLowestRow=0;for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])trackedLowestRow=Math.max(trackedLowestRow,r);}
 function initGrid(){
   grid=[];
-  const sR=Math.max(4,Math.min(7,Math.floor(lvl*.8)+4));
+  // Start with fewer rows, grow per level
+  const sR=Math.min(5+Math.floor(lvl/2),9);
   for(let r=0;r<ROWS;r++){grid[r]=[];const cols=colsInRow(r);for(let c=0;c<cols;c++){if(r<sR){const p=bobaXY(r,c);grid[r][c]=new Boba(rndCol(),p.x,p.y);}else grid[r][c]=null;}}
 }
 function triggerRipple(rx,ry){ for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++){const b=grid[r][c];if(!b)continue;const d=Math.sqrt((b.x-rx)**2+(b.y-ry)**2);setTimeout(()=>{if(grid[r]&&grid[r][c]){grid[r][c].ripOff=-R*.4;grid[r][c].wobbleV+=.3;}},d*8);} }
@@ -755,41 +758,38 @@ function drawUI(t){
   const cmY=barH-R*.55,cmX=pad,cmW=W-pad*2,cmH=R*.5,fill=Math.min(1,comboMeter);
   cx.save();cx.fillStyle='rgba(0,0,0,0.3)';cx.beginPath();cx.roundRect(cmX,cmY,cmW,cmH,cmH/2);cx.fill();
   if(fill>0){const mc=fill>.7?'#FF2200':fill>.4?'#FF8800':'#FF6EB4';const mg=cx.createLinearGradient(cmX,0,cmX+cmW*fill,0);mg.addColorStop(0,mc);mg.addColorStop(1,'#FFE040');if(fill>.9){cx.shadowColor=mc;cx.shadowBlur=8;}cx.fillStyle=mg;cx.beginPath();cx.roundRect(cmX,cmY,cmW*fill,cmH,cmH/2);cx.fill();cx.fillStyle='rgba(255,255,255,0.25)';cx.beginPath();cx.roundRect(cmX+2,cmY+1,cmW*fill*.6,cmH*.4,cmH*.2);cx.fill();}
-  const sl=cInt-(shotsThisLevel%cInt);
-  cx.fillStyle=sl<=2?'#FF4400':'rgba(255,220,255,0.8)';cx.font=`bold ${Math.round(R*.5)}px Arial`;cx.textAlign='right';
-  cx.fillText(`▼${sl}`,cmX+cmW-2,cmY+cmH*.85);
+  // Classic: Show misses remaining until ceiling drops (6 - consecutiveMisses)
+  const missesRemaining=Math.max(0,6-consecutiveMisses);
+  cx.fillStyle=missesRemaining<=2?'#FF4400':'rgba(255,220,255,0.8)';cx.font=`bold ${Math.round(R*.5)}px Arial`;cx.textAlign='right';
+  cx.fillText(`▼${missesRemaining}`,cmX+cmW-2,cmY+cmH*.85);
   cx.restore();
 
-  // ── WAVE BOX ──
-  const waveTarget=2+lvl;
-  const dotsTotal=waveTarget;
-  const dotSpacing=R*1.4;
-  const dotsW=dotsTotal*dotSpacing+R*3.8;
-  const wbW=dotsW+R*1.2,wbH=R*1.65;
+  // ── LEVEL INFO BOX (Classic Bubble Blast style) ──
+  const wbW=R*8,wbH=R*1.65;
   const wbX=pad*.5,wbY=barH+R*.22;
   cx.save();
   // bg
   const wbBG=cx.createLinearGradient(wbX,wbY,wbX+wbW,wbY);
   wbBG.addColorStop(0,'rgba(20,0,45,0.95)');wbBG.addColorStop(.5,'rgba(40,0,80,0.98)');wbBG.addColorStop(1,'rgba(20,0,45,0.95)');
   cx.fillStyle=wbBG;cx.beginPath();cx.roundRect(wbX,wbY,wbW,wbH,R*.45);cx.fill();
-  // orange pulse border
+  // border
   const wbPulse=(Math.sin(t*.007)+1)/2;
   cx.strokeStyle=`rgba(255,${Math.round(120+wbPulse*80)},0,${0.8+wbPulse*.2})`;
   cx.lineWidth=2.5;cx.shadowColor='#FF6600';cx.shadowBlur=8+wbPulse*8;
   cx.beginPath();cx.roundRect(wbX,wbY,wbW,wbH,R*.45);cx.stroke();cx.shadowBlur=0;
-  // WAVE label
+  // COLORS label + dots showing active colors
   const wbCY=wbY+wbH*.5;
-  cx.font=`900 ${Math.round(R*.95)}px Arial Black`;cx.textAlign='left';cx.textBaseline='middle';
-  cx.fillStyle='rgba(255,180,80,0.85)';cx.fillText('WAVE',wbX+R*.6,wbCY);
-  // Progress dots
-  const dotStartX=wbX+R*5.2;
-  for(let i=0;i<waveTarget;i++){
+  cx.font=`900 ${Math.round(R*.75)}px Arial Black`;cx.textAlign='left';cx.textBaseline='middle';
+  cx.fillStyle='rgba(255,180,80,0.85)';cx.fillText('COLORS',wbX+R*.6,wbCY);
+  // Show active color count as dots
+  const dotSpacing=R*.7;
+  const dotStartX=wbX+R*5.5;
+  for(let i=0;i<6;i++){
     const dx=dotStartX+i*dotSpacing,dy=wbCY;
-    const filled=i<dropsThisLevel;
-    if(filled){cx.fillStyle='#FF6600';cx.shadowColor='#FF4400';cx.shadowBlur=10;}
-    else{cx.fillStyle='rgba(255,255,255,0.18)';cx.shadowBlur=0;}
-    cx.beginPath();cx.arc(dx,dy,R*.38,0,Math.PI*2);cx.fill();
-    if(filled){cx.fillStyle='rgba(255,255,255,0.5)';cx.beginPath();cx.arc(dx-R*.1,dy-R*.1,R*.13,0,Math.PI*2);cx.fill();}
+    const filled=i<actPal.length;
+    if(filled){cx.fillStyle=actPal[i].c;cx.shadowColor=actPal[i].c;cx.shadowBlur=8;}
+    else{cx.fillStyle='rgba(255,255,255,0.1)';cx.shadowBlur=0;}
+    cx.beginPath();cx.arc(dx,dy,R*.22,0,Math.PI*2);cx.fill();
     cx.shadowBlur=0;
   }
   cx.restore();cx.restore();
@@ -832,7 +832,17 @@ function drawNextPreview(){
 
 // ── LEVEL COMPLETE ────────────────────────────────────────────────
 let lcSA2=[0,0,0];
-function calcStars(){const s=shots-lvlShStart,sg=score-lvlScStart;return sg>200&&s<15?3:sg>100?2:1;}
+function calcStars(){
+  // Classic Puzzle Bobble scoring: 3 stars for clearing quickly with high score
+  const levelShots=shots-lvlShStart;
+  const levelScore=score-lvlScStart;
+  // 3 stars: High score + efficient (few shots)
+  if(levelScore>=300&&levelShots<=12) return 3;
+  // 2 stars: Good score or moderate efficiency  
+  if(levelScore>=150||levelShots<=18) return 2;
+  // 1 star: Completed the level
+  return 1;
+}
 function drawLevelComplete(t){
   cx.save();
   // Dark overlay
@@ -1197,6 +1207,7 @@ function onStop(){
   if(!proj)return;
   const spot=findSpot(proj.x,proj.y);
   const ct=proj.boba.ct;
+  let madeMatch=false;
   if(spot){
     const {x,y}=bobaXY(spot.r,spot.c);
     proj.boba.x=x;proj.boba.y=y;proj.boba.land();
@@ -1204,13 +1215,14 @@ function onStop(){
     rings.push(new Ring(x,y,'rgba(255,255,255,0.8)'));
     getNbrs(spot.r,spot.c).forEach(n=>{if(grid[n.r][n.c])grid[n.r][n.c].hit();});
     // POWER-UPS
-    if(ct.name==='lightning'){ doLightning(spot.r); grid[spot.r][spot.c]=null; }
-    else if(ct.name==='bomb'){ grid[spot.r][spot.c]=null; doBomb(spot.r,spot.c,x,y); }
-    else if(ct.name==='fireball'){ grid[spot.r][spot.c]=null; doFireball(spot.c,y,x,y); }
-    else if(ct.name==='freeze'){ grid[spot.r][spot.c]=null; doFreeze(); }
+    if(ct.name==='lightning'){ doLightning(spot.r); grid[spot.r][spot.c]=null; madeMatch=true; }
+    else if(ct.name==='bomb'){ grid[spot.r][spot.c]=null; doBomb(spot.r,spot.c,x,y); madeMatch=true; }
+    else if(ct.name==='fireball'){ grid[spot.r][spot.c]=null; doFireball(spot.c,y,x,y); madeMatch=true; }
+    else if(ct.name==='freeze'){ grid[spot.r][spot.c]=null; doFreeze(); madeMatch=true; }
     else {
       const matches=findMatch(spot.r,spot.c,ct);
       if(matches.length>=3){
+        madeMatch=true;
         combo++;comboMeterTarget=Math.min(1,combo/6);
         let pts=matches.length*10+(matches.length>3?(matches.length-3)*20:0);
         if(combo>1)pts=Math.round(pts*combo*.7);
@@ -1227,14 +1239,34 @@ function onStop(){
         ftexts.push(new FloatText(mx,my-R*2,`+${pts}`,combo>=3?'#FFE040':'#FFF',combo>=3));
         if(score>hiScore){hiScore=score;try{localStorage.setItem('bbt_hi',hiScore);}catch(e){}}
         cascadeDrop(matches.map(m=>({x:m.b.x,y:m.b.y})),0);
-      } else { combo=0;comboMeterTarget=Math.max(0,comboMeterTarget-.2); }
+      } else { 
+        combo=0;comboMeterTarget=Math.max(0,comboMeterTarget-.2); 
+      }
     }
   }
   proj=null;shots++;shotsThisLevel++;
-  // Mid-level color ramp: every 5 shots add a new color
-  if(shotsThisLevel%5===0&&actPal.length<PALETTE.length) actPal.push(PALETTE[actPal.length]);
-  if(freezeShots>0){ freezeShots--; }
-  else if(shotsThisLevel%cInt===0){ dropCeiling();for(let c=0;c<(grid[0]||[]).length;c++)if(grid[0][c])grid[0][c].frighten(); }
+  
+  // CLASSIC BUBBLE BLAST RULE: Ceiling drops only when you DON'T make a match
+  if(!madeMatch){
+    consecutiveMisses++;
+    // Every 6 consecutive misses, drop ceiling (classic Puzzle Bobble style)
+    if(consecutiveMisses>=6 && freezeShots<=0){
+      dropCeiling();
+      consecutiveMisses=0;
+      // Frighten bubbles near bottom
+      for(let r=grid.length-3;r<grid.length;r++){
+        for(let c=0;c<grid[r].length;c++){
+          if(grid[r]&&grid[r][c]) grid[r][c].frighten();
+        }
+      }
+    }
+  } else {
+    consecutiveMisses=0; // Reset on match
+  }
+  
+  if(freezeShots>0) freezeShots--;
+  
+  // Level complete ONLY when board is clear
   if(checkClear()){
     gameState='levelcomplete';lvlStars=calcStars();lcTimer=0;lcSA2=[0,0,0];
     lcScDisp=lvlScStart;lvlScStart=score;lvlShStart=shots;
@@ -1243,16 +1275,14 @@ function onStop(){
 }
 
 function dropCeiling(){
-  ceilOff+=R*1.732;const nr=[],cols=colsInRow(0);
+  ceilOff+=R*1.732;
+  const nr=[],cols=colsInRow(0);
   for(let c=0;c<cols;c++){const p=bobaXY(0,c);p.y-=R*1.732;nr.push(new Boba(rndCol(),p.x,p.y));}
-  grid.unshift(nr);if(grid.length>ROWS)grid.pop();updPos();
+  grid.unshift(nr);
+  if(grid.length>ROWS)grid.pop();
+  updPos();
   dropsThisLevel++;
-  const target=2+lvl;
-  if(dropsThisLevel>=target){
-    gameState='levelcomplete';lvlStars=calcStars();lcTimer=0;lcSA2=[0,0,0];
-    lcScDisp=lvlScStart;lvlScStart=score;lvlShStart=shots;
-    for(let i=0;i<60;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,Math.random()*H*.5));
-  }
+  // Classic: No "survive drops" win condition - you MUST clear the board
 }
 function checkGO(){
   for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&grid[r][c].y>CNY-R*3){lives--;livesAnim[lives<0?0:lives]=1.6;if(lives<=0)return true;ceilOff=Math.max(0,ceilOff-R*1.732);updPos();}
@@ -1266,15 +1296,27 @@ function endGame(){
   if(score>hiScore){hiScore=score;try{localStorage.setItem('bbt_hi',hiScore);}catch(e){}}
   setTimeout(()=>{gameState='gameover';},1200);
 }
-function lvlUp(){lvl++;lvlBadgePop=1;shotsThisLevel=0;dropsThisLevel=0;ceilOff=0;getReadyTimer=55;actPal=[...PALETTE.slice(0,Math.min(PALETTE.length,3+Math.floor(lvl/2)))];cInt=Math.max(4,CI_BASE-Math.floor(lvl/2));}
+function lvlUp(){
+  lvl++;
+  lvlBadgePop=1;
+  shotsThisLevel=0;
+  dropsThisLevel=0;
+  consecutiveMisses=0;
+  ceilOff=0;
+  getReadyTimer=55;
+  // Classic: Start with 3 colors, slowly add more (max 6)
+  const numColors=Math.min(MAX_COLORS_START+Math.floor((lvl-1)/2),6);
+  actPal=[...PALETTE.slice(0,numColors)];
+  // cInt kept for backwards compatibility but not used for ceiling drops anymore
+}
 
 function resetGame(){
   score=0;shots=0;shotsThisLevel=0;ceilOff=0;gameState='playing';lives=3;lvl=1;combo=0;
-  actPal=[...PALETTE.slice(0,4)];cInt=CI_BASE;freezeShots=0;dropsThisLevel=0;
+  actPal=[...PALETTE.slice(0,MAX_COLORS_START)];cInt=CI_BASE;freezeShots=0;dropsThisLevel=0;consecutiveMisses=0;
   parts=[];rings=[];confettiArr=[];ftexts=[];sparkArr=[];lbolts=[];shockwaves=[];comboStack=[];pendingActions=[];
   proj=null;aimAngle=-Math.PI/2;mascot=null;nxt2Boba=null;
   lvlScStart=0;lvlShStart=0;comboMeter=0;comboMeterTarget=0;bgComboPct=0;
-  cannonCharge=0;flashAlpha=0;flashCol='#FFF';livesAnim=[1,1,1];scoreBounce=0;  lvlBadgePop=0;beatPulse=0;beatTimer=0;getReadyTimer=0;
+  cannonCharge=0;flashAlpha=0;flashCol='#FFF';livesAnim=[1,1,1];scoreBounce=0;lvlBadgePop=0;beatPulse=0;beatTimer=0;getReadyTimer=0;
   resize();initParallax();initGrid();spawnBoba();calcAim();
 }
 
