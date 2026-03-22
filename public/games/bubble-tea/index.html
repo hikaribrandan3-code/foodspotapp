@@ -446,7 +446,8 @@ function getNbrs(r,c){ const e=r%2===0,off=e?[[-1,-1],[-1,0],[0,-1],[0,1],[1,-1]
 function findMatch(sr,sc,ct){ const res=[],vis=new Set(),q=[{r:sr,c:sc}]; while(q.length){const {r,c}=q.shift(),k=`${r},${c}`;if(vis.has(k))continue;vis.add(k);const b=grid[r][c];if(!b)continue;const m=ct.name==='rainbow'||ct.name==='lightning'||b.ct.name==='rainbow'||ct.name===b.ct.name;if(m){res.push({r,c,b});getNbrs(r,c).forEach(n=>{if(!vis.has(`${n.r},${n.c}`))q.push(n);});}}return res; }
 function findFloat(){ const vis=new Set(),q=[]; for(let c=0;c<(grid[0]||[]).length;c++)if(grid[0][c]){q.push({r:0,c});vis.add(`0,${c}`);} while(q.length){const {r,c}=q.shift();getNbrs(r,c).forEach(n=>{const k=`${n.r},${n.c}`;if(!vis.has(k)){vis.add(k);q.push(n);}});} const fl=[]; for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&!vis.has(`${r},${c}`))fl.push({r,c,b:grid[r][c]}); return fl; }
 function findSpot(x,y){ const r0=Math.round((y-GY-ceilOff)/(R*1.732)),c0=Math.round((x-GX-rowOX(r0))/(R*2)); for(let rad=0;rad<6;rad++)for(let dr=-rad;dr<=rad;dr++)for(let dc=-rad;dc<=rad;dc++){if(Math.abs(dr)+Math.abs(dc)!==rad)continue;const r=r0+dr,c=c0+dc;if(isVal(r,c)&&!grid[r][c])return {r,c};} return null; }
-function updPos(){for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]){const p=bobaXY(r,c);grid[r][c].x=p.x;grid[r][c].y=p.y;}}
+function updPos(){for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]){const p=bobaXY(r,c);grid[r][c].x=p.x;grid[r][c].y=p.y;grid[r][c].wobble=0;grid[r][c].wobbleV=0;grid[r][c].ripOff=0;}}
+function updateLowestRow(){trackedLowestRow=0;for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])trackedLowestRow=Math.max(trackedLowestRow,r);}
 function initGrid(){
   grid=[];
   const sR=Math.max(4,Math.min(7,Math.floor(lvl*.8)+4));
@@ -1361,8 +1362,10 @@ function loop(t){
     drawGridHighlight();
     if(gameState==='playing'&&getReadyTimer<=0)drawAim();
     drawCannon(t);
-    if(curBoba&&!proj){const orR=R*3.4,orA=t*.0018;curBoba.x=CNX+Math.cos(orA)*orR;curBoba.y=(CNY-R*.3)+Math.sin(orA)*orR*.5;
-      cx.save();cx.translate(curBoba.x,curBoba.y);cx.scale(1.26,1.26);cx.translate(-curBoba.x,-curBoba.y);curBoba.draw(t);cx.restore();}
+    if(curBoba&&!proj){
+      curBoba.x=CNX;curBoba.y=CNY-R*.3;
+      cx.save();cx.translate(curBoba.x,curBoba.y);cx.scale(1.26,1.26);cx.translate(-curBoba.x,-curBoba.y);curBoba.draw(t);cx.restore();
+    }
     if(proj&&gameState==='playing'){proj.update();if(proj.stopped)onStop();else proj.draw(t);}
     if(gameState==='playing')cannonCharge=Math.max(0,cannonCharge-.008);
   }
