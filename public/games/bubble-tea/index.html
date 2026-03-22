@@ -84,16 +84,20 @@ const COL_BOMB={name:'bomb',c:'#FF3300',hi:'#FF7744',lo:'#AA0000',out:'#440000',
 const COL_FIREBALL={name:'fireball',c:'#FF7700',hi:'#FFCC44',lo:'#CC3300',out:'#661100',wv:'#FF9900',fc:'#330800'};
 const COL_FREEZE={name:'freeze',c:'#88EEFF',hi:'#DDFAFF',lo:'#0099CC',out:'#003366',wv:'#BBFAFF',fc:'#002244'};
 const MAX_COLORS_START=3;
+const CEILING_THRESHOLD=3; // Ceiling drops after this many consecutive misses
 let actPal=[...PALETTE.slice(0,MAX_COLORS_START)];
 
-function rndCol(){
-  const r=Math.random();
-  // Power-ups only 5% chance (was 23%)
-  if(r<.01) return COL_LIGHTNING;
-  if(r<.02) return COL_RAINBOW;
-  if(r<.03) return COL_BOMB;
-  if(r<.04) return COL_FIREBALL;
-  if(r<.05) return COL_FREEZE;
+function rndCol(isPowerUp=false){
+  if(isPowerUp){
+    // Power-up types
+    const r=Math.random();
+    if(r<.20) return COL_LIGHTNING;
+    if(r<.40) return COL_RAINBOW;
+    if(r<.60) return COL_BOMB;
+    if(r<.80) return COL_FIREBALL;
+    return COL_FREEZE;
+  }
+  // Normal bubble - no random power-up chance here (handled by pity timer)
   return actPal[Math.floor(Math.random()*actPal.length)];
 }
 
@@ -121,6 +125,8 @@ let beatTimer=0,beatPulse=0;
 let shotsThisLevel=0;
 let comboStack=[];
 let dangerFlash=0;
+let shotsSincePowerUp=0; // Pity timer for power-ups
+let matchesThisCascade=0; // Track combo freeze
 let rayAngle=0;
 let paralaxA=[],paralaxB=[];
 const isMobile=navigator.maxTouchPoints>0;
@@ -464,8 +470,8 @@ function updPos(){for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++
 function updateLowestRow(){trackedLowestRow=0;for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])trackedLowestRow=Math.max(trackedLowestRow,r);}
 function initGrid(){
   grid=[];
-  // Start with fewer rows, grow per level
-  const sR=Math.min(5+Math.floor(lvl/2),9);
+  // Start with fewer rows, grow per level (cap at 8 for tighter pacing)
+  const sR=Math.min(5+Math.floor(lvl/2),8);
   for(let r=0;r<ROWS;r++){grid[r]=[];const cols=colsInRow(r);for(let c=0;c<cols;c++){if(r<sR){const p=bobaXY(r,c);grid[r][c]=new Boba(rndCol(),p.x,p.y);}else grid[r][c]=null;}}
 }
 function triggerRipple(rx,ry){ for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++){const b=grid[r][c];if(!b)continue;const d=Math.sqrt((b.x-rx)**2+(b.y-ry)**2);setTimeout(()=>{if(grid[r]&&grid[r][c]){grid[r][c].ripOff=-R*.4;grid[r][c].wobbleV+=.3;}},d*8);} }
@@ -770,8 +776,8 @@ function drawUI(t){
   const cmY=barH-R*.55,cmX=pad,cmW=W-pad*2,cmH=R*.5,fill=Math.min(1,comboMeter);
   cx.save();cx.fillStyle='rgba(0,0,0,0.3)';cx.beginPath();cx.roundRect(cmX,cmY,cmW,cmH,cmH/2);cx.fill();
   if(fill>0){const mc=fill>.7?'#FF2200':fill>.4?'#FF8800':'#FF6EB4';const mg=cx.createLinearGradient(cmX,0,cmX+cmW*fill,0);mg.addColorStop(0,mc);mg.addColorStop(1,'#FFE040');if(fill>.9){cx.shadowColor=mc;cx.shadowBlur=8;}cx.fillStyle=mg;cx.beginPath();cx.roundRect(cmX,cmY,cmW*fill,cmH,cmH/2);cx.fill();cx.fillStyle='rgba(255,255,255,0.25)';cx.beginPath();cx.roundRect(cmX+2,cmY+1,cmW*fill*.6,cmH*.4,cmH*.2);cx.fill();}
-  // Classic: Show misses remaining until ceiling drops (6 - consecutiveMisses)
-  const missesRemaining=Math.max(0,6-consecutiveMisses);
+  // Classic: Show misses remaining until ceiling drops
+  const missesRemaining=Math.max(0,CEILING_THRESHOLD-consecutiveMisses);
   cx.fillStyle=missesRemaining<=2?'#FF4400':'rgba(255,220,255,0.8)';cx.font=`bold ${Math.round(R*.5)}px Arial`;cx.textAlign='right';
   cx.fillText(`▼${missesRemaining}`,cmX+cmW-2,cmY+cmH*.85);
   cx.restore();
@@ -845,13 +851,13 @@ function drawNextPreview(){
 // ── LEVEL COMPLETE ────────────────────────────────────────────────
 let lcSA2=[0,0,0];
 function calcStars(){
-  // Classic Puzzle Bobble scoring: 3 stars for clearing quickly with high score
+  // Tighter star rating for faster session pacing
   const levelShots=shots-lvlShStart;
   const levelScore=score-lvlScStart;
-  // 3 stars: High score + efficient (few shots)
-  if(levelScore>=300&&levelShots<=12) return 3;
-  // 2 stars: Good score or moderate efficiency  
-  if(levelScore>=150||levelShots<=18) return 2;
+  // 3 stars: Perfect run - high score AND very efficient
+  if(levelScore>=350&&levelShots<=10) return 3;
+  // 2 stars: Good score OR decent efficiency
+  if(levelScore>=200||levelShots<=16) return 2;
   // 1 star: Completed the level
   return 1;
 }
@@ -1218,7 +1224,22 @@ function cascadeDrop(sources,bonusPts){
 }
 
 // ── GAME LOGIC ────────────────────────────────────────────────────
-function spawnBoba(){curBoba=nxtBoba||new Boba(rndCol());nxtBoba=nxt2Boba||new Boba(rndCol());nxt2Boba=new Boba(rndCol());}
+function spawnBoba(){
+  shotsSincePowerUp++;
+  // Pity timer: guaranteed power-up every 25 shots, else 3% chance
+  const shouldGivePowerUp=shotsSincePowerUp>=25||Math.random()<0.03;
+  if(shouldGivePowerUp) shotsSincePowerUp=0;
+  
+  curBoba=nxtBoba||new Boba(rndCol(shouldGivePowerUp));
+  
+  const nextIsPowerUp=shotsSincePowerUp>=25||Math.random()<0.03;
+  if(nextIsPowerUp) shotsSincePowerUp=0;
+  nxtBoba=nxt2Boba||new Boba(rndCol(nextIsPowerUp));
+  
+  const next2IsPowerUp=shotsSincePowerUp>=25||Math.random()<0.03;
+  if(next2IsPowerUp) shotsSincePowerUp=0;
+  nxt2Boba=new Boba(rndCol(next2IsPowerUp));
+}
 function fire(){
   if(proj||gameState!=='playing')return;
   proj=new Proj(curBoba,aimAngle);
@@ -1246,6 +1267,8 @@ function onStop(){
       const matches=findMatch(spot.r,spot.c,ct);
       if(matches.length>=3){
         madeMatch=true;
+        matchesThisCascade++; // Track for combo freeze
+        shotsSincePowerUp=0; // Reset pity timer on match
         combo++;comboMeterTarget=Math.min(1,combo/6);
         let pts=matches.length*10+(matches.length>3?(matches.length-3)*20:0);
         if(combo>1)pts=Math.round(pts*combo*.7);
@@ -1272,8 +1295,16 @@ function onStop(){
   // CLASSIC BUBBLE BLAST RULE: Ceiling drops only when you DON'T make a match
   if(!madeMatch){
     consecutiveMisses++;
-    // Every 6 consecutive misses, drop ceiling (classic Puzzle Bobble style)
-    if(consecutiveMisses>=4 && freezeShots<=0){
+    // At 2 misses: frighten bottom rows (visual warning)
+    if(consecutiveMisses===2){
+      for(let r=grid.length-2;r<grid.length;r++){
+        for(let c=0;c<grid[r].length;c++){
+          if(grid[r]&&grid[r][c]) grid[r][c].frighten();
+        }
+      }
+    }
+    // At threshold: drop ceiling
+    if(consecutiveMisses>=CEILING_THRESHOLD && freezeShots<=0){
       dropCeiling();
       consecutiveMisses=0;
       // Frighten bubbles near bottom
@@ -1285,7 +1316,13 @@ function onStop(){
     }
   } else {
     consecutiveMisses=0; // Reset on match
+    // Combo freeze reward: 3+ matches in one cascade = 2 free misses
+    if(matchesThisCascade>=3){
+      freezeShots+=2;
+      ftexts.push(new FloatText(W/2,H*.35,'COMBO FREEZE! ❄️','#88EEFF',true));
+    }
   }
+  matchesThisCascade=0; // Reset cascade tracker
   
   if(freezeShots>0){ freezeShots--; if(freezeShots<=0) iceParticles=[]; }
   
@@ -1327,10 +1364,13 @@ function lvlUp(){
   consecutiveMisses=0;
   ceilOff=0;
   getReadyTimer=55;
-  // Classic: Start with 3 colors, slowly add more (max 6)
-  const numColors=Math.min(MAX_COLORS_START+Math.floor((lvl-1)/2),6);
+  // Colors per level: 3 (1-2), 4 (3-4), 5 (5-6), 6 (7+)
+  let numColors;
+  if(lvl<=2) numColors=3;
+  else if(lvl<=4) numColors=4;
+  else if(lvl<=6) numColors=5;
+  else numColors=6;
   actPal=[...PALETTE.slice(0,numColors)];
-  // cInt kept for backwards compatibility but not used for ceiling drops anymore
 }
 
 function resetGame(){
