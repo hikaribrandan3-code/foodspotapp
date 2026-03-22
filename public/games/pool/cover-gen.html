@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a1a2e; }
+    canvas { border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <canvas id="c" width="390" height="260"></canvas>
+  <script>
+    const c = document.getElementById('c'), x = c.getContext('2d');
+    const W = 390, H = 260;
+    
+    // Background
+    const g = x.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#1a5c3a');
+    g.addColorStop(1,'#0d3d26');
+    x.fillStyle=g; x.fillRect(0,0,W,H);
+    
+    // Wood border
+    x.strokeStyle='#8b4513'; x.lineWidth=15;
+    x.strokeRect(10,10,W-20,H-20);
+    
+    // Pockets
+    x.fillStyle='#0a0a0a';
+    [[25,25],[W/2,20],[W-25,25],[25,H-25],[W/2,H-20],[W-25,H-25]].forEach(p=>{
+      x.beginPath(); x.arc(p[0],p[1],18,0,Math.PI*2); x.fill();
+    });
+    
+    // Title
+    x.font='bold 42px sans-serif';
+    x.textAlign='center';
+    x.fillStyle='#fff';
+    x.shadowColor='rgba(0,0,0,0.8)';
+    x.shadowBlur=10;
+    x.fillText('🎱 8-BALL', W/2, H/2-10);
+    x.font='24px sans-serif';
+    x.fillStyle='#4ade80';
+    x.fillText('POOL', W/2, H/2+25);
+    
+    // Decorative balls
+    const colors=['#fbbf24','#3b82f6','#ef4444','#8b5cf6','#f97316'];
+    colors.forEach((col,i)=>{
+      x.fillStyle=col;
+      x.beginPath();
+      x.arc(60+i*70, H-50, 20, 0, Math.PI*2);
+      x.fill();
+      x.fillStyle='rgba(255,255,255,0.3)';
+      x.beginPath();
+      x.arc(55+i*70, H-58, 6, 0, Math.PI*2);
+      x.fill();
+    });
+    
+    // Save as PNG
+    const link=document.createElement('a');
+    link.download='cover.png';
+    link.href=c.toDataURL();
+    link.click();
+  </script>
+</body>
+</html>

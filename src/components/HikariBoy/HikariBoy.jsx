@@ -31,12 +31,13 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 4 games
+// Curated game library - 5 games
 const GAMES = [
   { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.webp', url: '/games/burger-stack/index.html' },
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.webp', url: '/games/spice-invaders/index.html' },
   { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.webp', url: '/games/bubble-tea/index.html' },
   { id: 'candylandflip', name: 'Candyland Flip', cover: '/games/candylandflip/cover.webp', url: '/games/candylandflip/index.html' },
+  { id: 'pool', name: '8-Ball Pool', cover: '/games/pool/cover.svg', url: '/games/pool/index.html' },
 ];
 
 export function HikariBoy({ 
