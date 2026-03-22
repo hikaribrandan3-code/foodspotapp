@@ -63,8 +63,8 @@ window.addEventListener('message',(e)=>{
     else if(gameState==='playing'){cannonCharge=Math.min(cannonCharge+.3,1);fire();}
     return;
   }
-  if(button==='dpad-left'){if(gameState==='playing'){aimAngle=Math.max(-Math.PI+.15,aimAngle-.12);calcAim();}}
-  if(button==='dpad-right'){if(gameState==='playing'){aimAngle=Math.min(-.15,aimAngle+.12);calcAim();}}
+  if(button==='dpad-left'){if(gameState==='playing'){aimAngle=Math.max(-Math.PI+.1,aimAngle-.05);calcAim();}}
+  if(button==='dpad-right'){if(gameState==='playing'){aimAngle=Math.min(-.1,aimAngle+.05);calcAim();}}
   if(button==='dpad-down'){if(gameState==='paused'){pauseSelection=1;}}
   if(button==='dpad-up'){if(gameState==='paused'){pauseSelection=0;}}
 });
@@ -1347,7 +1347,7 @@ function resetGame(){
 cv.addEventListener('pointermove',e=>{
   e.preventDefault();if(gameState!=='playing')return;
   const rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  aimAngle=Math.atan2(my-CNY,mx-CNX);aimAngle=Math.max(-Math.PI+.15,Math.min(-.15,aimAngle));calcAim();
+  aimAngle=Math.atan2(my-CNY,mx-CNX);aimAngle=Math.max(-Math.PI+.1,Math.min(-.1,aimAngle));calcAim();
 },{passive:false});
 cv.addEventListener('pointerdown',e=>{
   e.preventDefault();
@@ -1363,8 +1363,8 @@ window.addEventListener('keydown',e=>{
   if(gameState==='gameover'){if(e.key==='Enter')resetGame();return;}
   if(gameState==='levelcomplete'&&e.key==='Enter'){lvlUp();gameState='playing';resize();initGrid();spawnBoba();calcAim();return;}
   if(gameState!=='playing')return;
-  if(e.key==='ArrowLeft')aimAngle=Math.max(-Math.PI+.15,aimAngle-.06);
-  if(e.key==='ArrowRight')aimAngle=Math.min(-.15,aimAngle+.06);
+  if(e.key==='ArrowLeft')aimAngle=Math.max(-Math.PI+.1,aimAngle-.05);
+  if(e.key==='ArrowRight')aimAngle=Math.min(-.1,aimAngle+.05);
   if(e.key===' '||e.key==='z'||e.key==='Z'||e.key==='Enter'){cannonCharge=Math.min(cannonCharge+.3,1);fire();}
   calcAim();
 });
