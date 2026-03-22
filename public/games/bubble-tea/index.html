@@ -241,9 +241,18 @@ function drawRays(p){
 // ── BG ────────────────────────────────────────────────────────────
 function drawBG(t){
   const tgt=Math.min(1,combo/5); bgComboPct=lerp(bgComboPct,tgt,.04); const p=bgComboPct;
-  const top=p<.5?lerpRGB('#2D004F','#6B0000',p*2):lerpRGB('#6B0000','#8B0000',Math.min(1,(p-.5)*2));
-  const mid=p<.5?lerpRGB('#5C0080','#A02000',p*2):lerpRGB('#A02000','#CC0000',(p-.5)*2);
-  const bot=lerpRGB('#3D006A','#5A0000',p);
+  // FROZEN: Blue/ice background when freeze is active
+  let top,mid,bot;
+  if(freezeShots>0){
+    const freezePulse=(Math.sin(t*.01)+1)/2;
+    top=`rgb(${Math.round(20+freezePulse*20)},${Math.round(40+freezePulse*30)},${Math.round(100+freezePulse*40)})`;
+    mid=`rgb(${Math.round(40+freezePulse*20)},${Math.round(80+freezePulse*40)},${Math.round(140+freezePulse*50)})`;
+    bot=`rgb(${Math.round(30+freezePulse*15)},${Math.round(60+freezePulse*30)},${Math.round(120+freezePulse*40)})`;
+  } else {
+    top=p<.5?lerpRGB('#2D004F','#6B0000',p*2):lerpRGB('#6B0000','#8B0000',Math.min(1,(p-.5)*2));
+    mid=p<.5?lerpRGB('#5C0080','#A02000',p*2):lerpRGB('#A02000','#CC0000',(p-.5)*2);
+    bot=lerpRGB('#3D006A','#5A0000',p);
+  }
   const g=cx.createLinearGradient(0,0,0,H); g.addColorStop(0,top); g.addColorStop(.5,mid); g.addColorStop(1,bot);
   cx.fillStyle=g; cx.fillRect(0,0,W,H);
   if(p>.5){ for(let i=0;i<3;i++){ const fx=(i+.5)*W/3,fg=cx.createRadialGradient(fx,H,0,fx,H,H*.65); fg.addColorStop(0,`rgba(255,80,0,${(p-.5)*.3})`); fg.addColorStop(1,'transparent'); cx.fillStyle=fg; cx.fillRect(0,0,W,H); } }
@@ -396,6 +405,9 @@ class ConfettiPiece{ constructor(x,y){this.x=x;this.y=y;this.vx=(Math.random()-.
 class FloatText{ constructor(x,y,txt,col='#FFF',big=false){this.x=x;this.y=y;this.txt=txt;this.col=col;this.life=1;this.vy=-2.2;this.big=big;this.scl=big?1.4:1;} update(){this.y+=this.vy;this.vy*=.94;this.life-=.016;if(this.scl>1)this.scl=Math.max(1,this.scl-.06);} draw(){const fs=this.big?Math.round(R*2):Math.round(R*1.2);cx.save();cx.globalAlpha=Math.max(0,this.life);cx.translate(this.x,this.y);cx.scale(this.scl,this.scl);cx.font=`bold ${fs}px Arial Rounded MT Bold,Arial`;cx.textAlign='center';cx.textBaseline='middle';cx.strokeStyle='rgba(0,0,0,0.7)';cx.lineWidth=5;cx.strokeText(this.txt,0,0);cx.fillStyle=this.col;cx.fillText(this.txt,0,0);cx.restore();} }
 class Shockwave{ constructor(x,y,col='rgba(255,255,255,1)'){this.x=x;this.y=y;this.r=R;this.life=1;this.col=col;} update(){this.r+=W*.025;this.life-=.035;} draw(){cx.save();cx.globalAlpha=Math.max(0,this.life*.5);cx.strokeStyle=this.col.replace('1)',`${this.life})`);cx.lineWidth=4*this.life;cx.beginPath();cx.arc(this.x,this.y,this.r,0,Math.PI*2);cx.stroke();cx.restore();} }
 class LBolt{ constructor(x1,y1,x2,y2,col='rgba(255,255,100,1)'){this.x1=x1;this.y1=y1;this.x2=x2;this.y2=y2;this.life=1;this.col=col;this.sg=this.gen();} gen(){const p=[{x:this.x1,y:this.y1}];for(let i=1;i<7;i++){const t=i/7;p.push({x:this.x1+(this.x2-this.x1)*t+(Math.random()-.5)*35,y:this.y1+(this.y2-this.y1)*t+(Math.random()-.5)*25});}p.push({x:this.x2,y:this.y2});return p;} update(){this.life-=.12;} draw(){cx.save();cx.globalAlpha=Math.max(0,this.life);cx.strokeStyle=this.col.replace('1)',`${this.life})`);cx.lineWidth=2+this.life*3;cx.shadowColor='#FFD700';cx.shadowBlur=10;cx.beginPath();cx.moveTo(this.sg[0].x,this.sg[0].y);this.sg.forEach(p=>cx.lineTo(p.x,p.y));cx.stroke();cx.restore();} }
+// Ice crystals for freeze effect
+let iceParticles=[];
+class IceCrystal{constructor(){this.x=Math.random()*W;this.y=-R*2;this.vx=(Math.random()-.5)*.5;this.vy=Math.random()*2+1;this.size=Math.random()*R*.4+R*.2;this.rot=Math.random()*Math.PI*2;this.rotSpeed=(Math.random()-.5)*.05;}update(){this.x+=this.vx;this.y+=this.vy;this.rot+=this.rotSpeed;if(this.y>H+R*2){this.y=-R*2;this.x=Math.random()*W;}}draw(){cx.save();cx.translate(this.x,this.y);cx.rotate(this.rot);cx.fillStyle='rgba(200,240,255,0.8)';cx.strokeStyle='rgba(136,238,255,0.9)';cx.lineWidth=1;cx.shadowColor='#88EEFF';cx.shadowBlur=4;cx.beginPath();for(let i=0;i<6;i++){const a=i*Math.PI/3;const sx=Math.cos(a)*this.size;const sy=Math.sin(a)*this.size;if(i===0)cx.moveTo(sx,sy);else cx.lineTo(sx,sy);}cx.closePath();cx.fill();cx.stroke();cx.restore();}}
 
 // ── COMBO STACK ───────────────────────────────────────────────────
 function pushComboStack(val){
@@ -1159,12 +1171,23 @@ function doFireball(fc2,fy,bx,by){
 }
 
 function doFreeze(){
-  flashAlpha=.25;flashCol='#88EEFF';playFX('freeze');
+  flashAlpha=.4;flashCol='#88EEFF';playFX('freeze');
   freezeShots+=8;
   ftexts.push(new FloatText(W/2,H*.44,'❄️ FROZEN! ❄️','#88EEFF',true));
   shockwaves.push(new Shockwave(CNX,CNY,'rgba(136,238,255,1)'));
-  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])sparkArr.push(new Spark(grid[r][c].x,grid[r][c].y,'#88EEFF'));
-  for(let i=0;i<30;i++)parts.push(new Particle(CNX,CNY,'#88EEFF',false));
+  // ICE EFFECT: Spawn falling ice crystals
+  iceParticles=[];
+  for(let i=0;i<25;i++) iceParticles.push(new IceCrystal());
+  // Freeze all bubbles in place - add ice crystals around them
+  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]){
+    sparkArr.push(new Spark(grid[r][c].x,grid[r][c].y,'#88EEFF'));
+    // Add ice crystal particles around each bubble
+    for(let i=0;i<4;i++){
+      const angle=(Math.PI*2/4)*i;
+      parts.push(new Particle(grid[r][c].x+Math.cos(angle)*R,grid[r][c].y+Math.sin(angle)*R,'#CCF0FF',false));
+    }
+  }
+  for(let i=0;i<40;i++)parts.push(new Particle(CNX,CNY,'#88EEFF',false));
 }
 
 function cascadeDrop(sources,bonusPts){
@@ -1250,7 +1273,7 @@ function onStop(){
   if(!madeMatch){
     consecutiveMisses++;
     // Every 6 consecutive misses, drop ceiling (classic Puzzle Bobble style)
-    if(consecutiveMisses>=6 && freezeShots<=0){
+    if(consecutiveMisses>=4 && freezeShots<=0){
       dropCeiling();
       consecutiveMisses=0;
       // Frighten bubbles near bottom
@@ -1264,7 +1287,7 @@ function onStop(){
     consecutiveMisses=0; // Reset on match
   }
   
-  if(freezeShots>0) freezeShots--;
+  if(freezeShots>0){ freezeShots--; if(freezeShots<=0) iceParticles=[]; }
   
   // Level complete ONLY when board is clear
   if(checkClear()){
@@ -1313,7 +1336,7 @@ function lvlUp(){
 function resetGame(){
   score=0;shots=0;shotsThisLevel=0;ceilOff=0;gameState='playing';lives=3;lvl=1;combo=0;
   actPal=[...PALETTE.slice(0,MAX_COLORS_START)];cInt=CI_BASE;freezeShots=0;dropsThisLevel=0;consecutiveMisses=0;
-  parts=[];rings=[];confettiArr=[];ftexts=[];sparkArr=[];lbolts=[];shockwaves=[];comboStack=[];pendingActions=[];
+  parts=[];rings=[];confettiArr=[];ftexts=[];sparkArr=[];lbolts=[];shockwaves=[];comboStack=[];pendingActions=[];iceParticles=[];
   proj=null;aimAngle=-Math.PI/2;mascot=null;nxt2Boba=null;
   lvlScStart=0;lvlShStart=0;comboMeter=0;comboMeterTarget=0;bgComboPct=0;
   cannonCharge=0;flashAlpha=0;flashCol='#FFF';livesAnim=[1,1,1];scoreBounce=0;lvlBadgePop=0;beatPulse=0;beatTimer=0;getReadyTimer=0;
@@ -1364,6 +1387,8 @@ function loop(t){
   cx.save();
   if(gameState==='splash'){updParallax();drawSplash(t);cx.restore();return;}
   applyShake();updParallax();drawBG(t);
+  // Draw falling ice crystals during freeze
+  if(freezeShots>0){for(let i=iceParticles.length-1;i>=0;i--){iceParticles[i].update();iceParticles[i].draw();}}
   for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]){
     if(grid[r][c].y<-R||grid[r][c].y>H+R)continue;
     grid[r][c].update(t);grid[r][c].draw(t);}
