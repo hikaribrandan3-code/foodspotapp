@@ -750,7 +750,7 @@ function sndSlotTick(){if(!AC||muted)return;var o=AC.createOscillator(),g=AC.cre
 function drawSlot(){
   var slotY=H*.25;ctx.fillStyle='rgba(0,0,0,.85)';ctx.fillRect(0,0,W,H);
   var panelW=230,panelH=180;
-  var px=W/2-panelW/2;
+  var cx=W/2-22, px=cx-panelW/2;
   
   var leverX=px+panelW+5,leverY=slotY+75;
   var pullP=Math.min(1,slotTimer/12);if(slotTimer>12)pullP=Math.max(0,1-(slotTimer-12)/6);
@@ -768,9 +768,9 @@ function drawSlot(){
   ctx.strokeStyle='#FFD700';ctx.lineWidth=4;ctx.stroke();ctx.restore();
   
   ctx.fillStyle='#FFD700';ctx.font='900 17px Arial Black';ctx.textAlign='center';ctx.shadowColor='#FFD700';ctx.shadowBlur=10;
-  ctx.fillText("✨ CHEF'S SPECIAL ✨",W/2,slotY+9);ctx.shadowBlur=0;
+  ctx.fillText("✨ CHEF'S SPECIAL ✨",cx,slotY+9);ctx.shadowBlur=0;
   
-  var rW=52,rH=64,gap=10,reelsW=3*rW+2*gap,sx=W/2-reelsW/2,ry=slotY+50;
+  var rW=52,rH=64,gap=10,reelsW=3*rW+2*gap,sx=cx-reelsW/2,ry=slotY+50;
   ctx.fillStyle='#181818';ctx.beginPath();ctx.roundRect(sx-12,ry-12,reelsW+24,rH+24,12);ctx.fill();
   ctx.strokeStyle='#333';ctx.lineWidth=4;ctx.stroke();
   
@@ -795,11 +795,11 @@ function drawSlot(){
   
   var botY=ry+rH+38;ctx.textAlign='center';
   if(slotDone[2]){
-    var wP=1+Math.sin(Date.now()*.015)*.1;ctx.save();ctx.translate(W/2,botY);ctx.scale(wP,wP);
+    var wP=1+Math.sin(Date.now()*.015)*.1;ctx.save();ctx.translate(cx,botY);ctx.scale(wP,wP);
     ctx.fillStyle='#FFD700';ctx.shadowColor='#FF3860';ctx.shadowBlur=20;ctx.font='900 16px Arial Black';ctx.fillText(SLOT_TXT[slotRewardIdx],0,0);ctx.restore();
   }else{
     var d=['','.','..','...'][Math.floor(Date.now()/200)%4];
-    ctx.fillStyle='#FFF';ctx.font='bold 14px Arial';ctx.fillText('SPINNING'+d,W/2,botY);
+    ctx.fillStyle='#FFF';ctx.font='bold 14px Arial';ctx.fillText('SPINNING'+d,cx,botY);
   }
   ctx.textAlign='left';
 }
