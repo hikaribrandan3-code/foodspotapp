@@ -153,117 +153,242 @@ const coverImg=new Image();
 let spinY=0;
 
 // ── AUDIO ─────────────────────────────────────────────────
+// Blue Jazz Lounge - 40s/50s smoky club vibe
 let AC=null;
+// Slow swing progressions - laid back and mellow
 const PROG=[
-  {b:[130.81,164.81,196.00,174.61],c:[329.63,392.00,493.88,440.00]},
-  {b:[110.00,138.59,164.81,155.56],c:[261.63,329.63,392.00,369.99]},
-  {b:[146.83,174.61,220.00,196.00],c:[293.66,369.99,440.00,415.30]},
-  {b:[98.00,123.47,146.83,130.81], c:[246.94,311.13,369.99,349.23]},
-  {b:[130.81,155.56,196.00,185.00],c:[329.63,415.30,493.88,466.16]},
-  {b:[110.00,130.81,164.81,155.56],c:[261.63,349.23,392.00,440.00]},
-  {b:[73.42,92.50,110.00,123.47],  c:[293.66,369.99,440.00,392.00]},
-  {b:[98.00,116.54,130.81,146.83], c:[246.94,293.66,349.23,392.00]},
-  {b:[164.81,185.00,220.00,207.65],c:[311.13,392.00,493.88,440.00]},
-  {b:[110.00,138.59,164.81,155.56],c:[277.18,349.23,440.00,415.30]},
-  {b:[146.83,164.81,196.00,220.00],c:[293.66,369.99,440.00,392.00]},
-  {b:[98.00,116.54,138.59,155.56], c:[246.94,311.13,369.99,349.23]},
-  {b:[123.47,138.59,155.56,146.83],c:[311.13,369.99,466.16,440.00]},
-  {b:[116.54,130.81,164.81,155.56],c:[277.18,329.63,415.30,466.16]},
-  {b:[110.00,130.81,164.81,138.59],c:[261.63,329.63,415.30,392.00]},
-  {b:[98.00,110.00,130.81,123.47], c:[246.94,293.66,369.99,415.30]},
+  {b:[82.41,98.00,123.47,110.00],c:[261.63,311.13,392.00,349.23]}, // E♭maj7
+  {b:[73.42,87.31,110.00,98.00], c:[233.08,277.18,349.23,311.13]}, // D♭maj7
+  {b:[65.41,77.78,98.00,87.31],  c:[207.65,246.94,311.13,277.18]}, // B♭maj7
+  {b:[61.74,73.42,92.50,82.41],  c:[196.00,233.08,293.66,261.63]}, // A♭maj7
+  {b:[55.00,65.41,82.41,73.42],  c:[174.61,207.65,261.63,233.08]}, // G♭maj7
+  {b:[49.00,58.27,73.42,65.41],  c:[155.56,185.00,233.08,207.65]}, // Emaj7
 ];
-const BPM=82, BEAT=60/BPM;
+const BPM=68, BEAT=60/BPM; // Slow and smoky
 let jBar=0, jBt=0, jNext=0;
+let vinylNoise=null;
 
 function initAudio(){
   if(AC)return;
-  try{AC=new(window.AudioContext||window.webkitAudioContext)();jNext=AC.currentTime+0.08;schedJazz();}catch(e){}
+  try{
+    AC=new(window.AudioContext||window.webkitAudioContext)();
+    createVinylNoise();
+    jNext=AC.currentTime+0.15;
+    schedJazz();
+  }catch(e){}
+}
+function createVinylNoise(){
+  const sr=AC.sampleRate,frames=sr*2; // 2 seconds of crackle
+  const buf=AC.createBuffer(1,frames,sr),d=buf.getChannelData(0);
+  for(let i=0;i<frames;i++){
+    // Vinyl crackle: random pops at low density
+    const crackle=Math.random()<0.0008?(Math.random()*2-1)*0.15:0;
+    const hiss=(Math.random()*2-1)*0.008;
+    d[i]=crackle+hiss;
+  }
+  vinylNoise=AC.createBufferSource();
+  vinylNoise.buffer=buf;
+  vinylNoise.loop=true;
+  const g=AC.createGain();
+  g.gain.value=0.04;
+  vinylNoise.connect(g);
+  g.connect(AC.destination);
+  vinylNoise.start();
 }
 function schedJazz(){
   if(!AC)return;
-  while(jNext<AC.currentTime+0.55){
+  while(jNext<AC.currentTime+0.6){
     playJazzBeat(PROG[jBar%PROG.length],jBt,jNext);
-    jNext+=BEAT; jBt++;
+    // Swing feel - triplet timing for that lazy behind-the-beat feel
+    const swing=[0,0.34,0.66,1.0]; 
+    jNext+=BEAT*(swing[(jBt+1)%4]-swing[jBt%4]);
+    jBt++;
     if(jBt>=4){jBt=0;jBar=(jBar+1)%PROG.length;}
   }
-  setTimeout(schedJazz,160);
+  setTimeout(schedJazz,180);
 }
 function playJazzBeat(bar,bt,t){
-  bassNote(bt===3?bar.b[bt]*Math.pow(2,1/12):bar.b[bt],t);
-  if(bt===0){pianoNote(bar.c[1],t,0.055);pianoNote(bar.c[3],t+0.012,0.042);}
-  else if(bt===1){pianoNote(bar.c[2],t+BEAT*0.62,0.038);}
-  else if(bt===2){pianoNote(bar.c[0],t,0.048);pianoNote(bar.c[2],t+0.018,0.044);pianoNote(bar.c[3],t+0.030,0.038);}
-  else{pianoNote(bar.c[3],t,0.032);}
-  hihat(t,0.55,bt===1||bt===3); hihat(t+BEAT*0.63,0.30,false);
-  if(bt===0)kick(t,0.55); if(bt===2)kick(t,0.20);
-  if(bt===1||bt===3)brush(t);
-  ride(t);
-  if(bt===0&&jBar%8===4)saxNote(bar.c[2]/2,t,0.038);
-  if(bt===2&&jBar%8===4)saxNote(bar.c[3]/2,t+BEAT*.3,0.028);
-  if(jBar>=8&&jBar<=15&&(bt===1||bt===3))trumpetNote(bar.b[bt],t+BEAT*.08,0.028);
+  // Walking bass on every beat - warm and round
+  bassNote(bar.b[bt%4],t,bt);
+  
+  // Piano chords - sparse and mellow, behind the beat
+  if(bt===0){
+    pianoChord(bar.c[0],bar.c[2],t+BEAT*0.08,0.08);
+    pianoChord(bar.c[1],bar.c[3],t+BEAT*0.42,0.05);
+  }
+  if(bt===2){
+    pianoChord(bar.c[0],bar.c[3],t+BEAT*0.06,0.06);
+  }
+  
+  // Brushed snare - continuous swish
+  brushSnare(t,0.12);
+  if(bt%2===1)brushSnare(t+BEAT*0.5,0.08);
+  
+  // Gentle ride cymbal on 2 and 4
+  if(bt===1||bt===3)softRide(t+BEAT*0.1,0.06);
+  
+  // Occasional soft kick
+  if(bt===0&&Math.random()<0.4)softKick(t,0.35);
+  
+  // Tenor sax melody - smooth and smoky, sparse
+  if(jBar%4===0&&bt===2)smokySax(bar.c[1],t+BEAT*0.15,0.045);
+  if(jBar%6===3&&bt===1)smokySax(bar.c[2],t,0.038);
+  
+  // Muted trumpet fills - very occasional
+  if(jBar%8===5&&bt===0&&Math.random()<0.3)mutedTrumpet(bar.c[0],t+BEAT*0.2,0.032);
 }
-function bassNote(freq,t){
-  const o=AC.createOscillator(),g=AC.createGain();
-  o.connect(g);g.connect(AC.destination);o.type='triangle';o.frequency.value=freq;
-  g.gain.setValueAtTime(0.001,t);g.gain.linearRampToValueAtTime(0.20,t+0.018);
-  g.gain.exponentialRampToValueAtTime(0.09,t+BEAT*0.55);g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*0.82);
-  o.start(t);o.stop(t+BEAT*0.88);
+
+// Warm upright bass - sine with subtle harmonics
+function bassNote(freq,t,bt){
+  const o1=AC.createOscillator(),o2=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
+  o1.type='sine';o2.type='triangle';
+  o1.frequency.value=freq;
+  o2.frequency.value=freq;
+  o2.detune.value=4; // Slight warmth
+  f.type='lowpass';f.frequency.value=400;f.Q.value=0.5;
+  const hg=AC.createGain();hg.gain.value=0.12;
+  o1.connect(f);o2.connect(hg);f.connect(g);hg.connect(g);
+  g.connect(AC.destination);
+  
+  // Walking bass envelope - smooth attack
+  g.gain.setValueAtTime(0.001,t);
+  g.gain.linearRampToValueAtTime(0.28,t+0.04);
+  g.gain.exponentialRampToValueAtTime(0.18,t+BEAT*0.7);
+  g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*0.95);
+  
+  o1.start(t);o2.start(t);
+  o1.stop(t+BEAT);o2.stop(t+BEAT);
 }
-function pianoNote(freq,t,vol){
-  const o=AC.createOscillator(),g=AC.createGain();
-  o.connect(g);g.connect(AC.destination);o.type='sine';o.frequency.value=freq;
-  g.gain.setValueAtTime(0.001,t);g.gain.linearRampToValueAtTime(vol,t+0.016);
-  g.gain.exponentialRampToValueAtTime(vol*0.45,t+0.10);g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*1.7);
-  o.start(t);o.stop(t+BEAT*1.8);
+
+// Warm Rhodes-style piano - mellow with bell-like harmonics
+function pianoChord(f1,f2,t,vol){
+  [f1,f2].forEach((freq,idx)=>{
+    const o1=AC.createOscillator(),o2=AC.createOscillator(),g=AC.createGain();
+    const f=AC.createBiquadFilter();
+    o1.type='triangle';o2.type='sine';
+    o1.frequency.value=freq;
+    o2.frequency.value=freq*2; // Octave harmonic
+    f.type='lowpass';f.frequency.value=2800;f.Q.value=0.8;
+    o1.connect(f);o2.connect(f);f.connect(g);g.connect(AC.destination);
+    
+    const v=vol*(idx===0?1:0.4);
+    g.gain.setValueAtTime(0.001,t);
+    g.gain.linearRampToValueAtTime(v,t+0.025);
+    g.gain.exponentialRampToValueAtTime(v*0.35,t+0.4);
+    g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*2.5);
+    
+    o1.start(t);o2.start(t);
+    o1.stop(t+BEAT*2.6);o2.stop(t+BEAT*2.6);
+  });
 }
-function hihat(t,vol,accent){
-  const sr=AC.sampleRate,dur=accent?0.058:0.030,frames=Math.floor(sr*dur);
+
+// Brushed snare - continuous swish sound
+function brushSnare(t,vol){
+  const sr=AC.sampleRate,dur=0.25,frames=Math.floor(sr*dur);
   const buf=AC.createBuffer(1,frames,sr),d=buf.getChannelData(0);
-  for(let i=0;i<frames;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/frames,1.6);
-  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),gg=AC.createGain();
-  s.buffer=buf;f.type='highpass';f.frequency.value=9000;
-  s.connect(f);f.connect(gg);gg.connect(AC.destination);gg.gain.value=(accent?0.10:0.056)*vol;s.start(t);
+  for(let i=0;i<frames;i++){
+    // Granular noise for brush texture
+    const grain=Math.random()<0.15?Math.random()*2-1:0;
+    const noise=(Math.random()*2-1)*0.3;
+    d[i]=(grain*0.4+noise*0.6)*Math.pow(1-i/frames,0.4);
+  }
+  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=buf;
+  f.type='bandpass';f.frequency.value=1800;f.Q.value=0.6;
+  s.connect(f);f.connect(g);g.connect(AC.destination);
+  g.gain.setValueAtTime(vol,t);
+  g.gain.exponentialRampToValueAtTime(vol*0.6,t+0.15);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur-0.02);
+  s.start(t);
 }
-function kick(t,vol){
+
+// Soft ride cymbal - mellow and distant
+function softRide(t,vol){
+  const sr=AC.sampleRate,dur=0.8,frames=Math.floor(sr*dur);
+  const buf=AC.createBuffer(1,frames,sr),d=buf.getChannelData(0);
+  for(let i=0;i<frames;i++){
+    d[i]=(Math.random()*2-1)*Math.pow(1-i/frames,1.8)*0.5;
+  }
+  const s=AC.createBufferSource(),f1=AC.createBiquadFilter(),f2=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=buf;
+  f1.type='highpass';f1.frequency.value=3000;
+  f2.type='lowpass';f2.frequency.value=7000;
+  s.connect(f1);f1.connect(f2);f2.connect(g);g.connect(AC.destination);
+  g.gain.setValueAtTime(vol,t);
+  g.gain.exponentialRampToValueAtTime(vol*0.3,t+0.3);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur-0.1);
+  s.start(t);
+}
+
+// Soft kick - very gentle, felt more than heard
+function softKick(t,vol){
   const o=AC.createOscillator(),g=AC.createGain();
-  o.connect(g);g.connect(AC.destination);o.type='sine';
-  o.frequency.setValueAtTime(170,t);o.frequency.exponentialRampToValueAtTime(38,t+0.09);
-  g.gain.setValueAtTime(vol*0.55,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.20);o.start(t);o.stop(t+0.22);
+  o.type='sine';
+  o.frequency.setValueAtTime(90,t);
+  o.frequency.exponentialRampToValueAtTime(35,t+0.12);
+  g.gain.setValueAtTime(vol*0.4,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+  o.connect(g);g.connect(AC.destination);
+  o.start(t);o.stop(t+0.28);
 }
-function brush(t){
-  const sr=AC.sampleRate,frames=Math.floor(sr*0.14),buf=AC.createBuffer(1,frames,sr),d=buf.getChannelData(0);
-  for(let i=0;i<frames;i++)d[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/frames)*Math.pow(1-i/frames,0.6);
-  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),gg=AC.createGain();
-  s.buffer=buf;f.type='bandpass';f.frequency.value=3200;f.Q.value=0.7;
-  s.connect(f);f.connect(gg);gg.connect(AC.destination);gg.gain.value=0.065;s.start(t);
-}
-function ride(t){
-  const sr=AC.sampleRate,frames=Math.floor(sr*0.30),buf=AC.createBuffer(1,frames,sr),d=buf.getChannelData(0);
-  for(let i=0;i<frames;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/frames,2.2);
-  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),gg=AC.createGain();
-  s.buffer=buf;f.type='highpass';f.frequency.value=5800;
-  s.connect(f);f.connect(gg);gg.connect(AC.destination);gg.gain.value=0.018;s.start(t);
-}
-function saxNote(freq,t,vol){
+
+// Smoky tenor sax - smooth with subtle growl
+function smokySax(freq,t,vol){
   const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
   const lfo=AC.createOscillator(),lg=AC.createGain();
-  lfo.frequency.value=5.2;lfo.type='sine';lg.gain.value=4;
+  // Gentle vibrato
+  lfo.frequency.value=3.5;lfo.type='sine';lg.gain.value=6;
   lfo.connect(lg);lg.connect(o.frequency);
+  
   o.type='sawtooth';o.frequency.value=freq;
-  f.type='bandpass';f.frequency.value=1200;f.Q.value=1.8;
-  o.connect(f);f.connect(g);g.connect(AC.destination);
-  g.gain.setValueAtTime(0.001,t);g.gain.linearRampToValueAtTime(vol,t+0.06);
-  g.gain.exponentialRampToValueAtTime(vol*.6,t+0.18);g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*1.6);
-  lfo.start(t);lfo.stop(t+BEAT*1.7);o.start(t);o.stop(t+BEAT*1.7);
+  // Warm filter - mellow not harsh
+  f.type='lowpass';f.frequency.value=900;f.Q.value=1.2;
+  
+  // Add subtle growl harmonics
+  const o2=AC.createOscillator(),g2=AC.createGain();
+  o2.type='square';o2.frequency.value=freq;
+  o2.detune.value=-12;
+  const f2=AC.createBiquadFilter();
+  f2.type='lowpass';f2.frequency.value=600;
+  
+  o.connect(f);f.connect(g);
+  o2.connect(f2);f2.connect(g2);g2.connect(AC.destination);
+  g2.gain.value=0.15;
+  
+  g.connect(AC.destination);
+  
+  // Smooth envelope
+  g.gain.setValueAtTime(0.001,t);
+  g.gain.linearRampToValueAtTime(vol,t+0.12);
+  g.gain.exponentialRampToValueAtTime(vol*0.5,t+0.5);
+  g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*2.2);
+  
+  lfo.start(t);lfo.stop(t+BEAT*2.3);
+  o.start(t);o.stop(t+BEAT*2.3);
+  o2.start(t);o2.stop(t+BEAT*2.3);
 }
-function trumpetNote(freq,t,vol){
+
+// Muted trumpet - soft and distant
+function mutedTrumpet(freq,t,vol){
   const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
-  o.type='square';o.frequency.value=freq;
-  f.type='highpass';f.frequency.value=600;
+  o.type='sawtooth';o.frequency.value=freq;
+  // Muted sound - narrow bandpass
+  f.type='bandpass';f.frequency.value=800;f.Q.value=2.5;
+  
+  const o2=AC.createOscillator();
+  o2.type='sine';o2.frequency.value=freq;
+  const g2=AC.createGain();g2.gain.value=0.3;
+  o2.connect(g2);g2.connect(AC.destination);
+  
   o.connect(f);f.connect(g);g.connect(AC.destination);
-  g.gain.setValueAtTime(0.001,t);g.gain.linearRampToValueAtTime(vol,t+0.018);
-  g.gain.exponentialRampToValueAtTime(vol*.4,t+0.08);g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*.55);
-  o.start(t);o.stop(t+BEAT*.6);
+  
+  g.gain.setValueAtTime(0.001,t);
+  g.gain.linearRampToValueAtTime(vol*0.7,t+0.04);
+  g.gain.exponentialRampToValueAtTime(vol*0.2,t+0.25);
+  g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*1.2);
+  
+  o.start(t);o.stop(t+BEAT*1.3);
+  o2.start(t);o2.stop(t+BEAT*1.3);
 }
 function sndHit(v){
   if(!AC||v<0.8)return;
