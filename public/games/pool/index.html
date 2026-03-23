@@ -59,7 +59,7 @@ let feltPattern=null;
 let menuState='player', menuSel=0, menuFade=1, menuFadeDir=1, menuFadeCb=null;
 let gameMode='1p-medium', frameCount=0;
 const MENU_BTNS={
-  player:[{label:'1 PLAYER',color:'#ff3fa0',glow:'#ff3fa0'},{label:'2 PLAYERS',color:'#22d3ee',glow:'#22d3ee'}],
+  player:[{label:'1 PLAYER',color:'#d4a017',glow:'#ffd700'},{label:'2 PLAYERS',color:'#d4a017',glow:'#ffd700'}],
   difficulty:[{label:'EASY',color:'#22c55e',glow:'#22c55e'},{label:'MEDIUM',color:'#f59e0b',glow:'#f59e0b'},{label:'HARD',color:'#ef4444',glow:'#ef4444'}]
 };
 
@@ -359,7 +359,7 @@ function rr(x,y,w,h,r){
 }
 
 // ── MENU DRAW ─────────────────────────────────────────────
-function drawNeonBtn(x,y,w,h,label,color,glow,active){
+function drawNeonBtn(x,y,w,h,label,color,glow,active,fs){
   ctx.save();
   ctx.globalAlpha=active?1.0:0.38;
   const fg=ctx.createLinearGradient(x,y,x,y+h);
@@ -374,7 +374,7 @@ function drawNeonBtn(x,y,w,h,label,color,glow,active){
   }
   ctx.shadowColor=active?glow:'transparent';ctx.shadowBlur=active?12:0;
   ctx.fillStyle=active?'#ffffff':'rgba(180,140,30,0.6)';
-  ctx.font='bold 13px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='bold '+(fs||13)+'px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(label,x+w/2,y+h/2);
   ctx.shadowBlur=0;ctx.restore();
 }
@@ -400,14 +400,12 @@ function drawMenu(){
     const bw=148,bh=52,gap=16,by=H-178,sx=(W-(bw*2+gap))/2;
     btns.forEach(function(btn,i){drawNeonBtn(sx+i*(bw+gap),by,bw,bh,btn.label,btn.color,btn.glow,i===menuSel);});
   }else{
-    ctx.fillStyle='rgba(180,140,30,0.45)';ctx.font='10px Georgia,serif';
-    ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('← BACK',FX+6,H-202);
-    goldRule(H-196);
-    ctx.fillStyle='rgba(212,175,55,0.65)';ctx.font='11px Georgia,serif';
-    ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('DIFFICULTY',W/2,H-182);
-    goldRule(H-178);
-    const bw=100,bh=50,gap=10,by=H-166,sx=(W-(bw*3+gap*2))/2;
-    btns.forEach(function(btn,i){drawNeonBtn(sx+i*(bw+gap),by,bw,bh,btn.label,btn.color,btn.glow,i===menuSel);});
+    goldRule(H-208);
+    ctx.fillStyle='rgba(212,175,55,0.65)';ctx.font='13px Georgia,serif';
+    ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('DIFFICULTY',W/2,H-190);
+    goldRule(H-186);
+    const bw=120,bh=60,gap=12,by=H-176,sx=(W-(bw*3+gap*2))/2;
+    btns.forEach(function(btn,i){drawNeonBtn(sx+i*(bw+gap),by,bw,bh,btn.label,btn.color,btn.glow,i===menuSel,16);});
   }
   if(Math.random()<0.015){ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fillRect(0,0,W,H);}
   ctx.globalAlpha=1;
