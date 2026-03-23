@@ -691,7 +691,7 @@ function drawCueBallHitSpot(){
   ctx.save();ctx.shadowColor=dotColor;ctx.shadowBlur=8;
   ctx.beginPath();ctx.arc(mx,dotY,5,0,Math.PI*2);ctx.fillStyle=dotColor;ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.2;ctx.stroke();ctx.restore();
-  ctx.fillStyle='rgba(212,175,55,0.8)';ctx.font='bold 12px Georgia,serif';
+  ctx.fillStyle='rgba(212,175,55,0.8)';ctx.font='bold 11px Georgia,serif';
   ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('E N G L I S H',mx,my-r-14);
   const rl=ctx.createLinearGradient(mx-22,0,mx+22,0);
   rl.addColorStop(0,'transparent');rl.addColorStop(.5,'rgba(212,175,55,0.5)');rl.addColorStop(1,'transparent');
@@ -923,7 +923,7 @@ function drawHUD(){
   tg.addColorStop(0,'#fff8dc');tg.addColorStop(.4,'#ffd700');tg.addColorStop(1,'#b8860b');
   // Sharp drop shadow for depth (not ambient glow)
   ctx.shadowColor='rgba(0,0,0,0.8)';ctx.shadowBlur=0;ctx.shadowOffsetX=2;ctx.shadowOffsetY=3;
-  ctx.fillStyle=tg;ctx.font='bold 34px Georgia,serif';
+  ctx.fillStyle=tg;ctx.font='bold 31px Georgia,serif';
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText("HIKARI'S BILLIARDS",W/2,TY/2);
   ctx.restore();
   [0,1].forEach(function(p){
