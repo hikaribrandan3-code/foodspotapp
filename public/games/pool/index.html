@@ -15,7 +15,7 @@ canvas{display:block;margin:0 auto;touch-action:none;outline:none}
 <script>
 'use strict';//v2
 // ── CANVAS ────────────────────────────────────────────────
-const W=494,H=560,Y_OFF=43,GX_OFF=0; // W expanded 15%, no side offset
+const W=534,H=560,Y_OFF=43,GX_OFF=0; // W expanded 23% total, no side offset
 const cvs=document.getElementById('c');
 const ctx=cvs.getContext('2d');
 let scale=1;
@@ -31,8 +31,8 @@ document.addEventListener('touchstart',()=>cvs.focus(),{passive:true});
 
 // ── CONSTANTS ─────────────────────────────────────────────
 const CY='#22d3ee', CY2='rgba(34,211,238,', OR='#f97316', WH='#f1f5f9';
-const TX=55, TY=88, TW=384, TH=306; // TX offset increased to center wider table
-const FX=73, FY=TY+16, FW=348, FH=274;
+const TX=75, TY=88, TW=384, TH=306; // TX recentered for 534px width
+const FX=93, FY=TY+16, FW=348, FH=274; // FX recentered
 const FR=FX+FW, FB=FY+FH;
 const BR=9, PR=13;
 const PKS=[
@@ -411,9 +411,9 @@ function drawMenu(){
   ctx.globalAlpha=menuFade;
   const btns=MENU_BTNS[menuState];
   const goldRule=function(y2){
-    const rg=ctx.createLinearGradient(80,y2,310,y2);
+    const rg=ctx.createLinearGradient(100,y2,W-100,y2);
     rg.addColorStop(0,'transparent');rg.addColorStop(.5,'rgba(212,175,55,0.55)');rg.addColorStop(1,'transparent');
-    ctx.fillStyle=rg;ctx.fillRect(80,y2,230,1);
+    ctx.fillStyle=rg;ctx.fillRect(100,y2,W-200,1);
   };
   if(menuState==='player'){
     goldRule(H-208);
