@@ -15,7 +15,7 @@ canvas{display:block;margin:0 auto;touch-action:none;outline:none}
 <script>
 'use strict';//v2
 // ── CANVAS ────────────────────────────────────────────────
-const W=390,H=560,Y_OFF=43;
+const W=430,H=560,Y_OFF=43,GX_OFF=20;
 const cvs=document.getElementById('c');
 const ctx=cvs.getContext('2d');
 let scale=1;
@@ -380,7 +380,7 @@ function drawNeonBtn(x,y,w,h,label,color,glow,active,fs){
 }
 function drawMenu(){
   ctx.clearRect(0,0,W,H);
-  ctx.drawImage(coverImg,0,0,W,H);
+  ctx.drawImage(coverImg,-20,0,430,560);
   ctx.fillStyle='rgba(0,0,0,0.10)';for(let y=0;y<H;y+=2)ctx.fillRect(0,y,W,1);
   const ov=ctx.createLinearGradient(0,H-230,0,H);
   ov.addColorStop(0,'rgba(0,0,0,0)');ov.addColorStop(.25,'rgba(0,0,0,0.6)');ov.addColorStop(1,'rgba(2,1,6,0.94)');
@@ -397,14 +397,14 @@ function drawMenu(){
     ctx.fillStyle='rgba(212,175,55,0.65)';ctx.font='11px Georgia,serif';
     ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('SELECT MODE',W/2,H-194);
     goldRule(H-190);
-    const bw=148,bh=52,gap=16,by=H-178,sx=(W-(bw*2+gap))/2;
+    const bw=160,bh=56,gap=20,by=H-180,sx=(W-(bw*2+gap))/2;
     btns.forEach(function(btn,i){drawNeonBtn(sx+i*(bw+gap),by,bw,bh,btn.label,btn.color,btn.glow,i===menuSel);});
   }else{
     goldRule(H-208);
     ctx.fillStyle='rgba(212,175,55,0.65)';ctx.font='13px Georgia,serif';
     ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('DIFFICULTY',W/2,H-190);
     goldRule(H-186);
-    const bw=120,bh=60,gap=12,by=H-176,sx=(W-(bw*3+gap*2))/2;
+    const bw=130,bh=65,gap=15,by=H-180,sx=(W-(bw*3+gap*2))/2;
     btns.forEach(function(btn,i){drawNeonBtn(sx+i*(bw+gap),by,bw,bh,btn.label,btn.color,btn.glow,i===menuSel,16);});
   }
   if(Math.random()<0.015){ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fillRect(0,0,W,H);}
@@ -1066,7 +1066,7 @@ function loop(){
   }
   if(G.foulFlash>0)G.foulFlash=Math.max(0,G.foulFlash-0.04);
   ctx.clearRect(0,0,W,H);
-  ctx.save();ctx.translate(0,Y_OFF);
+  ctx.save();ctx.translate(GX_OFF,Y_OFF);
   drawBg();
   let shook=false;
   if(G.st>0){ctx.save();ctx.translate(G.sx,G.sy);G.sx*=.6;G.sy*=.6;G.st--;shook=true;}
@@ -1112,10 +1112,10 @@ function onDown(e){
     if(menuFadeDir===-1)return;
     const btns=MENU_BTNS[menuState];
     if(menuState==='player'){
-      const bw=148,bh=52,gap=16,by=H-178,sx=(W-(bw*2+gap))/2;
+      const bw=160,bh=56,gap=20,by=H-180,sx=(W-(bw*2+gap))/2;
       btns.forEach(function(btn,i){const bx=sx+i*(bw+gap);if(p.x>=bx&&p.x<=bx+bw&&p.y>=by&&p.y<=by+bh){menuSel=i;menuSelect();}});
     }else{
-      const bw=120,bh=60,gap=12,by=H-176,sx=(W-(bw*3+gap*2))/2;
+      const bw=130,bh=65,gap=15,by=H-180,sx=(W-(bw*3+gap*2))/2;
       btns.forEach(function(btn,i){const bx=sx+i*(bw+gap);if(p.x>=bx&&p.x<=bx+bw&&p.y>=by&&p.y<=by+bh){menuSel=i;menuSelect();}});
     }
     return;
