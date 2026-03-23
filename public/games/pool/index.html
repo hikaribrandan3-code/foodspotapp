@@ -894,23 +894,9 @@ function drawHUD(){
   const gold='rgba(212,175,55,0.7)',goldB='rgba(212,175,55,0.35)';
   const cy=TY/2;
   ctx.strokeStyle=gold;ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(62,cy);ctx.bezierCurveTo(52,cy-6,38,cy-2,30,cy-6);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(62,cy);ctx.bezierCurveTo(50,cy+6,36,cy+4,28,cy+8);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(62,cy);ctx.bezierCurveTo(58,cy-8,48,cy-14,42,cy-16);ctx.stroke();
+  // REMOVED: all bezier curve electricity lines
   ctx.strokeStyle=goldB;ctx.lineWidth=0.8;
-  ctx.beginPath();ctx.moveTo(70,cy);ctx.bezierCurveTo(65,cy-4,58,cy-4,55,cy-7);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(70,cy);ctx.bezierCurveTo(65,cy+4,58,cy+4,55,cy+7);ctx.stroke();
-  ctx.fillStyle=gold;
-  [[30,cy-6],[28,cy+8],[42,cy-16]].forEach(function(pt){ctx.save();ctx.translate(pt[0],pt[1]);ctx.rotate(Math.PI/4);ctx.fillRect(-2.5,-2.5,5,5);ctx.restore();});
-  ctx.strokeStyle=gold;ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(W-62,cy);ctx.bezierCurveTo(W-52,cy-6,W-38,cy-2,W-30,cy-6);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(W-62,cy);ctx.bezierCurveTo(W-50,cy+6,W-36,cy+4,W-28,cy+8);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(W-62,cy);ctx.bezierCurveTo(W-58,cy-8,W-48,cy-14,W-42,cy-16);ctx.stroke();
-  ctx.strokeStyle=goldB;ctx.lineWidth=0.8;
-  ctx.beginPath();ctx.moveTo(W-70,cy);ctx.bezierCurveTo(W-65,cy-4,W-58,cy-4,W-55,cy-7);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(W-70,cy);ctx.bezierCurveTo(W-65,cy+4,W-58,cy+4,W-55,cy+7);ctx.stroke();
-  ctx.fillStyle=gold;
-  [[W-30,cy-6],[W-28,cy+8],[W-42,cy-16]].forEach(function(pt){ctx.save();ctx.translate(pt[0],pt[1]);ctx.rotate(Math.PI/4);ctx.fillRect(-2.5,-2.5,5,5);ctx.restore();});
+  // REMOVED: decorative diamond markers
   const tr=ctx.createLinearGradient(60,0,W-60,0);
   tr.addColorStop(0,'transparent');tr.addColorStop(.5,'rgba(212,175,55,0.4)');tr.addColorStop(1,'transparent');
   ctx.fillStyle=tr;ctx.fillRect(60,10,W-120,0.8);
@@ -925,29 +911,30 @@ function drawHUD(){
   ctx.fillStyle=tg;ctx.font='bold 31px Georgia,serif';
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText("HIKARI'S BILLIARDS",W/2,TY/2);
   ctx.restore();
+  // Simple clean orbs - Blue P1 left, Red CPU/P2 right
   [0,1].forEach(function(p){
-    const px=p===0?30:W-30,act=G.turn===p&&G.state!=='over';
+    const px=p===0?36:W-36,act=G.turn===p&&G.state!=='over';
+    const isP1=p===0;
+    const orbColor=isP1?'#2563eb':'#dc2626'; // Blue for P1, Red for CPU/P2
+    const glowColor=isP1?'rgba(37,99,235,0.6)':'rgba(220,38,38,0.6)';
+    // Active glow ring
     if(act){
-      ctx.save();ctx.shadowColor='rgba(212,175,55,0.9)';ctx.shadowBlur=14;
-      ctx.beginPath();ctx.arc(px,TY/2,28,0,Math.PI*2);
-      ctx.strokeStyle='rgba(212,175,55,1)';ctx.lineWidth=2;ctx.stroke();ctx.restore();
+      ctx.save();ctx.shadowColor=glowColor;ctx.shadowBlur=16;
+      ctx.beginPath();ctx.arc(px,TY/2,26,0,Math.PI*2);
+      ctx.strokeStyle=isP1?'#60a5fa':'#f87171';ctx.lineWidth=3;ctx.stroke();ctx.restore();
     }
-    ctx.beginPath();ctx.arc(px,TY/2,20,0,Math.PI*2);
-    const ag=ctx.createRadialGradient(px-4,TY/2-4,2,px,TY/2,20);
-    ag.addColorStop(0,act?'rgba(80,60,10,0.95)':'rgba(25,18,4,0.95)');ag.addColorStop(1,'rgba(5,3,1,0.98)');
-    ctx.fillStyle=ag;ctx.fill();
-    ctx.strokeStyle=act?'rgba(212,175,55,0.8)':'rgba(140,105,20,0.4)';ctx.lineWidth=1.2;ctx.stroke();
-    ctx.fillStyle=act?'#ffd700':'rgba(180,140,30,0.55)';
-    ctx.font='bold 17px Georgia,serif';
+    // Main orb
+    ctx.beginPath();ctx.arc(px,TY/2,22,0,Math.PI*2);
+    const og=ctx.createRadialGradient(px-6,TY/2-6,4,px,TY/2,22);
+    og.addColorStop(0,isP1?'#3b82f6':'#ef4444');
+    og.addColorStop(1,isP1?'#1d4ed8':'#b91c1c');
+    ctx.fillStyle=og;ctx.fill();
+    ctx.strokeStyle=act?(isP1?'#93c5fd':'#fca5a5'):(isP1?'#1e40af':'#991b1b');
+    ctx.lineWidth=2;ctx.stroke();
+    // Text
+    ctx.fillStyle='#ffffff';ctx.font='bold 15px Georgia,serif';
     ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(p===0?'P1':(G.gameMode==='2p'?'P2':'CPU'),px,TY/2+1);
-    if(act){
-      const dir=p===0?1:-1;
-      ctx.save();ctx.shadowColor='rgba(212,175,55,0.9)';ctx.shadowBlur=8;
-      ctx.fillStyle='rgba(212,175,55,0.95)';
-      ctx.beginPath();ctx.moveTo(px+dir*32,TY/2);ctx.lineTo(px+dir*38,TY/2-3);ctx.lineTo(px+dir*38,TY/2+3);ctx.closePath();ctx.fill();
-      ctx.restore();
-    }
+    ctx.fillText(isP1?'P1':(G.gameMode==='2p'?'P2':'CPU'),px,TY/2+1);
   });
   if(G.msgT>0){
     G.msgT--;
