@@ -381,7 +381,7 @@ function drawNeonBtn(x,y,w,h,label,color,glow,active,fs){
 function drawMenu(){
   ctx.clearRect(0,0,W,H);
   ctx.save();
-  ctx.translate(0,H*0.07);
+  ctx.translate(W/2,H/2);ctx.scale(1.15,1.15);ctx.translate(-W/2,-H/2);
   ctx.drawImage(coverImg,-20,0,430,560);
   ctx.fillStyle='rgba(0,0,0,0.10)';for(let y=0;y<H;y+=2)ctx.fillRect(0,y,W,1);
   const ov=ctx.createLinearGradient(0,H-230,0,H);
@@ -1113,7 +1113,7 @@ function onDown(e){
   if(G.state==='over'){confetti=[];G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;return;}
   if(G.state==='menu'){
     if(menuFadeDir===-1)return;
-    const mx=p.x,my=p.y-H*0.07;
+    const mx=(p.x-W/2)/1.15+W/2,my=(p.y-H/2)/1.15+H/2;
     const btns=MENU_BTNS[menuState];
     if(menuState==='player'){
       const bw=160,bh=56,gap=20,by=H-180,sx=(W-(bw*2+gap))/2;
