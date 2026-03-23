@@ -659,7 +659,7 @@ function drawAimPulse(){
     const phase=(G.frame*.06+i*.5)%(Math.PI*2);
     const r=BR+4+Math.sin(phase)*5,a=0.22-Math.sin(phase)*0.15;
     ctx.beginPath();ctx.arc(cue.x,cue.y,r,0,Math.PI*2);
-    ctx.strokeStyle='rgba(34,211,238,'+a+')';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.strokeStyle='rgba(255,215,0,'+a+')';ctx.lineWidth=1.5;ctx.stroke();
   }
 }
 
@@ -706,21 +706,27 @@ function drawBg(){
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
 }
 function drawTable(){
-  ctx.save();ctx.shadowColor=CY;ctx.shadowBlur=18;
-  rr(TX,TY,TW,TH,10);ctx.strokeStyle='rgba(34,211,238,0.28)';ctx.lineWidth=1.2;ctx.stroke();
-  ctx.shadowBlur=0;ctx.restore();
-  const rg=ctx.createLinearGradient(TX,TY,TX,TY+TH);
-  rg.addColorStop(0,'#111d2c');rg.addColorStop(.45,'#0a1420');rg.addColorStop(1,'#060c15');
-  ctx.fillStyle=rg;rr(TX,TY,TW,TH,10);ctx.fill();
-  rr(TX+1.5,TY+1.5,TW-3,TH-3,9);ctx.strokeStyle='rgba(34,211,238,0.12)';ctx.lineWidth=1;ctx.stroke();
-  ctx.fillStyle='rgba(34,211,238,0.6)';
+  // Ornate mahogany rails with gold trim - Monte Carlo style
+  ctx.save();
+  const railGrad=ctx.createLinearGradient(TX,TY,TX+TW,TY+TH);
+  railGrad.addColorStop(0,'#4a2510');railGrad.addColorStop(.3,'#5d3018');railGrad.addColorStop(.5,'#6b3a1e');railGrad.addColorStop(.7,'#5d3018');railGrad.addColorStop(1,'#3d1e0c');
+  ctx.fillStyle=railGrad;rr(TX,TY,TW,TH,10);ctx.fill();
+  // Gold border trim
+  ctx.strokeStyle='rgba(212,175,55,0.9)';ctx.lineWidth=2;
+  rr(TX+2,TY+2,TW-4,TH-4,9);ctx.stroke();
+  ctx.strokeStyle='rgba(180,140,40,0.5)';ctx.lineWidth=1;
+  rr(TX+5,TY+5,TW-10,TH-10,8);ctx.stroke();
+  ctx.restore();
+  // Decorative diamond markers
+  ctx.fillStyle='rgba(212,175,55,0.85)';
   [.25,.5,.75].forEach(function(t){
     [[FX+FW*t,FY-9],[FX+FW*t,FB+9],[FX-9,FY+FH*t],[FR+9,FY+FH*t]].forEach(function(coords){
       ctx.save();ctx.translate(coords[0],coords[1]);ctx.rotate(Math.PI/4);ctx.fillRect(-2.5,-2.5,5,5);ctx.restore();
     });
   });
-  const fg=ctx.createRadialGradient(FX+FW*.5,FY+FH*.4,25,FX+FW*.5,FY+FH*.5,FW*.62);
-  fg.addColorStop(0,'#1e9450');fg.addColorStop(.55,'#167338');fg.addColorStop(1,'#093d1c');
+  // Traditional baize green felt - classic casino style
+  const fg=ctx.createRadialGradient(FX+FW*.5,FY+FH*.4,20,FX+FW*.5,FY+FH*.5,FW*.7);
+  fg.addColorStop(0,'#2d8a52');fg.addColorStop(.4,'#1f6b3d');fg.addColorStop(.8,'#165432');fg.addColorStop(1,'#0f3d24');
   ctx.fillStyle=fg;ctx.fillRect(FX,FY,FW,FH);
   if(!feltPattern)feltPattern=ctx.createPattern(feltPC,'repeat');
   ctx.save();ctx.globalAlpha=0.09;ctx.fillStyle=feltPattern;ctx.fillRect(FX,FY,FW,FH);ctx.restore();
@@ -731,13 +737,17 @@ function drawTable(){
   ctx.restore();
   ctx.strokeStyle='rgba(34,211,238,0.07)';ctx.lineWidth=1;ctx.setLineDash([4,7]);
   ctx.beginPath();ctx.moveTo(FX,FY+FH*.73);ctx.lineTo(FR,FY+FH*.73);ctx.stroke();ctx.setLineDash([]);
+  // Ornate leather pockets with gold rims
   PKS.forEach(function(p){
     const psh=ctx.createRadialGradient(p.x,p.y,PR*.5,p.x,p.y,PR+10);
-    psh.addColorStop(0,'rgba(0,0,0,0.75)');psh.addColorStop(1,'transparent');
+    psh.addColorStop(0,'rgba(0,0,0,0.8)');psh.addColorStop(1,'transparent');
     ctx.beginPath();ctx.arc(p.x,p.y,PR+10,0,Math.PI*2);ctx.fillStyle=psh;ctx.fill();
-    ctx.beginPath();ctx.arc(p.x,p.y,PR,0,Math.PI*2);ctx.fillStyle='#010305';ctx.fill();
-    ctx.strokeStyle='rgba(34,211,238,0.22)';ctx.lineWidth=1.5;ctx.stroke();
-    ctx.beginPath();ctx.arc(p.x,p.y,PR*.55,0,Math.PI*2);ctx.fillStyle='#000';ctx.fill();
+    ctx.beginPath();ctx.arc(p.x,p.y,PR,0,Math.PI*2);ctx.fillStyle='#0a0502';ctx.fill();
+    // Gold rim
+    ctx.strokeStyle='rgba(212,175,55,0.7)';ctx.lineWidth=2;ctx.stroke();
+    ctx.beginPath();ctx.arc(p.x,p.y,PR*.6,0,Math.PI*2);ctx.fillStyle='#000';ctx.fill();
+    // Inner brass ring
+    ctx.strokeStyle='rgba(180,140,40,0.4)';ctx.lineWidth=1;ctx.stroke();
   });
 }
 function drawRealisticCue(){
@@ -746,15 +756,16 @@ function drawRealisticCue(){
   const pulse=0.55+Math.sin(G.frame*0.18)*0.35,dashOff=(G.frame*.8)%14;
   drawAimPulse();
   ctx.save();
+  // Modern sleek aim lines - crisp white with subtle glow
   if(gh){
     ctx.setLineDash([6,5]);ctx.lineDashOffset=-dashOff;
-    ctx.strokeStyle=CY2+(0.14+pulse*0.14)+')';ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(255,255,255,'+(0.6+pulse*0.25)+')';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(cue.x+Math.cos(ang)*(BR+1),cue.y+Math.sin(ang)*(BR+1));ctx.lineTo(gh.gx,gh.gy);ctx.stroke();
-    ctx.setLineDash([]);ctx.strokeStyle=CY2+(0.06+pulse*0.1)+')';ctx.lineWidth=4;
+    ctx.setLineDash([]);ctx.strokeStyle='rgba(255,215,0,'+(0.2+pulse*0.15)+')';ctx.lineWidth=3;
     ctx.beginPath();ctx.moveTo(cue.x+Math.cos(ang)*(BR+1),cue.y+Math.sin(ang)*(BR+1));ctx.lineTo(gh.gx,gh.gy);ctx.stroke();
     ctx.beginPath();ctx.arc(gh.gx,gh.gy,BR,0,Math.PI*2);
-    ctx.strokeStyle=CY2+(0.28+pulse*0.32)+')';ctx.lineWidth=1.5;ctx.stroke();
-    ctx.fillStyle='rgba(34,211,238,0.07)';ctx.fill();
+    ctx.strokeStyle='rgba(255,215,0,'+(0.5+pulse*0.3)+')';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='rgba(255,215,0,0.08)';ctx.fill();
     ctx.save();
     ctx.fillStyle='rgba(0,0,0,0.65)';
     ctx.beginPath();ctx.arc(gh.ball.x,gh.ball.y-BR-10,8,0,Math.PI*2);ctx.fill();
@@ -764,32 +775,39 @@ function drawRealisticCue(){
     const tnx=(gh.ball.x-gh.gx)/(BR*2),tny=(gh.ball.y-gh.gy)/(BR*2);
     ctx.setLineDash([4,4]);ctx.lineDashOffset=-dashOff;
     ctx.beginPath();ctx.moveTo(gh.ball.x,gh.ball.y);ctx.lineTo(gh.ball.x+tnx*52,gh.ball.y+tny*52);
-    ctx.strokeStyle='rgba(250,204,21,'+(0.35+pulse*0.28)+')';ctx.lineWidth=1.6;ctx.stroke();
+    ctx.strokeStyle='rgba(255,215,0,'+(0.4+pulse*0.25)+')';ctx.lineWidth=1.6;ctx.stroke();
   }else{
     ctx.setLineDash([6,5]);ctx.lineDashOffset=-dashOff;
-    ctx.strokeStyle=CY2+(0.10+pulse*0.1)+')';ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(255,255,255,'+(0.4+pulse*0.2)+')';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(cue.x+Math.cos(ang)*(BR+1),cue.y+Math.sin(ang)*(BR+1));ctx.lineTo(cue.x+Math.cos(ang)*145,cue.y+Math.sin(ang)*145);ctx.stroke();
-    ctx.setLineDash([]);ctx.strokeStyle=CY2+(0.04+pulse*0.07)+')';ctx.lineWidth=4;
+    ctx.setLineDash([]);ctx.strokeStyle='rgba(255,215,0,'+(0.15+pulse*0.1)+')';ctx.lineWidth=3;
     ctx.beginPath();ctx.moveTo(cue.x+Math.cos(ang)*(BR+1),cue.y+Math.sin(ang)*(BR+1));ctx.lineTo(cue.x+Math.cos(ang)*145,cue.y+Math.sin(ang)*145);ctx.stroke();
   }
   ctx.setLineDash([]);ctx.restore();
+  // Modern sleek cue stick - graphite with gold accents
   const tx=cue.x-Math.cos(ang)*(BR+pb),ty2=cue.y-Math.sin(ang)*(BR+pb);
   ctx.save();ctx.translate(tx,ty2);ctx.rotate(ang+Math.PI);
-  ctx.beginPath();ctx.moveTo(0,-2.2);ctx.lineTo(135,-5.8);ctx.lineTo(135,5.8);ctx.lineTo(0,2.2);ctx.closePath();
-  const sg=ctx.createLinearGradient(0,-3,0,3);
-  sg.addColorStop(0,'#f0e0a8');sg.addColorStop(.25,'#d4a84b');sg.addColorStop(.5,'#c8922a');sg.addColorStop(.75,'#b87820');sg.addColorStop(1,'#8a5010');
-  ctx.fillStyle=sg;ctx.fill();
-  ctx.strokeStyle='rgba(100,60,10,0.18)';ctx.lineWidth=0.5;
-  [0.3,0.55,0.72].forEach(function(t){ctx.beginPath();ctx.moveTo(10,(-2.2+(4.4*t)));ctx.lineTo(100,(-5.8+(11.6*t)));ctx.stroke();});
-  ctx.strokeStyle='rgba(60,30,5,0.6)';ctx.lineWidth=1.5;
-  [25,48,68].forEach(function(lx){ctx.beginPath();ctx.moveTo(lx,-5.8*(lx/135));ctx.lineTo(lx,5.8*(lx/135));ctx.stroke();});
-  ctx.beginPath();ctx.moveTo(88,-5.2);ctx.lineTo(135,-5.8);ctx.lineTo(135,5.8);ctx.lineTo(88,5.2);ctx.closePath();
-  const bg2=ctx.createLinearGradient(0,-5,0,5);
-  bg2.addColorStop(0,'#5a2808');bg2.addColorStop(.5,'#3a1604');bg2.addColorStop(1,'#2a0c04');
-  ctx.fillStyle=bg2;ctx.fill();
-  ctx.beginPath();ctx.moveTo(-1,-2.2);ctx.lineTo(6,-2.8);ctx.lineTo(6,2.8);ctx.lineTo(-1,2.2);ctx.closePath();
-  ctx.fillStyle='#3b7fd4';ctx.fill();ctx.restore();
-  ctx.beginPath();ctx.arc(tx,ty2,2.5,0,Math.PI*2);ctx.fillStyle='#3b7fd4';ctx.fill();
+  // Main shaft - sleek graphite
+  ctx.beginPath();ctx.moveTo(0,-2.5);ctx.lineTo(140,-5.5);ctx.lineTo(140,5.5);ctx.lineTo(0,2.5);ctx.closePath();
+  const shaftGrad=ctx.createLinearGradient(0,-3,0,3);
+  shaftGrad.addColorStop(0,'#2a2a2a');shaftGrad.addColorStop(.5,'#1a1a1a');shaftGrad.addColorStop(1,'#0a0a0a');
+  ctx.fillStyle=shaftGrad;ctx.fill();
+  // Gold rings
+  ctx.strokeStyle='rgba(212,175,55,0.9)';ctx.lineWidth=1.5;
+  [30,60,90].forEach(function(lx){ctx.beginPath();ctx.moveTo(lx,-5.5*(lx/140));ctx.lineTo(lx,5.5*(lx/140));ctx.stroke();});
+  // Butt section - rich mahogany
+  ctx.beginPath();ctx.moveTo(100,-4.8);ctx.lineTo(140,-5.5);ctx.lineTo(140,5.5);ctx.lineTo(100,4.8);ctx.closePath();
+  const buttGrad=ctx.createLinearGradient(0,-5,0,5);
+  buttGrad.addColorStop(0,'#5d3018');buttGrad.addColorStop(.5,'#3d1e0c');buttGrad.addColorStop(1,'#2a1508');
+  ctx.fillStyle=buttGrad;ctx.fill();
+  // Gold butt cap
+  ctx.beginPath();ctx.moveTo(138,-5.3);ctx.lineTo(140,-5.5);ctx.lineTo(140,5.5);ctx.lineTo(138,5.3);ctx.closePath();
+  ctx.fillStyle='rgba(212,175,55,0.95)';ctx.fill();
+  // Blue tip
+  ctx.beginPath();ctx.moveTo(-1,-2.5);ctx.lineTo(4,-2.8);ctx.lineTo(4,2.8);ctx.lineTo(-1,2.5);ctx.closePath();
+  ctx.fillStyle='#3b82f6';ctx.fill();
+  ctx.restore();
+  ctx.beginPath();ctx.arc(tx,ty2,2.5,0,Math.PI*2);ctx.fillStyle='#60a5fa';ctx.fill();
 }
 function drawPower(){
   if(!G.charge&&G.pwr<0.01)return;
@@ -909,7 +927,27 @@ function drawHUD(){
   tg.addColorStop(0,'#fff8dc');tg.addColorStop(.4,'#ffd700');tg.addColorStop(1,'#b8860b');
   // Crispy clean - no shadow, no glow
   ctx.fillStyle=tg;ctx.font='bold 31px Georgia,serif';
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText("HIKARI'S BILLIARDS",W/2,TY/2);
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText("HIKARI'S BILLIARDS",W/2,TY/2-4);
+  ctx.restore();
+  // Monte Carlo casino flourish under title
+  ctx.save();
+  const fy=TY/2+14;
+  const gold='rgba(212,175,55,0.9)',goldDim='rgba(180,140,40,0.5)';
+  // Central diamond
+  ctx.save();ctx.translate(W/2,fy);ctx.rotate(Math.PI/4);ctx.fillStyle=gold;ctx.fillRect(-4,-4,8,8);ctx.restore();
+  // Swirling flourishes left
+  ctx.strokeStyle=gold;ctx.lineWidth=1.5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(W/2-8,fy);ctx.quadraticCurveTo(W/2-20,fy-3,W/2-35,fy);ctx.quadraticCurveTo(W/2-50,fy+4,W/2-65,fy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2-8,fy);ctx.quadraticCurveTo(W/2-20,fy+3,W/2-35,fy);ctx.quadraticCurveTo(W/2-50,fy-4,W/2-65,fy);ctx.stroke();
+  // Swirling flourishes right  
+  ctx.beginPath();ctx.moveTo(W/2+8,fy);ctx.quadraticCurveTo(W/2+20,fy-3,W/2+35,fy);ctx.quadraticCurveTo(W/2+50,fy+4,W/2+65,fy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2+8,fy);ctx.quadraticCurveTo(W/2+20,fy+3,W/2+35,fy);ctx.quadraticCurveTo(W/2+50,fy-4,W/2+65,fy);ctx.stroke();
+  // Small decorative diamonds at ends
+  [[W/2-70,fy],[W/2+70,fy]].forEach(function(pt){ctx.save();ctx.translate(pt[0],pt[1]);ctx.rotate(Math.PI/4);ctx.fillStyle=goldDim;ctx.fillRect(-2.5,-2.5,5,5);ctx.restore();});
+  // Horizontal accent lines
+  ctx.strokeStyle=goldDim;ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(W/2-85,fy);ctx.lineTo(W/2-75,fy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2+75,fy);ctx.lineTo(W/2+85,fy);ctx.stroke();
   ctx.restore();
   // Simple clean orbs - Blue P1 left, Red CPU/P2 right
   [0,1].forEach(function(p){
@@ -945,14 +983,14 @@ function drawHUD(){
 }
 function drawHandMode(){
   const hx=G.handX,hy=G.handY,t=G.frame*.05;
-  ctx.strokeStyle=CY2+(0.42+Math.sin(t)*0.24)+')';ctx.lineWidth=1.2;
+  ctx.strokeStyle='rgba(255,215,0,'+(0.42+Math.sin(t)*0.24)+')';ctx.lineWidth=1.2;
   ctx.setLineDash([4,6]);ctx.beginPath();ctx.rect(FX+BR,FY+BR,FW-BR*2,FH-BR*2);ctx.stroke();ctx.setLineDash([]);
   ctx.beginPath();ctx.arc(hx,hy,BR+3+Math.sin(t*3)*1.5,0,Math.PI*2);
-  ctx.strokeStyle=CY2+(0.5+Math.sin(t*3)*0.25)+')';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.strokeStyle='rgba(255,215,0,'+(0.5+Math.sin(t*3)*0.25)+')';ctx.lineWidth=1.5;ctx.stroke();
   const gg=ctx.createRadialGradient(hx-BR*.38,hy-BR*.4,BR*.04,hx+BR*.15,hy+BR*.15,BR*1.05);
   gg.addColorStop(0,'rgba(255,255,255,0.8)');gg.addColorStop(1,'rgba(180,180,210,0.45)');
   ctx.beginPath();ctx.arc(hx,hy,BR,0,Math.PI*2);ctx.fillStyle=gg;ctx.fill();
-  ctx.fillStyle=CY;ctx.font='bold 8px Arial';ctx.textAlign='center';ctx.fillText('[A] to place',hx,hy-BR-8);
+  ctx.fillStyle='#ffd700';ctx.font='bold 8px Arial';ctx.textAlign='center';ctx.fillText('[A] to place',hx,hy-BR-8);
 }
 function drawParts(){
   G.parts=G.parts.filter(function(p){
@@ -967,7 +1005,7 @@ function drawFloats(){
     f.y-=0.8;f.life-=0.015;if(f.life<=0)return false;
     ctx.globalAlpha=f.life;
     ctx.fillStyle='rgba(0,0,0,0.55)';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(f.text,f.x+1,f.y+1);
-    ctx.fillStyle=CY;ctx.fillText(f.text,f.x,f.y);ctx.globalAlpha=1;return true;
+    ctx.fillStyle='#ffd700';ctx.fillText(f.text,f.x,f.y);ctx.globalAlpha=1;return true;
   });
 }
 function drawOver(){
