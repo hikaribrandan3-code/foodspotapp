@@ -15,7 +15,7 @@ canvas{display:block;margin:0 auto;touch-action:none;outline:none}
 <script>
 'use strict';//v2
 // ── CANVAS ────────────────────────────────────────────────
-const W=390,H=560,X_OFF=20,Y_OFF=43;
+const W=390,H=560,Y_OFF=43;
 const cvs=document.getElementById('c');
 const ctx=cvs.getContext('2d');
 let scale=1;
@@ -1025,7 +1025,7 @@ function loop(){
   if(G.state==='menu'){
     menuFade=Math.max(0,Math.min(1,menuFade+menuFadeDir*0.07));
     if(menuFadeDir===-1&&menuFade<=0&&menuFadeCb){const cb=menuFadeCb;menuFadeCb=null;cb();}
-    ctx.save();ctx.translate(X_OFF,Y_OFF);drawMenu();ctx.restore();
+    ctx.save();ctx.translate(0,Y_OFF);drawMenu();ctx.restore();
     return;
   }
   const isHuman=G.turn===0||(G.gameMode==='2p'&&G.turn===1);
@@ -1066,7 +1066,7 @@ function loop(){
   }
   if(G.foulFlash>0)G.foulFlash=Math.max(0,G.foulFlash-0.04);
   ctx.clearRect(0,0,W,H);
-  ctx.save();ctx.translate(X_OFF,Y_OFF);
+  ctx.save();ctx.translate(0,Y_OFF);
   drawBg();
   let shook=false;
   if(G.st>0){ctx.save();ctx.translate(G.sx,G.sy);G.sx*=.6;G.sy*=.6;G.st--;shook=true;}
