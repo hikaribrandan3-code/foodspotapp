@@ -1041,8 +1041,8 @@ function loop(){
   }
   const isHuman=G.turn===0||(G.gameMode==='2p'&&G.turn===1);
   if(G.state==='aim'&&isHuman){
-    if(keys.left)G.ang-=0.008;
-    if(keys.right)G.ang+=0.008;
+    if(keys.left)G.ang-=0.025;
+    if(keys.right)G.ang+=0.025;
     if(!G.charge){
       if(keys.up)spinY=Math.min(1,spinY+0.06);
       if(keys.down)spinY=Math.max(-1,spinY-0.06);
