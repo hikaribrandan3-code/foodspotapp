@@ -169,7 +169,11 @@ let jBar=0, jBt=0, jNext=0;
 let vinylNoise=null;
 
 function initAudio(){
-  if(AC)return;
+  if(AC){
+    // Resume if suspended (browser autoplay policy)
+    if(AC.state==='suspended')AC.resume();
+    return;
+  }
   try{
     AC=new(window.AudioContext||window.webkitAudioContext)();
     createVinylNoise();
@@ -190,7 +194,7 @@ function createVinylNoise(){
   vinylNoise.buffer=buf;
   vinylNoise.loop=true;
   const g=AC.createGain();
-  g.gain.value=0.04;
+  g.gain.value=0.08;
   vinylNoise.connect(g);
   g.connect(AC.destination);
   vinylNoise.start();
@@ -220,22 +224,22 @@ function playJazzBeat(bar,bt,t){
     pianoChord(bar.c[0],bar.c[3],t+BEAT*0.06,0.06);
   }
   
-  // Brushed snare - continuous swish
-  brushSnare(t,0.12);
-  if(bt%2===1)brushSnare(t+BEAT*0.5,0.08);
+  // Brushed snare - continuous swish (louder)
+  brushSnare(t,0.22);
+  if(bt%2===1)brushSnare(t+BEAT*0.5,0.15);
   
-  // Gentle ride cymbal on 2 and 4
-  if(bt===1||bt===3)softRide(t+BEAT*0.1,0.06);
+  // Gentle ride cymbal on 2 and 4 (louder)
+  if(bt===1||bt===3)softRide(t+BEAT*0.1,0.12);
   
   // Occasional soft kick
   if(bt===0&&Math.random()<0.4)softKick(t,0.35);
   
-  // Tenor sax melody - smooth and smoky, sparse
-  if(jBar%4===0&&bt===2)smokySax(bar.c[1],t+BEAT*0.15,0.045);
-  if(jBar%6===3&&bt===1)smokySax(bar.c[2],t,0.038);
+  // Tenor sax melody - smooth and smoky, sparse (louder)
+  if(jBar%4===0&&bt===2)smokySax(bar.c[1],t+BEAT*0.15,0.09);
+  if(jBar%6===3&&bt===1)smokySax(bar.c[2],t,0.075);
   
-  // Muted trumpet fills - very occasional
-  if(jBar%8===5&&bt===0&&Math.random()<0.3)mutedTrumpet(bar.c[0],t+BEAT*0.2,0.032);
+  // Muted trumpet fills - very occasional (louder)
+  if(jBar%8===5&&bt===0&&Math.random()<0.3)mutedTrumpet(bar.c[0],t+BEAT*0.2,0.065);
 }
 
 // Warm upright bass - sine with subtle harmonics
@@ -250,9 +254,9 @@ function bassNote(freq,t,bt){
   o1.connect(f);o2.connect(hg);f.connect(g);hg.connect(g);
   g.connect(AC.destination);
   
-  // Walking bass envelope - smooth attack
+  // Walking bass envelope - smooth attack (louder)
   g.gain.setValueAtTime(0.001,t);
-  g.gain.linearRampToValueAtTime(0.28,t+0.04);
+  g.gain.linearRampToValueAtTime(0.45,t+0.04);
   g.gain.exponentialRampToValueAtTime(0.18,t+BEAT*0.7);
   g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*0.95);
   
@@ -273,7 +277,7 @@ function pianoChord(f1,f2,t,vol){
     
     const v=vol*(idx===0?1:0.4);
     g.gain.setValueAtTime(0.001,t);
-    g.gain.linearRampToValueAtTime(v,t+0.025);
+    g.gain.linearRampToValueAtTime(v*1.8,t+0.025);
     g.gain.exponentialRampToValueAtTime(v*0.35,t+0.4);
     g.gain.exponentialRampToValueAtTime(0.001,t+BEAT*2.5);
     
