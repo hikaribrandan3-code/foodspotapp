@@ -919,10 +919,11 @@ function drawHUD(){
   ctx.save();ctx.translate(W/2,TY-10);ctx.rotate(Math.PI/4);ctx.fillStyle='rgba(212,175,55,0.6)';ctx.fillRect(-2,-2,4,4);ctx.restore();
   ctx.restore();
   ctx.save();
-  const tg=ctx.createLinearGradient(W/2-90,0,W/2+90,0);
-  tg.addColorStop(0,'#fff8dc');tg.addColorStop(.4,'#ffd700');tg.addColorStop(1,'#c8960a');
-  // Removed shadow/glow - solid clean gold only
-  ctx.fillStyle=tg;ctx.font='bold 25px Georgia,serif';
+  const tg=ctx.createLinearGradient(W/2-110,0,W/2+110,0);
+  tg.addColorStop(0,'#fff8dc');tg.addColorStop(.4,'#ffd700');tg.addColorStop(1,'#b8860b');
+  // Sharp drop shadow for depth (not ambient glow)
+  ctx.shadowColor='rgba(0,0,0,0.8)';ctx.shadowBlur=0;ctx.shadowOffsetX=2;ctx.shadowOffsetY=3;
+  ctx.fillStyle=tg;ctx.font='bold 34px Georgia,serif';
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText("HIKARI'S BILLIARDS",W/2,TY/2);
   ctx.restore();
   [0,1].forEach(function(p){
