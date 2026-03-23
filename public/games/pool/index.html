@@ -380,8 +380,6 @@ function drawNeonBtn(x,y,w,h,label,color,glow,active,fs){
 }
 function drawMenu(){
   ctx.clearRect(0,0,W,H);
-  ctx.save();
-  ctx.translate(W/2,H/2);ctx.scale(1.18,1.18);ctx.translate(-W/2,-H/2);
   ctx.drawImage(coverImg,0,0,W,H);
   ctx.fillStyle='rgba(0,0,0,0.10)';for(let y=0;y<H;y+=2)ctx.fillRect(0,y,W,1);
   const ov=ctx.createLinearGradient(0,H-230,0,H);
@@ -410,7 +408,6 @@ function drawMenu(){
     btns.forEach(function(btn,i){drawNeonBtn(sx+i*(bw+gap),by,bw,bh,btn.label,btn.color,btn.glow,i===menuSel,16);});
   }
   if(Math.random()<0.015){ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fillRect(0,0,W,H);}
-  ctx.restore();
   ctx.globalAlpha=1;
 }
 
@@ -1113,14 +1110,13 @@ function onDown(e){
   if(G.state==='over'){confetti=[];G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;return;}
   if(G.state==='menu'){
     if(menuFadeDir===-1)return;
-    const mx=(p.x-W/2)/1.18+W/2,my=(p.y-H/2)/1.18+H/2;
     const btns=MENU_BTNS[menuState];
     if(menuState==='player'){
       const bw=148,bh=52,gap=16,by=H-178,sx=(W-(bw*2+gap))/2;
-      btns.forEach(function(btn,i){const bx=sx+i*(bw+gap);if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){menuSel=i;menuSelect();}});
+      btns.forEach(function(btn,i){const bx=sx+i*(bw+gap);if(p.x>=bx&&p.x<=bx+bw&&p.y>=by&&p.y<=by+bh){menuSel=i;menuSelect();}});
     }else{
       const bw=120,bh=60,gap=12,by=H-176,sx=(W-(bw*3+gap*2))/2;
-      btns.forEach(function(btn,i){const bx=sx+i*(bw+gap);if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){menuSel=i;menuSelect();}});
+      btns.forEach(function(btn,i){const bx=sx+i*(bw+gap);if(p.x>=bx&&p.x<=bx+bw&&p.y>=by&&p.y<=by+bh){menuSel=i;menuSelect();}});
     }
     return;
   }
