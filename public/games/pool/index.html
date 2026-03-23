@@ -307,27 +307,21 @@ function newGame(){
 const isHB=window.parent!==window;
 if(isHB)setTimeout(()=>{menuState='player';menuSel=0;},300);
 function exitGame(){window.parent.postMessage({type:'GAME_EXIT',gameId:'pool'},'*');}
+let lastDpadFrame=0;
 window.addEventListener('message',ev=>{
   const b=ev.data?.button;
   const t=ev.data?.type;
   if(t==='BUTTON_PRESS'){
+    lastDpadFrame=frameCount;
     if(b==='select')exitGame();
     if(b==='start'){if(G.state==='menu')menuSelect();else startGame();}
-    if(b==='dpad-left'||b==='dpad-up'){
-      if(G.state==='menu'&&menuFadeDir!==-1){menuSel--;if(menuSel<0)menuSel=MENU_BTNS[menuState].length-1;}
-      else if(b==='dpad-left')keys.left=true;
-      else keys.up=true;
-    }
-    if(b==='dpad-right'||b==='dpad-down'){
-      if(G.state==='menu'&&menuFadeDir!==-1){menuSel++;if(menuSel>MENU_BTNS[menuState].length-1)menuSel=0;}
-      else if(b==='dpad-right')keys.right=true;
-      else keys.down=true;
-    }
-    if(b==='a'){
-      if(G.state==='menu')menuSelect();
-      else keys.a=true;
-    }
+    if(b==='dpad-left'){keys.left=true;if(G.state==='menu'&&menuFadeDir!==-1){menuSel--;if(menuSel<0)menuSel=MENU_BTNS[menuState].length-1;}}
+    if(b==='dpad-right'){keys.right=true;if(G.state==='menu'&&menuFadeDir!==-1){menuSel++;if(menuSel>MENU_BTNS[menuState].length-1)menuSel=0;}}
+    if(b==='dpad-up')keys.up=true;
+    if(b==='dpad-down')keys.down=true;
+    if(b==='a'){if(G.state==='menu')menuSelect();else keys.a=true;}
   }else if(t==='BUTTON_RELEASE'){
+    lastDpadFrame=frameCount;
     if(b==='dpad-left')keys.left=false;
     if(b==='dpad-right')keys.right=false;
     if(b==='dpad-up')keys.up=false;
@@ -1023,10 +1017,12 @@ function onKey(e,down){
     if(k==='b'||k==='B'||k==='Escape')menuBack();
   }
 }
-[window,document,cvs].forEach(function(el){
-  el.addEventListener('keydown',function(e){onKey(e,true);});
-  el.addEventListener('keyup',function(e){onKey(e,false);});
-});
+if(!isHB){
+  [window,document,cvs].forEach(function(el){
+    el.addEventListener('keydown',function(e){onKey(e,true);});
+    el.addEventListener('keyup',function(e){onKey(e,false);});
+  });
+}
 
 // ── MAIN LOOP ─────────────────────────────────────────────
 function loop(){
@@ -1041,8 +1037,8 @@ function loop(){
   }
   const isHuman=G.turn===0||(G.gameMode==='2p'&&G.turn===1);
   if(G.state==='aim'&&isHuman){
-    if(keys.left)G.ang-=0.025;
-    if(keys.right)G.ang+=0.025;
+    if(keys.left){G.ang-=0.012;lastDpadFrame=frameCount;}
+    if(keys.right){G.ang+=0.012;lastDpadFrame=frameCount;}
     if(!G.charge){
       if(keys.up)spinY=Math.min(1,spinY+0.06);
       if(keys.down)spinY=Math.max(-1,spinY-0.06);
@@ -1064,6 +1060,7 @@ function loop(){
     }
   }
   aPrev=keys.a;
+  if(isHB&&(frameCount-lastDpadFrame>15)){keys.left=false;keys.right=false;keys.up=false;keys.down=false;}
   if(G.state==='roll'){for(let i=0;i<4;i++)physStep();if(allStop())endTurn();}
   if(G.state==='aim'&&G.turn===1&&G.gameMode!=='2p'){G.aiDelay--;if(G.aiDelay<=0){computeAI();G.aiDelay=9999;}}
   if(G.state==='hand'&&G.turn===1&&G.gameMode!=='2p'){
