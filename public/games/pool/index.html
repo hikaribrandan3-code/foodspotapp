@@ -691,7 +691,7 @@ function drawCueBallHitSpot(){
   ctx.save();ctx.shadowColor=dotColor;ctx.shadowBlur=8;
   ctx.beginPath();ctx.arc(mx,dotY,5,0,Math.PI*2);ctx.fillStyle=dotColor;ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.2;ctx.stroke();ctx.restore();
-  ctx.fillStyle='rgba(212,175,55,0.8)';ctx.font='bold 7px Georgia,serif';
+  ctx.fillStyle='rgba(212,175,55,0.8)';ctx.font='bold 12px Georgia,serif';
   ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('E N G L I S H',mx,my-r-14);
   const rl=ctx.createLinearGradient(mx-22,0,mx+22,0);
   rl.addColorStop(0,'transparent');rl.addColorStop(.5,'rgba(212,175,55,0.5)');rl.addColorStop(1,'transparent');
@@ -877,9 +877,9 @@ function drawBallTray(){
   ctx.font='9px Arial';ctx.textBaseline='top';
   ctx.fillStyle=p0act?'rgba(255,215,0,0.9)':'rgba(180,140,30,0.35)';
   ctx.textAlign='left';ctx.fillText('♔',FX+4,ly);
-  ctx.font='bold 8px Georgia,serif';ctx.fillText(' P1',FX+14,ly+1);
+  ctx.font='bold 15px Georgia,serif';ctx.fillText(' P1',FX+14,ly-2);
   ctx.fillStyle=p1act?'rgba(255,215,0,0.9)':'rgba(180,140,30,0.35)';
-  ctx.textAlign='right';ctx.font='bold 8px Georgia,serif';ctx.fillText((G.gameMode==='2p'?'P2':'CPU')+' ',FR-14,ly+1);
+  ctx.textAlign='right';ctx.font='bold 15px Georgia,serif';ctx.fillText((G.gameMode==='2p'?'P2':'CPU')+' ',FR-14,ly-2);
   ctx.font='9px Arial';ctx.fillText('♔',FR-6,ly);
   ctx.fillStyle='rgba(212,175,55,0.28)';ctx.font='7px Georgia,serif';
   ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('TURN '+G.turnCount,cx8,ly+1);
@@ -921,31 +921,31 @@ function drawHUD(){
   ctx.save();
   const tg=ctx.createLinearGradient(W/2-90,0,W/2+90,0);
   tg.addColorStop(0,'#fff8dc');tg.addColorStop(.4,'#ffd700');tg.addColorStop(1,'#c8960a');
-  ctx.shadowColor='rgba(212,175,55,0.85)';ctx.shadowBlur=20;
-  ctx.fillStyle=tg;ctx.font='bold 22px Georgia,serif';
+  // Removed shadow/glow - solid clean gold only
+  ctx.fillStyle=tg;ctx.font='bold 25px Georgia,serif';
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText("HIKARI'S BILLIARDS",W/2,TY/2);
   ctx.restore();
   [0,1].forEach(function(p){
     const px=p===0?30:W-30,act=G.turn===p&&G.state!=='over';
     if(act){
       ctx.save();ctx.shadowColor='rgba(212,175,55,0.9)';ctx.shadowBlur=14;
-      ctx.beginPath();ctx.arc(px,TY/2,19,0,Math.PI*2);
+      ctx.beginPath();ctx.arc(px,TY/2,28,0,Math.PI*2);
       ctx.strokeStyle='rgba(212,175,55,1)';ctx.lineWidth=2;ctx.stroke();ctx.restore();
     }
-    ctx.beginPath();ctx.arc(px,TY/2,15,0,Math.PI*2);
-    const ag=ctx.createRadialGradient(px-4,TY/2-4,2,px,TY/2,15);
+    ctx.beginPath();ctx.arc(px,TY/2,20,0,Math.PI*2);
+    const ag=ctx.createRadialGradient(px-4,TY/2-4,2,px,TY/2,20);
     ag.addColorStop(0,act?'rgba(80,60,10,0.95)':'rgba(25,18,4,0.95)');ag.addColorStop(1,'rgba(5,3,1,0.98)');
     ctx.fillStyle=ag;ctx.fill();
     ctx.strokeStyle=act?'rgba(212,175,55,0.8)':'rgba(140,105,20,0.4)';ctx.lineWidth=1.2;ctx.stroke();
     ctx.fillStyle=act?'#ffd700':'rgba(180,140,30,0.55)';
-    ctx.font='bold '+(act?'8.5':'8')+'px Georgia,serif';
+    ctx.font='bold 17px Georgia,serif';
     ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(p===0?'P1':(G.gameMode==='2p'?'P2':'CPU'),px,TY/2+3);
+    ctx.fillText(p===0?'P1':(G.gameMode==='2p'?'P2':'CPU'),px,TY/2+1);
     if(act){
       const dir=p===0?1:-1;
       ctx.save();ctx.shadowColor='rgba(212,175,55,0.9)';ctx.shadowBlur=8;
       ctx.fillStyle='rgba(212,175,55,0.95)';
-      ctx.beginPath();ctx.moveTo(px+dir*22,TY/2);ctx.lineTo(px+dir*28,TY/2-3);ctx.lineTo(px+dir*28,TY/2+3);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(px+dir*32,TY/2);ctx.lineTo(px+dir*38,TY/2-3);ctx.lineTo(px+dir*38,TY/2+3);ctx.closePath();ctx.fill();
       ctx.restore();
     }
   });
