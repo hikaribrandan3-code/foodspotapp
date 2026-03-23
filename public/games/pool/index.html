@@ -15,7 +15,7 @@ canvas{display:block;margin:0 auto;touch-action:none;outline:none}
 <script>
 'use strict';//v2
 // ── CANVAS ────────────────────────────────────────────────
-const W=430,H=560,Y_OFF=43,GX_OFF=20;
+const W=494,H=560,Y_OFF=43,GX_OFF=0; // W expanded 15%, no side offset
 const cvs=document.getElementById('c');
 const ctx=cvs.getContext('2d');
 let scale=1;
@@ -31,8 +31,8 @@ document.addEventListener('touchstart',()=>cvs.focus(),{passive:true});
 
 // ── CONSTANTS ─────────────────────────────────────────────
 const CY='#22d3ee', CY2='rgba(34,211,238,', OR='#f97316', WH='#f1f5f9';
-const TX=3, TY=88, TW=384, TH=306;
-const FX=21, FY=TY+16, FW=348, FH=274;
+const TX=55, TY=88, TW=384, TH=306; // TX offset increased to center wider table
+const FX=73, FY=TY+16, FW=348, FH=274;
 const FR=FX+FW, FB=FY+FH;
 const BR=9, PR=13;
 const PKS=[
@@ -314,12 +314,31 @@ window.addEventListener('message',ev=>{
   if(t==='BUTTON_PRESS'){
     lastDpadFrame=frameCount;
     if(b==='select')exitGame();
-    if(b==='start'){if(G.state==='menu')menuSelect();else startGame();}
+    // START button: menu navigation OR restart game when over
+    if(b==='start'){
+      if(G.state==='over'){
+        // Restart game on START when game over
+        confetti=[];G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;
+      } else if(G.state==='menu'){
+        menuSelect();
+      } else {
+        startGame();
+      }
+    }
     if(b==='dpad-left'){keys.left=true;if(G.state==='menu'&&menuFadeDir!==-1){menuSel--;if(menuSel<0)menuSel=MENU_BTNS[menuState].length-1;}}
     if(b==='dpad-right'){keys.right=true;if(G.state==='menu'&&menuFadeDir!==-1){menuSel++;if(menuSel>MENU_BTNS[menuState].length-1)menuSel=0;}}
     if(b==='dpad-up')keys.up=true;
     if(b==='dpad-down')keys.down=true;
-    if(b==='a'){if(G.state==='menu')menuSelect();else keys.a=true;}
+    if(b==='a'){
+      if(G.state==='over'){
+        // A button also restarts when game over
+        confetti=[];G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;
+      } else if(G.state==='menu'){
+        menuSelect();
+      } else {
+        keys.a=true;
+      }
+    }
   }else if(t==='BUTTON_RELEASE'){
     lastDpadFrame=frameCount;
     if(b==='dpad-left')keys.left=false;
@@ -990,8 +1009,20 @@ function drawOver(){
   const rl=ctx.createLinearGradient(FX+40,0,FR-40,0);
   rl.addColorStop(0,'transparent');rl.addColorStop(.5,'rgba(212,175,55,0.5)');rl.addColorStop(1,'transparent');
   ctx.fillStyle=rl;ctx.fillRect(FX+40,FY+FH*.5,FW-80,1);
-  ctx.fillStyle='rgba(212,175,55,0.4)';ctx.font='10px Georgia,serif';ctx.textBaseline='middle';
-  ctx.fillText('Tap or press [A] to continue',W/2,FY+FH*.58);
+  
+  // Gold "Try Again" button
+  const btnW=140,btnH=42,btnX=W/2-btnW/2,btnY=FY+FH*.56;
+  const btnG=ctx.createLinearGradient(btnX,btnY,btnX,btnY+btnH);
+  btnG.addColorStop(0,'rgba(212,175,55,0.9)');btnG.addColorStop(.5,'rgba(255,215,0,0.95)');btnG.addColorStop(1,'rgba(180,140,30,0.9)');
+  ctx.save();ctx.shadowColor='rgba(255,215,0,0.8)';ctx.shadowBlur=15;
+  rr(btnX,btnY,btnW,btnH,8);ctx.fillStyle=btnG;ctx.fill();ctx.restore();
+  ctx.strokeStyle='rgba(255,240,180,0.9)';ctx.lineWidth=2;
+  rr(btnX,btnY,btnW,btnH,8);ctx.stroke();
+  ctx.fillStyle='#1a1205';ctx.font='bold 16px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('TRY AGAIN',W/2,btnY+btnH/2+1);
+  
+  ctx.fillStyle='rgba(212,175,55,0.5)';ctx.font='9px Georgia,serif';ctx.textBaseline='middle';
+  ctx.fillText('Press [A] or [START]',W/2,btnY+btnH+18);
 }
 
 // ── KEYS ──────────────────────────────────────────────────
@@ -1060,7 +1091,8 @@ function loop(){
     }
   }
   aPrev=keys.a;
-  if(isHB&&(frameCount-lastDpadFrame>15)){keys.left=false;keys.right=false;keys.up=false;keys.down=false;}
+  // Removed 15-frame auto-reset timeout - was causing choppy input
+  // Keys now only reset on BUTTON_RELEASE from HikariBoy
   if(G.state==='roll'){for(let i=0;i<4;i++)physStep();if(allStop())endTurn();}
   if(G.state==='aim'&&G.turn===1&&G.gameMode!=='2p'){G.aiDelay--;if(G.aiDelay<=0){computeAI();G.aiDelay=9999;}}
   if(G.state==='hand'&&G.turn===1&&G.gameMode!=='2p'){
