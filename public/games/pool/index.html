@@ -31,8 +31,8 @@ document.addEventListener('touchstart',()=>cvs.focus(),{passive:true});
 
 // ── CONSTANTS ─────────────────────────────────────────────
 const CY='#22d3ee', CY2='rgba(34,211,238,', OR='#f97316', WH='#f1f5f9';
-const TX=75, TY=88, TW=384, TH=306; // TX recentered for 534px width
-const FX=93, FY=TY+16, FW=348, FH=274; // FX recentered
+const TX=56, TY=88, TW=422, TH=306; // Table 10% wider (422 vs 384), centered on 534px canvas
+const FX=74, FY=TY+16, FW=383, FH=274; // Felt 10% wider, same height
 const FR=FX+FW, FB=FY+FH;
 const BR=9, PR=13;
 const PKS=[
@@ -665,7 +665,7 @@ function drawAimPulse(){
 
 // ── ENGLISH BEZEL ─────────────────────────────────────────
 function drawCueBallHitSpot(){
-  const mx=W-52,my=H-90,r=20;
+  const mx=W-40,my=H-90,r=20; // Shifted right 12px to avoid wider table
   ctx.save();
   ctx.shadowColor='rgba(0,0,0,0.8)';ctx.shadowBlur=12;
   ctx.beginPath();ctx.arc(mx,my,r+10,0,Math.PI*2);
