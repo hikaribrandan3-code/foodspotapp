@@ -295,21 +295,33 @@ export function HikariBoy({
                 className="dpad-area dpad-up"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP); }}
                 onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_UP); }}
+                onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP); }}
+                onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_UP); }}
+                onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_UP); }}
               ></button>
               <button 
                 className="dpad-area dpad-left"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_LEFT); }}
                 onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_LEFT); }}
+                onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_LEFT); }}
+                onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_LEFT); }}
+                onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_LEFT); }}
               ></button>
               <button 
                 className="dpad-area dpad-right"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_RIGHT); }}
                 onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_RIGHT); }}
+                onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_RIGHT); }}
+                onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_RIGHT); }}
+                onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_RIGHT); }}
               ></button>
               <button 
                 className="dpad-area dpad-down"
                 onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN); }}
                 onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_DOWN); }}
+                onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN); }}
+                onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_DOWN); }}
+                onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_DOWN); }}
               ></button>
               <button 
                 className="dpad-diagonal dpad-up-left"
@@ -344,11 +356,17 @@ export function HikariBoy({
               className="action-btn btn-b"
               onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.B); }}
               onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.B); }}
+              onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.B); }}
+              onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.B); }}
+              onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.B); }}
             >B</button>
             <button 
               className="action-btn btn-a"
               onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.A); }}
               onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.A); }}
+              onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.A); }}
+              onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.A); }}
+              onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.A); }}
             >A</button>
           </div>
         </div>
