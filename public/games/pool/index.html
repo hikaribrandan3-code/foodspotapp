@@ -932,11 +932,11 @@ function drawHUD(){
   // Monte Carlo casino flourish under title
   ctx.save();
   const fy=TY/2+14;
-  const gold='rgba(212,175,55,0.9)',goldDim='rgba(180,140,40,0.5)';
+  const goldBrite='rgba(212,175,55,0.9)',goldDim='rgba(180,140,40,0.5)';
   // Central diamond
-  ctx.save();ctx.translate(W/2,fy);ctx.rotate(Math.PI/4);ctx.fillStyle=gold;ctx.fillRect(-4,-4,8,8);ctx.restore();
+  ctx.save();ctx.translate(W/2,fy);ctx.rotate(Math.PI/4);ctx.fillStyle=goldBrite;ctx.fillRect(-4,-4,8,8);ctx.restore();
   // Swirling flourishes left
-  ctx.strokeStyle=gold;ctx.lineWidth=1.5;ctx.lineCap='round';
+  ctx.strokeStyle=goldBrite;ctx.lineWidth=1.5;ctx.lineCap='round';
   ctx.beginPath();ctx.moveTo(W/2-8,fy);ctx.quadraticCurveTo(W/2-20,fy-3,W/2-35,fy);ctx.quadraticCurveTo(W/2-50,fy+4,W/2-65,fy);ctx.stroke();
   ctx.beginPath();ctx.moveTo(W/2-8,fy);ctx.quadraticCurveTo(W/2-20,fy+3,W/2-35,fy);ctx.quadraticCurveTo(W/2-50,fy-4,W/2-65,fy);ctx.stroke();
   // Swirling flourishes right  
