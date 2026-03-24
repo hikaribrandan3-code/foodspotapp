@@ -1060,7 +1060,7 @@ function drawTable(){
 
 // ── KEYS ──────────────────────────────────────────────────
 const keys={left:false,right:false,up:false,down:false,a:false};
-let aPrev=false;
+let aPrev=false,aHeldFrames=0;
 function onKey(e,down){
   const k=e.key;
   if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(k))e.preventDefault();
@@ -1079,13 +1079,9 @@ function onKey(e,down){
     if(k==='b'||k==='B'||k==='Escape')menuBack();
   }
 }
-// Always register keys regardless of HikariBoy — also handle touch focus
+// Use ONLY window event listeners to avoid duplicate events
 window.addEventListener('keydown',function(e){onKey(e,true);});
 window.addEventListener('keyup',function(e){onKey(e,false);});
-document.addEventListener('keydown',function(e){onKey(e,true);});
-document.addEventListener('keyup',function(e){onKey(e,false);});
-cvs.addEventListener('keydown',function(e){onKey(e,true);});
-cvs.addEventListener('keyup',function(e){onKey(e,false);});
 
 // ── MAIN LOOP ─────────────────────────────────────────────
 function loop(){
@@ -1104,9 +1100,17 @@ function loop(){
       if(keys.up)spinY=Math.min(1,spinY+0.06);
       if(keys.down)spinY=Math.max(-1,spinY-0.06);
     }
-    if(keys.a&&!G.charge){G.charge=true;G.pwr=0;}
-    if(keys.a&&G.charge)G.pwr=Math.min(1,G.pwr+0.012);
-    if(!keys.a&&aPrev&&G.charge){if(G.pwr>0.04)shoot();else{G.charge=false;G.pwr=0;}}
+    // CHARGE LOGIC: start charge on first press, build while held, fire on release
+    if(keys.a){
+      aHeldFrames++;
+      if(!G.charge){G.charge=true;G.pwr=0;aHeldFrames=0;}
+      // Faster charge rate: 0.02 per frame = 50 frames to full (~0.8s)
+      G.pwr=Math.min(1,G.pwr+0.02);
+    }else{
+      // Button released - fire if we were charging
+      if(G.charge&&aHeldFrames>0){if(G.pwr>0.04)shoot();else{G.charge=false;G.pwr=0;}}
+      aHeldFrames=0;
+    }
   }
   if(G.state==='hand'&&isHuman){
     const spd=2.5;
@@ -1120,7 +1124,7 @@ function loop(){
       G.state='aim';G.potted=[];G.foul=false;
     }
   }
-  aPrev=keys.a;
+  // aPrev tracking removed - using aHeldFrames instead
   if(G.state==='roll'){for(let i=0;i<4;i++)physStep();if(allStop())endTurn();}
   if(G.state==='aim'&&G.turn===1&&G.gameMode!=='2p'){G.aiDelay--;if(G.aiDelay<=0){computeAI();G.aiDelay=9999;}}
   if(G.state==='hand'&&G.turn===1&&G.gameMode!=='2p'){
