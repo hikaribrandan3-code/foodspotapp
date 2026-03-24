@@ -14,6 +14,35 @@ const Info = ({ config }) => {
     const whatsapp = tenantData?.business_info?.whatsapp || tenantData?.whatsapp;
     const logoUrl = tenantData?.logo_url || tenantData?.hero_url || tenantData?.branding?.logoURL;
 
+    // Get info pills from config (set in Settings.jsx)
+    const infoPills = config?.infoPills || tenantData?.info_pills || {};
+    const pillIconMode = infoPills?.pill_icon_mode || 'white';
+
+    // Default colors for pills if not set
+    const defaultPillColors = {
+        whatsapp: '#E55F51',
+        mercadoPago: '#F4D03F',
+        rappi: '#E67E22',
+        pedidosYa: '#58D68D',
+        adminAccess: '#448AFF'
+    };
+
+    // Get pill color from config or fallback to default
+    const getPillColor = (pillId) => {
+        return infoPills[pillId]?.bgColor || defaultPillColors[pillId] || '#666666';
+    };
+
+    // Check if pill is enabled (default to true for backward compatibility)
+    const isPillEnabled = (pillId) => {
+        // If explicitly set to false, hide it. Otherwise show.
+        return infoPills[pillId]?.enabled !== false;
+    };
+
+    // Get pill content/link
+    const getPillContent = (pillId) => {
+        return infoPills[pillId]?.content || '';
+    };
+
     // Button Styles for the "Old UI" Restoration
     const buttonBase = {
         display: 'flex',
@@ -24,7 +53,7 @@ const Info = ({ config }) => {
         borderRadius: '30px',
         fontSize: '1.1rem',
         fontWeight: '600',
-        color: 'white',
+        color: pillIconMode === 'dark' ? '#1F2937' : 'white',
         border: 'none',
         marginBottom: '12px',
         cursor: 'pointer',
@@ -54,42 +83,66 @@ const Info = ({ config }) => {
                 justifyContent: 'flex-start',
                 padding: '12px 20px 0'
             }}>
-                {/* 2. COLORFUL BUTTON STACK (Restored from IMG_8708) */}
+                {/* 2. COLORFUL BUTTON STACK - Now uses config from Settings */}
                 <div>
-                    {whatsapp && (
+                    {/* WhatsApp - only show if enabled and has number */}
+                    {isPillEnabled('whatsapp') && whatsapp && (
                         <a
                             href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ ...buttonBase, background: '#E55F51' }}
+                            style={{ ...buttonBase, background: getPillColor('whatsapp') }}
                         >
                             {t('info_whatsapp')}
                         </a>
                     )}
 
-                    <button
-                        style={{ ...buttonBase, background: '#F4D03F' }}
-                        onClick={() => navigate(`/${tenantSlug}/checkout`)}
-                    >
-                        {t('info_mercado_pago')}
-                    </button>
+                    {/* Mercado Pago */}
+                    {isPillEnabled('mercadoPago') && (
+                        <button
+                            style={{ ...buttonBase, background: getPillColor('mercadoPago') }}
+                            onClick={() => navigate(`/${tenantSlug}/checkout`)}
+                        >
+                            {t('info_mercado_pago')}
+                        </button>
+                    )}
 
-                    <button style={{ ...buttonBase, background: '#E67E22' }}>
-                        {t('info_rappi')}
-                    </button>
+                    {/* Rappi */}
+                    {isPillEnabled('rappi') && (
+                        <button 
+                            style={{ ...buttonBase, background: getPillColor('rappi') }}
+                            onClick={() => {
+                                const rappiUrl = getPillContent('rappi');
+                                if (rappiUrl) window.open(rappiUrl, '_blank');
+                            }}
+                        >
+                            {t('info_rappi')}
+                        </button>
+                    )}
 
-                    <button style={{ ...buttonBase, background: '#58D68D' }}>
-                        {t('info_pedidosya')}
-                    </button>
+                    {/* PedidosYa */}
+                    {isPillEnabled('pedidosYa') && (
+                        <button 
+                            style={{ ...buttonBase, background: getPillColor('pedidosYa') }}
+                            onClick={() => {
+                                const pyUrl = getPillContent('pedidosYa');
+                                if (pyUrl) window.open(pyUrl, '_blank');
+                            }}
+                        >
+                            {t('info_pedidosya')}
+                        </button>
+                    )}
 
-                    {/* THE UNIFIED GATEWAY BUTTON */}
-                    <button
-                        style={{ ...buttonBase, background: '#448AFF' }}
-                        onClick={() => navigate(`/${tenantSlug}/owner`)}
-                    >
-                        <span style={{ marginRight: '8px' }}>🔒</span>
-                        {t('info_admin_access')}
-                    </button>
+                    {/* Admin Access */}
+                    {isPillEnabled('adminAccess') && (
+                        <button
+                            style={{ ...buttonBase, background: getPillColor('adminAccess') }}
+                            onClick={() => navigate(`/${tenantSlug}/owner`)}
+                        >
+                            <span style={{ marginRight: '8px' }}>🔒</span>
+                            {t('info_admin_access')}
+                        </button>
+                    )}
                 </div>
 
                 {/* 3. FOOTER */}
@@ -97,7 +150,7 @@ const Info = ({ config }) => {
                     <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                         {t('powered_by')}
                     </p>
-                    <p style={{ color: '#C4856A', fontSize: '1.85rem', fontWeight: '800' }}>
+                    <p style={{ color: config?.branding?.poweredByColor || '#C4856A', fontSize: '1.85rem', fontWeight: '800' }}>
                         @foodspotapp
                     </p>
                 </div>

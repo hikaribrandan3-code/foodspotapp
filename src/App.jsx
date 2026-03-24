@@ -136,7 +136,9 @@ function App() {
                     fontFamily: cloudAppConfig.branding?.fontFamily || tenantData.font_family || config.branding?.fontFamily,
                     fontWeight: cloudAppConfig.branding?.fontWeight || tenantData.font_weight || config.branding?.fontWeight,
                     primaryColor: cloudAppConfig.branding?.primaryColor || tenantData.navbar_color || config.branding?.primaryColor,
-                    iconColorMode: cloudAppConfig.branding?.iconColorMode || tenantData.nav_icon_mode || config.branding?.iconColorMode
+                    iconColorMode: cloudAppConfig.branding?.iconColorMode || tenantData.nav_icon_mode || config.branding?.iconColorMode,
+                    navbar_color: tenantData.navbar_color || config.branding?.navbar_color,
+                    nav_icon_mode: tenantData.nav_icon_mode || config.branding?.nav_icon_mode
                 },
                 homeConfig: cloudAppConfig.homeConfig || config.homeConfig,
                 heroIcons: tenantData.hero_icons || cloudAppConfig.heroIcons || config.heroIcons
