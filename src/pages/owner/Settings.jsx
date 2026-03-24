@@ -479,6 +479,12 @@ const Settings = () => {
             });
 
             // 1. Construct Full Payload from local state (never stale)
+            // 🛡️ HERO ICONS: Build from local state, not tenant (prevents revert)
+            const heroIconsPayload = Object.entries(heroIconColors).reduce((acc, [id, color]) => {
+                acc[id] = { color };
+                return acc;
+            }, {});
+
             const payload = {
                 business_name: localIdentity.business_name || tenant?.business_name,
                 font_family: localIdentity.font_family || tenant?.font_family,
@@ -491,7 +497,7 @@ const Settings = () => {
                 powered_by_color: currentPoweredBy,
                 hero_mode: tenant?.hero_mode,
                 hero_url: tenant?.hero_url,
-                hero_icons: tenant?.hero_icons,
+                hero_icons: heroIconsPayload,
                 info_pills: tenant?.info_pills,
                 munchboy_enabled: tenant?.munchboy_enabled,
                 munchboy_name: localMunchboyName,
