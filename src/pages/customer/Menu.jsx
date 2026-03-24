@@ -609,7 +609,7 @@ export default function Menu({ config: configProp }) {
             {/* Header */}
             {/* Header */}
             <div style={{ margin: '0 2%' }}>
-                <HeaderClamp config={tenantData?.app_config || {}} />
+                <HeaderClamp config={config} />
             </div>
 
             {/* Edit Mode HUD */}
