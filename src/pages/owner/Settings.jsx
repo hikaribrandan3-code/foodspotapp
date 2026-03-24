@@ -152,6 +152,19 @@ const Settings = () => {
             if (tenant.navbar_color) {
                 document.documentElement.style.setProperty('--color-navbar-bg', tenant.navbar_color);
             }
+            // 🛡️ THEME COLORS: Set CSS variables from tenant data on load
+            if (tenant.primary_color) {
+                document.documentElement.style.setProperty('--color-primary', tenant.primary_color);
+            }
+            if (tenant.secondary_color) {
+                document.documentElement.style.setProperty('--color-secondary', tenant.secondary_color);
+            }
+            if (tenant.confirmation_color) {
+                document.documentElement.style.setProperty('--color-confirm', tenant.confirmation_color);
+            }
+            if (tenant.powered_by_color) {
+                document.documentElement.style.setProperty('--color-powered', tenant.powered_by_color);
+            }
         }
     }, [tenant, hasChanges]);
 
@@ -407,9 +420,9 @@ const Settings = () => {
         window.location.href = `/${tenant?.slug || ''}`;
     };
 
-    // 🛡️ HELPER: Get CSS variable value (captures current optimistic state)
+    // 🛡️ HELPER: Get CSS variable value (reads inline style, not computed)
     const getCssVar = (name) => {
-        const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        const val = document.documentElement.style.getPropertyValue(name).trim();
         return val || null;
     };
 
