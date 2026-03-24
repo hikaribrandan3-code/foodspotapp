@@ -14,6 +14,23 @@ import { LanguageProvider, useLanguage } from './contexts/LanguageContext.jsx'
 import { SessionProvider } from './contexts/SessionContext.jsx'
 import { StaffProvider } from './contexts/StaffContext.jsx'
 
+// Helper: Parse hero_url transform params (s=scale, x=offsetX, y=offsetY)
+function parseHeroUrl(heroUrl) {
+    if (!heroUrl) return { image: null, scale: 1, offsetX: 0, offsetY: 0 };
+    try {
+        const url = new URL(heroUrl, 'http://dummy.com');
+        const params = new URLSearchParams(url.search);
+        return {
+            image: heroUrl,
+            scale: parseFloat(params.get('s')) || 1,
+            offsetX: parseFloat(params.get('x')) || 0,
+            offsetY: parseFloat(params.get('y')) || 0
+        };
+    } catch (e) {
+        return { image: heroUrl, scale: 1, offsetX: 0, offsetY: 0 };
+    }
+}
+
 // Component
 import BottomNav from './components/BottomNav.jsx'
 import BackendNav from './components/BackendNav.jsx'
@@ -82,7 +99,7 @@ function App() {
                 businessName: tenantData.business_name || tenantData.app_config.businessName,
                 headerCover: {
                     ...(tenantData.app_config.headerCover || {}),
-                    image: tenantData.hero_url || tenantData.app_config.headerCover?.image
+                    ...parseHeroUrl(tenantData.hero_url || tenantData.app_config.headerCover?.image)
                 },
                 headerBranding: {
                     ...(tenantData.app_config.headerBranding || {}),
@@ -115,7 +132,7 @@ function App() {
                 headerCover: {
                     ...config.headerCover,
                     ...(cloudAppConfig.headerCover || {}),
-                    image: tenantData.hero_url || cloudAppConfig.headerCover?.image || config.headerCover?.image
+                    ...parseHeroUrl(tenantData.hero_url || cloudAppConfig.headerCover?.image || config.headerCover?.image)
                 },
                 headerBranding: {
                     ...config.headerBranding,
@@ -371,7 +388,7 @@ function App() {
         try {
             const { data: cloudBranding } = await getBranding(businessId);
             if (cloudBranding) {
-                setConfig({ ...localConfig, branding: { ...localConfig.branding, primaryColor: cloudBranding.primary_color || localConfig.branding?.primaryColor }, colors: { ...localConfig.colors, primary: cloudBranding.primary_color || localConfig.colors?.primary, secondary: cloudBranding.secondary_color || localConfig.colors?.secondary }, headerCover: cloudBranding.hero_url ? { ...localConfig.headerCover, image: cloudBranding.hero_url } : localConfig.headerCover, logo: cloudBranding.logo_url || localConfig.logo });
+                setConfig({ ...localConfig, branding: { ...localConfig.branding, primaryColor: cloudBranding.primary_color || localConfig.branding?.primaryColor }, colors: { ...localConfig.colors, primary: cloudBranding.primary_color || localConfig.colors?.primary, secondary: cloudBranding.secondary_color || localConfig.colors?.secondary }, headerCover: cloudBranding.hero_url ? { ...localConfig.headerCover, ...parseHeroUrl(cloudBranding.hero_url) } : localConfig.headerCover, logo: cloudBranding.logo_url || localConfig.logo });
             } else if (localConfig) { setConfig(localConfig); }
         } catch (err) { console.warn('[Supabase] Refresh failed', err); if (localConfig) setConfig(localConfig); }
         setOrders(getOrders());
