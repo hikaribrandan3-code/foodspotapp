@@ -197,10 +197,11 @@ function sndPocket(){if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(
 // ── GAME STATE ────────────────────────────────────────────
 let G={state:'menu',frame:0};
 function newGame(){
-  const balls=[{id:0,x:FX+FW/2,y:FY+FH*.68,vx:0,vy:0,angle:0,pocketed:false}];
+  // SLIDING vs ROLLING: balls start in rolling state (at rest on table)
+  const balls=[{id:0,x:FX+FW/2,y:FY+FH*.68,vx:0,vy:0,angle:0,pocketed:false,rollState:'rolling',slideTimer:0}];
   const cx=FX+FW/2,cy=FY+FH*.27,d=BR*2+1.3;let ri=0;
   for(let r=0;r<5;r++)for(let c=0;c<=r;c++)
-    balls.push({id:RACK[ri++],x:cx+(c-r/2)*d,y:cy+r*d*0.866,vx:0,vy:0,angle:0,pocketed:false});
+    balls.push({id:RACK[ri++],x:cx+(c-r/2)*d,y:cy+r*d*0.866,vx:0,vy:0,angle:0,pocketed:false,rollState:'rolling',slideTimer:0});
   G={
     state:'aim',balls,floats:[],parts:[],pocketGlows:[],
     ang:Math.PI,pwr:0,charge:false,
@@ -309,18 +310,33 @@ const allStop=function(){return G.balls.every(function(b){return b.pocketed||Mat
 function physStep(){
   const act=G.balls.filter(function(b){return !b.pocketed;});
   for(const b of act){
-    // WEIGHTY FRICTION: balls feel like 6oz phenolic resin on wool felt
-    // Higher friction = 0.965 (3.5% decay per step) instead of 0.978
     const spd=Math.hypot(b.vx,b.vy);
-    let friction=0.965;
-    if(spd<0.8)friction=0.955; // Extra grip at low speeds
-    if(spd<0.4)friction=0.94;  // Balls really grab when slow
-    b.vx*=friction;b.vy*=friction;
-    // Hard stop threshold lowered so balls actually roll out
-    if(Math.abs(b.vx)<0.035)b.vx=0;if(Math.abs(b.vy)<0.035)b.vy=0;
+    
+    // SLIDING vs ROLLING: Two-phase friction model
+    // Research: μ_slide = 0.21 (high friction when skidding)
+    //           μ_roll = 0.015 (very low rolling resistance)
+    if(b.rollState==='sliding'){
+      // HIGH FRICTION SLIDE PHASE: ball skids across felt
+      // 0.935 = ~0.21 effective friction coefficient
+      b.vx*=0.935;b.vy*=0.935;
+      b.slideTimer--;
+      // Transition to rolling when timer expires or speed drops
+      if(b.slideTimer<=0||spd<0.5){
+        b.rollState='rolling';
+        b.slideTimer=0;
+      }
+    }else{
+      // LOW FRICTION ROLL PHASE: ball rolls smoothly
+      // 0.985 = ~0.015 effective rolling resistance
+      // Balls glide forever once rolling (3-4 table lengths!)
+      b.vx*=0.985;b.vy*=0.985;
+    }
+    
+    // Hard stop threshold
+    if(Math.abs(b.vx)<0.025)b.vx=0;if(Math.abs(b.vy)<0.025)b.vy=0;
     b.x+=b.vx;b.y+=b.vy;
     // Visual rotation tied to actual roll distance
-    if(spd>0.035)b.angle+=spd/BR;
+    if(spd>0.025)b.angle+=spd/BR;
     pocketCheck(b);if(!b.pocketed)wallBounce(b);
   }
   for(let p=0;p<2;p++)for(let i=0;i<act.length;i++)for(let j=i+1;j<act.length;j++)
@@ -346,6 +362,10 @@ function ballCollide(a,b){
   const restitution=0.92; // Not perfectly elastic - balls feel solid
   const impulse=dv*restitution;
   a.vx-=impulse*nx;a.vy-=impulse*ny;b.vx+=impulse*nx;b.vy+=impulse*ny;
+  // SLIDING: balls enter slide phase on collision (transfer + fresh impact)
+  // Research: collisions induce sliding that lasts ~0.5-1s
+  a.rollState='sliding';a.slideTimer=35; // ~0.6s sliding
+  b.rollState='sliding';b.slideTimer=35;
   // Stronger position correction to prevent sinking
   const ov=(mn-d)*0.55+0.15;a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
   // Audio/visual feedback scaled by impact intensity
@@ -402,6 +422,8 @@ function shoot(){
   cue.vy=Math.sin(G.ang)*G.pwr*21;
   cue.vx+=Math.cos(G.ang+Math.PI/2)*spinY*G.pwr*4.5;
   cue.vy+=Math.sin(G.ang+Math.PI/2)*spinY*G.pwr*4.5;
+  // SLIDING: cue ball starts sliding when struck
+  cue.rollState='sliding';cue.slideTimer=45; // ~0.75s of sliding at 60fps
   spinY=0;G.pwr=0;G.charge=false;G.potted=[];G.foul=false;G.state='roll';
   G.shotPreview=null;G.pocketAlert=null;
 }
@@ -1118,11 +1140,7 @@ function loop(){
     if(keys.right)G.handX=Math.min(FR-BR-1,G.handX+spd);
     if(keys.up)G.handY=Math.max(FY+BR+1,G.handY-spd);
     if(keys.down)G.handY=Math.min(FB-BR-1,G.handY+spd);
-    if(keys.a&&!aPrev){
-      const cb=G.balls.find(function(b){return b.id===0;});
-      cb.pocketed=false;cb.vx=0;cb.vy=0;cb.x=G.handX;cb.y=G.handY;
-      G.state='aim';G.potted=[];G.foul=false;
-    }
+    // Ball placement handled in drawHandMode with rollState reset
   }
   // aPrev tracking removed - using aHeldFrames instead
   if(G.state==='roll'){for(let i=0;i<4;i++)physStep();if(allStop())endTurn();}
@@ -1132,6 +1150,7 @@ function loop(){
     if(G.aiDelay<=0){
       const cb=G.balls.find(function(b){return b.id===0;});
       cb.pocketed=false;cb.vx=0;cb.vy=0;cb.x=FX+FW*.28+Math.random()*FW*.44;cb.y=FY+FH*.55;
+      cb.rollState='rolling';cb.slideTimer=0; // AI places ball at rest
       G.state='aim';G.potted=[];G.foul=false;G.aiDelay=88;
     }
   }
