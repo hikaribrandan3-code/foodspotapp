@@ -204,6 +204,11 @@ const Settings = () => {
         if (field === 'font_family') document.documentElement.style.setProperty('--font-main', value);
         if (field === 'font_weight') document.documentElement.style.setProperty('--font-weight-hero', value);
         if (field === 'navbar_color') document.documentElement.style.setProperty('--color-navbar-bg', value);
+        // 🛡️ THEME COLORS: Set CSS variables immediately for race-condition-proof saves
+        if (field === 'primary_color') document.documentElement.style.setProperty('--color-primary', value);
+        if (field === 'secondary_color') document.documentElement.style.setProperty('--color-secondary', value);
+        if (field === 'confirmation_color') document.documentElement.style.setProperty('--color-confirm', value);
+        if (field === 'powered_by_color') document.documentElement.style.setProperty('--color-powered', value);
 
         syncContext({ [field]: value });
 
@@ -402,34 +407,48 @@ const Settings = () => {
         window.location.href = `/${tenant?.slug || ''}`;
     };
 
+    // 🛡️ HELPER: Get CSS variable value (captures current optimistic state)
+    const getCssVar = (name) => {
+        const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return val || null;
+    };
+
     // 💾 THE ATOMIC SAVE (Manual Persistence Protocol v5.0)
     const handlePlatformSave = async () => {
         setIsSaving(true);
         console.log('💾 SAVING BRANDING VAULT:', businessId);
 
         try {
-            // 1. Construct Full Payload from Optimistic Tenant State + Local State
-            // Use local state for munchboy fields to ensure colors are saved correctly
+            // 🛡️ RACE CONDITION FIX: Capture current values BEFORE any async operations
+            // Colors are read from CSS custom properties (set immediately on change)
+            // Identity fields use local state (prevents refreshTenantData overwrite)
+            const currentNavbarColor = getCssVar('--color-navbar-bg') || tenant?.navbar_color;
+            const currentPrimary = getCssVar('--color-primary') || tenant?.primary_color;
+            const currentSecondary = getCssVar('--color-secondary') || tenant?.secondary_color;
+            const currentConfirmation = getCssVar('--color-confirm') || tenant?.confirmation_color;
+            const currentPoweredBy = getCssVar('--color-powered') || tenant?.powered_by_color;
+
+            // 1. Construct Full Payload from CAPTURED State (not tenant directly)
             const payload = {
-                business_name: tenant.business_name,
-                font_family: tenant.font_family,
-                font_weight: tenant.font_weight,
-                navbar_color: tenant.navbar_color,
-                nav_icon_mode: tenant.nav_icon_mode,
-                primary_color: tenant.primary_color,
-                secondary_color: tenant.secondary_color,
-                confirmation_color: tenant.confirmation_color,
-                powered_by_color: tenant.powered_by_color,
-                hero_mode: tenant.hero_mode,
-                hero_url: tenant.hero_url,
-                hero_icons: tenant.hero_icons,
-                info_pills: tenant.info_pills,
-                munchboy_enabled: tenant.munchboy_enabled,
+                business_name: localIdentity.business_name || tenant?.business_name,
+                font_family: localIdentity.font_family || tenant?.font_family,
+                font_weight: localIdentity.font_weight || tenant?.font_weight,
+                navbar_color: currentNavbarColor,
+                nav_icon_mode: tenant?.nav_icon_mode,
+                primary_color: currentPrimary,
+                secondary_color: currentSecondary,
+                confirmation_color: currentConfirmation,
+                powered_by_color: currentPoweredBy,
+                hero_mode: tenant?.hero_mode,
+                hero_url: tenant?.hero_url,
+                hero_icons: tenant?.hero_icons,
+                info_pills: tenant?.info_pills,
+                munchboy_enabled: tenant?.munchboy_enabled,
                 munchboy_name: localMunchboyName,
                 munchboy_shell_color: localMunchboyColors.shell,
                 munchboy_a_color: localMunchboyColors.a,
                 munchboy_b_color: localMunchboyColors.b,
-                app_config: tenant.app_config,
+                app_config: tenant?.app_config,
                 updated_at: new Date()
             };
 
