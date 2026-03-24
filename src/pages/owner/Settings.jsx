@@ -536,7 +536,15 @@ const Settings = () => {
     };
 
     const ColorPillar = ({ label, keyName, cssVar, defaultValue }) => {
-        const currentColor = tenant?.[keyName] || defaultValue;
+        // 🛡️ THEME COLORS: Read from local state (not tenant) to show live changes
+        const themeColorMap = {
+            'navbar_color': localThemeColors.navbar,
+            'primary_color': localThemeColors.primary,
+            'secondary_color': localThemeColors.secondary,
+            'confirmation_color': localThemeColors.confirmation,
+            'powered_by_color': localThemeColors.poweredBy
+        };
+        const currentColor = themeColorMap[keyName] || tenant?.[keyName] || defaultValue;
         return (
             <div className="color-pillar">
                 <p className="pillar-label">{label}</p>
@@ -561,7 +569,8 @@ const Settings = () => {
 
     const heroIconMode = tenant?.hero_icon_mode || 'black';
     const navIconMode = tenant?.nav_icon_mode || 'white';
-    const navbarColor = tenant?.navbar_color || '#1F2937';
+    // 🛡️ THEME COLORS: Use local state for live preview (not tenant)
+    const navbarColor = localThemeColors.navbar || tenant?.navbar_color || '#1F2937';
 
     return (
         <div className="bg-[#F8FAFC] min-h-screen">
