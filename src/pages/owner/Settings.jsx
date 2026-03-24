@@ -88,6 +88,15 @@ const Settings = () => {
         b: '#D1D5DB'
     });
 
+    // 🛡️ THEME COLORS: Local state to prevent revert (mirrors munchboy pattern)
+    const [localThemeColors, setLocalThemeColors] = useState({
+        navbar: '#1F2937',
+        primary: '#B8956A',
+        secondary: '#A89070',
+        confirmation: '#22C55E',
+        poweredBy: '#C4856A'
+    });
+
     // Dropdown states
     const [isFontMenuOpen, setIsFontMenuOpen] = useState(false);
     const [isWeightMenuOpen, setIsWeightMenuOpen] = useState(false);
@@ -139,6 +148,14 @@ const Settings = () => {
                     shell: tenant.munchboy_shell_color || '#6B0FCC',
                     a: tenant.munchboy_a_color || '#D1D5DB',
                     b: tenant.munchboy_b_color || '#D1D5DB'
+                });
+                // 🛡️ THEME COLORS: Sync from tenant when not dirty
+                setLocalThemeColors({
+                    navbar: tenant.navbar_color || '#1F2937',
+                    primary: tenant.primary_color || '#B8956A',
+                    secondary: tenant.secondary_color || '#A89070',
+                    confirmation: tenant.confirmation_color || '#22C55E',
+                    poweredBy: tenant.powered_by_color || '#C4856A'
                 });
             }
 
@@ -222,6 +239,13 @@ const Settings = () => {
         if (field === 'secondary_color') document.documentElement.style.setProperty('--color-secondary', value);
         if (field === 'confirmation_color') document.documentElement.style.setProperty('--color-confirm', value);  // Match ColorPillar
         if (field === 'powered_by_color') document.documentElement.style.setProperty('--color-powered', value);
+
+        // 🛡️ THEME COLORS: Update local state (mirrors munchboy pattern)
+        if (field === 'navbar_color') setLocalThemeColors(prev => ({ ...prev, navbar: value }));
+        if (field === 'primary_color') setLocalThemeColors(prev => ({ ...prev, primary: value }));
+        if (field === 'secondary_color') setLocalThemeColors(prev => ({ ...prev, secondary: value }));
+        if (field === 'confirmation_color') setLocalThemeColors(prev => ({ ...prev, confirmation: value }));
+        if (field === 'powered_by_color') setLocalThemeColors(prev => ({ ...prev, poweredBy: value }));
 
         syncContext({ [field]: value });
 
@@ -432,17 +456,16 @@ const Settings = () => {
         console.log('💾 SAVING BRANDING VAULT:', businessId);
 
         try {
-            // 🛡️ RACE CONDITION FIX: Capture current values BEFORE any async operations
-            // Colors are read from CSS custom properties (set immediately on change)
-            // Identity fields use local state (prevents refreshTenantData overwrite)
-            const currentNavbarColor = getCssVar('--color-navbar-bg') || tenant?.navbar_color || '#1F2937';
-            const currentPrimary = getCssVar('--color-primary') || tenant?.primary_color || '#B8956A';
-            const currentSecondary = getCssVar('--color-secondary') || tenant?.secondary_color || '#A89070';
-            const currentConfirmation = getCssVar('--color-confirm') || tenant?.confirmation_color || '#22C55E';
-            const currentPoweredBy = getCssVar('--color-powered') || tenant?.powered_by_color || '#C4856A';
+            // 🛡️ RACE CONDITION FIX: Use local state for colors (mirrors munchboy pattern)
+            // Local state is updated immediately on change, never overwritten by refreshTenantData
+            const currentNavbarColor = localThemeColors.navbar;
+            const currentPrimary = localThemeColors.primary;
+            const currentSecondary = localThemeColors.secondary;
+            const currentConfirmation = localThemeColors.confirmation;
+            const currentPoweredBy = localThemeColors.poweredBy;
 
             // DEBUG: Log what we're capturing
-            console.log('[Settings Save] Captured colors:', {
+            console.log('[Settings Save] Local theme colors:', {
                 navbar: currentNavbarColor,
                 primary: currentPrimary,
                 secondary: currentSecondary,
@@ -450,32 +473,29 @@ const Settings = () => {
                 poweredBy: currentPoweredBy
             });
 
-            // 1. Construct Full Payload from CAPTURED State (not tenant directly)
-            // 🛡️ FILTER: Remove null/undefined to prevent 400 errors
-            const payload = Object.fromEntries(
-                Object.entries({
-                    business_name: localIdentity.business_name || tenant?.business_name,
-                    font_family: localIdentity.font_family || tenant?.font_family,
-                    font_weight: localIdentity.font_weight || tenant?.font_weight,
-                    navbar_color: currentNavbarColor,
-                    nav_icon_mode: tenant?.nav_icon_mode,
-                    primary_color: currentPrimary,
-                    secondary_color: currentSecondary,
-                    confirmation_color: currentConfirmation,
-                    powered_by_color: currentPoweredBy,
-                    hero_mode: tenant?.hero_mode,
-                    hero_url: tenant?.hero_url,
-                    hero_icons: tenant?.hero_icons,
-                    info_pills: tenant?.info_pills,
-                    munchboy_enabled: tenant?.munchboy_enabled,
-                    munchboy_name: localMunchboyName,
-                    munchboy_shell_color: localMunchboyColors.shell,
-                    munchboy_a_color: localMunchboyColors.a,
-                    munchboy_b_color: localMunchboyColors.b,
-                    app_config: tenant?.app_config,
-                    updated_at: new Date().toISOString()
-                }).filter(([_, v]) => v !== null && v !== undefined)
-            );
+            // 1. Construct Full Payload from local state (never stale)
+            const payload = {
+                business_name: localIdentity.business_name || tenant?.business_name,
+                font_family: localIdentity.font_family || tenant?.font_family,
+                font_weight: localIdentity.font_weight || tenant?.font_weight,
+                navbar_color: currentNavbarColor,
+                nav_icon_mode: tenant?.nav_icon_mode,
+                primary_color: currentPrimary,
+                secondary_color: currentSecondary,
+                confirmation_color: currentConfirmation,
+                powered_by_color: currentPoweredBy,
+                hero_mode: tenant?.hero_mode,
+                hero_url: tenant?.hero_url,
+                hero_icons: tenant?.hero_icons,
+                info_pills: tenant?.info_pills,
+                munchboy_enabled: tenant?.munchboy_enabled,
+                munchboy_name: localMunchboyName,
+                munchboy_shell_color: localMunchboyColors.shell,
+                munchboy_a_color: localMunchboyColors.a,
+                munchboy_b_color: localMunchboyColors.b,
+                app_config: tenant?.app_config,
+                updated_at: new Date().toISOString()
+            };
 
             console.log('[Settings Save] Payload:', payload);
 
