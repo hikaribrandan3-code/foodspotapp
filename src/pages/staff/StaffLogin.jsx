@@ -42,13 +42,13 @@ function StaffLogin() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'radial-gradient(circle at 50% 50%, #2a2218 0%, #131313 70%)'
+                background: 'radial-gradient(circle at top left, #e0eaff 0%, #f7f9fb 100%)'
             }}>
                 <div style={{
                     width: 32,
                     height: 32,
-                    border: '3px solid #353534',
-                    borderTopColor: '#dfc29f',
+                    border: '3px solid #e0eaff',
+                    borderTopColor: '#0058bc',
                     borderRadius: '50%',
                     animation: 'spin 0.8s linear infinite'
                 }} />
@@ -88,328 +88,279 @@ function StaffLogin() {
         }
     }
 
+    // ============================
+    // PREMIUM LIGHT LOGIN UI
+    // ============================
     return (
         <div style={{
+            background: 'radial-gradient(circle at top left, #e0eaff 0%, #f7f9fb 100%)',
             minHeight: '100dvh',
-            background: 'radial-gradient(circle at 50% 50%, #2a2218 0%, #131313 70%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
-            color: '#e5e2e1',
-            position: 'relative',
-            overflow: 'hidden'
+            fontFamily: '"Montserrat", sans-serif',
+            color: '#191c1e',
+            padding: 24,
+            position: 'relative'
         }}>
-            {/* Fixed Header */}
+            {/* TopAppBar */}
             <header style={{
                 position: 'fixed',
                 top: 0,
-                width: '100%',
+                left: 0,
+                right: 0,
                 display: 'flex',
-                justifyContent: 'center',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '0 24px',
-                height: 80,
-                zIndex: 50
+                width: '100%',
+                padding: '16px 24px',
+                background: 'transparent'
             }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {/* Placeholder for left action */}
+                </div>
                 <h1 style={{
-                    fontFamily: '"Manrope", sans-serif',
-                    fontWeight: 900,
+                    fontFamily: '"Montserrat", sans-serif',
+                    fontWeight: 700,
                     fontSize: 24,
-                    color: '#dfc29f',
-                    letterSpacing: '0.15em',
-                    textTransform: 'uppercase',
+                    letterSpacing: '-0.025em',
+                    color: '#0058bc',
                     margin: 0
-                }}>FoodSpot</h1>
+                }}>FoodSpot Staff</h1>
+                <div style={{ width: 40 }} />
             </header>
 
-            {/* Main Content */}
-            <main style={{ width: '100%', maxWidth: 448, padding: '48px 24px', zIndex: 10 }}>
-                <div style={{
-                    background: 'rgba(28, 27, 27, 0.65)',
-                    backdropFilter: 'blur(24px)',
-                    WebkitBackdropFilter: 'blur(24px)',
-                    borderRadius: 40,
-                    padding: 32,
-                    boxShadow: '0 -4px 40px rgba(0,0,0,0.12)',
-                    border: '1px solid rgba(77, 69, 60, 0.2)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                }}>
-                    {/* Context Header */}
-                    <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                        <h2 style={{
-                            fontFamily: '"Manrope", sans-serif',
-                            fontSize: 30,
-                            fontWeight: 700,
-                            letterSpacing: '-0.025em',
-                            color: '#e5e2e1',
-                            margin: '0 0 8px 0'
-                        }}>Staff Access</h2>
-                        <p style={{
-                            color: '#d1c4b9',
-                            fontWeight: 500,
-                            opacity: 0.8,
-                            margin: 0,
-                            fontSize: 14
-                        }}>Enter your credentials to continue</p>
+            <main style={{ width: '100%', maxWidth: 448, marginTop: 64, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {/* Logo Branding */}
+                <div style={{ marginBottom: 40, textAlign: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                        <span style={{ fontSize: 48, color: '#0058bc' }}>🍽️</span>
                     </div>
+                    <div style={{
+                        fontSize: 30,
+                        fontWeight: 700,
+                        letterSpacing: '-0.05em',
+                        color: '#191c1e'
+                    }}>
+                        FoodSpot<span style={{ color: '#0058bc' }}>.</span>
+                    </div>
+                </div>
+
+                {/* Auth Card */}
+                <div style={{
+                    width: '100%',
+                    background: '#ffffff',
+                    padding: 32,
+                    borderRadius: 12,
+                    boxShadow: '0 40px 80px -20px rgba(0, 88, 188, 0.08), 0 0 40px rgba(0, 88, 188, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.5)',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)'
+                }}>
+                    <h2 style={{ fontSize: 24, fontWeight: 700, color: '#191c1e', marginBottom: 32, textAlign: 'center', margin: '0 0 32px 0' }}>Staff Access</h2>
 
                     {/* Staff Badge */}
                     <div style={{
-                        width: '100%',
-                        background: 'rgba(14, 14, 14, 0.5)',
-                        padding: 6,
-                        borderRadius: 9999,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginBottom: 40,
-                        position: 'relative'
+                        padding: '12px',
+                        background: '#f2f4f6',
+                        borderRadius: 12,
+                        marginBottom: 32,
+                        border: '1px solid rgba(193, 198, 215, 0.2)'
                     }}>
-                        <div style={{
-                            position: 'absolute',
-                            left: 6,
-                            right: 6,
-                            height: 'calc(100% - 12px)',
-                            background: '#353534',
-                            borderRadius: 9999,
-                            boxShadow: '0 0 15px rgba(223, 194, 159, 0.1)',
-                            top: 6
-                        }} />
-                        <span style={{
-                            position: 'relative',
-                            zIndex: 10,
-                            padding: '12px 0',
-                            fontSize: 13,
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.1em',
-                            color: '#dfc29f',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8
-                        }}>
-                            <span style={{ fontSize: 18 }}>🪪</span>
-                            Staff Login
+                        <span style={{ fontSize: 14, fontWeight: 700, color: '#414755', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 20 }}>🪪</span>
+                            Authorized Personnel Only
                         </span>
                     </div>
 
-                    {/* Login Form */}
-                    <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-                        {/* Email Input */}
-                        <div style={{ marginBottom: 24 }}>
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                        {/* Email Field */}
+                        <div>
                             <label style={{
                                 display: 'block',
-                                fontSize: 10,
+                                fontSize: 12,
                                 fontWeight: 700,
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.15em',
-                                color: '#d1c4b9',
+                                letterSpacing: '0.05em',
+                                color: '#414755',
                                 marginLeft: 4,
                                 marginBottom: 8
                             }}>Email Address</label>
-                            <input
-                                type="email"
-                                placeholder="staff@foodspot.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                autoFocus
-                                disabled={loading}
-                                style={{
-                                    width: '100%',
-                                    height: 64,
-                                    background: '#0e0e0e',
-                                    border: 'none',
-                                    borderRadius: 16,
-                                    padding: '0 24px',
-                                    color: '#e5e2e1',
-                                    fontWeight: 500,
-                                    fontSize: 15,
-                                    outline: 'none',
-                                    boxSizing: 'border-box',
-                                    transition: 'box-shadow 0.2s ease'
-                                }}
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 1px rgba(223,194,159,0.4)'}
-                                onBlur={(e) => e.target.style.boxShadow = 'none'}
-                            />
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                <span style={{ position: 'absolute', left: 16, color: '#414755', fontSize: 20 }}>✉️</span>
+                                <input
+                                    type="email"
+                                    placeholder="staff@foodspot.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    autoFocus
+                                    disabled={loading}
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px 16px 16px 48px',
+                                        background: '#f2f4f6',
+                                        border: '1px solid rgba(193, 198, 215, 0.15)',
+                                        borderRadius: 8,
+                                        fontSize: 16,
+                                        color: '#191c1e',
+                                        outline: 'none',
+                                        transition: 'all 0.3s ease',
+                                        boxSizing: 'border-box'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.background = '#ffffff'
+                                        e.target.style.borderColor = '#0058bc'
+                                        e.target.style.boxShadow = '0 0 0 4px rgba(0, 88, 188, 0.1)'
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.background = '#f2f4f6'
+                                        e.target.style.borderColor = 'rgba(193, 198, 215, 0.15)'
+                                        e.target.style.boxShadow = 'none'
+                                    }}
+                                />
+                            </div>
                         </div>
 
-                        {/* Password Input */}
-                        <div style={{ marginBottom: 8 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px', marginBottom: 8 }}>
+                        {/* Password Field */}
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
                                 <label style={{
-                                    fontSize: 10,
+                                    display: 'block',
+                                    fontSize: 12,
                                     fontWeight: 700,
                                     textTransform: 'uppercase',
-                                    letterSpacing: '0.15em',
-                                    color: '#d1c4b9'
-                                }}>Security Key</label>
+                                    letterSpacing: '0.05em',
+                                    color: '#414755',
+                                    marginLeft: 4,
+                                    margin: 0
+                                }}>Password</label>
                             </div>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                disabled={loading}
-                                style={{
-                                    width: '100%',
-                                    height: 64,
-                                    background: '#0e0e0e',
-                                    border: 'none',
-                                    borderRadius: 16,
-                                    padding: '0 24px',
-                                    color: '#e5e2e1',
-                                    fontWeight: 500,
-                                    fontSize: 15,
-                                    outline: 'none',
-                                    boxSizing: 'border-box',
-                                    transition: 'box-shadow 0.2s ease'
-                                }}
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 1px rgba(223,194,159,0.4)'}
-                                onBlur={(e) => e.target.style.boxShadow = 'none'}
-                            />
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                <span style={{ position: 'absolute', left: 16, color: '#414755', fontSize: 20 }}>🔒</span>
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    disabled={loading}
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px 16px 16px 48px',
+                                        background: '#f2f4f6',
+                                        border: '1px solid rgba(193, 198, 215, 0.15)',
+                                        borderRadius: 8,
+                                        fontSize: 16,
+                                        color: '#191c1e',
+                                        outline: 'none',
+                                        transition: 'all 0.3s ease',
+                                        boxSizing: 'border-box'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.background = '#ffffff'
+                                        e.target.style.borderColor = '#0058bc'
+                                        e.target.style.boxShadow = '0 0 0 4px rgba(0, 88, 188, 0.1)'
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.background = '#f2f4f6'
+                                        e.target.style.borderColor = 'rgba(193, 198, 215, 0.15)'
+                                        e.target.style.boxShadow = 'none'
+                                    }}
+                                />
+                            </div>
+                            
+                            {/* Error Message */}
+                            {error && (
+                                <p style={{
+                                    color: '#ba1a1a',
+                                    textAlign: 'center',
+                                    fontSize: 13,
+                                    marginTop: 12,
+                                    background: 'rgba(186, 26, 26, 0.1)',
+                                    padding: '10px 16px',
+                                    borderRadius: 12,
+                                    border: '1px solid rgba(186, 26, 26, 0.2)'
+                                }}>{error}</p>
+                            )}
                         </div>
 
-                        {/* Error Message */}
-                        {error && (
-                            <p style={{
-                                color: '#ffb4ab',
-                                textAlign: 'center',
-                                fontSize: 13,
-                                marginBottom: 10,
-                                background: 'rgba(147, 0, 10, 0.2)',
-                                padding: '10px 16px',
-                                borderRadius: 12,
-                                border: '1px solid rgba(255, 180, 171, 0.2)'
-                            }}>{error}</p>
-                        )}
-
-                        {/* Password Strength Meter */}
-                        <div style={{ marginBottom: 24, paddingTop: 8 }}>
-                            <div style={{ display: 'flex', gap: 6, height: 6, width: '100%' }}>
-                                <div style={{ flex: 1, borderRadius: 9999, background: '#8b7355' }} />
-                                <div style={{ flex: 1, borderRadius: 9999, background: '#8b7355' }} />
-                                <div style={{ flex: 1, borderRadius: 9999, background: password.length > 4 ? '#8b7355' : '#353534' }} />
-                                <div style={{ flex: 1, borderRadius: 9999, background: password.length > 8 ? '#8b7355' : '#353534' }} />
-                            </div>
-                            <p style={{
-                                fontSize: 10,
+                        {/* Login Button */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            style={{
+                                width: '100%',
+                                padding: '16px 0',
+                                background: loading ? '#e0e3e5' : 'linear-gradient(to right, #0058bc, #0070eb)',
+                                color: loading ? '#717786' : '#ffffff',
                                 fontWeight: 700,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.15em',
-                                color: '#d1c4b9',
-                                textAlign: 'center',
-                                marginTop: 12
-                            }}>
-                                {password.length === 0 ? 'Enter credentials' : password.length <= 4 ? 'Weak' : password.length <= 8 ? 'Strong Access Level' : 'Maximum Security'}
-                            </p>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                style={{
-                                    width: '100%',
-                                    height: 64,
-                                    background: loading
-                                        ? '#4d453c'
-                                        : 'linear-gradient(135deg, #dfc29f 0%, #8b7355 100%)',
-                                    color: loading ? '#9a8f84' : '#3f2d15',
-                                    fontFamily: '"Manrope", sans-serif',
-                                    fontWeight: 700,
-                                    fontSize: 18,
-                                    borderRadius: 16,
-                                    border: 'none',
-                                    boxShadow: loading ? 'none' : '0 4px 20px rgba(223, 194, 159, 0.2)',
-                                    cursor: loading ? 'wait' : 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 8,
-                                    transition: 'opacity 0.2s ease, transform 0.1s ease'
-                                }}
-                                onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.98)')}
-                                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                            >
-                                {loading ? 'Verificando...' : 'Login'}
-                                {!loading && <span style={{ fontSize: 20 }}>→</span>}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => navigate('/')}
-                                style={{
-                                    width: '100%',
-                                    height: 64,
-                                    background: 'transparent',
-                                    border: '1px solid rgba(77, 69, 60, 0.3)',
-                                    color: '#d1c4b9',
-                                    fontFamily: '"Manrope", sans-serif',
-                                    fontWeight: 700,
-                                    fontSize: 18,
-                                    borderRadius: 16,
-                                    cursor: 'pointer',
-                                    transition: 'background 0.2s ease, transform 0.1s ease'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = '#1c1b1b'}
-                                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
-                                onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-                                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                            >
-                                Back
-                            </button>
-                        </div>
+                                borderRadius: 8,
+                                border: 'none',
+                                boxShadow: loading ? 'none' : '0 10px 15px -3px rgba(0, 88, 188, 0.25)',
+                                cursor: loading ? 'wait' : 'pointer',
+                                transition: 'all 0.2s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 8,
+                                marginTop: 16
+                            }}
+                            onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.98)')}
+                            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                            {loading ? 'Verificando...' : 'Login'}
+                            {!loading && <span style={{ fontSize: 18 }}>→</span>}
+                        </button>
                     </form>
                 </div>
+
+                {/* Secondary Action */}
+                <a 
+                    href="#" 
+                    onClick={(e) => { e.preventDefault(); navigate('/'); }}
+                    style={{
+                        marginTop: 40,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        color: '#414755',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#0058bc'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#414755'}
+                >
+                    <span style={{ fontSize: 18 }}>←</span>
+                    Back to Public Portal
+                </a>
             </main>
 
-            {/* Background Decorative Blur Orbs */}
-            <div style={{
-                position: 'absolute',
-                top: '25%',
-                left: -80,
-                width: 320,
-                height: 320,
-                background: 'rgba(223, 194, 159, 0.05)',
-                filter: 'blur(120px)',
-                borderRadius: '50%',
-                pointerEvents: 'none'
-            }} />
-            <div style={{
-                position: 'absolute',
-                bottom: '25%',
-                right: -80,
-                width: 384,
-                height: 384,
-                background: 'rgba(139, 115, 85, 0.1)',
-                filter: 'blur(150px)',
-                borderRadius: '50%',
-                pointerEvents: 'none'
-            }} />
-
-            {/* Background Hero Image */}
-            <div style={{
+            {/* Footer Semantic Shell */}
+            <footer style={{
                 position: 'fixed',
-                inset: 0,
-                zIndex: -1,
-                opacity: 0.1
+                bottom: 0,
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: 16,
+                paddingBottom: 32,
+                fontFamily: '"Montserrat", sans-serif',
+                fontSize: 14,
+                color: '#717786'
             }}>
-                <img
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQMD1WWzULK-OYupbPZxeSzfpVJoZEnHhlAXCvT_lzZPs3W9mO4Mjhge_MHdrREJacVpXTHgo3a8vXkU06xML-SjlIIayDirdcBsZuVFTfSPhp2HhQSMbb0UoI8Ui6dQD8SM2WW5rD79R1ZvvbVyAwcls9Kn_pAL9UltGVwEvesdQXHMxE7po2xNtRtlBzYM8zFgSuQEIGYhb5TXRTU4tYkWS6OAtTwAS3biEAqvQ-9mzpYP3QGqJK-4Sd7m0TQ4yHFoG0bCVow00"
-                    alt=""
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        filter: 'grayscale(100%)'
-                    }}
-                />
-            </div>
+                <span style={{ color: '#414755', opacity: 0.6 }}>© 2026 FoodSpot Systems</span>
+                <div style={{ display: 'flex', gap: 24 }}>
+                    <a href="#" style={{ color: '#717786', textDecoration: 'none', transition: 'color 0.2s ease' }} onMouseEnter={(e)=>e.currentTarget.style.color='#0058bc'} onMouseLeave={(e)=>e.currentTarget.style.color='#717786'}>Privacy Policy</a>
+                    <a href="#" style={{ color: '#717786', textDecoration: 'none', transition: 'color 0.2s ease' }} onMouseEnter={(e)=>e.currentTarget.style.color='#0058bc'} onMouseLeave={(e)=>e.currentTarget.style.color='#717786'}>Terms of Service</a>
+                    <a href="#" style={{ color: '#717786', textDecoration: 'none', transition: 'color 0.2s ease' }} onMouseEnter={(e)=>e.currentTarget.style.color='#0058bc'} onMouseLeave={(e)=>e.currentTarget.style.color='#717786'}>Help Center</a>
+                </div>
+            </footer>
         </div>
     )
 }

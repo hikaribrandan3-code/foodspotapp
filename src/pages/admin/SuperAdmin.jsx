@@ -491,372 +491,281 @@ function SuperAdmin({ config: configProp }) {
 
     // Login screen
     if (!isAuthenticated) {
-        // Toggle between Owner and Staff mode
-        const [loginMode, setLoginMode] = React.useState('owner'); // 'owner' | 'staff'
-
+        // Toggle between Owner and S        // ============================
+        // PREMIUM LIGHT LOGIN UI
+        // ============================
         return (
             <div style={{
+                background: 'radial-gradient(circle at top left, #e0eaff 0%, #f7f9fb 100%)',
                 minHeight: '100dvh',
-                background: 'radial-gradient(circle at 50% 50%, #2a2218 0%, #131313 70%)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
-                color: '#e5e2e1',
-                position: 'relative',
-                overflow: 'hidden'
+                fontFamily: '"Montserrat", sans-serif',
+                color: '#191c1e',
+                padding: 24,
+                position: 'relative'
             }}>
-                {/* Fixed Header */}
+                {/* TopAppBar */}
                 <header style={{
                     position: 'fixed',
                     top: 0,
-                    width: '100%',
+                    left: 0,
+                    right: 0,
                     display: 'flex',
-                    justifyContent: 'center',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '0 24px',
-                    height: 80,
-                    zIndex: 50
+                    width: '100%',
+                    padding: '16px 24px',
+                    background: 'transparent'
                 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {/* Placeholder for left action */}
+                    </div>
                     <h1 style={{
-                        fontFamily: '"Manrope", sans-serif',
-                        fontWeight: 900,
+                        fontFamily: '"Montserrat", sans-serif',
+                        fontWeight: 700,
                         fontSize: 24,
-                        color: '#dfc29f',
-                        letterSpacing: '0.15em',
-                        textTransform: 'uppercase',
+                        letterSpacing: '-0.025em',
+                        color: '#0058bc',
                         margin: 0
-                    }}>FoodSpot</h1>
+                    }}>FoodSpot Admin</h1>
+                    <div style={{ width: 40 }} />
                 </header>
 
-                {/* Main Content */}
-                <main style={{ width: '100%', maxWidth: 448, padding: '48px 24px', zIndex: 10 }}>
-                    <div style={{
-                        background: 'rgba(28, 27, 27, 0.65)',
-                        backdropFilter: 'blur(24px)',
-                        WebkitBackdropFilter: 'blur(24px)',
-                        borderRadius: 40,
-                        padding: window.innerWidth > 768 ? 40 : 32,
-                        boxShadow: '0 -4px 40px rgba(0,0,0,0.12)',
-                        border: '1px solid rgba(77, 69, 60, 0.2)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
-                    }}>
-                        {/* Context Header */}
-                        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                            <h2 style={{
-                                fontFamily: '"Manrope", sans-serif',
-                                fontSize: 30,
-                                fontWeight: 700,
-                                letterSpacing: '-0.025em',
-                                color: '#e5e2e1',
-                                margin: '0 0 8px 0'
-                            }}>Admin Access</h2>
-                            <p style={{
-                                color: '#d1c4b9',
-                                fontWeight: 500,
-                                opacity: 0.8,
-                                margin: 0,
-                                fontSize: 14
-                            }}>Manage your culinary empire</p>
+                <main style={{ width: '100%', maxWidth: 448, marginTop: 64, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    {/* Logo Branding */}
+                    <div style={{ marginBottom: 40, textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                            <span style={{ fontSize: 48, color: '#0058bc' }}>🍽️</span>
                         </div>
-
-                        {/* Auth Toggle (Owner / Staff) */}
                         <div style={{
-                            width: '100%',
-                            background: 'rgba(14, 14, 14, 0.5)',
-                            padding: 6,
-                            borderRadius: 9999,
-                            display: 'flex',
-                            alignItems: 'center',
-                            marginBottom: 40,
-                            position: 'relative'
+                            fontSize: 30,
+                            fontWeight: 700,
+                            letterSpacing: '-0.05em',
+                            color: '#191c1e'
                         }}>
-                            {/* Animated pill indicator */}
-                            <div style={{
-                                position: 'absolute',
-                                left: loginMode === 'owner' ? 6 : 'calc(50% + 0px)',
-                                width: 'calc(50% - 6px)',
-                                height: 'calc(100% - 12px)',
-                                background: '#353534',
-                                borderRadius: 9999,
-                                boxShadow: '0 0 15px rgba(223, 194, 159, 0.1)',
-                                transition: 'left 0.3s ease',
-                                top: 6
-                            }} />
-                            <button
-                                type="button"
-                                onClick={() => setLoginMode('owner')}
-                                style={{
-                                    position: 'relative',
-                                    zIndex: 10,
-                                    flex: 1,
-                                    padding: '12px 0',
-                                    fontSize: 13,
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.1em',
-                                    color: loginMode === 'owner' ? '#dfc29f' : '#d1c4b9',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 8,
-                                    transition: 'color 0.3s ease'
-                                }}
-                            >
-                                <span style={{ fontSize: 18 }}>⚙️</span>
-                                Owner
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setLoginMode('staff')}
-                                style={{
-                                    position: 'relative',
-                                    zIndex: 10,
-                                    flex: 1,
-                                    padding: '12px 0',
-                                    fontSize: 13,
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.1em',
-                                    color: loginMode === 'staff' ? '#dfc29f' : '#d1c4b9',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 8,
-                                    transition: 'color 0.3s ease'
-                                }}
-                            >
-                                <span style={{ fontSize: 18 }}>🪪</span>
-                                Staff
-                            </button>
+                            FoodSpot<span style={{ color: '#0058bc' }}>.</span>
                         </div>
+                    </div>
 
-                        {/* Login Form */}
-                        <form onSubmit={handleLogin} style={{ width: '100%' }}>
-                            {/* Email Input */}
-                            <div style={{ marginBottom: 24 }}>
+                    {/* Auth Card */}
+                    <div style={{
+                        width: '100%',
+                        background: '#ffffff',
+                        padding: 32,
+                        borderRadius: 12,
+                        boxShadow: '0 40px 80px -20px rgba(0, 88, 188, 0.08), 0 0 40px rgba(0, 88, 188, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.5)',
+                        backdropFilter: 'blur(4px)',
+                        WebkitBackdropFilter: 'blur(4px)'
+                    }}>
+                        <h2 style={{ fontSize: 24, fontWeight: 700, color: '#191c1e', marginBottom: 32, textAlign: 'center', margin: '0 0 32px 0' }}>Super Admin Access</h2>
+
+                        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                            {/* Email Field */}
+                            <div>
                                 <label style={{
                                     display: 'block',
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     fontWeight: 700,
                                     textTransform: 'uppercase',
-                                    letterSpacing: '0.15em',
-                                    color: '#d1c4b9',
+                                    letterSpacing: '0.05em',
+                                    color: '#414755',
                                     marginLeft: 4,
                                     marginBottom: 8
                                 }}>Email Address</label>
-                                <input
-                                    type="email"
-                                    placeholder={loginMode === 'owner' ? 'owner@foodspot.com' : 'staff@foodspot.com'}
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    disabled={authLoading}
-                                    style={{
-                                        width: '100%',
-                                        height: 64,
-                                        background: '#0e0e0e',
-                                        border: 'none',
-                                        borderRadius: 16,
-                                        padding: '0 24px',
-                                        color: '#e5e2e1',
-                                        fontWeight: 500,
-                                        fontSize: 15,
-                                        outline: 'none',
-                                        boxSizing: 'border-box',
-                                        transition: 'box-shadow 0.2s ease'
-                                    }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 1px rgba(223,194,159,0.4)'}
-                                    onBlur={(e) => e.target.style.boxShadow = 'none'}
-                                />
+                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ position: 'absolute', left: 16, color: '#414755', fontSize: 20 }}>✉️</span>
+                                    <input
+                                        type="email"
+                                        placeholder="admin@foodspot.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        autoFocus
+                                        disabled={authLoading}
+                                        style={{
+                                            width: '100%',
+                                            padding: '16px 16px 16px 48px',
+                                            background: '#f2f4f6',
+                                            border: '1px solid rgba(193, 198, 215, 0.15)',
+                                            borderRadius: 8,
+                                            fontSize: 16,
+                                            color: '#191c1e',
+                                            outline: 'none',
+                                            transition: 'all 0.3s ease',
+                                            boxSizing: 'border-box'
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.background = '#ffffff'
+                                            e.target.style.borderColor = '#0058bc'
+                                            e.target.style.boxShadow = '0 0 0 4px rgba(0, 88, 188, 0.1)'
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.background = '#f2f4f6'
+                                            e.target.style.borderColor = 'rgba(193, 198, 215, 0.15)'
+                                            e.target.style.boxShadow = 'none'
+                                        }}
+                                    />
+                                </div>
                             </div>
 
-                            {/* Password Input */}
-                            <div style={{ marginBottom: 8 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px', marginBottom: 8 }}>
+                            {/* Password Field */}
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
                                     <label style={{
-                                        fontSize: 10,
+                                        display: 'block',
+                                        fontSize: 12,
                                         fontWeight: 700,
                                         textTransform: 'uppercase',
-                                        letterSpacing: '0.15em',
-                                        color: '#d1c4b9'
+                                        letterSpacing: '0.05em',
+                                        color: '#414755',
+                                        marginLeft: 4,
+                                        margin: 0
                                     }}>Security Key</label>
+                                    <a href="#" style={{ fontSize: 12, fontWeight: 700, color: '#0058bc', textDecoration: 'none' }}>Forgot Password?</a>
                                 </div>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    disabled={authLoading}
-                                    style={{
-                                        width: '100%',
-                                        height: 64,
-                                        background: '#0e0e0e',
-                                        border: 'none',
-                                        borderRadius: 16,
-                                        padding: '0 24px',
-                                        color: '#e5e2e1',
-                                        fontWeight: 500,
-                                        fontSize: 15,
-                                        outline: 'none',
-                                        boxSizing: 'border-box',
-                                        transition: 'box-shadow 0.2s ease'
-                                    }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 1px rgba(223,194,159,0.4)'}
-                                    onBlur={(e) => e.target.style.boxShadow = 'none'}
-                                />
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                                    <a href="#" style={{ fontSize: 12, fontWeight: 600, color: '#dfc29f', textDecoration: 'none', opacity: 0.9 }}>Forgot Password?</a>
+                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ position: 'absolute', left: 16, color: '#414755', fontSize: 20 }}>🔒</span>
+                                    <input
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        disabled={authLoading}
+                                        style={{
+                                            width: '100%',
+                                            padding: '16px 16px 16px 48px',
+                                            background: '#f2f4f6',
+                                            border: '1px solid rgba(193, 198, 215, 0.15)',
+                                            borderRadius: 8,
+                                            fontSize: 16,
+                                            color: '#191c1e',
+                                            outline: 'none',
+                                            transition: 'all 0.3s ease',
+                                            boxSizing: 'border-box'
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.background = '#ffffff'
+                                            e.target.style.borderColor = '#0058bc'
+                                            e.target.style.boxShadow = '0 0 0 4px rgba(0, 88, 188, 0.1)'
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.background = '#f2f4f6'
+                                            e.target.style.borderColor = 'rgba(193, 198, 215, 0.15)'
+                                            e.target.style.boxShadow = 'none'
+                                        }}
+                                    />
+                                </div>
+                                
+                                {/* Error Message */}
+                                {error && (
+                                    <p style={{
+                                        color: '#ba1a1a',
+                                        textAlign: 'center',
+                                        fontSize: 13,
+                                        marginTop: 12,
+                                        background: 'rgba(186, 26, 26, 0.1)',
+                                        padding: '10px 16px',
+                                        borderRadius: 12,
+                                        border: '1px solid rgba(186, 26, 26, 0.2)'
+                                    }}>{error}</p>
+                                )}
+
+                                {/* Access Strength Meter */}
+                                <div style={{ paddingTop: 8, paddingLeft: 4, paddingRight: 4, marginTop: 8 }}>
+                                    <div style={{ display: 'flex', gap: 6, height: 4, width: '100%' }}>
+                                        <div style={{ flex: 1, backgroundColor: '#0058bc', borderRadius: 9999 }} />
+                                        <div style={{ flex: 1, backgroundColor: '#0058bc', borderRadius: 9999 }} />
+                                        <div style={{ flex: 1, backgroundColor: password.length > 4 ? '#0058bc' : '#e0e3e5', borderRadius: 9999 }} />
+                                        <div style={{ flex: 1, backgroundColor: password.length > 6 ? '#0058bc' : '#e0e3e5', borderRadius: 9999 }} />
+                                        <div style={{ flex: 1, backgroundColor: password.length > 8 ? '#0058bc' : '#e0e3e5', borderRadius: 9999 }} />
+                                    </div>
+                                    <p style={{ fontSize: 10, marginTop: 8, fontWeight: 500, color: '#414755' }}>
+                                        Access Strength: <span style={{ color: '#0058bc', fontWeight: 700 }}>
+                                        {password.length === 0 ? 'None' : password.length <= 4 ? 'Standard' : password.length <= 8 ? 'Strong' : 'Maximum'}
+                                        </span>
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Error Message */}
-                            {error && (
-                                <p style={{
-                                    color: '#ffb4ab',
-                                    textAlign: 'center',
-                                    fontSize: 13,
-                                    marginBottom: 10,
-                                    background: 'rgba(147, 0, 10, 0.2)',
-                                    padding: '10px 16px',
-                                    borderRadius: 12,
-                                    border: '1px solid rgba(255, 180, 171, 0.2)'
-                                }}>{error}</p>
-                            )}
-
-                            {/* Password Strength Meter */}
-                            <div style={{ marginBottom: 24, paddingTop: 8 }}>
-                                <div style={{ display: 'flex', gap: 6, height: 6, width: '100%' }}>
-                                    <div style={{ flex: 1, borderRadius: 9999, background: '#8b7355' }} />
-                                    <div style={{ flex: 1, borderRadius: 9999, background: '#8b7355' }} />
-                                    <div style={{ flex: 1, borderRadius: 9999, background: password.length > 4 ? '#8b7355' : '#353534' }} />
-                                    <div style={{ flex: 1, borderRadius: 9999, background: password.length > 8 ? '#8b7355' : '#353534' }} />
-                                </div>
-                                <p style={{
-                                    fontSize: 10,
+                            {/* Login Button */}
+                            <button
+                                type="submit"
+                                disabled={authLoading}
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 0',
+                                    background: authLoading ? '#e0e3e5' : 'linear-gradient(to right, #0058bc, #0070eb)',
+                                    color: authLoading ? '#717786' : '#ffffff',
                                     fontWeight: 700,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.15em',
-                                    color: '#d1c4b9',
-                                    textAlign: 'center',
-                                    marginTop: 12
-                                }}>
-                                    {password.length === 0 ? 'Enter credentials' : password.length <= 4 ? 'Weak' : password.length <= 8 ? 'Strong Access Level' : 'Maximum Security'}
-                                </p>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
-                                <button
-                                    type="submit"
-                                    disabled={authLoading}
-                                    style={{
-                                        width: '100%',
-                                        height: 64,
-                                        background: authLoading
-                                            ? '#4d453c'
-                                            : 'linear-gradient(135deg, #dfc29f 0%, #8b7355 100%)',
-                                        color: authLoading ? '#9a8f84' : '#3f2d15',
-                                        fontFamily: '"Manrope", sans-serif',
-                                        fontWeight: 700,
-                                        fontSize: 18,
-                                        borderRadius: 16,
-                                        border: 'none',
-                                        boxShadow: authLoading ? 'none' : '0 4px 20px rgba(223, 194, 159, 0.2)',
-                                        cursor: authLoading ? 'wait' : 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 8,
-                                        transition: 'opacity 0.2s ease, transform 0.1s ease'
-                                    }}
-                                    onMouseDown={(e) => !authLoading && (e.currentTarget.style.transform = 'scale(0.98)')}
-                                    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                >
-                                    {authLoading ? 'Verificando...' : 'Login'}
-                                    {!authLoading && <span style={{ fontSize: 20 }}>→</span>}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/')}
-                                    style={{
-                                        width: '100%',
-                                        height: 64,
-                                        background: 'transparent',
-                                        border: '1px solid rgba(77, 69, 60, 0.3)',
-                                        color: '#d1c4b9',
-                                        fontFamily: '"Manrope", sans-serif',
-                                        fontWeight: 700,
-                                        fontSize: 18,
-                                        borderRadius: 16,
-                                        cursor: 'pointer',
-                                        transition: 'background 0.2s ease, transform 0.1s ease'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = '#1c1b1b'}
-                                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
-                                    onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-                                    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                >
-                                    Back
-                                </button>
-                            </div>
+                                    borderRadius: 8,
+                                    border: 'none',
+                                    boxShadow: authLoading ? 'none' : '0 10px 15px -3px rgba(0, 88, 188, 0.25)',
+                                    cursor: authLoading ? 'wait' : 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 8,
+                                    marginTop: 16
+                                }}
+                                onMouseDown={(e) => !authLoading && (e.currentTarget.style.transform = 'scale(0.98)')}
+                                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                                {authLoading ? 'Verificando...' : 'Login'}
+                                {!authLoading && <span style={{ fontSize: 18 }}>→</span>}
+                            </button>
                         </form>
                     </div>
                 </main>
 
-                {/* Background Decorative Blur Orbs */}
-                <div style={{
-                    position: 'absolute',
-                    top: '25%',
-                    left: -80,
-                    width: 320,
-                    height: 320,
-                    background: 'rgba(223, 194, 159, 0.05)',
-                    filter: 'blur(120px)',
-                    borderRadius: '50%',
-                    pointerEvents: 'none'
-                }} />
-                <div style={{
-                    position: 'absolute',
-                    bottom: '25%',
-                    right: -80,
-                    width: 384,
-                    height: 384,
-                    background: 'rgba(139, 115, 85, 0.1)',
-                    filter: 'blur(150px)',
-                    borderRadius: '50%',
-                    pointerEvents: 'none'
-                }} />
-
-                {/* Background Hero Image */}
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: -1,
-                    opacity: 0.1
-                }}>
-                    <img
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQMD1WWzULK-OYupbPZxeSzfpVJoZEnHhlAXCvT_lzZPs3W9mO4Mjhge_MHdrREJacVpXTHgo3a8vXkU06xML-SjlIIayDirdcBsZuVFTfSPhp2HhQSMbb0UoI8Ui6dQD8SM2WW5rD79R1ZvvbVyAwcls9Kn_pAL9UltGVwEvesdQXHMxE7po2xNtRtlBzYM8zFgSuQEIGYhb5TXRTU4tYkWS6OAtTwAS3biEAqvQ-9mzpYP3QGqJK-4Sd7m0TQ4yHFoG0bCVow00"
-                        alt=""
+                {/* Secondary Action */}
+                <div style={{ width: '100%', maxWidth: 448, display: 'flex', justifyContent: 'center' }}>
+                    <a 
+                        href="#" 
+                        onClick={(e) => { e.preventDefault(); window.location.href = '/'; }}
                         style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            filter: 'grayscale(100%)'
+                            marginTop: 40,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            color: '#414755',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            transition: 'all 0.3s ease'
                         }}
-                    />
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#0058bc'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#414755'}
+                    >
+                        <span style={{ fontSize: 18 }}>←</span>
+                        Back to Public Portal
+                    </a>
                 </div>
 
-                {/* DEV-ONLY BYPASS */}
+                {/* Footer Semantic Shell */}
+                <footer style={{
+                    position: 'fixed',
+                    bottom: 0,
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    flexWrap: 'wrap',
+                    gap: 16,
+                    paddingBottom: 32,
+                    fontFamily: '"Montserrat", sans-serif',
+                    fontSize: 14,
+                    color: '#717786'
+                }}>
+                    <span style={{ color: '#414755', opacity: 0.6 }}>© 2026 FoodSpot Systems</span>
+                    <div style={{ display: 'flex', gap: 24 }}>
+                        <a href="#" style={{ color: '#717786', textDecoration: 'none', transition: 'color 0.2s ease' }} onMouseEnter={(e)=>e.currentTarget.style.color='#0058bc'} onMouseLeave={(e)=>e.currentTarget.style.color='#717786'}>Privacy Policy</a>
+                        <a href="#" style={{ color: '#717786', textDecoration: 'none', transition: 'color 0.2s ease' }} onMouseEnter={(e)=>e.currentTarget.style.color='#0058bc'} onMouseLeave={(e)=>e.currentTarget.style.color='#717786'}>Terms of Service</a>
+                        <a href="#" style={{ color: '#717786', textDecoration: 'none', transition: 'color 0.2s ease' }} onMouseEnter={(e)=>e.currentTarget.style.color='#0058bc'} onMouseLeave={(e)=>e.currentTarget.style.color='#717786'}>Help Center</a>
+                    </div>
+                </footer>
                 {import.meta.env.DEV && (
                     <button
                         type="button"
