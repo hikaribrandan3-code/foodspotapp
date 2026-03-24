@@ -103,6 +103,8 @@ const Settings = () => {
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
     const rafRef = useRef(null);
+    // 🛡️ JUST SAVED FLAG: Prevents useEffect from overwriting local state with stale DB data
+    const justSavedRef = useRef(false);
 
     // Modal states
     const [showCoverEditor, setShowCoverEditor] = useState(false);
@@ -142,7 +144,8 @@ const Settings = () => {
             });
 
             // Sync munchboy fields from tenant (only if not dirty to avoid overwrite)
-            if (!hasChanges) {
+            // 🛡️ ALSO skip if we just saved (prevents replica lag from overwriting local state)
+            if (!hasChanges && !justSavedRef.current) {
                 setLocalMunchboyName(tenant.munchboy_name || 'MUNCHBOY');
                 setLocalMunchboyColors({
                     shell: tenant.munchboy_shell_color || '#6B0FCC',
@@ -158,6 +161,8 @@ const Settings = () => {
                     poweredBy: tenant.powered_by_color || '#C4856A'
                 });
             }
+            // Reset just saved flag after useEffect runs
+            justSavedRef.current = false;
 
             // Force CSS visuals
             if (tenant.font_family) {
@@ -501,6 +506,9 @@ const Settings = () => {
 
             // 2. Cloud Sync
             await updateBranding(payload, businessId);
+
+            // 🛡️ SET FLAG: Prevent useEffect from overwriting local state with stale DB data
+            justSavedRef.current = true;
 
             // 3. Global Refresh
             await refreshTenantData();
