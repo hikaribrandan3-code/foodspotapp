@@ -36,7 +36,8 @@ function AppHeader({ config: configProp }) {
     const headerMode = config?.headerBranding?.mode || 'cover'
     const breakpoint = getBreakpoint()
     const coverHeight = COVER_HEIGHTS[breakpoint]
-    const useClamp = config?.experimental?.headerClampMobile && breakpoint === 'mobile'
+    // Only clamp if explicitly enabled AND not in cover mode (cover needs full height)
+    const useClamp = config?.experimental?.headerClampMobile && breakpoint === 'mobile' && headerMode !== 'cover' && headerMode !== 'image'
 
     // ============================================
     // COVER MODE (V1 Default)
