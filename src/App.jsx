@@ -149,14 +149,26 @@ function App() {
         }
     }, [tenantData]);
 
-    // Listen for optimistic updates
+    // Listen for optimistic updates (and SuperAdmin remote updates)
     useEffect(() => {
         const handleSync = (e) => {
-            setConfig(prev => normalizeConfig({ ...prev, ...e.detail }));
+            if (e.detail) {
+                // 1. Settings.jsx Save (Targeted payload)
+                console.log('🔄 [App.jsx] Merging frontendSync payload');
+                setConfig(prev => normalizeConfig({ ...prev, ...e.detail }));
+            } else {
+                // 2. SuperAdmin.jsx "Actualizar" Button (Parameterless refresh)
+                console.log('🔄 [App.jsx] Parameterless frontendSync caught');
+                if (tenantData) {
+                    setConfig(prev => normalizeConfig({ ...prev, ...tenantData }));
+                } else {
+                    setConfig(getConfig());
+                }
+            }
         };
         window.addEventListener('frontendSync', handleSync);
         return () => window.removeEventListener('frontendSync', handleSync);
-    }, []);
+    }, [tenantData]);
 
     const safeConfig = useMemo(() => config ?? normalizeConfig({}), [config]);
     const trialExpired = false;
@@ -385,16 +397,12 @@ function App() {
         initCloudSync();
 
         const handleStorage = (e) => { if (e.key === 'grub_config' || e.key === null) refreshConfig(); };
-        const handleFrontend = () => {
-            if (tenantData) {
-                setConfig(prev => normalizeConfig({ ...prev, ...tenantData }));
-            } else {
-                setConfig(getConfig());
-            }
-        };
+        
         window.addEventListener('storage', handleStorage);
-        window.addEventListener('frontendSync', handleFrontend);
-        return () => { if (realtimeChannel) realtimeChannel.unsubscribe(); window.removeEventListener('storage', handleStorage); window.removeEventListener('frontendSync', handleFrontend); };
+        return () => { 
+            if (realtimeChannel) realtimeChannel.unsubscribe(); 
+            window.removeEventListener('storage', handleStorage); 
+        };
     }, [businessId, refreshConfig]);
 
     // Login interceptor fix
