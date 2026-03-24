@@ -344,13 +344,37 @@ function physStep(){
 }
 function wallBounce(b){
   if(PKS.some(function(p){return Math.hypot(b.x-p.x,b.y-p.y)<PR+BR+2;}))return;
-  // RAIL BOUNCE: cushion rubber absorbs some energy but returns most
-  // Rails are bouncier than ball-ball collisions
-  const e=0.82;
-  if(b.x-BR<FX&&b.vx<0){b.x=FX+BR;b.vx*=-e;doShake(Math.abs(b.vx)*0.7);}
-  if(b.x+BR>FR&&b.vx>0){b.x=FR-BR;b.vx*=-e;doShake(Math.abs(b.vx)*0.7);}
-  if(b.y-BR<FY&&b.vy<0){b.y=FY+BR;b.vy*=-e;doShake(Math.abs(b.vy)*0.7);}
-  if(b.y+BR>FB&&b.vy>0){b.y=FB-BR;b.vy*=-e;doShake(Math.abs(b.vy)*0.7);}
+  // ANGLE-DEPENDENT RAIL BOUNCE: cushions behave differently based on impact angle
+  // Research: perpendicular hits dig in (more dampened), glancing hits skim (more bouncy)
+  // Perpendicular: e ≈ 0.75-0.82 | Glancing (shallow angle): e ≈ 0.88
+  function getRailRestitution(vx,vy,isVertical){
+    // Calculate approach angle relative to rail normal
+    // isVertical = left/right rails (bounce affects vx)
+    // !isVertical = top/bottom rails (bounce affects vy)
+    const approachAngle=isVertical?Math.abs(Math.atan2(vy,vx)):Math.abs(Math.atan2(vx,vy));
+    // approachAngle = 0 = perpendicular (head-on into rail)
+    // approachAngle ≈ 1.57 (90°) = parallel to rail (glancing)
+    // Map: shallow angle (glancing) → high restitution (0.88)
+    //      perpendicular → lower restitution (0.78)
+    const t=Math.min(approachAngle/1.2,1); // Normalize, cap at 1
+    return 0.78+t*0.10; // Range: 0.78 to 0.88
+  }
+  if(b.x-BR<FX&&b.vx<0){
+    const e=getRailRestitution(b.vx,b.vy,true);
+    b.x=FX+BR;b.vx*=-e;doShake(Math.abs(b.vx)*0.7);
+  }
+  if(b.x+BR>FR&&b.vx>0){
+    const e=getRailRestitution(b.vx,b.vy,true);
+    b.x=FR-BR;b.vx*=-e;doShake(Math.abs(b.vx)*0.7);
+  }
+  if(b.y-BR<FY&&b.vy<0){
+    const e=getRailRestitution(b.vx,b.vy,false);
+    b.y=FY+BR;b.vy*=-e;doShake(Math.abs(b.vy)*0.7);
+  }
+  if(b.y+BR>FB&&b.vy>0){
+    const e=getRailRestitution(b.vx,b.vy,false);
+    b.y=FB-BR;b.vy*=-e;doShake(Math.abs(b.vy)*0.7);
+  }
 }
 function ballCollide(a,b){
   const dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy,mn=BR*2;
