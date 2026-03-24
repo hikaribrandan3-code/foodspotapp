@@ -111,15 +111,14 @@ function StaffLogin() {
                 left: 0,
                 right: 0,
                 display: 'flex',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
                 alignItems: 'center',
                 width: '100%',
                 padding: '16px 24px',
-                background: 'transparent'
+                background: '#ffffff',
+                boxShadow: '0 4px 20px rgba(0, 88, 188, 0.05)',
+                zIndex: 50
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {/* Placeholder for left action */}
-                </div>
                 <h1 style={{
                     fontFamily: '"Montserrat", sans-serif',
                     fontWeight: 700,
@@ -128,25 +127,9 @@ function StaffLogin() {
                     color: '#0058bc',
                     margin: 0
                 }}>FoodSpot Staff</h1>
-                <div style={{ width: 40 }} />
             </header>
 
-            <main style={{ width: '100%', maxWidth: 448, marginTop: 64, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                {/* Logo Branding */}
-                <div style={{ marginBottom: 40, textAlign: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 48, color: '#0058bc' }}>🍽️</span>
-                    </div>
-                    <div style={{
-                        fontSize: 30,
-                        fontWeight: 700,
-                        letterSpacing: '-0.05em',
-                        color: '#191c1e'
-                    }}>
-                        FoodSpot<span style={{ color: '#0058bc' }}>.</span>
-                    </div>
-                </div>
-
+            <main style={{ width: '100%', maxWidth: 448, marginTop: 80, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {/* Auth Card */}
                 <div style={{
                     width: '100%',
