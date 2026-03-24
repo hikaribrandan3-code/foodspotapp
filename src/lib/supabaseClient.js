@@ -21,7 +21,50 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { getScopedGuestToken, migrateLegacyToken } from '../utils/storage.js';
+
+// 🛡️ INLINE GUEST TOKEN UTILITIES (Breaks circular dependency with storage.js)
+// These functions are duplicated here to avoid: supabaseClient → storage → supabaseClient
+
+const getTenantTokenKey = () => {
+    if (typeof window === 'undefined') return 'fs_guest_token';
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    const urlSlug = pathSegments[0];
+    const tenantSlug = (urlSlug && urlSlug !== 'admin') ? urlSlug : localStorage.getItem('fs_last_active_slug');
+    return tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token';
+};
+
+const getScopedGuestToken = () => {
+    if (typeof window === 'undefined') return null;
+    const tokenKey = getTenantTokenKey();
+    let token = localStorage.getItem(tokenKey);
+    
+    if (!token) {
+        token = crypto.randomUUID 
+            ? crypto.randomUUID() 
+            : `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem(tokenKey, token);
+    }
+    
+    return token;
+};
+
+const migrateLegacyToken = () => {
+    if (typeof window === 'undefined') return;
+    
+    const legacyToken = localStorage.getItem('fs_guest_token');
+    const tenantSlug = (() => {
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const urlSlug = pathSegments[0];
+        return (urlSlug && urlSlug !== 'admin') ? urlSlug : localStorage.getItem('fs_last_active_slug');
+    })();
+    
+    if (legacyToken && tenantSlug) {
+        const newKey = `fs_guest_token_${tenantSlug}`;
+        localStorage.setItem(newKey, legacyToken);
+        localStorage.removeItem('fs_guest_token');
+        console.log(`[Vault-Seal] Migrated legacy token to: ${tenantSlug}`);
+    }
+};
 
 // Trigger migration on client init
 if (typeof window !== 'undefined') {

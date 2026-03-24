@@ -38,7 +38,7 @@
 - **Acquisition Target:** $40M (gaming IP + Optimistic Write tech + festival market)
 
 ## Preferences
-- **Terminal Bridge:** OpenCode (user confirmed working, preferred over Aider)
+- **Terminal Bridge:** OpenCode (user confirmed working, preferred over Aider), Claude Code (v2.1.81 active)
 - **Styling:** Vanilla CSS only (no Tailwind), CSS variables for branding
 - **Camera:** Strict separation - native browser APIs only, no QR bridging into CamTech
 
