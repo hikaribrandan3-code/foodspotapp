@@ -128,6 +128,7 @@ const Settings = () => {
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
     const rafRef = useRef(null);
+    const justSavedRef = useRef(false); // 🛡️ Blocks Data Pump from overwriting after save
 
     // Color Picker Modal State
     const [colorPickerState, setColorPickerState] = useState({
@@ -302,6 +303,14 @@ const Settings = () => {
             if (colorPickerState.isHeroIcon) {
                 updateHeroIconColor(colorPickerState.iconId, newColor);
             }
+            // Live preview for munchboy colors
+            if (colorPickerState.keyName === 'munchboy_shell_color') {
+                updateDraftField('munchboy_shell_color', newColor);
+            } else if (colorPickerState.keyName === 'munchboy_a_color') {
+                updateDraftField('munchboy_a_color', newColor);
+            } else if (colorPickerState.keyName === 'munchboy_b_color') {
+                updateDraftField('munchboy_b_color', newColor);
+            }
         });
     };
 
@@ -326,119 +335,126 @@ const Settings = () => {
         if (colorPickerState.isHeroIcon) {
             updateHeroIconColor(colorPickerState.iconId, colorPickerState.originalColor);
         }
+        // Revert munchboy colors on cancel
+        if (colorPickerState.keyName === 'munchboy_shell_color') {
+            updateDraftField('munchboy_shell_color', colorPickerState.originalColor);
+        } else if (colorPickerState.keyName === 'munchboy_a_color') {
+            updateDraftField('munchboy_a_color', colorPickerState.originalColor);
+        } else if (colorPickerState.keyName === 'munchboy_b_color') {
+            updateDraftField('munchboy_b_color', colorPickerState.originalColor);
+        }
         setColorPickerState(prev => ({ ...prev, isOpen: false }));
     };
 
-    // ============================================================
-    // SAVE: Atomic save operation
-    // ============================================================
-    const handlePlatformSave = async () => {
-        if (!businessId) return;
-        
-        setIsSaving(true);
-        console.log('[Settings] Saving branding for business:', businessId);
-
-        try {
-            // Construct payload directly from draft state (single source of truth)
-            const payload = {
-                business_name: draft.business_name,
-                font_family: draft.font_family,
-                font_weight: draft.font_weight,
-                navbar_color: draft.navbar_color,
-                primary_color: draft.primary_color,
-                secondary_color: draft.secondary_color,
-                confirmation_color: draft.confirmation_color,
-                powered_by_color: draft.powered_by_color,
-                hero_icons: draft.hero_icons,
-                info_pills: draft.info_pills,
-                munchboy_name: draft.munchboy_name,
-                munchboy_shell_color: draft.munchboy_shell_color,
-                munchboy_a_color: draft.munchboy_a_color,
-                munchboy_b_color: draft.munchboy_b_color,
-                munchboy_enabled: draft.munchboy_enabled,
-                hero_mode: draft.hero_mode,
-                hero_url: draft.hero_url,
-                nav_icon_mode: draft.nav_icon_mode,
-                hero_icon_mode: draft.hero_icon_mode,
-                app_config: draft.app_config,
-                updated_at: new Date().toISOString()
-            };
-
-            console.log('[Settings] Save payload:', payload);
-
-            // 1. Save to database
-            const { error: updateError } = await updateBranding(payload, businessId);
-            
-            if (updateError) {
-                console.error('[Settings] Update failed:', updateError);
-                throw updateError;
-            }
-
-            // 2. Refresh tenant data (this will update the context, but NOT our draft due to init guard)
-            await refreshTenantData();
-
-            // 3. Clear dirty state
-            setHasChanges(false);
-            setSaveStatus({ message: t('branding_saved') || 'Saved successfully!' });
-            setTimeout(() => setSaveStatus(null), 3000);
-
-        } catch (error) {
-            console.error('[Settings] Save failed:', error);
-            setSaveStatus({ error: true, message: t('save_error') || 'Save failed. Please try again.' });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    // ============================================================
-    // LOGOUT
-    // ============================================================
+    // Logout
     const handleLogout = async () => {
         await supabase.auth.signOut();
         clearAuth();
         window.location.href = `/${tenant?.slug || ''}`;
     };
 
-    // ============================================================
-    // UI EFFECTS
-    // ============================================================
-    
-    // Body scroll lock for color picker
-    useEffect(() => {
-        if (colorPickerState.isOpen) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
+    // 💾 THE ATOMIC SAVE (Manual Persistence Protocol v6.1 — Resilient Two-Tier with Draft Pattern)
+    const handlePlatformSave = async () => {
+        if (!businessId) return;
+        setIsSaving(true);
+        console.log('💾 SAVING BRANDING VAULT:', businessId);
+
+        // 🛡️ GUARD: Prevent Data Pump from overwriting local state with stale DB data
+        justSavedRef.current = true;
+
+        // Helper: apply returned data without doing a full refreshTenantData() round-trip
+        const applyReturnedData = (savedData) => {
+            if (!savedData) return;
+            Object.assign(tenant, savedData);
+            window.dispatchEvent(new CustomEvent('frontendSync', { detail: savedData }));
+            if (tenant.slug) {
+                const cacheKey = `tenant_lock_${tenant.slug}`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    try { localStorage.setItem(cacheKey, JSON.stringify({ ...JSON.parse(cached), ...savedData })); } catch (e) { /* ignore */ }
+                }
+            }
+        };
+
+        try {
+            // 1. Full payload (all columns from DRAFT state)
+            const fullPayload = {
+                business_name: draft.business_name,
+                font_family: draft.font_family,
+                font_weight: draft.font_weight,
+                navbar_color: draft.navbar_color,
+                nav_icon_mode: draft.nav_icon_mode,
+                primary_color: draft.primary_color,
+                secondary_color: draft.secondary_color,
+                confirmation_color: draft.confirmation_color,
+                powered_by_color: draft.powered_by_color,
+                hero_mode: draft.hero_mode,
+                hero_url: draft.hero_url,
+                hero_icons: draft.hero_icons,
+                info_pills: draft.info_pills,
+                munchboy_enabled: draft.munchboy_enabled,
+                munchboy_name: draft.munchboy_name,
+                munchboy_shell_color: draft.munchboy_shell_color,
+                munchboy_a_color: draft.munchboy_a_color,
+                munchboy_b_color: draft.munchboy_b_color,
+                app_config: draft.app_config,
+                updated_at: new Date().toISOString()
+            };
+
+            const { data: savedData, error: saveError } = await updateBranding(fullPayload, businessId);
+
+            if (saveError) {
+                // 🔍 DIAGNOSTIC: Log full Supabase error
+                console.warn('⚠️ Full save failed. Retrying with core fields only...');
+                console.error('⚠️ Supabase Error:', JSON.stringify(saveError, null, 2));
+
+                // 🛡️ TIER-2 FALLBACK: Core fields only
+                const corePayload = {
+                    business_name: draft.business_name,
+                    font_family: draft.font_family,
+                    font_weight: draft.font_weight,
+                    navbar_color: draft.navbar_color,
+                    nav_icon_mode: draft.nav_icon_mode,
+                    primary_color: draft.primary_color,
+                    secondary_color: draft.secondary_color,
+                    confirmation_color: draft.confirmation_color,
+                    powered_by_color: draft.powered_by_color,
+                    hero_mode: draft.hero_mode,
+                    hero_url: draft.hero_url,
+                    updated_at: new Date().toISOString()
+                };
+
+                const { data: coreData, error: coreError } = await updateBranding(corePayload, businessId);
+                if (coreError) throw coreError;
+                applyReturnedData(coreData);
+            } else {
+                applyReturnedData(savedData);
+            }
+
+            // Success State
+            setHasChanges(false);
+            sessionStorage.removeItem(`dirty_branding_${businessId}`);
+            setSaveStatus({ message: t('branding_saved') });
+            setTimeout(() => setSaveStatus(null), 3000);
+            setTimeout(() => { justSavedRef.current = false; }, 2000);
+
+        } catch (error) {
+            console.error('💾 Save failed entirely:', error);
+            justSavedRef.current = false;
+            setSaveStatus({ error: true, message: t('save_error') });
+        } finally {
+            setIsSaving(false);
         }
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [colorPickerState.isOpen]);
+    };
 
-    // Close dropdowns on outside click
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (fontMenuRef.current && !fontMenuRef.current.contains(event.target)) {
-                setIsFontMenuOpen(false);
-            }
-            if (weightMenuRef.current && !weightMenuRef.current.contains(event.target)) {
-                setIsWeightMenuOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('touchstart', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('touchstart', handleClickOutside);
-        };
-    }, []);
+    // Helper: Hex to RGB
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ?
+            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` :
+            '0, 0, 0';
+    };
 
-    // ============================================================
-    // RENDER HELPERS
-    // ============================================================
     const ColorPillar = ({ label, keyName, cssVar, defaultValue }) => {
         const currentColor = draft[keyName] || defaultValue;
         return (
