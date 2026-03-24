@@ -297,10 +297,14 @@ function App() {
     }, [
         config.branding?.fontFamily,
         config.branding?.fontWeight,
+        config.branding?.primaryColor,
+        config.branding?.navbar_color,
+        config.branding?.iconColorMode,
         config.colors?.primary,
         config.colors?.secondary,
+        config.colors?.confirmation,
+        config.colors?.powered,
         config.heroIcons,
-        config.branding?.primaryColor
     ]);
 
     useEffect(() => {

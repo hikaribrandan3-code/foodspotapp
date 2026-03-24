@@ -50,18 +50,25 @@ function BottomNav({ config: configProp }) {
         setDynamicConfig(configProp || {});
     }, [configProp]);
 
-    // ⚡ LISTEN FOR 'frontendSync' EVENT (The "Starter Fluid")
+    // ⚡ LISTEN FOR 'frontendSync' EVENT — extract branding fields from wherever they land
     useEffect(() => {
         const handleSync = (e) => {
-            console.log('⚡ BottomNav caught sync:', e.detail);
-            setDynamicConfig(prev => ({
-                ...prev,
-                branding: {
-                    ...prev.branding,
-                    ...e.detail, // Merges navbar_color, nav_icon_mode, etc.
-                    // Special handling for hero keys if they leak here, but mainly for branding
-                }
-            }));
+            if (!e.detail) return;
+            const d = e.detail;
+            // Branding data may be at root level (legacy) or nested under d.branding (new format)
+            const brandingPatch = {
+                ...(d.branding || {}),
+                // Also pull flat keys if they exist at root (backwards compat)
+                ...(d.navbar_color ? { navbar_color: d.navbar_color } : {}),
+                ...(d.nav_icon_mode ? { nav_icon_mode: d.nav_icon_mode } : {}),
+            };
+            console.log('⚡ BottomNav caught sync — branding patch:', brandingPatch);
+            if (Object.keys(brandingPatch).length > 0) {
+                setDynamicConfig(prev => ({
+                    ...prev,
+                    branding: { ...prev.branding, ...brandingPatch }
+                }));
+            }
         };
 
         window.addEventListener('frontendSync', handleSync);
