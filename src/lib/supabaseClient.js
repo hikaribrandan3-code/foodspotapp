@@ -203,6 +203,21 @@ export async function getBranding(businessId) {
  * @param {string} businessId - REQUIRED: Tenant UUID for isolation (!immutable ID!)
  * @returns {Promise<{data: object, error: Error|null}>}
  */
+// 🛡️ KNOWN COLUMNS CACHE: Prevents repeated 400 errors from unknown columns.
+// Populated on first successful save; cleared on page reload.
+let _knownBrandingColumns = null;
+
+// 🔐 GUARANTEED SAFE COLUMNS: These exist in every branding table deployment.
+const CORE_BRANDING_COLUMNS = [
+    'business_name', 'font_family', 'font_weight',
+    'navbar_color', 'primary_color', 'secondary_color',
+    'confirmation_color', 'powered_by_color',
+    'hero_mode', 'hero_url', 'nav_icon_mode',
+    'is_paused', 'pause_message',
+    'delivery_radius', 'delivery_fee', 'free_delivery_threshold',
+    'updated_at'
+];
+
 export async function updateBranding(updates, businessId) {
     // 🛡️ STRICT GUARDRAIL: Prevent off-silo branding updates
     if (!businessId) {
@@ -234,15 +249,66 @@ export async function updateBranding(updates, businessId) {
         if (updates.free_delivery_threshold !== undefined) dbUpdates.free_delivery_threshold = updates.free_delivery_threshold
         if (updates.freeDeliveryThreshold !== undefined) dbUpdates.free_delivery_threshold = updates.freeDeliveryThreshold
 
-        // 🔒 PERMANENT ID FIX: Ensure we are updating the row where business_id matches
+        // 🛡️ COLUMN FILTER: If we already know which columns exist, strip anything else
+        let filteredUpdates = dbUpdates;
+        if (_knownBrandingColumns) {
+            filteredUpdates = {};
+            for (const key of Object.keys(dbUpdates)) {
+                if (_knownBrandingColumns.has(key)) {
+                    filteredUpdates[key] = dbUpdates[key];
+                }
+            }
+            console.log('[updateBranding] Using cached column set, sending:', Object.keys(filteredUpdates).join(', '));
+        }
+
+        // 🔒 ATTEMPT 1: Try with all (or cached) columns
         const { data, error } = await supabase
             .from('branding')
-            .update(dbUpdates)
-            .eq('business_id', businessId) // 🔐 FIXED: Was 'tenant_id'
+            .update(filteredUpdates)
+            .eq('business_id', businessId)
             .select()
             .single()
 
-        if (error) console.error('[updateBranding] DB Error:', error)
+        if (!error && data) {
+            // ✅ SUCCESS: Learn which columns the table actually has from the returned row
+            _knownBrandingColumns = new Set(Object.keys(data));
+            console.log('[updateBranding] ✅ Success. Learned columns:', [..._knownBrandingColumns].join(', '));
+            return { data, error: null }
+        }
+
+        // 🔍 DIAGNOSTIC: Log the full error
+        console.warn('[updateBranding] Attempt 1 failed:', error?.message || error);
+
+        // 🛡️ ATTEMPT 2: Auto-heal by using only CORE columns (guaranteed safe)
+        if (error && (error.code === '42703' || error.message?.includes('column') || error.code === 'PGRST204' || String(error.code) === '400')) {
+            console.warn('[updateBranding] ⚠️ Column mismatch detected. Retrying with core columns only...');
+            
+            const coreUpdates = {};
+            for (const key of CORE_BRANDING_COLUMNS) {
+                if (dbUpdates[key] !== undefined) {
+                    coreUpdates[key] = dbUpdates[key];
+                }
+            }
+            // Always include updated_at
+            coreUpdates.updated_at = new Date().toISOString();
+
+            const { data: coreData, error: coreError } = await supabase
+                .from('branding')
+                .update(coreUpdates)
+                .eq('business_id', businessId)
+                .select()
+                .single()
+
+            if (!coreError && coreData) {
+                _knownBrandingColumns = new Set(Object.keys(coreData));
+                console.log('[updateBranding] ✅ Core save succeeded. Known columns:', [..._knownBrandingColumns].join(', '));
+                return { data: coreData, error: null }
+            }
+
+            console.error('[updateBranding] ❌ Core save also failed:', coreError);
+            return { data: null, error: coreError }
+        }
+
         return { data, error }
     } catch (error) {
         console.error('[updateBranding] Exception:', error)

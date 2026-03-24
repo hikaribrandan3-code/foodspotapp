@@ -501,27 +501,6 @@ export default function StoreBranding({ config: configProp, isDemo = false }) {
                 </div>
             </div>
 
-            {/* Apply Button */}
-            <button
-                onClick={() => {
-                    window.dispatchEvent(new CustomEvent('frontendSync'));
-                    alert('✅ ¡Branding aplicado al frontend!');
-                }}
-                style={{
-                    width: '100%',
-                    padding: '16px',
-                    background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 12,
-                    fontSize: 15,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
-                }}
-            >
-                ✨ Actualizar Frontend
-            </button>
 
             {/* Color Picker Modal */}
             {colorPickerState.isOpen && (

@@ -659,34 +659,6 @@ function SuperAdmin({ config: configProp }) {
                         </>
                     }
                 />
-                {/* Sync Button - SuperAdmin specific */}
-                <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB' }}>
-                    <button
-                        onClick={() => {
-                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                            setMenu(getMenu())
-                            setOrders(getOrders())
-                            alert('✅ Frontend synced!')
-                        }}
-                        style={{
-                            width: '100%',
-                            padding: '12px 24px',
-                            background: config.camera?.color || config.branding?.primaryColor || '#3B82F6',
-                            borderRadius: 12,
-                            border: 'none',
-                            fontSize: 14,
-                            fontWeight: 600,
-                            color: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 8,
-                            cursor: 'pointer'
-                        }}
-                    >
-                        🔄 Actualizar Frontend
-                    </button>
-                </div>
 
                 {/* Content - with bottom padding for BackendNav */}
                 <div style={{ padding: 16, paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
