@@ -114,8 +114,7 @@
 /* 🛡️ VAULT-SEAL: Class for AppHeader to consume variable */
 .menu-header-bg {
   background-image: var(--header-image) !important;
-  background-size: cover;
-  background-position: center;
+  /* background-size, position handled by inline styles in AppHeader */
   background-repeat: no-repeat;
   pointer-events: none;
   /* 🛡️ FORENSIC FIX: Prevent header from stealing clicks */

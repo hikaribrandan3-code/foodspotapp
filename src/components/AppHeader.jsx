@@ -55,11 +55,12 @@ function AppHeader({ config: configProp }) {
                 height: '200%',
                 left: '-50%',
                 top: '-50%',
-                // backgroundImage: handled by menu-header-bg class
+                backgroundImage: config?.headerCover?.image ? `url(${config.headerCover.image})` : undefined,
                 backgroundSize: `${scale * 100}%`,
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-                transform: `translate(${offsetX}px, ${offsetY}px)`
+                transform: `translate(${offsetX}px, ${offsetY}px)`,
+                transition: 'transform 0.1s ease-out'
             }} />
         )
         const placeholder = (
