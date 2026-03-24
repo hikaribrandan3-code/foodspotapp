@@ -416,6 +416,7 @@ const TrialSignup = () => {
             <style>{`
                 /* Material Symbols Setup */
                 .material-symbols-outlined {
+                    font-family: 'Material Symbols Outlined', sans-serif;
                     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
                     display: inline-block;
                     line-height: 1;
@@ -478,13 +479,13 @@ const TrialSignup = () => {
             <button 
                 onClick={handleTranslate}
                 style={{ 
-                    position: 'absolute', top: 24, right: 24, zIndex: 100, 
-                    background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(10px)', 
+                    position: 'fixed', top: 24, right: 24, zIndex: 1000, 
+                    background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', 
                     WebkitBackdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255,255,255,0.4)', color: 'white', 
+                    border: '1px solid rgba(255,255,255,0.2)', color: 'white', 
                     padding: '8px 16px', borderRadius: 20, cursor: 'pointer', 
                     fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                 }}
             >
                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>translate</span>
