@@ -29,10 +29,10 @@
 @media (max-height: 850px) {
   :root {
     --btn-scale: 0.82;
-    --dpad-size: 130px;
+    --dpad-size: 137px;
     --sys-btn-size: 22px;
-    --action-a-size: 64px;
-    --action-b-size: 58px;
+    --action-a-size: 67px;
+    --action-b-size: 67px;
     --shoulder-height: 4.5vh;
     --controls-pad-x: 24px;
     --controls-pad-y: 8px;
@@ -44,10 +44,10 @@
 @media (min-height: 851px) and (max-height: 920px) {
   :root {
     --btn-scale: 0.92;
-    --dpad-size: 140px;
+    --dpad-size: 147px;
     --sys-btn-size: 24px;
-    --action-a-size: 70px;
-    --action-b-size: 62px;
+    --action-a-size: 74px;
+    --action-b-size: 74px;
     --shoulder-height: 4.5vh;
     --controls-pad-x: 30px;
     --controls-pad-y: 10px;
@@ -59,10 +59,10 @@
 @media (min-height: 921px) {
   :root {
     --btn-scale: 1;
-    --dpad-size: 150px;
+    --dpad-size: 158px;
     --sys-btn-size: 28px;
-    --action-a-size: 72px;
-    --action-b-size: 66px;
+    --action-a-size: 76px;
+    --action-b-size: 76px;
     --shoulder-height: 4.5vh;
     --controls-pad-x: 36px;
     --controls-pad-y: 12px;
@@ -654,8 +654,8 @@
   width: var(--action-a-size);
   height: var(--action-a-size);
   font-size: calc(28px * var(--btn-scale));
-  top: 7px;
-  right: 7px;
+  top: 0;
+  right: 0;
   background: radial-gradient(circle at 35% 35%, var(--button-a-color) 0%, var(--button-a-color) 40%, var(--button-gray-dark) 100%);
   border-color: var(--button-a-outline);
 }
@@ -665,8 +665,8 @@
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(28px * var(--btn-scale));
-  bottom: 19px;
-  left: 19px;
+  bottom: 28px;
+  left: 28px;
   background: radial-gradient(circle at 35% 35%, var(--button-b-color) 0%, var(--button-b-color) 40%, var(--button-gray-dark) 100%);
   border-color: var(--button-b-outline);
 }
