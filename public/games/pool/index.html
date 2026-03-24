@@ -1104,8 +1104,8 @@ function loop(){
     if(keys.a){
       aHeldFrames++;
       if(!G.charge){G.charge=true;G.pwr=0;aHeldFrames=0;}
-      // Faster charge rate: 0.02 per frame = 50 frames to full (~0.8s)
-      G.pwr=Math.min(1,G.pwr+0.02);
+      // Charge rate: 1.4 seconds to full at 60fps = ~0.012 per frame
+      G.pwr=Math.min(1,G.pwr+0.012);
     }else{
       // Button released - fire if we were charging
       if(G.charge&&aHeldFrames>0){if(G.pwr>0.04)shoot();else{G.charge=false;G.pwr=0;}}
