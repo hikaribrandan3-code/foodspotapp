@@ -395,7 +395,29 @@ const Settings = () => {
 
             // ✅ Apply confirmed data to context + cache
             Object.assign(tenant, savedData);
-            window.dispatchEvent(new CustomEvent('frontendSync', { detail: savedData }));
+
+            // 🗺️ FRONTEND SYNC: Map flat DB rows to nested UI config
+            const frontendSyncData = {
+                ...savedData,
+                colors: {
+                    primary: savedData.primary_color,
+                    secondary: savedData.secondary_color,
+                    confirmation: savedData.confirmation_color,
+                    powered: savedData.powered_by_color
+                },
+                branding: {
+                    primaryColor: savedData.primary_color,
+                    navbar_color: savedData.navbar_color,
+                    nav_icon_mode: savedData.nav_icon_mode,
+                    fontFamily: savedData.font_family,
+                    fontWeight: savedData.font_weight
+                },
+                infoPills: savedData.info_pills,
+                heroIcons: savedData.hero_icons
+            };
+
+            window.dispatchEvent(new CustomEvent('frontendSync', { detail: frontendSyncData }));
+
             if (tenant.slug) {
                 const cacheKey = `tenant_lock_${tenant.slug}`;
                 const cached = localStorage.getItem(cacheKey);
