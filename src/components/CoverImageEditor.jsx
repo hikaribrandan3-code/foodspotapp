@@ -254,7 +254,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             const distance = Math.sqrt(dx * dx + dy * dy)
 
             if (initialPinchDistance.current > 0) {
-                const newScale = Math.min(3, Math.max(0.5, initialScaleRef.current * (distance / initialPinchDistance.current)))
+                const newScale = Math.min(5, Math.max(0.5, initialScaleRef.current * (distance / initialPinchDistance.current)))
                 posRef.current.scale = newScale
                 setScale(newScale)
             }

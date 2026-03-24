@@ -9,6 +9,23 @@ import HeaderClamp from '../../components/HeaderClamp'
 import { getDividerPreset } from '../../config/dividerPresets'
 import ItemCard from '../../components/ItemCard'
 
+// Helper: Parse hero_url transform params (s=scale, x=offsetX, y=offsetY)
+function parseHeroUrl(heroUrl) {
+    if (!heroUrl) return { image: null, scale: 1, offsetX: 0, offsetY: 0 };
+    try {
+        const url = new URL(heroUrl, 'http://dummy.com');
+        const params = new URLSearchParams(url.search);
+        return {
+            image: heroUrl,
+            scale: parseFloat(params.get('s')) || 1,
+            offsetX: parseFloat(params.get('x')) || 0,
+            offsetY: parseFloat(params.get('y')) || 0
+        };
+    } catch (e) {
+        return { image: heroUrl, scale: 1, offsetX: 0, offsetY: 0 };
+    }
+}
+
 // 🚀 VAULT-SEAL: Image Optimization Helper
 // Appends Supabase transformation parameters for lighter assets
 const getOptimizedImageUrl = (url, options = {}) => {
@@ -231,7 +248,7 @@ export default function Menu({ config: configProp }) {
         ...(tenantData?.app_config || configProp || {}),
         headerCover: {
             ...(tenantData?.app_config?.headerCover || {}),
-            image: tenantData?.hero_url || tenantData?.app_config?.headerCover?.image
+            ...parseHeroUrl(tenantData?.hero_url || tenantData?.app_config?.headerCover?.image)
         }
     }), [tenantData, configProp])
 
