@@ -353,32 +353,18 @@ const Settings = () => {
         window.location.href = `/${tenant?.slug || ''}`;
     };
 
-    // 💾 THE ATOMIC SAVE (Manual Persistence Protocol v6.1 — Resilient Two-Tier with Draft Pattern)
+    // 💾 ATOMIC SAVE (v7 — Self-Healing via updateBranding)
     const handlePlatformSave = async () => {
         if (!businessId) return;
         setIsSaving(true);
-        console.log('💾 SAVING BRANDING VAULT:', businessId);
+        console.log('💾 SAVING BRANDING — business:', businessId);
 
         // 🛡️ GUARD: Prevent Data Pump from overwriting local state with stale DB data
         justSavedRef.current = true;
 
-        // Helper: apply returned data without doing a full refreshTenantData() round-trip
-        const applyReturnedData = (savedData) => {
-            if (!savedData) return;
-            Object.assign(tenant, savedData);
-            window.dispatchEvent(new CustomEvent('frontendSync', { detail: savedData }));
-            if (tenant.slug) {
-                const cacheKey = `tenant_lock_${tenant.slug}`;
-                const cached = localStorage.getItem(cacheKey);
-                if (cached) {
-                    try { localStorage.setItem(cacheKey, JSON.stringify({ ...JSON.parse(cached), ...savedData })); } catch (e) { /* ignore */ }
-                }
-            }
-        };
-
         try {
-            // 1. Full payload (all columns from DRAFT state)
-            const fullPayload = {
+            // Single payload from DRAFT state — updateBranding handles column filtering
+            const payload = {
                 business_name: draft.business_name,
                 font_family: draft.font_family,
                 font_weight: draft.font_weight,
@@ -398,40 +384,26 @@ const Settings = () => {
                 munchboy_a_color: draft.munchboy_a_color,
                 munchboy_b_color: draft.munchboy_b_color,
                 app_config: draft.app_config,
-                updated_at: new Date().toISOString()
             };
 
-            const { data: savedData, error: saveError } = await updateBranding(fullPayload, businessId);
+            const { data: savedData, error: saveError } = await updateBranding(payload, businessId);
 
-            if (saveError) {
-                // 🔍 DIAGNOSTIC: Log full Supabase error
-                console.warn('⚠️ Full save failed. Retrying with core fields only...');
-                console.error('⚠️ Supabase Error:', JSON.stringify(saveError, null, 2));
-
-                // 🛡️ TIER-2 FALLBACK: Core fields only
-                const corePayload = {
-                    business_name: draft.business_name,
-                    font_family: draft.font_family,
-                    font_weight: draft.font_weight,
-                    navbar_color: draft.navbar_color,
-                    nav_icon_mode: draft.nav_icon_mode,
-                    primary_color: draft.primary_color,
-                    secondary_color: draft.secondary_color,
-                    confirmation_color: draft.confirmation_color,
-                    powered_by_color: draft.powered_by_color,
-                    hero_mode: draft.hero_mode,
-                    hero_url: draft.hero_url,
-                    updated_at: new Date().toISOString()
-                };
-
-                const { data: coreData, error: coreError } = await updateBranding(corePayload, businessId);
-                if (coreError) throw coreError;
-                applyReturnedData(coreData);
-            } else {
-                applyReturnedData(savedData);
+            // 🛡️ STRICT CHECK: Only show success if data was actually written
+            if (saveError || !savedData) {
+                throw saveError || new Error('Save returned no data');
             }
 
-            // Success State
+            // ✅ Apply confirmed data to context + cache
+            Object.assign(tenant, savedData);
+            window.dispatchEvent(new CustomEvent('frontendSync', { detail: savedData }));
+            if (tenant.slug) {
+                const cacheKey = `tenant_lock_${tenant.slug}`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    try { localStorage.setItem(cacheKey, JSON.stringify({ ...JSON.parse(cached), ...savedData })); } catch (e) { /* ignore */ }
+                }
+            }
+
             setHasChanges(false);
             sessionStorage.removeItem(`dirty_branding_${businessId}`);
             setSaveStatus({ message: t('branding_saved') });
@@ -439,9 +411,9 @@ const Settings = () => {
             setTimeout(() => { justSavedRef.current = false; }, 2000);
 
         } catch (error) {
-            console.error('💾 Save failed entirely:', error);
+            console.error('💾 Save failed:', error);
             justSavedRef.current = false;
-            setSaveStatus({ error: true, message: t('save_error') });
+            setSaveStatus({ error: true, message: t('save_error') || 'Save failed. Please try again.' });
         } finally {
             setIsSaving(false);
         }
