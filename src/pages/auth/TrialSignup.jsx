@@ -25,6 +25,114 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../../utils/storage.js'
 
 // ============================================
+// 🌍 TRANSLATIONS
+// ============================================
+const t = {
+  en: {
+    mobileTitle: 'FoodSpot Mobile',
+    subtitleSignup: 'Elevate your culinary business',
+    createAccount: 'Create your account',
+    joinNetwork: 'Join the elite network of food creators.',
+    businessName: 'BUSINESS NAME',
+    businessPlaceholder: 'e.g., Burger Palace',
+    emailLabel: 'EMAIL ADDRESS',
+    emailPlaceholder: 'chef@restaurant.com',
+    passwordLabel: 'PASSWORD',
+    strength: 'STRENGTH:',
+    good: 'GOOD',
+    moderate: 'MODERATE',
+    weak: 'WEAK',
+    avoid123: "Avoid '123456'",
+    startFreeTrial: 'Start free trial',
+    processing: 'Processing...',
+    orContinueWith: 'Or continue with',
+    alreadyHaveAccount: 'Already have an account?',
+    login: 'Log in',
+    bySigningUp: "By signing up, you agree to FoodSpot's",
+    tos: 'Terms of Service',
+    and: 'and',
+    privacy: 'Privacy Policy',
+    welcome: 'Welcome',
+    discoverFlavors: 'Discover the best flavors around you',
+    forgot: 'FORGOT?',
+    newHere: 'New here?',
+    signUp: 'Sign up',
+    exploreTasteShare: 'Explore • Taste • Share',
+    google: 'Google',
+    email: 'Email',
+    apple: 'Apple'
+  },
+  es: {
+    mobileTitle: 'FoodSpot Mobile',
+    subtitleSignup: 'Eleva tu negocio culinario',
+    createAccount: 'Crea tu cuenta',
+    joinNetwork: 'Únete a la red élite de creadores.',
+    businessName: 'NOMBRE DEL NEGOCIO',
+    businessPlaceholder: 'ej. Burger Palace',
+    emailLabel: 'CORREO ELECTRÓNICO',
+    emailPlaceholder: 'chef@restaurante.com',
+    passwordLabel: 'CONTRASEÑA',
+    strength: 'SEGURIDAD:',
+    good: 'ALTA',
+    moderate: 'MEDIA',
+    weak: 'BAJA',
+    avoid123: "Evita '123456'",
+    startFreeTrial: 'Comenzar prueba gratis',
+    processing: 'Procesando...',
+    orContinueWith: 'O continúa con',
+    alreadyHaveAccount: '¿Ya tienes cuenta?',
+    login: 'Iniciar sesión',
+    bySigningUp: "Al registrarte, aceptas los",
+    tos: 'Términos de Servicio',
+    and: 'y la',
+    privacy: 'Política de Privacidad',
+    welcome: 'Bienvenido',
+    discoverFlavors: 'Descubre los mejores sabores a tu alrededor',
+    forgot: '¿OLVIDASTE?',
+    newHere: '¿Eres nuevo?',
+    signUp: 'Regístrate',
+    exploreTasteShare: 'Explora • Prueba • Comparte',
+    google: 'Google',
+    email: 'Email',
+    apple: 'Apple'
+  },
+  pt: {
+    mobileTitle: 'FoodSpot Mobile',
+    subtitleSignup: 'Eleve o seu negócio culinário',
+    createAccount: 'Crie sua conta',
+    joinNetwork: 'Junte-se à rede de criadores de elite.',
+    businessName: 'NOME DO NEGÓCIO',
+    businessPlaceholder: 'ex: Burger Palace',
+    emailLabel: 'ENDEREÇO DE EMAIL',
+    emailPlaceholder: 'chef@restaurante.com',
+    passwordLabel: 'SENHA',
+    strength: 'FORÇA:',
+    good: 'ALTA',
+    moderate: 'MEDIA',
+    weak: 'BAIXA',
+    avoid123: "Evite '123456'",
+    startFreeTrial: 'Começar teste grátis',
+    processing: 'Processando...',
+    orContinueWith: 'Ou continue com',
+    alreadyHaveAccount: 'Já tem uma conta?',
+    login: 'Entrar',
+    bySigningUp: "Ao se cadastrar, você concorda com os",
+    tos: 'Termos de Serviço',
+    and: 'e a',
+    privacy: 'Política de Privacidade',
+    welcome: 'Bem-vindo',
+    discoverFlavors: 'Descubra os melhores sabores ao seu redor',
+    forgot: 'ESQUECEU?',
+    newHere: 'É novo aqui?',
+    signUp: 'Cadastre-se',
+    exploreTasteShare: 'Explore • Prove • Compartilhe',
+    google: 'Google',
+    email: 'Email',
+    apple: 'Apple'
+  }
+}
+
+// ============================================
 // 🔐 PREMIER AUTH SCREEN (Strike 12)
 // ============================================
 
@@ -39,6 +147,7 @@ const TrialSignup = () => {
 
     // UI State
     const [mode, setMode] = useState('signup') // 'signup' | 'login'
+    const [lang, setLang] = useState('en')
     const [showEmailForm, setShowEmailForm] = useState(false)
 
     // Form state
@@ -47,6 +156,9 @@ const TrialSignup = () => {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+    
+    // Quick Reference to localized copy
+    const l = t[lang]
 
     // Pre-fill business name from URL param
     useEffect(() => {
@@ -286,11 +398,18 @@ const TrialSignup = () => {
         }
     }
 
-    // ============================
-    // RENDER: RESPONSIVE SPLIT
-    // ============================
+    // Toggle Language Handler
+    const handleTranslate = () => {
+        setLang(current => {
+            if (current === 'en') return 'es'
+            if (current === 'es') return 'pt'
+            return 'en'
+        })
+    }
 
-
+    // ============================
+    // RENDER
+    // ============================
 
     return (
         <>
@@ -355,12 +474,30 @@ const TrialSignup = () => {
                 .social-btn:active { transform: scale(0.95); }
             `}</style>
             
+            {/* Global Floating Language Translator Button */}
+            <button 
+                onClick={handleTranslate}
+                style={{ 
+                    position: 'absolute', top: 24, right: 24, zIndex: 100, 
+                    background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(10px)', 
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.4)', color: 'white', 
+                    padding: '8px 16px', borderRadius: 20, cursor: 'pointer', 
+                    fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }}
+            >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>translate</span>
+                {lang.toUpperCase()}
+            </button>
+
             {mode === 'signup' ? (
-                <div className="signup-hero-bg" style={{ minHeight: '100dvh', fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#191c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                <div className="signup-hero-bg" style={{ minHeight: '100dvh', fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#191c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', position: 'relative' }}>
                     <main style={{ width: '100%', maxWidth: '448px', margin: '32px 0' }}>
+                        
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
-                            <h1 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 800, fontSize: '36px', color: '#ffffff', letterSpacing: '-0.05em', margin: 0, textShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>FoodSpot</h1>
-                            <p style={{ color: 'rgba(255,255,255,0.8)', marginTop: '8px', fontWeight: 500, margin: 0 }}>Elevate your culinary business</p>
+                            <h1 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 900, fontSize: '40px', color: '#ffffff', letterSpacing: '-0.05em', margin: 0, textShadow: '0 4px 6px rgba(0,0,0,0.3)', transform: 'scale(1.1)' }}>{l.mobileTitle}</h1>
+                            <p style={{ color: 'rgba(255,255,255,0.9)', marginTop: '12px', fontWeight: 600, margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>{l.subtitleSignup}</p>
                         </div>
                         
                         {error && (
@@ -369,32 +506,32 @@ const TrialSignup = () => {
 
                         <div className="glass-card-signup">
                             <div style={{ marginBottom: '32px' }}>
-                                <h2 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 700, fontSize: '24px', margin: 0 }}>Create your account</h2>
-                                <p style={{ color: '#586377', fontSize: '14px', marginTop: '4px', margin: 0 }}>Join the elite network of food creators.</p>
+                                <h2 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 800, fontSize: '24px', margin: 0 }}>{l.createAccount}</h2>
+                                <p style={{ color: '#586377', fontSize: '14px', marginTop: '4px', margin: 0 }}>{l.joinNetwork}</p>
                             </div>
                             
                             <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>BUSINESS NAME</label>
-                                    <input className="ts-input" type="text" placeholder="e.g., Burger Palace" value={businessName} onChange={e => setBusinessName(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 20px', color: '#191c1e' }} />
+                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.businessName}</label>
+                                    <input className="ts-input" type="text" placeholder={l.businessPlaceholder} value={businessName} onChange={e => setBusinessName(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 20px', color: '#191c1e', fontWeight: 600 }} />
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>EMAIL ADDRESS</label>
+                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.emailLabel}</label>
                                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                         <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#0058bc' }}>mail</span>
-                                        <input className="ts-input" type="email" placeholder="chef@restaurant.com" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 20px 16px 48px', color: '#191c1e' }} />
+                                        <input className="ts-input" type="email" placeholder={l.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 20px 16px 48px', color: '#191c1e', fontWeight: 600 }} />
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>PASSWORD</label>
+                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.passwordLabel}</label>
                                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                         <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#0058bc' }}>lock</span>
-                                        <input className="ts-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 48px', color: '#191c1e' }} />
+                                        <input className="ts-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 48px', color: '#191c1e', fontWeight: 600 }} />
                                     </div>
                                     <div style={{ paddingTop: '8px', paddingLeft: '4px', paddingRight: '4px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#586377' }}>STRENGTH: {password.length > 5 ? 'GOOD' : 'MODERATE'}</span>
-                                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#9e3d00' }}>Avoid '123456'</span>
+                                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#586377' }}>{l.strength} {password.length > 5 ? l.good : password.length > 0 ? l.moderate : l.weak}</span>
+                                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#9e3d00' }}>{l.avoid123}</span>
                                         </div>
                                         <div style={{ height: '6px', width: '100%', background: '#e6e8ea', borderRadius: '9999px', overflow: 'hidden', display: 'flex', gap: '2px' }}>
                                             <div style={{ height: '100%', width: '33.33%', background: password.length > 0 ? '#9e3d00' : 'transparent', borderRadius: '9999px' }}></div>
@@ -403,8 +540,8 @@ const TrialSignup = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '16px' }}>
-                                    {loading ? 'Procesando...' : 'Comenzar prueba gratis'}
+                                <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '16px', padding: '18px' }}>
+                                    {loading ? l.processing : l.startFreeTrial}
                                 </button>
                             </form>
                             
@@ -413,30 +550,30 @@ const TrialSignup = () => {
                                     <div style={{ width: '100%', borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
                                 </div>
                                 <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>
-                                    <span style={{ background: '#ffffff', padding: '0 16px', color: '#586377', opacity: 0.9 }}>Or continue with</span>
+                                    <span style={{ background: '#ffffff', padding: '0 16px', color: '#586377', opacity: 0.9 }}>{l.orContinueWith}</span>
                                 </div>
                             </div>
                             
                             <div style={{ display: 'flex', gap: '16px' }}>
                                 <button type="button" onClick={handleGoogleLogin} disabled={loading} className="social-btn" style={{ flex: 1 }}>
                                     <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvoDfKDiuMJl1Schk_jYlonI9Ak2qxMNG2ce5EIF2O_FwFCu1U1VUknDhCrjkId-cYpXhXcGi8TQqQk9lnZ5cNsejz0y69g2Ecar2hNuQbwSqlILIsneGl8qZTIv8KoZGC2hz22GswAIyz_mn4Wz0HjArG41ZODqO_Wb_gCuhNiSE4F0JlNrkRIEH32UQ1ZgETf9Ek1cNH3WVrX9lFWUDf1N4PBL322dHeCXt8ZuEIb53-8XWxJBdwpxUwh1xP10py8o9chTnJcPlY" alt="Google" style={{ width: 16, height: 16 }} />
-                                    <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '12px' }}>Google</span>
+                                    <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '12px' }}>{l.google}</span>
                                 </button>
                                 <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="social-btn" style={{ flex: 1 }}>
                                     <span className="material-symbols-outlined" style={{ color: '#191c1e', opacity: 0.7, fontSize: 18 }}>mail</span>
-                                    <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '12px' }}>Email</span>
+                                    <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '12px' }}>{l.email}</span>
                                 </button>
                             </div>
                             
-                            <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '14px', color: '#586377', margin: '32px 0 0 0' }}>
-                                Already have an account?{' '}
-                                <a href="#" onClick={(e) => { e.preventDefault(); setMode('login'); setError(null); }} style={{ color: '#0058bc', fontWeight: 700, textDecoration: 'none' }}>Log in</a>
+                            <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '14px', color: '#586377', margin: '32px 0 0 0', fontWeight: 500 }}>
+                                {l.alreadyHaveAccount}{' '}
+                                <a href="#" onClick={(e) => { e.preventDefault(); setMode('login'); setError(null); }} style={{ color: '#0058bc', fontWeight: 800, textDecoration: 'none' }}>{l.login}</a>
                             </p>
                         </div>
                         
-                        <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 500, lineHeight: 1.5, padding: '0 32px' }}>
-                            By signing up, you agree to FoodSpot's <br/>
-                            <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Terms of Service</span> and <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>.
+                        <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '10px', color: 'rgba(255,255,255,0.7)', fontWeight: 500, lineHeight: 1.5, padding: '0 32px' }}>
+                            {l.bySigningUp} <br/>
+                            <span style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}>{l.tos}</span> {l.and} <span style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}>{l.privacy}</span>.
                         </p>
                     </main>
                 </div>
@@ -457,8 +594,8 @@ const TrialSignup = () => {
                     <main style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '448px', padding: '0 24px' }}>
                         <div className="glass-card-login">
                             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                                <h1 style={{ fontSize: '30px', fontWeight: 700, color: '#0058bc', marginBottom: '8px', letterSpacing: '-0.025em', margin: 0 }}>Bienvenido</h1>
-                                <p style={{ color: '#586377', fontSize: '14px', fontWeight: 500, margin: 0, marginTop: '8px' }}>Descubre los mejores sabores a tu alrededor</p>
+                                <h1 style={{ fontSize: '30px', fontWeight: 800, color: '#0058bc', marginBottom: '8px', letterSpacing: '-0.025em', margin: 0 }}>{l.welcome}</h1>
+                                <p style={{ color: '#586377', fontSize: '14px', fontWeight: 600, margin: 0, marginTop: '8px' }}>{l.discoverFlavors}</p>
                             </div>
                             
                             {error && (
@@ -467,49 +604,49 @@ const TrialSignup = () => {
                             
                             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0058bc', marginLeft: '4px' }}>Email</label>
+                                    <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0058bc', marginLeft: '4px' }}>{l.emailLabel}</label>
                                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                         <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#586377' }}>mail</span>
-                                        <input className="ts-input" type="email" placeholder="tu@email.com" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#ffffff', border: 'none', borderRadius: '8px', padding: '16px 16px 16px 48px', color: '#191c1e', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} />
+                                        <input className="ts-input" type="email" placeholder={l.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#ffffff', border: 'none', borderRadius: '8px', padding: '16px 16px 16px 48px', color: '#191c1e', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontWeight: 600 }} />
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginLeft: '4px' }}>
-                                        <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0058bc', margin: 0 }}>Password</label>
-                                        <a href="#" style={{ fontSize: '10px', fontWeight: 700, color: '#586377', textDecoration: 'none' }}>¿OLVIDASTE?</a>
+                                        <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0058bc', margin: 0 }}>{l.passwordLabel}</label>
+                                        <a href="#" style={{ fontSize: '10px', fontWeight: 700, color: '#586377', textDecoration: 'none' }}>{l.forgot}</a>
                                     </div>
                                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                         <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#586377' }}>lock</span>
-                                        <input className="ts-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} style={{ width: '100%', background: '#ffffff', border: 'none', borderRadius: '8px', padding: '16px 16px 16px 48px', color: '#191c1e', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} />
+                                        <input className="ts-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} style={{ width: '100%', background: '#ffffff', border: 'none', borderRadius: '8px', padding: '16px 16px 16px 48px', color: '#191c1e', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontWeight: 600 }} />
                                     </div>
                                 </div>
                                 <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '0', fontSize: '18px', padding: '16px', borderRadius: '9999px' }}>
-                                    <span>{loading ? 'Procesando...' : 'Iniciar sesión'}</span>
+                                    <span>{loading ? l.processing : l.login}</span>
                                     {!loading && <span className="material-symbols-outlined" style={{ fontSize: 20 }}>arrow_forward</span>}
                                 </button>
                             </form>
                             
                             <div style={{ display: 'flex', alignItems: 'center', margin: '32px 0' }}>
                                 <div style={{ flexGrow: 1, borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
-                                <span style={{ margin: '0 16px', fontSize: '10px', fontWeight: 700, color: '#c1c6d7', textTransform: 'uppercase', letterSpacing: '0.1em' }}>O continúa con</span>
+                                <span style={{ margin: '0 16px', fontSize: '10px', fontWeight: 700, color: '#c1c6d7', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{l.orContinueWith}</span>
                                 <div style={{ flexGrow: 1, borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
                             </div>
                             
                             <div style={{ display: 'flex', gap: '16px' }}>
                                 <button type="button" onClick={handleGoogleLogin} disabled={loading} className="social-btn" style={{ flex: 1, padding: '12px', fontSize: '12px' }}>
                                     <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuY8s_dsoFucVh5TaXd4oIju_IptYK3cJ-QJIyF6y5OUwKyBTeKs7_jA9X8s7swzDmHyrJjWQP7KltGwFfFkECKNmsVwU2UIA--h5kNKsjEjCU9xzmEWMNgVVPM8oIFbP9pZb__ixpk6q9dL_OiGpM5fhLwSYFULmZ_KWO6gp2tnvpPIfwjMPaKPTugwjVPIcmU1wz38A7dM2vrQ6meUrAr6k9rf1Q2Pc0vAuXk-JcmKoUQldCh2SLUJBmQ7WzzTJ3vuN9CQma4Tnd" alt="Google" style={{ width: 16, height: 16 }} />
-                                    <span>Google</span>
+                                    <span>{l.google}</span>
                                 </button>
                                 <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="social-btn" style={{ flex: 1, padding: '12px', fontSize: '12px' }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#586377' }}>alternate_email</span>
-                                    <span>Apple</span>
+                                    <span>{l.apple}</span>
                                 </button>
                             </div>
                             
                             <div style={{ marginTop: '40px', textAlign: 'center' }}>
-                                <p style={{ fontSize: '14px', fontWeight: 500, color: '#586377', margin: 0 }}>
-                                    ¿Eres nuevo?{' '}
-                                    <a href="#" onClick={(e) => { e.preventDefault(); setMode('signup'); setError(null); }} style={{ color: '#0058bc', fontWeight: 700, textDecoration: 'none', marginLeft: '4px' }}>Regístrate</a>
+                                <p style={{ fontSize: '14px', fontWeight: 600, color: '#586377', margin: 0 }}>
+                                    {l.newHere}{' '}
+                                    <a href="#" onClick={(e) => { e.preventDefault(); setMode('signup'); setError(null); }} style={{ color: '#0058bc', fontWeight: 800, textDecoration: 'none', marginLeft: '4px' }}>{l.signUp}</a>
                                 </p>
                             </div>
                         </div>
@@ -517,7 +654,7 @@ const TrialSignup = () => {
                     
                     <div style={{ position: 'fixed', bottom: '40px', zIndex: 10, textAlign: 'center', width: '100%', padding: '0 24px', pointerEvents: 'none' }}>
                         <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                            Explora • Prueba • Comparte
+                            {l.exploreTasteShare}
                         </p>
                     </div>
                 </div>
