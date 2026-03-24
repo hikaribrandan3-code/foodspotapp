@@ -25,6 +25,114 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../../utils/storage.js'
 
 // ============================================
+// 🌍 TRANSLATIONS
+// ============================================
+const t = {
+  en: {
+    mobileTitle: 'FoodSpot Mobile',
+    subtitleSignup: 'Elevate your culinary business',
+    createAccount: 'Create your account',
+    joinNetwork: 'Join the elite network of food creators.',
+    businessName: 'BUSINESS NAME',
+    businessPlaceholder: 'e.g., Burger Palace',
+    emailLabel: 'EMAIL ADDRESS',
+    emailPlaceholder: 'chef@restaurant.com',
+    passwordLabel: 'PASSWORD',
+    strength: 'STRENGTH:',
+    good: 'GOOD',
+    moderate: 'MODERATE',
+    weak: 'WEAK',
+    avoid123: "Avoid '123456'",
+    startFreeTrial: 'Start free trial',
+    processing: 'Processing...',
+    orContinueWith: 'Or continue with',
+    alreadyHaveAccount: 'Already have an account?',
+    login: 'Log in',
+    bySigningUp: "By signing up, you agree to FoodSpot's",
+    tos: 'Terms of Service',
+    and: 'and',
+    privacy: 'Privacy Policy',
+    welcome: 'Welcome',
+    discoverFlavors: 'Discover the best flavors around you',
+    forgot: 'FORGOT?',
+    newHere: 'New here?',
+    signUp: 'Sign up',
+    exploreTasteShare: 'Explore • Taste • Share',
+    google: 'Google',
+    email: 'Email',
+    apple: 'Apple'
+  },
+  es: {
+    mobileTitle: 'FoodSpot Mobile',
+    subtitleSignup: 'Eleva tu negocio culinario',
+    createAccount: 'Crea tu cuenta',
+    joinNetwork: 'Únete a la red élite de creadores.',
+    businessName: 'NOMBRE DEL NEGOCIO',
+    businessPlaceholder: 'ej. Burger Palace',
+    emailLabel: 'CORREO ELECTRÓNICO',
+    emailPlaceholder: 'chef@restaurante.com',
+    passwordLabel: 'CONTRASEÑA',
+    strength: 'SEGURIDAD:',
+    good: 'ALTA',
+    moderate: 'MEDIA',
+    weak: 'BAJA',
+    avoid123: "Evita '123456'",
+    startFreeTrial: 'Comenzar prueba gratis',
+    processing: 'Procesando...',
+    orContinueWith: 'O continúa con',
+    alreadyHaveAccount: '¿Ya tienes cuenta?',
+    login: 'Iniciar sesión',
+    bySigningUp: "Al registrarte, aceptas los",
+    tos: 'Términos de Servicio',
+    and: 'y la',
+    privacy: 'Política de Privacidad',
+    welcome: 'Bienvenido',
+    discoverFlavors: 'Descubre los mejores sabores a tu alrededor',
+    forgot: '¿OLVIDASTE?',
+    newHere: '¿Eres nuevo?',
+    signUp: 'Regístrate',
+    exploreTasteShare: 'Explora • Prueba • Comparte',
+    google: 'Google',
+    email: 'Email',
+    apple: 'Apple'
+  },
+  pt: {
+    mobileTitle: 'FoodSpot Mobile',
+    subtitleSignup: 'Eleve o seu negócio culinário',
+    createAccount: 'Crie sua conta',
+    joinNetwork: 'Junte-se à rede de criadores de elite.',
+    businessName: 'NOME DO NEGÓCIO',
+    businessPlaceholder: 'ex: Burger Palace',
+    emailLabel: 'ENDEREÇO DE EMAIL',
+    emailPlaceholder: 'chef@restaurante.com',
+    passwordLabel: 'SENHA',
+    strength: 'FORÇA:',
+    good: 'ALTA',
+    moderate: 'MEDIA',
+    weak: 'BAIXA',
+    avoid123: "Evite '123456'",
+    startFreeTrial: 'Começar teste grátis',
+    processing: 'Processando...',
+    orContinueWith: 'Ou continue com',
+    alreadyHaveAccount: 'Já tem uma conta?',
+    login: 'Entrar',
+    bySigningUp: "Ao se cadastrar, você concorda com os",
+    tos: 'Termos de Serviço',
+    and: 'e a',
+    privacy: 'Política de Privacidade',
+    welcome: 'Bem-vindo',
+    discoverFlavors: 'Descubra os melhores sabores ao seu redor',
+    forgot: 'ESQUECEU?',
+    newHere: 'É novo aqui?',
+    signUp: 'Cadastre-se',
+    exploreTasteShare: 'Explore • Prove • Compartilhe',
+    google: 'Google',
+    email: 'Email',
+    apple: 'Apple'
+  }
+}
+
+// ============================================
 // 🔐 PREMIER AUTH SCREEN (Strike 12)
 // ============================================
 
@@ -39,6 +147,7 @@ const TrialSignup = () => {
 
     // UI State
     const [mode, setMode] = useState('signup') // 'signup' | 'login'
+    const [lang, setLang] = useState('en')
     const [showEmailForm, setShowEmailForm] = useState(false)
 
     // Form state
@@ -47,6 +156,9 @@ const TrialSignup = () => {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+    
+    // Quick Reference to localized copy
+    const l = t[lang]
 
     // Pre-fill business name from URL param
     useEffect(() => {
@@ -286,459 +398,269 @@ const TrialSignup = () => {
         }
     }
 
-    // ============================
-    // RENDER: RESPONSIVE SPLIT
-    // ============================
+    // Toggle Language Handler
+    const handleTranslate = () => {
+        setLang(current => {
+            if (current === 'en') return 'es'
+            if (current === 'es') return 'pt'
+            return 'en'
+        })
+    }
 
-
+    // ============================
+    // RENDER
+    // ============================
 
     return (
         <>
-            {/* RESPONSIVE CSS */}
             <style>{`
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
+                /* Material Symbols Setup */
+                .material-symbols-outlined {
+                    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+                    display: inline-block;
+                    line-height: 1;
                 }
-                #trial-title, #trial-title * {
-                    color: #FFFFFF !important;
+                
+                /* Global Animations */
+                .ts-btn:hover { transform: scale(1.02); }
+                .ts-btn:active { transform: scale(0.98); }
+                
+                .ts-input::placeholder { color: #c1c6d7; }
+                .ts-input:focus {
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(0, 88, 188, 0.2);
                 }
-                input::placeholder { color: #9CA3AF; }
-                input:focus {
-                    border-color: #DC3C14 !important;
-                    box-shadow: 0 0 0 4px rgba(220, 60, 20, 0.1) !important;
-                    background: #FFFFFF !important;
+                
+                /* Sign Up specific hero bg */
+                .signup-hero-bg {
+                    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuAwbRWIbTSOLmazpgRD0jJQ-dY3mjTSoUE8FPmHn9gqca4PcdTMcSz4y9SOQJeXvinys-9mN5MOHpB1KbcmqKA2ArSsjQmr3yqxdHgVtLnnjizH4KXLgwbU9uClN1EgiaeMq-IhWv9gZ0OXPa2WvK0vcwI6fXoD3mDfdI28FWP1_PG10NeNN1zpu25UCGDtf_Mkb3KrjtjQ1nNZQLXY7BD32-rSVgah9vsTeGANvBPDAObs34KtWlV7jDOtMVg9IVNoSQX2DMXko0eF);
+                    background-size: cover;
+                    background-position: center;
                 }
-                /* MOBILE: Default Layout */
-                .ts-desktop-shell { display: none !important; }
-                .ts-mobile-shell { 
-                    display: flex;
-                    flex-direction: column;
+                
+                /* Login cinematic bg image layer */
+                .login-cinematic-img {
+                    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.1);
                 }
-
-                /* DESKTOP: show split, hide mobile */
-                @media (min-width: 1024px) {
-                    .ts-desktop-shell { 
-                        display: flex !important;
-                        align-items: center;
-                        justify-content: center;
-                    }
-                    .ts-mobile-shell { display: none !important; }
-                    .ts-form-panel button:hover {
-                        transform: translateY(-1px);
-                        box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important;
-                    }
+                .login-gradient-overlay {
+                    position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 88, 188, 0.4), rgba(0, 0, 0, 0.6)); mix-blend-mode: multiply;
                 }
+                
+                /* Glassmorphism Classes */
+                .glass-card-signup {
+                    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+                    border: 1px solid rgba(0, 122, 255, 0.1); border-radius: 16px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                }
+                
+                .glass-card-login {
+                    background: rgba(247, 249, 251, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 32px; box-shadow: 0px 20px 40px rgba(0, 88, 188, 0.15);
+                }
+                
+                /* Modifiers */
+                .btn-primary {
+                    background: linear-gradient(to bottom right, #0058bc, #0070eb); color: white; padding: 16px 32px;
+                    border-radius: 9999px; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 10px 20px rgba(0, 88, 188, 0.2);
+                    border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+                }
+                .btn-primary:active { transform: scale(0.98); box-shadow: none; }
+                
+                .social-btn {
+                    display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px 16px;
+                    background: #ffffff; border: 1px solid rgba(193, 198, 215, 0.2); border-radius: 9999px;
+                    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); cursor: pointer; transition: background 0.2s, transform 0.2s; font-weight: 700; color: #191c1e;
+                }
+                .social-btn:hover { background: #f2f4f6; }
+                .social-btn:active { transform: scale(0.95); }
             `}</style>
+            
+            {/* Global Floating Language Translator Button */}
+            <button 
+                onClick={handleTranslate}
+                style={{ 
+                    position: 'absolute', top: 24, right: 24, zIndex: 100, 
+                    background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(10px)', 
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.4)', color: 'white', 
+                    padding: '8px 16px', borderRadius: 20, cursor: 'pointer', 
+                    fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }}
+            >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>translate</span>
+                {lang.toUpperCase()}
+            </button>
 
-            {/* ═══════════════════════════════════ */}
-            {/* MOBILE LAYOUT (< 1024px) — UNCHANGED */}
-            {/* ═══════════════════════════════════ */}
-            <div className="ts-mobile-shell" style={{
-                minHeight: '100vh',
-                position: 'relative', overflow: 'hidden',
-                fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-                backgroundColor: '#D80000'
-            }}>
-                {/* SUNBURST - GPU Optimized */}
-                <div style={{
-                    position: 'absolute',
-                    width: 2000,
-                    height: 2000,
-                    top: '50%',
-                    left: '50%',
-                    marginLeft: -1000,
-                    marginTop: -1000,
-                    zIndex: 0,
-                }}>
-                    <div style={{
-                        width: '100%',
-                        height: '100%',
-                        background: `repeating-conic-gradient(from 0deg at 50% 50%, #D00000 0deg 15deg, #FF3300 15deg 30deg)`,
-                        filter: prefersReducedMotion ? 'none' : 'blur(2px)',
-                        animation: prefersReducedMotion ? 'none' : 'spin 60s linear infinite',
-                        willChange: 'transform',
-                    }} />
-                </div>
-                {/* HEAT GLOW - Optimized (Removed expensive mix-blend-mode) */}
-                <div style={{
-                    position: 'absolute', inset: 0, zIndex: 1,
-                    background: 'radial-gradient(circle at center, rgba(255,100,0,0.3) 0%, rgba(160,0,0,0.7) 90%)',
-                }} />
-                {/* HERO BURGER */}
-                <div style={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '95%', height: 'auto', aspectRatio: '1/1', zIndex: 2,
-                    backgroundImage: 'url(/assets/burger-hero.jpg)',
-                    backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-                    filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.6))',
-                    marginTop: 10
-                }} />
-                {/* CONTENT */}
-                <div style={{
-                    position: 'relative', zIndex: 10,
-                    flex: 1, display: 'flex', flexDirection: 'column',
-                    justifyContent: 'space-between', padding: '0 24px',
-                    paddingTop: 'calc(env(safe-area-inset-top, 20px) + 40px)',
-                    paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 32px)',
-                    minHeight: '100dvh'
-                }}>
-                    {/* TOP: BRANDING */}
-                    <div style={{ textAlign: 'center' }}>
-                        <p style={{
-                            color: '#FFFFFF', fontSize: 13, fontWeight: 700,
-                            letterSpacing: '0.12em', textTransform: 'uppercase',
-                            marginBottom: 16, textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                            opacity: 0.95
-                        }}>
-                            TU NEGOCIO. TU MARCA. TU APP.
-                        </p>
-                        <div id="trial-title" style={{
-                            color: '#FFFFFF',
-                            textShadow: '0 4px 30px rgba(0,0,0,0.5)',
-                            fontFamily: "'Inter', sans-serif",
-                            transform: 'skewY(-3deg) translateY(-10px)',
-                        }}>
-                            <div style={{ fontSize: '42px', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 2 }}>
-                                ¡Bienvenidos a
-                            </div>
-                            <div style={{ fontSize: '68px', fontWeight: 900, lineHeight: 0.85, letterSpacing: '-0.05em', display: 'block', marginBottom: -5 }}>
-                                FoodSpot
-                            </div>
-                            <div style={{ fontSize: '68px', fontWeight: 900, lineHeight: 0.85, letterSpacing: '-0.05em', display: 'block' }}>
-                                Mobile!
-                            </div>
+            {mode === 'signup' ? (
+                <div className="signup-hero-bg" style={{ minHeight: '100dvh', fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#191c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', position: 'relative' }}>
+                    <main style={{ width: '100%', maxWidth: '448px', margin: '32px 0' }}>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
+                            <h1 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 900, fontSize: '40px', color: '#ffffff', letterSpacing: '-0.05em', margin: 0, textShadow: '0 4px 6px rgba(0,0,0,0.3)', transform: 'scale(1.1)' }}>{l.mobileTitle}</h1>
+                            <p style={{ color: 'rgba(255,255,255,0.9)', marginTop: '12px', fontWeight: 600, margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>{l.subtitleSignup}</p>
                         </div>
-                    </div>
+                        
+                        {error && (
+                            <div style={{ background: '#ffdad6', color: '#ba1a1a', padding: '12px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center', fontWeight: 'bold' }}>{error}</div>
+                        )}
 
-                    {/* BOTTOM: ACTIONS (mobile — glassmorphism) */}
-                    <div className="ts-form-panel" style={{
-                        width: '100%',
-                        display: 'flex', flexDirection: 'column',
-                        justifyContent: 'center', alignItems: 'center',
-                        padding: '24px 0'
-                    }}>
-                        <div style={{ maxWidth: 400, width: '100%', margin: '0 auto' }}>
-                            {/* Error Toast */}
-                            {error && (
-                                <div style={{
-                                    background: '#FEE2E2', border: '2px solid #EF4444',
-                                    borderRadius: 16, padding: '12px 16px', marginBottom: 16,
-                                    color: '#991B1B', fontSize: 13, textAlign: 'center',
-                                    fontWeight: 700, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                                }}>
-                                    {error}
+                        <div className="glass-card-signup">
+                            <div style={{ marginBottom: '32px' }}>
+                                <h2 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 800, fontSize: '24px', margin: 0 }}>{l.createAccount}</h2>
+                                <p style={{ color: '#586377', fontSize: '14px', marginTop: '4px', margin: 0 }}>{l.joinNetwork}</p>
+                            </div>
+                            
+                            <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.businessName}</label>
+                                    <input className="ts-input" type="text" placeholder={l.businessPlaceholder} value={businessName} onChange={e => setBusinessName(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 20px', color: '#191c1e', fontWeight: 600 }} />
                                 </div>
-                            )}
-
-                            {!showEmailForm ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                    {/* GOOGLE */}
-                                    <button
-                                        onClick={handleGoogleLogin}
-                                        disabled={loading}
-                                        style={{
-                                            width: '100%', padding: '14px 20px',
-                                            background: 'rgba(255, 255, 255, 0.9)',
-                                            backdropFilter: 'blur(8px)',
-                                            WebkitBackdropFilter: 'blur(8px)',
-                                            border: '1px solid rgba(255,255,255,0.5)',
-                                            borderRadius: 50,
-                                            display: 'flex', alignItems: 'center', gap: 14,
-                                            fontSize: 14, fontWeight: 700, color: '#1F2937',
-                                            cursor: 'pointer',
-                                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                                            opacity: loading ? 0.7 : 1,
-                                            transition: 'all 0.15s ease'
-                                        }}
-                                    >
-                                        <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <svg width="24" height="24" viewBox="0 0 48 48">
-                                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-                                                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-                                                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-                                                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-                                            </svg>
-                                        </div>
-                                        <span style={{ flex: 1, textAlign: 'center' }}>Continuar con Google</span>
-                                    </button>
-
-                                    {/* EMAIL */}
-                                    <button
-                                        onClick={() => setShowEmailForm(true)}
-                                        disabled={loading}
-                                        style={{
-                                            width: '100%', padding: '14px 20px',
-                                            background: 'rgba(255, 255, 255, 0.9)',
-                                            backdropFilter: 'blur(8px)',
-                                            WebkitBackdropFilter: 'blur(8px)',
-                                            border: '1px solid rgba(255,255,255,0.5)',
-                                            borderRadius: 50,
-                                            display: 'flex', alignItems: 'center', gap: 14,
-                                            fontSize: 14, fontWeight: 700, color: '#1F2937',
-                                            cursor: 'pointer',
-                                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                                            transition: 'all 0.15s ease'
-                                        }}
-                                    >
-                                        <div style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <rect x="2" y="4" width="20" height="16" rx="2" />
-                                                <path d="M22 7l-10 7L2 7" />
-                                            </svg>
-                                        </div>
-                                        <span style={{ flex: 1, textAlign: 'center' }}>Continuar con Email</span>
-                                    </button>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.emailLabel}</label>
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#0058bc' }}>mail</span>
+                                        <input className="ts-input" type="email" placeholder={l.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 20px 16px 48px', color: '#191c1e', fontWeight: 600 }} />
+                                    </div>
                                 </div>
-                            ) : (
-                                <div style={{
-                                    background: '#FFFFFF',
-                                    borderRadius: 32,
-                                    padding: 28,
-                                    boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
-                                    border: 'none',
-                                    marginBottom: 20
-                                }}>
-                                    <button
-                                        onClick={() => { setShowEmailForm(false); setError(null) }}
-                                        style={{
-                                            background: 'none', border: 'none', color: '#6B7280',
-                                            fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 20,
-                                            display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700
-                                        }}
-                                    >
-                                        ← Volver
-                                    </button>
-
-                                    <h3 style={{ color: '#1F2937', fontSize: 22, fontWeight: 800, margin: '0 0 24px', textAlign: 'center' }}>
-                                        {mode === 'signup' ? 'Creá tu cuenta' : 'Iniciá sesión'}
-                                    </h3>
-
-                                    <form onSubmit={mode === 'signup' ? handleSignup : handleLogin}>
-                                        {mode === 'signup' && (
-                                            <div style={{ marginBottom: 16 }}>
-                                                <label style={labelStyle}>Nombre del Negocio</label>
-                                                <input
-                                                    type="text" value={businessName}
-                                                    onChange={(e) => setBusinessName(e.target.value)}
-                                                    placeholder="Ej: Burger Palace"
-                                                    required style={inputStyle}
-                                                />
-                                            </div>
-                                        )}
-                                        <div style={{ marginBottom: 16 }}>
-                                            <label style={labelStyle}>Email</label>
-                                            <input
-                                                type="email" value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                placeholder="tu@email.com"
-                                                required style={inputStyle}
-                                            />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.passwordLabel}</label>
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#0058bc' }}>lock</span>
+                                        <input className="ts-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 48px', color: '#191c1e', fontWeight: 600 }} />
+                                    </div>
+                                    <div style={{ paddingTop: '8px', paddingLeft: '4px', paddingRight: '4px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#586377' }}>{l.strength} {password.length > 5 ? l.good : password.length > 0 ? l.moderate : l.weak}</span>
+                                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#9e3d00' }}>{l.avoid123}</span>
                                         </div>
-                                        <div style={{ marginBottom: 24 }}>
-                                            <label style={labelStyle}>Contraseña</label>
-                                            <input
-                                                type="password" value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                placeholder="Min. 6 caracteres"
-                                                required minLength={6} style={inputStyle}
-                                            />
+                                        <div style={{ height: '6px', width: '100%', background: '#e6e8ea', borderRadius: '9999px', overflow: 'hidden', display: 'flex', gap: '2px' }}>
+                                            <div style={{ height: '100%', width: '33.33%', background: password.length > 0 ? '#9e3d00' : 'transparent', borderRadius: '9999px' }}></div>
+                                            <div style={{ height: '100%', width: '33.33%', background: password.length > 5 ? 'rgba(0, 88, 188, 0.6)' : 'transparent', borderRadius: '9999px' }}></div>
+                                            <div style={{ height: '100%', width: '33.33%', background: password.length > 8 ? '#0058bc' : 'transparent', borderRadius: '9999px' }}></div>
                                         </div>
-
-                                        <button
-                                            type="submit" disabled={loading}
-                                            style={{
-                                                width: '100%', padding: 18, fontSize: 16,
-                                                fontWeight: 800, borderRadius: 16, border: 'none',
-                                                background: loading ? '#E5E7EB' : '#DC3C14',
-                                                color: loading ? '#9CA3AF' : '#FFFFFF',
-                                                cursor: loading ? 'not-allowed' : 'pointer',
-                                                boxShadow: loading ? 'none' : '0 4px 12px rgba(220, 60, 20, 0.3)',
-                                                transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            {loading ? 'Procesando...' : (mode === 'signup' ? 'Comenzar prueba gratis →' : 'Iniciar sesión →')}
-                                        </button>
-                                    </form>
+                                    </div>
                                 </div>
-                            )}
-
-                            {/* FOOTER LINK */}
-                            <p style={{
-                                color: 'rgba(255,255,255,0.9)',
-                                fontSize: 14, textAlign: 'center', margin: 0, marginTop: 12,
-                                fontWeight: 600,
-                                textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                            }}>
-                                {mode === 'signup' ? '¿Ya tienes cuenta? ' : '¿Eres nuevo? '}
-                                <button
-                                    onClick={() => {
-                                        setMode(mode === 'signup' ? 'login' : 'signup')
-                                        setShowEmailForm(true)
-                                        setError(null)
-                                    }}
-                                    style={{
-                                        background: 'none', border: 'none',
-                                        color: 'white',
-                                        fontWeight: 800, cursor: 'pointer',
-                                        textDecoration: 'underline', fontSize: 14,
-                                        padding: 0, marginLeft: 4
-                                    }}
-                                >
-                                    {mode === 'signup' ? 'Inicia Sesión' : 'Regístrate'}
+                                <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '16px', padding: '18px' }}>
+                                    {loading ? l.processing : l.startFreeTrial}
                                 </button>
+                            </form>
+                            
+                            <div style={{ position: 'relative', margin: '32px 0' }}>
+                                <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, display: 'flex', alignItems: 'center' }}>
+                                    <div style={{ width: '100%', borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
+                                </div>
+                                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+                                    <span style={{ background: '#ffffff', padding: '0 16px', color: '#586377', opacity: 0.9 }}>{l.orContinueWith}</span>
+                                </div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                                <button type="button" onClick={handleGoogleLogin} disabled={loading} className="social-btn" style={{ flex: 1 }}>
+                                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvoDfKDiuMJl1Schk_jYlonI9Ak2qxMNG2ce5EIF2O_FwFCu1U1VUknDhCrjkId-cYpXhXcGi8TQqQk9lnZ5cNsejz0y69g2Ecar2hNuQbwSqlILIsneGl8qZTIv8KoZGC2hz22GswAIyz_mn4Wz0HjArG41ZODqO_Wb_gCuhNiSE4F0JlNrkRIEH32UQ1ZgETf9Ek1cNH3WVrX9lFWUDf1N4PBL322dHeCXt8ZuEIb53-8XWxJBdwpxUwh1xP10py8o9chTnJcPlY" alt="Google" style={{ width: 16, height: 16 }} />
+                                    <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '12px' }}>{l.google}</span>
+                                </button>
+                                <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="social-btn" style={{ flex: 1 }}>
+                                    <span className="material-symbols-outlined" style={{ color: '#191c1e', opacity: 0.7, fontSize: 18 }}>mail</span>
+                                    <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '12px' }}>{l.email}</span>
+                                </button>
+                            </div>
+                            
+                            <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '14px', color: '#586377', margin: '32px 0 0 0', fontWeight: 500 }}>
+                                {l.alreadyHaveAccount}{' '}
+                                <a href="#" onClick={(e) => { e.preventDefault(); setMode('login'); setError(null); }} style={{ color: '#0058bc', fontWeight: 800, textDecoration: 'none' }}>{l.login}</a>
                             </p>
                         </div>
-                    </div>
+                        
+                        <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '10px', color: 'rgba(255,255,255,0.7)', fontWeight: 500, lineHeight: 1.5, padding: '0 32px' }}>
+                            {l.bySigningUp} <br/>
+                            <span style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}>{l.tos}</span> {l.and} <span style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}>{l.privacy}</span>.
+                        </p>
+                    </main>
                 </div>
-            </div>
-
-            {/* ═══════════════════════════════════ */}
-            {/* DESKTOP LAYOUT (≥ 1024px) — CENTERED MODAL REPLICA */}
-            {/* ═══════════════════════════════════ */}
-            <div className="ts-desktop-shell" style={{
-                minHeight: '100vh',
-                fontFamily: "'Inter', sans-serif",
-                backgroundColor: '#FDF8F0', // Beige background from reference
-                position: 'relative', overflow: 'hidden'
-            }}>
-                {/* MODAL CARD */}
-                <div style={{
-                    position: 'relative', zIndex: 10,
-                    width: 440,
-                    background: '#FFFFFF',
-                    borderRadius: 32,
-                    padding: '48px 40px',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.02)',
-                    textAlign: 'center'
-                }}>
-                    {/* LOGO HEADER */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
-                        <div style={{ width: 24, height: 24, marginBottom: 0 }}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 19V6M5 12l7-7 7 7" stroke="none" />
-                                <path d="M2.05 10.5a9 9 0 0 1 17.4 3.5l1.55 1.55a9 9 0 0 1-1.55 1.55l-1.55-1.55a9 9 0 0 1-3.5 17.4" stroke="none" />
-                                {/* Simple Leaf Icon Replica */}
-                                <path d="M12 2L12 12" stroke="#1F2937" strokeWidth="2.5" />
-                                <path d="M12 2C12 2 18 4 18 10C18 16 12 12 12 12" stroke="#1F2937" strokeWidth="2.5" fill="none" />
-                                <path d="M12 2C12 2 6 4 6 10C6 16 12 12 12 12" stroke="#1F2937" strokeWidth="2.5" fill="none" />
-                            </svg>
-                        </div>
-                        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1F2937', margin: 0, letterSpacing: '-0.02em', marginTop: -4 }}>
-                            FoodSpot
-                            <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#6B7280', marginTop: 2 }}>Mobile</span>
-                        </h1>
+            ) : (
+                <div style={{ minHeight: '100dvh', fontFamily: '"Montserrat", sans-serif', color: '#191c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', backgroundColor: '#f7f9fb' }}>
+                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 0 }}>
+                        <img className="login-cinematic-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHY_u1BxiUSrKWO-DeRh3p3YLyGmCL_kJvTiVl17WsnqsVGUD0JoLVsPsaEgkMH8pVJvyPj2zYe84d8k35MAM2jVHOFtDoF7_M1Ym_tKg7aj9r88B1grMY_Yvaq2fAFRog_-mhSu7Qu1sjuxl3uTjxbqlWb2T6ZAKDJ53IcmjH7JQtZlQk4BvT0SvZyX6tL88FsSZBpgLHx-MrTwJsZMY6KQOnPo8HXzFhOp8bYHbMMIeEJhV5C1_8MCfMfop2HIr9I65o3e-V66Nw" alt="Vibrant street food" />
+                        <div className="login-gradient-overlay"></div>
                     </div>
-
-                    {/* TITLE */}
-                    <h2 style={{ fontSize: 32, fontWeight: 900, color: '#1F2937', margin: '0 0 12px', letterSpacing: '-0.03em' }}>
-                        {mode === 'signup' ? 'Empezá gratis' : '¡Hola de nuevo!'}
-                    </h2>
-                    <p style={{ fontSize: 15, color: '#4B5563', margin: '0 0 32px', lineHeight: 1.5 }}>
-                        {mode === 'signup' ? '14 días gratis. Sin tarjeta. Cancelás cuando quieras.' : 'Ingresá a tu panel de control.'}
-                    </p>
-
-                    {/* BUTTONS (Desktop Styles) */}
-                    {!showEmailForm ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            {/* GOOGLE - ORANGE/RED */}
-                            <button
-                                onClick={handleGoogleLogin}
-                                disabled={loading}
-                                style={{
-                                    width: '100%', padding: '16px',
-                                    background: 'linear-gradient(135deg, #E2552D 0%, #CC3210 100%)',
-                                    border: 'none', borderRadius: 50,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-                                    fontSize: 16, fontWeight: 600, color: '#FFFFFF',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(220, 60, 20, 0.3)',
-                                    transition: 'transform 0.1s'
-                                }}
-                            >
-                                <div style={{ background: 'white', borderRadius: '50%', padding: 4, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#EA4335" d="M12.48 10.92v3.28h5.22c-.2 1.05-2.55 3.3-5.22 3.3-3.15 0-5.73-2.6-5.73-5.77s2.57-5.77 5.73-5.77c1.78 0 2.96.76 3.65 1.41l2.58-2.6C16.96 2.86 14.88 2 12.48 2 6.72 2 2 6.72 2 12.5s4.72 10.5 10.48 10.5c6.04 0 10.04-4.24 10.04-10.25 0-.7-.07-1.3-.18-1.83h-9.86z"></path></svg>
-                                </div>
-                                Continuar con Google
-                            </button>
-
-                            <div style={{ fontSize: 12, color: '#9CA3AF', fontWeight: 600 }}>o</div>
-
-                            {/* EMAIL - BLUE */}
-                            <button
-                                onClick={() => setShowEmailForm(true)}
-                                disabled={loading}
-                                style={{
-                                    width: '100%', padding: '16px',
-                                    background: '#4285F4',
-                                    border: 'none', borderRadius: 50,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-                                    fontSize: 16, fontWeight: 600, color: '#FFFFFF',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(66, 133, 244, 0.3)',
-                                    transition: 'transform 0.1s'
-                                }}
-                            >
-                                Continuar con Email
-                            </button>
+                    
+                    <header style={{ position: 'absolute', top: 0, width: '100%', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
+                        <div style={{ fontSize: '30px', fontWeight: 800, color: 'white', letterSpacing: '-0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '36px', fontVariationSettings: "'FILL' 1" }}>restaurant_menu</span>
+                            <span style={{ fontFamily: '"Montserrat", sans-serif', textTransform: 'uppercase', letterSpacing: '0.2em' }}>FoodSpot</span>
                         </div>
-                    ) : (
-                        /* EMAIL FORM (Simplified for desktop modal) */
-                        <form onSubmit={mode === 'signup' ? handleSignup : handleLogin} style={{ textAlign: 'left' }}>
-                            {/* ... Inputs ... Reuse Input Styles but maybe scoped? Using style={inputStyle} */}
-                            {mode === 'signup' && (
-                                <div style={{ marginBottom: 16 }}>
-                                    <label style={labelStyle}>Nombre del Negocio</label>
-                                    <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Ej: Burger Palace" required style={inputStyle} />
-                                </div>
+                    </header>
+                    
+                    <main style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '448px', padding: '0 24px' }}>
+                        <div className="glass-card-login">
+                            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                                <h1 style={{ fontSize: '30px', fontWeight: 800, color: '#0058bc', marginBottom: '8px', letterSpacing: '-0.025em', margin: 0 }}>{l.welcome}</h1>
+                                <p style={{ color: '#586377', fontSize: '14px', fontWeight: 600, margin: 0, marginTop: '8px' }}>{l.discoverFlavors}</p>
+                            </div>
+                            
+                            {error && (
+                                <div style={{ background: '#ffdad6', color: '#ba1a1a', padding: '12px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center', fontWeight: 'bold' }}>{error}</div>
                             )}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={labelStyle}>Email</label>
-                                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" required style={inputStyle} />
+                            
+                            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0058bc', marginLeft: '4px' }}>{l.emailLabel}</label>
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#586377' }}>mail</span>
+                                        <input className="ts-input" type="email" placeholder={l.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#ffffff', border: 'none', borderRadius: '8px', padding: '16px 16px 16px 48px', color: '#191c1e', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontWeight: 600 }} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginLeft: '4px' }}>
+                                        <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0058bc', margin: 0 }}>{l.passwordLabel}</label>
+                                        <a href="#" style={{ fontSize: '10px', fontWeight: 700, color: '#586377', textDecoration: 'none' }}>{l.forgot}</a>
+                                    </div>
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#586377' }}>lock</span>
+                                        <input className="ts-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} style={{ width: '100%', background: '#ffffff', border: 'none', borderRadius: '8px', padding: '16px 16px 16px 48px', color: '#191c1e', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontWeight: 600 }} />
+                                    </div>
+                                </div>
+                                <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '0', fontSize: '18px', padding: '16px', borderRadius: '9999px' }}>
+                                    <span>{loading ? l.processing : l.login}</span>
+                                    {!loading && <span className="material-symbols-outlined" style={{ fontSize: 20 }}>arrow_forward</span>}
+                                </button>
+                            </form>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', margin: '32px 0' }}>
+                                <div style={{ flexGrow: 1, borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
+                                <span style={{ margin: '0 16px', fontSize: '10px', fontWeight: 700, color: '#c1c6d7', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{l.orContinueWith}</span>
+                                <div style={{ flexGrow: 1, borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
                             </div>
-                            <div style={{ marginBottom: 24 }}>
-                                <label style={labelStyle}>Contraseña</label>
-                                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 caracteres" required minLength={6} style={inputStyle} />
-                            </div>
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                <button type="button" onClick={() => setShowEmailForm(false)} style={{ flex: 1, padding: 14, background: '#F3F4F6', border: 'none', borderRadius: 12, color: '#4B5563', fontWeight: 600, cursor: 'pointer' }}>Volver</button>
-                                <button type="submit" disabled={loading} style={{ flex: 2, padding: 14, background: '#DC3C14', border: 'none', borderRadius: 12, color: 'white', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
-                                    {loading ? '...' : 'Continuar'}
+                            
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                                <button type="button" onClick={handleGoogleLogin} disabled={loading} className="social-btn" style={{ flex: 1, padding: '12px', fontSize: '12px' }}>
+                                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuY8s_dsoFucVh5TaXd4oIju_IptYK3cJ-QJIyF6y5OUwKyBTeKs7_jA9X8s7swzDmHyrJjWQP7KltGwFfFkECKNmsVwU2UIA--h5kNKsjEjCU9xzmEWMNgVVPM8oIFbP9pZb__ixpk6q9dL_OiGpM5fhLwSYFULmZ_KWO6gp2tnvpPIfwjMPaKPTugwjVPIcmU1wz38A7dM2vrQ6meUrAr6k9rf1Q2Pc0vAuXk-JcmKoUQldCh2SLUJBmQ7WzzTJ3vuN9CQma4Tnd" alt="Google" style={{ width: 16, height: 16 }} />
+                                    <span>{l.google}</span>
+                                </button>
+                                <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="social-btn" style={{ flex: 1, padding: '12px', fontSize: '12px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#586377' }}>alternate_email</span>
+                                    <span>{l.apple}</span>
                                 </button>
                             </div>
-                        </form>
-                    )}
-
-                    {/* FOOTER */}
-                    <p style={{ marginTop: 32, fontSize: 13, color: '#6B7280' }}>
-                        {mode === 'signup' ? '¿Ya tenés cuenta? ' : '¿Sos nuevo? '}
-                        <button onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError(null); setShowEmailForm(false) }}
-                            style={{ background: 'none', border: 'none', color: '#1F2937', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>
-                            {mode === 'signup' ? 'Inicia sesión' : 'Registrate'}
-                        </button>
-                    </p>
+                            
+                            <div style={{ marginTop: '40px', textAlign: 'center' }}>
+                                <p style={{ fontSize: '14px', fontWeight: 600, color: '#586377', margin: 0 }}>
+                                    {l.newHere}{' '}
+                                    <a href="#" onClick={(e) => { e.preventDefault(); setMode('signup'); setError(null); }} style={{ color: '#0058bc', fontWeight: 800, textDecoration: 'none', marginLeft: '4px' }}>{l.signUp}</a>
+                                </p>
+                            </div>
+                        </div>
+                    </main>
+                    
+                    <div style={{ position: 'fixed', bottom: '40px', zIndex: 10, textAlign: 'center', width: '100%', padding: '0 24px', pointerEvents: 'none' }}>
+                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                            {l.exploreTasteShare}
+                        </p>
+                    </div>
                 </div>
-            </div>
+            )}
         </>
     )
-}
-
-// ============================
-// STYLES
-// ============================
-const labelStyle = {
-    display: 'block', color: '#4B5563',
-    fontSize: 12, fontWeight: 800, marginBottom: 6,
-    textTransform: 'uppercase', letterSpacing: '0.05em'
-}
-
-const inputStyle = {
-    width: '100%', padding: '16px',
-    borderRadius: 14, border: '2px solid #E5E7EB',
-    fontSize: 16, color: '#1F2937', background: '#F9FAFB',
-    boxSizing: 'border-box', outline: 'none',
-    fontWeight: 600
 }
 
 export default TrialSignup
