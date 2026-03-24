@@ -266,6 +266,17 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             let newX = posRef.current.offsetX + dx
             let newY = posRef.current.offsetY + dy
 
+            // CONSTRAIN: Don't let image leave the frame (FB-style)
+            // At scale S, image is S times the container size
+            // Can pan (S - 1) / 2 * container before hitting edge
+            const containerW = window.innerWidth
+            const containerH = coverHeight
+            const maxPanX = Math.max(0, (scale - 1) * containerW / 2)
+            const maxPanY = Math.max(0, (scale - 1) * containerH / 2)
+
+            newX = Math.max(-maxPanX, Math.min(maxPanX, newX))
+            newY = Math.max(-maxPanY, Math.min(maxPanY, newY))
+
             // Snap assist
             let isSnappedX = false
             let isSnappedY = false
@@ -283,7 +294,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
             lastPointer.current = { x: e.clientX, y: e.clientY }
 
-            console.log('[Pointer] Move:', newX, newY)
+            console.log('[Pointer] Move:', newX, newY, 'Max:', maxPanX, maxPanY)
         }
     }, [])
 

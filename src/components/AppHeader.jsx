@@ -45,9 +45,19 @@ function AppHeader({ config: configProp }) {
     // Fix: Treat 'image' as 'cover' to handle legacy/raw DB values
     if (headerMode === 'cover' || headerMode === 'image') {
         const cover = config?.headerCover || {}
-        const scale = cover.scale || 1.0
-        const offsetX = cover.offsetX || 0
-        const offsetY = cover.offsetY || 0
+        let scale = cover.scale || 1.0
+        let offsetX = cover.offsetX || 0
+        let offsetY = cover.offsetY || 0
+
+        // CONSTRAIN: Clamp offsets so image always covers frame (matches editor)
+        // Get actual container dimensions
+        const containerW = typeof window !== 'undefined' ? window.innerWidth : 414
+        const containerH = coverHeight
+        const maxPanX = Math.max(0, (scale - 1) * containerW / 2)
+        const maxPanY = Math.max(0, (scale - 1) * containerH / 2)
+
+        offsetX = Math.max(-maxPanX, Math.min(maxPanX, offsetX))
+        offsetY = Math.max(-maxPanY, Math.min(maxPanY, offsetY))
 
         const coverContent = (
             <div className="cover-content menu-header-bg" style={{
