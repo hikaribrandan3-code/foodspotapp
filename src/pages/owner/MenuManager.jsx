@@ -16,7 +16,7 @@ import './MenuStyles.css'
 
 /**
  * MENU MANAGER
- * 
+ *
  * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
  * This ensures Single Source of Truth from App.jsx.
  */
@@ -243,10 +243,20 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [isSaving, setIsSaving] = useState(false)
     // 📦 PENDING FILE BUFFER: Holds raw File objects until save
     const [pendingFiles, setPendingFiles] = useState({})
-    
+
+    // --- FEATURED ITEMS LOGIC (MOVED HERE TO FIX TDZ) ---
+    // 🛡️ DEFAULT TO 4 SLOTS: Ensure UI is always clickable even if cloud array is empty/null
+    // MEMOIZED: Prevent heavy array ops on every render
+    const activeFeaturedItems = React.useMemo(() => {
+        const photos = localConfig?.featuredPhotos || []
+        const slots = [...photos]
+        while (slots.length < 4) slots.push(null)
+        return slots.slice(0, 4)
+    }, [localConfig?.featuredPhotos])
+
     // 🛡️ VAULT-SEAL: Blob URL tracker for memory management
     const { createBlobUrl, revokeBlobUrl, revokeAllBlobUrls } = useBlobUrlTracker()
-    
+
     // 🚀 VAULT-SEAL: Thumbnail URL optimizer for backend menu manager
     const getThumbUrl = (url, size = 80) => {
         if (!url || url.startsWith('blob:')) return url
@@ -256,17 +266,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const sep = url.includes('?') ? '&' : '?'
         return `${url}${sep}width=${size}&quality=60&format=webp`
     }
-    
+
     // 🚀 Preload featured item thumbnails (priority)
     useEffect(() => {
         if (!activeFeaturedItems?.length) return
-        
+
         const preloadUrls = activeFeaturedItems
             .filter(slot => slot?.image && !slot.image.startsWith('blob:'))
             .map(slot => getThumbUrl(slot.image, 200))
-            
+
         if (preloadUrls.length === 0) return
-        
+
         // Low priority preload
         const schedulePrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 1))
         schedulePrefetch(() => {
@@ -277,7 +287,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             })
         }, { timeout: 2000 })
     }, [activeFeaturedItems])
-    
+
     // 🛡️ Cleanup blob URLs on unmount
     useEffect(() => {
         return () => {
@@ -366,16 +376,16 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
 
         // 🛡️ CATEGORY VALIDATION: Ensure all items have valid category references
-        const validCategories = updatedMenu.categories.filter(cat => 
+        const validCategories = updatedMenu.categories.filter(cat =>
             cat && cat.id && typeof cat.id === 'string' && Array.isArray(cat.items)
         )
-        
+
         if (validCategories.length !== updatedMenu.categories.length) {
             console.warn('⚠️ SYNC BLOCKED: Invalid categories detected. Filtering...')
         }
 
-        const sanitizedMenu = { 
-            ...updatedMenu, 
+        const sanitizedMenu = {
+            ...updatedMenu,
             categories: validCategories.map(cat => ({
                 ...cat,
                 // Ensure each item has required fields
@@ -494,13 +504,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const handleDeleteCategory = (catId) => {
         const category = menu.categories.find(c => c.id === catId)
         if (!category) return
-        
+
         // 🛡️ FK VALIDATION: Prevent deletion of non-empty categories
         if (category.items && category.items.length > 0) {
             alert('Error: Category must be empty before deletion.')
             return
         }
-        
+
         if (!confirm('¿Eliminar categoría?')) return
         setMenu(prev => ({ ...prev, categories: prev.categories.filter(c => c.id !== catId) }))
         setHasChanges(true)
@@ -879,15 +889,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
     }
 
-    // --- FEATURED ITEMS LOGIC ---
-    // 🛡️ DEFAULT TO 4 SLOTS: Ensure UI is always clickable even if cloud array is empty/null
-    // MEMOIZED: Prevent heavy array ops on every render
-    const activeFeaturedItems = React.useMemo(() => {
-        const photos = localConfig?.featuredPhotos || []
-        const slots = [...photos]
-        while (slots.length < 4) slots.push(null)
-        return slots.slice(0, 4)
-    }, [localConfig?.featuredPhotos])
+    // --- FEATURED ITEMS FUNCTIONS ---
     const isFeatured = (item) => activeFeaturedItems.some(f => f && f.name === item.name)
 
     const handleToggleFeatured = (item) => {
@@ -1295,17 +1297,17 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                     }}>
                                     {slot?.image ? (
-                                        <img 
-                                            src={getThumbUrl(slot.image, 200)} 
+                                        <img
+                                            src={getThumbUrl(slot.image, 200)}
                                             alt=""
                                             loading="lazy"
                                             decoding="async"
-                                            style={{ 
-                                                width: '100%', 
-                                                height: '100%', 
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
                                                 objectFit: 'cover',
                                                 animation: 'fadeIn 0.3s ease'
-                                            }} 
+                                            }}
                                         />
                                     ) : (
                                         <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center', pointerEvents: 'none' }}>Editar</span>
@@ -1588,18 +1590,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 }}
                                             >
                                                 {item.image ? (
-                                                    <img 
-                                                        src={getThumbUrl(item.image, 80)} 
-                                                        alt="" 
+                                                    <img
+                                                        src={getThumbUrl(item.image, 80)}
+                                                        alt=""
                                                         loading="lazy"
                                                         decoding="async"
-                                                        style={{ 
-                                                            width: '100%', 
-                                                            height: '100%', 
-                                                            objectFit: 'cover', 
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover',
                                                             pointerEvents: 'none',
                                                             animation: 'fadeIn 0.3s ease'
-                                                        }} 
+                                                        }}
                                                     />
                                                 ) : (
                                                     <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
