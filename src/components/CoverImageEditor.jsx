@@ -254,7 +254,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             const distance = Math.sqrt(dx * dx + dy * dy)
 
             if (initialPinchDistance.current > 0) {
-                const newScale = Math.min(5, Math.max(0.5, initialScaleRef.current * (distance / initialPinchDistance.current)))
+                const newScale = Math.min(5, Math.max(0.25, initialScaleRef.current * (distance / initialPinchDistance.current)))
                 posRef.current.scale = newScale
                 setScale(newScale)
             }
@@ -689,57 +689,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
             <div style={{ position: 'absolute', top: coverHeight + 12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 11, fontWeight: 600, padding: '6px 14px', borderRadius: 20, zIndex: 10, whiteSpace: 'nowrap' }}>
                 ↕ Drag • Pinch zoom • {Math.round(scale * 100)}%
-            </div>
-
-            {/* ZOOM CONTROLS */}
-            <div style={{
-                position: 'absolute', bottom: 100, right: 12,
-                display: 'flex', flexDirection: 'column', gap: 8,
-                zIndex: 2000
-            }}>
-                <div
-                    onClick={() => {
-                        const newScale = Math.min(5, scale + 0.25);
-                        setScale(newScale);
-                        posRef.current.scale = newScale;
-                    }}
-                    style={{
-                        width: 44, height: 44, background: 'rgba(0,0,0,0.7)',
-                        color: '#fff', borderRadius: 10, fontSize: 24, fontWeight: 600,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                >
-                    +
-                </div>
-                <div
-                    onClick={() => {
-                        const newScale = Math.max(0.5, scale - 0.25);
-                        setScale(newScale);
-                        posRef.current.scale = newScale;
-                    }}
-                    style={{
-                        width: 44, height: 44, background: 'rgba(0,0,0,0.7)',
-                        color: '#fff', borderRadius: 10, fontSize: 24, fontWeight: 600,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                >
-                    −
-                </div>
-                <div
-                    onClick={() => {
-                        setScale(1);
-                        setOffsetX(0);
-                        setOffsetY(0);
-                        posRef.current = { scale: 1, offsetX: 0, offsetY: 0 };
-                    }}
-                    style={{
-                        width: 44, height: 44, background: 'rgba(0,0,0,0.7)',
-                        color: '#fff', borderRadius: 10, fontSize: 12, fontWeight: 600,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                >
-                    ⟲
-                </div>
             </div>
         </div>
     )
