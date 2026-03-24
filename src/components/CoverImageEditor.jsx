@@ -328,6 +328,19 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         input.onchange = async (e) => {
             const file = e.target.files?.[0]
             if (file) {
+                // File size validation: warn if over 500KB
+                const MAX_RECOMMENDED_SIZE = 500 * 1024; // 500KB
+                if (file.size > MAX_RECOMMENDED_SIZE) {
+                    const proceed = confirm(
+                        `This image is ${(file.size / 1024).toFixed(0)}KB (recommended: under 500KB).\n\n` +
+                        `Large images may take longer to upload on slow connections.\n\n` +
+                        `Continue anyway?`
+                    );
+                    if (!proceed) {
+                        document.body.removeChild(input);
+                        return;
+                    }
+                }
                 try {
                     setOriginalFile(file)
                     const { publicUrl } = await processAndStoreImage(file)
@@ -552,14 +565,21 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             inputMode="none"
             data-form-type="other"
             style={{
-                position: 'fixed', inset: 0, background: '#000', zIndex: 99999,
+                position: 'fixed', inset: 0, background: '#1F2937', zIndex: 99999,
                 touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none'
             }}
         >
-            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.3 }}>
-                <Home config={config} />
-                <StaticBottomNav />
-            </div>
+            {/* Background placeholder - shows current/new image if available */}
+            {image && (
+                <div style={{ 
+                    position: 'absolute', 
+                    inset: 0, 
+                    opacity: 0.2,
+                    backgroundImage: `url(${image})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                }} />
+            )}
 
             <div style={{ position: 'absolute', top: coverHeight, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', pointerEvents: 'none', zIndex: 5 }} />
 

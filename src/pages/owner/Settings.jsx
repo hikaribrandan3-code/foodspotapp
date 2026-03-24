@@ -583,6 +583,7 @@ const Settings = () => {
                     </div>
 
                     {draft.hero_mode === 'image' ? (
+                        <>
                         <div className="hero-studio-trigger" onClick={() => setShowCoverEditor(true)}>
                             {draft.hero_url ? (
                                 <>
@@ -597,6 +598,12 @@ const Settings = () => {
                                 </div>
                             )}
                         </div>
+                        {/* Guidelines for best results */}
+                        <p style={{ fontSize: 11, color: '#64748B', marginTop: 10, marginBottom: 0, textAlign: 'center' }}>
+                            📸 <strong>Tip:</strong> For best results, use images around <strong>1200×800px</strong> or <strong>16:9 ratio</strong>, under <strong>500KB</strong>.
+                            <br />Larger files may take longer to upload on slow connections.
+                        </p>
+                        </>
 
                     ) : (
                         <div
