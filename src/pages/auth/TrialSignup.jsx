@@ -2,10 +2,8 @@
  * TrialSignup.jsx — Strike 12: Premier Auth Screen
  * 
  * Premium full-bleed auth screen with:
- * - Hero burger background + red/orange gradient overlay
- * - "Continuar con Google" + "Continuar con Email" buttons
- * - Collapsible email/password form
- * - Login/Signup mode toggle
+ * - Login: Cinematic cinematic bright light mode
+ * - Signup: Dark mode "Culinary OS" theme with responsive split-screen and floating nav
  * 
  * Flow (Signup):
  * 1. Capture business name, email, password
@@ -38,8 +36,8 @@ const t = {
     emailLabel: 'EMAIL ADDRESS',
     emailPlaceholder: 'chef@restaurant.com',
     passwordLabel: 'PASSWORD',
-    strength: 'STRENGTH:',
-    good: 'GOOD',
+    strength: 'SECURITY STRENGTH',
+    good: 'GOURMET READY',
     moderate: 'MODERATE',
     weak: 'WEAK',
     avoid123: "Avoid '123456'",
@@ -72,8 +70,8 @@ const t = {
     emailLabel: 'CORREO ELECTRÓNICO',
     emailPlaceholder: 'chef@restaurante.com',
     passwordLabel: 'CONTRASEÑA',
-    strength: 'SEGURIDAD:',
-    good: 'ALTA',
+    strength: 'SEGURIDAD',
+    good: 'LISTA PARA GOURMET',
     moderate: 'MEDIA',
     weak: 'BAJA',
     avoid123: "Evita '123456'",
@@ -106,8 +104,8 @@ const t = {
     emailLabel: 'ENDEREÇO DE EMAIL',
     emailPlaceholder: 'chef@restaurante.com',
     passwordLabel: 'SENHA',
-    strength: 'FORÇA:',
-    good: 'ALTA',
+    strength: 'FORÇA',
+    good: 'PRONTA GOURMET',
     moderate: 'MEDIA',
     weak: 'BAIXA',
     avoid123: "Evite '123456'",
@@ -415,6 +413,8 @@ const TrialSignup = () => {
         <>
             <style>{`
                 /* Material Symbols Setup */
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+                
                 .material-symbols-outlined {
                     font-family: 'Material Symbols Outlined', sans-serif;
                     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -432,151 +432,292 @@ const TrialSignup = () => {
                     box-shadow: 0 0 0 3px rgba(0, 88, 188, 0.2);
                 }
                 
-                /* Sign Up specific hero bg */
-                .signup-hero-bg {
-                    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuAwbRWIbTSOLmazpgRD0jJQ-dY3mjTSoUE8FPmHn9gqca4PcdTMcSz4y9SOQJeXvinys-9mN5MOHpB1KbcmqKA2ArSsjQmr3yqxdHgVtLnnjizH4KXLgwbU9uClN1EgiaeMq-IhWv9gZ0OXPa2WvK0vcwI6fXoD3mDfdI28FWP1_PG10NeNN1zpu25UCGDtf_Mkb3KrjtjQ1nNZQLXY7BD32-rSVgah9vsTeGANvBPDAObs34KtWlV7jDOtMVg9IVNoSQX2DMXko0eF);
-                    background-size: cover;
-                    background-position: center;
+                /* ================================== */
+                /* DARK MODE SIGNUP STYLES (Culinary OS)*/
+                /* ================================== */
+                :root {
+                    --bg-dark: #0e0e0e;
+                    --primary: #ff8f76;
+                    --primary-fixed: #ff785a;
+                    --on-primary-fixed: #000000;
+                    --surface-highest: #262626;
+                    --surface-low: #131313;
+                    --on-surface-variant: #adaaaa;
+                    --outline-variant: #484847;
+                }
+                .dm-wrapper {
+                    background-color: var(--bg-dark);
+                    color: white;
+                    font-family: 'Be Vietnam Pro', sans-serif;
+                    min-height: 100dvh;
+                    overflow-x: hidden;
+                    position: relative;
+                }
+                .dm-hero-bg {
+                    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+                }
+                .dm-hero-gradient {
+                    position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.4), black); z-index: 10;
+                }
+                .dm-hero-img {
+                    width: 100%; height: 100%; object-fit: cover; transform: scale(1.05); opacity: 0.6;
                 }
                 
-                /* Login cinematic bg image layer */
-                .login-cinematic-img {
-                    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.1);
-                }
-                .login-gradient-overlay {
-                    position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 88, 188, 0.4), rgba(0, 0, 0, 0.6)); mix-blend-mode: multiply;
-                }
+                /* Top Nav */
+                .dm-nav { position: fixed; top: 0; width: 100%; z-index: 50; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; }
                 
-                /* Glassmorphism Classes */
-                .glass-card-signup {
-                    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-                    border: 1px solid rgba(0, 122, 255, 0.1); border-radius: 16px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-                }
+                /* Main Grid */
+                .dm-main { position: relative; z-index: 20; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6rem 1rem 5rem 1rem; }
+                .dm-grid { max-width: 80rem; width: 100%; display: grid; gap: 3rem; align-items: center; }
                 
-                .glass-card-login {
-                    background: rgba(247, 249, 251, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 32px; box-shadow: 0px 20px 40px rgba(0, 88, 188, 0.15);
+                /* Media Queries */
+                @media (min-width: 1024px) {
+                    .dm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
                 }
+
+                /* Typography */
+                .dm-text-center { text-align: center; }
+                @media (min-width: 1024px) { .dm-text-center { text-align: left; padding-right: 3rem; } }
                 
-                /* Modifiers */
-                .btn-primary {
-                    background: linear-gradient(to bottom right, #0058bc, #0070eb); color: white; padding: 16px 32px;
-                    border-radius: 9999px; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 10px 20px rgba(0, 88, 188, 0.2);
-                    border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
-                }
-                .btn-primary:active { transform: scale(0.98); box-shadow: none; }
+                .dm-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid rgba(255, 143, 118, 0.2); background: rgba(255,255,255,0.03); backdrop-filter: blur(24px); }
                 
-                .social-btn {
-                    display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px 16px;
-                    background: #ffffff; border: 1px solid rgba(193, 198, 215, 0.2); border-radius: 9999px;
-                    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); cursor: pointer; transition: background 0.2s, transform 0.2s; font-weight: 700; color: #191c1e;
+                .dm-h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 3rem; line-height: 0.9; letter-spacing: -0.05em; color: white; text-shadow: 0 0 20px rgba(255, 143, 118, 0.4); margin-top: 1.5rem; margin-bottom: 2rem; }
+                @media (min-width: 768px) { .dm-h1 { font-size: 4.5rem; } }
+                @media (min-width: 1024px) { .dm-h1 { font-size: 5rem; } }
+                
+                .dm-p { font-size: 1.25rem; color: var(--on-surface-variant); font-weight: 500; max-width: 36rem; line-height: 1.6; margin: 0 auto 1rem auto; }
+                @media (min-width: 1024px) { .dm-p { margin: 0 0 1rem 0; } }
+
+                /* Flex List */
+                .dm-features { display: flex; flex-wrap: wrap; gap: 1.5rem; padding-top: 1rem; justify-content: center; }
+                @media (min-width: 1024px) { .dm-features { justify-content: flex-start; } }
+                
+                .dm-feature-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: var(--surface-highest); display: flex; align-items: center; justify-content: center; }
+
+                /* Glass Card */
+                .dm-glass-wrapper { position: relative; }
+                .dm-glow { position: absolute; inset: -1rem; background: rgba(255, 143, 118, 0.2); filter: blur(80px); border-radius: 9999px; pointer-events: none; }
+                .dm-glass-card {
+                    position: relative; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 3rem; padding: 2rem;
+                    box-shadow: 0px 40px 80px -20px rgba(255, 87, 51, 0.25), 0px 20px 40px rgba(0, 0, 0, 0.6);
                 }
-                .social-btn:hover { background: #f2f4f6; }
-                .social-btn:active { transform: scale(0.95); }
+                @media (min-width: 768px) { .dm-glass-card { padding: 3rem; } }
+
+                /* Forms */
+                .dm-input-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--on-surface-variant); padding: 0 0.25rem; margin-bottom: 0.5rem; display: block; }
+                .dm-input-box { position: relative; display: flex; align-items: center; }
+                .dm-input { width: 100%; background: rgba(38,38,38,0.5); border: none; border-radius: 1rem; padding: 1rem 1rem 1rem 3rem; color: white; transition: all 0.2s; }
+                .dm-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 143, 118, 0.5); }
+                .dm-input::placeholder { color: rgba(173, 170, 170, 0.4); }
+                .dm-icon { position: absolute; left: 1rem; color: var(--on-surface-variant); transition: color 0.2s; }
+                .dm-input:focus + .dm-icon, .dm-input-box:focus-within .dm-icon { color: var(--primary); }
+
+                /* Primary Button */
+                .dm-btn-primary {
+                    width: 100%; background: var(--primary-fixed); color: var(--on-primary-fixed); padding: 1.25rem; border-radius: 9999px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.125rem; text-transform: uppercase; letter-spacing: 0.05em; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 10px 15px -3px rgba(255, 143, 118, 0.2);
+                    margin-top: 2rem;
+                }
+                .dm-btn-primary:active { transform: scale(0.95); }
+
+                /* Floating Nav */
+                .dm-floating-nav {
+                    position: fixed; bottom: 0; left: 0; width: 100%; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: 1rem 1rem 1.5rem 1rem; background: rgba(14,14,14,0.8); backdrop-filter: blur(24px); border-radius: 2rem 2rem 0 0; box-shadow: 0px -20px 40px rgba(0,0,0,0.4);
+                }
+                .dm-nav-item {
+                    display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--on-surface-variant); text-decoration: none; transition: all 0.3s; padding: 0.5rem; cursor: pointer;
+                }
+                .dm-nav-item:hover { color: white; }
+                .dm-nav-item.active { color: #ff5c39; transform: scale(1.1); }
+                .dm-nav-label { font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.25rem; }
+
+                /* Floating Decoration */
+                .dm-float-deco { position: absolute; bottom: -2rem; right: -2rem; width: 8rem; height: 8rem; border-radius: 1.5rem; display: flex; align-items: center; justify-content: center; transform: rotate(12deg); border: 1px solid rgba(255, 143, 118, 0.4); background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(24px); box-shadow: 0px 40px 80px -20px rgba(255, 87, 51, 0.25), 0px 20px 40px rgba(0, 0, 0, 0.6); display: none; }
+                @media (min-width: 768px) { .dm-float-deco { display: flex; } }
+
+                /* Secondary Button */
+                .dm-social-btn {
+                    flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; border-radius: 1rem; background: var(--surface-highest); color: white; border: none; cursor: pointer; transition: background 0.2s;
+                }
+                .dm-social-btn:hover { background: rgba(38,38,38,0.8); }
+
+                /* ================================== */
+                /* LOGIN LIGHT STYLES                 */
+                /* ================================== */
+                .login-cinematic-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
+                .login-gradient-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 88, 188, 0.4), rgba(0, 0, 0, 0.6)); mix-blend-mode: multiply; }
+                .glass-card-login { background: rgba(247, 249, 251, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 32px; box-shadow: 0px 20px 40px rgba(0, 88, 188, 0.15); }
+                .btn-primary { background: linear-gradient(to bottom right, #0058bc, #0070eb); color: white; padding: 16px 32px; border-radius: 9999px; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 10px 20px rgba(0, 88, 188, 0.2); border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+                .social-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid rgba(193, 198, 215, 0.2); border-radius: 9999px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); cursor: pointer; transition: background 0.2s, transform 0.2s; font-weight: 700; color: #191c1e; }
             `}</style>
-            
-            {/* Global Floating Language Translator Button */}
-            <button 
-                onClick={handleTranslate}
-                style={{ 
-                    position: 'fixed', top: 24, right: 24, zIndex: 1000, 
-                    background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', 
-                    WebkitBackdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255,255,255,0.2)', color: 'white', 
-                    padding: '8px 16px', borderRadius: 20, cursor: 'pointer', 
-                    fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                }}
-            >
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>translate</span>
-                {lang.toUpperCase()}
-            </button>
 
             {mode === 'signup' ? (
-                <div className="signup-hero-bg" style={{ minHeight: '100dvh', fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#191c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', position: 'relative' }}>
-                    <main style={{ width: '100%', maxWidth: '448px', margin: '32px 0' }}>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', position: 'relative', zIndex: 10 }}>
-                            <h1 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 900, fontSize: '40px', color: 'white', opacity: 1, letterSpacing: '-0.05em', margin: 0, transform: 'scale(1.1)' }}>{l.mobileTitle}</h1>
-                            <p style={{ color: 'white', opacity: 1, marginTop: '12px', fontWeight: 600, margin: 0 }}>{l.subtitleSignup}</p>
-                        </div>
-                        
-                        {error && (
-                            <div style={{ background: '#ffdad6', color: '#ba1a1a', padding: '12px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center', fontWeight: 'bold' }}>{error}</div>
-                        )}
+                <div className="dm-wrapper">
+                    {/* Hero Background */}
+                    <div className="dm-hero-bg">
+                        <div className="dm-hero-gradient"></div>
+                        <img className="dm-hero-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4E7XYx2ZjDvx6ntI5oFq9nX98OsUxwRVdEzyOQ7fRmCSXpvN_ILKYn9vWuk01lcHqxzC8TVUYqIcNUqGjzgduax3rwYyFgPBIkz4OSPpKeEpWxIMlcKrMLxJ2oGEO1_agJB4B2EutVtrioCEEEbwcknPcHVc-Gur71hdWwyw9J92INZRg5SujiKhlAiqmmfzQL1SBfhU0vH8bHgSWyOV5ZnrwHfKFkVCMnBdfFgufuDYid5_-XPXMfXlaldejcPTe7rwNRDcn3kFe" alt="Culinary OS Festival" />
+                    </div>
 
-                        <div className="glass-card-signup">
-                            <div style={{ marginBottom: '32px' }}>
-                                <h2 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 800, fontSize: '24px', margin: 0 }}>{l.createAccount}</h2>
-                                <p style={{ color: '#586377', fontSize: '14px', marginTop: '4px', margin: 0 }}>{l.joinNetwork}</p>
-                            </div>
-                            
-                            <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.businessName}</label>
-                                    <input className="ts-input" type="text" placeholder={l.businessPlaceholder} value={businessName} onChange={e => setBusinessName(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 20px', color: '#191c1e', fontWeight: 600 }} />
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.emailLabel}</label>
-                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                        <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#0058bc' }}>mail</span>
-                                        <input className="ts-input" type="email" placeholder={l.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 20px 16px 48px', color: '#191c1e', fontWeight: 600 }} />
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#586377', marginLeft: '4px' }}>{l.passwordLabel}</label>
-                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                        <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', color: '#0058bc' }}>lock</span>
-                                        <input className="ts-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} style={{ width: '100%', background: '#f2f4f6', border: 'none', borderRadius: '6px', padding: '16px 48px', color: '#191c1e', fontWeight: 600 }} />
-                                    </div>
-                                    <div style={{ paddingTop: '8px', paddingLeft: '4px', paddingRight: '4px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#586377' }}>{l.strength} {password.length > 5 ? l.good : password.length > 0 ? l.moderate : l.weak}</span>
-                                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#9e3d00' }}>{l.avoid123}</span>
-                                        </div>
-                                        <div style={{ height: '6px', width: '100%', background: '#e6e8ea', borderRadius: '9999px', overflow: 'hidden', display: 'flex', gap: '2px' }}>
-                                            <div style={{ height: '100%', width: '33.33%', background: password.length > 0 ? '#9e3d00' : 'transparent', borderRadius: '9999px' }}></div>
-                                            <div style={{ height: '100%', width: '33.33%', background: password.length > 5 ? 'rgba(0, 88, 188, 0.6)' : 'transparent', borderRadius: '9999px' }}></div>
-                                            <div style={{ height: '100%', width: '33.33%', background: password.length > 8 ? '#0058bc' : 'transparent', borderRadius: '9999px' }}></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '16px', padding: '18px' }}>
-                                    {loading ? l.processing : l.startFreeTrial}
-                                </button>
-                            </form>
-                            
-                            <div style={{ position: 'relative', margin: '32px 0' }}>
-                                <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, display: 'flex', alignItems: 'center' }}>
-                                    <div style={{ width: '100%', borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
-                                </div>
-                                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>
-                                    <span style={{ background: '#ffffff', padding: '0 16px', color: '#586377', opacity: 0.9 }}>{l.orContinueWith}</span>
-                                </div>
-                            </div>
-                            
-                            <div style={{ display: 'flex', gap: '16px' }}>
-                                <button type="button" onClick={handleGoogleLogin} disabled={loading} className="social-btn" style={{ flex: 1 }}>
-                                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvoDfKDiuMJl1Schk_jYlonI9Ak2qxMNG2ce5EIF2O_FwFCu1U1VUknDhCrjkId-cYpXhXcGi8TQqQk9lnZ5cNsejz0y69g2Ecar2hNuQbwSqlILIsneGl8qZTIv8KoZGC2hz22GswAIyz_mn4Wz0HjArG41ZODqO_Wb_gCuhNiSE4F0JlNrkRIEH32UQ1ZgETf9Ek1cNH3WVrX9lFWUDf1N4PBL322dHeCXt8ZuEIb53-8XWxJBdwpxUwh1xP10py8o9chTnJcPlY" alt="Google" style={{ width: 16, height: 16 }} />
-                                    <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '12px' }}>{l.google}</span>
-                                </button>
-                                <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="social-btn" style={{ flex: 1 }}>
-                                    <span className="material-symbols-outlined" style={{ color: '#191c1e', opacity: 0.7, fontSize: 18 }}>mail</span>
-                                    <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '12px' }}>{l.email}</span>
-                                </button>
-                            </div>
-                            
-                            <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '14px', color: '#586377', margin: '32px 0 0 0', fontWeight: 500 }}>
-                                {l.alreadyHaveAccount}{' '}
-                                <a href="#" onClick={(e) => { e.preventDefault(); setMode('login'); setError(null); }} style={{ color: '#0058bc', fontWeight: 800, textDecoration: 'none' }}>{l.login}</a>
-                            </p>
+                    {/* Top Navigation */}
+                    <header className="dm-nav">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-0.05em', fontSize: '1.5rem', fontStyle: 'italic', color: 'white' }}>FoodSpot</span>
                         </div>
-                        
-                        <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '10px', color: 'rgba(255,255,255,0.7)', fontWeight: 500, lineHeight: 1.5, padding: '0 32px' }}>
-                            {l.bySigningUp} <br/>
-                            <span style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}>{l.tos}</span> {l.and} <span style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}>{l.privacy}</span>.
-                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <button onClick={() => setMode('login')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontFamily: '"Be Vietnam Pro", sans-serif', fontWeight: 700 }}>{l.login}</button>
+                            <button onClick={handleTranslate} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}>
+                                <span className="material-symbols-outlined">language</span>
+                                {lang.toUpperCase()}
+                            </button>
+                        </div>
+                    </header>
+
+                    <main className="dm-main">
+                        <div className="dm-grid">
+                            {/* Headline Section */}
+                            <div className="dm-text-center">
+                                <div className="dm-badge">
+                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff8f76' }}></span>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.2em', color: '#ff8f76', textTransform: 'uppercase' }}>Summer Festival Edition</span>
+                                </div>
+                                <h1 className="dm-h1">
+                                    The First <span style={{ color: '#ff8f76', fontStyle: 'italic' }}>UGC-Driven</span> Culinary OS.
+                                </h1>
+                                <p className="dm-p">
+                                    Turn Every Customer into a Creator. Engineered for Pop-ups, Festivals, and the On-the-Go Hustle.
+                                </p>
+                                
+                                <div className="dm-features">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div className="dm-feature-icon">
+                                            <span className="material-symbols-outlined" style={{ color: '#ff8f76', fontVariationSettings: "'FILL' 1" }}>restaurant_menu</span>
+                                        </div>
+                                        <span style={{ fontWeight: 700, fontSize: '0.875rem', letterSpacing: '0.025em' }}>Live Menus</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div className="dm-feature-icon">
+                                            <span className="material-symbols-outlined" style={{ color: '#ff8f76', fontVariationSettings: "'FILL' 1" }}>bolt</span>
+                                        </div>
+                                        <span style={{ fontWeight: 700, fontSize: '0.875rem', letterSpacing: '0.025em' }}>Instant Checkout</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div className="dm-feature-icon">
+                                            <span className="material-symbols-outlined" style={{ color: '#ff8f76', fontVariationSettings: "'FILL' 1" }}>groups</span>
+                                        </div>
+                                        <span style={{ fontWeight: 700, fontSize: '0.875rem', letterSpacing: '0.025em' }}>Creator Loop</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Login/Signup Card */}
+                            <div className="dm-glass-wrapper">
+                                <div className="dm-glow"></div>
+                                <div className="dm-glass-card">
+                                    
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <h2 style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontWeight: 800, fontSize: '1.875rem', color: 'white', margin: 0 }}>Get Cooking</h2>
+                                        <p style={{ color: '#adaaaa', marginTop: '0.5rem', margin: 0 }}>Join the hustle in under 60 seconds.</p>
+                                    </div>
+                                    
+                                    {error && <div style={{ background: '#490013', color: '#ffb2b9', padding: '12px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center', fontWeight: 'bold' }}>{error}</div>}
+                                    
+                                    <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                        
+                                        <div>
+                                            <label className="dm-input-label">{l.businessName}</label>
+                                            <div className="dm-input-box">
+                                                <span className="material-symbols-outlined dm-icon">storefront</span>
+                                                <input className="dm-input" type="text" placeholder={l.businessPlaceholder} value={businessName} onChange={e => setBusinessName(e.target.value)} required disabled={loading} />
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="dm-input-label">{l.emailLabel}</label>
+                                            <div className="dm-input-box">
+                                                <span className="material-symbols-outlined dm-icon">alternate_email</span>
+                                                <input className="dm-input" type="email" placeholder={l.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} />
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <label className="dm-input-label" style={{ marginBottom: 0 }}>{l.passwordLabel}</label>
+                                                <a href="#" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ff8f76', textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); setMode('login'); }}>{l.alreadyHaveAccount}</a>
+                                            </div>
+                                            <div className="dm-input-box" style={{ marginTop: '0.5rem' }}>
+                                                <span className="material-symbols-outlined dm-icon">lock_open</span>
+                                                <input className="dm-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} />
+                                            </div>
+                                            
+                                            <div style={{ paddingTop: '0.5rem', paddingLeft: '0.25rem', paddingRight: '0.25rem' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem', fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '-0.05em' }}>
+                                                    <span style={{ color: '#adaaaa' }}>{l.strength}</span>
+                                                    <span style={{ color: '#ff8f76' }}>{password.length > 5 ? l.good : password.length > 0 ? l.moderate : l.weak}</span>
+                                                </div>
+                                                <div style={{ height: '0.25rem', width: '100%', backgroundColor: '#262626', borderRadius: '9999px', overflow: 'hidden', display: 'flex', gap: '0.25rem' }}>
+                                                    <div style={{ height: '100%', width: '25%', backgroundColor: password.length > 0 ? '#ff8f76' : 'transparent', borderRadius: '9999px' }}></div>
+                                                    <div style={{ height: '100%', width: '25%', backgroundColor: password.length > 3 ? '#ff8f76' : 'transparent', borderRadius: '9999px' }}></div>
+                                                    <div style={{ height: '100%', width: '25%', backgroundColor: password.length > 5 ? '#ff8f76' : 'transparent', borderRadius: '9999px' }}></div>
+                                                    <div style={{ height: '100%', width: '25%', backgroundColor: password.length > 8 ? '#ff8f76' : 'rgba(19, 19, 19, 1)', borderRadius: '9999px' }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <button type="submit" disabled={loading} className="dm-btn-primary">
+                                            {loading ? l.processing : l.startFreeTrial}
+                                        </button>
+                                        
+                                    </form>
+                                    
+                                    <div style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+                                            <div style={{ height: '1px', flex: 1, backgroundColor: 'rgba(72, 72, 71, 0.3)' }}></div>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#adaaaa', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{l.orContinueWith}</span>
+                                            <div style={{ height: '1px', flex: 1, backgroundColor: 'rgba(72, 72, 71, 0.3)' }}></div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                                            <button type="button" onClick={handleGoogleLogin} className="dm-social-btn">
+                                                <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>group_add</span>
+                                                <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{l.google}</span>
+                                            </button>
+                                            <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="dm-social-btn">
+                                                <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>email</span>
+                                                <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{l.email}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                {/* Floating Antigravity Item */}
+                                <div className="dm-float-deco">
+                                    <div style={{ textAlign: 'center' }}>
+                                        <span style={{ display: 'block', fontSize: '1.875rem', fontWeight: 900, color: '#ff8f76', fontStyle: 'italic', lineHeight: 1 }}>14</span>
+                                        <span style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', color: '#adaaaa' }}>Day Trial</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </main>
+
+                    {/* Bottom Navigation */}
+                    <nav className="dm-floating-nav">
+                        <div className="dm-nav-item active">
+                            <span className="material-symbols-outlined">explore</span>
+                            <span className="dm-nav-label">Discover</span>
+                        </div>
+                        <div className="dm-nav-item">
+                            <span className="material-symbols-outlined">local_fire_department</span>
+                            <span className="dm-nav-label">Hustle</span>
+                        </div>
+                        <div className="dm-nav-item">
+                            <span className="material-symbols-outlined">camera</span>
+                            <span className="dm-nav-label">Creator</span>
+                        </div>
+                        <div className="dm-nav-item">
+                            <span className="material-symbols-outlined">person</span>
+                            <span className="dm-nav-label">Profile</span>
+                        </div>
+                    </nav>
                 </div>
             ) : (
                 <div style={{ minHeight: '100dvh', fontFamily: '"Montserrat", sans-serif', color: '#191c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', backgroundColor: '#f7f9fb' }}>
@@ -584,6 +725,22 @@ const TrialSignup = () => {
                         <img className="login-cinematic-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHY_u1BxiUSrKWO-DeRh3p3YLyGmCL_kJvTiVl17WsnqsVGUD0JoLVsPsaEgkMH8pVJvyPj2zYe84d8k35MAM2jVHOFtDoF7_M1Ym_tKg7aj9r88B1grMY_Yvaq2fAFRog_-mhSu7Qu1sjuxl3uTjxbqlWb2T6ZAKDJ53IcmjH7JQtZlQk4BvT0SvZyX6tL88FsSZBpgLHx-MrTwJsZMY6KQOnPo8HXzFhOp8bYHbMMIeEJhV5C1_8MCfMfop2HIr9I65o3e-V66Nw" alt="Vibrant street food" />
                         <div className="login-gradient-overlay"></div>
                     </div>
+                    
+                    <button 
+                        onClick={handleTranslate}
+                        style={{ 
+                            position: 'fixed', top: 24, right: 24, zIndex: 1000, 
+                            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', 
+                            WebkitBackdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255,255,255,0.2)', color: 'white', 
+                            padding: '8px 16px', borderRadius: 20, cursor: 'pointer', 
+                            fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                        }}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: 18 }}>translate</span>
+                        {lang.toUpperCase()}
+                    </button>
                     
                     <header style={{ position: 'absolute', top: 0, width: '100%', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
                         <div style={{ fontSize: '30px', fontWeight: 800, color: 'white', letterSpacing: '-0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -635,7 +792,7 @@ const TrialSignup = () => {
                             
                             <div style={{ display: 'flex', gap: '16px' }}>
                                 <button type="button" onClick={handleGoogleLogin} disabled={loading} className="social-btn" style={{ flex: 1, padding: '12px', fontSize: '12px' }}>
-                                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuY8s_dsoFucVh5TaXd4oIju_IptYK3cJ-QJIyF6y5OUwKyBTeKs7_jA9X8s7swzDmHyrJjWQP7KltGwFfFkECKNmsVwU2UIA--h5kNKsjEjCU9xzmEWMNgVVPM8oIFbP9pZb__ixpk6q9dL_OiGpM5fhLwSYFULmZ_KWO6gp2tnvpPIfwjMPaKPTugwjVPIcmU1wz38A7dM2vrQ6meUrAr6k9rf1Q2Pc0vAuXk-JcmKoUQldCh2SLUJBmQ7WzzTJ3vuN9CQma4Tnd" alt="Google" style={{ width: 16, height: 16 }} />
+                                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#191c1e' }}>group_add</span>
                                     <span>{l.google}</span>
                                 </button>
                                 <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="social-btn" style={{ flex: 1, padding: '12px', fontSize: '12px' }}>
