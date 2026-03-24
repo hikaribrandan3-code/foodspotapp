@@ -1,5 +1,5 @@
-// src/pages/owner/Settings.jsx - VISUAL MIRROR v2.0
-import React, { useState, useEffect, useRef } from 'react';
+// src/pages/owner/Settings.jsx - VISUAL MIRROR v2.1 (FIXED)
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -9,7 +9,6 @@ import BackendNav from '../../components/BackendNav';
 import CoverImageEditor from '../../components/CoverImageEditor';
 import ColorPickerModal from '../../components/ColorPickerModal';
 import { clearAuth } from '../../utils/storage';
-import { updateConfig } from '../../config/appConfig.v2.js'; // updateConfig kept for potential future use
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
 import './Settings.css';
 
@@ -55,46 +54,72 @@ const HERO_ICON_DEFS = (t) => [
     { id: 'game', label: t('game'), Icon: GameIcon }
 ];
 
+// Default values for all branding fields
+const DEFAULTS = {
+    navbar: '#1F2937',
+    primary: '#B8956A',
+    secondary: '#A89070',
+    confirmation: '#22C55E',
+    poweredBy: '#C4856A',
+    fontFamily: 'Inter',
+    fontWeight: '600',
+    heroIconColor: '#FFFFFF'
+};
+
 const Settings = () => {
     const { tenantData: tenant, businessId, refreshTenantData } = useTenant();
     const { t } = useLanguage();
-    const [isSaving, setIsSaving] = useState(false);
-    // 🛡️ ATOMIC SAVE STATE (Manual Persistence v5.0)
-    const [hasChanges, setHasChanges] = useState(
-        () => sessionStorage.getItem(`dirty_branding_${businessId}`) === 'true'
-    );
-    const [saveStatus, setSaveStatus] = useState(null);
-
-    // Persistence Hook
-    useEffect(() => {
-        if (businessId) {
-            sessionStorage.setItem(`dirty_branding_${businessId}`, hasChanges);
-        }
-    }, [hasChanges, businessId]);
     const navigate = useNavigate();
+    
+    // UI State
+    const [isSaving, setIsSaving] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [saveStatus, setSaveStatus] = useState(null);
+    const [showCoverEditor, setShowCoverEditor] = useState(false);
 
-    // LOCAL STATE for 60fps typing
-    const [localIdentity, setLocalIdentity] = useState({
+    // Track the last businessId we've initialized for to prevent re-initialization
+    const initializedForBusinessRef = useRef(null);
+
+    // ============================================================
+    // SINGLE SOURCE OF TRUTH: All editable data lives here
+    // ============================================================
+    const [draft, setDraft] = useState({
+        // Identity
         business_name: '',
-        font_family: 'Inter',
-        font_weight: '600'
-    });
-
-    // LOCAL STATE for munchboy fields (prevents reload/flicker issues)
-    const [localMunchboyName, setLocalMunchboyName] = useState('MUNCHBOY');
-    const [localMunchboyColors, setLocalMunchboyColors] = useState({
-        shell: '#6B0FCC',
-        a: '#D1D5DB',
-        b: '#D1D5DB'
-    });
-
-    // 🛡️ THEME COLORS: Local state to prevent revert (mirrors munchboy pattern)
-    const [localThemeColors, setLocalThemeColors] = useState({
-        navbar: '#1F2937',
-        primary: '#B8956A',
-        secondary: '#A89070',
-        confirmation: '#22C55E',
-        poweredBy: '#C4856A'
+        font_family: DEFAULTS.fontFamily,
+        font_weight: DEFAULTS.fontWeight,
+        
+        // Theme Colors
+        navbar_color: DEFAULTS.navbar,
+        primary_color: DEFAULTS.primary,
+        secondary_color: DEFAULTS.secondary,
+        confirmation_color: DEFAULTS.confirmation,
+        powered_by_color: DEFAULTS.poweredBy,
+        
+        // Hero Icons
+        hero_icons: {
+            menu: { color: DEFAULTS.heroIconColor },
+            delivery: { color: DEFAULTS.heroIconColor },
+            promos: { color: DEFAULTS.heroIconColor },
+            game: { color: DEFAULTS.heroIconColor }
+        },
+        
+        // Info Pills
+        info_pills: {},
+        
+        // Munchboy
+        munchboy_name: 'MUNCHBOY',
+        munchboy_shell_color: '#6B0FCC',
+        munchboy_a_color: '#D1D5DB',
+        munchboy_b_color: '#D1D5DB',
+        munchboy_enabled: false,
+        
+        // Other
+        hero_mode: 'text',
+        hero_url: '',
+        nav_icon_mode: 'white',
+        hero_icon_mode: 'black',
+        app_config: {}
     });
 
     // Dropdown states
@@ -103,94 +128,282 @@ const Settings = () => {
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
     const rafRef = useRef(null);
-    // 🛡️ JUST SAVED FLAG: Prevents useEffect from overwriting local state with stale DB data
-    const justSavedRef = useRef(false);
 
-    // Modal states
-    const [showCoverEditor, setShowCoverEditor] = useState(false);
+    // Color Picker Modal State
     const [colorPickerState, setColorPickerState] = useState({
         isOpen: false,
         title: '',
         keyName: '',
         cssVar: '',
         initialColor: '#8B7355',
-        originalColor: '#8B7355' // For revert on cancel
+        originalColor: '#8B7355',
+        isHeroIcon: false,
+        iconId: null
     });
 
-    // Local preview colors (for instant feedback without re-render)
-    const [heroIconColors, setHeroIconColors] = useState({
-        menu: '#FFFFFF',
-        delivery: '#FFFFFF',
-        promos: '#FFFFFF',
-        game: '#FFFFFF'
-    });
-
-    // Data Pump: Sync context to UI
+    // ============================================================
+    // INITIALIZATION: One-time load from tenant data
+    // Only runs when businessId changes, not on every tenant update
+    // ============================================================
     useEffect(() => {
-        if (tenant) {
-            setLocalIdentity({
-                business_name: tenant.business_name || '',
-                font_family: tenant.font_family || 'Inter',
-                font_weight: tenant.font_weight || '600'
-            });
+        if (!tenant?.business_id) return;
+        
+        // Only initialize once per businessId to prevent overwrites
+        if (initializedForBusinessRef.current === tenant.business_id) return;
+        
+        console.log('[Settings] Initializing draft from tenant for business:', tenant.business_id);
+        
+        const icons = tenant.hero_icons || {};
+        
+        setDraft({
+            business_name: tenant.business_name || '',
+            font_family: tenant.font_family || DEFAULTS.fontFamily,
+            font_weight: tenant.font_weight || DEFAULTS.fontWeight,
+            
+            navbar_color: tenant.navbar_color || DEFAULTS.navbar,
+            primary_color: tenant.primary_color || DEFAULTS.primary,
+            secondary_color: tenant.secondary_color || DEFAULTS.secondary,
+            confirmation_color: tenant.confirmation_color || DEFAULTS.confirmation,
+            powered_by_color: tenant.powered_by_color || DEFAULTS.poweredBy,
+            
+            hero_icons: {
+                menu: { color: icons.menu?.color || DEFAULTS.heroIconColor },
+                delivery: { color: icons.delivery?.color || DEFAULTS.heroIconColor },
+                promos: { color: icons.promos?.color || DEFAULTS.heroIconColor },
+                game: { color: icons.game?.color || DEFAULTS.heroIconColor }
+            },
+            
+            info_pills: tenant.info_pills || {},
+            
+            munchboy_name: tenant.munchboy_name || 'MUNCHBOY',
+            munchboy_shell_color: tenant.munchboy_shell_color || '#6B0FCC',
+            munchboy_a_color: tenant.munchboy_a_color || '#D1D5DB',
+            munchboy_b_color: tenant.munchboy_b_color || '#D1D5DB',
+            munchboy_enabled: tenant.munchboy_enabled || false,
+            
+            hero_mode: tenant.hero_mode || 'text',
+            hero_url: tenant.hero_url || '',
+            nav_icon_mode: tenant.nav_icon_mode || 'white',
+            hero_icon_mode: tenant.hero_icon_mode || 'black',
+            app_config: tenant.app_config || {}
+        });
+        
+        // Apply CSS variables immediately
+        applyCssVariables(tenant);
+        
+        initializedForBusinessRef.current = tenant.business_id;
+        setHasChanges(false);
+        
+    }, [tenant?.business_id]); // Only depend on business_id, not the entire tenant object
 
-            // Sync hero icon colors from tenant
-            const icons = tenant.hero_icons || {};
-            setHeroIconColors({
-                menu: icons.menu?.color || '#FFFFFF',
-                delivery: icons.delivery?.color || '#FFFFFF',
-                promos: icons.promos?.color || '#FFFFFF',
-                game: icons.game?.color || '#FFFFFF'
-            });
+    // ============================================================
+    // CSS VARIABLES: Apply current draft values to document
+    // ============================================================
+    const applyCssVariables = useCallback((data) => {
+        const root = document.documentElement.style;
+        
+        if (data.font_family) root.setProperty('--font-main', data.font_family);
+        if (data.font_weight) root.setProperty('--font-weight-hero', data.font_weight);
+        if (data.navbar_color) root.setProperty('--color-navbar-bg', data.navbar_color);
+        if (data.primary_color) root.setProperty('--color-primary', data.primary_color);
+        if (data.secondary_color) root.setProperty('--color-secondary', data.secondary_color);
+        if (data.confirmation_color) root.setProperty('--color-confirm', data.confirmation_color);
+        if (data.powered_by_color) root.setProperty('--color-powered', data.powered_by_color);
+    }, []);
 
-            // Sync munchboy fields from tenant (only if not dirty to avoid overwrite)
-            // 🛡️ ALSO skip if we just saved (prevents replica lag from overwriting local state)
-            if (!hasChanges && !justSavedRef.current) {
-                setLocalMunchboyName(tenant.munchboy_name || 'MUNCHBOY');
-                setLocalMunchboyColors({
-                    shell: tenant.munchboy_shell_color || '#6B0FCC',
-                    a: tenant.munchboy_a_color || '#D1D5DB',
-                    b: tenant.munchboy_b_color || '#D1D5DB'
-                });
-                // 🛡️ THEME COLORS: Sync from tenant when not dirty
-                setLocalThemeColors({
-                    navbar: tenant.navbar_color || '#1F2937',
-                    primary: tenant.primary_color || '#B8956A',
-                    secondary: tenant.secondary_color || '#A89070',
-                    confirmation: tenant.confirmation_color || '#22C55E',
-                    poweredBy: tenant.powered_by_color || '#C4856A'
-                });
-            }
-            // Reset just saved flag after useEffect runs
-            justSavedRef.current = false;
+    // Apply CSS whenever draft changes
+    useEffect(() => {
+        applyCssVariables(draft);
+    }, [draft, applyCssVariables]);
 
-            // Force CSS visuals
-            if (tenant.font_family) {
-                document.documentElement.style.setProperty('--font-main', tenant.font_family);
+    // ============================================================
+    // DRAFT UPDATE HELPERS
+    // ============================================================
+    const updateDraftField = useCallback((field, value) => {
+        setDraft(prev => ({ ...prev, [field]: value }));
+        setHasChanges(true);
+    }, []);
+
+    const updateHeroIconColor = useCallback((iconId, color) => {
+        setDraft(prev => ({
+            ...prev,
+            hero_icons: {
+                ...prev.hero_icons,
+                [iconId]: { ...prev.hero_icons[iconId], color }
             }
-            if (tenant.font_weight) {
-                document.documentElement.style.setProperty('--font-weight-hero', tenant.font_weight);
+        }));
+        setHasChanges(true);
+    }, []);
+
+    const updateInfoPill = useCallback((pillId, updates) => {
+        setDraft(prev => ({
+            ...prev,
+            info_pills: {
+                ...prev.info_pills,
+                [pillId]: { ...prev.info_pills[pillId], ...updates }
             }
-            if (tenant.navbar_color) {
-                document.documentElement.style.setProperty('--color-navbar-bg', tenant.navbar_color);
+        }));
+        setHasChanges(true);
+    }, []);
+
+    // ============================================================
+    // EVENT HANDLERS
+    // ============================================================
+    const handleNameChange = (e) => {
+        updateDraftField('business_name', e.target.value);
+    };
+
+    const handleFontSelect = (family) => {
+        updateDraftField('font_family', family);
+        setIsFontMenuOpen(false);
+    };
+
+    const handleWeightSelect = (weight) => {
+        updateDraftField('font_weight', weight);
+        setIsWeightMenuOpen(false);
+    };
+
+    // Color Picker Modal Handlers
+    const openColorPicker = (title, keyName, cssVar, defaultColor) => {
+        const currentColor = draft[keyName] || defaultColor;
+        setColorPickerState({
+            isOpen: true,
+            title,
+            keyName,
+            cssVar,
+            initialColor: currentColor,
+            originalColor: currentColor,
+            isHeroIcon: false,
+            iconId: null
+        });
+    };
+
+    const openHeroIconColorPicker = (iconId, label) => {
+        const currentColor = draft.hero_icons[iconId]?.color || DEFAULTS.heroIconColor;
+        setColorPickerState({
+            isOpen: true,
+            title: `Color: ${label}`,
+            keyName: '',
+            cssVar: '',
+            initialColor: currentColor,
+            originalColor: currentColor,
+            isHeroIcon: true,
+            iconId
+        });
+    };
+
+    const handleColorPickerLiveChange = (newColor) => {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        
+        rafRef.current = requestAnimationFrame(() => {
+            if (colorPickerState.cssVar) {
+                document.documentElement.style.setProperty(colorPickerState.cssVar, newColor);
             }
-            // 🛡️ THEME COLORS: Set CSS variables from tenant data on load
-            if (tenant.primary_color) {
-                document.documentElement.style.setProperty('--color-primary', tenant.primary_color);
+            if (colorPickerState.isHeroIcon) {
+                updateHeroIconColor(colorPickerState.iconId, newColor);
             }
-            if (tenant.secondary_color) {
-                document.documentElement.style.setProperty('--color-secondary', tenant.secondary_color);
-            }
-            if (tenant.confirmation_color) {
-                document.documentElement.style.setProperty('--color-confirm', tenant.confirmation_color);
-            }
-            if (tenant.powered_by_color) {
-                document.documentElement.style.setProperty('--color-powered', tenant.powered_by_color);
-            }
+        });
+    };
+
+    const handleColorPickerApply = (finalColor) => {
+        if (colorPickerState.isHeroIcon) {
+            updateHeroIconColor(colorPickerState.iconId, finalColor);
+        } else if (colorPickerState.keyName.startsWith('info_pill_')) {
+            const pillId = colorPickerState.keyName.replace('info_pill_', '');
+            updateInfoPill(pillId, { bgColor: finalColor });
+        } else if (colorPickerState.keyName) {
+            updateDraftField(colorPickerState.keyName, finalColor);
         }
-    }, [tenant, hasChanges]);
+        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+    };
 
-    // 🛡️ BODY SCROLL LOCK: Prevent background scroll when ColorPicker is open
+    const handleColorPickerClose = () => {
+        // Revert CSS variable
+        if (colorPickerState.cssVar) {
+            document.documentElement.style.setProperty(colorPickerState.cssVar, colorPickerState.originalColor);
+        }
+        // Revert hero icon if canceled
+        if (colorPickerState.isHeroIcon) {
+            updateHeroIconColor(colorPickerState.iconId, colorPickerState.originalColor);
+        }
+        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+    };
+
+    // ============================================================
+    // SAVE: Atomic save operation
+    // ============================================================
+    const handlePlatformSave = async () => {
+        if (!businessId) return;
+        
+        setIsSaving(true);
+        console.log('[Settings] Saving branding for business:', businessId);
+
+        try {
+            // Construct payload directly from draft state (single source of truth)
+            const payload = {
+                business_name: draft.business_name,
+                font_family: draft.font_family,
+                font_weight: draft.font_weight,
+                navbar_color: draft.navbar_color,
+                primary_color: draft.primary_color,
+                secondary_color: draft.secondary_color,
+                confirmation_color: draft.confirmation_color,
+                powered_by_color: draft.powered_by_color,
+                hero_icons: draft.hero_icons,
+                info_pills: draft.info_pills,
+                munchboy_name: draft.munchboy_name,
+                munchboy_shell_color: draft.munchboy_shell_color,
+                munchboy_a_color: draft.munchboy_a_color,
+                munchboy_b_color: draft.munchboy_b_color,
+                munchboy_enabled: draft.munchboy_enabled,
+                hero_mode: draft.hero_mode,
+                hero_url: draft.hero_url,
+                nav_icon_mode: draft.nav_icon_mode,
+                hero_icon_mode: draft.hero_icon_mode,
+                app_config: draft.app_config,
+                updated_at: new Date().toISOString()
+            };
+
+            console.log('[Settings] Save payload:', payload);
+
+            // 1. Save to database
+            const { error: updateError } = await updateBranding(payload, businessId);
+            
+            if (updateError) {
+                console.error('[Settings] Update failed:', updateError);
+                throw updateError;
+            }
+
+            // 2. Refresh tenant data (this will update the context, but NOT our draft due to init guard)
+            await refreshTenantData();
+
+            // 3. Clear dirty state
+            setHasChanges(false);
+            setSaveStatus({ message: t('branding_saved') || 'Saved successfully!' });
+            setTimeout(() => setSaveStatus(null), 3000);
+
+        } catch (error) {
+            console.error('[Settings] Save failed:', error);
+            setSaveStatus({ error: true, message: t('save_error') || 'Save failed. Please try again.' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // ============================================================
+    // LOGOUT
+    // ============================================================
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        clearAuth();
+        window.location.href = `/${tenant?.slug || ''}`;
+    };
+
+    // ============================================================
+    // UI EFFECTS
+    // ============================================================
+    
+    // Body scroll lock for color picker
     useEffect(() => {
         if (colorPickerState.isOpen) {
             document.body.style.overflow = 'hidden';
@@ -223,338 +436,14 @@ const Settings = () => {
         };
     }, []);
 
-    // Optimistic Sync Adapter
-    const syncContext = (updates) => {
-        window.dispatchEvent(new CustomEvent('frontendSync', { detail: updates }));
-        if (tenant) {
-            Object.assign(tenant, updates);
-        }
-    };
-
-    // Field Update Handler
-    const handleFieldUpdate = async (field, value) => {
-        if (!businessId) return;
-
-        // Instant CSS mapping
-        if (field === 'font_family') document.documentElement.style.setProperty('--font-main', value);
-        if (field === 'font_weight') document.documentElement.style.setProperty('--font-weight-hero', value);
-        if (field === 'navbar_color') document.documentElement.style.setProperty('--color-navbar-bg', value);
-        // 🛡️ THEME COLORS: Set CSS variables immediately for race-condition-proof saves
-        if (field === 'primary_color') document.documentElement.style.setProperty('--color-primary', value);
-        if (field === 'secondary_color') document.documentElement.style.setProperty('--color-secondary', value);
-        if (field === 'confirmation_color') document.documentElement.style.setProperty('--color-confirm', value);  // Match ColorPillar
-        if (field === 'powered_by_color') document.documentElement.style.setProperty('--color-powered', value);
-
-        // 🛡️ THEME COLORS: Update local state (mirrors munchboy pattern)
-        if (field === 'navbar_color') setLocalThemeColors(prev => ({ ...prev, navbar: value }));
-        if (field === 'primary_color') setLocalThemeColors(prev => ({ ...prev, primary: value }));
-        if (field === 'secondary_color') setLocalThemeColors(prev => ({ ...prev, secondary: value }));
-        if (field === 'confirmation_color') setLocalThemeColors(prev => ({ ...prev, confirmation: value }));
-        if (field === 'powered_by_color') setLocalThemeColors(prev => ({ ...prev, poweredBy: value }));
-
-        syncContext({ [field]: value });
-
-        // 💾 PERSIST TO STORAGE (Fixes BottomNav sync on route change)
-        // Map Supabase (snake_case) to appConfig (structure)
-        // 🎨 VAULT SEAL: All 4 theme colors + branding fields
-        const storageUpdates = {};
-        const BRANDING_FIELDS = [
-            'navbar_color', 'nav_icon_mode', 'business_name', 'font_family', 'font_weight',
-            'primary_color', 'secondary_color', 'confirmation_color', 'powered_by_color'
-        ];
-        if (BRANDING_FIELDS.includes(field)) {
-            storageUpdates.branding = { [field]: value };
-            // Also map to colors object for App.jsx CSS hydration
-            if (['primary_color', 'secondary_color', 'confirmation_color', 'powered_by_color'].includes(field)) {
-                let colorKey = field.replace('_color', ''); // e.g., 'confirmation'
-                if (colorKey === 'powered_by') colorKey = 'powered'; // 🩹 FIX: App.jsx expects 'powered'
-                storageUpdates.colors = { [colorKey]: value };
-            }
-        } else if (field === 'hero_mode' || field === 'hero_url') {
-            storageUpdates.headerBranding = { [field]: value };
-            storageUpdates[field] = value; // Save at root too for Home.jsx polyfills
-        } else if (field === 'info_pills') {
-            // 🩹 PATCH: Map snake_case (DB) to camelCase (App) for local storage
-            storageUpdates.infoPills = value;
-        } else {
-            storageUpdates[field] = value;
-        }
-        // 🛡️ CLOUD-FIRST: localStorage writes disabled.
-        // updateConfig(storageUpdates);
-
-        // 🛡️ ATOMIC PROTOCOL: Mark as dirty, do NOT sync yet.
-        setHasChanges(true);
-    };
-
-    // Hero Icon Color Update
-    const handleHeroIconColorUpdate = async (iconId, color) => {
-        if (!businessId) return;
-
-        const currentIcons = tenant?.hero_icons || {};
-        const updatedIcons = {
-            ...currentIcons,
-            [iconId]: {
-                ...(currentIcons[iconId] || {}),
-                color: color
-            }
-        };
-
-        // Update local state for instant preview
-        setHeroIconColors(prev => ({ ...prev, [iconId]: color }));
-        syncContext({ hero_icons: updatedIcons });
-
-        // 🛡️ CLOUD-FIRST: localStorage writes disabled.
-        // updateConfig({
-        //     hero_icons: updatedIcons,
-        //     heroIcons: { // Attempt to map to camelCase structure for completeness
-        //         [iconId]: { color: color }
-        //     }
-        // });
-
-        // 🛡️ ATOMIC PROTOCOL: Mark as dirty
-        setHasChanges(true);
-    };
-
-    // Typography handlers
-    const handleNameChange = (e) => {
-        setLocalIdentity(prev => ({ ...prev, business_name: e.target.value }));
-    };
-
-    const handleNameBlur = async () => {
-        if (!businessId) return;
-        syncContext({ business_name: localIdentity.business_name });
-        // 🛡️ ATOMIC PROTOCOL: Mark as dirty
-        setHasChanges(true);
-    };
-
-    const handleFontSelect = (family) => {
-        setLocalIdentity(prev => ({ ...prev, font_family: family }));
-        document.documentElement.style.setProperty('--font-main', family);
-        setIsFontMenuOpen(false);
-        handleFieldUpdate('font_family', family);
-    };
-
-    const handleWeightSelect = (weight) => {
-        setLocalIdentity(prev => ({ ...prev, font_weight: weight }));
-        document.documentElement.style.setProperty('--font-weight-hero', weight);
-        setIsWeightMenuOpen(false);
-        handleFieldUpdate('font_weight', weight);
-    };
-
-    // Color Picker Modal Handlers
-    const openColorPicker = (title, keyName, cssVar, defaultColor) => {
-        const currentColor = tenant?.[keyName] || defaultColor;
-        setColorPickerState({
-            isOpen: true,
-            title,
-            keyName,
-            cssVar,
-            initialColor: currentColor,
-            originalColor: currentColor
-        });
-    };
-
-    const openHeroIconColorPicker = (iconId, label) => {
-        const currentColor = heroIconColors[iconId] || '#FFFFFF';
-        setColorPickerState({
-            isOpen: true,
-            title: `Color: ${label}`,
-            keyName: `hero_icon_${iconId}`,
-            cssVar: '',
-            initialColor: currentColor,
-            originalColor: currentColor,
-            isHeroIcon: true,
-            iconId: iconId
-        });
-    };
-
-    const handleColorPickerLiveChange = (newColor) => {
-        if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        
-        rafRef.current = requestAnimationFrame(() => {
-            // Instant preview via CSS or local state
-            if (colorPickerState.cssVar) {
-                document.documentElement.style.setProperty(colorPickerState.cssVar, newColor);
-            }
-            if (colorPickerState.isHeroIcon) {
-                setHeroIconColors(prev => ({ ...prev, [colorPickerState.iconId]: newColor }));
-            }
-            // Live preview for munchboy colors
-            if (colorPickerState.keyName === 'munchboy_shell_color') {
-                setLocalMunchboyColors(prev => ({ ...prev, shell: newColor }));
-            } else if (colorPickerState.keyName === 'munchboy_a_color') {
-                setLocalMunchboyColors(prev => ({ ...prev, a: newColor }));
-            } else if (colorPickerState.keyName === 'munchboy_b_color') {
-                setLocalMunchboyColors(prev => ({ ...prev, b: newColor }));
-            }
-        });
-    };
-
-    const handleColorPickerApply = (finalColor) => {
-        if (colorPickerState.isHeroIcon) {
-            handleHeroIconColorUpdate(colorPickerState.iconId, finalColor);
-        } else if (colorPickerState.keyName.startsWith('info_pill_')) {
-            // Interceptor for Nested Info Pills
-            const pillId = colorPickerState.keyName.replace('info_pill_', '');
-            const currentPills = tenant?.info_pills || {};
-            const newPills = {
-                ...currentPills,
-                [pillId]: { ...(currentPills[pillId] || {}), bgColor: finalColor }
-            };
-            handleFieldUpdate('info_pills', newPills);
-        } else if (colorPickerState.keyName === 'munchboy_shell_color') {
-            // Update local state for munchboy shell color
-            setLocalMunchboyColors(prev => ({ ...prev, shell: finalColor }));
-            syncContext({ munchboy_shell_color: finalColor });
-            setHasChanges(true);
-        } else if (colorPickerState.keyName === 'munchboy_a_color') {
-            // Update local state for munchboy A button color
-            setLocalMunchboyColors(prev => ({ ...prev, a: finalColor }));
-            syncContext({ munchboy_a_color: finalColor });
-            setHasChanges(true);
-        } else if (colorPickerState.keyName === 'munchboy_b_color') {
-            // Update local state for munchboy B button color
-            setLocalMunchboyColors(prev => ({ ...prev, b: finalColor }));
-            syncContext({ munchboy_b_color: finalColor });
-            setHasChanges(true);
-        } else {
-            handleFieldUpdate(colorPickerState.keyName, finalColor);
-        }
-        setColorPickerState(prev => ({ ...prev, isOpen: false }));
-    };
-
-    const handleColorPickerClose = () => {
-        // Revert to original color
-        if (colorPickerState.cssVar) {
-            document.documentElement.style.setProperty(colorPickerState.cssVar, colorPickerState.originalColor);
-        }
-        if (colorPickerState.isHeroIcon) {
-            setHeroIconColors(prev => ({ ...prev, [colorPickerState.iconId]: colorPickerState.originalColor }));
-        }
-        // Revert munchboy colors on cancel
-        if (colorPickerState.keyName === 'munchboy_shell_color') {
-            setLocalMunchboyColors(prev => ({ ...prev, shell: colorPickerState.originalColor }));
-        } else if (colorPickerState.keyName === 'munchboy_a_color') {
-            setLocalMunchboyColors(prev => ({ ...prev, a: colorPickerState.originalColor }));
-        } else if (colorPickerState.keyName === 'munchboy_b_color') {
-            setLocalMunchboyColors(prev => ({ ...prev, b: colorPickerState.originalColor }));
-        }
-        setColorPickerState(prev => ({ ...prev, isOpen: false }));
-    };
-
-    // Logout
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        clearAuth();
-        window.location.href = `/${tenant?.slug || ''}`;
-    };
-
-    // 🛡️ HELPER: Get CSS variable value (reads inline style, not computed)
-    const getCssVar = (name) => {
-        const val = document.documentElement.style.getPropertyValue(name).trim();
-        return val || null;
-    };
-
-    // 💾 THE ATOMIC SAVE (Manual Persistence Protocol v5.0)
-    const handlePlatformSave = async () => {
-        setIsSaving(true);
-        console.log('💾 SAVING BRANDING VAULT:', businessId);
-
-        try {
-            // 🛡️ RACE CONDITION FIX: Use local state for colors (mirrors munchboy pattern)
-            // Local state is updated immediately on change, never overwritten by refreshTenantData
-            const currentNavbarColor = localThemeColors.navbar;
-            const currentPrimary = localThemeColors.primary;
-            const currentSecondary = localThemeColors.secondary;
-            const currentConfirmation = localThemeColors.confirmation;
-            const currentPoweredBy = localThemeColors.poweredBy;
-
-            // DEBUG: Log what we're capturing
-            console.log('[Settings Save] Local theme colors:', {
-                navbar: currentNavbarColor,
-                primary: currentPrimary,
-                secondary: currentSecondary,
-                confirmation: currentConfirmation,
-                poweredBy: currentPoweredBy
-            });
-
-            // 1. Construct Full Payload from local state (never stale)
-            // 🛡️ HERO ICONS: Build from local state, not tenant (prevents revert)
-            const heroIconsPayload = Object.entries(heroIconColors).reduce((acc, [id, color]) => {
-                acc[id] = { color };
-                return acc;
-            }, {});
-
-            const payload = {
-                business_name: localIdentity.business_name || tenant?.business_name,
-                font_family: localIdentity.font_family || tenant?.font_family,
-                font_weight: localIdentity.font_weight || tenant?.font_weight,
-                navbar_color: currentNavbarColor,
-                nav_icon_mode: tenant?.nav_icon_mode,
-                primary_color: currentPrimary,
-                secondary_color: currentSecondary,
-                confirmation_color: currentConfirmation,
-                powered_by_color: currentPoweredBy,
-                hero_mode: tenant?.hero_mode,
-                hero_url: tenant?.hero_url,
-                hero_icons: heroIconsPayload,
-                info_pills: tenant?.info_pills,
-                munchboy_enabled: tenant?.munchboy_enabled,
-                munchboy_name: localMunchboyName,
-                munchboy_shell_color: localMunchboyColors.shell,
-                munchboy_a_color: localMunchboyColors.a,
-                munchboy_b_color: localMunchboyColors.b,
-                app_config: tenant?.app_config,
-                updated_at: new Date().toISOString()
-            };
-
-            console.log('[Settings Save] Payload:', payload);
-
-            // 2. Cloud Sync
-            await updateBranding(payload, businessId);
-
-            // 🛡️ SET FLAG: Prevent useEffect from overwriting local state with stale DB data
-            justSavedRef.current = true;
-
-            // 3. Global Refresh
-            await refreshTenantData();
-
-            // 4. Success State
-            setHasChanges(false);
-            sessionStorage.removeItem(`dirty_branding_${businessId}`);
-            setSaveStatus({ message: t('branding_saved') });
-            setTimeout(() => setSaveStatus(null), 3000);
-
-        } catch (error) {
-            console.error("Save failed:", error);
-            setSaveStatus({ error: true, message: t('save_error') });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    // Helper: Hex to RGB
-    const hexToRgb = (hex) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ?
-            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` :
-            '0, 0, 0';
-    };
-
+    // ============================================================
+    // RENDER HELPERS
+    // ============================================================
     const ColorPillar = ({ label, keyName, cssVar, defaultValue }) => {
-        // 🛡️ THEME COLORS: Read from local state (not tenant) to show live changes
-        const themeColorMap = {
-            'navbar_color': localThemeColors.navbar,
-            'primary_color': localThemeColors.primary,
-            'secondary_color': localThemeColors.secondary,
-            'confirmation_color': localThemeColors.confirmation,
-            'powered_by_color': localThemeColors.poweredBy
-        };
-        const currentColor = themeColorMap[keyName] || tenant?.[keyName] || defaultValue;
+        const currentColor = draft[keyName] || defaultValue;
         return (
             <div className="color-pillar">
                 <p className="pillar-label">{label}</p>
-                {/* Clickable swatch - opens ColorPickerModal */}
                 <div
                     onClick={() => openColorPicker(label, keyName, cssVar, defaultValue)}
                     style={{
@@ -573,10 +462,9 @@ const Settings = () => {
 
     if (!tenant) return <div className="p-4 text-center text-gray-500">{t('loading_vault')}</div>;
 
-    const heroIconMode = tenant?.hero_icon_mode || 'black';
-    const navIconMode = tenant?.nav_icon_mode || 'white';
-    // 🛡️ THEME COLORS: Use local state for live preview (not tenant)
-    const navbarColor = localThemeColors.navbar || tenant?.navbar_color || '#1F2937';
+    const heroIconMode = draft.hero_icon_mode || 'black';
+    const navIconMode = draft.nav_icon_mode || 'white';
+    const navbarColor = draft.navbar_color || DEFAULTS.navbar;
 
     return (
         <div className="bg-[#F8FAFC] min-h-screen">
@@ -590,9 +478,8 @@ const Settings = () => {
                         <input
                             type="text"
                             className="fs-input"
-                            value={localIdentity.business_name}
+                            value={draft.business_name}
                             onChange={handleNameChange}
-                            onBlur={handleNameBlur}
                             placeholder={t('business_name_placeholder')}
                         />
                         <div className="typo-grid">
@@ -603,7 +490,7 @@ const Settings = () => {
                                     className="dropdown-trigger"
                                     onClick={() => setIsFontMenuOpen(!isFontMenuOpen)}
                                 >
-                                    <span>{localIdentity.font_family}</span>
+                                    <span>{draft.font_family}</span>
                                     <span className="dropdown-arrow">▼</span>
                                 </button>
                                 {isFontMenuOpen && (
@@ -611,12 +498,12 @@ const Settings = () => {
                                         {['Inter', 'Roboto', 'Outfit', 'Lora', 'Poppins', 'Montserrat'].map((font) => (
                                             <div
                                                 key={font}
-                                                className={`dropdown-option ${localIdentity.font_family === font ? 'active' : ''}`}
+                                                className={`dropdown-option ${draft.font_family === font ? 'active' : ''}`}
                                                 onClick={(e) => { e.stopPropagation(); handleFontSelect(font); }}
                                                 style={{ fontFamily: font }}
                                             >
                                                 {font}
-                                                {localIdentity.font_family === font && <span className="check">✓</span>}
+                                                {draft.font_family === font && <span className="check">✓</span>}
                                             </div>
                                         ))}
                                     </div>
@@ -631,11 +518,11 @@ const Settings = () => {
                                     onClick={() => setIsWeightMenuOpen(!isWeightMenuOpen)}
                                 >
                                     <span>
-                                        {localIdentity.font_weight === '400' ? t('font_weight_400') :
-                                            localIdentity.font_weight === '500' ? t('font_weight_500') :
-                                                localIdentity.font_weight === '600' ? t('font_weight_600') :
-                                                    localIdentity.font_weight === '700' ? t('font_weight_700') :
-                                                        localIdentity.font_weight === '800' ? t('font_weight_800') : t('font_weight_600')}
+                                        {draft.font_weight === '400' ? t('font_weight_400') :
+                                         draft.font_weight === '500' ? t('font_weight_500') :
+                                         draft.font_weight === '600' ? t('font_weight_600') :
+                                         draft.font_weight === '700' ? t('font_weight_700') :
+                                         draft.font_weight === '800' ? t('font_weight_800') : t('font_weight_600')}
                                     </span>
                                     <span className="dropdown-arrow">▼</span>
                                 </button>
@@ -650,12 +537,12 @@ const Settings = () => {
                                         ].map((option) => (
                                             <div
                                                 key={option.value}
-                                                className={`dropdown-option ${localIdentity.font_weight === option.value ? 'active' : ''}`}
+                                                className={`dropdown-option ${draft.font_weight === option.value ? 'active' : ''}`}
                                                 onClick={(e) => { e.stopPropagation(); handleWeightSelect(option.value); }}
                                                 style={{ fontWeight: option.value }}
                                             >
                                                 {option.label}
-                                                {localIdentity.font_weight === option.value && <span className="check">✓</span>}
+                                                {draft.font_weight === option.value && <span className="check">✓</span>}
                                             </div>
                                         ))}
                                     </div>
@@ -671,26 +558,26 @@ const Settings = () => {
                         <h3>2. {t('hero_cover')}</h3>
                         <div className="mode-toggle">
                             <button
-                                onClick={() => handleFieldUpdate('hero_mode', 'text')}
-                                className={tenant?.hero_mode === 'text' ? 'active' : ''}
+                                onClick={() => updateDraftField('hero_mode', 'text')}
+                                className={draft.hero_mode === 'text' ? 'active' : ''}
                             >
                                 {t('text_mode')}
                             </button>
                             <button
-                                onClick={() => handleFieldUpdate('hero_mode', 'image')}
-                                className={tenant?.hero_mode === 'image' ? 'active' : ''}
+                                onClick={() => updateDraftField('hero_mode', 'image')}
+                                className={draft.hero_mode === 'image' ? 'active' : ''}
                             >
                                 {t('image_mode')}
                             </button>
                         </div>
                     </div>
 
-                    {tenant?.hero_mode === 'image' ? (
+                    {draft.hero_mode === 'image' ? (
                         <div className="hero-studio-trigger" onClick={() => setShowCoverEditor(true)}>
-                            {tenant?.hero_url ? (
+                            {draft.hero_url ? (
                                 <>
                                     <div className="editor-crosshair">+</div>
-                                    <img src={tenant.hero_url} className="preview-img" alt="Hero" />
+                                    <img src={draft.hero_url} className="preview-img" alt="Hero" />
                                     <div className="edit-overlay"><span>{t('edit_image')}</span></div>
                                 </>
                             ) : (
@@ -704,9 +591,9 @@ const Settings = () => {
                     ) : (
                         <div
                             className="hero-preview-text"
-                            style={{ fontFamily: tenant?.font_family, fontWeight: tenant?.font_weight }}
+                            style={{ fontFamily: draft.font_family, fontWeight: draft.font_weight }}
                         >
-                            {tenant?.business_name || 'Business Name'}
+                            {draft.business_name || 'Business Name'}
                         </div>
                     )}
 
@@ -716,47 +603,43 @@ const Settings = () => {
                         onClose={() => setShowCoverEditor(false)}
                         businessId={businessId}
                         initialData={(() => {
-                            if (!tenant?.hero_url) return {};
+                            if (!draft.hero_url) return {};
                             try {
-                                const url = new URL(tenant.hero_url, 'http://dummy.com');
+                                const url = new URL(draft.hero_url, 'http://dummy.com');
                                 const params = new URLSearchParams(url.search);
                                 return {
-                                    image: tenant.hero_url,
+                                    image: draft.hero_url,
                                     scale: parseFloat(params.get('s')) || 1,
                                     offsetX: parseFloat(params.get('x')) || 0,
                                     offsetY: parseFloat(params.get('y')) || 0,
                                 };
                             } catch (e) {
-                                return { image: tenant.hero_url, scale: 1, offsetX: 0, offsetY: 0 };
+                                return { image: draft.hero_url, scale: 1, offsetX: 0, offsetY: 0 };
                             }
                         })()}
                         onSave={(data) => {
-                            // 💾 ENCODE CROP SETTINGS IN URL
-                            // Robust fix: Avoid DB schema dependency by using query params
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
-                            // Use s/x/y shorter keys
                             const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&x=${data.offsetX}&y=${data.offsetY}`;
-
-                            // Update hero_url directly
-                            handleFieldUpdate('hero_url', finalUrl)
+                            updateDraftField('hero_url', finalUrl);
+                            setShowCoverEditor(false);
                         }}
                     />
                 </section>
 
-                {/* ========== 3. HERO ICONS (NEW - WYSIWYG) ========== */}
+                {/* ========== 3. HERO ICONS ========== */}
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>3. {t('hero_icons_label')}</h3>
                         <div className="mode-toggle">
                             <button
-                                onClick={() => handleFieldUpdate('hero_icon_mode', 'white')}
+                                onClick={() => updateDraftField('hero_icon_mode', 'white')}
                                 className={heroIconMode === 'white' ? 'active' : ''}
                             >
                                 {t('white_mode')}
                             </button>
                             <button
-                                onClick={() => handleFieldUpdate('hero_icon_mode', 'black')}
+                                onClick={() => updateDraftField('hero_icon_mode', 'black')}
                                 className={heroIconMode === 'black' ? 'active' : ''}
                             >
                                 {t('dark_mode')}
@@ -774,7 +657,7 @@ const Settings = () => {
                         margin: '0 auto'
                     }}>
                         {HERO_ICON_DEFS(t).map(({ id, label, Icon }) => {
-                            const bgColor = heroIconColors[id] || '#FFFFFF';
+                            const bgColor = draft.hero_icons[id]?.color || DEFAULTS.heroIconColor;
                             const iconColor = heroIconMode === 'white' ? '#FFFFFF' : '#4A4036';
 
                             return (
@@ -823,19 +706,19 @@ const Settings = () => {
                     </div>
                 </section>
 
-                {/* ========== 4. NAVBAR STYLE (MiniNav Preview) ========== */}
+                {/* ========== 4. NAVBAR STYLE ========== */}
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>4. {t('bar_style')}</h3>
                         <div className="mode-toggle">
                             <button
-                                onClick={() => handleFieldUpdate('nav_icon_mode', 'white')}
+                                onClick={() => updateDraftField('nav_icon_mode', 'white')}
                                 className={navIconMode === 'white' ? 'active' : ''}
                             >
                                 {t('white_mode')}
                             </button>
                             <button
-                                onClick={() => handleFieldUpdate('nav_icon_mode', 'black')}
+                                onClick={() => updateDraftField('nav_icon_mode', 'black')}
                                 className={navIconMode === 'black' ? 'active' : ''}
                             >
                                 {t('dark_mode')}
@@ -846,7 +729,7 @@ const Settings = () => {
 
                     {/* MiniNav Preview */}
                     <div
-                        onClick={() => openColorPicker(t('bar_color_title'), 'navbar_color', '--color-navbar-bg', '#1F2937')}
+                        onClick={() => openColorPicker(t('bar_color_title'), 'navbar_color', '--color-navbar-bg', DEFAULTS.navbar)}
                         style={{
                             background: navbarColor,
                             borderRadius: 16,
@@ -882,18 +765,18 @@ const Settings = () => {
                 <section className="branding-card">
                     <h3>5. {t('theme_colors')}</h3>
                     <div className="color-grid">
-                        <ColorPillar label={t('primary')} keyName="primary_color" cssVar="--color-primary" defaultValue="#B8956A" />
-                        <ColorPillar label={t('secondary')} keyName="secondary_color" cssVar="--color-secondary" defaultValue="#A89070" />
-                        <ColorPillar label={t('confirmation')} keyName="confirmation_color" cssVar="--color-confirm" defaultValue="#22C55E" />
-                        <ColorPillar label={t('powered_by')} keyName="powered_by_color" cssVar="--color-powered" defaultValue="#C4856A" />
+                        <ColorPillar label={t('primary')} keyName="primary_color" cssVar="--color-primary" defaultValue={DEFAULTS.primary} />
+                        <ColorPillar label={t('secondary')} keyName="secondary_color" cssVar="--color-secondary" defaultValue={DEFAULTS.secondary} />
+                        <ColorPillar label={t('confirmation')} keyName="confirmation_color" cssVar="--color-confirm" defaultValue={DEFAULTS.confirmation} />
+                        <ColorPillar label={t('powered_by')} keyName="powered_by_color" cssVar="--color-powered" defaultValue={DEFAULTS.poweredBy} />
                     </div>
                 </section>
 
-                {/* ========== 6. MUNCHBOY BRANDING - HIDDEN FOR LAUNCH ========== */}
+                {/* ========== 6. MUNCHBOY BRANDING ========== */}
                 {false && (
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>🎮 Munchboy Arcade</h3>
+                        <h3>Munchboy Arcade</h3>
                     </div>
                     <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Customize the gaming experience branding</p>
                     
@@ -901,7 +784,7 @@ const Settings = () => {
                     <div 
                         className="munchboy-preview"
                         style={{
-                            background: localMunchboyColors.shell,
+                            background: draft.munchboy_shell_color,
                             borderRadius: 20,
                             padding: '24px 16px 16px',
                             marginBottom: 20,
@@ -932,7 +815,7 @@ const Settings = () => {
                             marginBottom: 16,
                             opacity: 0.9
                         }}>
-                            {localMunchboyName}
+                            {draft.munchboy_name}
                         </div>
                         
                         {/* Controller preview */}
@@ -943,29 +826,19 @@ const Settings = () => {
                             padding: '0 8px'
                         }}>
                             {/* D-Pad */}
-                            <div style={{
-                                width: 70,
-                                height: 70,
-                                position: 'relative'
-                            }}>
+                            <div style={{ width: 70, height: 70, position: 'relative' }}>
                                 <div style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: 0,
+                                    position: 'absolute', top: '50%', left: 0,
                                     transform: 'translateY(-50%)',
-                                    width: '100%',
-                                    height: '35%',
+                                    width: '100%', height: '35%',
                                     background: '#D1D5DB',
                                     borderRadius: 6,
                                     border: '2px solid #1a1a1a'
                                 }} />
                                 <div style={{
-                                    position: 'absolute',
-                                    left: '50%',
-                                    top: 0,
+                                    position: 'absolute', left: '50%', top: 0,
                                     transform: 'translateX(-50%)',
-                                    width: '35%',
-                                    height: '100%',
+                                    width: '35%', height: '100%',
                                     background: '#D1D5DB',
                                     borderRadius: 6,
                                     border: '2px solid #1a1a1a'
@@ -973,53 +846,29 @@ const Settings = () => {
                             </div>
                             
                             {/* A/B Buttons */}
-                            <div style={{
-                                position: 'relative',
-                                width: 60,
-                                height: 58
-                            }}>
-                                {/* A Button */}
+                            <div style={{ position: 'relative', width: 60, height: 58 }}>
                                 <div 
-                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', localMunchboyColors.a)}
+                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', draft.munchboy_a_color)}
                                     style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        right: 0,
-                                        width: 44,
-                                        height: 44,
-                                        borderRadius: '50%',
-                                        background: localMunchboyColors.a,
+                                        position: 'absolute', top: 0, right: 0,
+                                        width: 44, height: 44, borderRadius: '50%',
+                                        background: draft.munchboy_a_color,
                                         border: '3px solid #1a1a1a',
                                         boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        fontSize: 16,
-                                        fontWeight: 'bold',
-                                        color: '#666'
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
                                     }}
                                 >A</div>
-                                {/* B Button */}
                                 <div 
-                                    onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', localMunchboyColors.b)}
+                                    onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', draft.munchboy_b_color)}
                                     style={{
-                                        position: 'absolute',
-                                        bottom: 0,
-                                        left: 0,
-                                        width: 44,
-                                        height: 44,
-                                        borderRadius: '50%',
-                                        background: localMunchboyColors.b,
+                                        position: 'absolute', bottom: 0, left: 0,
+                                        width: 44, height: 44, borderRadius: '50%',
+                                        background: draft.munchboy_b_color,
                                         border: '3px solid #1a1a1a',
                                         boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        fontSize: 16,
-                                        fontWeight: 'bold',
-                                        color: '#666'
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
                                     }}
                                 >B</div>
                             </div>
@@ -1028,39 +877,32 @@ const Settings = () => {
                     
                     {/* Compact Controls Row */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                        {/* Colors - compact row */}
                         <div style={{ display: 'flex', gap: 8, flex: 1 }}>
                             <div 
-                                onClick={() => openColorPicker('Shell', 'munchboy_shell_color', '', localMunchboyColors.shell)}
+                                onClick={() => openColorPicker('Shell', 'munchboy_shell_color', '', draft.munchboy_shell_color)}
                                 style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: 8,
-                                    background: localMunchboyColors.shell,
+                                    width: 36, height: 36, borderRadius: 8,
+                                    background: draft.munchboy_shell_color,
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
                                 title="Shell"
                             />
                             <div 
-                                onClick={() => openColorPicker('A Button', 'munchboy_a_color', '', localMunchboyColors.a)}
+                                onClick={() => openColorPicker('A Button', 'munchboy_a_color', '', draft.munchboy_a_color)}
                                 style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: '50%',
-                                    background: localMunchboyColors.a,
+                                    width: 36, height: 36, borderRadius: '50%',
+                                    background: draft.munchboy_a_color,
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
                                 title="A Button"
                             />
                             <div 
-                                onClick={() => openColorPicker('B Button', 'munchboy_b_color', '', localMunchboyColors.b)}
+                                onClick={() => openColorPicker('B Button', 'munchboy_b_color', '', draft.munchboy_b_color)}
                                 style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: '50%',
-                                    background: localMunchboyColors.b,
+                                    width: 36, height: 36, borderRadius: '50%',
+                                    background: draft.munchboy_b_color,
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
@@ -1070,13 +912,13 @@ const Settings = () => {
                         
                         {/* Enable Toggle */}
                         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: tenant?.munchboy_enabled ? '#22C55E' : '#64748B' }}>
-                                {tenant?.munchboy_enabled ? 'ON' : 'OFF'}
+                            <span style={{ fontSize: 12, fontWeight: 600, color: draft.munchboy_enabled ? '#22C55E' : '#64748B' }}>
+                                {draft.munchboy_enabled ? 'ON' : 'OFF'}
                             </span>
                             <input
                                 type="checkbox"
-                                checked={!!tenant?.munchboy_enabled}
-                                onChange={(e) => handleFieldUpdate('munchboy_enabled', e.target.checked)}
+                                checked={!!draft.munchboy_enabled}
+                                onChange={(e) => updateDraftField('munchboy_enabled', e.target.checked)}
                                 style={{ accentColor: '#22C55E' }}
                             />
                         </label>
@@ -1090,12 +932,9 @@ const Settings = () => {
                         <input
                             type="text"
                             className="pill-input"
-                            value={localMunchboyName}
+                            value={draft.munchboy_name}
                             placeholder="MUNCHBOY"
-                            onChange={(e) => {
-                                setLocalMunchboyName(e.target.value);
-                                setHasChanges(true);
-                            }}
+                            onChange={(e) => updateDraftField('munchboy_name', e.target.value)}
                             style={{ width: '100%', fontSize: 14 }}
                         />
                     </div>
@@ -1103,26 +942,19 @@ const Settings = () => {
                 )}
 
                 {/* ========== 6. INFO PILLS ========== */}
-                {/* ========== 6. INFO PILLS ========== */}
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>6. {t('info_pills')}</h3>
                         <div className="mode-toggle">
                             <button
-                                onClick={() => {
-                                    const currentPills = tenant?.info_pills || {};
-                                    handleFieldUpdate('info_pills', { ...currentPills, pill_icon_mode: 'white' });
-                                }}
-                                className={tenant?.info_pills?.pill_icon_mode === 'white' || !tenant?.info_pills?.pill_icon_mode ? 'active' : ''}
+                                onClick={() => updateDraftField('info_pills', { ...draft.info_pills, pill_icon_mode: 'white' })}
+                                className={draft.info_pills?.pill_icon_mode === 'white' || !draft.info_pills?.pill_icon_mode ? 'active' : ''}
                             >
                                 {t('white_mode')}
                             </button>
                             <button
-                                onClick={() => {
-                                    const currentPills = tenant?.info_pills || {};
-                                    handleFieldUpdate('info_pills', { ...currentPills, pill_icon_mode: 'dark' });
-                                }}
-                                className={tenant?.info_pills?.pill_icon_mode === 'dark' ? 'active' : ''}
+                                onClick={() => updateDraftField('info_pills', { ...draft.info_pills, pill_icon_mode: 'dark' })}
+                                className={draft.info_pills?.pill_icon_mode === 'dark' ? 'active' : ''}
                             >
                                 {t('dark_mode')}
                             </button>
@@ -1131,8 +963,7 @@ const Settings = () => {
                     <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('info_pills_desc')}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         {['whatsapp', 'rappi', 'mercadoPago', 'pedidosYa', 'adminAccess'].map(pillId => {
-                            const pills = tenant?.info_pills || {};
-                            const pillData = pills[pillId] || {};
+                            const pillData = draft.info_pills[pillId] || {};
                             const isActive = pillData.enabled;
                             const bgColor = pillData.bgColor || '#EEEEEE';
                             const content = pillData.content || '';
@@ -1153,24 +984,16 @@ const Settings = () => {
                                 adminAccess: 'N/A'
                             };
 
-                            const handlePillUpdate = (updates) => {
-                                const newPills = {
-                                    ...pills,
-                                    [pillId]: { ...pillData, ...updates }
-                                };
-                                handleFieldUpdate('info_pills', newPills);
-                            };
-
                             return (
                                 <div key={pillId} className="pill-row">
-                                    {/* 1. Toggle & Color Swatch */}
+                                    {/* Color Swatch */}
                                     <div
                                         onClick={() => openColorPicker(`Color: ${labels[pillId]}`, `info_pill_${pillId}`, '', bgColor)}
                                         className="pill-swatch"
                                         style={{ background: bgColor }}
                                     />
 
-                                    {/* 2. Content Input */}
+                                    {/* Content Input */}
                                     <div style={{ flex: 1 }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{labels[pillId]}</span>
@@ -1181,7 +1004,7 @@ const Settings = () => {
                                                 <input
                                                     type="checkbox"
                                                     checked={!!isActive}
-                                                    onChange={(e) => handlePillUpdate({ enabled: e.target.checked })}
+                                                    onChange={(e) => updateInfoPill(pillId, { enabled: e.target.checked })}
                                                     style={{ accentColor: '#22C55E' }}
                                                 />
                                             </label>
@@ -1192,7 +1015,7 @@ const Settings = () => {
                                                 className="pill-input"
                                                 defaultValue={content}
                                                 placeholder={placeHolders[pillId]}
-                                                onBlur={(e) => handlePillUpdate({ content: e.target.value })}
+                                                onBlur={(e) => updateInfoPill(pillId, { content: e.target.value })}
                                             />
                                         )}
                                     </div>
@@ -1201,85 +1024,63 @@ const Settings = () => {
                         })}
                     </div>
                 </section>
-            </div >
+            </div>
 
             <BackendNav role="owner" useRoutes={true} />
 
-            {/* Cover Image Editor Modal */}
-            <CoverImageEditor
-                isOpen={showCoverEditor}
-                onClose={() => setShowCoverEditor(false)}
-                onSave={(data) => {
-                    if (data?.image) handleFieldUpdate('hero_url', data.image);
-                    setShowCoverEditor(false);
-                }}
-                initialData={{ image: tenant?.hero_url }}
-                config={{}} // Cloud-First: No localStorage dependency
-                businessId={businessId}
-                heroMode={tenant?.hero_mode}
-            />
-
             {/* Color Picker Modal */}
-            {
-                colorPickerState.isOpen && (
-                    <ColorPickerModal
-                        title={colorPickerState.title}
-                        initialColor={colorPickerState.initialColor}
-                        onLiveChange={handleColorPickerLiveChange}
-                        onApply={handleColorPickerApply}
-                        onClose={handleColorPickerClose}
-                    />
-                )
-            }
+            {colorPickerState.isOpen && (
+                <ColorPickerModal
+                    title={colorPickerState.title}
+                    initialColor={colorPickerState.initialColor}
+                    onLiveChange={handleColorPickerLiveChange}
+                    onApply={handleColorPickerApply}
+                    onClose={handleColorPickerClose}
+                />
+            )}
 
             {/* SAVE SUCCESS TOAST */}
-            {
-                saveStatus && (
-                    <div style={{
-                        position: 'fixed',
-                        bottom: 24,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
-                        padding: '10px 24px', borderRadius: 50,
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                        fontWeight: 600, fontSize: 14, zIndex: 9999,
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        animation: 'fadeIn 0.2s ease-out'
-                    }}>
-                        <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
-                    </div>
-                )
-            }
+            {saveStatus && (
+                <div style={{
+                    position: 'fixed', bottom: 24, left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
+                    padding: '10px 24px', borderRadius: 50,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                    fontWeight: 600, fontSize: 14, zIndex: 9999,
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
+                </div>
+            )}
 
-            {/* 💾 FLOATING SAVE BAR (Atomic) */}
-            {
-                hasChanges && (
-                    <div style={{
-                        position: 'fixed', bottom: 95, left: 12, right: 12,
-                        background: '#1E293B', color: 'white', padding: '14px 20px',
-                        borderRadius: 16, display: 'flex', justifyContent: 'space-between',
-                        alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-                        zIndex: 10000, animation: 'slideUp 0.3s ease-out',
-                        border: '1px solid rgba(255,255,255,0.1)'
-                    }}>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{t('unsaved_changes_warning')}</div>
-                        <button
-                            onClick={handlePlatformSave}
-                            disabled={isSaving}
-                            style={{
-                                background: '#3B82F6', color: 'white', border: 'none',
-                                padding: '10px 24px', borderRadius: 12, fontWeight: 800,
-                                fontSize: 14, cursor: 'pointer',
-                                opacity: isSaving ? 0.7 : 1
-                            }}
-                        >
-                            {isSaving ? t('saving_btn') : t('save')}
-                        </button>
-                    </div>
-                )
-            }
-        </div >
+            {/* FLOATING SAVE BAR */}
+            {hasChanges && (
+                <div style={{
+                    position: 'fixed', bottom: 95, left: 12, right: 12,
+                    background: '#1E293B', color: 'white', padding: '14px 20px',
+                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{t('unsaved_changes_warning')}</div>
+                    <button
+                        onClick={handlePlatformSave}
+                        disabled={isSaving}
+                        style={{
+                            background: '#3B82F6', color: 'white', border: 'none',
+                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
+                            fontSize: 14, cursor: 'pointer',
+                            opacity: isSaving ? 0.7 : 1
+                        }}
+                    >
+                        {isSaving ? t('saving_btn') : t('save')}
+                    </button>
+                </div>
+            )}
+        </div>
     );
 };
 
