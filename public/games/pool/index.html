@@ -362,6 +362,18 @@ function ballCollide(a,b){
   const restitution=0.92; // Not perfectly elastic - balls feel solid
   const impulse=dv*restitution;
   a.vx-=impulse*nx;a.vy-=impulse*ny;b.vx+=impulse*nx;b.vy+=impulse*ny;
+  // BALL-BALL FRICTION: tangential impulse transfers spin between balls
+  // Research: μ_bb = 0.05-0.06 for well-polished phenolic balls
+  // This makes cue ball stop on head-on breaks (90° separation)
+  const tx=-ny,ty=nx; // Tangent vector (perpendicular to normal)
+  const dvt=(a.vx-b.vx)*tx+(a.vy-b.vy)*ty; // Relative velocity along tangent
+  // Coulomb friction: tangential impulse limited by normal impulse
+  const frictionCoef=0.055; // 0.055 = realistic ball-ball friction
+  const maxFriction=impulse*frictionCoef;
+  const frictionImpulse=Math.max(-maxFriction,Math.min(maxFriction,dvt));
+  // Apply tangential friction (creates "english" transfer between balls)
+  a.vx-=frictionImpulse*tx;a.vy-=frictionImpulse*ty;
+  b.vx+=frictionImpulse*tx;b.vy+=frictionImpulse*ty;
   // SLIDING: balls enter slide phase on collision (transfer + fresh impact)
   // Research: collisions induce sliding that lasts ~0.5-1s
   a.rollState='sliding';a.slideTimer=35; // ~0.6s sliding
