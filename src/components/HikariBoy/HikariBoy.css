@@ -665,8 +665,8 @@
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(28px * var(--btn-scale));
-  bottom: 30px;
-  left: 30px;
+  bottom: 38px;
+  left: 38px;
   background: radial-gradient(circle at 35% 35%, var(--button-b-color) 0%, var(--button-b-color) 40%, var(--button-gray-dark) 100%);
   border-color: var(--button-b-outline);
 }
