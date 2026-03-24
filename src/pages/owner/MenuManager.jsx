@@ -713,6 +713,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
             setInputKey(prev => prev + 1)
             // 🛡️ Revoke the blob URL after upload completes (replaced with public URL)
             revokeBlobUrl(previewUrl)
+            // 🛡️ REMOVE FROM PENDING: Clear this file from upload buffer
+            if (targetItem?.itemId) {
+                setPendingFiles(prev => {
+                    const newPending = { ...prev }
+                    delete newPending[targetItem.itemId]
+                    return newPending
+                })
+            }
             activeFeaturedSlotRef.current = null
             activeCategoryItemRef.current = null
         }
