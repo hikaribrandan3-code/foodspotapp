@@ -22,8 +22,7 @@ const prefetchImages = (urls) => {
     if (!urls || urls.length === 0) return
     
     // Use requestIdleCallback for low-priority fetching, fallback to setTimeout
-    const schedulePrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 1)
-    )
+    const schedulePrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 1))
     
     schedulePrefetch(() => {
         urls.forEach(url => {

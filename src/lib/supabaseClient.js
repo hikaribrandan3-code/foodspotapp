@@ -21,7 +21,60 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { getScopedGuestToken, migrateLegacyToken } from '../utils/storage.js';
+
+// 🛡️ INLINED FROM storage.js TO BREAK CIRCULAR DEPENDENCY
+// These functions were imported from storage.js, causing a circular dependency:
+// TenantContext → storage.js → supabaseClient.js → storage.js
+// By inlining them here, we break the loop.
+
+/**
+ * Extract tenant slug from URL path
+ */
+function getCurrentTenantSlug() {
+    if (typeof window === 'undefined') return null;
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    const urlSlug = pathSegments[0];
+    if (urlSlug && urlSlug !== 'admin') return urlSlug;
+    return localStorage.getItem('fs_last_active_slug');
+}
+
+/**
+ * Generate storage key for guest token (scoped by tenant)
+ */
+function getTenantTokenKey() {
+    const tenantSlug = getCurrentTenantSlug();
+    return tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token';
+}
+
+/**
+ * Migrate legacy unscoped token to tenant-scoped token
+ */
+function migrateLegacyToken() {
+    if (typeof window === 'undefined') return;
+    const legacyToken = localStorage.getItem('fs_guest_token');
+    const tenantSlug = getCurrentTenantSlug();
+    if (legacyToken && tenantSlug) {
+        const newKey = `fs_guest_token_${tenantSlug}`;
+        localStorage.setItem(newKey, legacyToken);
+        localStorage.removeItem('fs_guest_token');
+        console.log(`[Vault-Seal] Migrated legacy token to: ${tenantSlug}`);
+    }
+}
+
+/**
+ * Get or create guest token for current tenant
+ */
+function getScopedGuestToken() {
+    const tokenKey = getTenantTokenKey();
+    let token = localStorage.getItem(tokenKey);
+    if (!token) {
+        token = crypto.randomUUID
+            ? crypto.randomUUID()
+            : `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem(tokenKey, token);
+    }
+    return token;
+}
 
 // Trigger migration on client init
 if (typeof window !== 'undefined') {

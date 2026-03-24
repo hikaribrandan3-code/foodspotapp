@@ -311,6 +311,30 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // --- 🛡️ SAFE-SYNC: Sync Logic (Final Boss Fix) ---
 
+    // 🔴 BLOB GUARD: Reject save if any blob URLs detected
+    const hasBlobUrls = (menuData) => {
+        if (!menuData?.categories) return false
+        for (const cat of menuData.categories) {
+            if (!cat?.items) continue
+            for (const item of cat.items) {
+                if (item?.image && item.image.startsWith('blob:')) {
+                    console.error(`🚨 BLOB GUARD: Rejecting save - ${item.name} has blob URL:`, item.image)
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    // 🔴 PENDING UPLOAD GUARD: Check if images still uploading
+    const hasPendingUploads = () => {
+        const pendingCount = Object.keys(pendingFiles).length
+        if (pendingCount > 0) {
+            console.warn(`🚨 PENDING GUARD: ${pendingCount} images still uploading. Rejecting save.`)
+            return true
+        }
+        return false
+    }
 
     const syncMenuToCloud = async (updatedMenu) => {
         // 🔒 HYDRATION GUARD: Block sync until cloud data is loaded
@@ -325,26 +349,68 @@ function MenuManager({ config: configProp, demoMode = false }) {
             return
         }
 
+        // 🔴 BLOB GUARD: Hard block on blob URLs
+        if (hasBlobUrls(updatedMenu)) {
+            window.alert('⏳ Imágenes aún cargando...\n\nEspera a que las fotos terminen de subir antes de guardar.\n\n(Error: BLOB_URL_BLOCKED)')
+            setSaveStatus({ message: '⏳ Esperando imágenes...', error: true })
+            setTimeout(() => setSaveStatus(null), 3000)
+            return
+        }
+
+        // 🔴 PENDING UPLOAD GUARD: Block if files still uploading
+        if (hasPendingUploads()) {
+            window.alert('⏳ Subida en progreso...\n\nHay fotos que aún se están subiendo. Espera unos segundos e intenta de nuevo.')
+            setSaveStatus({ message: '⏳ Subiendo imágenes...', error: true })
+            setTimeout(() => setSaveStatus(null), 3000)
+            return
+        }
+
+        // 🛡️ CATEGORY VALIDATION: Ensure all items have valid category references
+        const validCategories = updatedMenu.categories.filter(cat => 
+            cat && cat.id && typeof cat.id === 'string' && Array.isArray(cat.items)
+        )
+        
+        if (validCategories.length !== updatedMenu.categories.length) {
+            console.warn('⚠️ SYNC BLOCKED: Invalid categories detected. Filtering...')
+        }
+
+        const sanitizedMenu = { 
+            ...updatedMenu, 
+            categories: validCategories.map(cat => ({
+                ...cat,
+                // Ensure each item has required fields
+                items: (cat.items || []).filter(item => item && item.id).map(item => ({
+                    id: item.id,
+                    name: item.name || 'Sin nombre',
+                    price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
+                    image: item.image || null,
+                    description: item.description || '',
+                    available: item.available !== false
+                }))
+            }))
+        }
+
         console.log('☁️ Syncing Menu to Supabase (JSONB Strict)... Target:', targetBusinessId)
 
         // ⚡ STRICT UPDATE: Partial update to avoid wiping other fields
         const { error } = await supabase
             .from('branding')
             .update({
-                menu_data: updatedMenu,
+                menu_data: sanitizedMenu,
                 updated_at: new Date()
             })
             .eq('business_id', targetBusinessId) // 🛡️ GLOBAL PLATFORM STANDARD
 
         if (error) {
             console.error('❌ Cloud Sync Failed:', error)
-            window.alert(`❌ SYNC ERROR: ${error.message}\nCode: ${error.code || 'N/A'}\nDetails: ${error.details || 'None'}`)
-            setSaveStatus({ message: 'Error al guardar en nube', error: true })
+            window.alert(`❌ ERROR DE SINCRONIZACIÓN:\n\n${error.message}\n\nCódigo: ${error.code || 'N/A'}\n\nDetalles: ${error.details || 'Contacta soporte si persiste.'}`)
+            setSaveStatus({ message: '❌ Error al guardar', error: true })
+            setTimeout(() => setSaveStatus(null), 5000)
         } else {
             console.log('✅ Cloud Sync Validated')
             // 💧 FORCE STATE HYDRATION: Immediately update local state to match saved data
-            setMenu(updatedMenu)
-            setSaveStatus({ message: '☁️ Sincronizado' })
+            setMenu(sanitizedMenu)
+            setSaveStatus({ message: '✅ Guardado en nube' })
             setTimeout(() => setSaveStatus(null), 2000)
         }
     }
@@ -445,24 +511,32 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setIsSaving(true)
         console.log('💾 SAVING VAULT:', targetBusinessId)
 
+        // 🔴 PENDING UPLOAD GUARD: Block if files still uploading
+        if (hasPendingUploads()) {
+            window.alert('⏳ Subida en progreso...\n\nHay fotos que aún se están subiendo. Espera unos segundos e intenta de nuevo.')
+            setSaveStatus({ message: '⏳ Subiendo imágenes...', error: true })
+            setIsSaving(false)
+            setTimeout(() => setSaveStatus(null), 3000)
+            return
+        }
+
         // 0. 🖼️ STORAGE-FIRST: Process all pending files before DB write
         const processedMenu = await processMenuImages(menu, pendingFiles)
+
+        // 🔴 BLOB GUARD: Hard block on blob URLs after processing
+        if (hasBlobUrls(processedMenu)) {
+            window.alert('⏳ Imágenes aún cargando...\n\nAlgunas fotos no terminaron de subir. Revisa que todas las imágenes se vean correctamente antes de guardar.')
+            setSaveStatus({ message: '⏳ Esperando imágenes...', error: true })
+            setIsSaving(false)
+            setTimeout(() => setSaveStatus(null), 3000)
+            return
+        }
 
         // 0.5. 🛡️ BOUNCER GUARD: Filter invalid categories
         const validCategories = processedMenu.categories.filter(cat =>
             cat && cat.id && Array.isArray(cat.items)
         )
         const menuToSave = { ...processedMenu, categories: validCategories }
-
-        // 🔍 INTERCEPTOR: Audit menuToSave for blob URLs
-        console.log('🔍 INTERCEPTOR: Auditing menu payload before save...')
-        menuToSave.categories.forEach(cat => {
-            cat.items.forEach(item => {
-                if (item.image && item.image.startsWith('blob:')) {
-                    console.error(`🚨 CRITICAL: Blob URL detected in payload for ${item.name}!`, item.image)
-                }
-            })
-        })
 
         // 1. SYNC BRANDING (Including Processed Menu)
         const { error: brandingError } = await supabase
@@ -479,7 +553,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
             .eq('business_id', targetBusinessId)
 
         if (brandingError) {
-            alert('❌ Error Branding: ' + brandingError.message)
+            console.error('❌ Branding Sync Error:', brandingError)
+            window.alert(`❌ ERROR AL GUARDAR:\n\n${brandingError.message}\n\nCódigo: ${brandingError.code || 'N/A'}`)
             setIsSaving(false)
             return
         }
