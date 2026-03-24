@@ -495,9 +495,9 @@ const TrialSignup = () => {
                 <div className="signup-hero-bg" style={{ minHeight: '100dvh', fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#191c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', position: 'relative' }}>
                     <main style={{ width: '100%', maxWidth: '448px', margin: '32px 0' }}>
                         
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
-                            <h1 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 900, fontSize: '40px', color: '#ffffff', letterSpacing: '-0.05em', margin: 0, textShadow: '0 4px 6px rgba(0,0,0,0.3)', transform: 'scale(1.1)' }}>{l.mobileTitle}</h1>
-                            <p style={{ color: 'rgba(255,255,255,0.9)', marginTop: '12px', fontWeight: 600, margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>{l.subtitleSignup}</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', position: 'relative', zIndex: 10 }}>
+                            <h1 style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 900, fontSize: '40px', color: 'white', opacity: 1, letterSpacing: '-0.05em', margin: 0, transform: 'scale(1.1)' }}>{l.mobileTitle}</h1>
+                            <p style={{ color: 'white', opacity: 1, marginTop: '12px', fontWeight: 600, margin: 0 }}>{l.subtitleSignup}</p>
                         </div>
                         
                         {error && (
