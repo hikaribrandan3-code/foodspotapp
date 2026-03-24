@@ -619,7 +619,7 @@ const Settings = () => {
                         isOpen={showCoverEditor}
                         onClose={() => setShowCoverEditor(false)}
                         businessId={businessId}
-                        config={{ branding: { logo_url: draft.hero_url } }}
+                        config={{ branding: { logo_url: null } }}
                         initialData={(() => {
                             if (!draft.hero_url) return {};
                             try {
