@@ -704,6 +704,14 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             <div style={{ position: 'absolute', top: coverHeight + 12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 11, fontWeight: 600, padding: '6px 14px', borderRadius: 20, zIndex: 10, whiteSpace: 'nowrap' }}>
                 ↕ Drag • Pinch zoom • {Math.round(scale * 100)}%
             </div>
+
+            {/* Hero Guidelines */}
+            <div style={{ position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 10, maxWidth: '90%' }}>
+                <p style={{ margin: 0, fontSize: 11, color: '#9CA3AF', lineHeight: 1.4 }}>
+                    💡 <strong>Tip:</strong> Use 16:9 images (1200×800px) for best results.<br />
+                    Pinch to zoom • Drag to position • 100% = fill frame
+                </p>
+            </div>
         </div>
     )
 }

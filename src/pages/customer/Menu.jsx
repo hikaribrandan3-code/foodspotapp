@@ -692,8 +692,8 @@ export default function Menu({ config: configProp }) {
                 )
             })()}
 
-            {/* Category Rail (Sticky) */}
-            {enabledCategories.length > 1 && (
+            {/* Category Rail (Sticky) - HIDDEN FOR MVP HERO FIX */}
+            {/* {enabledCategories.length > 1 && (
                 <div style={{
                     position: 'sticky', top: 52, zIndex: 900, background: 'rgba(255,255,255,0.95)',
                     backdropFilter: 'blur(8px)', padding: '8px 0', margin: '0 0 16px 0', borderBottom: '1px solid rgba(0,0,0,0.05)'
@@ -708,7 +708,7 @@ export default function Menu({ config: configProp }) {
                         ))}
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* Grid */}
             <div style={{ padding: '0 8px' }}>

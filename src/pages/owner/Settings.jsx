@@ -959,7 +959,8 @@ const Settings = () => {
                 </section>
                 )}
 
-                {/* ========== 6. INFO PILLS ========== */}
+                {/* ========== 6. INFO PILLS - HIDDEN FOR MVP ========== */}
+                {false && (
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>6. {t('info_pills')}</h3>
@@ -1042,6 +1043,7 @@ const Settings = () => {
                         })}
                     </div>
                 </section>
+                )}
             </div>
 
             <BackendNav role="owner" useRoutes={true} />
