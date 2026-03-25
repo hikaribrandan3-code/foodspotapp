@@ -68,11 +68,13 @@ const t = {
     and: 'and',
     privacy: 'Privacy Policy',
     welcome: 'Welcome',
-    discoverFlavors: 'Discover the best flavors around you',
-    forgot: 'FORGOT?',
+    discoverFlavors: 'Sign in to your Culinary OS.',
+    signInToCulinaryOS: 'Sign in to your Culinary OS.',
+    forgot: 'Forgot?',
     newHere: 'New here?',
-    signUp: 'Sign up',
-    exploreTasteShare: 'Explore • Taste • Share',
+    signUp: 'Create Account',
+    backToSignup: 'Back to signup',
+    exploreTasteShare: 'Enterprise • Professional • Platform',
     google: 'Google',
     email: 'Email',
     apple: 'Apple'
@@ -102,11 +104,11 @@ const t = {
     and: 'y la',
     privacy: 'Política de Privacidad',
     welcome: 'Bienvenido',
-    discoverFlavors: 'Descubre los mejores sabores a tu alrededor',
+    discoverFlavors: 'Inicia sesión en tu OS Culinario.',
     forgot: '¿Olvidaste?',
     newHere: '¿Eres nuevo?',
     signUp: 'Regístrate',
-    exploreTasteShare: 'Explora • Prueba • Comparte',
+    exploreTasteShare: 'Empresa • Profesional • Plataforma',
     google: 'Google',
     email: 'Email',
     apple: 'Apple'
@@ -136,11 +138,11 @@ const t = {
     and: 'e a',
     privacy: 'Política de Privacidade',
     welcome: 'Bem-vindo',
-    discoverFlavors: 'Descubra os melhores sabores ao seu redor',
+    discoverFlavors: 'Entre na sua Plataforma Culinária.',
     forgot: 'Esqueceu?',
     newHere: 'É novo aqui?',
     signUp: 'Cadastre-se',
-    exploreTasteShare: 'Explore • Prove • Compartilhe',
+    exploreTasteShare: 'Empresarial • Profissional • Plataforma',
     google: 'Google',
     email: 'Email',
     apple: 'Apple'
@@ -509,13 +511,11 @@ const TrialSignup = () => {
                 .dm-social-btn:hover { background: #f2f4f6; }
 
                 /* ================================== */
-                /* LOGIN LIGHT STYLES                 */
+                /* LOGIN VIEW STYLES - Professional   */
                 /* ================================== */
-                .login-cinematic-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
-                .login-gradient-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 88, 188, 0.4), rgba(0, 0, 0, 0.6)); mix-blend-mode: multiply; }
-                .glass-card-login { background: rgba(247, 249, 251, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 32px; box-shadow: 0px 20px 40px rgba(0, 88, 188, 0.15); }
-                .btn-primary { background: linear-gradient(to bottom right, #0058bc, #0070eb); color: white; padding: 16px 32px; border-radius: 9999px; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 10px 20px rgba(0, 88, 188, 0.2); border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
-                .social-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid rgba(193, 198, 215, 0.2); border-radius: 9999px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); cursor: pointer; transition: background 0.2s, transform 0.2s; font-weight: 700; color: #191c1e; }
+                .login-cinematic-img { display: none; }
+                .login-gradient-overlay { display: none; }
+                .glass-card-login { display: none; }
             `}</style>
             
             {/* Global Translator Overlay Button - Absolute to prevent flow collision, Fixed to viewport */}
@@ -681,89 +681,96 @@ const TrialSignup = () => {
                     {/* Bottom nav explicitly removed as per surgical request */}
                 </div>
             ) : (
-                <div style={{ minHeight: '100dvh', fontFamily: '"Montserrat", sans-serif', color: '#191c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', backgroundColor: '#f7f9fb' }}>
-                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 0 }}>
-                        <img className="login-cinematic-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHY_u1BxiUSrKWO-DeRh3p3YLyGmCL_kJvTiVl17WsnqsVGUD0JoLVsPsaEgkMH8pVJvyPj2zYe84d8k35MAM2jVHOFtDoF7_M1Ym_tKg7aj9r88B1grMY_Yvaq2fAFRog_-mhSu7Qu1sjuxl3uTjxbqlWb2T6ZAKDJ53IcmjH7JQtZlQk4BvT0SvZyX6tL88FsSZBpgLHx-MrTwJsZMY6KQOnPo8HXzFhOp8bYHbMMIeEJhV5C1_8MCfMfop2HIr9I65o3e-V66Nw" alt="Vibrant street food" />
-                        <div className="login-gradient-overlay"></div>
+                <div className="dm-wrapper">
+                    {/* Darkened Hero Overlay (60%) - Same as signup for continuity */}
+                    <div className="dm-hero-bg">
+                        <div className="dm-hero-gradient"></div>
+                        <img className="dm-hero-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4E7XYx2ZjDvx6ntI5oFq9nX98OsUxwRVdEzyOQ7fRmCSXpvN_ILKYn9vWuk01lcHqxzC8TVUYqIcNUqGjzgduax3rwYyFgPBIkz4OSPpKeEpWxIMlcKrMLxJ2oGEO1_agJB4B2EutVtrioCEEEbwcknPcHVc-Gur71hdWwyw9J92INZRg5SujiKhlAiqmmfzQL1SBfhU0vH8bHgSWyOV5ZnrwHfKFkVCMnBdfFgufuDYid5_-XPXMfXlaldejcPTe7rwNRDcn3kFe" alt="Culinary OS" />
                     </div>
-                    
-                    <header style={{ position: 'absolute', top: 0, width: '100%', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
-                        <div style={{ fontSize: '30px', fontWeight: 800, color: 'white', letterSpacing: '-0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <SvgIcon name="restaurant_menu" color="white" size={32} />
-                            <span style={{ fontFamily: '"Montserrat", sans-serif', textTransform: 'uppercase', letterSpacing: '0.2em' }}>FoodSpot</span>
+
+                    {/* Top Navigation - Text Only Branding */}
+                    <header className="dm-nav" style={{ justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-0.02em', fontSize: '1.5rem', fontStyle: 'italic', color: 'white' }}>FoodSpot</span>
                         </div>
                     </header>
-                    
-                    <main style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '448px', padding: '0 24px' }}>
-                        <div className="glass-card-login">
-                            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                                <h1 style={{ fontSize: '30px', fontWeight: 800, color: '#0058bc', marginBottom: '8px', letterSpacing: '-0.025em', margin: 0 }}>{l.welcome}</h1>
-                                <p style={{ color: '#586377', fontSize: '14px', fontWeight: 600, margin: 0, marginTop: '8px' }}>{l.discoverFlavors}</p>
-                            </div>
+
+                    <main className="dm-main">
+                        <div className="dm-grid" style={{ gridTemplateColumns: '1fr', maxWidth: '480px', margin: '0 auto' }}>
                             
-                            {error && (
-                                <div style={{ background: '#ffdad6', color: '#ba1a1a', padding: '12px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center', fontWeight: 'bold' }}>{error}</div>
-                            )}
-                            
-                            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0058bc', marginLeft: '4px' }}>{l.emailLabel}</label>
-                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                        <div style={{ position: 'absolute', left: '16px', display: 'flex' }}>
-                                            <SvgIcon name="mail" color="#586377" size={20} />
-                                        </div>
-                                        <input className="ts-input" type="email" placeholder={l.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} style={{ width: '100%', background: '#ffffff', border: 'none', borderRadius: '8px', padding: '16px 16px 16px 48px', color: '#191c1e', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontWeight: 600 }} />
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginLeft: '4px' }}>
-                                        <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0058bc', margin: 0 }}>{l.passwordLabel}</label>
-                                        <a href="#" style={{ fontSize: '10px', fontWeight: 700, color: '#586377', textDecoration: 'none' }}>{l.forgot}</a>
-                                    </div>
-                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                        <div style={{ position: 'absolute', left: '16px', display: 'flex' }}>
-                                            <SvgIcon name="lock" color="#586377" size={20} />
-                                        </div>
-                                        <input className="ts-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} style={{ width: '100%', background: '#ffffff', border: 'none', borderRadius: '8px', padding: '16px 16px 16px 48px', color: '#191c1e', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontWeight: 600 }} />
-                                    </div>
-                                </div>
-                                <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '0', fontSize: '18px', padding: '16px', borderRadius: '9999px' }}>
-                                    <span>{loading ? l.processing : l.login}</span>
-                                    {!loading && <SvgIcon name="arrow_forward" size={20} color="white" />}
-                                </button>
-                            </form>
-                            
-                            <div style={{ display: 'flex', alignItems: 'center', margin: '32px 0' }}>
-                                <div style={{ flexGrow: 1, borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
-                                <span style={{ margin: '0 16px', fontSize: '10px', fontWeight: 700, color: '#c1c6d7', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{l.orContinueWith}</span>
-                                <div style={{ flexGrow: 1, borderTop: '1px solid rgba(193, 198, 215, 0.5)' }}></div>
-                            </div>
-                            
-                            <div style={{ display: 'flex', gap: '16px' }}>
-                                <button type="button" onClick={handleGoogleLogin} disabled={loading} className="social-btn" style={{ flex: 1, padding: '12px', fontSize: '12px' }}>
-                                    <SvgIcon name="group_add" size={18} color="#191c1e" />
-                                    <span>{l.google}</span>
-                                </button>
-                                <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="social-btn" style={{ flex: 1, padding: '12px', fontSize: '12px' }}>
-                                    <SvgIcon name="alternate_email" size={18} color="#586377" />
-                                    <span>{l.apple}</span>
-                                </button>
-                            </div>
-                            
-                            <div style={{ marginTop: '40px', textAlign: 'center' }}>
-                                <p style={{ fontSize: '14px', fontWeight: 600, color: '#586377', margin: 0 }}>
-                                    {l.newHere}{' '}
-                                    <a href="#" onClick={(e) => { e.preventDefault(); setMode('signup'); setError(null); }} style={{ color: '#0058bc', fontWeight: 800, textDecoration: 'none', marginLeft: '4px' }}>{l.signUp}</a>
+                            {/* Headline Section - Professional */}
+                            <div className="dm-text-center" style={{ marginBottom: '2rem' }}>
+                                <h1 className="dm-h1" style={{ fontWeight: 800, fontSize: '2rem' }}>
+                                    Welcome Back
+                                </h1>
+                                <p className="dm-p" style={{ fontSize: '1rem' }}>
+                                    {l.discoverFlavors}
                                 </p>
+                            </div>
+                            
+                            {/* PURE WHITE Glassmorphism Login Card - Matches Signup */}
+                            <div className="dm-glass-wrapper">
+                                <div className="dm-glass-card" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
+                                    
+                                    {error && <div style={{ background: '#FF5733', color: 'white', padding: '16px', borderRadius: '12px', marginBottom: '24px', textAlign: 'center', fontWeight: '800' }}>{error}</div>}
+                                    
+                                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                        
+                                        <div>
+                                            <label className="dm-input-label">{l.emailLabel}</label>
+                                            <div className="dm-input-box">
+                                                <span className="dm-icon"><SvgIcon name="alternate_email" size={20} /></span>
+                                                <input className="dm-input" type="email" placeholder={l.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} />
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <label className="dm-input-label" style={{ marginBottom: 0 }}>{l.passwordLabel}</label>
+                                                <a href="#" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#FF5733', textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); alert('Password reset coming soon'); }}>{l.forgot}</a>
+                                            </div>
+                                            <div className="dm-input-box" style={{ marginTop: '0.5rem' }}>
+                                                <span className="dm-icon"><SvgIcon name="lock_open" size={20} /></span>
+                                                <input className="dm-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} />
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Professional Orange Button - Matches Signup */}
+                                        <button type="submit" disabled={loading} className="dm-btn-primary" style={{ marginTop: '0.5rem' }}>
+                                            {loading ? l.processing : l.login}
+                                        </button>
+                                        
+                                    </form>
+                                    
+                                    <div style={{ paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+                                            <div style={{ height: '1px', flex: 1, backgroundColor: '#e1e4e8' }}></div>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#a1aab7', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{l.orContinueWith}</span>
+                                            <div style={{ height: '1px', flex: 1, backgroundColor: '#e1e4e8' }}></div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                                            <button type="button" onClick={handleGoogleLogin} disabled={loading} className="dm-social-btn">
+                                                <SvgIcon name="group_add" size={18} />
+                                                <span>{l.google}</span>
+                                            </button>
+                                            <button type="button" onClick={() => document.querySelector('input[type="email"]')?.focus()} className="dm-social-btn">
+                                                <SvgIcon name="alternate_email" size={18} />
+                                                <span>{l.email}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Back to Signup - Professional Link */}
+                                    <div style={{ marginTop: '1.5rem', textAlign: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                                        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#586377', margin: 0 }}>
+                                            {l.newHere}{' '}
+                                            <a href="#" onClick={(e) => { e.preventDefault(); setMode('signup'); setError(null); }} style={{ color: '#FF5733', fontWeight: 800, textDecoration: 'none' }}>{l.signUp}</a>
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </main>
-                    
-                    <div style={{ position: 'fixed', bottom: '40px', zIndex: 10, textAlign: 'center', width: '100%', padding: '0 24px', pointerEvents: 'none' }}>
-                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                            {l.exploreTasteShare}
-                        </p>
-                    </div>
                 </div>
             )}
         </>
