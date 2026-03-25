@@ -47,18 +47,18 @@ const t = {
     mobileTitle: 'FoodSpot Mobile',
     subtitleSignup: 'Elevate your culinary business',
     createAccount: 'Create your account',
-    joinNetwork: 'Join the elite network of food creators.',
-    businessName: 'BUSINESS NAME',
-    businessPlaceholder: 'e.g., Burger Palace',
-    emailLabel: 'EMAIL ADDRESS',
-    emailPlaceholder: 'chef@restaurant.com',
-    passwordLabel: 'PASSWORD',
-    strength: 'SECURITY STRENGTH',
-    good: 'GOURMET READY',
-    moderate: 'MODERATE',
-    weak: 'WEAK',
-    avoid123: "Avoid '123456'",
-    startFreeTrial: 'Start free trial',
+    joinNetwork: 'Establish your professional culinary platform.',
+    businessName: 'Business Name',
+    businessPlaceholder: 'e.g., Le Gourmet Bistro',
+    emailLabel: 'Email Address',
+    emailPlaceholder: 'owner@restaurant.com',
+    passwordLabel: 'Password',
+    strength: 'Security Strength',
+    good: 'Enterprise Ready',
+    moderate: 'Moderate',
+    weak: 'Weak',
+    avoid123: "Avoid common passwords",
+    startFreeTrial: 'Create Business Account',
     processing: 'Processing...',
     orContinueWith: 'Or continue with',
     alreadyHaveAccount: 'Already have an account?',
@@ -79,20 +79,20 @@ const t = {
   },
   es: {
     mobileTitle: 'FoodSpot Mobile',
-    subtitleSignup: 'Eleva tu negocio culinario',
-    createAccount: 'Crea tu cuenta',
-    joinNetwork: 'Únete a la red élite de creadores.',
-    businessName: 'NOMBRE DEL NEGOCIO',
-    businessPlaceholder: 'ej. Burger Palace',
-    emailLabel: 'CORREO ELECTRÓNICO',
-    emailPlaceholder: 'chef@restaurante.com',
-    passwordLabel: 'CONTRASEÑA',
-    strength: 'SEGURIDAD',
-    good: 'LISTA PARA GOURMET',
-    moderate: 'MEDIA',
-    weak: 'BAJA',
-    avoid123: "Evita '123456'",
-    startFreeTrial: 'Comenzar prueba gratis',
+    subtitleSignup: 'Plataforma culinaria profesional',
+    createAccount: 'Crear cuenta empresarial',
+    joinNetwork: 'Establece tu plataforma culinaria profesional.',
+    businessName: 'Nombre del Negocio',
+    businessPlaceholder: 'ej. Le Gourmet Bistro',
+    emailLabel: 'Correo Electrónico',
+    emailPlaceholder: 'propietario@restaurante.com',
+    passwordLabel: 'Contraseña',
+    strength: 'Seguridad',
+    good: 'Listo para Empresas',
+    moderate: 'Media',
+    weak: 'Baja',
+    avoid123: "Evita contraseñas comunes",
+    startFreeTrial: 'Crear Cuenta Empresarial',
     processing: 'Procesando...',
     orContinueWith: 'O continúa con',
     alreadyHaveAccount: '¿Ya tienes cuenta?',
@@ -103,7 +103,7 @@ const t = {
     privacy: 'Política de Privacidad',
     welcome: 'Bienvenido',
     discoverFlavors: 'Descubre los mejores sabores a tu alrededor',
-    forgot: '¿OLVIDASTE?',
+    forgot: '¿Olvidaste?',
     newHere: '¿Eres nuevo?',
     signUp: 'Regístrate',
     exploreTasteShare: 'Explora • Prueba • Comparte',
@@ -113,20 +113,20 @@ const t = {
   },
   pt: {
     mobileTitle: 'FoodSpot Mobile',
-    subtitleSignup: 'Eleve o seu negócio culinário',
-    createAccount: 'Crie sua conta',
-    joinNetwork: 'Junte-se à rede de criadores de elite.',
-    businessName: 'NOME DO NEGÓCIO',
-    businessPlaceholder: 'ex: Burger Palace',
-    emailLabel: 'ENDEREÇO DE EMAIL',
-    emailPlaceholder: 'chef@restaurante.com',
-    passwordLabel: 'SENHA',
-    strength: 'FORÇA',
-    good: 'PRONTA GOURMET',
-    moderate: 'MEDIA',
-    weak: 'BAIXA',
-    avoid123: "Evite '123456'",
-    startFreeTrial: 'Começar teste grátis',
+    subtitleSignup: 'Plataforma culinária profissional',
+    createAccount: 'Criar conta empresarial',
+    joinNetwork: 'Estabeleça sua plataforma culinária profissional.',
+    businessName: 'Nome do Negócio',
+    businessPlaceholder: 'ex: Le Gourmet Bistro',
+    emailLabel: 'Endereço de Email',
+    emailPlaceholder: 'proprietario@restaurante.com',
+    passwordLabel: 'Senha',
+    strength: 'Força da Senha',
+    good: 'Pronto para Empresas',
+    moderate: 'Média',
+    weak: 'Baixa',
+    avoid123: "Evite senhas comuns",
+    startFreeTrial: 'Criar Conta Empresarial',
     processing: 'Processando...',
     orContinueWith: 'Ou continue com',
     alreadyHaveAccount: 'Já tem uma conta?',
@@ -137,7 +137,7 @@ const t = {
     privacy: 'Política de Privacidade',
     welcome: 'Bem-vindo',
     discoverFlavors: 'Descubra os melhores sabores ao seu redor',
-    forgot: 'ESQUECEU?',
+    forgot: 'Esqueceu?',
     newHere: 'É novo aqui?',
     signUp: 'Cadastre-se',
     exploreTasteShare: 'Explore • Prove • Compartilhe',
@@ -559,15 +559,11 @@ const TrialSignup = () => {
                             
                             {/* Headline Section: Free flowing in space, decoupled from glass panel */}
                             <div className="dm-text-center">
-                                <div className="dm-badge">
-                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#FF5733' }}></span>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.1em', color: '#FF5733', textTransform: 'uppercase' }}>Summer Festival Edition</span>
-                                </div>
-                                <h1 className="dm-h1">
-                                    The First <span style={{ color: '#FF5733', fontStyle: 'italic' }}>UGC-Driven</span> Culinary OS.
+                                <h1 className="dm-h1" style={{ fontWeight: 800 }}>
+                                    FOODSPOT: The First <span style={{ color: '#FF5733', fontStyle: 'italic' }}>UGC-Driven</span> Culinary OS.
                                 </h1>
                                 <p className="dm-p">
-                                    Turn Every Customer into a Creator. Engineered for Pop-ups, Festivals, and the On-the-Go Hustle.
+                                    Turn Every Customer into a Creator. Engineered for Enterprise, Professional Venues, and Global Platform Scale.
                                 </p>
                                 
                                 <div className="dm-features">
@@ -597,8 +593,8 @@ const TrialSignup = () => {
                                 <div className="dm-glass-card">
                                     
                                     <div style={{ marginBottom: '2rem' }}>
-                                        <h2 className="dm-h2">Get Cooking</h2>
-                                        <p style={{ color: '#586377', marginTop: '0.25rem', margin: 0, fontWeight: 500 }}>Join the hustle in under 60 seconds.</p>
+                                        <h2 className="dm-h2">{l.createAccount}</h2>
+                                        <p style={{ color: '#586377', marginTop: '0.25rem', margin: 0, fontWeight: 500 }}>{l.joinNetwork}</p>
                                     </div>
                                     
                                     {error && <div style={{ background: '#FF5733', color: 'white', padding: '16px', borderRadius: '12px', marginBottom: '24px', textAlign: 'center', fontWeight: '800' }}>{error}</div>}

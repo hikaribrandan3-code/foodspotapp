@@ -120,6 +120,36 @@
   /* 🛡️ FORENSIC FIX: Prevent header from stealing clicks */
 }
 
+/* =============================================
+   PROFESSIONAL WHITE THEME - Vault Seal
+   Replaces teal/emerald with white
+   ============================================= */
+:root {
+  /* Override confirmation/success colors to white */
+  --color-success: #FFFFFF !important;
+  --confirmation-color: #FFFFFF !important;
+  --nav-secondary-color: #FFFFFF !important;
+  
+  /* Green accent replacements */
+  --accent-green: #FFFFFF !important;
+  --accent-emerald: #FFFFFF !important;
+  --accent-teal: #FFFFFF !important;
+}
+
+/* Force white backgrounds on green elements */
+.bg-green, .bg-emerald, .bg-teal,
+[class*="green"], [class*="emerald"], [class*="teal"],
+[style*="22C55E"], [style*="10B981"], [style*="14B8A6"] {
+  background-color: #FFFFFF !important;
+  color: #1F2937 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Professional borders for contrast */
+.pro-border {
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
 /* ⚡ GLOBAL POLISH ENFORCEMENT */
 .fs-input,
 select,

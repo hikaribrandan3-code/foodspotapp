@@ -68,7 +68,7 @@ export const defaultConfig = {
         success: "#5A8B55",
         warning: "#B8860B",
         error: "#A85555",
-        confirmation: "#22C55E", // Third color slot: confirmation/success actions
+        confirmation: "#FFFFFF", // Third color slot: confirmation/success actions (Professional White)
     },
 
     // Branding Customization (Owner-controlled)
