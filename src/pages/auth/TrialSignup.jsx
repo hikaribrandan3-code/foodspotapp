@@ -458,9 +458,9 @@ const TrialSignup = () => {
                 .dm-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid rgba(255, 87, 51, 0.2); background: rgba(255, 87, 51, 0.1); backdrop-filter: blur(24px); }
                 
                 /* HEADLINE SURGICAL FIX: Own space, Extra Bold, No Overlaps */
-                .dm-h1 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 3rem; line-height: 1; letter-spacing: -0.05em; color: white; margin-top: 1.5rem; margin-bottom: 1.5rem; }
-                @media (min-width: 768px) { .dm-h1 { font-size: 4rem; margin-bottom: 2rem; } }
-                @media (min-width: 1024px) { .dm-h1 { font-size: 5rem; margin-bottom: 2rem; } }
+                .dm-h1 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 3rem; line-height: 1; letter-spacing: -0.05em; color: white !important; margin-top: 1.5rem; margin-bottom: 1.5rem; }
+                @media (min-width: 768px) { .dm-h1 { font-size: 4rem; margin-bottom: 2rem; color: white !important; } }
+                @media (min-width: 1024px) { .dm-h1 { font-size: 5rem; margin-bottom: 2rem; color: white !important; } }
                 
                 .dm-p { font-size: 1.125rem; color: var(--on-surface-variant); font-weight: 500; max-width: 36rem; line-height: 1.6; margin: 0 auto; }
                 @media (min-width: 1024px) { .dm-p { margin: 0; } }
