@@ -67,7 +67,7 @@ function AppHeader({ config: configProp }) {
                 left: '-50%',
                 top: '-50%',
                 backgroundImage: config?.headerCover?.image ? `url(${config.headerCover.image})` : undefined,
-                backgroundSize: `${scale * 100}%`,
+                backgroundSize: `${scale * 50}%`,
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 transform: `translate(${offsetX}px, ${offsetY}px)`,

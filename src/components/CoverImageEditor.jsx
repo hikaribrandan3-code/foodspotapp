@@ -475,7 +475,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                         {image && (
                             <div style={{
                                 position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
-                                backgroundImage: `url(${image})`, backgroundSize: `${scale * 100}%`,
+                                backgroundImage: `url(${image})`, backgroundSize: `${scale * 50}%`,
                                 backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
                                 transform: `translate(${offsetX}px, ${offsetY}px)`,
                                 pointerEvents: 'none'
@@ -629,7 +629,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                             left: '-50%',
                             top: '-50%',
                             backgroundImage: `url(${image})`,
-                            backgroundSize: `${scale * 100}%`,
+                            backgroundSize: `${scale * 50}%`,
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',
                             transform: `translate(${offsetX}px, ${offsetY}px)`,
