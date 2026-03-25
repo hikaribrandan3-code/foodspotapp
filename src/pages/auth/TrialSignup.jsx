@@ -562,7 +562,7 @@ const TrialSignup = () => {
                                 <h1 className="dm-h1" style={{ fontWeight: 800 }}>
                                     FOODSPOT: The First <span style={{ color: '#FF5733', fontStyle: 'italic' }}>UGC-Driven</span> Culinary OS.
                                 </h1>
-                                <p className="dm-p">
+                                <p className="dm-p" style={{ color: 'white' }}>
                                     Turn Every Customer into a Creator. Engineered for Enterprise, Professional Venues, and Global Platform Scale.
                                 </p>
                                 
