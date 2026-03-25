@@ -560,10 +560,10 @@ const TrialSignup = () => {
                             {/* Headline Section: Free flowing in space, decoupled from glass panel */}
                             <div className="dm-text-center">
                                 <h1 className="dm-h1" style={{ fontWeight: 800, color: 'white' }}>
-                                    Foodspot: The First <span style={{ color: '#FF5733', fontStyle: 'italic' }}>Restaurant OS That Turns Diners Into Creators</span>
+                                    Foodspot: The First <span style={{ color: '#FF5733', fontStyle: 'italic' }}>Restaurant OS</span> That Turns Diners Into Creators
                                 </h1>
                                 <p className="dm-p" style={{ color: 'white' }}>
-                                    Turn Every Customer into a Creator. Engineered for Enterprise, Professional Venues, and Global Platform Scale.
+                                    Your menu. Their content. Your growth.
                                 </p>
                                 
                                 <div className="dm-features">
