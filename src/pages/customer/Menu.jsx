@@ -692,8 +692,26 @@ export default function Menu({ config: configProp }) {
                 )
             })()} */}
 
-            {/* Grid - Tightened spacing after hero */}
-            <div style={{ padding: '0 8px', marginTop: 0 }}>
+            {/* Category Rail (Sticky) - RESTORED */}
+            {enabledCategories.length > 1 && (
+                <div style={{
+                    position: 'sticky', top: 52, zIndex: 900, background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(8px)', padding: '8px 0', margin: '0 0 16px 0', borderBottom: '1px solid rgba(0,0,0,0.05)'
+                }}>
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 8px', scrollbarWidth: 'none' }}>
+                        {enabledCategories.map(cat => (
+                            <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
+                                padding: '8px 16px', borderRadius: 20, border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
+                                background: activeCategory === cat.id ? '#111827' : 'white', color: activeCategory === cat.id ? 'white' : '#374151',
+                                fontWeight: 600, flexShrink: 0, boxShadow: activeCategory === cat.id ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                            }}>{cat.name}</button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Grid */}
+            <div style={{ padding: '0 8px' }}>
                 {enabledCategories.map(category => (
                     <div key={category.id} ref={el => categoryRefs.current[category.id] = el} data-category-id={category.id} style={{ marginBottom: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
