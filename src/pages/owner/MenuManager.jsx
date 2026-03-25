@@ -1156,7 +1156,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     </div>
                 </div>
 
-                {/* ==================== BRIDGED BRANDING SECTION ==================== */}
+                {/* ==================== BRIDGED BRANDING SECTION - HIDDEN FOR MVP ==================== */}
+                {false && (
+                <div>
                 <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
                 <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Estilo de Menú (Píldora)
@@ -1265,6 +1267,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         )
                     })()}
                 </div>
+                </div>
+                )}
 
                 {/* ==================== VISUAL DIVIDER ==================== */}
                 <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />

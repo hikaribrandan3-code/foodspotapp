@@ -708,8 +708,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             {/* Hero Guidelines */}
             <div style={{ position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 10, maxWidth: '90%' }}>
                 <p style={{ margin: 0, fontSize: 11, color: '#9CA3AF', lineHeight: 1.4 }}>
-                    💡 <strong>Tip:</strong> Use 16:9 images (1200×800px) for best results.<br />
-                    Pinch to zoom • Drag to position • 100% = fill frame
+                    💡 <strong>Tip:</strong> 16:9 images (1200×800px) work best.<br />
+                    <strong>150% zoom = sweet spot</strong> • Drag to position
                 </p>
             </div>
         </div>
