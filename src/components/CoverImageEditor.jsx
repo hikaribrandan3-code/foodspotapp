@@ -474,10 +474,11 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     }}>
                         {image && (
                             <div style={{
-                                position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
-                                backgroundImage: `url(${image})`, backgroundSize: `${scale * 50}%`,
+                                position: 'absolute', width: '100%', height: '100%', left: 0, top: 0,
+                                backgroundImage: `url(${image})`, backgroundSize: 'cover',
                                 backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-                                transform: `translate(${offsetX}px, ${offsetY}px)`,
+                                transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
+                                transformOrigin: 'center center',
                                 pointerEvents: 'none'
                             }} />
                         )}
@@ -624,14 +625,16 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     <div
                         style={{
                             position: 'absolute',
-                            width: '200%',
-                            height: '200%',
-                            left: '-50%',
-                            top: '-50%',
+                            width: '100%',
+                            height: '100%',
+                            left: 0,
+                            top: 0,
                             backgroundImage: `url(${image})`,
-                            backgroundSize: `${scale * 50}%`,
+                            backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',
+                            transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
+                            transformOrigin: 'center center',
                             transform: `translate(${offsetX}px, ${offsetY}px)`,
                             willChange: 'transform',
                             pointerEvents: 'none',
