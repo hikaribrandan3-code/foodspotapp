@@ -79,16 +79,16 @@
 - **Counter:** "1 / 5" position indicator
 - **Covers:** PNG covers for all games
 
-### 5 Curated Food Games (Final Selection)
+### 5 Live Games (HikariBoy Emulator)
 | # | Game | Status | Exit Button | Notes |
 |---|------|--------|-------------|-------|
-| 1 | Food Fight | ✅ Complete | ✅ SELECT | 150 HP, 15% zoom, pixel-art menu |
-| 2 | Spice Invaders | ✅ Complete | ✅ SELECT | Space invaders clone |
-| 3 | Burger Stack | ✅ Complete | ✅ SELECT | Stacking game |
-| 4 | Hotdog Dash | ✅ Complete | ✅ SELECT | Runner game |
-| 5 | Bubble Tea | ✅ Complete | ✅ SELECT | Timing game |
+| 1 | Burger Stack | ✅ LIVE | ✅ SELECT | Stacking game |
+| 2 | Spice Invaders | ✅ LIVE | ✅ SELECT | Space invaders clone |
+| 3 | Bubble Tea Blast | ✅ LIVE | ✅ SELECT | Timing game |
+| 4 | Candyland Flip | ✅ LIVE | ✅ SELECT | Arcade flipper |
+| 5 | Hikari Billiards | ✅ LIVE | ✅ SELECT | Pool/shooter |
 
-**Removed (11 games):** Fruit Slice, Fry Catch, Taco Tower, Coffee Pour, Steak Flip, Bento Box, Pizza Slice, Sushi Roll, Condiment Blast, Donut Roll, Ice Cream, Ingredient Match (reduced for quality + load time)
+**Archived (removed from frontend):** Food Fight, Hotdog Dash, Sushi Roll, Fruit Slice, Fry Catch, Taco Tower, Coffee Pour, Steak Flip, Bento Box, Pizza Slice, Condiment Blast, Donut Roll, Ice Cream, Ingredient Match
 
 ### Controls
 | Button | Selector Mode | Game Mode |
@@ -124,21 +124,16 @@
 - Same GBA chime sound
 - PRESS START to enter game selector
 
-### Game Catalog (12 Total)
-| # | Game | Type | Cover |
-|---|------|------|-------|
-| 1 | Burger Stack | Food | PNG |
-| 2 | Food Fight | Food | PNG |
-| 3 | Fry Catch | Food | PNG |
-| 4 | Bubble Tea | Food | PNG |
-| 5 | Coffee Pour | Food | PNG |
-| 6 | Spice Invaders | Food | PNG |
-| 7 | Fruit Slice | Food | PNG |
-| 8 | Bento Box | Food | PNG |
-| 9 | Luminesweeper | GBA Homebrew | SVG |
-| 10 | BulletGBA | GBA Homebrew | SVG |
-| 11 | Gorf | GBA Homebrew | SVG |
-| 12 | μCity | GBA Homebrew | SVG |
+### Game Catalog (5 Live Games)
+| # | Game | Cover |
+|---|------|-------|
+| 1 | Burger Stack | WebP |
+| 2 | Spice Invaders | WebP |
+| 3 | Bubble Tea Blast | WebP |
+| 4 | Candyland Flip | WebP |
+| 5 | Hikari Billiards | PNG |
+
+**Archived:** Food Fight, Hotdog Dash, Sushi Roll, Fry Catch, Coffee Pour, Fruit Slice, Bento Box, Luminesweeper, BulletGBA, Gorf, μCity, and others.
 
 ### Leak Fix
 ```css
@@ -147,18 +142,17 @@ body.hikariboy-active .auth-container { display: none !important; }
 ```
 
 ### Key Files
-- `src/components/HikariBoy/HikariBoy.jsx` - Main shell
+- `src/components/HikariBoy/HikariBoy.jsx` - Main shell (5 games)
 - `src/components/HikariBoy/HikariBoy.css` - Delta styling
 - `src/components/HikariBoy/GbaBoot.jsx` - GBA bezel boot screen
 - `src/components/HikariBoy/GbaBoot.css` - Boot screen styles
-- `public/games/*/index.html` - 12 game files
-- `public/games/*/cover.png` - PNG covers (8 games)
-- `public/games/*/cover.svg` - SVG fallback covers
+- `public/games/*/index.html` - 5 game files
+- `public/games/*/cover.webp` - WebP covers (4 games)
+- `public/games/pool/cover.png` - PNG cover (1 game)
 
 ### Pending
-- ✅ Replace SVG covers with PNG assets (8/12 done - food games have PNG)
+- ✅ All games have exit buttons (SELECT)
 - ✅ MUNCHBOY boot sequence with GBA chime (DONE)
-- Add exit buttons to remaining games (optional)
 
 
 #### 🔥 Addictive Games (10)
