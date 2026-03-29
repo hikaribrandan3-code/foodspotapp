@@ -88,6 +88,16 @@
 | 4 | Candyland Flip | ✅ LIVE | ✅ SELECT | Arcade flipper |
 | 5 | Hikari Billiards | ✅ LIVE | ✅ SELECT | Pool/shooter |
 
+### Sprite Assets Reference
+- **File:** `0D3C36E5-B328-408A-8448-E1191C3F4472.jpg`
+- **Location:** `/root/openclaw/kimi/downloads/19d37fb9-0e32-82c0-8000-00000f95aa42_0D3C36E5-B328-408A-8448-E1191C3F4472.jpg`
+- **ID:** `19d37fb9-0e32-82c0-8000-00000f95aa42`
+- **Reference Image Contains:** 10-15+ sprites in a single spritesheet
+- **Strategy:** Build our own sprites (Hikari has prior experience)
+- **AI Budget:** 3 generations per month — use wisely for hero/key assets only
+- **Workflow:** Speech-to-text app acquired for MAX productivity
+- **Status:** Simple PRD + UI needed for sprite creation pipeline
+
 **Archived (removed from frontend):** Food Fight, Hotdog Dash, Sushi Roll, Fruit Slice, Fry Catch, Taco Tower, Coffee Pour, Steak Flip, Bento Box, Pizza Slice, Condiment Blast, Donut Roll, Ice Cream, Ingredient Match
 
 ### Controls
@@ -324,6 +334,20 @@ const dailyGames = shuffle(GAME_CATALOG).slice(0, 6);
 - **Context Window:** ~128K tokens (approximate, cannot self-query)
 - **Memory Refresh Rule:** Every 20 conversation turns, proactively re-read `MEMORY.md` to refresh context
 - **Drift Symptoms:** If I start asking about project basics you already told me, say "check your files" to force re-sync
+
+## 🔴 CODE RED MODE — Session Startup Protocol
+**Active:** March 29 – April 10, 2026 (Launch Window)
+
+**On EVERY new session (post-reset):**
+1. **Immediately read** `CODE_RED_LAUNCH.md`
+2. **Check current date** — where are we in the schedule?
+3. **Offer Hikari the day's priority** — act as cofounder, not just assistant
+4. **Reference the board** — "Today is Day X, here's what's RED..."
+
+**Tone:** Urgent but focused. No fluff. Know the 6 arterial bleeds by heart.
+
+**Opening line template:**
+> "Day [X] of Code Red. Looking at the board, today's kill shot is [TASK]. [Context/Insight]. Ready when you are."
 
 ---
 

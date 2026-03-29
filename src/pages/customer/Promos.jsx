@@ -6,8 +6,9 @@ const Promos = () => {
   const { tenantSlug } = useParams();
 
   const handleBack = () => {
-    if (tenantSlug) {
-      navigate(`/${tenantSlug}/home`);
+    // Try tenant-specific home first, then fallback to browser back
+    if (tenantSlug && tenantSlug.trim() !== '') {
+      navigate(`/${tenantSlug}/home`, { replace: false });
     } else {
       navigate(-1);
     }
@@ -36,22 +37,44 @@ const Promos = () => {
         onClick={handleBack}
         style={{
           position: 'absolute',
-          top: '32px',
-          left: '32px',
-          padding: '8px',
-          borderRadius: '9999px',
-          backgroundColor: 'rgba(255,255,255,0.15)',
+          top: '16px',
+          left: '16px',
+          width: '48px',
+          height: '48px',
+          padding: '12px',
+          borderRadius: '50%',
+          backgroundColor: 'rgba(255,255,255,0.2)',
           border: 'none',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 0.2s ease',
-          zIndex: 1000000
+          zIndex: 1000000,
+          pointerEvents: 'auto',
+          touchAction: 'manipulation',
+          WebkitTapHighlightColor: 'transparent'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.35)';
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+        onTouchStart={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.35)';
+          e.currentTarget.style.transform = 'scale(0.95)';
+        }}
+        onTouchEnd={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)';
+          e.currentTarget.style.transform = 'scale(1)';
         }}
         aria-label="Volver"
+        type="button"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'none' }}>
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
       </button>
