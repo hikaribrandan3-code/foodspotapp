@@ -25,12 +25,20 @@
 }
 
 .dm-wrapper {
-  background-color: var(--dm-bg-dark);
+  background-color: #0e0e0e !important;
   color: var(--dm-white);
   font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
   min-height: 100dvh;
+  width: 100%;
   overflow-x: hidden;
   position: relative;
+}
+
+/* Override global body background when TrialSignup is active */
+.dm-wrapper,
+.dm-wrapper::before {
+  background-color: #0e0e0e !important;
 }
 
 /* ============================================
@@ -41,6 +49,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0e0e0e 50%, #1a1a1a 100%);
 }
 
 .dm-hero-gradient {
