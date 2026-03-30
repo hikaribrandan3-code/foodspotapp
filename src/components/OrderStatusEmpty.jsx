@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTenant } from '../contexts/TenantContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabaseClient.js'
+import BurgerLoader from './BurgerLoader'
 import './OrderStatusEmpty.css'
 
 /**
@@ -153,11 +154,8 @@ const OrderStatusEmpty = ({ config: configProp }) => {
 
     if (loading) {
         return (
-            <div className="order-status-empty">
-                <div className="ose-loading">
-                    <div className="ose-loading-spinner"></div>
-                    <p>{t('loading')}</p>
-                </div>
+            <div className="order-status-empty" style={{ display: 'flex', minHeight: '100vh', background: '#FAFAF8' }}>
+                <BurgerLoader />
             </div>
         )
     }
