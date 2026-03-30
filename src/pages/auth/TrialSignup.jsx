@@ -61,7 +61,7 @@ const TRANSLATIONS = {
     welcome: 'Welcome Back',
     welcomePrefix: 'Welcome back to sign in to your ',
     welcomeBrand: 'Foodspot OS',
-    discoverFlavors: 'Sign in to your Culinary OS.',
+    discoverFlavors: '',
     google: 'Google',
     email: 'Email',
     liveMenus: 'Live Menus',
@@ -71,11 +71,11 @@ const TRANSLATIONS = {
     trialText: 'Day Trial',
     headlinePrefix: 'Foodspot: The First ',
     headlineAccent: 'Restaurant OS',
-    headlineSuffix: ' That Turns Diners Into Creators',
+    headlineSuffix: ' That Turns Diners Into Content Creators',
     subheadline: 'Your menu. Their content. Your growth.'
   },
   es: {
-    createAccount: 'Crear cuenta',
+    createAccount: 'Crear cuenta empresarial',
     joinNetwork: 'Establece tu plataforma culinaria profesional.',
     businessName: 'Nombre del Negocio',
     businessPlaceholder: 'ej. Le Gourmet Bistro',
@@ -86,7 +86,7 @@ const TRANSLATIONS = {
     good: 'Listo para Empresas',
     moderate: 'Media',
     weak: 'Baja',
-    startFreeTrial: 'Crear Cuenta',
+    startFreeTrial: 'Crear Cuenta Empresarial',
     login: 'Iniciar sesión',
     processing: 'Procesando...',
     orContinueWith: 'O continúa con',
@@ -95,9 +95,9 @@ const TRANSLATIONS = {
     newHere: '¿Eres nuevo?',
     signUp: 'Regístrate',
     welcome: 'Bienvenido',
-    welcomePrefix: 'Bienvenido de nuevo. Inicia sesión en ',
+    welcomePrefix: 'Bienvenido de nuevo a ',
     welcomeBrand: 'Foodspot OS',
-    discoverFlavors: 'Inicia sesión en tu OS Culinario.',
+    discoverFlavors: '',
     google: 'Google',
     email: 'Email',
     liveMenus: 'Menús en Vivo',
@@ -105,13 +105,13 @@ const TRANSLATIONS = {
     creatorLoop: 'Bucle de Creadores',
     trialDays: '14',
     trialText: 'Días de Prueba',
-    headlinePrefix: 'Foodspot: El Primer ',
-    headlineAccent: 'OS Restaurante',
-    headlineSuffix: ' que Convierte Comensales en Creadores',
+    headlinePrefix: 'Foodspot: Convierte Comensales en ',
+    headlineAccent: 'Creadores de Contenido',
+    headlineSuffix: '',
     subheadline: 'Tu menú. Su contenido. Tu crecimiento.'
   },
   pt: {
-    createAccount: 'Criar conta',
+    createAccount: 'Criar conta empresarial',
     joinNetwork: 'Estabeleça sua plataforma culinária profissional.',
     businessName: 'Nome do Negócio',
     businessPlaceholder: 'ex: Le Gourmet Bistro',
@@ -122,7 +122,7 @@ const TRANSLATIONS = {
     good: 'Pronto para Empresas',
     moderate: 'Média',
     weak: 'Baixa',
-    startFreeTrial: 'Criar Conta',
+    startFreeTrial: 'Criar Conta Empresarial',
     login: 'Entrar',
     processing: 'Processando...',
     orContinueWith: 'Ou continue com',
@@ -131,9 +131,9 @@ const TRANSLATIONS = {
     newHere: 'É novo aqui?',
     signUp: 'Cadastre-se',
     welcome: 'Bem-vindo',
-    welcomePrefix: 'Bem-vindo de volta. Entre na sua ',
+    welcomePrefix: 'Bem-vindo de volta a ',
     welcomeBrand: 'Foodspot OS',
-    discoverFlavors: 'Entre na sua Plataforma Culinária.',
+    discoverFlavors: '',
     google: 'Google',
     email: 'Email',
     liveMenus: 'Cardápios Ao Vivo',
@@ -141,9 +141,9 @@ const TRANSLATIONS = {
     creatorLoop: 'Loop de Criadores',
     trialDays: '14',
     trialText: 'Dias de Teste',
-    headlinePrefix: 'Foodspot: O Primeiro ',
-    headlineAccent: 'OS Restaurante',
-    headlineSuffix: ' que Transforma Clientes em Criadores',
+    headlinePrefix: 'Foodspot: Transforma Clientes em ',
+    headlineAccent: 'Criadores de Conteúdo',
+    headlineSuffix: '',
     subheadline: 'Seu cardápio. O conteúdo deles. Seu crescimento.'
   }
 }
@@ -467,18 +467,16 @@ const TrialSignup = () => {
                 <>{l.welcomePrefix}<span className="dm-h1__accent">{l.welcomeBrand}</span></>
               )}
             </h1>
-            <p className={`dm-p ${isSignup ? 'dm-p--light' : ''}`}>
-              {isSignup ? l.subheadline : l.discoverFlavors}
-            </p>
-            
-            {isSignup && (
-              <div className="dm-features">
-                <FeatureItem icon="menu" text={l.liveMenus} />
-                <FeatureItem icon="bolt" text={l.instantCheckout} />
-                <FeatureItem icon="groups" text={l.creatorLoop} />
-              </div>
-            )}
-          </div>
+            {isSignup ? (
+              <>
+                <p className="dm-p dm-p--light">{l.subheadline}</p>
+                <div className="dm-features">
+                  <FeatureItem icon="menu" text={l.liveMenus} />
+                  <FeatureItem icon="bolt" text={l.instantCheckout} />
+                  <FeatureItem icon="groups" text={l.creatorLoop} />
+                </div>
+              </>
+            ) : null}
 
           {/* Form Card */}
           <div className="dm-glass-wrapper">
