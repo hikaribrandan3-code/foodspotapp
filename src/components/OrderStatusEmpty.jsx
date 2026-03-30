@@ -110,10 +110,10 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     }, [businessId])
 
     // Navigation helpers
-    const handleCategoryClick = (categoryName) => {
-        const encodedCategory = encodeURIComponent(categoryName.toLowerCase())
-        // Use 'search' param instead of 'category' so it correctly finds items even if actual DB categories aren't meticulously set up yet
-        navigate(`/${tenantSlug}/menu?search=${encodedCategory}`)
+    const handleCategoryClick = (categorySlugOrName) => {
+        const encodedCategory = encodeURIComponent(categorySlugOrName.toLowerCase())
+        // Professional Standard: Always pass the universal key (e.g., 'drinks') to the backend/Menu router
+        navigate(`/${tenantSlug}/menu?category=${encodedCategory}`)
     }
 
     const handleItemClick = (itemId) => {
@@ -237,23 +237,23 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                     </section>
                 )}
 
-                {/* Categories */}
-                {/* Fallback to static Emoji layout if DB empty (matches user layout screenshot) */}
-                <section className="ose-categories">
-                    <h3 className="ose-section-title">{categoriesText}</h3>
-                    <div className="ose-categories-scroll">
-                        {(categories.length > 0 ? categories : [
-                            { id: 'cat-1', name: 'Burger', icon: 'lunch_dining', staticEmoji: '🍔' },
-                            { id: 'cat-2', name: 'Fries', icon: 'chips', staticEmoji: '🍟' },
-                            { id: 'cat-3', name: 'Drinks', icon: 'local_bar', staticEmoji: '🍸' },
-                            { id: 'cat-4', name: 'Sweets', icon: 'icecream', staticEmoji: '🍦' },
-                            { id: 'cat-5', name: 'Pizza', icon: 'local_pizza', staticEmoji: '🍕' }
-                        ]).map((cat) => (
-                            <button
-                                key={cat.id}
-                                className="ose-category"
-                                onClick={() => handleCategoryClick(cat.name)}
-                            >
+            {/* Categories */}
+            {/* Fallback to static Emoji layout if DB empty (matches user layout screenshot) */}
+            <section className="ose-categories">
+                <h3 className="ose-section-title">{categoriesText}</h3>
+                <div className="ose-categories-scroll">
+                    {(categories.length > 0 ? categories : [
+                        { id: 'cat-1', name: t('burger') !== 'burger' ? t('burger') : 'Burger', slug: 'burger', staticEmoji: '🍔' },
+                        { id: 'cat-2', name: t('fries') !== 'fries' ? t('fries') : 'Fries', slug: 'fries', staticEmoji: '🍟' },
+                        { id: 'cat-3', name: t('drinks') !== 'drinks' ? t('drinks') : 'Drinks', slug: 'drinks', staticEmoji: '🍸' },
+                        { id: 'cat-4', name: t('sweets') !== 'sweets' ? t('sweets') : 'Sweets', slug: 'sweets', staticEmoji: '🍦' },
+                        { id: 'cat-5', name: t('pizza') !== 'pizza' ? t('pizza') : 'Pizza', slug: 'pizza', staticEmoji: '🍕' }
+                    ]).map((cat) => (
+                        <button
+                            key={cat.id}
+                            className="ose-category"
+                            onClick={() => handleCategoryClick(cat.slug || cat.name)}
+                        >
                                 <div className="ose-category-icon">
                                     <span style={{ fontSize: 24, paddingBottom: 2 }}>
                                         {cat.staticEmoji || getCategoryEmoji(cat.name)}
