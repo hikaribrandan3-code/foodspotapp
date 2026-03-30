@@ -179,22 +179,23 @@
 .dm-h1 {
   font-family: 'Montserrat', sans-serif;
   font-weight: 900;
-  font-size: 2.5rem;
-  line-height: 1.1;
-  letter-spacing: -0.05em;
+  font-size: clamp(1.75rem, 5.5vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
   color: #FFFFFF !important;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
   text-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
   text-wrap: balance;
   overflow-wrap: break-word;
   word-wrap: break-word;
   hyphens: auto;
+  max-width: 100%;
 }
 
 .dm-h1--small {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  margin-bottom: 0.75rem;
 }
 
 .dm-h1__accent {
@@ -210,14 +211,20 @@
 
 @media (min-width: 768px) {
   .dm-h1 {
-    font-size: 3.5rem;
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    line-height: 1.1;
+  }
+  
+  .dm-h1--small {
+    font-size: clamp(2rem, 3.5vw, 2.5rem);
   }
 }
 
 @media (min-width: 1024px) {
   .dm-h1 {
-    font-size: 4.5rem;
-    margin-bottom: 2rem;
+    font-size: clamp(3rem, 3.5vw, 4rem);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.04em;
   }
 }
 
@@ -339,10 +346,13 @@
 .dm-h2 {
   font-family: 'Montserrat', sans-serif;
   font-weight: 900;
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
   color: var(--dm-bg-dark);
   margin: 0 0 0.25rem;
   letter-spacing: -0.025em;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 @media (min-width: 768px) {

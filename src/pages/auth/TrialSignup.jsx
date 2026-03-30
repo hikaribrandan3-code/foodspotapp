@@ -69,11 +69,13 @@ const TRANSLATIONS = {
     creatorLoop: 'Creator Loop',
     trialDays: '14',
     trialText: 'Day Trial',
-    headline: 'Foodspot: The First Restaurant OS That Turns Diners Into Creators',
+    headlinePrefix: 'Foodspot: The First ',
+    headlineAccent: 'Restaurant OS',
+    headlineSuffix: ' That Turns Diners Into Creators',
     subheadline: 'Your menu. Their content. Your growth.'
   },
   es: {
-    createAccount: 'Crear cuenta empresarial',
+    createAccount: 'Crear cuenta',
     joinNetwork: 'Establece tu plataforma culinaria profesional.',
     businessName: 'Nombre del Negocio',
     businessPlaceholder: 'ej. Le Gourmet Bistro',
@@ -84,7 +86,7 @@ const TRANSLATIONS = {
     good: 'Listo para Empresas',
     moderate: 'Media',
     weak: 'Baja',
-    startFreeTrial: 'Crear Cuenta Empresarial',
+    startFreeTrial: 'Crear Cuenta',
     login: 'Iniciar sesión',
     processing: 'Procesando...',
     orContinueWith: 'O continúa con',
@@ -103,11 +105,13 @@ const TRANSLATIONS = {
     creatorLoop: 'Bucle de Creadores',
     trialDays: '14',
     trialText: 'Días de Prueba',
-    headline: 'Foodspot: El Primer OS Restaurante que Convierte Comensales en Creadores',
+    headlinePrefix: 'Foodspot: El Primer ',
+    headlineAccent: 'OS Restaurante',
+    headlineSuffix: ' que Convierte Comensales en Creadores',
     subheadline: 'Tu menú. Su contenido. Tu crecimiento.'
   },
   pt: {
-    createAccount: 'Criar conta empresarial',
+    createAccount: 'Criar conta',
     joinNetwork: 'Estabeleça sua plataforma culinária profissional.',
     businessName: 'Nome do Negócio',
     businessPlaceholder: 'ex: Le Gourmet Bistro',
@@ -118,7 +122,7 @@ const TRANSLATIONS = {
     good: 'Pronto para Empresas',
     moderate: 'Média',
     weak: 'Baixa',
-    startFreeTrial: 'Criar Conta Empresarial',
+    startFreeTrial: 'Criar Conta',
     login: 'Entrar',
     processing: 'Processando...',
     orContinueWith: 'Ou continue com',
@@ -137,7 +141,9 @@ const TRANSLATIONS = {
     creatorLoop: 'Loop de Criadores',
     trialDays: '14',
     trialText: 'Dias de Teste',
-    headline: 'Foodspot: O Primeiro OS Restaurante que Transforma Clientes em Criadores',
+    headlinePrefix: 'Foodspot: O Primeiro ',
+    headlineAccent: 'OS Restaurante',
+    headlineSuffix: ' que Transforma Clientes em Criadores',
     subheadline: 'Seu cardápio. O conteúdo deles. Seu crescimento.'
   }
 }
@@ -456,7 +462,7 @@ const TrialSignup = () => {
           <div className="dm-text-center">
             <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`}>
               {isSignup ? (
-                <>{l.headline.split('Restaurant OS')[0]}<span className="dm-h1__accent">Restaurant OS</span>{l.headline.split('Restaurant OS')[1]}</>
+                <>{l.headlinePrefix}<span className="dm-h1__accent">{l.headlineAccent}</span>{l.headlineSuffix}</>
               ) : (
                 <>{l.welcomePrefix}<span className="dm-h1__accent">{l.welcomeBrand}</span></>
               )}
