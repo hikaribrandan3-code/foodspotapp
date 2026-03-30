@@ -59,6 +59,8 @@ const TRANSLATIONS = {
     newHere: 'New here?',
     signUp: 'Create Account',
     welcome: 'Welcome Back',
+    welcomePrefix: 'Welcome back to sign in to your ',
+    welcomeBrand: 'Foodspot OS',
     discoverFlavors: 'Sign in to your Culinary OS.',
     google: 'Google',
     email: 'Email',
@@ -91,6 +93,8 @@ const TRANSLATIONS = {
     newHere: '¿Eres nuevo?',
     signUp: 'Regístrate',
     welcome: 'Bienvenido',
+    welcomePrefix: 'Bienvenido de nuevo. Inicia sesión en ',
+    welcomeBrand: 'Foodspot OS',
     discoverFlavors: 'Inicia sesión en tu OS Culinario.',
     google: 'Google',
     email: 'Email',
@@ -123,6 +127,8 @@ const TRANSLATIONS = {
     newHere: 'É novo aqui?',
     signUp: 'Cadastre-se',
     welcome: 'Bem-vindo',
+    welcomePrefix: 'Bem-vindo de volta. Entre na sua ',
+    welcomeBrand: 'Foodspot OS',
     discoverFlavors: 'Entre na sua Plataforma Culinária.',
     google: 'Google',
     email: 'Email',
@@ -451,7 +457,9 @@ const TrialSignup = () => {
             <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`}>
               {isSignup ? (
                 <>{l.headline.split('Restaurant OS')[0]}<span className="dm-h1__accent">Restaurant OS</span>{l.headline.split('Restaurant OS')[1]}</>
-              ) : l.welcome}
+              ) : (
+                <>{l.welcomePrefix}<span className="dm-h1__accent">{l.welcomeBrand}</span></>
+              )}
             </h1>
             <p className={`dm-p ${isSignup ? 'dm-p--light' : ''}`}>
               {isSignup ? l.subheadline : l.discoverFlavors}

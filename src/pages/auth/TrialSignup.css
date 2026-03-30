@@ -148,17 +148,20 @@
    ============================================ */
 .dm-text-center {
   text-align: center;
+  padding: 0 1rem;
 }
 
 @media (min-width: 1024px) {
   .dm-text-center {
     text-align: left;
     padding-right: 3rem;
+    padding-left: 0;
   }
 
   .dm-grid--single .dm-text-center {
     text-align: center;
-    padding-right: 0;
+    padding-right: 1rem;
+    padding-left: 1rem;
   }
 }
 
@@ -182,6 +185,11 @@
   color: #FFFFFF !important;
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
 .dm-h1--small {
@@ -192,6 +200,12 @@
 .dm-h1__accent {
   color: var(--dm-primary);
   font-style: italic;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.welcome-brand {
+  font-weight: 900;
+  color: var(--dm-primary);
 }
 
 @media (min-width: 768px) {
@@ -214,10 +228,12 @@
   max-width: 36rem;
   line-height: 1.6;
   margin: 0 auto;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
 
 .dm-p--light {
   color: #FFFFFF;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
 
 @media (min-width: 1024px) {
