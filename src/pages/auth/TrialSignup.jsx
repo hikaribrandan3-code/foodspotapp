@@ -108,9 +108,9 @@ const TRANSLATIONS = {
     creatorLoop: 'Bucle de Creadores',
     trialDays: '14',
     trialText: 'Días de Prueba',
-    headlineBrand: 'Foodspot:',
-    headlinePrefix: 'Convierte Clientes en ',
-    headlineAccent: 'Creadores de Contenido',
+    headlineBrand: 'Foodspot: ',
+    headlinePrefix: 'El Primer\nSistema Operativo Que\nConvierte Clientes En\nCreadores De ',
+    headlineAccent: 'Contenido!',
     headlineSuffix: '',
     subheadline: 'Tu menú. Su contenido. Tu crecimiento.'
   },
@@ -146,9 +146,9 @@ const TRANSLATIONS = {
     creatorLoop: 'Loop de Criadores',
     trialDays: '14',
     trialText: 'Dias de Teste',
-    headlineBrand: 'Foodspot:',
-    headlinePrefix: 'Transforma Clientes em ',
-    headlineAccent: 'Criadores de Conteúdo',
+    headlineBrand: 'Foodspot: ',
+    headlinePrefix: 'O Primeiro\nSistema Operacional\nQue Transforma Clientes\nEm Criadores De ',
+    headlineAccent: 'Conteúdo!',
     headlineSuffix: '',
     subheadline: 'Seu cardápio. O conteúdo deles. Seu crescimento.'
   }
@@ -466,16 +466,10 @@ const TrialSignup = () => {
           
           {/* Headline Section */}
           <div className="dm-text-center">
-            <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`}>
+            <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`} style={{ whiteSpace: 'pre-line' }}>
               {isSignup ? (
                 <>
-                  {lang !== 'en' ? (
-                    <span style={{ display: 'block', fontSize: '1.2em', lineHeight: 1, marginBottom: '0.2rem' }}>
-                      {l.headlineBrand}
-                    </span>
-                  ) : (
-                    <span>{l.headlineBrand}</span>
-                  )}
+                  <span>{l.headlineBrand}</span>
                   {l.headlinePrefix}<span className="dm-h1__accent">{l.headlineAccent}</span>{l.headlineSuffix}
                 </>
               ) : (
