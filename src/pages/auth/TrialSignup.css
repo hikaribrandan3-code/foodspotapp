@@ -192,17 +192,13 @@
   color: #FFFFFF !important;
   margin-top: 0;
   margin-bottom: 0;
-}
-
-/* Text shadow for white headline words only */
-.dm-h1__text {
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
 }
 
 .dm-h1__accent {
   color: var(--dm-primary);
   font-style: italic;
-  /* No text-shadow on accent line */
+  text-shadow: none; /* Remove shadow from orange accent */
 }
 
 .dm-h1--small {
