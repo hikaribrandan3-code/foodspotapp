@@ -44,6 +44,19 @@ const OrderStatusEmpty = ({ config: configProp }) => {
         image: tenantData?.app_config?.promo_banner_image || null
     }
 
+    // Translation fallbacks to prevent raw keys like "search_placeholder" rendering literally
+    const translatedSearch = t('search_placeholder')
+    const searchPlaceholder = translatedSearch !== 'search_placeholder' ? translatedSearch : 'Search for burgers, fries...'
+
+    const translatedRecommended = t('recommended_for_you')
+    const recommendedText = translatedRecommended !== 'recommended_for_you' ? translatedRecommended : 'Recommended for you'
+
+    const translatedSeeMore = t('see_more')
+    const seeMoreText = translatedSeeMore !== 'see_more' ? translatedSeeMore : 'See More'
+
+    const translatedCategories = t('browse_categories')
+    const categoriesText = translatedCategories !== 'browse_categories' ? translatedCategories : 'Browse Categories'
+
     // Fetch featured items and categories
     useEffect(() => {
         const fetchData = async () => {
@@ -177,7 +190,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                         <input
                             type="text"
                             className="ose-search-input"
-                            placeholder={t('search_placeholder') || 'Search for burgers, fries...'}
+                            placeholder={searchPlaceholder}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -213,37 +226,47 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 )}
 
                 {/* Categories */}
-                {categories.length > 0 && (
-                    <section className="ose-categories">
-                        <h3 className="ose-section-title">{t('browse_categories') || 'Browse Categories'}</h3>
-                        <div className="ose-categories-scroll">
-                            {categories.map((cat) => (
-                                <button
-                                    key={cat.id}
-                                    className="ose-category"
-                                    onClick={() => handleCategoryClick(cat.name)}
-                                >
-                                    <div className="ose-category-icon">
+                {/* Fallback to static Emoji layout if DB empty (matches user layout screenshot) */}
+                <section className="ose-categories">
+                    <h3 className="ose-section-title">{categoriesText}</h3>
+                    <div className="ose-categories-scroll">
+                        {(categories.length > 0 ? categories : [
+                            { id: 'cat-1', name: 'Burger', icon: 'lunch_dining', staticEmoji: '🍔' },
+                            { id: 'cat-2', name: 'Fries', icon: 'chips', staticEmoji: '🍟' },
+                            { id: 'cat-3', name: 'Drinks', icon: 'local_bar', staticEmoji: '🍸' },
+                            { id: 'cat-4', name: 'Sweets', icon: 'icecream', staticEmoji: '🍦' },
+                            { id: 'cat-5', name: 'Pizza', icon: 'local_pizza', staticEmoji: '🍕' }
+                        ]).map((cat) => (
+                            <button
+                                key={cat.id}
+                                className="ose-category"
+                                onClick={() => handleCategoryClick(cat.name)}
+                            >
+                                <div className="ose-category-icon">
+                                    {cat.staticEmoji ? (
+                                        <span style={{ fontSize: 24, paddingBottom: 2 }}>{cat.staticEmoji}</span>
+                                    ) : (
                                         <span className="material-symbols-outlined">
                                             {getCategoryIcon(cat.name, cat.icon)}
                                         </span>
-                                    </div>
-                                    <span className="ose-category-name">{cat.name}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </section>
-                )}
+                                    )}
+                                </div>
+                                <span className="ose-category-name">{cat.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </section>
 
                 {/* Featured Items Grid */}
                 <section className="ose-featured">
                     <div className="ose-section-header">
-                        <h3 className="ose-section-title">{t('recommended_for_you') || 'Recommended for you'}</h3>
+                        <h3 className="ose-section-title">{recommendedText}</h3>
                         <button 
                             className="ose-see-more"
+                            style={{ backgroundColor: primaryColor }}
                             onClick={() => navigate(`/${tenantSlug}/menu`)}
                         >
-                            {t('see_more') || 'See More'}
+                            {seeMoreText}
                         </button>
                     </div>
 

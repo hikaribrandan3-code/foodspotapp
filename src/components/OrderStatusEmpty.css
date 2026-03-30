@@ -5,7 +5,7 @@
     min-height: 100vh;
     background: #ffffff;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    padding-bottom: 100px; /* Space for bottom nav */
+    padding-bottom: 80px; /* Precise height for GrubClub bottom nav */
 }
 
 /* Header */
@@ -329,13 +329,16 @@
 }
 
 .ose-see-more {
-    font-size: 12px;
-    font-weight: 600;
-    color: #FF9500;
-    background: none;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #FF9500;
     border: none;
+    border-radius: 20px;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 6px 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .ose-see-more:hover {
@@ -498,7 +501,7 @@
 
 /* Bottom Spacer */
 .ose-bottom-spacer {
-    height: 80px;
+    display: none;
 }
 
 /* Responsive */
