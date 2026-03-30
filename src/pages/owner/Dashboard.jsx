@@ -4,6 +4,7 @@ import { useTenant } from '../../contexts/TenantContext'
 import { subscribeToOrders, updateOrderCloud } from '../../lib/supabaseClient'
 import ItemCard from '../../components/ItemCard'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics' // Strike 17 Imports
+import BurgerLoader from '../../components/BurgerLoader'
 
 // 🔔 NOTIFICATION SOUND (Simple Beep)
 const playNotificationSound = () => {
@@ -188,7 +189,7 @@ export default function Dashboard() {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
 
-    if (loading) return <div style={{ padding: 20, color: 'white' }}>Cargando cocina...</div>
+    if (loading) return <BurgerLoader />
 
     return (
         <div style={{

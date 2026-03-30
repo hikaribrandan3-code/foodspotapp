@@ -9,6 +9,7 @@ import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import ItemCard from '../../components/ItemCard'
 import { QRCodeSVG } from 'qrcode.react'
+import BurgerLoader from '../../components/BurgerLoader'
 // ============================================
 // 📊 ORDER STATUS - REAL-TIME LIVE TRACKER
 // ============================================
@@ -237,16 +238,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
     // Loading
     if (loading) {
-        return (
-            <div style={{
-                minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF'
-            }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 48, marginBottom: 16, animation: 'pulse 1.5s infinite' }}>📦</div>
-                    <p style={{ color: '#6B7280' }}>{t('loading_order')}</p>
-                </div>
-            </div>
-        )
+        return <BurgerLoader />
     }
 
     // Empty

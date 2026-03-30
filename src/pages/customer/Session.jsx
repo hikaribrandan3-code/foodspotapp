@@ -5,6 +5,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useSession } from '../../contexts/SessionContext';
 import HeaderClamp from '../../components/HeaderClamp';
 import { QRCodeSVG } from 'qrcode.react';
+import BurgerLoader from '../../components/BurgerLoader';
 
 function Session({ config }) {
     const { tenantSlug, sessionId } = useParams();
@@ -92,14 +93,7 @@ function Session({ config }) {
         : '';
 
     if (loading) {
-        return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAF8' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 40, marginBottom: 16 }}>🍽️</div>
-                    <div style={{ color: '#6B7280' }}>Cargando sesión...</div>
-                </div>
-            </div>
-        );
+        return <BurgerLoader />
     }
 
     if (mode === 'error' || error) {
