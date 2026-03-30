@@ -1,231 +1,354 @@
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTenant } from '../contexts/TenantContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { supabase } from '../lib/supabaseClient.js'
+import './OrderStatusEmpty.css'
 
 /**
- * OrderStatusEmpty - Pre-Estado Empty State Component
+ * OrderStatusEmpty - Pre-Order Status Empty State
  * 
- * Architectural Constraints:
- * - Battle 2: Must use config prop only (no getConfig/localStorage)
- * - Battle 5: All strings in Spanish
- * - Z-Index: Primary CTA at z-index 10 (below Camera at z-50+)
+ * Billion-dollar food app design:
+ * - Hero banner with promo
+ * - Category pills
+ * - Featured items grid
+ * - Clean, fast, familiar
  */
-const OrderStatusEmpty = ({ config: configProp, featuredItems = [] }) => {
+
+const OrderStatusEmpty = ({ config: configProp }) => {
     const config = configProp || {};
     const navigate = useNavigate()
-    const { tenantData } = useTenant()
+    const { tenantData, businessId } = useTenant()
     const { t } = useLanguage()
+    const { tenantSlug } = useParams()
 
-    // 🛡️ DYNAMIC ROUTING: Ensure we stay within the tenant silo
-    const menuPath = tenantData?.slug ? `/${tenantData.slug}/menu` : '/menu'
-    const promosPath = tenantData?.slug ? `/${tenantData.slug}/promos` : '/promos'
-    const enviosPath = tenantData?.slug ? `/${tenantData.slug}/envios` : '/envios'
+    const [featuredItems, setFeaturedItems] = useState([])
+    const [categories, setCategories] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [searchQuery, setSearchQuery] = useState('')
 
-    // INVARIANT: config MUST come from props (Battle 2: Single Source of Truth)
-    if (!config) {
-        console.error('[Status] config prop is missing — check App.jsx routing')
-        return null
+    // Derived values from tenant config
+    const location = tenantData?.business_name || tenantData?.venue_name || 'Córdoba, AR'
+    const primaryColor = config?.branding?.primaryColor || '#FF9500'
+    const navBgColor = config?.branding?.navbar_color || primaryColor
+
+    // Promo banner config (fallback to hardcoded)
+    const promoConfig = {
+        enabled: tenantData?.app_config?.promo_banner_enabled ?? true,
+        text: tenantData?.app_config?.promo_banner_text || 'Free delivery on your first order.',
+        subtext: tenantData?.app_config?.promo_banner_subtext || 'Up to 3 times per day',
+        cta: tenantData?.app_config?.promo_banner_cta || 'Claim Now',
+        image: tenantData?.app_config?.promo_banner_image || null
     }
 
-    // Logic Gate: Use themeColor for the primary CTA but keep pills neutral SaaS style
-    const primaryActionColor = config.branding?.primaryColor || '#10b981'
+    // Fetch featured items and categories
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!businessId) return
+
+            try {
+                // Fetch featured items from menu_items
+                const { data: items, error: itemsError } = await supabase
+                    .from('menu_items')
+                    .select('id, name, description, price, image, category_id, is_featured, is_available')
+                    .eq('business_id', businessId)
+                    .eq('is_available', true)
+                    .or('is_featured.eq.true,featured.eq.true')
+                    .limit(4)
+
+                if (itemsError) throw itemsError
+
+                // If no featured items, fetch any available items
+                let displayItems = items || []
+                if (displayItems.length === 0) {
+                    const { data: fallbackItems } = await supabase
+                        .from('menu_items')
+                        .select('id, name, description, price, image, category_id, is_available')
+                        .eq('business_id', businessId)
+                        .eq('is_available', true)
+                        .limit(4)
+                    displayItems = fallbackItems || []
+                }
+
+                setFeaturedItems(displayItems)
+
+                // Fetch categories for the pills
+                const { data: cats, error: catsError } = await supabase
+                    .from('menu_categories')
+                    .select('id, name, icon, sort_order')
+                    .eq('business_id', businessId)
+                    .order('sort_order', { ascending: true })
+                    .limit(5)
+
+                if (catsError) throw catsError
+                setCategories(cats || [])
+
+            } catch (err) {
+                console.error('[OrderStatusEmpty] Fetch error:', err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchData()
+    }, [businessId])
+
+    // Navigation helpers
+    const handleCategoryClick = (categoryName) => {
+        const encodedCategory = encodeURIComponent(categoryName.toLowerCase())
+        navigate(`/${tenantSlug}/menu?category=${encodedCategory}`)
+    }
+
+    const handleItemClick = (itemId) => {
+        navigate(`/${tenantSlug}/menu/${itemId}`)
+    }
+
+    const handleClaimPromo = () => {
+        // Same endpoint as Promos (coming soon)
+        navigate(`/${tenantSlug}/promos`)
+    }
+
+    const handleSearch = (e) => {
+        e.preventDefault()
+        if (searchQuery.trim()) {
+            navigate(`/${tenantSlug}/menu?search=${encodeURIComponent(searchQuery)}`)
+        }
+    }
+
+    // Category icon mapping (Material Symbols)
+    const getCategoryIcon = (categoryName, iconType) => {
+        if (iconType) return iconType
+        
+        const name = categoryName?.toLowerCase() || ''
+        if (name.includes('burger')) return 'lunch_dining'
+        if (name.includes('fries') || name.includes('side')) return 'chips'
+        if (name.includes('drink') || name.includes('bebida')) return 'local_bar'
+        if (name.includes('sweet') || name.includes('postre') || name.includes('dessert')) return 'icecream'
+        if (name.includes('pizza')) return 'local_pizza'
+        if (name.includes('chicken') || name.includes('pollo')) return 'kebab_dining'
+        if (name.includes('salad') || name.includes('ensalada')) return 'eco'
+        return 'restaurant'
+    }
+
+    const formatPrice = (price) => {
+        return `$${parseFloat(price).toFixed(2)}`
+    }
+
+    if (loading) {
+        return (
+            <div className="order-status-empty">
+                <div className="ose-loading">
+                    <div className="ose-loading-spinner"></div>
+                    <p>{t('loading')}</p>
+                </div>
+            </div>
+        )
+    }
 
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: '100vh',
-            background: 'rgba(248, 250, 252, 0.4)',
-            paddingBottom: 128
-        }}>
-            {/* 1. Header & Minimalist Empty State */}
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingTop: 32, /* Maintained */
-                paddingBottom: 32, /* The Big Squeeze Gap: exactly 32px to tiles */
-                paddingLeft: 12, /* 12px Gutter Sync */
-                paddingRight: 12, /* 12px Gutter Sync */
-                textAlign: 'center'
-            }}>
-
-                {/* Status Hero: Replaces Header & Card */}
-                <p style={{
-                    color: '#0F172A',
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontSize: 18, /* Hero Authority: +20% (14 -> 18ish) */
-                    fontWeight: 700, /* Bold */
-                    textAlign: 'center',
-                    margin: 0
-                }}>
-                    {t('no_active_orders')}
-                </p>
-            </div>
-
-            {/* 2. SaaS Action Pills — Linked to Functional Logic */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 12,
-                padding: '0 12px', /* 12px Gutter Sync */
-                marginBottom: 24 /* Big Squeeze: 36 -> 24 (Combined with Title pull) */
-            }}>
-                <button
-                    onClick={() => navigate(enviosPath)}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                        padding: '16px 0',
-                        borderRadius: 12, /* Mute: Sync with Card Radius */
-                        background: '#FFFFFF',
-                        border: '1px solid #E2E8F0',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                        cursor: 'pointer',
-                        transition: 'transform 0.1s ease'
-                    }}
-                >
-                    <span style={{ fontSize: 12, opacity: 0.7 }}>🚚</span> {/* Mute: 10% Reduction */}
-                    <span style={{ fontWeight: 700, color: '#334155' }}>Delivery</span>
-                </button>
-                <button
-                    onClick={() => navigate(promosPath)}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                        padding: '16px 0',
-                        borderRadius: 12, /* Mute: Sync with Card Radius */
-                        background: '#FFFFFF',
-                        border: '1px solid #E2E8F0',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                        cursor: 'pointer',
-                        transition: 'transform 0.1s ease'
-                    }}
-                >
-                    <span style={{ fontSize: 12, opacity: 0.7 }}>🎁</span> {/* Mute: 10% Reduction */}
-                    <span style={{ fontWeight: 700, color: '#334155' }}>Promos</span>
-                </button>
-            </div>
-
-            {/* 3. Featured Products Grid (Mapped from Config Props) */}
-            <div style={{ padding: '0 12px' }}>
-                <div style={{
-                    marginBottom: 12, /* Big Squeeze: Reduced gap */
-                    textAlign: 'center'
-                }}>
-                    <h2 style={{
-                        fontSize: 18,
-                        fontWeight: 600, /* Semi-Bold */
-                        color: '#333333', /* Deep Charcoal */
-                        letterSpacing: '0.02em',
-                        marginTop: 0, /* Big Squeeze: Pull UP */
-                        marginBottom: 0,
-                        textWrap: 'balance'
-                    }}>
-                        {t('featured_products')}
-                    </h2>
+        <div className="order-status-empty">
+            {/* Header */}
+            <header className="ose-header">
+                <div className="ose-header-content">
+                    <div className="ose-location">
+                        <span className="material-symbols-outlined ose-location-icon">location_on</span>
+                        <h1 className="ose-location-text">{location}</h1>
+                        <span className="material-symbols-outlined ose-location-arrow">expand_more</span>
+                    </div>
+                    <button 
+                        className="ose-search-btn"
+                        onClick={() => navigate(`/${tenantSlug}/menu`)}
+                    >
+                        <span className="material-symbols-outlined">search</span>
+                    </button>
                 </div>
+            </header>
 
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 12 /* Grid Lock: 12px */
-                }}>
-                    {featuredItems.slice(0, 4).map((item, index) => (
-                        <div
-                            key={item.id || index}
-                            onClick={() => navigate(menuPath)}
-                            style={{
-                                background: '#FFFFFF',
-                                borderRadius: 24,
-                                overflow: 'hidden',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                border: '1px solid rgba(241, 245, 249, 1)',
-                                cursor: 'pointer',
-                                transition: 'opacity 0.15s ease'
-                            }}
-                        >
-                            <div style={{
-                                aspectRatio: '1 / 1',
-                                width: '100%',
-                                position: 'relative'
-                            }}>
-                                {item.image ? (
-                                    <img
-                                        src={item.image}
-                                        alt={item.name || 'Producto'}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'cover'
-                                        }}
-                                    />
-                                ) : (
-                                    <div style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        background: '#E5E0D8',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        <span style={{ fontSize: 32, opacity: 0.5 }}>🍽️</span>
-                                    </div>
-                                )}
-                            </div>
-                            <div style={{ padding: 16, textAlign: 'center' }}>
-                                <h4 style={{
-                                    fontSize: 14,
-                                    fontWeight: 700,
-                                    color: '#1E293B',
-                                    margin: 0,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                }}>
-                                    {item.name || 'Producto'}
-                                </h4>
-                            </div>
+            <main className="ose-main">
+                {/* Search Bar */}
+                <section className="ose-search-section">
+                    <form onSubmit={handleSearch} className="ose-search-form">
+                        <span className="material-symbols-outlined ose-search-icon">search</span>
+                        <input
+                            type="text"
+                            className="ose-search-input"
+                            placeholder={t('search_placeholder') || 'Search for burgers, fries...'}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </form>
+
+                    {/* Filter Pills */}
+                    <div className="ose-filter-pills">
+                        <button className="ose-pill">{t('pickup') || 'Pickup'}</button>
+                        <button className="ose-pill">{t('under_20_min') || 'Under 20 min'}</button>
+                        <button className="ose-pill">{t('price') || 'Price'}</button>
+                        <button className="ose-pill">{t('rating') || 'Rating'}</button>
+                    </div>
+                </section>
+
+                {/* Hero Banner */}
+                {promoConfig.enabled && (
+                    <section className="ose-hero" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${adjustColor(primaryColor, -20)})` }}>
+                        <div className="ose-hero-content">
+                            <h2 className="ose-hero-title">{promoConfig.text}</h2>
+                            <p className="ose-hero-subtext">{promoConfig.subtext}</p>
+                            <button className="ose-hero-cta" onClick={handleClaimPromo}>
+                                {promoConfig.cta}
+                            </button>
                         </div>
-                    ))}
-                </div>
-            </div>
+                        <div className="ose-hero-image">
+                            {promoConfig.image ? (
+                                <img src={promoConfig.image} alt="Promo" />
+                            ) : (
+                                <span className="ose-hero-emoji">🍔</span>
+                            )}
+                        </div>
+                    </section>
+                )}
 
-            {/* 4. Primary CTA — Fixed and Z-Indexed below Camera */}
-            <div style={{
-                position: 'fixed',
-                bottom: 96,
-                left: '2%',
-                right: '2%',
-                zIndex: 10
-            }}>
-                <button
-                    onClick={() => navigate(menuPath)}
-                    style={{
-                        width: '100%',
-                        padding: '20px 0', /* CTA Dominance: The Boss */
-                        background: primaryActionColor,
-                        color: '#FFFFFF',
-                        fontFamily: 'Montserrat, sans-serif',
-                        fontWeight: 900,
-                        fontSize: 18,
-                        border: 'none',
-                        borderRadius: 16,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                        cursor: 'pointer',
-                        transition: 'transform 0.1s ease'
-                    }}
-                >
-                    {t('place_order')}
-                </button>
-            </div>
+                {/* Categories */}
+                {categories.length > 0 && (
+                    <section className="ose-categories">
+                        <h3 className="ose-section-title">{t('browse_categories') || 'Browse Categories'}</h3>
+                        <div className="ose-categories-scroll">
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat.id}
+                                    className="ose-category"
+                                    onClick={() => handleCategoryClick(cat.name)}
+                                >
+                                    <div className="ose-category-icon">
+                                        <span className="material-symbols-outlined">
+                                            {getCategoryIcon(cat.name, cat.icon)}
+                                        </span>
+                                    </div>
+                                    <span className="ose-category-name">{cat.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Featured Items Grid */}
+                <section className="ose-featured">
+                    <div className="ose-section-header">
+                        <h3 className="ose-section-title">{t('recommended_for_you') || 'Recommended for you'}</h3>
+                        <button 
+                            className="ose-see-more"
+                            onClick={() => navigate(`/${tenantSlug}/menu`)}
+                        >
+                            {t('see_more') || 'See More'}
+                        </button>
+                    </div>
+
+                    <div className="ose-grid">
+                        {featuredItems.length > 0 ? (
+                            featuredItems.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="ose-card"
+                                    onClick={() => handleItemClick(item.id)}
+                                >
+                                    <div className="ose-card-image">
+                                        {item.image ? (
+                                            <img src={item.image} alt={item.name} loading="lazy" />
+                                        ) : (
+                                            <div className="ose-card-placeholder">
+                                                <span>🍽️</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="ose-card-content">
+                                        <h4 className="ose-card-title">{item.name}</h4>
+                                        <p className="ose-card-desc">{item.description || item.name}</p>
+                                        <div className="ose-card-footer">
+                                            <span className="ose-card-price">{formatPrice(item.price)}</span>
+                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
+                                                <span className="material-symbols-outlined">add</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            // Fallback static items if no data
+                            <>
+                                <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
+                                    <div className="ose-card-image ose-card-placeholder">
+                                        <span>🍔</span>
+                                    </div>
+                                    <div className="ose-card-content">
+                                        <h4 className="ose-card-title">Classic Beef Stack</h4>
+                                        <p className="ose-card-desc">Double patty, cheddar</p>
+                                        <div className="ose-card-footer">
+                                            <span className="ose-card-price">$12.64</span>
+                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
+                                                <span className="material-symbols-outlined">add</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
+                                    <div className="ose-card-image ose-card-placeholder">
+                                        <span>🌶️</span>
+                                    </div>
+                                    <div className="ose-card-content">
+                                        <h4 className="ose-card-title">Spicy Jalapeño</h4>
+                                        <p className="ose-card-desc">Crispy chicken, zesty</p>
+                                        <div className="ose-card-footer">
+                                            <span className="ose-card-price">$10.99</span>
+                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
+                                                <span className="material-symbols-outlined">add</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
+                                    <div className="ose-card-image ose-card-placeholder">
+                                        <span>🍕</span>
+                                    </div>
+                                    <div className="ose-card-content">
+                                        <h4 className="ose-card-title">Rustic Pepperoni</h4>
+                                        <p className="ose-card-desc">Hand-tossed, 12-inch</p>
+                                        <div className="ose-card-footer">
+                                            <span className="ose-card-price">$14.50</span>
+                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
+                                                <span className="material-symbols-outlined">add</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
+                                    <div className="ose-card-image ose-card-placeholder">
+                                        <span>🍟</span>
+                                    </div>
+                                    <div className="ose-card-content">
+                                        <h4 className="ose-card-title">Truffle Parm Fries</h4>
+                                        <p className="ose-card-desc">Large portion, sea salt</p>
+                                        <div className="ose-card-footer">
+                                            <span className="ose-card-price">$6.25</span>
+                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
+                                                <span className="material-symbols-outlined">add</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </section>
+            </main>
+
+            {/* Spacer for bottom nav */}
+            <div className="ose-bottom-spacer"></div>
         </div>
     )
+}
+
+// Helper to darken/lighten color for gradients
+function adjustColor(color, amount) {
+    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2))
 }
 
 export default OrderStatusEmpty

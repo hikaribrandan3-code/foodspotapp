@@ -1,0 +1,524 @@
+/* OrderStatusEmpty.css - Pre-Order Status Empty State */
+/* Billion-dollar food app styling - Vanilla CSS only */
+
+.order-status-empty {
+    min-height: 100vh;
+    background: #ffffff;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    padding-bottom: 100px; /* Space for bottom nav */
+}
+
+/* Header */
+.ose-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.ose-header-content {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ose-location {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ose-location-icon {
+    font-size: 20px;
+    color: #FF9500;
+}
+
+.ose-location-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.ose-location-arrow {
+    font-size: 16px;
+    color: #666;
+}
+
+.ose-search-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.ose-search-btn:hover {
+    background: #f5f5f5;
+}
+
+.ose-search-btn span {
+    font-size: 22px;
+    color: #FF9500;
+}
+
+/* Main Content */
+.ose-main {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Search Section */
+.ose-search-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ose-search-form {
+    position: relative;
+    width: 100%;
+}
+
+.ose-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #999;
+}
+
+.ose-search-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 16px 0 48px;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #1a1a1a;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.ose-search-input:focus {
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(255, 149, 0, 0.2);
+}
+
+.ose-search-input::placeholder {
+    color: #999;
+}
+
+/* Filter Pills */
+.ose-filter-pills {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.ose-filter-pills::-webkit-scrollbar {
+    display: none;
+}
+
+.ose-pill {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.ose-pill:hover {
+    background: #FF9500;
+    color: #fff;
+    border-color: #FF9500;
+}
+
+/* Hero Banner */
+.ose-hero {
+    position: relative;
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ose-hero-content {
+    flex: 1;
+    z-index: 1;
+    max-width: 60%;
+}
+
+.ose-hero-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 8px 0;
+    line-height: 1.2;
+}
+
+.ose-hero-subtext {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 12px 0;
+}
+
+.ose-hero-cta {
+    padding: 8px 16px;
+    background: #fff;
+    color: #FF9500;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+}
+
+.ose-hero-cta:hover {
+    transform: scale(1.05);
+}
+
+.ose-hero-cta:active {
+    transform: scale(0.98);
+}
+
+.ose-hero-image {
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    width: 140px;
+    height: 140px;
+}
+
+.ose-hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.ose-hero-emoji {
+    font-size: 100px;
+    line-height: 1;
+}
+
+/* Categories */
+.ose-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ose-section-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.ose-categories-scroll {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.ose-categories-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.ose-category {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 4px;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+
+.ose-category:hover {
+    transform: translateY(-2px);
+}
+
+.ose-category:active {
+    transform: scale(0.95);
+}
+
+.ose-category-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.ose-category:hover .ose-category-icon {
+    background: #FF9500;
+}
+
+.ose-category-icon span {
+    font-size: 24px;
+    color: #FF9500;
+}
+
+.ose-category:hover .ose-category-icon span {
+    color: #fff;
+}
+
+.ose-category-name {
+    font-size: 10px;
+    font-weight: 700;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Featured Section */
+.ose-featured {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ose-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ose-see-more {
+    font-size: 12px;
+    font-weight: 600;
+    color: #FF9500;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.ose-see-more:hover {
+    text-decoration: underline;
+}
+
+/* Product Grid */
+.ose-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.ose-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ose-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.ose-card:active {
+    transform: scale(0.98);
+}
+
+.ose-card-image {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.ose-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.ose-card:hover .ose-card-image img {
+    transform: scale(1.05);
+}
+
+.ose-card-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f5f5f5, #e5e5e5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ose-card-placeholder span {
+    font-size: 48px;
+}
+
+.ose-card-content {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ose-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ose-card-desc {
+    font-size: 11px;
+    color: #888;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ose-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.ose-card-price {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1a1a1a;
+}
+
+.ose-card-add {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ose-card-add:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.ose-card-add:active {
+    transform: scale(0.95);
+}
+
+.ose-card-add span {
+    font-size: 18px;
+    color: #fff;
+}
+
+/* Loading State */
+.ose-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+}
+
+.ose-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f0f0f0;
+    border-top-color: #FF9500;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.ose-loading p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+/* Bottom Spacer */
+.ose-bottom-spacer {
+    height: 80px;
+}
+
+/* Responsive */
+@media (min-width: 480px) {
+    .ose-main {
+        padding: 16px 24px;
+    }
+    
+    .ose-grid {
+        gap: 16px;
+    }
+    
+    .ose-hero {
+        min-height: 160px;
+    }
+    
+    .ose-hero-content {
+        max-width: 50%;
+    }
+    
+    .ose-hero-title {
+        font-size: 20px;
+    }
+}
