@@ -477,6 +477,7 @@ const TrialSignup = () => {
                 </div>
               </>
             ) : null}
+          </div>
 
           {/* Form Card */}
           <div className="dm-glass-wrapper">
