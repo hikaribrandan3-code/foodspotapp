@@ -37,11 +37,12 @@ function OwnerLogin() {
                     incorrect: 'Credenciales incorrectas',
                     loading: 'Verificando...',
                     forgot: '¿Olvidaste tu contraseña?',
-                    emailLabel: 'Correo Electrónico',
-                    passwordLabel: 'Contraseña',
+                    emailLabel: 'Email Address',
+                    passwordLabel: 'Password',
                     pinLabel: 'Station PIN',
                     privacy: 'Privacidad',
-                    terms: 'Términos'
+                    terms: 'Términos',
+                    staffUsername: 'Staff Username'
                 },
                 en: {
                     title: 'FoodSpot OS',
@@ -56,7 +57,8 @@ function OwnerLogin() {
                     passwordLabel: 'Password',
                     pinLabel: 'Station PIN',
                     privacy: 'Privacy',
-                    terms: 'Terms'
+                    terms: 'Terms',
+                    staffUsername: 'Staff Username'
                 }
             };
             return translations[lang]?.[key] || translations['es'][key] || key;
@@ -199,11 +201,11 @@ function OwnerLogin() {
     };
 
     // ============================
-    // PREMIUM FOODSPOT OS UI
+    // PREMIUM FOODSPOT OS LOGIN UI
     // ============================
     return (
         <div style={{
-            backgroundColor: '#f7f9fb',
+            backgroundColor: '#ffffff',
             color: '#191c1e',
             display: 'flex',
             flexDirection: 'column',
@@ -211,27 +213,47 @@ function OwnerLogin() {
             fontFamily: '"Plus Jakarta Sans", "Inter", sans-serif',
             overflowX: 'hidden'
         }}>
-            {/* Hero Image Section */}
-            <div style={{ position: 'relative', width: '100%', overflow: 'hidden', height: '30vh' }}>
-                <img 
-                    alt="Gourmet Burger" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3kJf4SvwgmpJBEZosFOk5f5jv75s8LYW4Rm2cpJO4sz3Ezljvv7WK-WttaW5gvh_Qfh5X2JG0Kixv35rtEABkGWQgwMCCmi5lmDiAS1_j3lHfjMZKd_92yzqIc7ju5myq-yu4wYEc9yrevO_KFWKvmGOujfykQbVPjgOaNxJfa3US6HOntNFhyHJaTECgciT5m8jZy9EoYR1L6ADtwjIxJ5o51jrUnfW3MGErIYofJdqfdQpdftOd53yE3NqvrN9MlpWjs4FelV0"
-                />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #f7f9fb, transparent, transparent)' }}></div>
-            </div>
-
-            {/* Main Content Container - Pull up into the gradient */}
-            <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', padding: '0 24px', marginTop: '-48px', position: 'relative', zIndex: 10 }}>
-                {/* Logo Branding */}
-                <header style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff9800" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '16px' }}>
-                        <path d="M11 15h2a2 2 0 1 0 0-4h-2a2 2 0 1 1 0-4h2"></path>
-                        <path d="M12 17v2"></path>
-                        <path d="M12 5v2"></path>
-                        <circle cx="12" cy="12" r="10"></circle>
-                    </svg>
-                    <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#191c1e', letterSpacing: '-0.05em', margin: 0 }}>FoodSpot OS</h1>
+            {/* Main Content Container */}
+            <main style={{ 
+                flexGrow: 1, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                padding: '0 24px', 
+                paddingTop: '48px',
+                position: 'relative', 
+                zIndex: 10 
+            }}>
+                {/* Brand Card Header */}
+                <header style={{ 
+                    width: '100%', 
+                    maxWidth: '400px', 
+                    margin: '0 auto 40px auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                }}>
+                    <div style={{
+                        backgroundColor: '#ffffff',
+                        padding: '16px',
+                        borderRadius: '16px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        marginBottom: '16px'
+                    }}>
+                        {/* Restaurant Icon */}
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ff9800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                            <path d="M7 2v20"/>
+                            <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+                        </svg>
+                    </div>
+                    <h1 style={{
+                        fontFamily: '"Plus Jakarta Sans", sans-serif',
+                        fontSize: '30px',
+                        fontWeight: 900,
+                        color: '#191c1e',
+                        letterSpacing: '-0.05em',
+                        margin: 0
+                    }}>FoodSpot OS</h1>
                 </header>
 
                 {/* Role Toggle */}
@@ -242,32 +264,44 @@ function OwnerLogin() {
                     display: 'flex', 
                     marginBottom: '40px', 
                     width: '100%', 
-                    maxWidth: '380px', 
+                    maxWidth: '400px', 
                     margin: '0 auto 40px auto', 
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' 
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
                 }}>
                     <button 
                         type="button"
-                        onClick={() => { setLoginMode('owner'); setError(''); }}
+                        onClick={() => { setLoginMode('owner'); setError(''); setEmail(''); setPassword(''); }}
                         style={{
-                            flex: 1, padding: '12px 24px', borderRadius: '9999px', fontSize: '14px', fontWeight: 700, transition: 'all 0.3s ease',
+                            flex: 1, 
+                            padding: '12px 24px', 
+                            borderRadius: '9999px', 
+                            fontSize: '14px', 
+                            fontWeight: 700, 
+                            transition: 'all 0.3s ease',
                             backgroundColor: loginMode === 'owner' ? '#8b5000' : 'transparent',
                             color: loginMode === 'owner' ? '#ffffff' : '#554434',
-                            boxShadow: loginMode === 'owner' ? '0 8px 16px rgba(139, 80, 0, 0.3)' : 'none',
-                            border: 'none', cursor: 'pointer'
+                            boxShadow: loginMode === 'owner' ? '0 4px 12px rgba(139, 80, 0, 0.3)' : 'none',
+                            border: 'none', 
+                            cursor: 'pointer'
                         }}
                     >
                         {t('ownerLogin')}
                     </button>
                     <button 
                         type="button"
-                        onClick={() => { setLoginMode('staff'); setError(''); }}
+                        onClick={() => { setLoginMode('staff'); setError(''); setEmail(''); setPassword(''); }}
                         style={{
-                            flex: 1, padding: '12px 24px', borderRadius: '9999px', fontSize: '14px', fontWeight: 700, transition: 'all 0.3s ease',
+                            flex: 1, 
+                            padding: '12px 24px', 
+                            borderRadius: '9999px', 
+                            fontSize: '14px', 
+                            fontWeight: 700, 
+                            transition: 'all 0.3s ease',
                             backgroundColor: loginMode === 'staff' ? '#8b5000' : 'transparent',
                             color: loginMode === 'staff' ? '#ffffff' : '#554434',
-                            boxShadow: loginMode === 'staff' ? '0 8px 16px rgba(139, 80, 0, 0.3)' : 'none',
-                            border: 'none', cursor: 'pointer'
+                            boxShadow: loginMode === 'staff' ? '0 4px 12px rgba(139, 80, 0, 0.3)' : 'none',
+                            border: 'none', 
+                            cursor: 'pointer'
                         }}
                     >
                         {t('staffLogin')}
@@ -275,75 +309,224 @@ function OwnerLogin() {
                 </div>
 
                 {/* Form Section */}
-                <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '380px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     
-                    {/* Username/Email Field */}
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <label style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#554434', marginBottom: '8px', marginLeft: '16px', opacity: 0.7 }}>
-                            {loginMode === 'staff' ? t('emailPlaceholderStaff') : t('emailLabel')}
-                        </label>
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            backgroundColor: '#ffffff', 
-                            border: '1px solid rgba(219, 194, 173, 0.5)', 
-                            borderRadius: '18px', 
-                            padding: '16px', 
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                            transition: 'all 0.2s' 
-                        }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 12, opacity: 0.6}}>
-                                {loginMode === 'staff' ? (
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                ) : (
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                )}
-                                {loginMode === 'staff' ? <circle cx="12" cy="7" r="4"></circle> : <polyline points="22,6 12,13 2,6"></polyline>}
-                            </svg>
-                            <input 
-                                type={loginMode === 'staff' ? 'text' : 'email'}
-                                placeholder={loginMode === 'staff' ? 'chef_mario' : 'name@restaurant.com'}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={loading}
-                                style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', width: '100%', color: '#191c1e', fontWeight: 600, fontSize: '16px' }}
-                            />
-                        </div>
-                    </div>
+                    {/* Owner Fields - Email/Password */}
+                    {loginMode === 'owner' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {/* Email Field */}
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    color: '#554434',
+                                    marginBottom: '8px',
+                                    marginLeft: '16px'
+                                }}>{t('emailLabel')}</label>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: '#f2f4f6',
+                                    border: '1px solid rgba(219, 194, 173, 0.2)',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    transition: 'all 0.2s ease'
+                                }}>
+                                    {/* Mail Icon */}
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                                    </svg>
+                                    <input
+                                        type="email"
+                                        placeholder="name@restaurant.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        disabled={loading}
+                                        style={{
+                                            backgroundColor: 'transparent',
+                                            border: 'none',
+                                            outline: 'none',
+                                            width: '100%',
+                                            color: '#191c1e',
+                                            fontWeight: 500,
+                                            fontSize: '16px'
+                                        }}
+                                    />
+                                </div>
+                            </div>
 
-                    {/* Password/PIN Field */}
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <label style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#554434', marginBottom: '8px', marginLeft: '16px', opacity: 0.7 }}>
-                            {loginMode === 'staff' ? t('pinLabel') : t('passwordLabel')}
-                        </label>
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            backgroundColor: '#ffffff', 
-                            border: '1px solid rgba(219, 194, 173, 0.5)', 
-                            borderRadius: '18px', 
-                            padding: '16px', 
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                            transition: 'all 0.2s' 
-                        }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 12, opacity: 0.6}}>
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                            <input 
-                                type="password"
-                                placeholder={loginMode === 'staff' ? '0000' : '••••••••'}
-                                maxLength={loginMode === 'staff' ? 4 : undefined}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                disabled={loading}
-                                style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', width: '100%', color: '#191c1e', fontWeight: 600, fontSize: '16px', letterSpacing: loginMode === 'staff' ? '0.4em' : 'normal' }}
-                            />
+                            {/* Password Field */}
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    color: '#554434',
+                                    marginBottom: '8px',
+                                    marginLeft: '16px'
+                                }}>{t('passwordLabel')}</label>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: '#f2f4f6',
+                                    border: '1px solid rgba(219, 194, 173, 0.2)',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    transition: 'all 0.2s ease'
+                                }}>
+                                    {/* Lock Icon */}
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                    </svg>
+                                    <input
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        disabled={loading}
+                                        style={{
+                                            backgroundColor: 'transparent',
+                                            border: 'none',
+                                            outline: 'none',
+                                            width: '100%',
+                                            color: '#191c1e',
+                                            fontWeight: 500,
+                                            fontSize: '16px'
+                                        }}
+                                    />
+                                    {/* Visibility Icon */}
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px', opacity: 0.4, cursor: 'pointer' }}>
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
+                    {/* Staff Fields - Username/PIN */}
+                    {loginMode === 'staff' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {/* Staff Username Field */}
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    color: '#554434',
+                                    marginBottom: '8px',
+                                    marginLeft: '16px'
+                                }}>{t('staffUsername')}</label>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: '#f2f4f6',
+                                    border: '1px solid rgba(219, 194, 173, 0.2)',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    transition: 'all 0.2s ease'
+                                }}>
+                                    {/* Person Icon */}
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        placeholder="chef_mario"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        disabled={loading}
+                                        style={{
+                                            backgroundColor: 'transparent',
+                                            border: 'none',
+                                            outline: 'none',
+                                            width: '100%',
+                                            color: '#191c1e',
+                                            fontWeight: 500,
+                                            fontSize: '16px'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Station PIN Field */}
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    color: '#554434',
+                                    marginBottom: '8px',
+                                    marginLeft: '16px'
+                                }}>{t('pinLabel')}</label>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: '#f2f4f6',
+                                    border: '1px solid rgba(219, 194, 173, 0.2)',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    transition: 'all 0.2s ease'
+                                }}>
+                                    {/* Dialpad Icon */}
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                        <circle cx="12" cy="12" r="1"/>
+                                        <circle cx="19" cy="12" r="1"/>
+                                        <circle cx="5" cy="12" r="1"/>
+                                        <circle cx="12" cy="5" r="1"/>
+                                        <circle cx="19" cy="5" r="1"/>
+                                        <circle cx="5" cy="5" r="1"/>
+                                        <circle cx="12" cy="19" r="1"/>
+                                        <circle cx="19" cy="19" r="1"/>
+                                        <circle cx="5" cy="19" r="1"/>
+                                    </svg>
+                                    <input
+                                        type="password"
+                                        placeholder="0000"
+                                        maxLength={4}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        disabled={loading}
+                                        style={{
+                                            backgroundColor: 'transparent',
+                                            border: 'none',
+                                            outline: 'none',
+                                            width: '100%',
+                                            color: '#191c1e',
+                                            fontWeight: 500,
+                                            fontSize: '16px',
+                                            letterSpacing: '0.3em'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Error Message */}
                     {error && (
-                        <p style={{ color: '#ba1a1a', textAlign: 'center', fontSize: '14px', background: '#ffdad6', padding: '14px', borderRadius: '14px', border: '1px solid rgba(186,26,26,0.15)', margin: 0 }}>{error}</p>
+                        <p style={{ 
+                            color: '#ba1a1a', 
+                            textAlign: 'center', 
+                            fontSize: '14px', 
+                            background: '#ffdad6', 
+                            padding: '14px', 
+                            borderRadius: '14px', 
+                            border: '1px solid rgba(186,26,26,0.15)', 
+                            margin: 0 
+                        }}>{error}</p>
                     )}
 
                     {/* Primary CTA */}
@@ -355,18 +538,17 @@ function OwnerLogin() {
                                 width: '100%', 
                                 backgroundColor: '#ff9800', 
                                 color: '#ffffff', 
-                                borderRadius: '20px', 
+                                borderRadius: '16px', 
                                 padding: '20px', 
                                 fontSize: '16px', 
                                 fontWeight: 900, 
                                 letterSpacing: '0.15em', 
-                                boxShadow: loading ? 'none' : '0 12px 24px rgba(255, 152, 0, 0.35)', 
+                                boxShadow: loading ? 'none' : '0 8px 24px rgba(255, 152, 0, 0.35)', 
                                 border: 'none', 
                                 cursor: loading ? 'wait' : 'pointer', 
                                 transition: 'all 0.2s ease', 
                                 textTransform: 'uppercase',
-                                transform: loading ? 'scale(0.98)' : 'none',
-                                opacity: loading ? 0.8 : 1
+                                transform: loading ? 'scale(0.98)' : 'none'
                             }}
                         >
                             {loading ? t('loading') : t('submit')}
@@ -377,7 +559,14 @@ function OwnerLogin() {
                     <div style={{ textAlign: 'center', paddingTop: '8px' }}>
                         <button 
                             type="button"
-                            style={{ background: 'none', border: 'none', fontSize: '13px', fontWeight: 700, color: 'rgba(25, 28, 30, 0.5)', cursor: 'pointer' }}
+                            style={{ 
+                                background: 'none', 
+                                border: 'none', 
+                                fontSize: '12px', 
+                                fontWeight: 700, 
+                                color: 'rgba(25, 28, 30, 0.5)', 
+                                cursor: 'pointer' 
+                            }}
                         >
                             {t('forgot')}
                         </button>
@@ -386,17 +575,56 @@ function OwnerLogin() {
             </main>
 
             {/* Footer */}
-            <footer style={{ marginTop: 'auto', paddingTop: '40px', paddingBottom: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', gap: '12px', opacity: 0.8 }}>
-                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(25, 28, 30, 0.3)', margin: 0 }}>Powered by FoodSpot OS</p>
-                <div style={{ display: 'flex', gap: '20px' }}>
+            <footer style={{ 
+                marginTop: 'auto', 
+                paddingTop: '40px', 
+                paddingBottom: '32px', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                width: '100%', 
+                gap: '8px', 
+                opacity: 0.8 
+            }}>
+                <p style={{ 
+                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                    fontSize: '10px', 
+                    fontWeight: 500, 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em', 
+                    color: 'rgba(25, 28, 30, 0.4)', 
+                    margin: 0 
+                }}>Powered by FoodSpot OS</p>
+                <div style={{ display: 'flex', gap: '16px' }}>
                     <button 
                         onClick={(e) => { e.preventDefault(); navigate(`/${tenantSlug || ''}`) }}
-                        style={{ background: 'none', border: 'none', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(25, 28, 30, 0.4)', textDecoration: 'underline', cursor: 'pointer' }}
+                        style={{ 
+                            background: 'none', 
+                            border: 'none', 
+                            fontSize: '10px', 
+                            fontWeight: 500, 
+                            textTransform: 'uppercase', 
+                            letterSpacing: '0.05em', 
+                            color: 'rgba(25, 28, 30, 0.4)', 
+                            textDecoration: 'underline', 
+                            cursor: 'pointer' 
+                        }}
                     >
                         {t('privacy')}
                     </button>
                     <button 
-                        style={{ background: 'none', border: 'none', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(25, 28, 30, 0.4)', textDecoration: 'underline', cursor: 'pointer' }}
+                        style={{ 
+                            background: 'none', 
+                            border: 'none', 
+                            fontSize: '10px', 
+                            fontWeight: 500, 
+                            textTransform: 'uppercase', 
+                            letterSpacing: '0.05em', 
+                            color: 'rgba(25, 28, 30, 0.4)', 
+                            textDecoration: 'underline', 
+                            cursor: 'pointer' 
+                        }}
                     >
                         {t('terms')}
                     </button>
