@@ -71,7 +71,7 @@ const TRANSLATIONS = {
     trialDays: '14',
     trialText: 'Day Trial',
     headlineBrand: 'Foodspot: The OS',
-    headlinePrefix: ' That Turns Diners Into ',
+    headlinePrefix: ' That Turns Diners Into\n',
     headlineAccent: 'Content Creators !',
     headlineSuffix: '',
     subheadline: 'Your menu. Their content. Your growth.'
