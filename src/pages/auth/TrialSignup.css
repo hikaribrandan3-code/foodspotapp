@@ -181,6 +181,13 @@
   border-radius: 1rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  text-align: left; /* Fix orphan "OS" on mobile by left-aligning */
+}
+
+@media (min-width: 768px) {
+  .dm-headline-overlay {
+    text-align: center; /* Center on larger screens */
+  }
 }
 
 .dm-h1 {
