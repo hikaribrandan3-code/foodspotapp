@@ -71,9 +71,9 @@ const TRANSLATIONS = {
     trialDays: '14',
     trialText: 'Day Trial',
     headlineBrand: 'Foodspot:',
-    headlinePrefix: ' The First ',
-    headlineAccent: 'Restaurant OS:',
-    headlineSuffix: ' That Turns Diners Into Content Creators!',
+    headlinePrefix: ' The OS\nThat Turns Diners Into\n',
+    headlineAccent: 'Content Creators !',
+    headlineSuffix: '',
     subheadline: 'Your menu. Their content. Your growth.'
   },
   es: {
@@ -109,8 +109,8 @@ const TRANSLATIONS = {
     trialDays: '14',
     trialText: 'Días de Prueba',
     headlineBrand: 'Foodspot: ',
-    headlinePrefix: 'El Primer\nSistema Operativo Que\nConvierte Clientes En\nCreadores De ',
-    headlineAccent: 'Contenido!',
+    headlinePrefix: 'El OS\nQue Convierte Clientes\nEn ',
+    headlineAccent: 'Creadores !',
     headlineSuffix: '',
     subheadline: 'Tu menú. Su contenido. Tu crecimiento.'
   },
@@ -147,8 +147,8 @@ const TRANSLATIONS = {
     trialDays: '14',
     trialText: 'Dias de Teste',
     headlineBrand: 'Foodspot: ',
-    headlinePrefix: 'O Primeiro\nSistema Operacional\nQue Transforma Clientes\nEm Criadores De ',
-    headlineAccent: 'Conteúdo!',
+    headlinePrefix: 'O OS\nQue Transforma Clientes\nEm ',
+    headlineAccent: 'Criadores !',
     headlineSuffix: '',
     subheadline: 'Seu cardápio. O conteúdo deles. Seu crescimento.'
   }
