@@ -70,8 +70,8 @@ const TRANSLATIONS = {
     creatorLoop: 'Creator Loop',
     trialDays: '14',
     trialText: 'Day Trial',
-    headlineBrand: 'Foodspot:',
-    headlinePrefix: ' The OS\nThat Turns Diners Into\n',
+    headlineBrand: 'Foodspot: The OS',
+    headlinePrefix: ' That Turns Diners Into ',
     headlineAccent: 'Content Creators !',
     headlineSuffix: '',
     subheadline: 'Your menu. Their content. Your growth.'
@@ -108,9 +108,9 @@ const TRANSLATIONS = {
     creatorLoop: 'Bucle de Creadores',
     trialDays: '14',
     trialText: 'Días de Prueba',
-    headlineBrand: 'Foodspot: ',
-    headlinePrefix: 'El OS\nQue Convierte Clientes\nEn ',
-    headlineAccent: 'Creadores !',
+    headlineBrand: 'Foodspot: El OS',
+    headlinePrefix: ' Que Convierte Clientes En ',
+    headlineAccent: 'Creadores De Contenido !',
     headlineSuffix: '',
     subheadline: 'Tu menú. Su contenido. Tu crecimiento.'
   },
@@ -146,9 +146,9 @@ const TRANSLATIONS = {
     creatorLoop: 'Loop de Criadores',
     trialDays: '14',
     trialText: 'Dias de Teste',
-    headlineBrand: 'Foodspot: ',
-    headlinePrefix: 'O OS\nQue Transforma Clientes\nEm ',
-    headlineAccent: 'Criadores !',
+    headlineBrand: 'Foodspot: O OS',
+    headlinePrefix: ' Que Transforma Clientes Em ',
+    headlineAccent: 'Criadores De Conteúdo !',
     headlineSuffix: '',
     subheadline: 'Seu cardápio. O conteúdo deles. Seu crescimento.'
   }
@@ -466,20 +466,18 @@ const TrialSignup = () => {
           
           {/* Headline Section */}
           <div className="dm-text-center">
-            <div className="dm-headline-overlay">
-              <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`} style={{ whiteSpace: 'pre-line' }}>
-                {isSignup ? (
-                  <>
-                    <span>{l.headlineBrand}</span>{l.headlinePrefix}<span className="dm-h1__accent">{l.headlineAccent}</span>{l.headlineSuffix}
-                  </>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>{l.welcomeBrand}</span>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{l.welcomeSub}</span>
-                  </div>
-                )}
-              </h1>
-            </div>
+            <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`} style={{ whiteSpace: 'pre-line' }}>
+              {isSignup ? (
+                <>
+                  <span>{l.headlineBrand}</span>{l.headlinePrefix}<span className="dm-h1__accent">{l.headlineAccent}</span>{l.headlineSuffix}
+                </>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>{l.welcomeBrand}</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{l.welcomeSub}</span>
+                </div>
+              )}
+            </h1>
             {isSignup ? (
               <>
                 <p className="dm-p dm-p--light">{l.subheadline}</p>
