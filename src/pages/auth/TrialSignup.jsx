@@ -143,10 +143,10 @@ const TRANSLATIONS = {
 const HeroBackground = () => (
   <div className="dm-hero-bg">
     <div className="dm-hero-gradient" />
-    <img 
-      className="dm-hero-img" 
-      src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&q=80" 
-      alt="Culinary OS" 
+    <img
+      className="dm-hero-img"
+      src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4E7XYx2ZjDvx6ntI5oFq9nX98OsUxwRVdEzyOQ7fRmCSXpvN_ILKYn9vWuk01lcHqxzC8TVUYqIcNUqGjzgduax3rwYyFgPBIkz4OSPpKeEpWxIMlcKrMLxJ2oGEO1_agJB4B2EutVtrioCEEEbwcknPcHVc-Gur71hdWwyw9J92INZRg5SujiKhlAiqmmfzQL1SBfhU0vH8bHgSWyOV5ZnrwHfKFkVCMnBdfFgufuDYid5_-XPXMfXlaldejcPTe7rwNRDcn3kFe"
+      alt="Culinary OS Festival"
       loading="eager"
     />
   </div>
