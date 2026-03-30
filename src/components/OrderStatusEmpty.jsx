@@ -28,7 +28,10 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     const [searchQuery, setSearchQuery] = useState('')
 
     // Derived values from tenant config
-    const location = tenantData?.business_name || tenantData?.venue_name || 'Córdoba, AR'
+    const rawAddress = tenantData?.address || ''
+    const extractedCity = rawAddress.includes(',') ? rawAddress.split(',')[0] : rawAddress
+    const displayCity = extractedCity || tenantData?.city || ''
+
     const primaryColor = config?.branding?.primaryColor || '#FF9500'
     const navBgColor = config?.branding?.navbar_color || primaryColor
 
@@ -148,21 +151,23 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     return (
         <div className="order-status-empty">
             {/* Header */}
-            <header className="ose-header">
-                <div className="ose-header-content">
-                    <div className="ose-location">
-                        <span className="material-symbols-outlined ose-location-icon">location_on</span>
-                        <h1 className="ose-location-text">{location}</h1>
-                        <span className="material-symbols-outlined ose-location-arrow">expand_more</span>
+            {displayCity && (
+                <header className="ose-header">
+                    <div className="ose-header-content">
+                        <div className="ose-location">
+                            <span className="material-symbols-outlined ose-location-icon">location_on</span>
+                            <h1 className="ose-location-text">{displayCity}</h1>
+                            <span className="material-symbols-outlined ose-location-arrow">expand_more</span>
+                        </div>
+                        <button 
+                            className="ose-search-btn"
+                            onClick={() => navigate(`/${tenantSlug}/menu`)}
+                        >
+                            <span className="material-symbols-outlined">search</span>
+                        </button>
                     </div>
-                    <button 
-                        className="ose-search-btn"
-                        onClick={() => navigate(`/${tenantSlug}/menu`)}
-                    >
-                        <span className="material-symbols-outlined">search</span>
-                    </button>
-                </div>
-            </header>
+                </header>
+            )}
 
             <main className="ose-main">
                 {/* Search Bar */}
@@ -180,10 +185,10 @@ const OrderStatusEmpty = ({ config: configProp }) => {
 
                     {/* Filter Pills */}
                     <div className="ose-filter-pills">
-                        <button className="ose-pill">{t('pickup') || 'Pickup'}</button>
-                        <button className="ose-pill">{t('under_20_min') || 'Under 20 min'}</button>
-                        <button className="ose-pill">{t('price') || 'Price'}</button>
-                        <button className="ose-pill">{t('rating') || 'Rating'}</button>
+                        <button className="ose-pill">{t('pickup') !== 'pickup' ? t('pickup') : 'Pickup'}</button>
+                        <button className="ose-pill">Under 20 min</button>
+                        <button className="ose-pill">Price</button>
+                        <button className="ose-pill">Most Popular</button>
                     </div>
                 </section>
 
@@ -272,15 +277,15 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                 </div>
                             ))
                         ) : (
-                            // Fallback static items if no data
+                            // Fallback static items if no data (using requested placeholders)
                             <>
                                 <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
-                                    <div className="ose-card-image ose-card-placeholder">
-                                        <span>🍔</span>
+                                    <div className="ose-card-image">
+                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAWWiBLsK1nG_Zs8Cs49OrPq2QJveck7-TN1iTpscNGt-fwJEw9vQK58KSKis6n5EytONT6JaxPbkB8dxrricAW7GrsaCKOfuoja3HM-c_B83d0bJsHxJy8kAosEuyru7EXNrtoxDBIyE-WaRnB6PmfervykO1sXBLpnLDZO8DpPn-V4gSxhD-WRjEgQzWzC1sxmETnytSnOjSuMQJ0O_rieloz2zc14aHaFpditC1tBijrkmPISFLzohr448R6Jwd-i3_Vuu_L2PE" alt="Classic Beef Stack" />
                                     </div>
                                     <div className="ose-card-content">
-                                        <h4 className="ose-card-title">Classic Beef Stack</h4>
-                                        <p className="ose-card-desc">Double patty, cheddar</p>
+                                        <h4 className="ose-card-title">Margarita Special</h4>
+                                        <p className="ose-card-desc">15-20 min • $2.00 fee</p>
                                         <div className="ose-card-footer">
                                             <span className="ose-card-price">$12.64</span>
                                             <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
@@ -290,14 +295,14 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                     </div>
                                 </div>
                                 <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
-                                    <div className="ose-card-image ose-card-placeholder">
-                                        <span>🌶️</span>
+                                    <div className="ose-card-image">
+                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqekU5dfVWOw4ZP0b4v-KSVHl2YPgoBkCP31w2D6utoMxXNrMe6T1DpgujbI_VW9zSiC3AC2a1CrApwx8vwV0biz68cOJfxaqWE0CVvZvcQIr4Ib3gckl67g6vwCsOOVeRAahLhiVZ8W9IkQI9h4okdC8QDGA8u3dNpfjmiluCTxVzSGxLo8XGJgjvJsCsG9hPlIFvOJLmimm20sBKQc-LxIwCQbhojAFgTcoSQpCe3Smkp6aohHK3jmOMzoTGNSY7ZjRu4VjPq7xE" alt="Spicy Jalapeño" />
                                     </div>
                                     <div className="ose-card-content">
-                                        <h4 className="ose-card-title">Spicy Jalapeño</h4>
-                                        <p className="ose-card-desc">Crispy chicken, zesty</p>
+                                        <h4 className="ose-card-title">Green Buddha Bowl</h4>
+                                        <p className="ose-card-desc">20-25 min • Free</p>
                                         <div className="ose-card-footer">
-                                            <span className="ose-card-price">$10.99</span>
+                                            <span className="ose-card-price">$9.50</span>
                                             <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
                                                 <span className="material-symbols-outlined">add</span>
                                             </button>
@@ -305,14 +310,14 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                     </div>
                                 </div>
                                 <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
-                                    <div className="ose-card-image ose-card-placeholder">
-                                        <span>🍕</span>
+                                    <div className="ose-card-image">
+                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSzl9rpOS_OdScAw4s70QODXMRHlQgJs-jyAC2czIXNUHLRVEoTaufzc7WBInzEMTxMzvikN7EBDYiCkM8lX7ziUCKgNnposqj5j9XEbBe8QotBjH2sxT-7FxwwhErqwqY3anNa8IGdWJ1VYx8zQfb24TLqd9eTGBq5ZETK9ANzJU4H4iyr9MJAq-B0BdgZEw6_iiLHAqARuxOZ9bE1JUNWOrvntob8KovOHY-xVZ-DOFwfrZDMGN22vZtz-fGmf5yMoJgq2tii_4A" alt="Rustic Pepperoni" />
                                     </div>
                                     <div className="ose-card-content">
-                                        <h4 className="ose-card-title">Rustic Pepperoni</h4>
-                                        <p className="ose-card-desc">Hand-tossed, 12-inch</p>
+                                        <h4 className="ose-card-title">Street Tacos Trio</h4>
+                                        <p className="ose-card-desc">10-15 min • $1.50 fee</p>
                                         <div className="ose-card-footer">
-                                            <span className="ose-card-price">$14.50</span>
+                                            <span className="ose-card-price">$11.20</span>
                                             <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
                                                 <span className="material-symbols-outlined">add</span>
                                             </button>
@@ -320,14 +325,14 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                     </div>
                                 </div>
                                 <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
-                                    <div className="ose-card-image ose-card-placeholder">
-                                        <span>🍟</span>
+                                    <div className="ose-card-image">
+                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwY3tF3soi0VSxERslFKaR4h5bHFl5ZmIk01SJf4nvstRi8G-O22Y4KUmZm106pBII-jxXhE-2nCCX8oCe4bkmcYWnbsKZMUo4ICAK63BZUe9m1htvu4uPx4QF1KHGcG_5Fsyd1ssJsaYigozp3utvNkUJvNJcCaG3g763uAZtqvaEREXHfwA9N205f0VsNvHqNqbaoDluoEfHfxFgwyPixKobeia5-0ihXtkrYNBofXf7GtOY3p4p8NoYnY6Vx6b9g1bziVoDZ_93" alt="Truffle Parm Fries" />
                                     </div>
                                     <div className="ose-card-content">
-                                        <h4 className="ose-card-title">Truffle Parm Fries</h4>
-                                        <p className="ose-card-desc">Large portion, sea salt</p>
+                                        <h4 className="ose-card-title">Choco Lava Cake</h4>
+                                        <p className="ose-card-desc">15 min • Free</p>
                                         <div className="ose-card-footer">
-                                            <span className="ose-card-price">$6.25</span>
+                                            <span className="ose-card-price">$6.75</span>
                                             <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
                                                 <span className="material-symbols-outlined">add</span>
                                             </button>
