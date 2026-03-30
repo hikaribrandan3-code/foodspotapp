@@ -225,14 +225,12 @@ function OwnerLogin() {
             <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', padding: '0 24px', marginTop: '-48px', position: 'relative', zIndex: 10 }}>
                 {/* Logo Branding */}
                 <header style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
-                    <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', marginBottom: '16px' }}>
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff9800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 15h2a2 2 0 1 0 0-4h-2a2 2 0 1 1 0-4h2"></path>
-                            <path d="M12 17v2"></path>
-                            <path d="M12 5v2"></path>
-                            <circle cx="12" cy="12" r="10"></circle>
-                        </svg>
-                    </div>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff9800" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '16px' }}>
+                        <path d="M11 15h2a2 2 0 1 0 0-4h-2a2 2 0 1 1 0-4h2"></path>
+                        <path d="M12 17v2"></path>
+                        <path d="M12 5v2"></path>
+                        <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
                     <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#191c1e', letterSpacing: '-0.05em', margin: 0 }}>FoodSpot OS</h1>
                 </header>
 
@@ -389,7 +387,7 @@ function OwnerLogin() {
 
             {/* Footer */}
             <footer style={{ marginTop: 'auto', paddingTop: '40px', paddingBottom: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', gap: '12px', opacity: 0.8 }}>
-                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(25, 28, 30, 0.3)', margin: 0 }}>Powered by @foodspotapp</p>
+                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(25, 28, 30, 0.3)', margin: 0 }}>Powered by FoodSpot OS</p>
                 <div style={{ display: 'flex', gap: '20px' }}>
                     <button 
                         onClick={(e) => { e.preventDefault(); navigate(`/${tenantSlug || ''}`) }}
