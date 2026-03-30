@@ -466,19 +466,21 @@ const TrialSignup = () => {
           
           {/* Headline Section */}
           <div className="dm-text-center">
-            <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`} style={{ whiteSpace: 'pre-line' }}>
-              {isSignup ? (
-                <>
-                  <span>{l.headlineBrand}</span>
-                  {l.headlinePrefix}<span className="dm-h1__accent">{l.headlineAccent}</span>{l.headlineSuffix}
-                </>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>{l.welcomeBrand}</span>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{l.welcomeSub}</span>
-                </div>
-              )}
-            </h1>
+            <div className="dm-headline-overlay">
+              <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`} style={{ whiteSpace: 'pre-line' }}>
+                {isSignup ? (
+                  <>
+                    <span className="dm-h1__text">{l.headlineBrand}</span>
+                    <span className="dm-h1__text">{l.headlinePrefix}</span><span className="dm-h1__accent">{l.headlineAccent}</span><span className="dm-h1__text">{l.headlineSuffix}</span>
+                  </>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span className="dm-h1__text" style={{ fontSize: '2.5rem', fontWeight: 900 }}>{l.welcomeBrand}</span>
+                    <span className="dm-h1__text" style={{ fontSize: '1.25rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{l.welcomeSub}</span>
+                  </div>
+                )}
+              </h1>
+            </div>
             {isSignup ? (
               <>
                 <p className="dm-p dm-p--light">{l.subheadline}</p>
