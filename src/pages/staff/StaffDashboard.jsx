@@ -7,6 +7,7 @@ import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logi
 import { useOrdersRealtime } from '../../hooks/useOrdersRealtime.js'
 import { useStaff } from '../../contexts/StaffContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import BurgerLoader from '../../components/BurgerLoader'
 
 // Lazy-load scanner to avoid camera bundle on every page load
 const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
@@ -232,17 +233,7 @@ function StaffDashboard() {
     // RENDER: LOADING
     // ============================================
     if (loading) {
-        return (
-            <div style={{
-                minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: '#1F2937'
-            }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>🍳</div>
-                    <p style={{ color: '#9CA3AF' }}>Cargando pedidos...</p>
-                </div>
-            </div>
-        )
+        return <BurgerLoader />
     }
 
     // ============================================

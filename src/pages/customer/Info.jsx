@@ -150,8 +150,8 @@ const Info = ({ config }) => {
                     <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                         {t('powered_by')}
                     </p>
-                    <p style={{ color: config?.branding?.poweredByColor || '#C4856A', fontSize: '1.85rem', fontWeight: '800' }}>
-                        @foodspotapp
+                    <p style={{ color: config?.branding?.poweredByColor || '#C4856A', fontSize: '1.85rem', fontWeight: '800', letterSpacing: '-0.05em' }}>
+                        FoodSpot OS
                     </p>
                 </div>
             </div> {/* End Content Container */}

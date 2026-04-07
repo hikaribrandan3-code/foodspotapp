@@ -12,6 +12,7 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
+import BurgerLoader from '../../components/BurgerLoader'
 
 // 🚀 VAULT-SEAL: Image Optimization Helper
 const getOptimizedImageUrl = (url, options = {}) => {
@@ -626,21 +627,7 @@ function Home({ config: configProp }) {
 
     // 🛡️ LOADING STATE: Rendered at end to maintain hook order
     if (isLoading) {
-        return (
-            <div className="page" style={{
-                padding: '0 24px',
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#F5F0E8'
-            }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 32, marginBottom: 16 }}>🍽️</div>
-                    <p style={{ color: '#7A6F65', fontSize: 14 }}>{t('loading')}</p>
-                </div>
-            </div>
-        )
+        return <BurgerLoader />
     }
 
     return (

@@ -4,6 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useKDSSync } from '../../hooks/useKDSSync';
 import { useCamTechListener } from '../../hooks/useCamTech';
+import BurgerLoader from '../../components/BurgerLoader';
 
 const KDS_COLUMNS = [
     { id: 'paid', next: 'cooking', color: 'yellow' },
@@ -43,7 +44,7 @@ export const StaffKDS = () => {
         return grouped;
     }, [orders]);
 
-    if (loading) return <div className="kds-loading">{t('loading')}</div>;
+    if (loading) return <BurgerLoader />;
 
     if (!businessId) return <div className="kds-error">No business ID found. Please login.</div>;
 
