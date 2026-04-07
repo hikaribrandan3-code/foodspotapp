@@ -23,6 +23,7 @@ import {
     buildWhatsAppSummary
 } from '../../utils/deliveryUtils.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { handleCashPayment } from '../../services/offlinePayment.js'
 
 // ============================================
 // 🛒 ORDER.JSX - THE UNIVERSAL CHECKOUT ENGINE
@@ -390,7 +391,29 @@ function Order({ config: configProp }) {
                 }
             }
 
-            // ─── STEP 5: FINALIZE ─────────────────────────────
+            // ─── STEP 5: CASH/OFFLINE PAYMENT HANDLING ────────
+            // If cash payment, create ledger entry (with offline resilience)
+            if (isCashPath && savedOrder) {
+                try {
+                    const cashResult = await handleCashPayment({
+                        orderId: savedOrder.id,
+                        amountCents: Math.round(savedOrder.total * 100),
+                        businessId: businessId,
+                        currency: 'ARS'
+                    })
+                    
+                    if (cashResult.method === 'offline') {
+                        showToast('💾 Pago en efectivo guardado (modo offline)')
+                    } else {
+                        console.log('[Order] Cash payment logged:', cashResult.data?.ledgerId)
+                    }
+                } catch (cashError) {
+                    console.warn('[Order] Cash payment logging failed:', cashError)
+                    // Don't block order - payment can be reconciled later
+                }
+            }
+
+            // ─── STEP 6: FINALIZE ─────────────────────────────
             clearCurrentOrder()
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()

@@ -1,7 +1,9 @@
 // ============================================
-// 💰 MERCADO PAGO WEBHOOK - VAULT-SEAL V6
+// 💰 MERCADO PAGO WEBHOOK - VAULT-SEAL v7
+// WITH TRANSACTION LEDGER INTEGRATION
 // ============================================
 // Security Level: 🛡️ HIGH (HMAC + Idempotency + Multi-Tenant)
+// New: Auto-creates transaction_ledger entries on payment
 //
 // Deploy: supabase functions deploy mp-webhook --no-verify-jwt
 // ============================================
@@ -24,6 +26,80 @@ const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signature, x-request-id",
 };
+
+/**
+ * Create or update transaction ledger entry
+ */
+async function upsertLedgerEntry(supabase: any, orderId: string, payment: any, businessId: string) {
+    try {
+        // Check if ledger entry already exists
+        const { data: existingLedger, error: checkError } = await supabase
+            .from("transaction_ledger")
+            .select("id, status")
+            .eq("order_id", orderId)
+            .single();
+
+        const ledgerData = {
+            order_id: orderId,
+            business_id: businessId,
+            transaction_type: 'payment',
+            status: payment.status === 'approved' ? 'completed' : 'pending',
+            amount_gross_cents: Math.round(payment.transaction_amount * 100),
+            external_reference: payment.external_reference,
+            mercado_pago_response: {
+                id: payment.id,
+                status: payment.status,
+                status_detail: payment.status_detail,
+                payment_method_id: payment.payment_method_id,
+                payment_type_id: payment.payment_type_id,
+                transaction_amount: payment.transaction_amount,
+                date_approved: payment.date_approved,
+                date_created: payment.date_created,
+                currency_id: payment.currency_id,
+                description: payment.description
+            },
+            payment_method: payment.payment_method_id,
+            currency: payment.currency_id || 'ARS',
+            processed_at: payment.status === 'approved' ? new Date().toISOString() : null
+        };
+
+        if (existingLedger) {
+            // Update existing entry
+            const { data, error } = await supabase
+                .from("transaction_ledger")
+                .update(ledgerData)
+                .eq("id", existingLedger.id)
+                .select()
+                .single();
+
+            if (error) {
+                console.error(`[mp-webhook] Ledger update error:`, error);
+                return { success: false, error: error.message };
+            }
+
+            console.log(`[mp-webhook] Ledger entry updated: ${existingLedger.id}`);
+            return { success: true, ledgerId: existingLedger.id, action: 'updated' };
+        } else {
+            // Create new entry
+            const { data, error } = await supabase
+                .from("transaction_ledger")
+                .insert(ledgerData)
+                .select()
+                .single();
+
+            if (error) {
+                console.error(`[mp-webhook] Ledger insert error:`, error);
+                return { success: false, error: error.message };
+            }
+
+            console.log(`[mp-webhook] Ledger entry created: ${data.id}`);
+            return { success: true, ledgerId: data.id, action: 'created' };
+        }
+    } catch (err) {
+        console.error(`[mp-webhook] Ledger upsert error:`, err);
+        return { success: false, error: err.message };
+    }
+}
 
 serve(async (req: Request) => {
     // Handle CORS preflight
@@ -110,16 +186,14 @@ serve(async (req: Request) => {
         // ============================================
         // 3. MULTI-TENANT TOKEN LOOKUP
         // ============================================
-        // We use the MP User ID from the webhook to identify the tenant
         if (!mpUserId) {
             console.error("❌ Missing user_id in webhook payload - Cannot identify tenant");
-            // If we can't identify tenant, we can't fetch payment.
             return new Response(JSON.stringify({ error: "Missing user_id" }), { status: 400, headers: corsHeaders });
         }
 
         const { data: secretData, error: secretError } = await supabase
             .from("branding_secrets")
-            .select("mp_access_token, id")
+            .select("mp_access_token, id, business_id")
             .eq("mp_user_id", mpUserId)
             .single();
 
@@ -129,7 +203,8 @@ serve(async (req: Request) => {
         }
 
         const accessToken = secretData.mp_access_token;
-        console.log(`🏢 Tenant Identified: ${secretData.id}`);
+        const businessId = secretData.business_id;
+        console.log(`🏢 Tenant Identified: ${secretData.id}, Business: ${businessId}`);
 
         // ============================================
         // 4. FETCH PAYMENT DETAILS
@@ -158,11 +233,11 @@ serve(async (req: Request) => {
         // ============================================
         const { data: existingOrder, error: orderError } = await supabase
             .from("orders")
-            .select("id, payment_id, status")
+            .select("id, payment_id, status, business_id")
             .eq("id", orderId)
             .single();
 
-        if (orderError && orderError.code !== 'PGRST116') { // Ignore "not found" which is handled below
+        if (orderError && orderError.code !== 'PGRST116') {
             console.error("Database error fetching order:", orderError);
             return new Response(JSON.stringify({ error: "DB Error" }), { status: 500, headers: corsHeaders });
         }
@@ -178,7 +253,7 @@ serve(async (req: Request) => {
             return new Response(JSON.stringify({ status: "already_processed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
-        // Check if order is already confirmed by ANOTHER payment (Edge case)
+        // Check if order is already confirmed by ANOTHER payment
         if (existingOrder.status === 'paid_unreleased' && existingOrder.payment_id && existingOrder.payment_id !== dataId) {
             console.warn(`⚠️ Order ${orderId} already confirmed with DIFFERENT payment ID: ${existingOrder.payment_id}. Ignoring ${dataId}`);
             return new Response(JSON.stringify({ status: "ignored_duplicate_payment" }), { status: 200, headers: corsHeaders });
@@ -188,10 +263,7 @@ serve(async (req: Request) => {
         // 6. PROCESS PAYMENT
         // ============================================
         if (payment.status === "approved") {
-            // 🚀 P0 #4 FIX: Auto-advance to kitchen
-            // Previously set to 'paid_unreleased' which stalled orders.
-            // Now goes straight to 'released_to_kitchen' so the Owner Dashboard
-            // picks it up immediately and staff get the notification.
+            // Update order status
             const { data: updatedOrder, error: updateError } = await supabase
                 .from("orders")
                 .update({
@@ -219,12 +291,43 @@ serve(async (req: Request) => {
                 return new Response(JSON.stringify({ error: "Failed to update order" }), { status: 500, headers: corsHeaders });
             }
 
-            console.log(`🎉 Order #${updatedOrder.order_number} PAID → KITCHEN! Auto-released.`);
-            return new Response(JSON.stringify({ success: true, order_id: orderId }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            // ============================================
+            // 7. CREATE/UPDATE LEDGER ENTRY (NEW)
+            // ============================================
+            const ledgerResult = await upsertLedgerEntry(supabase, orderId, payment, businessId || existingOrder.business_id);
+            
+            if (!ledgerResult.success) {
+                console.error(`[mp-webhook] Ledger entry failed: ${ledgerResult.error}`);
+                // Don't fail the webhook - order is already updated
+                // Log for manual reconciliation
+            }
+
+            console.log(`🎉 Order #${updatedOrder.order_number} PAID → KITCHEN! Ledger: ${ledgerResult.ledgerId || 'FAILED'}`);
+            
+            return new Response(
+                JSON.stringify({ 
+                    success: true, 
+                    order_id: orderId,
+                    ledger_id: ledgerResult.ledgerId,
+                    ledger_action: ledgerResult.action
+                }), 
+                { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
 
         } else {
-            console.log(`⏳ Payment not approved yet: ${payment.status}`);
-            return new Response(JSON.stringify({ status: "pending", payment_status: payment.status }), { status: 200, headers: corsHeaders });
+            // Payment not approved yet - still create/update ledger with pending status
+            const ledgerResult = await upsertLedgerEntry(supabase, orderId, payment, businessId || existingOrder.business_id);
+            
+            console.log(`⏳ Payment not approved yet: ${payment.status}, Ledger: ${ledgerResult.ledgerId || 'FAILED'}`);
+            
+            return new Response(
+                JSON.stringify({ 
+                    status: "pending", 
+                    payment_status: payment.status,
+                    ledger_id: ledgerResult.ledgerId
+                }), 
+                { status: 200, headers: corsHeaders }
+            );
         }
 
     } catch (err) {
