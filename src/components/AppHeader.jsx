@@ -16,6 +16,22 @@
  */
 import { useLanguage } from '../contexts/LanguageContext'
 
+function getBreakpoint() {
+    if (typeof window === 'undefined') return 'mobile'
+    return window.innerWidth >= 768 ? 'tablet' : 'mobile'
+}
+
+// INVARIANT: config must come from prop, not getConfig()
+function AppHeader({ config: configProp }) {
+    const { t } = useLanguage()
+    const config = configProp || {};
+    const canvasMode = config?.canvasMode || 'light'
+    const businessName = config?.businessName || 'FoodSpot'
+    const headerMode = config?.headerBranding?.mode || 'cover'
+    const breakpoint = getBreakpoint()
+    // Only clamp if explicitly enabled AND not in cover mode (cover needs full height)
+    const useClamp = config?.experimental?.headerClampMobile && breakpoint === 'mobile' && headerMode !== 'cover' && headerMode !== 'image'
+
     // ============================================
     // 16:9 HERO COVER MODE (Universal Standard)
     // ============================================
