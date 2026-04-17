@@ -268,13 +268,11 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             let newX = posRef.current.offsetX + dx
             let newY = posRef.current.offsetY + dy
 
-            // CONSTRAIN: Don't let image leave the frame (FB-style)
-            // At scale S, image is S times the container size
-            // Can pan (S - 1) / 2 * container before hitting edge
+            // Free-form panning with generous bounds to allow for object-fit overflow
             const containerW = window.innerWidth
             const containerH = coverHeight
-            const maxPanX = Math.max(0, (scale - 1) * containerW / 2)
-            const maxPanY = Math.max(0, (scale - 1) * containerH / 2)
+            const maxPanX = containerW
+            const maxPanY = containerH
 
             newX = Math.max(-maxPanX, Math.min(maxPanX, newX))
             newY = Math.max(-maxPanY, Math.min(maxPanY, newY))
@@ -386,12 +384,14 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
         const offsetX = posRef.current.offsetX
         const offsetY = posRef.current.offsetY
 
-        const maxPanX = Math.max(1, (scale - 1) * containerW / 2)
-        const maxPanY = Math.max(1, (scale - 1) * containerH / 2)
+        // Calculate offset as a pure percentage of container size
+        // e.g. offsetX = -containerW/4 -> panX = -25%
+        const panX = (offsetX / containerW) * 100
+        const panY = (offsetY / containerH) * 100
 
-        // Map -maxPanX..maxPanX to 0%..100%
-        const posX = Math.round(50 + (offsetX / maxPanX) * 50)
-        const posY = Math.round(50 + (offsetY / maxPanY) * 50)
+        // Store shifted by 50 to keep them positive-ish centered around 50%
+        const posX = Math.round(50 + panX)
+        const posY = Math.round(50 + panY)
 
         const lsKey = `hero_${businessId}`
         const storageData = {
@@ -434,6 +434,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             const saveData = {
                 image: image,
                 scale: posRef.current.scale,
+                posX: Math.round(50 + (posRef.current.offsetX / (typeof window !== 'undefined' ? window.innerWidth : 414)) * 100),
+                posY: Math.round(50 + (posRef.current.offsetY / coverHeight) * 100),
                 offsetX: posRef.current.offsetX,
                 offsetY: posRef.current.offsetY,
                 updatedAt: Date.now()

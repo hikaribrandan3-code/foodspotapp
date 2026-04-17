@@ -55,11 +55,11 @@ function AppHeader({ config: configProp }) {
                 top: 0,
                 backgroundImage: config?.headerCover?.image ? `url(${config.headerCover.image})` : undefined,
                 backgroundSize: 'cover',
-                backgroundPosition: `${posX}% ${posY}%`,
+                backgroundPosition: `center`,
                 backgroundRepeat: 'no-repeat',
-                transform: `scale(${scale})`,
+                transform: `translate(${posX - 50}%, ${posY - 50}%) scale(${scale})`,
                 transformOrigin: 'center center',
-                transition: 'transform 0.1s ease-out, background-position 0.2s ease'
+                transition: 'transform 0.1s ease-out'
             }} />
         )
 
