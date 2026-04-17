@@ -168,8 +168,10 @@ export default function Menu({ config: configProp }) {
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
     useEffect(() => {
+        console.log('[Menu] 🔍 DEBUG: tenantLoaded=', tenantLoaded, 'tenantData=', !!tenantData)
         if (tenantLoaded) {
             // Priority: 1. Cloud Data, 2. Seed Data
+            console.log('[Menu] 🔍 DEBUG: menu_data exists=', !!tenantData?.menu_data, 'categories=', tenantData?.menu_data?.categories?.length)
             if (tenantData?.menu_data && tenantData.menu_data.categories.length > 0) {
                 console.log('[Menu] ☁️ Loading Cloud Data')
                 setMenu(tenantData.menu_data)
