@@ -956,6 +956,7 @@ const Settings = () => {
                             style={{ width: '100%', fontSize: 14 }}
                         />
                     </div>
+                </section>
 
                 {/* ========== 7. INFO PILLS ========== */}
                 <section className="branding-card">
