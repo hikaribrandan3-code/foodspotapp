@@ -112,28 +112,12 @@ export function TenantProvider({ children }) {
 
                 console.log(`[TenantLock] 🔐 Locking Tenant: ${targetSlug}`)
 
-                // ⚡ CACHE-FIRST STRATEGY (Optimization)
-                const CACHE_KEY = `tenant_lock_${targetSlug}`
-                const cached = localStorage.getItem(CACHE_KEY)
+                console.log(`[TenantLock] 🔐 Locking Tenant: ${targetSlug}`)
 
-                if (cached) {
-                    const parsed = JSON.parse(cached)
-                    setTenantData(parsed)
-                    setBusinessId(parsed.business_id)
-                    setTenantStoragePrefix(parsed.business_id)
-
-                    if (parsed.language) {
-                        console.log(`[TenantLock] ⚡ HYDRATED from cache with language: ${parsed.language}`)
-                        setLoading(false)
-                    } else {
-                        console.warn('[TenantLock] ⚠️ Legacy cache missing language. Waiting for revalidation...')
-                    }
-
-                    setTimeout(() => revalidate(targetSlug), 100)
-                } else {
-                    console.log('[TenantLock] 📡 First Boot: Waiting for revalidate...')
-                    await revalidate(targetSlug)
-                }
+                // ⚡ MISSION PROTOCOL: DIRECT "UNIVERSAL TRUTH" URL RESOLUTION
+                // We bypass volatile local state / polling to prevent Identity collisions
+                console.log('[TenantLock] 📡 Fetching Identity directly from Supabase via URL Slug...')
+                await revalidate(targetSlug)
 
             } catch (err) {
                 console.error('[TenantLock] 💥 Critical Failure:', err)
@@ -202,11 +186,7 @@ export function TenantProvider({ children }) {
                 }
 
                 // UPDATE PERSISTENCE
-                const CACHE_KEY = `tenant_lock_${slug}`
-                localStorage.setItem(CACHE_KEY, JSON.stringify(data))
                 localStorage.setItem('fs_last_active_slug', slug)
-
-                applyTheme(data)
             }
         }
 
@@ -263,11 +243,6 @@ export function TenantProvider({ children }) {
 
                 const data = { ...brandingData, id: tenantRow?.id, venue_name: tenantRow?.venue_name, language: tenantRow?.language || 'es' }
                 setTenantData(data)
-                applyTheme(data)
-
-                if (data.slug) {
-                    localStorage.setItem(`tenant_lock_${data.slug}`, JSON.stringify(data))
-                }
                 console.log('✅ GLOBAL REFRESH COMPLETE')
             }
         } catch (err) {
@@ -275,24 +250,7 @@ export function TenantProvider({ children }) {
         }
     }
 
-    // 🎨 THEME ENGINE
-    const applyTheme = (data) => {
-        if (!data) return
-        const root = document.documentElement.style
-        const fontFamily = data.font_family ? `'${data.font_family}', sans-serif` : 'Inter, system-ui, sans-serif'
-
-        root.setProperty('--font-family-brand', fontFamily)
-        if (data.primary_color) root.setProperty('--color-primary', data.primary_color)
-        if (data.secondary_color) root.setProperty('--color-secondary', data.secondary_color)
-        if (data.confirmation_color) root.setProperty('--color-confirm', data.confirmation_color)
-        if (data.powered_by_color) root.setProperty('--color-powered', data.powered_by_color)
-        if (data.background_color) root.setProperty('--color-bg', data.background_color)
-
-        if (data.service_modes && root && root.classList) {
-            if (data.service_modes.dineIn) root.classList.add('mode-dine-in')
-            else root.classList.remove('mode-dine-in')
-        }
-    }
+    // 🎨 THEME ENGINE EXTRACTED to ThemeHydrator in App.jsx
 
     // PUBLIC API
     const contextValue = {

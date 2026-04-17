@@ -212,6 +212,13 @@ function SuperAdmin({ config: configProp }) {
         setAuthLoading(true)
         setError('')
 
+        // 🛡️ MISSION PROTOCOL: STRICT HARD-SEAL ENTRANCE
+        if (email.toLowerCase() !== 'superadmin@foodspot.app') {
+            setAuthLoading(false)
+            setError('Acceso denegado: Email no autorizado para la Bóveda de Sistema.')
+            return
+        }
+
         try {
             const { data, error: authError } = await supabase.auth.signInWithPassword({
                 email,
@@ -219,6 +226,12 @@ function SuperAdmin({ config: configProp }) {
             })
 
             if (authError) throw authError
+
+            // Double lock validation
+            if (data?.user?.email?.toLowerCase() !== 'superadmin@foodspot.app') {
+                await supabase.auth.signOut()
+                throw new Error('Unauthorized Identity')
+            }
 
             setIsAuthenticated(true)
             setUserRole('superadmin')
@@ -749,32 +762,6 @@ function SuperAdmin({ config: configProp }) {
                         <a href="#" style={{ color: '#717786', textDecoration: 'none', transition: 'color 0.2s ease' }} onMouseEnter={(e)=>e.currentTarget.style.color='#0058bc'} onMouseLeave={(e)=>e.currentTarget.style.color='#717786'}>Help Center</a>
                     </div>
                 </footer>
-                {import.meta.env.DEV && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setIsAuthenticated(true)
-                            setUserRole('superadmin')
-                        }}
-                        style={{
-                            position: 'fixed',
-                            bottom: 24,
-                            right: 24,
-                            padding: '10px 20px',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: 'white',
-                            background: '#7C3AED',
-                            border: '2px dashed #A855F7',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            opacity: 0.6,
-                            zIndex: 100
-                        }}
-                    >
-                        🔧 DEV Bypass
-                    </button>
-                )}
             </div>
         )
     }

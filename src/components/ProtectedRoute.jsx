@@ -191,24 +191,28 @@ function ProtectedRoute({ children, requiredRole }) {
     // STATE 3.5: URL SILO GUARD (Cross-Tenant Jump Prevention)
     // ============================================
     // 🛡️ CRITICAL: Prevent user from accessing a different tenant's routes
-    // Compare user's slug against URL's tenantSlug (primary check for new users)
+    // Cryptographically compare user's slug against URL's tenantSlug
     // SuperAdmins bypass this check (they can view any tenant)
     const userRole = role
     if (userRole !== 'superadmin' && currentSlug) {
-        // Check slug match (works for new trial users with only slug in metadata)
         const slugMatch = userSlug && userSlug.toLowerCase() === currentSlug.toLowerCase()
-        // Check business_id match (works for established users with full branding)
         const businessMatch = userBusinessId && urlBusinessId && userBusinessId === urlBusinessId
 
         if (!slugMatch && !businessMatch) {
-            console.warn('[SILO JUMP BLOCKED] User attempted cross-tenant access:', {
+            console.warn('🚨 [SILO JUMP BLOCKED] Cross-tenant access attempted:', {
                 userSlug,
-                userBusinessId,
-                urlSlug: currentSlug,
-                urlBusinessId,
+                targetSlug: currentSlug,
                 email: session.user?.email
             })
-            return <Navigate to="/" replace state={{ siloJump: true }} />
+            
+            // 🛡️ SILO SNAP-BACK: Force redirect to their own authorized dashboard
+            if (userSlug) {
+                const authorizedRoute = getRoleHomeRoute(userRole, userSlug)
+                return <Navigate to={authorizedRoute} replace state={{ siloJump: true }} />
+            } else {
+                // Ultimate failsafe: no valid metadata identity
+                return <Navigate to="/" replace state={{ siloJump: true }} />
+            }
         }
     }
 
