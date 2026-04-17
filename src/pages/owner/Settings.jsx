@@ -377,6 +377,7 @@ const Settings = () => {
                 hero_mode: draft.hero_mode,
                 hero_url: draft.hero_url,
                 hero_icons: draft.hero_icons,
+                hero_icon_mode: draft.hero_icon_mode,
                 info_pills: draft.info_pills,
                 munchboy_enabled: draft.munchboy_enabled,
                 munchboy_name: draft.munchboy_name,
@@ -791,7 +792,6 @@ const Settings = () => {
                 </section>
 
                 {/* ========== 6. MUNCHBOY BRANDING ========== */}
-                {false && (
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>Munchboy Arcade</h3>
@@ -956,11 +956,8 @@ const Settings = () => {
                             style={{ width: '100%', fontSize: 14 }}
                         />
                     </div>
-                </section>
-                )}
 
-                {/* ========== 6. INFO PILLS - HIDDEN FOR MVP ========== */}
-                {false && (
+                {/* ========== 7. INFO PILLS ========== */}
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>6. {t('info_pills')}</h3>
@@ -1043,7 +1040,6 @@ const Settings = () => {
                         })}
                     </div>
                 </section>
-                )}
             </div>
 
             <BackendNav role="owner" useRoutes={true} />
