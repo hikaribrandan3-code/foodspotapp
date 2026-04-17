@@ -11,18 +11,21 @@ import ItemCard from '../../components/ItemCard'
 
 // Helper: Parse hero_url transform params (s=scale, x=offsetX, y=offsetY)
 function parseHeroUrl(heroUrl) {
-    if (!heroUrl) return { image: null, scale: 1, offsetX: 0, offsetY: 0 };
+    if (!heroUrl) return { image: null, scale: 1, posX: 50, posY: 50 };
     try {
         const url = new URL(heroUrl, 'http://dummy.com');
         const params = new URLSearchParams(url.search);
         return {
             image: heroUrl,
             scale: parseFloat(params.get('s')) || 1,
+            posX: parseFloat(params.get('px')) || 50,
+            posY: parseFloat(params.get('py')) || 50,
+            // Legacy fallbacks
             offsetX: parseFloat(params.get('x')) || 0,
             offsetY: parseFloat(params.get('y')) || 0
         };
     } catch (e) {
-        return { image: heroUrl, scale: 1, offsetX: 0, offsetY: 0 };
+        return { image: heroUrl, scale: 1, posX: 50, posY: 50 };
     }
 }
 

@@ -622,24 +622,28 @@ const Settings = () => {
                         businessId={businessId}
                         config={{ branding: { logo_url: null } }}
                         initialData={(() => {
-                            if (!draft.hero_url) return {};
+                            if (!draft.hero_url) return { image: null, scale: 1, posX: 50, posY: 50 };
                             try {
                                 const url = new URL(draft.hero_url, 'http://dummy.com');
                                 const params = new URLSearchParams(url.search);
                                 return {
                                     image: draft.hero_url,
                                     scale: parseFloat(params.get('s')) || 1,
+                                    posX: parseFloat(params.get('px')) || 50,
+                                    posY: parseFloat(params.get('py')) || 50,
+                                    // Legacy fallbacks
                                     offsetX: parseFloat(params.get('x')) || 0,
                                     offsetY: parseFloat(params.get('y')) || 0,
                                 };
                             } catch (e) {
-                                return { image: draft.hero_url, scale: 1, offsetX: 0, offsetY: 0 };
+                                return { image: draft.hero_url, scale: 1, posX: 50, posY: 50 };
                             }
                         })()}
                         onSave={(data) => {
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
-                            const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&x=${data.offsetX}&y=${data.offsetY}`;
+                            // 🚀 NEW STANDARD: px/py for percentage based positioning
+                            const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&px=${data.posX}&py=${data.posY}`;
                             updateDraftField('hero_url', finalUrl);
                             setShowCoverEditor(false);
                         }}
