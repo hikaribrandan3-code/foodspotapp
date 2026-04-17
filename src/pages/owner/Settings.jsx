@@ -119,7 +119,9 @@ const Settings = () => {
         hero_url: '',
         nav_icon_mode: 'white',
         hero_icon_mode: 'black',
-        app_config: {}
+        app_config: {},
+        menu_data: { categories: [] },
+        featured_photos: []
     });
 
     // Dropdown states
@@ -186,7 +188,9 @@ const Settings = () => {
             hero_url: tenant.hero_url || '',
             nav_icon_mode: tenant.nav_icon_mode || 'white',
             hero_icon_mode: tenant.hero_icon_mode || 'black',
-            app_config: tenant.app_config || {}
+            app_config: tenant.app_config || {},
+            menu_data: tenant.menu_data || { categories: [] },
+            featured_photos: tenant.featured_photos || []
         });
         
         // Apply CSS variables immediately
@@ -385,6 +389,8 @@ const Settings = () => {
                 munchboy_a_color: draft.munchboy_a_color,
                 munchboy_b_color: draft.munchboy_b_color,
                 app_config: draft.app_config,
+                menu_data: draft.menu_data,
+                featured_photos: draft.featured_photos,
             };
 
             const { data: savedData, error: saveError } = await updateBranding(payload, businessId);
