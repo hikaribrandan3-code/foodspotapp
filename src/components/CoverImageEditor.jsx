@@ -635,7 +635,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                             backgroundRepeat: 'no-repeat',
                             transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
                             transformOrigin: 'center center',
-                            transform: `translate(${offsetX}px, ${offsetY}px)`,
                             willChange: 'transform',
                             pointerEvents: 'none',
                             userSelect: 'none',
