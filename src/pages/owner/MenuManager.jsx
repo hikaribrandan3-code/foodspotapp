@@ -1559,14 +1559,41 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                         </h3>
                                     )}
                                 </div>
-                                <label className="toggle">
-                                    <input
-                                        type="checkbox"
-                                        checked={isEnabled}
-                                        onChange={() => handleToggleCategory(category.id)}
-                                    />
-                                    <span className="toggle-slider"></span>
-                                </label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <button
+                                        onClick={() => handleDeleteCategory(category.id)}
+                                        title="Eliminar categoría"
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            padding: 4,
+                                            borderRadius: 6,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: '#EF4444',
+                                            transition: 'background 0.15s ease'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = '#FEE2E2'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                                        </svg>
+                                    </button>
+                                    <label className="toggle">
+                                        <input
+                                            type="checkbox"
+                                            checked={isEnabled}
+                                            onChange={() => handleToggleCategory(category.id)}
+                                        />
+                                        <span className="toggle-slider"></span>
+                                    </label>
+                                </div>
                             </div>
 
                             <div style={{
