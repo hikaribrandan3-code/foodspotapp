@@ -101,20 +101,20 @@ function OwnerSummary() {
         const newInfo = { ...appConfig?.businessInfo, [field]: value }
         const updatedConfig = { ...appConfig, businessInfo: newInfo }
         setSavingConfig(true)
-        await supabase.from('branding').update({ app_config: updatedConfig }).eq('user_id', businessId)
+        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
         await refreshTenantData()
         setSavingConfig(false)
     }
 
     const updateExternalOrdering = async (updates) => {
         const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
-        await supabase.from('branding').update({ app_config: updatedConfig }).eq('user_id', businessId)
+        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
         await refreshTenantData()
     }
 
     const updatePayments = async (updates) => {
         const updatedConfig = { ...appConfig, payments: { ...appConfig?.payments, ...updates } }
-        await supabase.from('branding').update({ app_config: updatedConfig }).eq('user_id', businessId)
+        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
         await refreshTenantData()
     }
 
