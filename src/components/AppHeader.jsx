@@ -49,15 +49,15 @@ function AppHeader({ config: configProp }) {
         const coverContent = (
             <div className="cover-content menu-header-bg" style={{
                 position: 'absolute',
-                width: '100%',
-                height: '100%',
-                left: 0,
-                top: 0,
+                width: '300%',    /* 🔄 INFINITE WRAP: 3x oversize */
+                height: '300%',
+                left: '-100%',    /* Center the oversized div */
+                top: '-100%',
                 backgroundImage: config?.headerCover?.image ? `url(${config.headerCover.image})` : undefined,
                 backgroundSize: 'cover',
-                backgroundPosition: `center`,
+                backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-                transform: `translate(${posX - 50}%, ${posY - 50}%) scale(${scale})`,
+                transform: `translate(${(posX - 50) / 3}%, ${(posY - 50) / 3}%) scale(${scale})`,
                 transformOrigin: 'center center',
                 transition: 'transform 0.1s ease-out'
             }} />
