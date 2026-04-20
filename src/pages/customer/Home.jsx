@@ -70,6 +70,15 @@ function Home({ config: configProp }) {
         // })
     }, [tenantSlug, businessId])
 
+    // 🎯 PARENT KILL: Strip min-height:100vh from .app-container on mount
+    useEffect(() => {
+        const appContainer = document.querySelector('.app-container')
+        if (appContainer) appContainer.classList.add('app-home-tight')
+        return () => {
+            if (appContainer) appContainer.classList.remove('app-home-tight')
+        }
+    }, [])
+
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()
     // 🛡️ VAULT-SEAL FIX: Owner Mode Persistence
@@ -637,6 +646,10 @@ function Home({ config: configProp }) {
                     flex: 0 0 auto !important;
                     min-height: auto !important;
                     padding-bottom: 8px !important;
+                }
+                .app-container.app-home-tight {
+                    min-height: auto !important;
+                    justify-content: flex-start !important;
                 }
             `}</style>
             <div
