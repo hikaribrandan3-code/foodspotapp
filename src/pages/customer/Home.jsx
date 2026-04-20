@@ -680,8 +680,8 @@ function Home({ config: configProp }) {
                 }
                 .app-container.app-home-tight {
                     min-height: 100dvh !important;
-                    justify-content: flex-start !important;
-                    padding-bottom: 8px !important;
+                    justify-content: center !important;
+                    padding-bottom: 0 !important;
                 }
             `}</style>
             <div
