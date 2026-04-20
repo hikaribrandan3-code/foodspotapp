@@ -637,9 +637,8 @@ function Home({ config: configProp }) {
             style={{
                 maxWidth: '100%',
                 margin: '0 auto',
-                padding: '0 12px', /* The Invisible Grid (12px Rule) */
-                paddingBottom: 90,
-                minHeight: '100vh'
+                padding: '0 12px 8px 12px', /* Tight wrap: 8px bottom */
+                minHeight: 'auto' /* Kill the stretch — content dictates height */
             }}
         >
             <HeaderClamp config={config} />
