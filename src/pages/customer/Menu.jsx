@@ -34,6 +34,10 @@ const getOptimizedImageUrl = (url, options = {}) => {
     if (url.includes('unsplash.com')) {
         return url.includes('?') ? url : `${url}?w=500&q=80&fit=crop`
     }
+    // Skip optimization for Supabase storage URLs — they need /render/image/ for transforms
+    if (url.includes('.supabase.co/storage/v1/object/public/')) {
+        return url
+    }
     // Skip if already has transformation params
     if (url.includes('width=') || url.includes('quality=')) return url
     const { width = 500, quality = 80, format = 'webp' } = options

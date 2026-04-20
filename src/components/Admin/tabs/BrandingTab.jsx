@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CURATED_FONTS, FONT_WEIGHTS } from '../../../config/appConfig.v2.js';
+import { CURATED_FONTS, FONT_WEIGHTS, HERO_DEFAULT } from '../../../config/appConfig.v2.js';
 import BrandingColorPicker from '../../BrandingColorPicker.jsx';
-import HeroIconPicker from '../../HeroIconPicker.jsx';
+import ColorPickerModal from '../../ColorPickerModal.jsx';
 
 const cardStyle = { background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: 16 };
 const labelStyle = { fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' };
@@ -10,6 +10,30 @@ const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #E5
 
 export default function BrandingTab({ config, updateBrandingCloud, updateConfig, setShowCoverEditor }) {
     const navigate = useNavigate();
+    const [colorPickerState, setColorPickerState] = useState({
+        isOpen: false,
+        title: '',
+        iconId: null,
+        currentColor: '#8B7355',
+        originalColor: '#8B7355'
+    });
+
+    const handleHeroColorApply = (finalColor) => {
+        const { iconId } = colorPickerState;
+        if (!iconId) return;
+        const newHeroIcons = {
+            ...(config.heroIcons || {}),
+            [iconId]: { ...(config.heroIcons?.[iconId] || HERO_DEFAULT), color: finalColor }
+        };
+        updateConfig({ heroIcons: newHeroIcons });
+        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+    };
+
+    const handleHeroColorClose = () => {
+        setColorPickerState(prev => ({ ...prev, isOpen: false }));
+    };
+
+    const labels = { menu: '🍔 Menu', delivery: '🚚 Delivery', promos: '⭐ Promos', game: '🎮 Game' };
 
     return (
         <>
@@ -54,7 +78,50 @@ export default function BrandingTab({ config, updateBrandingCloud, updateConfig,
 
             <div style={cardStyle}>
                 <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase' }}>4. Iconos del Home</h4>
-                <HeroIconPicker config={config} onChange={(heroIcons) => updateConfig({ heroIcons })} />
+                <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 16 }}>
+                    Tap an icon to change its background color.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                    {['menu', 'delivery', 'promos', 'game'].map(iconId => {
+                        const iconConfig = config.heroIcons?.[iconId] || HERO_DEFAULT;
+                        const currentColor = iconConfig.color || '#8B7355';
+                        return (
+                            <div
+                                key={iconId}
+                                onClick={() => {
+                                    setColorPickerState({
+                                        isOpen: true,
+                                        title: labels[iconId],
+                                        iconId: iconId,
+                                        currentColor: currentColor,
+                                        originalColor: currentColor
+                                    });
+                                }}
+                                style={{
+                                    background: currentColor,
+                                    borderRadius: 12,
+                                    padding: 16,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                                }}
+                            >
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#FFF' }}>{labels[iconId]}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {colorPickerState.isOpen && (
+                    <ColorPickerModal
+                        title={colorPickerState.title}
+                        initialColor={colorPickerState.currentColor}
+                        onApply={handleHeroColorApply}
+                        onClose={handleHeroColorClose}
+                    />
+                )}
             </div>
 
             <div style={cardStyle}>

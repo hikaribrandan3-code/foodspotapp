@@ -1,13 +1,20 @@
 
+import { useState } from 'react'
 import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
 
 // 🚀 VAULT-SEAL: Image Optimization Helper
 const getOptimizedImageUrl = (url, options = {}) => {
     if (!url || url.startsWith('blob:')) return url
+    // Skip optimization for Unsplash images (they have their own params)
     if (url.includes('unsplash.com')) {
         return url.includes('?') ? url : `${url}?w=400&q=75&fit=crop`
     }
+    // Skip optimization for Supabase storage URLs — they need /render/image/ for transforms
+    if (url.includes('.supabase.co/storage/v1/object/public/')) {
+        return url
+    }
+    // Skip if already has transformation params
     if (url.includes('width=') || url.includes('quality=')) return url
     const { width = 400, quality = 75, format = 'webp' } = options
     const separator = url.includes('?') ? '&' : '?'
@@ -34,8 +41,10 @@ const ItemCard = ({
     const isDragging = dragState?.itemId === item.id
     const shakeStyle = (isEditMode && !dragState) ? { animation: 'wiggle 0.3s infinite linear alternate', animationDelay: `${Math.random() * 0.1}s` } : {}
 
+    const [imgError, setImgError] = useState(false)
+
     // Image Source Logic - Optimized
-    const imageSrc = (item.image && !item.image.startsWith('blob:'))
+    const imageSrc = (item.image && !item.image.startsWith('blob:') && !imgError)
         ? getOptimizedImageUrl(item.image, { width: 300, quality: 75, format: 'webp' })
         : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80'
 
@@ -68,6 +77,7 @@ const ItemCard = ({
                     alt="" 
                     loading="lazy"
                     decoding="async"
+                    onError={() => setImgError(true)}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                     draggable={false} 
                 />
