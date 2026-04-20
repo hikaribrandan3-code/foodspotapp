@@ -1266,112 +1266,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                 {/* ==================== VISUAL DIVIDER ==================== */}
                 <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
-                {/* 1. FEATURED SECTION (TOP 4) */}
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Destaques de Inicio (Top 4)
-                </h3>
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: 8,
-                    marginBottom: 24,
-                    background: 'white',
-                    padding: 12,
-                    borderRadius: 12,
-                    border: '1px solid #E2E8F0'
-                }}>
-                    {[0, 1, 2, 3].map(i => {
-                        const slot = activeFeaturedItems[i]
-                        return (
-                            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                {/* Image Box */}
-                                <div
-                                    onClick={() => handleFeaturedTap(i)}
-                                    className={!slot ? "empty-box" : ""}
-                                    style={{
-                                        aspectRatio: '1/1',
-                                        background: '#F1F5F9',
-                                        borderRadius: 10,
-                                        border: '1px dashed #CBD5E1',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        overflow: 'hidden',
-                                        cursor: 'pointer',
-                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                    }}>
-                                    {slot?.image ? (
-                                        <img
-                                            src={getThumbUrl(slot.image, 200)}
-                                            alt=""
-                                            loading="lazy"
-                                            decoding="async"
-                                            style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                objectFit: 'cover',
-                                                animation: 'fadeIn 0.3s ease'
-                                            }}
-                                        />
-                                    ) : (
-                                        <span style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center', pointerEvents: 'none' }}>Editar</span>
-                                    )}
-                                </div>
-                                {/* Meta Data (Below Image) */}
-                                {slot && (
-                                    <div style={{ textAlign: 'center' }}>
-                                        {/* INLINE NAME INPUT */}
-                                        <input
-                                            type="text"
-                                            defaultValue={slot.name || 'Destacado'}
-                                            onBlur={(e) => handleFeaturedUpdate(i, 'name', e.target.value)}
-                                            onClick={(e) => e.stopPropagation()} // 🛡️ Prevent Modal Open
-                                            style={{
-                                                fontWeight: 600,
-                                                fontSize: 11,
-                                                color: '#1E293B',
-                                                marginBottom: 2,
-                                                width: '100%',
-                                                textAlign: 'center',
-                                                border: 'none',
-                                                background: 'transparent',
-                                                outline: 'none',
-                                                padding: 0
-                                            }}
-                                        />
-                                        {/* INLINE PRICE INPUT */}
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                                            <span style={{ fontSize: 11, color: '#22C55E', fontWeight: 700 }}>$</span>
-                                            <input
-                                                type="number"
-                                                defaultValue={slot.price || ''}
-                                                onBlur={(e) => handleFeaturedUpdate(i, 'price', parseInt(e.target.value) || 0)}
-                                                onClick={(e) => e.stopPropagation()} // 🛡️ Prevent Modal Open
-                                                placeholder="0"
-                                                style={{
-                                                    color: '#22C55E',
-                                                    fontWeight: 700,
-                                                    fontSize: 12,
-                                                    width: 40,
-                                                    textAlign: 'center',
-                                                    border: 'none',
-                                                    background: 'transparent',
-                                                    outline: 'none',
-                                                    padding: 0
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })}
-                </div>
-
-                {/* 2. VISUAL DIVIDER */}
-                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
 
                 <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Menú Principal
@@ -1665,15 +1559,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                                 zIndex: 10
                                                             }}
                                                         />
-                                                        <div
-                                                            style={{
-                                                                fontSize: 16,
-                                                                filter: isFeatured(item) ? 'grayscale(0)' : 'grayscale(1)',
-                                                                opacity: isFeatured(item) ? 1 : 0.2
-                                                            }}
-                                                        >
-                                                            ⭐
-                                                        </div>
                                                     </div>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                         <span style={{ fontSize: 13, color: '#22C55E', fontWeight: 600 }}>$</span>
@@ -1703,15 +1588,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                             checked={!item.available}
                                                             onChange={() => handleToggleAvailability(category.id, item.id)}
                                                             style={{ width: 18, height: 18, accentColor: '#EF4444' }}
-                                                        />
-                                                    </label>
-                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
-                                                        Promo
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isFeatured(item)}
-                                                            onChange={() => handleToggleFeatured(item)}
-                                                            style={{ width: 18, height: 18, accentColor: '#EAB308' }}
                                                         />
                                                     </label>
                                                 </div>
