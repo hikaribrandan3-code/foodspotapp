@@ -72,10 +72,32 @@ function Home({ config: configProp }) {
 
     // 🎯 PARENT KILL: Strip min-height:100vh from .app-container on mount
     useEffect(() => {
+        const html = document.documentElement
+        const body = document.body
+        const root = document.getElementById('root')
         const appContainer = document.querySelector('.app-container')
+        const pageEl = document.querySelector('.page.home-tight')
+
+        if (html) html.style.minHeight = 'auto'
+        if (body) body.style.minHeight = 'auto'
+        if (root) root.style.minHeight = 'auto'
         if (appContainer) appContainer.classList.add('app-home-tight')
+        if (pageEl) {
+            pageEl.style.flex = '0 0 auto'
+            pageEl.style.minHeight = 'auto'
+            pageEl.style.paddingBottom = '8px'
+        }
+
         return () => {
+            if (html) html.style.minHeight = ''
+            if (body) body.style.minHeight = ''
+            if (root) root.style.minHeight = ''
             if (appContainer) appContainer.classList.remove('app-home-tight')
+            if (pageEl) {
+                pageEl.style.flex = ''
+                pageEl.style.minHeight = ''
+                pageEl.style.paddingBottom = ''
+            }
         }
     }, [])
 
@@ -642,6 +664,9 @@ function Home({ config: configProp }) {
     return (
         <>
             <style>{`
+                html, body, #root {
+                    min-height: auto !important;
+                }
                 .page.home-tight {
                     flex: 0 0 auto !important;
                     min-height: auto !important;
