@@ -638,7 +638,7 @@ function Home({ config: configProp }) {
                 maxWidth: '100%',
                 margin: '0 auto',
                 padding: '0 12px', /* The Invisible Grid (12px Rule) */
-                paddingBottom: 90,
+                paddingBottom: 70,
                 minHeight: '100vh'
             }}
         >
@@ -700,9 +700,9 @@ function Home({ config: configProp }) {
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: 12,
-                    marginBottom: 10, /* Dead Space Kill: Reduced by 50% */
+                    marginBottom: 0,
                     width: '99%', /* Hero Authority: 3% Scale-Up */
-                    margin: '12px auto 10px auto' /* Gap from Hero, Centered */
+                    margin: '12px auto 0 auto' /* Gap from Hero, Centered */
                 }}
             >
                 {localPrimaryActions.map((actionId, index) => {
