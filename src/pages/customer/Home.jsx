@@ -639,7 +639,8 @@ function Home({ config: configProp }) {
                 margin: '0 auto',
                 padding: '0 12px 8px 12px',
                 minHeight: 'auto',
-                flex: '0 0 auto' /* Kill flex:1 stretch from .page class */
+                flex: '0 0 auto',
+                paddingBottom: 8
             }}
         >
             <HeaderClamp config={config} />
