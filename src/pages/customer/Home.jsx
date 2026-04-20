@@ -631,8 +631,16 @@ function Home({ config: configProp }) {
     }
 
     return (
-        <div
-            className={`page ${isEditMode ? 'home-edit-mode' : ''}`}
+        <>
+            <style>{`
+                .page.home-tight {
+                    flex: 0 0 auto !important;
+                    min-height: auto !important;
+                    padding-bottom: 8px !important;
+                }
+            `}</style>
+            <div
+                className={`page home-tight ${isEditMode ? 'home-edit-mode' : ''}`}
             onContextMenu={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation() } }}
             style={{
                 maxWidth: '100%',
@@ -1071,6 +1079,7 @@ function Home({ config: configProp }) {
                 />
             )}
         </div>
+        </>
     )
 }
 
