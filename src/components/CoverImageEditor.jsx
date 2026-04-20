@@ -17,9 +17,11 @@ import { processAndStoreImage } from '../utils/imageOptimizer.js'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import Home from '../pages/customer/Home.jsx'
 
+const getAspectHeight = () => typeof window !== 'undefined' ? window.innerWidth * (9 / 16) : 230;
+
 const COVER_HEIGHTS = {
-    mobile: 220,
-    tablet: 280
+    mobile: getAspectHeight(),
+    tablet: getAspectHeight()
 }
 
 function getBreakpoint() {
@@ -266,13 +268,11 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             let newX = posRef.current.offsetX + dx
             let newY = posRef.current.offsetY + dy
 
-            // CONSTRAIN: Don't let image leave the frame (FB-style)
-            // At scale S, image is S times the container size
-            // Can pan (S - 1) / 2 * container before hitting edge
+            // Free-form panning with generous bounds to allow for object-fit overflow
             const containerW = window.innerWidth
             const containerH = coverHeight
-            const maxPanX = Math.max(0, (scale - 1) * containerW / 2)
-            const maxPanY = Math.max(0, (scale - 1) * containerH / 2)
+            const maxPanX = containerW
+            const maxPanY = containerH
 
             newX = Math.max(-maxPanX, Math.min(maxPanX, newX))
             newY = Math.max(-maxPanY, Math.min(maxPanY, newY))
@@ -377,12 +377,30 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
     const handleNext = useCallback(() => {
         if (!image) return
 
+        // 🛡️ REVOLUTION: Convert pixel offsets to relative percentages for cross-device stability
+        const containerW = typeof window !== 'undefined' ? window.innerWidth : 414
+        const containerH = coverHeight
+        const scale = posRef.current.scale
+        const offsetX = posRef.current.offsetX
+        const offsetY = posRef.current.offsetY
+
+        // Calculate offset as a pure percentage of container size
+        // e.g. offsetX = -containerW/4 -> panX = -25%
+        const panX = (offsetX / containerW) * 100
+        const panY = (offsetY / containerH) * 100
+
+        // Store shifted by 50 to keep them positive-ish centered around 50%
+        const posX = Math.round(50 + panX)
+        const posY = Math.round(50 + panY)
+
         const lsKey = `hero_${businessId}`
         const storageData = {
             image: image,
-            scale: posRef.current.scale,
-            offsetX: posRef.current.offsetX,
-            offsetY: posRef.current.offsetY,
+            scale: scale,
+            posX: posX,
+            posY: posY,
+            offsetX: offsetX, // Keep legacy for fallback
+            offsetY: offsetY, // Keep legacy for fallback
             updatedAt: Date.now()
         }
 
@@ -398,7 +416,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
 
         window.dispatchEvent(new CustomEvent('frontendSync'))
         setStep('preview')
-    }, [image, businessId])
+    }, [image, businessId, coverHeight])
 
     const handleBack = useCallback(() => {
         setStep('edit')
@@ -416,6 +434,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
             const saveData = {
                 image: image,
                 scale: posRef.current.scale,
+                posX: Math.round(50 + (posRef.current.offsetX / (typeof window !== 'undefined' ? window.innerWidth : 414)) * 100),
+                posY: Math.round(50 + (posRef.current.offsetY / coverHeight) * 100),
                 offsetX: posRef.current.offsetX,
                 offsetY: posRef.current.offsetY,
                 updatedAt: Date.now()
@@ -608,7 +628,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                     top: 0,
                     left: 0,
                     right: 0,
-                    height: coverHeight,
+                    width: '100%',
+                    aspectRatio: '16 / 9',
                     overflow: 'hidden',
                     cursor: 'move',
                     zIndex: 1000,
@@ -704,11 +725,20 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 ↕ Drag • Pinch zoom • {Math.round(scale * 100)}%
             </div>
 
-            {/* Hero Guidelines */}
+            {/* Hero Guidelines (Safe Zone) */}
+            <div style={{ 
+                position: 'absolute', 
+                top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                width: '83%', height: '83%', border: '1px dashed rgba(255,255,255,0.5)',
+                pointerEvents: 'none', zIndex: 12, borderRadius: 8
+            }}>
+                <div style={{ position: 'absolute', top: -18, left: 0, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>16:9 SAFE ZONE</div>
+            </div>
+
             <div style={{ position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 10, maxWidth: '90%' }}>
                 <p style={{ margin: 0, fontSize: 11, color: '#9CA3AF', lineHeight: 1.4 }}>
-                    💡 <strong>Tip:</strong> 16:9 images (1200×800px) work best.<br />
-                    <strong>150% zoom = sweet spot</strong> • Drag to position
+                    💡 <strong>Safe Zone:</strong> Keep key content in the dashed box.<br />
+                    Works like Facebook/Instagram • Drag to center food
                 </p>
             </div>
         </div>

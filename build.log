@@ -1,0 +1,37 @@
+
+> grub-club-app@1.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+[plugin:vite:esbuild] [plugin vite:esbuild] src/components/CoverImageEditor.jsx: Duplicate key "transform" in object literal
+636|                              transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
+637|                              transformOrigin: 'center center',
+638|                              transform: `translate(${offsetX}px, ${offsetY}px)`,
+   |                              ^
+639|                              willChange: 'transform',
+640|                              pointerEvents: 'none',
+
+✓ 108 modules transformed.
+x Build failed in 249ms
+error during build:
+src/main.jsx (8:7): "default" is not exported by "src/App.jsx", imported by "src/main.jsx".
+file: /Users/daiskebrandan/Developer/foodspotapp/src/main.jsx:8:7
+
+ 6: // Core Imports (Static to prevent ChunkLoadError on mobile)
+ 7: import { TenantProvider } from './contexts/TenantContext.jsx'
+ 8: import App from './App.jsx'
+           ^
+ 9: 
+10: // =============================================================================
+
+    at getRollupError (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at Module.error (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/node-entry.js:16956:16)
+    at Module.traceVariable (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/node-entry.js:17412:29)
+    at ModuleScope.findVariable (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/node-entry.js:15076:39)
+    at TrackingScope.findVariable (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/node-entry.js:5649:38)
+    at BlockScope.findVariable (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/node-entry.js:5649:38)
+    at BlockScope.findVariable (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/node-entry.js:5649:38)
+    at Identifier.bind (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/node-entry.js:5423:40)
+    at CallExpression.bind (file:///Users/daiskebrandan/Developer/foodspotapp/node_modules/rollup/dist/es/shared/node-entry.js:2809:28)

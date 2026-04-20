@@ -119,7 +119,9 @@ const Settings = () => {
         hero_url: '',
         nav_icon_mode: 'white',
         hero_icon_mode: 'black',
-        app_config: {}
+        app_config: {},
+        menu_data: { categories: [] },
+        featured_photos: []
     });
 
     // Dropdown states
@@ -186,7 +188,9 @@ const Settings = () => {
             hero_url: tenant.hero_url || '',
             nav_icon_mode: tenant.nav_icon_mode || 'white',
             hero_icon_mode: tenant.hero_icon_mode || 'black',
-            app_config: tenant.app_config || {}
+            app_config: tenant.app_config || {},
+            menu_data: tenant.menu_data || { categories: [] },
+            featured_photos: tenant.featured_photos || []
         });
         
         // Apply CSS variables immediately
@@ -377,6 +381,7 @@ const Settings = () => {
                 hero_mode: draft.hero_mode,
                 hero_url: draft.hero_url,
                 hero_icons: draft.hero_icons,
+                hero_icon_mode: draft.hero_icon_mode,
                 info_pills: draft.info_pills,
                 munchboy_enabled: draft.munchboy_enabled,
                 munchboy_name: draft.munchboy_name,
@@ -384,6 +389,8 @@ const Settings = () => {
                 munchboy_a_color: draft.munchboy_a_color,
                 munchboy_b_color: draft.munchboy_b_color,
                 app_config: draft.app_config,
+                menu_data: draft.menu_data,
+                featured_photos: draft.featured_photos,
             };
 
             const { data: savedData, error: saveError } = await updateBranding(payload, businessId);
@@ -621,24 +628,28 @@ const Settings = () => {
                         businessId={businessId}
                         config={{ branding: { logo_url: null } }}
                         initialData={(() => {
-                            if (!draft.hero_url) return {};
+                            if (!draft.hero_url) return { image: null, scale: 1, posX: 50, posY: 50 };
                             try {
                                 const url = new URL(draft.hero_url, 'http://dummy.com');
                                 const params = new URLSearchParams(url.search);
                                 return {
                                     image: draft.hero_url,
                                     scale: parseFloat(params.get('s')) || 1,
+                                    posX: parseFloat(params.get('px')) || 50,
+                                    posY: parseFloat(params.get('py')) || 50,
+                                    // Legacy fallbacks
                                     offsetX: parseFloat(params.get('x')) || 0,
                                     offsetY: parseFloat(params.get('y')) || 0,
                                 };
                             } catch (e) {
-                                return { image: draft.hero_url, scale: 1, offsetX: 0, offsetY: 0 };
+                                return { image: draft.hero_url, scale: 1, posX: 50, posY: 50 };
                             }
                         })()}
                         onSave={(data) => {
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
-                            const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&x=${data.offsetX}&y=${data.offsetY}`;
+                            // 🚀 NEW STANDARD: px/py for percentage based positioning
+                            const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&px=${data.posX}&py=${data.posY}`;
                             updateDraftField('hero_url', finalUrl);
                             setShowCoverEditor(false);
                         }}
@@ -791,7 +802,6 @@ const Settings = () => {
                 </section>
 
                 {/* ========== 6. MUNCHBOY BRANDING ========== */}
-                {false && (
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>Munchboy Arcade</h3>
@@ -957,10 +967,8 @@ const Settings = () => {
                         />
                     </div>
                 </section>
-                )}
 
-                {/* ========== 6. INFO PILLS - HIDDEN FOR MVP ========== */}
-                {false && (
+                {/* ========== 7. INFO PILLS ========== */}
                 <section className="branding-card">
                     <div className="section-header">
                         <h3>6. {t('info_pills')}</h3>
@@ -1043,7 +1051,6 @@ const Settings = () => {
                         })}
                     </div>
                 </section>
-                )}
             </div>
 
             <BackendNav role="owner" useRoutes={true} />

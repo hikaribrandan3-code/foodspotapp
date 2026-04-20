@@ -65,9 +65,14 @@ export function HikariBoy({
     }
     if (munchboyAColor) {
       document.documentElement.style.setProperty('--button-a-color', munchboyAColor);
+      // If color is custom (not default gray), use white labels for premium contrast
+      const aLabelColor = munchboyAColor.toLowerCase() === '#d1d5db' ? 'var(--button-gray-dark)' : '#FFFFFF';
+      document.documentElement.style.setProperty('--button-a-label-color', aLabelColor);
     }
     if (munchboyBColor) {
       document.documentElement.style.setProperty('--button-b-color', munchboyBColor);
+      const bLabelColor = munchboyBColor.toLowerCase() === '#d1d5db' ? 'var(--button-gray-dark)' : '#FFFFFF';
+      document.documentElement.style.setProperty('--button-b-label-color', bLabelColor);
     }
     
     const authSelectors = [

@@ -16,12 +16,6 @@
  */
 import { useLanguage } from '../contexts/LanguageContext'
 
-// Cover heights by breakpoint
-const COVER_HEIGHTS = {
-    mobile: 220,
-    tablet: 280
-}
-
 function getBreakpoint() {
     if (typeof window === 'undefined') return 'mobile'
     return window.innerWidth >= 768 ? 'tablet' : 'mobile'
@@ -35,29 +29,22 @@ function AppHeader({ config: configProp }) {
     const businessName = config?.businessName || 'FoodSpot'
     const headerMode = config?.headerBranding?.mode || 'cover'
     const breakpoint = getBreakpoint()
-    const coverHeight = COVER_HEIGHTS[breakpoint]
     // Only clamp if explicitly enabled AND not in cover mode (cover needs full height)
     const useClamp = config?.experimental?.headerClampMobile && breakpoint === 'mobile' && headerMode !== 'cover' && headerMode !== 'image'
 
     // ============================================
-    // COVER MODE (V1 Default)
+    // 16:9 HERO COVER MODE (Universal Standard)
     // ============================================
-    // Fix: Treat 'image' as 'cover' to handle legacy/raw DB values
     if (headerMode === 'cover' || headerMode === 'image') {
         const cover = config?.headerCover || {}
-        let scale = cover.scale || 1.0
-        let offsetX = cover.offsetX || 0
-        let offsetY = cover.offsetY || 0
+        
+        // 🛡️ POSITIONING: Prefer percentages (posX/Y) for cross-device stability
+        // Fallback to 50% (Center) if not provided
+        const posX = cover.posX !== undefined ? cover.posX : 50;
+        const posY = cover.posY !== undefined ? cover.posY : 50;
 
-        // CONSTRAIN: Clamp offsets so image always covers frame (matches editor)
-        // Get actual container dimensions
-        const containerW = typeof window !== 'undefined' ? window.innerWidth : 414
-        const containerH = coverHeight
-        const maxPanX = Math.max(0, (scale - 1) * containerW / 2)
-        const maxPanY = Math.max(0, (scale - 1) * containerH / 2)
-
-        offsetX = Math.max(-maxPanX, Math.min(maxPanX, offsetX))
-        offsetY = Math.max(-maxPanY, Math.min(maxPanY, offsetY))
+        // LEGACY SCALE: We still support scale for zoom, but fitment is driven by object-fit
+        const scale = cover.scale || 1.0;
 
         const coverContent = (
             <div className="cover-content menu-header-bg" style={{
@@ -68,38 +55,29 @@ function AppHeader({ config: configProp }) {
                 top: 0,
                 backgroundImage: config?.headerCover?.image ? `url(${config.headerCover.image})` : undefined,
                 backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                backgroundPosition: `center`,
                 backgroundRepeat: 'no-repeat',
-                transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
+                transform: `translate(${posX - 50}%, ${posY - 50}%) scale(${scale})`,
                 transformOrigin: 'center center',
                 transition: 'transform 0.1s ease-out'
             }} />
-        )
-        const placeholder = (
-            <div className="cover-content" style={{
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
-                <span style={{ color: 'var(--canvas-text)', opacity: 0.5, fontSize: 12 }}>
-                    {t('no_cover')}
-                </span>
-            </div>
         )
 
         return (
             <header style={{
                 position: 'relative',
                 background: 'var(--canvas-bg)',
-                flexShrink: 0
+                flexShrink: 0,
+                width: '100%',
+                overflow: 'hidden'
             }}>
                 <div
-                    className={useClamp ? 'cover-viewport' : undefined}
                     style={{
-                        height: useClamp ? undefined : coverHeight,
+                        width: '100%',
+                        aspectRatio: '16 / 9',
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        background: '#F1F5F9' // Clean skeleton background
                     }}
                 >
                     {coverContent}
