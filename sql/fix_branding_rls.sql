@@ -1,13 +1,19 @@
 -- =====================================================================
--- BRANDING TABLE RLS CLEANUP
+-- BRANDING TABLE RLS CLEANUP v2
 -- Run this in Supabase SQL Editor → buendqgmwpxdixwvlkhd
 --
--- Problem: 13+ conflicting policies cause UPDATE to silently return 0
--- rows. The user_id fallback in supabaseClient.js handles the code
--- side, but cleaning policies prevents future confusion.
+-- Root cause: branding table has no user_id column. The correct
+-- owner check must go through the tenants table, but a naive
+-- EXISTS subquery fails because tenants RLS also applies inside it.
+-- Fix: SECURITY DEFINER function bypasses tenants RLS cleanly.
 -- =====================================================================
 
--- 1. DROP all conflicting write/read policies
+-- 1. Drop any partial state from previous attempts
+DROP POLICY IF EXISTS "owner_full_access_by_user_id" ON public.branding;
+DROP POLICY IF EXISTS "owner_full_access_by_tenant" ON public.branding;
+DROP POLICY IF EXISTS "public_read_branding" ON public.branding;
+
+-- These were dropped in the previous run but include for safety
 DROP POLICY IF EXISTS "branding_owner_only" ON public.branding;
 DROP POLICY IF EXISTS "branding_owner_write" ON public.branding;
 DROP POLICY IF EXISTS "Owner Full Access" ON public.branding;
@@ -23,33 +29,29 @@ DROP POLICY IF EXISTS "branding_public_read" ON public.branding;
 DROP POLICY IF EXISTS "Public read access" ON public.branding;
 DROP POLICY IF EXISTS "branding_owner_access_v2" ON public.branding;
 
--- 2. Recreate clean minimal policies
+-- 2. Security-definer helper — bypasses RLS on tenants inside the subquery
+CREATE OR REPLACE FUNCTION public.is_branding_owner(p_business_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.tenants
+    WHERE tenants.id = p_business_id
+      AND tenants.owner_id = auth.uid()
+  );
+$$;
 
--- Customers (and anyone) can read any branding row — needed to load the tenant app
+-- 3. Two clean policies
+
+-- Customers (anyone) can read branding rows — needed to load the tenant app
 CREATE POLICY "public_read_branding"
   ON public.branding FOR SELECT TO public
   USING (true);
 
--- Owners can do everything on their own row matched by user_id (set at signup)
-CREATE POLICY "owner_full_access_by_user_id"
-  ON public.branding FOR ALL TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- Fallback: owners via tenants table join (covers rows where business_id is set)
+-- Authenticated owners can INSERT / UPDATE / DELETE their own branding row
 CREATE POLICY "owner_full_access_by_tenant"
   ON public.branding FOR ALL TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.tenants
-      WHERE tenants.id = branding.business_id
-        AND tenants.owner_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.tenants
-      WHERE tenants.id = branding.business_id
-        AND tenants.owner_id = auth.uid()
-    )
-  );
+  USING (public.is_branding_owner(business_id))
+  WITH CHECK (public.is_branding_owner(business_id));

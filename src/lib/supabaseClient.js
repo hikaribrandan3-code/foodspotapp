@@ -306,30 +306,6 @@ export async function updateBranding(updates, businessId) {
                 return { data: coreData, error: null }
             }
 
-            // ATTEMPT 3: business_id WHERE returned 0 rows (RLS mismatch) — fall back to user_id
-            if (coreError?.code === 'PGRST116' || !coreData) {
-                try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user?.id) {
-                        console.warn('[updateBranding] ⚠️ business_id returned 0 rows. Trying user_id fallback...');
-                        const { data: uidData, error: uidError } = await supabase
-                            .from('branding')
-                            .update(coreUpdates)
-                            .eq('user_id', user.id)
-                            .select()
-                            .single();
-                        if (!uidError && uidData) {
-                            _knownBrandingColumns = new Set(Object.keys(uidData));
-                            console.log('[updateBranding] ✅ user_id fallback succeeded');
-                            return { data: uidData, error: null };
-                        }
-                        if (uidError) console.error('[updateBranding] ❌ user_id fallback failed:', uidError);
-                    }
-                } catch (e) {
-                    console.error('[updateBranding] Exception in user_id fallback:', e);
-                }
-            }
-
             console.error('[updateBranding] ❌ Core save also failed:', coreError);
             return { data: null, error: coreError }
         }
