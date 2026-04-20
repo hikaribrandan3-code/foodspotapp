@@ -505,12 +505,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const category = menu.categories.find(c => c.id === catId)
         if (!category) return
 
-        // 🛡️ FK VALIDATION: Prevent deletion of non-empty categories
-        if (category.items && category.items.length > 0) {
-            alert('Error: Category must be empty before deletion.')
-            return
-        }
-
         if (!confirm('¿Eliminar categoría?')) return
         setMenu(prev => ({ ...prev, categories: prev.categories.filter(c => c.id !== catId) }))
         setHasChanges(true)
