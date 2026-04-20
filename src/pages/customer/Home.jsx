@@ -78,10 +78,13 @@ function Home({ config: configProp }) {
         const appContainer = document.querySelector('.app-container')
         const pageEl = document.querySelector('.page.home-tight')
 
-        if (html) html.style.minHeight = 'auto'
-        if (body) body.style.minHeight = 'auto'
-        if (root) root.style.minHeight = 'auto'
-        if (appContainer) appContainer.classList.add('app-home-tight')
+        if (html) html.style.minHeight = '100dvh'
+        if (body) body.style.minHeight = '100dvh'
+        if (root) root.style.minHeight = '100dvh'
+        if (appContainer) {
+            appContainer.classList.add('app-home-tight')
+            appContainer.style.justifyContent = 'center'
+        }
         if (pageEl) {
             pageEl.style.flex = '0 0 auto'
             pageEl.style.minHeight = 'auto'
@@ -92,7 +95,10 @@ function Home({ config: configProp }) {
             if (html) html.style.minHeight = ''
             if (body) body.style.minHeight = ''
             if (root) root.style.minHeight = ''
-            if (appContainer) appContainer.classList.remove('app-home-tight')
+            if (appContainer) {
+                appContainer.classList.remove('app-home-tight')
+                appContainer.style.justifyContent = ''
+            }
             if (pageEl) {
                 pageEl.style.flex = ''
                 pageEl.style.minHeight = ''
@@ -665,7 +671,7 @@ function Home({ config: configProp }) {
         <>
             <style>{`
                 html, body, #root {
-                    min-height: auto !important;
+                    min-height: 100dvh !important;
                 }
                 .page.home-tight {
                     flex: 0 0 auto !important;
@@ -673,8 +679,8 @@ function Home({ config: configProp }) {
                     padding-bottom: 8px !important;
                 }
                 .app-container.app-home-tight {
-                    min-height: auto !important;
-                    justify-content: flex-start !important;
+                    min-height: 100dvh !important;
+                    justify-content: center !important;
                 }
             `}</style>
             <div
