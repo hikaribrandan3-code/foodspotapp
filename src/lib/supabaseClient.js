@@ -180,12 +180,12 @@ export async function getBranding(businessId) {
         return { data: null, error: new Error('[SILO VIOLATION] getBranding requires businessId') }
     }
 
-    console.log('[getBranding] 🌐 Fetching from Supabase with filter: business_id =', businessId)
+    console.log('[getBranding] 🌐 Fetching from Supabase with filter: user_id =', businessId)
 
     const { data, error } = await supabase
         .from('branding')
         .select('*')
-        .eq('business_id', businessId) // 🔐 TENANT FILTER
+        .eq('user_id', businessId) // 🔐 TENANT FILTER (branding table uses user_id, not business_id)
         .single()
 
     if (error) {
@@ -266,7 +266,7 @@ export async function updateBranding(updates, businessId) {
         const { data, error } = await supabase
             .from('branding')
             .update(filteredUpdates)
-            .eq('business_id', businessId)
+            .eq('user_id', businessId) // 🔐 TENANT FILTER (branding table uses user_id)
             .select()
             .single()
 
@@ -296,7 +296,7 @@ export async function updateBranding(updates, businessId) {
             const { data: coreData, error: coreError } = await supabase
                 .from('branding')
                 .update(coreUpdates)
-                .eq('business_id', businessId)
+                .eq('user_id', businessId) // 🔐 TENANT FILTER (branding table uses user_id)
                 .select()
                 .single()
 
