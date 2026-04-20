@@ -172,20 +172,44 @@ export default function Menu({ config: configProp }) {
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
     useEffect(() => {
-        console.log('[Menu] 🔍 DEBUG: tenantLoaded=', tenantLoaded, 'tenantData=', !!tenantData)
-        if (tenantLoaded) {
-            // Priority: 1. Cloud Data, 2. Seed Data
-            console.log('[Menu] 🔍 DEBUG: menu_data exists=', !!tenantData?.menu_data, 'categories=', tenantData?.menu_data?.categories?.length)
-            if (tenantData?.menu_data && tenantData.menu_data.categories.length > 0) {
-                console.log('[Menu] ☁️ Loading Cloud Data')
-                setMenu(tenantData.menu_data)
-            } else {
-                console.log('[Menu] 🌱 Loading Seed Data (Fallback)')
-                setMenu(SEED_MENU)
+        if (!tenantLoaded) return;
+
+        const cloudMenu = tenantData?.menu_data;
+        const hasCloudMenu = cloudMenu && cloudMenu.categories?.length > 0;
+        const menuToLoad = hasCloudMenu ? cloudMenu : SEED_MENU;
+
+        setMenu(menuToLoad);
+        setIsDataLoaded(true);
+
+        // Enrich items that are missing images from the menu_items SQL table.
+        // This fixes the case where menu_data JSON was saved before images were uploaded,
+        // or when branding saves failed and the JSON blob never got updated image URLs.
+        if (hasCloudMenu && businessId) {
+            const allItems = cloudMenu.categories.flatMap(c => c.items || []);
+            const itemsMissingImages = allItems.filter(i => i.id && !i.image);
+            if (itemsMissingImages.length > 0) {
+                supabase
+                    .from('menu_items')
+                    .select('id, image')
+                    .eq('business_id', businessId)
+                    .not('image', 'is', null)
+                    .then(({ data: sqlItems }) => {
+                        if (!sqlItems?.length) return;
+                        const imageMap = new Map(sqlItems.map(i => [i.id, i.image]));
+                        setMenu(prev => ({
+                            ...prev,
+                            categories: prev.categories.map(cat => ({
+                                ...cat,
+                                items: (cat.items || []).map(item => ({
+                                    ...item,
+                                    image: item.image || imageMap.get(item.id) || item.image
+                                }))
+                            }))
+                        }));
+                    });
             }
-            setIsDataLoaded(true)
         }
-    }, [tenantLoaded, tenantData])
+    }, [tenantLoaded, tenantData, businessId])
 
     // =========================================================================
     // 2. AUTH & OWNER MODE (HARDWIRED BYPASS)
