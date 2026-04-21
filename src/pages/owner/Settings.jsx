@@ -114,6 +114,21 @@ const Settings = () => {
         munchboy_b_color: '#D1D5DB',
         munchboy_enabled: false,
         
+        // Payment & Fulfillment Configuration
+        service_modes: {
+            pickup: true,
+            delivery: true,
+            dineIn: false,
+            dineInPayment: 'after',
+            events: false
+        },
+        payment_methods: {
+            cash: true,
+            mercado_pago: true,
+            card: false,
+            transfer: false
+        },
+
         // Other
         hero_mode: 'text',
         hero_url: '',
@@ -190,7 +205,22 @@ const Settings = () => {
             hero_icon_mode: tenant.hero_icon_mode || 'black',
             app_config: tenant.app_config || {},
             menu_data: tenant.menu_data || { categories: [] },
-            featured_photos: tenant.featured_photos || []
+            featured_photos: tenant.featured_photos || [],
+
+            // Payment & Fulfillment
+            service_modes: tenant.service_modes || {
+                pickup: true,
+                delivery: true,
+                dineIn: false,
+                dineInPayment: 'after',
+                events: false
+            },
+            payment_methods: tenant.payment_methods || {
+                cash: true,
+                mercado_pago: true,
+                card: false,
+                transfer: false
+            }
         });
         
         // Apply CSS variables immediately
@@ -391,6 +421,8 @@ const Settings = () => {
                 app_config: draft.app_config,
                 menu_data: draft.menu_data,
                 featured_photos: draft.featured_photos,
+                service_modes: draft.service_modes,
+                payment_methods: draft.payment_methods,
             };
 
             const { data: savedData, error: saveError } = await updateBranding(payload, businessId);
@@ -1049,6 +1081,178 @@ const Settings = () => {
                                 </div>
                             );
                         })}
+                    </div>
+                </section>
+
+                {/* ========== PAYMENT & FULFILLMENT ========== */}
+                <section className="branding-card">
+                    <div className="section-header">
+                        <h3>💳 {t('payment_settings') || 'Payment & Fulfillment'}</h3>
+                    </div>
+
+                    {/* SERVICE MODES */}
+                    <div style={{ marginBottom: 24 }}>
+                        <h4 style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 12 }}>
+                            {t('service_modes') || 'Service Modes'}
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={draft.service_modes?.pickup ?? true}
+                                    onChange={(e) => {
+                                        setDraft(d => ({
+                                            ...d,
+                                            service_modes: { ...d.service_modes, pickup: e.target.checked }
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                    style={{ accentColor: '#22C55E' }}
+                                />
+                                <span style={{ fontSize: 13, color: '#374151' }}>📦 Pickup</span>
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={draft.service_modes?.delivery ?? true}
+                                    onChange={(e) => {
+                                        setDraft(d => ({
+                                            ...d,
+                                            service_modes: { ...d.service_modes, delivery: e.target.checked }
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                    style={{ accentColor: '#22C55E' }}
+                                />
+                                <span style={{ fontSize: 13, color: '#374151' }}>🚚 Delivery</span>
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={draft.service_modes?.dineIn ?? false}
+                                    onChange={(e) => {
+                                        setDraft(d => ({
+                                            ...d,
+                                            service_modes: { ...d.service_modes, dineIn: e.target.checked }
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                    style={{ accentColor: '#22C55E' }}
+                                />
+                                <span style={{ fontSize: 13, color: '#374151' }}>🍽️ Dine In</span>
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={draft.service_modes?.events ?? false}
+                                    onChange={(e) => {
+                                        setDraft(d => ({
+                                            ...d,
+                                            service_modes: { ...d.service_modes, events: e.target.checked }
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                    style={{ accentColor: '#22C55E' }}
+                                />
+                                <span style={{ fontSize: 13, color: '#374151' }}>🎉 Events</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* DINE-IN PAYMENT TIMING */}
+                    {draft.service_modes?.dineIn && (
+                        <div style={{ marginBottom: 24, padding: 12, background: '#F0FDF4', borderRadius: 12 }}>
+                            <h4 style={{ fontSize: 14, fontWeight: 600, color: '#166534', marginBottom: 8 }}>
+                                🕐 {t('dine_in_payment') || 'Dine-In Payment'}
+                            </h4>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+                                    <input
+                                        type="radio"
+                                        name="dineInPayment"
+                                        checked={draft.service_modes?.dineInPayment === 'before'}
+                                        onChange={() => {
+                                            setDraft(d => ({
+                                                ...d,
+                                                service_modes: { ...d.service_modes, dineInPayment: 'before' }
+                                            }));
+                                            setHasChanges(true);
+                                        }}
+                                    />
+                                    <span>💳 Pay Before (Upfront)</span>
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+                                    <input
+                                        type="radio"
+                                        name="dineInPayment"
+                                        checked={draft.service_modes?.dineInPayment === 'after'}
+                                        onChange={() => {
+                                            setDraft(d => ({
+                                                ...d,
+                                                service_modes: { ...d.service_modes, dineInPayment: 'after' }
+                                            }));
+                                            setHasChanges(true);
+                                        }}
+                                    />
+                                    <span>🧾 Pay After (At End)</span>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* PAYMENT METHODS */}
+                    <div>
+                        <h4 style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 12 }}>
+                            {t('payment_methods') || 'Payment Methods'}
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={draft.payment_methods?.cash ?? true}
+                                    onChange={(e) => {
+                                        setDraft(d => ({
+                                            ...d,
+                                            payment_methods: { ...d.payment_methods, cash: e.target.checked }
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                    style={{ accentColor: '#22C55E' }}
+                                />
+                                <span style={{ fontSize: 13, color: '#374151' }}>💵 Cash</span>
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={draft.payment_methods?.mercado_pago ?? true}
+                                    onChange={(e) => {
+                                        setDraft(d => ({
+                                            ...d,
+                                            payment_methods: { ...d.payment_methods, mercado_pago: e.target.checked }
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                    style={{ accentColor: '#22C55E' }}
+                                />
+                                <span style={{ fontSize: 13, color: '#374151' }}>💳 Mercado Pago</span>
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', opacity: 0.5 }}>
+                                <input
+                                    type="checkbox"
+                                    disabled
+                                    style={{ accentColor: '#22C55E' }}
+                                />
+                                <span style={{ fontSize: 13, color: '#9CA3AF' }}>🏦 Card (Coming Soon)</span>
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', opacity: 0.5 }}>
+                                <input
+                                    type="checkbox"
+                                    disabled
+                                    style={{ accentColor: '#22C55E' }}
+                                />
+                                <span style={{ fontSize: 13, color: '#9CA3AF' }}>🏧 Bank Transfer (Coming Soon)</span>
+                            </label>
+                        </div>
                     </div>
                 </section>
             </div>

@@ -256,7 +256,13 @@ export function TenantProvider({ children }) {
     const contextValue = {
         businessId,
         tenantData,
-        serviceModes: tenantData?.service_modes || { dineIn: true, dineInPayment: 'before', delivery: true, events: true },
+        serviceModes: tenantData?.service_modes || {
+            pickup: true,
+            delivery: true,
+            dineIn: false,
+            dineInPayment: 'after',
+            events: false
+        },
         loading,
         error,
         trialExpired,

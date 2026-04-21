@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { clearAuth } from '../../utils/storage.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 
 // ============================================
@@ -16,6 +17,7 @@ function RewardsManager() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData, refreshTenantData } = useTenant()
+    const { t } = useLanguage()
     const appConfig = tenantData?.app_config || {}
 
     // Hydrate from cloud
@@ -89,7 +91,7 @@ function RewardsManager() {
                         alignItems: 'center'
                     }}>
                         <div>
-                            <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>Recompensas activas</p>
+                            <p style={{ fontWeight: 500, fontSize: 14, color: '#1E293B', margin: 0 }}>{t('active_rewards')}</p>
                             <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>
                                 {rewardsEnabled ? '✓ Activo' : '✗ Inactivo'}
                             </p>
@@ -112,10 +114,10 @@ function RewardsManager() {
                     border: '1px solid #E2E8F0',
                     padding: 16
                 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16, marginTop: 0 }}>Configuración</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16, marginTop: 0 }}>{t('rewards_config')}</h3>
 
                     <div className="form-group">
-                        <label className="form-label">Sellos necesarios</label>
+                        <label className="form-label">{t('stamps_required')}</label>
                         <input
                             type="number"
                             className="form-input"
@@ -127,13 +129,13 @@ function RewardsManager() {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Descripción del premio</label>
+                        <label className="form-label">{t('reward_description')}</label>
                         <input
                             type="text"
                             className="form-input"
                             value={rewardDescription}
                             onChange={(e) => setRewardDescription(e.target.value)}
-                            placeholder="Ej: ¡Café gratis!"
+                            placeholder={t('free_coffee')}
                         />
                     </div>
 

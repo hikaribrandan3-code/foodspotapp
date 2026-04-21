@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useSession } from '../../contexts/SessionContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import HeaderClamp from '../../components/HeaderClamp';
 import { QRCodeSVG } from 'qrcode.react';
 import BurgerLoader from '../../components/BurgerLoader';
@@ -11,6 +12,7 @@ function Session({ config }) {
     const { tenantSlug, sessionId } = useParams();
     const navigate = useNavigate();
     const { tenantData } = useTenant();
+    const { t } = useLanguage();
     const { activeSession, hasActiveSession, loading, error, startNewSession, joinExistingSession, leaveSession } = useSession();
 
     const [mode, setMode] = useState('loading');
@@ -140,7 +142,7 @@ function Session({ config }) {
                         color: 'white',
                         marginBottom: 24
                     }}>
-                        <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 4 }}>Sesión activa</div>
+                        <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 4 }}>{t('active_session')}</div>
                         <div style={{ fontSize: 28, fontWeight: 800 }}>
                             {activeSession.session_name || `Mesa ${activeSession.table_number || '—'}`}
                         </div>
@@ -285,7 +287,7 @@ function Session({ config }) {
 
                     <div style={{ marginBottom: 16 }}>
                         <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block' }}>
-                            Número de mesa (opcional)
+                            {t('table_number_optional')}
                         </label>
                         <input
                             type="text"

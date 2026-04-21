@@ -10,6 +10,7 @@ import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import ItemCard from '../../components/ItemCard'
 import { QRCodeSVG } from 'qrcode.react'
 import BurgerLoader from '../../components/BurgerLoader'
+import HeaderClamp from '../../components/HeaderClamp.jsx'
 // ============================================
 // 📊 ORDER STATUS - REAL-TIME LIVE TRACKER
 // ============================================
@@ -251,16 +252,18 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hola, necesito ayuda con mi pedido #${order.order_number}`
 
     return (
-        <div className="page" style={{
-            background: '#FFFFFF',
-            minHeight: '100vh',
-            padding: '24px 20px',
-            paddingBottom: 'calc(40px + env(safe-area-inset-bottom))', // Safe Area
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
-        }}>
+        <>
+            <HeaderClamp config={config} />
+            <div className="page" style={{
+                background: '#FFFFFF',
+                minHeight: '100vh',
+                padding: '24px 20px',
+                paddingBottom: 'calc(40px + env(safe-area-inset-bottom))', // Safe Area
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
 
             {/* HERO ANIMATION */}
             <div style={{
@@ -501,7 +504,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     100% { opacity: 1; }
                 }
             `}</style>
-        </div>
+            </div>
+        </>
     )
 }
 
