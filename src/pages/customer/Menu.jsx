@@ -171,21 +171,67 @@ export default function Menu({ config: configProp }) {
     const [menu, setMenu] = useState({ categories: [] })
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
+    // Helper: Group items by category
+    const groupItemsByCategory = (items) => {
+        const grouped = {}
+        items.forEach(item => {
+            const catId = item.category_id || 'cat-default'
+            if (!grouped[catId]) {
+                grouped[catId] = { id: catId, name: catId.replace('cat-', '').replace('-', ' '), icon: '🍽️', items: [] }
+            }
+            grouped[catId].items.push({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                image: item.image,
+                available: item.available !== false
+            })
+        })
+        return Object.values(grouped)
+    }
+
     useEffect(() => {
-        console.log('[Menu] 🔍 DEBUG: tenantLoaded=', tenantLoaded, 'tenantData=', !!tenantData)
-        if (tenantLoaded) {
-            // Priority: 1. Cloud Data, 2. Seed Data
-            console.log('[Menu] 🔍 DEBUG: menu_data exists=', !!tenantData?.menu_data, 'categories=', tenantData?.menu_data?.categories?.length)
-            if (tenantData?.menu_data && tenantData.menu_data.categories.length > 0) {
-                console.log('[Menu] ☁️ Loading Cloud Data')
-                setMenu(tenantData.menu_data)
-            } else {
-                console.log('[Menu] 🌱 Loading Seed Data (Fallback)')
+        console.log('[Menu] 🔍 DEBUG: tenantLoaded=', tenantLoaded, 'businessId=', businessId)
+        if (!tenantLoaded || !businessId) return
+
+        const fetchMenu = async () => {
+            try {
+                // PRIMARY: Read from menu_items table (relational)
+                const { data: items, error } = await supabase
+                    .from('menu_items')
+                    .select('*')
+                    .eq('business_id', businessId)
+                    .order('display_order', { ascending: true })
+                    .limit(100)
+
+                if (error) {
+                    console.log('[Menu] ⚠️ DB Error:', error.message)
+                }
+
+                if (items && items.length > 0) {
+                    console.log('[Menu] ✅ Loading from menu_items table:', items.length, 'items')
+                    const grouped = groupItemsByCategory(items)
+                    setMenu({ categories: grouped })
+                } else {
+                    // FALLBACK: Try JSONB
+                    console.log('[Menu] 🔄 No relational data, checking JSONB...')
+                    if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
+                        console.log('[Menu] ☁️ Loading from JSONB')
+                        setMenu(tenantData.menu_data)
+                    } else {
+                        console.log('[Menu] 🌱 Loading Seed Data (Fallback)')
+                        setMenu(SEED_MENU)
+                    }
+                }
+            } catch (err) {
+                console.log('[Menu] ❌ Fetch error:', err)
                 setMenu(SEED_MENU)
             }
             setIsDataLoaded(true)
         }
-    }, [tenantLoaded, tenantData])
+
+        fetchMenu()
+    }, [tenantLoaded, businessId, tenantData?.menu_data])
 
     // =========================================================================
     // 2. AUTH & OWNER MODE (HARDWIRED BYPASS)

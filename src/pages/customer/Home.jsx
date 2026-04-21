@@ -204,7 +204,12 @@ function Home({ config: configProp }) {
     // Featured items with LOCAL STATE for optimistic updates
     // 🛡️ CLOUD-FIRST ALIGNMENT: Source of truth is tenantData.featuredPhotos
     // This removes the "ghost data" fallback to Latte/Seed.
-    const featuredPhotos = tenantData?.featured_photos || config?.featuredPhotos || []
+    // Check BOTH featured_photos (top-level) AND app_config.featuredPhotos
+    const featuredPhotos = 
+        tenantData?.app_config?.featuredPhotos || 
+        tenantData?.featured_photos || 
+        config?.featuredPhotos || 
+        []
 
     const buildFeaturedItems = useCallback((photos) => {
         // Enforce exactly 4 slots, populated strictly from the DB or null
