@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { incrementInstagramShare } from '../../utils/storage.js'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 
 function ShareFood({ config: configProp }) {
     const config = configProp || {};
@@ -11,6 +12,7 @@ function ShareFood({ config: configProp }) {
     }
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 SILO-AWARE: Get tenant from URL
+    const { t } = useLanguage()
     const appConfig = config
     const [shared, setShared] = useState(false)
 
@@ -40,8 +42,8 @@ function ShareFood({ config: configProp }) {
     return (
         <div className="page">
             <div className="page-header">
-                <h1 className="page-title">Compartí tu Comida</h1>
-                <p className="page-subtitle">Subilo a Instagram y ganá sellos 📸</p>
+                <h1 className="page-title">{t('share_food_title')}</h1>
+                <p className="page-subtitle">{t('share_instagram_earn')}</p>
             </div>
 
             {/* Main Card */}
@@ -99,7 +101,7 @@ function ShareFood({ config: configProp }) {
                             flexShrink: 0
                         }}>1</div>
                         <div>
-                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>Sacá una foto</p>
+                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{t('take_photo')}</p>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
                                 De tu café, comida o del local
                             </p>
@@ -121,7 +123,7 @@ function ShareFood({ config: configProp }) {
                             flexShrink: 0
                         }}>2</div>
                         <div>
-                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>Subila a Stories</p>
+                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{t('upload_stories')}</p>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
                                 Etiquetá a {appConfig.businessInfo?.instagram || '@grubclub.ar'}
                             </p>
@@ -143,7 +145,7 @@ function ShareFood({ config: configProp }) {
                             flexShrink: 0
                         }}>3</div>
                         <div>
-                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>Mostrá tu Story</p>
+                            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{t('show_story')}</p>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
                                 El staff valida y sumás +1 sello
                             </p>
