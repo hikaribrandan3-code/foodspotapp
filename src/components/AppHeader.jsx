@@ -47,20 +47,25 @@ function AppHeader({ config: configProp }) {
         const scale = cover.scale || 1.0;
 
         const coverContent = (
-            <div className="cover-content menu-header-bg" style={{
+            <div style={{
                 position: 'absolute',
                 width: '100%',
                 height: '100%',
                 left: 0,
                 top: 0,
-                backgroundImage: config?.headerCover?.image ? `url(${config.headerCover.image})` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: `center`,
-                backgroundRepeat: 'no-repeat',
-                transform: `translate(${posX - 50}%, ${posY - 50}%) scale(${scale})`,
+                transform: `scale(${scale})`,
                 transformOrigin: 'center center',
                 transition: 'transform 0.1s ease-out'
-            }} />
+            }}>
+                <div className="cover-content menu-header-bg" style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundImage: config?.headerCover?.image ? `url(${config.headerCover.image})` : undefined,
+                    backgroundSize: 'cover',
+                    backgroundPosition: `${posX}% ${posY}%`,
+                    backgroundRepeat: 'no-repeat'
+                }} />
+            </div>
         )
 
         return (

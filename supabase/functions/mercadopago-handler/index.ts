@@ -48,7 +48,7 @@ async function getPaymentStatus(paymentId: string, accessToken: string) {
 // Update order status in database
 async function updateOrderStatus(externalRef: string, paymentData: any) {
     try {
-        // Extract order ID from external reference (plain UUID, no underscore)
+        // external_reference is the plain order UUID
         const orderId = externalRef;
         
         if (!orderId) {
