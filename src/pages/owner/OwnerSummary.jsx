@@ -684,7 +684,7 @@ function TeamManagement({ businessId, t, primaryColor }) {
                             />
                             <input
                                 type="password"
-                                placeholder="PIN (4 dígitos)"
+                                placeholder={t('pin_4_digits')}
                                 value={newStaff.pin}
                                 onChange={(e) => setNewStaff(p => ({ ...p, pin: e.target.value }))}
                                 maxLength={4}

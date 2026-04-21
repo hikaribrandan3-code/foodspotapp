@@ -1,4 +1,5 @@
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 
 // ============================================
 // 🎯 REWARDS — CLOUD-FIRST (P1 #15)
@@ -60,6 +61,7 @@ const CoffeeStampIcon = ({ filled }) => (
 function Rewards() {
     // ☁️ SILO LOCK: All data from useTenant() — no direct Supabase calls
     const { tenantData } = useTenant()
+    const { t } = useLanguage()
     const appConfig = tenantData?.app_config || {}
 
     const rewardsEnabled = appConfig?.features?.rewardsEnabled ?? false
@@ -93,8 +95,8 @@ function Rewards() {
         <div style={styles.page}>
             {/* HEADER */}
             <header style={styles.header}>
-                <h1 style={styles.title}>Recompensas</h1>
-                <p style={styles.subtitle}>Juntá sellos y ganá premios ⭐</p>
+                <h1 style={styles.title}>{t('rewards_title')}</h1>
+                <p style={styles.subtitle}>{t('collect_stamps_earn')}</p>
             </header>
 
             {/* STAMP PROGRESS CARD */}
@@ -134,7 +136,7 @@ function Rewards() {
                 <div style={styles.rewardIconWrap}>
                     <GiftIcon />
                 </div>
-                <p style={styles.rewardLabel}>Tu próxima recompensa</p>
+                <p style={styles.rewardLabel}>{t('next_reward')}</p>
                 <p style={styles.rewardTitle}>{rewardDescription}</p>
             </div>
 
@@ -145,7 +147,7 @@ function Rewards() {
                 <div style={styles.ruleRow}>
                     <div style={styles.ruleIcon}><CartIcon /></div>
                     <div>
-                        <p style={styles.ruleLabel}>Hacé un pedido</p>
+                        <p style={styles.ruleLabel}>{t('make_order')}</p>
                         <p style={styles.ruleDesc}>+1 sello por pedido completado</p>
                     </div>
                 </div>
@@ -153,7 +155,7 @@ function Rewards() {
                 <div style={styles.ruleRow}>
                     <div style={styles.ruleIcon}><InstagramIcon /></div>
                     <div>
-                        <p style={styles.ruleLabel}>Compartí en Instagram</p>
+                        <p style={styles.ruleLabel}>{t('share_instagram_rule')}</p>
                         <p style={styles.ruleDesc}>+1 sello al compartir tu comida</p>
                     </div>
                 </div>
@@ -161,8 +163,8 @@ function Rewards() {
                 <div style={styles.ruleRow}>
                     <div style={styles.ruleIcon}><WaveIcon /></div>
                     <div>
-                        <p style={styles.ruleLabel}>Visitános</p>
-                        <p style={styles.ruleDesc}>El staff puede validar tu visita</p>
+                        <p style={styles.ruleLabel}>{t('visit_us')}</p>
+                        <p style={styles.ruleDesc}>{t('staff_validates')}</p>
                     </div>
                 </div>
             </div>

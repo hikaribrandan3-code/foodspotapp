@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { formatPrice } from '../../config/menuData.js'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getGuestToken } from '../../utils/guestToken.js'
@@ -105,6 +105,7 @@ function Order({ config: configProp }) {
     const { t } = useLanguage()
     const config = configProp || tenantData?.app_config || {}
     const navigate = useNavigate()
+    const { tenantSlug } = useParams()
 
     // 🏢 TENANT DATA EXTRACTION
     const storeCoords = useMemo(() => ({
@@ -425,7 +426,7 @@ function Order({ config: configProp }) {
 
             setSubmitted(true)
             setTimeout(() => {
-                navigate(`../status?orderId=${savedOrder.id}`)
+                navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
             }, 1500)
 
         } catch (err) {
@@ -455,7 +456,7 @@ function Order({ config: configProp }) {
             const validation = validateDeliveryInfo(customerInfo)
             if (!validation.valid) errors.push(...validation.errors)
         } else if (orderType === 'dine_in') {
-            if (!customerInfo.tableNumber) errors.push('Número de mesa requerido')
+            if (!customerInfo.tableNumber) errors.push(t('table_number_required_error'))
         }
         if (errors.length > 0) {
             setValidationErrors(errors)
@@ -513,7 +514,7 @@ function Order({ config: configProp }) {
 
             setSubmitted(true)
             setTimeout(() => {
-                navigate(`../status?orderId=${savedOrder.id}`)
+                navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
             }, 1500)
         } catch (err) {
             console.error('[Order] WhatsApp Submit Error:', err)
@@ -777,8 +778,8 @@ function Order({ config: configProp }) {
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                             }}>
                                 <div>
-                                    <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>Ubicación</span>
-                                    <div style={{ fontSize: 20, fontWeight: 700 }}>Comer en Mesa</div>
+                                    <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>{t('location_label')}</span>
+                                    <div style={{ fontSize: 20, fontWeight: 700 }}>{t('dine_in_table')}</div>
                                 </div>
                                 <div style={{ background: 'rgba(255,255,255,0.1)', padding: 8, borderRadius: 12 }}>
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><line x1="6" y1="6" x2="6" y2="6" /><line x1="6" y1="30" x2="6" y2="30" /></svg>
@@ -786,7 +787,7 @@ function Order({ config: configProp }) {
                             </div>
                         ) : (
                             <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 4 }}>
-                                Detalles de Entrega
+                                {t('delivery_details')}
                             </h3>
                         )}
                     </div>
@@ -813,13 +814,13 @@ function Order({ config: configProp }) {
                             )}
 
                             <InputGroup
-                                label="Nombre" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                                label={t('name_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
                                 value={customerInfo.name}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
                                 placeholder={t('name_placeholder')}
                             />
                             <InputGroup
-                                label="Teléfono" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
+                                label={t('phone_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
                                 value={customerInfo.phone}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
                                 placeholder={t('phone_label') + ' (ex: 1123456789)'}
@@ -829,24 +830,24 @@ function Order({ config: configProp }) {
                             {/* 🛡️ STRIKE 17: STRUCTURED ADDRESS GRID */}
                             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
                                 <InputGroup
-                                    label="Calle"
+                                    label={t('street_label')}
                                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>}
                                     value={customerInfo.address.street}
                                     onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, street: e.target.value } }))}
                                     placeholder={t('street_placeholder')}
                                 />
                                 <InputGroup
-                                    label="Altura"
+                                    label={t('number_label')}
                                     icon={<span style={{ fontSize: 16, fontWeight: 700 }}>#</span>}
                                     value={customerInfo.address.number}
                                     onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, number: e.target.value } }))}
-                                    placeholder="1234"
+                                    placeholder={t('number_placeholder')}
                                     inputMode="numeric"
                                 />
                             </div>
 
                             <InputGroup
-                                label="Piso / Depto (Opcional)"
+                                label={t('floor_label')}
                                 icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18" /><rect x="5" y="3" width="14" height="14" rx="2" /></svg>}
                                 value={customerInfo.address.floor}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, floor: e.target.value } }))}
@@ -854,7 +855,7 @@ function Order({ config: configProp }) {
                             />
 
                             <InputGroup
-                                label="Nota / Timbre (Opcional)"
+                                label={t('notes_label')}
                                 icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>}
                                 value={customerInfo.address.notes}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, notes: e.target.value } }))}
@@ -865,17 +866,17 @@ function Order({ config: configProp }) {
                     ) : (
                         <>
                             <InputGroup
-                                label="Número de Mesa" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" /><path d="M21 9H3" /><path d="M21 15H3" /><path d="M9 3v18" /><path d="M15 3v18" /></svg>}
+                                label={t('table_number_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" /><path d="M21 9H3" /><path d="M21 15H3" /><path d="M9 3v18" /><path d="M15 3v18" /></svg>}
                                 value={customerInfo.tableNumber}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
                                 placeholder={t('table_number_placeholder')}
                                 inputMode="numeric" pattern="[0-9]*"
                             />
                             <InputGroup
-                                label="Nombre (Opcional)" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                                label={t('name_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
                                 value={customerInfo.name}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
-                                placeholder="Para llamarte"
+                                placeholder={t('name_placeholder')}
                             />
                         </>
                     )}
@@ -917,7 +918,7 @@ function Order({ config: configProp }) {
 
                 {/* 4. ORDER ITEMS */}
                 <div style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>Resumen</h3>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>{t('summary')}</h3>
                     {order.items.map((item, index) => (
                         <div key={index} style={{
                             display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0',
