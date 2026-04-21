@@ -423,6 +423,8 @@ export const translations = {
     share_instagram_rule: { es: "Compartí en Instagram", en: "Share on Instagram", pt: "Compartilhe no Instagram" },
     visit_us: { es: "Visitános", en: "Visit us", pt: "Visite-nos" },
     staff_validates: { es: "El staff puede validar tu visita", en: "Staff can validate your visit", pt: "A equipe pode validar sua visita" },
-    active_session: { es: "Sesión activa", en: "Active session", pt: "Sessão ativa" }
+    active_session: { es: "Sesión activa", en: "Active session", pt: "Sessão ativa" },
+    table_number_required_error: { es: "Número de mesa requerido", en: "Table number required", pt: "Número da mesa obrigatório" },
+    table_number_optional: { es: "Número de mesa (opcional)", en: "Table number (optional)", pt: "Número da mesa (opcional)" }
 };
 

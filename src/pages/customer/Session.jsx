@@ -287,7 +287,7 @@ function Session({ config }) {
 
                     <div style={{ marginBottom: 16 }}>
                         <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block' }}>
-                            Número de mesa (opcional)
+                            {t('table_number_optional')}
                         </label>
                         <input
                             type="text"

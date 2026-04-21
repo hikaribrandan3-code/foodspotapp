@@ -456,7 +456,7 @@ function Order({ config: configProp }) {
             const validation = validateDeliveryInfo(customerInfo)
             if (!validation.valid) errors.push(...validation.errors)
         } else if (orderType === 'dine_in') {
-            if (!customerInfo.tableNumber) errors.push('Número de mesa requerido')
+            if (!customerInfo.tableNumber) errors.push(t('table_number_required_error'))
         }
         if (errors.length > 0) {
             setValidationErrors(errors)
