@@ -223,14 +223,14 @@ const Analytics = () => {
                                     <div style={{ fontSize: 18 }}>💳</div>
                                     <div>
                                         <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>{stats.mpCount}</div>
-                                        <div style={{ fontSize: 11, color: '#6B7280' }}>Mercado Pago</div>
+                                        <div style={{ fontSize: 11, color: '#6B7280' }}>{t('mercado_pago')}</div>
                                     </div>
                                 </div>
                                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#F0FDF4', borderRadius: 12 }}>
                                     <div style={{ fontSize: 18 }}>💵</div>
                                     <div>
                                         <div style={{ fontSize: 18, fontWeight: 800, color: '#16A34A' }}>{stats.cashCount}</div>
-                                        <div style={{ fontSize: 11, color: '#6B7280' }}>Efectivo</div>
+                                        <div style={{ fontSize: 11, color: '#6B7280' }}>{t('cash')}</div>
                                     </div>
                                 </div>
                             </div>

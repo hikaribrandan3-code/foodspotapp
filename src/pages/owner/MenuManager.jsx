@@ -8,6 +8,7 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
@@ -47,6 +48,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
     const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded, refreshTenantData } = useTenant()
+    const { t } = useLanguage()
     // 🛡️ RESOLVED ID: Handles Simulation + Fallback for Dev
     const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
@@ -970,7 +972,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 gap: 12
             }}>
                 <div style={{ fontSize: 32 }}>☁️</div>
-                <div style={{ color: '#64748B', fontWeight: 500 }}>Sincronizando con la Nube...</div>
+                <div style={{ color: '#64748B', fontWeight: 500 }}>{t('syncing_with_cloud')}</div>
             </div>
         )
     }
@@ -989,8 +991,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ Pausar pedidos</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Desactiva temporalmente los pedidos</p>
+                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ {t('pause_orders')}</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>{t('pause_orders_desc')}</p>
                             </div>
                             <label className="toggle">
                                 <input
@@ -1008,7 +1010,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         {/* Pause Message */}
                         {localConfig.pauseOrders && (
                             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Mensaje para clientes</label>
+                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>{t('pause_message_label')}</label>
                                 <input
                                     type="text"
                                     value={pauseMessage}
@@ -1078,7 +1080,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 }} />
                             </div>
 
-                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
+                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>{t('delivery_radius_label').replace('{radius}', localConfig.delivery?.radiusKm || 5)}</label>
                             <input
                                 type="range"
                                 min="1"
@@ -1104,7 +1106,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
+                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>{t('flat_fee_label')}</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -1122,7 +1124,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 />
                             </div>
                             <div>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
+                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>{t('free_delivery_from_label')}</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -1642,10 +1644,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 editingItem && (
                     <div className="modal-overlay" onClick={() => setEditingItem(null)}>
                         <div className="modal" onClick={e => e.stopPropagation()}>
-                            <h2 className="modal-title">Editar item</h2>
+                            <h2 className="modal-title">{t('edit_item')}</h2>
 
                             <div className="form-group">
-                                <label className="form-label">Nombre</label>
+                                <label className="form-label">{t('name_label')}</label>
                                 <input
                                     type="text"
                                     className="form-input"
@@ -1655,7 +1657,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Precio (ARS)</label>
+                                <label className="form-label">{t('price_label_ars')}</label>
                                 <input
                                     type="number"
                                     className="form-input"
@@ -1665,7 +1667,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Imagen (JPG/PNG)</label>
+                                <label className="form-label">{t('image_label')}</label>
                                 {editForm.image && (
                                     <div style={{ marginBottom: 8 }}>
                                         <img
