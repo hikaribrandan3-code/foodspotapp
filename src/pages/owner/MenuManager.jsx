@@ -1154,7 +1154,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 {/* ==================== PRINT MENU ==================== */}
                 <div style={{ marginTop: 24 }}>
                     <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '0 0 24px 0' }} />
-                    <PrintMenu businessId={targetBusinessId} tenantSlug={tenantSlug} />
+                    <PrintMenu menu={menu} tenantData={tenantData} tenantSlug={tenantSlug} />
                 </div>
 
                 {/* ==================== BRIDGED BRANDING SECTION - HIDDEN FOR MVP ==================== */}
