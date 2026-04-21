@@ -5,6 +5,7 @@ import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.v2.js'
 import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
+import { handleCashPayment } from '../../services/offlinePayment.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
@@ -67,9 +68,36 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         setOrders(getOrders())
     }
 
-    // Handle payment confirmation
-    const handlePaymentConfirm = (orderId) => {
+    // Handle payment confirmation — writes to Supabase for real orders
+    const handlePaymentConfirm = async (orderId) => {
         const method = paymentMethodSelect[orderId] || 'cash'
+        const isRealOrder = !demoMode && !orderId.startsWith('demo-')
+
+        if (isRealOrder) {
+            if (method === 'cash') {
+                const { data: dbOrder } = await supabase
+                    .from('orders')
+                    .select('id, total, business_id')
+                    .eq('id', orderId)
+                    .single()
+
+                if (dbOrder) {
+                    await handleCashPayment({
+                        orderId,
+                        amountCents: Math.round(dbOrder.total * 100),
+                        businessId: dbOrder.business_id,
+                        currency: 'ARS'
+                    })
+                }
+            } else {
+                // MP already handled by webhook — just confirm on our side
+                await supabase
+                    .from('orders')
+                    .update({ payment_confirmed: true, paid_at: new Date().toISOString() })
+                    .eq('id', orderId)
+            }
+        }
+
         updateOrder(orderId, { paymentConfirmed: true, paymentMethod: method })
         setOrders(getOrders())
     }
