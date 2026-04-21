@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { formatPrice } from '../../config/menuData.js'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getGuestToken } from '../../utils/guestToken.js'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { getDividerPreset } from '../../config/dividerPresets.js'
 import { formatAddressForDisplay } from '../../utils/logistics.js' // Strike 17 Import
@@ -101,6 +102,7 @@ const placeholderImages = [
 
 function Order({ config: configProp }) {
     const { businessId, tenantData, serviceModes } = useTenant()
+    const { t } = useLanguage()
     const config = configProp || tenantData?.app_config || {}
     const navigate = useNavigate()
 
@@ -263,13 +265,13 @@ function Order({ config: configProp }) {
         if (customerInfo.phone) {
             const digitsOnly = customerInfo.phone.replace(/\D/g, '')
             if (digitsOnly.length < 8) {
-                errors.push('Número de teléfono inválido (mínimo 8 dígitos, ej: 1123456789)')
+                errors.push(t('phone_invalid'))
             }
         }
 
         if (orderType === 'delivery') {
             if (!customerInfo.phone || customerInfo.phone.replace(/\D/g, '').length < 8) {
-                errors.push('WhatsApp requerido para delivery (ej: 1123456789)')
+                errors.push(t('whatsapp_required'))
             }
             const validation = validateDeliveryInfo(customerInfo)
             if (!validation.valid) errors.push(...validation.errors)
@@ -277,12 +279,12 @@ function Order({ config: configProp }) {
 
         // 🛡️ TABLE NUMBER: Only required for Dine In
         if (orderType === 'dine_in' && !customerInfo.tableNumber) {
-            errors.push('Número de mesa requerido')
+            errors.push(t('table_number_required'))
         }
 
         if (errors.length > 0) {
             setValidationErrors(errors)
-            showToast('⚠️ Completa los datos requeridos')
+            showToast('⚠️ ' + t('required_fields'))
             return
         }
 
@@ -390,7 +392,7 @@ function Order({ config: configProp }) {
                         window.open(whatsappUrl, '_blank')
                     }
 
-                    showToast('✅ Pedido registrado — Pagás en efectivo al recibir')
+                    showToast('✅ ' + t('cash_registered'))
                 }
             }
 
@@ -406,7 +408,7 @@ function Order({ config: configProp }) {
                     })
                     
                     if (cashResult.method === 'offline') {
-                        showToast('💾 Pago en efectivo guardado (modo offline)')
+                        showToast('💾 ' + t('cash_offline'))
                     } else {
                         console.log('[Order] Cash payment logged:', cashResult.data?.ledgerId)
                     }
@@ -457,7 +459,7 @@ function Order({ config: configProp }) {
         }
         if (errors.length > 0) {
             setValidationErrors(errors)
-            showToast('⚠️ Completa los datos requeridos')
+            showToast('⚠️ ' + t('required_fields'))
             return
         }
 
@@ -738,7 +740,7 @@ function Order({ config: configProp }) {
                 <div style={{ marginBottom: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
-                            {orderType === 'dine_in' ? 'Para la mesa' : 'Tu Pedido'}
+                            {orderType === 'dine_in' ? t('dine_in_table') : t('your_order')}
                         </h1>
                         {serviceModes?.dineIn && serviceModes?.delivery && (
                             <button
@@ -814,13 +816,13 @@ function Order({ config: configProp }) {
                                 label="Nombre" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
                                 value={customerInfo.name}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
-                                placeholder="Tu nombre y apellido"
+                                placeholder={t('name_placeholder')}
                             />
                             <InputGroup
                                 label="Teléfono" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
                                 value={customerInfo.phone}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
-                                placeholder="WhatsApp (ej: 11 1234 5678)"
+                                placeholder={t('phone_label') + ' (ex: 1123456789)'}
                                 type="tel"
                             />
 
@@ -831,7 +833,7 @@ function Order({ config: configProp }) {
                                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>}
                                     value={customerInfo.address.street}
                                     onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, street: e.target.value } }))}
-                                    placeholder="Ej: Av. Cabildo"
+                                    placeholder={t('street_placeholder')}
                                 />
                                 <InputGroup
                                     label="Altura"
@@ -848,7 +850,7 @@ function Order({ config: configProp }) {
                                 icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18" /><rect x="5" y="3" width="14" height="14" rx="2" /></svg>}
                                 value={customerInfo.address.floor}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, floor: e.target.value } }))}
-                                placeholder="Ej: 5B, PB, etc."
+                                placeholder={t('floor_placeholder')}
                             />
 
                             <InputGroup
@@ -856,7 +858,7 @@ function Order({ config: configProp }) {
                                 icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>}
                                 value={customerInfo.address.notes}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, notes: e.target.value } }))}
-                                placeholder="Ej: Timbre no anda, al fondo"
+                                placeholder={t('notes_placeholder')}
                                 isTextArea={true}
                             />
                         </>
@@ -866,7 +868,7 @@ function Order({ config: configProp }) {
                                 label="Número de Mesa" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" /><path d="M21 9H3" /><path d="M21 15H3" /><path d="M9 3v18" /><path d="M15 3v18" /></svg>}
                                 value={customerInfo.tableNumber}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
-                                placeholder="Indica el número"
+                                placeholder={t('table_number_placeholder')}
                                 inputMode="numeric" pattern="[0-9]*"
                             />
                             <InputGroup
@@ -893,8 +895,8 @@ function Order({ config: configProp }) {
                             id="mercadopago"
                             selected={paymentMethod === 'mercadopago'}
                             onClick={() => setPaymentMethod('mercadopago')}
-                            title="Mercado Pago"
-                            subtitle="Tarjetas, Débito, QR"
+                            title={t('mercado_pago')}
+                            subtitle={t('mp_subtitle')}
                             color="#009EE3"
                             icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
                         />
@@ -905,8 +907,8 @@ function Order({ config: configProp }) {
                             id="efectivo"
                             selected={paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter'}
                             onClick={() => setPaymentMethod(orderType === 'dine_in' ? 'pay_at_counter' : 'efectivo')}
-                            title={orderType === 'dine_in' ? 'Pagar al Final' : 'Efectivo'}
-                            subtitle={orderType === 'dine_in' ? 'En caja o al mozo' : 'Pagar al recibir'}
+                            title={orderType === 'dine_in' ? t('pay_at_end_table') : t('cash')}
+                            subtitle={orderType === 'dine_in' ? t('pay_at_end_desc') : t('cash_delivery')}
                             color="#22C55E"
                             icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
                         />
@@ -983,7 +985,7 @@ function Order({ config: configProp }) {
                         transform: 'translateZ(0)'
                     }}
                 >
-                    <span>{isSubmitting ? 'Procesando...' : (isOutOfRadius ? 'Fuera de Radio' : 'Confirmar Pedido')}</span>
+                    <span>{isSubmitting ? t('order_processing') : (isOutOfRadius ? t('out_of_delivery_radius') : t('confirm_order'))}</span>
                     {!isSubmitting && !isOutOfRadius && <span>➜</span>}
                 </button>
 
