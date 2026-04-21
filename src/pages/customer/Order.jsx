@@ -273,8 +273,11 @@ function Order({ config: configProp }) {
             }
             const validation = validateDeliveryInfo(customerInfo)
             if (!validation.valid) errors.push(...validation.errors)
-        } else if (orderType === 'dine_in') {
-            if (!customerInfo.tableNumber) errors.push('Número de mesa requerido')
+        }
+
+        // 🛡️ TABLE NUMBER: Only required for Dine In
+        if (orderType === 'dine_in' && !customerInfo.tableNumber) {
+            errors.push('Número de mesa requerido')
         }
 
         if (errors.length > 0) {
@@ -298,7 +301,7 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: 'pendiente', // 💎 PERSISTENT-FIRST: Saved immediately, payment resolved after
+            status: 'pending', // 💎 PERSISTENT-FIRST: Saved immediately, payment resolved after
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
@@ -472,7 +475,7 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: 'pendiente',
+            status: 'pending',
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
