@@ -9,6 +9,7 @@ import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 
 /**
  * DELIVERY MANAGER
@@ -21,6 +22,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const { t } = useLanguage()
+    const { businessId } = useTenant() // Get business ID for filtering orders
     const [orders, setOrders] = useState([])
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
@@ -39,6 +41,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             const { data, error } = await supabase
                 .from('orders')
                 .select('*')
+                .eq('business_id', businessId)
                 .order('created_at', { ascending: false })
                 .limit(50)
 
@@ -69,7 +72,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             clearInterval(interval)
             subscription.unsubscribe()
         }
-    }, [demoMode])
+    }, [demoMode, businessId])
 
     // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
     const handleLogout = async () => {
