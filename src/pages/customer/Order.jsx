@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { formatPrice } from '../../config/menuData.js'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getGuestToken } from '../../utils/guestToken.js'
@@ -105,6 +105,7 @@ function Order({ config: configProp }) {
     const { t } = useLanguage()
     const config = configProp || tenantData?.app_config || {}
     const navigate = useNavigate()
+    const { tenantSlug } = useParams()
 
     // 🏢 TENANT DATA EXTRACTION
     const storeCoords = useMemo(() => ({
@@ -425,7 +426,7 @@ function Order({ config: configProp }) {
 
             setSubmitted(true)
             setTimeout(() => {
-                navigate(`../status?orderId=${savedOrder.id}`)
+                navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
             }, 1500)
 
         } catch (err) {
@@ -513,7 +514,7 @@ function Order({ config: configProp }) {
 
             setSubmitted(true)
             setTimeout(() => {
-                navigate(`../status?orderId=${savedOrder.id}`)
+                navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
             }, 1500)
         } catch (err) {
             console.error('[Order] WhatsApp Submit Error:', err)
