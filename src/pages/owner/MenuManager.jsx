@@ -10,7 +10,7 @@ import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
-import PrintMenuModal from '../../components/PrintMenuModal.jsx'
+import PrintMenu from '../../components/PrintMenu.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
 import './MenuStyles.css'
@@ -56,7 +56,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // It will be populated by cloud data when tenantData arrives.
     const [menu, setMenu] = useState({ categories: [] })
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
-    const [isPrintMenuOpen, setIsPrintMenuOpen] = useState(false)
 
     // 🔒 HYDRATION LOCK: Prevents sync until cloud data is loaded
     const isHydratedRef = useRef(false)
@@ -1155,36 +1154,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 {/* ==================== PRINT MENU ==================== */}
                 <div style={{ marginTop: 24 }}>
                     <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '0 0 24px 0' }} />
-                    <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        📄 Menú para Imprimir
-                    </h3>
-                    <button
-                        onClick={() => setIsPrintMenuOpen(true)}
-                        style={{
-                            background: '#22c55e',
-                            color: 'white',
-                            border: 'none',
-                            padding: '12px 24px',
-                            borderRadius: '8px',
-                            fontSize: '15px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.target.style.background = '#16a34a'}
-                        onMouseLeave={(e) => e.target.style.background = '#22c55e'}
-                    >
-                        🖨️ Editar y Descargar
-                    </button>
+                    <PrintMenu businessId={targetBusinessId} tenantSlug={tenantSlug} />
                 </div>
-
-                <PrintMenuModal
-                    isOpen={isPrintMenuOpen}
-                    onClose={() => setIsPrintMenuOpen(false)}
-                    menu={menu}
-                    tenantData={tenantData}
-                    tenantSlug={tenantSlug}
-                />
 
                 {/* ==================== BRIDGED BRANDING SECTION - HIDDEN FOR MVP ==================== */}
                 {false && (
