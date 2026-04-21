@@ -1021,7 +1021,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     onBlur={() => {
                                         setLocalConfig(prev => ({ ...prev, pauseOrdersMessage: pauseMessage }))
                                     }}
-                                    placeholder="Ej: Estamos con muchos pedidos"
+                                    placeholder={t('pause_message_placeholder')}
                                     style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
                                 />
                             </div>
@@ -1307,7 +1307,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
                             <input
                                 type="text"
-                                placeholder="Nombre de categoría"
+                                placeholder={t('category_name')}
                                 value={newCategoryName}
                                 onChange={(e) => setNewCategoryName(e.target.value)}
                                 autoFocus

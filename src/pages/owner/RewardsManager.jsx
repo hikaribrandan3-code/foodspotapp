@@ -117,7 +117,7 @@ function RewardsManager() {
                     <h3 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16, marginTop: 0 }}>{t('rewards_config')}</h3>
 
                     <div className="form-group">
-                        <label className="form-label">Sellos necesarios</label>
+                        <label className="form-label">{t('stamps_required')}</label>
                         <input
                             type="number"
                             className="form-input"
@@ -129,13 +129,13 @@ function RewardsManager() {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Descripción del premio</label>
+                        <label className="form-label">{t('reward_description')}</label>
                         <input
                             type="text"
                             className="form-input"
                             value={rewardDescription}
                             onChange={(e) => setRewardDescription(e.target.value)}
-                            placeholder="Ej: ¡Café gratis!"
+                            placeholder={t('free_coffee')}
                         />
                     </div>
 

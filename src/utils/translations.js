@@ -399,6 +399,14 @@ export const translations = {
     dashboard_empty_title: { es: "Todo tranquilo por ahora... 😴", en: "All quiet for now... 😴", pt: "Tudo tranquilo por enquanto... 😴" },
     dashboard_empty_desc: { es: "Los pedidos aparecerán aquí automáticamente.", en: "Orders will appear here automatically.", pt: "Os pedidos aparecerão aqui automaticamente." },
     active_rewards: { es: "Recompensas activas", en: "Active rewards", pt: "Recompensas ativas" },
-    rewards_config: { es: "Configuración", en: "Settings", pt: "Configurações" }
+    rewards_config: { es: "Configuración", en: "Settings", pt: "Configurações" },
+    stamps_required: { es: "Sellos necesarios", en: "Stamps required", pt: "Selos necessários" },
+    reward_description: { es: "Descripción del premio", en: "Reward description", pt: "Descrição da recompensa" },
+    free_coffee: { es: "Ej: ¡Café gratis!", en: "Ex: Free coffee!", pt: "Ex: Café grátis!" },
+    pin_4_digits: { es: "PIN (4 dígitos)", en: "PIN (4 digits)", pt: "PIN (4 dígitos)" },
+    pause_message_placeholder: { es: "Ej: Estamos con muchos pedidos", en: "Ex: We're busy with many orders", pt: "Ex: Estamos ocupados com muitos pedidos" },
+    category_name: { es: "Nombre de categoría", en: "Category name", pt: "Nome da categoria" },
+    sessions: { es: "sesiones", en: "sessions", pt: "sessões" },
+    address: { es: "Dirección", en: "Address", pt: "Endereço" }
 };
 
