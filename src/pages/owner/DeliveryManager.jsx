@@ -21,20 +21,55 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const navigate = useNavigate()
     const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
     const { t } = useLanguage()
-    const [orders, setOrders] = useState(() => getOrders())
+    const [orders, setOrders] = useState([])
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
 
     // NOTE: Auth check removed - ProtectedRoute handles authentication
     // demoMode components bypass ProtectedRoute entirely via separate routes
 
-    // Poll for order updates
+    // Fetch orders from Supabase for staff dashboard (real-time)
     useEffect(() => {
-        const interval = setInterval(() => {
+        if (demoMode) {
             setOrders(getOrders())
-        }, 5000)
-        return () => clearInterval(interval)
-    }, [])
+            return
+        }
+
+        const fetchSupabaseOrders = async () => {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50)
+
+            if (!error && data) {
+                setOrders(data)
+            }
+        }
+
+        // Fetch immediately
+        fetchSupabaseOrders()
+
+        // Subscribe to real-time changes
+        const subscription = supabase
+            .channel('orders-channel')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'orders' },
+                () => {
+                    fetchSupabaseOrders()
+                }
+            )
+            .subscribe()
+
+        // Fallback poll every 5s if subscription fails
+        const interval = setInterval(fetchSupabaseOrders, 5000)
+
+        return () => {
+            clearInterval(interval)
+            subscription.unsubscribe()
+        }
+    }, [demoMode])
 
     // 🚀 SILO-AWARE LOGOUT: Redirect to customer-facing view of THIS tenant
     const handleLogout = async () => {
