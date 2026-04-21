@@ -48,8 +48,8 @@ async function getPaymentStatus(paymentId: string, accessToken: string) {
 // Update order status in database
 async function updateOrderStatus(externalRef: string, paymentData: any) {
     try {
-        // Extract order ID from external reference (format: order_{order_id}_{timestamp})
-        const orderId = externalRef.split('_')[1];
+        // Extract order ID from external reference (plain UUID, no underscore)
+        const orderId = externalRef;
         
         if (!orderId) {
             console.error(`[mercadopago-handler] Invalid external reference: ${externalRef}`);

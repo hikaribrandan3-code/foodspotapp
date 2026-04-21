@@ -287,7 +287,7 @@ function StaffDashboard() {
                         </h1>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {/* 🎟️ TICKET SCANNER BUTTON */}
+                        {/* 🎟️ TICKET SCANNER — NERFED: Browser camera API unreliable on mobile web
                         <button
                             onClick={() => setShowScanner(true)}
                             style={{
@@ -300,6 +300,7 @@ function StaffDashboard() {
                         >
                             🎟️ Escanear
                         </button>
+                        */}
                         <div style={{
                             width: 8, height: 8, borderRadius: '50%', background: '#22C55E',
                             boxShadow: '0 0 8px #22C55E'

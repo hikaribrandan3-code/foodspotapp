@@ -885,7 +885,7 @@ function Order({ config: configProp }) {
                         Método de Pago
                     </h3>
 
-                    {(orderType === 'delivery' || serviceModes?.dineInPayment === 'before') && (
+                    {(orderType === 'delivery' || orderType === 'pickup' || serviceModes?.dineInPayment === 'before') && (
                         <PaymentMethodCard
                             id="mercadopago"
                             selected={paymentMethod === 'mercadopago'}

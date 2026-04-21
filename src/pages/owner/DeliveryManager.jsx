@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.js'
+import { handleCashPayment } from '../../services/offlinePayment.js'
 import { verifyDeliveryCode, getPhoneLast4 } from '../../utils/deliveryUtils.js'
 import { updateConfig, CONFIRMATION_COLORS } from '../../config/appConfig.v2.js'
 import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
@@ -67,9 +68,33 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         setOrders(getOrders())
     }
 
-    // Handle payment confirmation
-    const handlePaymentConfirm = (orderId) => {
+    // Handle payment confirmation — writes to Supabase + localStorage
+    const handlePaymentConfirm = async (orderId) => {
         const method = paymentMethodSelect[orderId] || 'cash'
+        
+        // Write to Supabase
+        const { error } = await supabase
+            .from('orders')
+            .update({ 
+                payment_confirmed: true, 
+                payment_method: method,
+                payment_status: 'approved',
+                paid_at: new Date().toISOString()
+            })
+            .eq('id', orderId)
+        
+        if (error) {
+            console.error('[DeliveryManager] Payment confirm failed:', error)
+            alert('Error confirmando pago — intenta de nuevo')
+            return
+        }
+        
+        // If cash, also write to transaction_ledger
+        if (method === 'cash') {
+            await handleCashPayment(orderId)
+        }
+        
+        // Update local state
         updateOrder(orderId, { paymentConfirmed: true, paymentMethod: method })
         setOrders(getOrders())
     }
