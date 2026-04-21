@@ -1030,12 +1030,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                     {/* Archive Info */}
                     <div style={{ background: '#F0FDF4', borderRadius: 12, border: '1px solid #BBF7D0', padding: 12, marginBottom: 12 }}>
-                        <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
+                        <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>{t('archive_info_msg')}</p>
                     </div>
 
                     {/* Delivery Configuration */}
                     <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
-                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
+                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 {t('delivery_config_title')}</p>
 
                         <div style={{ marginBottom: 12 }}>
                             {/* SaaS-Scale Static Map & Radius Visualizer */}

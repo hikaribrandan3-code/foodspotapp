@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import { subscribeToOrders, updateOrderCloud } from '../../lib/supabaseClient'
 import ItemCard from '../../components/ItemCard'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics' // Strike 17 Imports
@@ -48,6 +49,7 @@ const NEXT_STEP = {
 
 export default function Dashboard() {
     const { businessId, tenantData } = useTenant()
+    const { t } = useLanguage()
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -234,8 +236,8 @@ export default function Dashboard() {
 
             {orders.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: 60, color: '#6B7280' }}>
-                    <h2>Todo tranquilo por ahora... 😴</h2>
-                    <p>Los pedidos aparecerán aquí automáticamente.</p>
+                    <h2>{t('dashboard_empty_title')}</h2>
+                    <p>{t('dashboard_empty_desc')}</p>
                 </div>
             ) : (
                 <div style={{

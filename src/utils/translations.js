@@ -395,6 +395,10 @@ export const translations = {
     pay_before_upfront: { es: "💳 Pagar Antes (Adelante)", en: "💳 Pay Before (Upfront)", pt: "💳 Pagar Antes (Adiantado)" },
     pay_after_table: { es: "🧾 Pagar Después (Al Final)", en: "🧾 Pay After (At End)", pt: "🧾 Pagar Depois (No Final)" },
     payment_methods_label: { es: "Métodos de Pago", en: "Payment Methods", pt: "Métodos de Pagamento" },
-    coming_soon: { es: "Próximamente", en: "Coming Soon", pt: "Em Breve" }
+    coming_soon: { es: "Próximamente", en: "Coming Soon", pt: "Em Breve" },
+    dashboard_empty_title: { es: "Todo tranquilo por ahora... 😴", en: "All quiet for now... 😴", pt: "Tudo tranquilo por enquanto... 😴" },
+    dashboard_empty_desc: { es: "Los pedidos aparecerán aquí automáticamente.", en: "Orders will appear here automatically.", pt: "Os pedidos aparecerão aqui automaticamente." },
+    active_rewards: { es: "Recompensas activas", en: "Active rewards", pt: "Recompensas ativas" },
+    rewards_config: { es: "Configuración", en: "Settings", pt: "Configurações" }
 };
 
