@@ -226,7 +226,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     }
 
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      try { if (channel) supabase.removeChannel(channel); } catch { /* WebSocket may already be closed on navigation */ }
       if (pollInterval) clearInterval(pollInterval);
     };
   }, [businessId, addToast, audioEnabled]);
