@@ -28,9 +28,6 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
 
-    // 🏢 BUSINESS ID: Extract from config (tenant data) or localStorage fallback
-    const businessId = config.businessId || config.business_id || localStorage.getItem('fs_business_id')
-
     // Fetch orders from Supabase for staff dashboard (real-time, SILO-FILTERED)
     useEffect(() => {
         if (demoMode) {
