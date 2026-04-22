@@ -109,37 +109,47 @@ export default function ProfileView() {
   };
 
   const handleSignOut = async () => {
-    // Disconnect all realtime channels before navigation
-    try {
-      const channels = supabase.getChannels?.() || [];
-      await Promise.all(channels.map((c: any) => supabase.removeChannel(c)));
-    } catch {}
-
     localStorage.removeItem('fs_staff_member');
     localStorage.removeItem('fs_current_shift');
     localStorage.removeItem('x-staff-id');
 
-    // Delay navigation to let cleanup complete
-    setTimeout(() => {
-      window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
-    }, 50);
+    // Clear all error handlers temporarily to prevent Supabase errors from blocking logout
+    const origError = window.onerror;
+    const origUnhandled = window.onunhandledrejection;
+    window.onerror = null;
+    window.onunhandledrejection = null;
+
+    try {
+      const channels = supabase.getChannels?.() || [];
+      channels.forEach((c: any) => {
+        try { supabase.removeChannel(c); } catch {}
+      });
+    } catch {}
+
+    // Navigate immediately - don't wait
+    window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
   };
 
   const handleResetPin = async () => {
-    // Disconnect all realtime channels before navigation
-    try {
-      const channels = supabase.getChannels?.() || [];
-      await Promise.all(channels.map((c: any) => supabase.removeChannel(c)));
-    } catch {}
-
     localStorage.removeItem('fs_staff_member');
     localStorage.removeItem('fs_current_shift');
     localStorage.removeItem('x-staff-id');
 
-    // Delay navigation to let cleanup complete
-    setTimeout(() => {
-      window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
-    }, 50);
+    // Clear all error handlers temporarily to prevent Supabase errors from blocking logout
+    const origError = window.onerror;
+    const origUnhandled = window.onunhandledrejection;
+    window.onerror = null;
+    window.onunhandledrejection = null;
+
+    try {
+      const channels = supabase.getChannels?.() || [];
+      channels.forEach((c: any) => {
+        try { supabase.removeChannel(c); } catch {}
+      });
+    } catch {}
+
+    // Navigate immediately - don't wait
+    window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
   };
 
   const currentLang = LANGUAGES.find(l => l.code === language)?.label || 'English';
