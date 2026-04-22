@@ -53,6 +53,7 @@ export default function OrderCard({
   showAdvanceButton = false,
 }: OrderCardProps) {
   const { selectOrder, verifyCash, confirmDelivery } = useOrders();
+  const { businessLat, businessLng } = useBusiness();
   const [isRemoving, setIsRemoving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const x = useMotionValue(0);
@@ -64,6 +65,19 @@ export default function OrderCard({
 
   const urgency = getUrgencyLevel(order.createdAt);
   const waitMins = getWaitMinutes(order.createdAt);
+
+  // Calculate ETA for DISPATCH state (distance + buffer)
+  const eta = (() => {
+    if (
+      order.status !== 'DISPATCH' ||
+      !order.deliveryCoords ||
+      !businessLat ||
+      !businessLng
+    )
+      return null;
+    const distKm = getDistanceKm(businessLat, businessLng, order.deliveryCoords.lat, order.deliveryCoords.lng);
+    return getETAMinutes(distKm);
+  })();
 
   const isCashPending = order.status === 'PENDING_VERIFICATION';
   const isDelivering = order.status === 'DELIVERING';
@@ -238,7 +252,7 @@ export default function OrderCard({
           )}
         </div>
 
-        {/* Customer + Items */}
+        {/* Customer + Items + ETA (if DISPATCH) */}
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-base truncate" style={{ color: 'var(--text-primary)' }}>{order.customerName}</h3>
@@ -246,6 +260,13 @@ export default function OrderCard({
               {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
               {order.items.some(i => i.specialInstructions) && <span className="ml-1.5 text-xs" style={{ color: 'var(--has-notes)' }}>&bull; has notes</span>}
             </p>
+            {/* ETA badge for DISPATCH state */}
+            {eta && (
+              <div className="flex items-center gap-1 mt-1.5 px-2 py-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}>
+                <Clock size={12} />
+                <span className="text-xs font-semibold">{eta}m</span>
+              </div>
+            )}
             {/* Delivery address — shown on logistics cards */}
             {showLocation && order.deliveryAddress && (
               <div className="flex items-start gap-1 mt-1.5">
