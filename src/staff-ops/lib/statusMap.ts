@@ -103,6 +103,13 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     deliveryAddress = parts.join(', ') || rawAddr.formatted_address || undefined;
   }
 
+  // Delivery type: delivery, pickup, or dine-in
+  let deliveryType: 'delivery' | 'pickup' | 'dine-in' | undefined;
+  const rawDeliveryType = dbOrder.delivery_type;
+  if (rawDeliveryType === 'delivery' || rawDeliveryType === 'pickup' || rawDeliveryType === 'dine-in') {
+    deliveryType = rawDeliveryType;
+  }
+
   return {
     id: dbOrder.id,
     customerName: dbOrder.customer_name || 'Cliente',
@@ -116,5 +123,6 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     cashVerified: paymentConfirmed,
     offlineQueued: false,
     deliveryAddress,
+    deliveryType,
   };
 }

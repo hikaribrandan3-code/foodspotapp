@@ -15,6 +15,7 @@ interface OrderCardProps {
   showLocation?: boolean;
   showConfirmDelivery?: boolean;
   onAdvance?: (orderId: string) => void;
+  showAdvanceButton?: boolean;
 }
 
 const SWIPE_THRESHOLD = 100;
@@ -29,6 +30,16 @@ function StatusIcon({ status }: { status: Order['status'] }) {
     case 'DISPATCH': return <Bike {...props} style={{ color: 'var(--status-icon-dispatch)' }} />;
     case 'DELIVERING': return <MapPin {...props} style={{ color: 'var(--status-icon-delivering)' }} />;
     case 'DONE': return <CheckCircle2 {...props} style={{ color: 'var(--status-icon-done)' }} />;
+  }
+}
+
+function DeliveryTypeIcon({ type }: { type?: 'delivery' | 'pickup' | 'dine-in' }) {
+  const props = { size: 12, strokeWidth: 2.5 };
+  switch (type) {
+    case 'delivery': return <Bike {...props} style={{ color: 'var(--status-icon-dispatch)' }} />;
+    case 'pickup': return <PackageCheck {...props} style={{ color: 'var(--status-icon-ready)' }} />;
+    case 'dine-in': return <MapPin {...props} style={{ color: 'var(--has-notes)' }} />;
+    default: return null;
   }
 }
 
@@ -47,6 +58,7 @@ export default function OrderCard({
   showLocation = false,
   showConfirmDelivery = false,
   onAdvance,
+  showAdvanceButton = false,
 }: OrderCardProps) {
   const { selectOrder, verifyCash, confirmDelivery } = useOrders();
   const [isRemoving, setIsRemoving] = useState(false);
@@ -224,9 +236,17 @@ export default function OrderCard({
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-base truncate" style={{ color: 'var(--text-primary)' }}>{order.customerName}</h3>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-              {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
-              {order.items.some(i => i.specialInstructions) && <span className="ml-1.5 text-xs" style={{ color: 'var(--has-notes)' }}>&bull; has notes</span>}
+            <p className="text-sm mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
+              <span>
+                {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                {order.items.some(i => i.specialInstructions) && <span className="ml-1.5 text-xs" style={{ color: 'var(--has-notes)' }}>&bull; has notes</span>}
+              </span>
+              {order.deliveryType && (
+                <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)' }}>
+                  <DeliveryTypeIcon type={order.deliveryType} />
+                  {order.deliveryType === 'dine-in' ? 'Dine-in' : order.deliveryType === 'pickup' ? 'Pickup' : 'Delivery'}
+                </span>
+              )}
             </p>
           </div>
           {showLocation && order.assignedTo && (
@@ -277,8 +297,8 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Quick-advance button (non-swipeable, non-delivery, non-cash) */}
-        {!compact && !isCashPending && !showConfirmDelivery && !swipeable && (() => {
+        {/* ── Quick-advance button (non-swipeable, non-delivery, non-cash) OR forced for kitchen */}
+        {!compact && !isCashPending && !showConfirmDelivery && (!swipeable || showAdvanceButton) && (() => {
           const nextLabels: Record<string, string> = {
             TODO: '▶ Start Prep',
             PREP: '✓ Mark Ready',

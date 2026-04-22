@@ -35,6 +35,7 @@ export default function BoardView() {
   ).length;
 
   const cashPendingCount = statusCounts.PENDING_VERIFICATION;
+  const deliveredCount = statusCounts.DONE;
 
   return (
     <div className="h-full w-full flex flex-col relative">
@@ -60,7 +61,7 @@ export default function BoardView() {
           <LayoutDashboard size={20} style={{ color: 'var(--status-icon-prep)' }} />
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Mission Control</h1>
         </div>
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{activeOrders.length} active &bull; {cashPendingCount} cash pending &bull; {criticalCount} critical</p>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{activeOrders.length} active &bull; {cashPendingCount} cash pending &bull; {criticalCount} critical &bull; {deliveredCount} delivered</p>
       </div>
 
       {/* Status counters */}

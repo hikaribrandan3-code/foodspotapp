@@ -64,7 +64,7 @@ export default function PrepView() {
                 </motion.div>
               )}
 
-              <OrderCard order={order} swipeable swipeDirection="horizontal" onSwipeComplete={handleSwipeComplete} />
+              <OrderCard order={order} swipeable swipeDirection="horizontal" onSwipeComplete={handleSwipeComplete} onAdvance={handleSwipeComplete} showAdvanceButton />
             </div>
           ))}
         </AnimatePresence>

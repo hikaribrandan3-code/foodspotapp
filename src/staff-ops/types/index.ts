@@ -29,6 +29,7 @@ export interface Order {
   deliveredAt?: number;
   deliveryCoords?: { lat: number; lng: number };
   deliveryAddress?: string;
+  deliveryType?: 'delivery' | 'pickup' | 'dine-in';
 }
 
 export type TabId = 'board' | 'prep' | 'logistics' | 'profile';
