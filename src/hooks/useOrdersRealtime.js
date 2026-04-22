@@ -28,37 +28,47 @@ export function useOrdersRealtime(businessId) {
         if (!businessId) return
 
         // 🛰️ REALTIME SUBSCRIPTION WITH HARDENED FILTERING
-        const channel = supabase
-            .channel(`orders-realtime-${businessId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'orders',
-                    filter: `business_id=eq.${businessId}` // 🛡️ DB-LEVEL ISOLATION
-                },
-                (payload) => {
-                    const { eventType, new: newRow, old: oldRow } = payload
+        let channel = null
+        let pollInterval = null
 
-                    setOrders(current => {
-                        switch (eventType) {
-                            case 'INSERT':
-                                return [newRow, ...current]
-                            case 'UPDATE':
-                                return current.map(o => o.id === newRow.id ? newRow : o)
-                            case 'DELETE':
-                                return current.filter(o => o.id !== oldRow.id)
-                            default:
-                                return current
-                        }
-                    })
-                }
-            )
-            .subscribe()
+        try {
+            channel = supabase
+                .channel(`orders-realtime-${businessId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'orders',
+                        filter: `business_id=eq.${businessId}`
+                    },
+                    (payload) => {
+                        const { eventType, new: newRow, old: oldRow } = payload
+                        setOrders(current => {
+                            switch (eventType) {
+                                case 'INSERT': return [newRow, ...current]
+                                case 'UPDATE': return current.map(o => o.id === newRow.id ? newRow : o)
+                                case 'DELETE': return current.filter(o => o.id !== oldRow.id)
+                                default: return current
+                            }
+                        })
+                    }
+                )
+                .subscribe((status, err) => {
+                    if (err || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                        console.warn('[useOrdersRealtime] Realtime unavailable, falling back to polling:', status, err?.message)
+                        // Fallback: poll every 15 seconds
+                        pollInterval = setInterval(fetchOrders, 15000)
+                    }
+                })
+        } catch (err) {
+            console.warn('[useOrdersRealtime] Realtime init failed, using polling:', err?.message)
+            pollInterval = setInterval(fetchOrders, 15000)
+        }
 
         return () => {
-            supabase.removeChannel(channel)
+            if (channel) supabase.removeChannel(channel)
+            if (pollInterval) clearInterval(pollInterval)
         }
     }, [businessId, fetchOrders])
 
