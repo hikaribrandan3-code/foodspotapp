@@ -40,6 +40,38 @@ export const supabase = {
   removeChannel: (...args) => getSupabase()?.removeChannel(...args)
 };
 
+export async function signOut() {
+  return getSupabase()?.auth.signOut();
+}
+
+export async function getCurrentUser() {
+  const { data: { user } } = await getSupabase()?.auth.getUser();
+  return user;
+}
+
+export async function addMenuItemCloud(businessId, newItem) {
+  if (!businessId) throw new Error('[SILO VIOLATION] addMenuItemCloud requires businessId');
+
+  const client = getSupabase();
+  const { data, error } = await client
+    .from('branding')
+    .select('menu_data')
+    .eq('business_id', businessId)
+    .single();
+
+  if (error) return { error };
+
+  const menu = [...(data?.menu_data || []), newItem];
+  const { data: result, error: updateError } = await client
+    .from('branding')
+    .update({ menu_data: menu })
+    .eq('business_id', businessId)
+    .select()
+    .single();
+
+  return { data: result, error: updateError };
+}
+
 export async function uploadAsset(file, businessId, bucketName = 'assets') {
   if (!businessId) throw new Error('[SILO VIOLATION] uploadAsset requires businessId');
 
