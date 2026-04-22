@@ -155,39 +155,80 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
       });
 
-    const channel = supabase
-      .channel(`staff-ops-${businessId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders', filter: `business_id=eq.${businessId}` },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (payload: any) => {
-          const { eventType, new: newRow, old: oldRow } = payload;
-          if (eventType === 'INSERT') {
-            const order = mapDbOrderToKimi(newRow);
-            dispatch({ type: 'ADD_ORDER', order });
-            addToast({
-              type: 'new_order',
-              title: `New Order #${newRow.order_number ?? ''}`,
-              message: `${order.customerName} — ${order.items.length} item${order.items.length !== 1 ? 's' : ''}`,
-              orderId: order.id,
-            });
-            if (audioEnabled) audio.alertNewOrder(order.priority);
-          } else if (eventType === 'UPDATE') {
-            const updated = mapDbOrderToKimi(newRow);
-            if (updated.status === 'DONE') {
-              dispatch({ type: 'REMOVE_ORDER', orderId: updated.id });
-            } else {
-              dispatch({ type: 'UPDATE_ORDER', order: updated });
-            }
-          } else if (eventType === 'DELETE') {
-            dispatch({ type: 'REMOVE_ORDER', orderId: oldRow.id });
-          }
-        },
-      )
-      .subscribe();
+    let channel: any = null;
+    let pollInterval: NodeJS.Timeout | null = null;
 
-    return () => { supabase.removeChannel(channel); };
+    try {
+      channel = supabase
+        .channel(`staff-ops-${businessId}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'orders', filter: `business_id=eq.${businessId}` },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (payload: any) => {
+            const { eventType, new: newRow, old: oldRow } = payload;
+            if (eventType === 'INSERT') {
+              const order = mapDbOrderToKimi(newRow);
+              dispatch({ type: 'ADD_ORDER', order });
+              addToast({
+                type: 'new_order',
+                title: `New Order #${newRow.order_number ?? ''}`,
+                message: `${order.customerName} — ${order.items.length} item${order.items.length !== 1 ? 's' : ''}`,
+                orderId: order.id,
+              });
+              if (audioEnabled) audio.alertNewOrder(order.priority);
+            } else if (eventType === 'UPDATE') {
+              const updated = mapDbOrderToKimi(newRow);
+              if (updated.status === 'DONE') {
+                dispatch({ type: 'REMOVE_ORDER', orderId: updated.id });
+              } else {
+                dispatch({ type: 'UPDATE_ORDER', order: updated });
+              }
+            } else if (eventType === 'DELETE') {
+              dispatch({ type: 'REMOVE_ORDER', orderId: oldRow.id });
+            }
+          },
+        )
+        .subscribe((status: string, err?: Error) => {
+          if (err || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('[useOrders] Realtime unavailable, falling back to polling:', status, err?.message);
+            // Fallback: poll every 15 seconds
+            pollInterval = setInterval(() => {
+              supabase
+                .from('orders')
+                .select('*')
+                .eq('business_id', businessId)
+                .not('status', 'in', '("entregado","cancelado")')
+                .order('created_at', { ascending: false })
+                .limit(100)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .then(({ data }: { data: any[] | null }) => {
+                  if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
+                });
+            }, 15000);
+          }
+        });
+    } catch (err) {
+      console.warn('[useOrders] Realtime init failed, using polling:', (err as Error)?.message);
+      pollInterval = setInterval(() => {
+        supabase
+          .from('orders')
+          .select('*')
+          .eq('business_id', businessId)
+          .not('status', 'in', '("entregado","cancelado")')
+          .order('created_at', { ascending: false })
+          .limit(100)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .then(({ data }: { data: any[] | null }) => {
+            if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
+          });
+      }, 15000);
+    }
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [businessId, addToast, audioEnabled]);
 
   /* ── Critical order monitor ──────────────────────────────────────── */
