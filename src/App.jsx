@@ -415,19 +415,23 @@ function App() {
             const customerPhone = localStorage.getItem('fs_customer_phone');
             if (guestToken) { try { const { data } = await getOrdersByGuestToken(guestToken, businessId); if (data?.length > 0) setOrders(data); } catch { } }
             else if (customerPhone) { try { const { data } = await getOrdersByPhone(customerPhone, businessId); if (data?.length > 0) setOrders(data); } catch { } }
-            realtimeChannel = subscribeToOrders(businessId, (newOrder) => {
-                setOrders(prev => {
-                    const updated = prev.some(o => o.id === newOrder.id) ? prev : [newOrder, ...prev];
-                    try { localStorage.setItem('foodspot_orders', JSON.stringify(updated.slice(0, 50))); } catch { }
-                    return updated;
+            try {
+                realtimeChannel = subscribeToOrders(businessId, (newOrder) => {
+                    setOrders(prev => {
+                        const updated = prev.some(o => o.id === newOrder.id) ? prev : [newOrder, ...prev];
+                        try { localStorage.setItem('foodspot_orders', JSON.stringify(updated.slice(0, 50))); } catch { }
+                        return updated;
+                    });
+                }, (orderId, updatedData) => {
+                    setOrders(prev => {
+                        const updated = prev.map(o => o.id === orderId ? { ...o, ...updatedData } : o);
+                        try { localStorage.setItem('foodspot_orders', JSON.stringify(updated.slice(0, 50))); } catch { }
+                        return updated;
+                    });
                 });
-            }, (orderId, updatedData) => {
-                setOrders(prev => {
-                    const updated = prev.map(o => o.id === orderId ? { ...o, ...updatedData } : o);
-                    try { localStorage.setItem('foodspot_orders', JSON.stringify(updated.slice(0, 50))); } catch { }
-                    return updated;
-                });
-            });
+            } catch (err) {
+                console.warn('[App] Realtime unavailable, continuing without live updates:', err?.message);
+            }
         };
         initCloudSync();
 
