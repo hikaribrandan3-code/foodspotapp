@@ -14,6 +14,7 @@ interface OrderCardProps {
   compact?: boolean;
   showLocation?: boolean;
   showConfirmDelivery?: boolean;
+  onAdvance?: (orderId: string) => void;
 }
 
 const SWIPE_THRESHOLD = 100;
@@ -45,6 +46,7 @@ export default function OrderCard({
   compact = false,
   showLocation = false,
   showConfirmDelivery = false,
+  onAdvance,
 }: OrderCardProps) {
   const { selectOrder, verifyCash, confirmDelivery } = useOrders();
   const [isRemoving, setIsRemoving] = useState(false);
@@ -278,16 +280,16 @@ export default function OrderCard({
         {/* ── Quick-advance button (non-swipeable, non-delivery, non-cash) */}
         {!compact && !isCashPending && !showConfirmDelivery && !swipeable && (() => {
           const nextLabels: Record<string, string> = {
-            TODO: 'Start Prep →',
-            PREP: 'Mark Ready →',
-            READY: 'Dispatch →',
-            DISPATCH: 'Mark Delivering →',
+            TODO: '▶ Start Prep',
+            PREP: '✓ Mark Ready',
+            READY: '🚴 Dispatch',
+            DISPATCH: '📍 Delivering',
           };
           const label = nextLabels[order.status];
           return label ? (
             <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
               <button
-                onClick={(e) => { e.stopPropagation(); onSwipeComplete?.(order.id); }}
+                onClick={(e) => { e.stopPropagation(); onAdvance?.(order.id); }}
                 className="w-full py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-[0.97]"
                 style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)' }}
               >

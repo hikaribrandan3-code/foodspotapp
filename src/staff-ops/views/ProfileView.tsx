@@ -108,44 +108,35 @@ export default function ProfileView() {
     setSheet(null);
   };
 
-  const handleSignOut = async () => {
-    // Clear session data immediately
-    localStorage.removeItem('fs_staff_member');
-    localStorage.removeItem('fs_current_shift');
-    localStorage.removeItem('x-staff-id');
+  const [shiftHistory, setShiftHistory] = useState<any[]>(
+    () => getStored('fs_shift_history', [])
+  );
 
-    // Suppress ALL errors during logout to prevent Supabase library errors from blocking navigation
-    window.onerror = () => true;
-    window.onunhandledrejection = () => true;
-
-    // Don't even try to cleanup Supabase - just navigate
-    // The app won't render without fs_staff_member anyway
-    try {
-      window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
-    } catch {
-      // If location.replace fails, use href
-      window.location.href = tenantSlug ? `/${tenantSlug}/staff` : '/login/staff';
+  const handleClockInOut = () => {
+    if (isOnDuty) {
+      // Clock out
+      const clockOutTime = new Date().toISOString();
+      const updated = {
+        ...currentShift,
+        clock_out_at: clockOutTime,
+      };
+      localStorage.removeItem('fs_current_shift');
+      const newHistory = [...shiftHistory, updated];
+      setShiftHistory(newHistory);
+      localStorage.setItem('fs_shift_history', JSON.stringify(newHistory));
+    } else {
+      // Clock in
+      const clockInTime = new Date().toISOString();
+      const newShift = {
+        id: `shift-${Date.now()}`,
+        staff_id: staffMember?.id,
+        clock_in_at: clockInTime,
+        clock_out_at: null,
+      };
+      localStorage.setItem('fs_current_shift', JSON.stringify(newShift));
     }
-  };
-
-  const handleResetPin = async () => {
-    // Clear session data immediately
-    localStorage.removeItem('fs_staff_member');
-    localStorage.removeItem('fs_current_shift');
-    localStorage.removeItem('x-staff-id');
-
-    // Suppress ALL errors during logout to prevent Supabase library errors from blocking navigation
-    window.onerror = () => true;
-    window.onunhandledrejection = () => true;
-
-    // Don't even try to cleanup Supabase - just navigate
-    // The app won't render without fs_staff_member anyway
-    try {
-      window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
-    } catch {
-      // If location.replace fails, use href
-      window.location.href = tenantSlug ? `/${tenantSlug}/staff` : '/login/staff';
-    }
+    // Force re-render
+    window.location.reload();
   };
 
   const currentLang = LANGUAGES.find(l => l.code === language)?.label || 'English';
@@ -222,13 +213,20 @@ export default function ProfileView() {
             onClick={() => setSheet('language')} />
         </Section>
 
-        {/* TODO MVP2: End Shift button disabled - causes Supabase cleanup error
-        <motion.button whileTap={{ scale: 0.98 }} onClick={handleSignOut}
-          className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm mt-2"
-          style={{ backgroundColor: 'var(--signout-bg)', border: '1px solid var(--signout-border)', color: 'var(--signout-text)' }}>
-          <LogOut size={18} /> {t('end_shift')}
+        {/* Clock In / Clock Out Button */}
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={handleClockInOut}
+          className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm mt-4"
+          style={{
+            backgroundColor: isOnDuty ? 'var(--urgency-critical-bg)' : 'var(--reception-bg)',
+            border: `1px solid ${isOnDuty ? 'var(--urgency-critical-border)' : 'var(--reception-border)'}`,
+            color: isOnDuty ? 'var(--timer-critical)' : 'var(--reception-text)',
+          }}
+        >
+          <Clock size={18} />
+          {isOnDuty ? `${t('off_duty')} - ${t('end_shift')}` : t('on_duty')}
         </motion.button>
-        */}
       </div>
 
       {/* ── Bottom Sheets ── */}

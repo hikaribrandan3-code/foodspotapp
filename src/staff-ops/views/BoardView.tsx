@@ -7,7 +7,7 @@ import ManualOrderModal from '@/components/ManualOrderModal';
 import type { OrderStatus } from '@/types';
 
 export default function BoardView() {
-  const { state, toggleOnline } = useOrders();
+  const { state, toggleOnline, advanceOrderStatus } = useOrders();
   const [manualOrderOpen, setManualOrderOpen] = useState(false);
 
   // Active orders (excluding DONE)
@@ -79,7 +79,7 @@ export default function BoardView() {
         <div className="space-y-1">
           {activeOrders.map((order, idx) => (
             <motion.div key={order.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04, duration: 0.3 }}>
-              <OrderCard order={order} compact={false} />
+              <OrderCard order={order} compact={false} onSwipeComplete={advanceOrderStatus} onAdvance={advanceOrderStatus} />
             </motion.div>
           ))}
         </div>
