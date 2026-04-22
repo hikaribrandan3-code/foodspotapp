@@ -17,20 +17,18 @@ export interface OrderItem {
 export interface Order {
   id: string;
   customerName: string;
+  customerPhone?: string;
   items: OrderItem[];
   status: OrderStatus;
   createdAt: number;
   priority: 'normal' | 'high';
   assignedTo?: string;
   offlineQueued?: boolean;
-  /** Payment method for the order */
   paymentMethod: 'cash' | 'card' | 'online';
-  /** Whether the cash payment has been physically verified */
   cashVerified?: boolean;
-  /** Timestamp when delivery was completed */
   deliveredAt?: number;
-  /** Delivery coordinates (lat, lng) */
   deliveryCoords?: { lat: number; lng: number };
+  deliveryAddress?: string;
 }
 
 export type TabId = 'board' | 'prep' | 'logistics' | 'profile';

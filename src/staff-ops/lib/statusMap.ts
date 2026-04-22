@@ -93,9 +93,20 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
   const waitMins = (Date.now() - createdAt) / 60000;
   const priority: 'normal' | 'high' = waitMins >= 8 ? 'high' : 'normal';
 
+  // Delivery address: can be string or JSONB object
+  let deliveryAddress: string | undefined;
+  const rawAddr = dbOrder.delivery_address;
+  if (typeof rawAddr === 'string') {
+    deliveryAddress = rawAddr;
+  } else if (rawAddr && typeof rawAddr === 'object') {
+    const parts = [rawAddr.street, rawAddr.city, rawAddr.state].filter(Boolean);
+    deliveryAddress = parts.join(', ') || rawAddr.formatted_address || undefined;
+  }
+
   return {
     id: dbOrder.id,
     customerName: dbOrder.customer_name || 'Cliente',
+    customerPhone: dbOrder.customer_phone ?? undefined,
     items,
     status,
     createdAt,
@@ -104,5 +115,6 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     paymentMethod,
     cashVerified: paymentConfirmed,
     offlineQueued: false,
+    deliveryAddress,
   };
 }

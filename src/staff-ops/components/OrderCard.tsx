@@ -275,12 +275,41 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Expanded preview for non-compact ───────────────────── */}
-        {!compact && !isCashPending && !showConfirmDelivery && (
+        {/* ── Quick-advance button (non-swipeable, non-delivery, non-cash) */}
+        {!compact && !isCashPending && !showConfirmDelivery && !swipeable && (() => {
+          const nextLabels: Record<string, string> = {
+            TODO: 'Start Prep →',
+            PREP: 'Mark Ready →',
+            READY: 'Dispatch →',
+            DISPATCH: 'Mark Delivering →',
+          };
+          const label = nextLabels[order.status];
+          return label ? (
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); onSwipeComplete?.(order.id); }}
+                className="w-full py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-[0.97]"
+                style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)' }}
+              >
+                {label}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: 'var(--text-tertiary)' }}>{STATUS_LABELS[order.status]}</span>
+                <span className="text-xs" style={{ color: 'var(--tap-hint)' }}>Tap for details</span>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Compact / swipeable footer */}
+        {!compact && !isCashPending && !showConfirmDelivery && swipeable && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: 'var(--text-tertiary)' }}>{STATUS_LABELS[order.status]}</span>
-              <span className="text-xs" style={{ color: 'var(--tap-hint)' }}>Tap for details</span>
+              <span className="text-xs" style={{ color: 'var(--tap-hint)' }}>Swipe to advance</span>
             </div>
           </div>
         )}
