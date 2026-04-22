@@ -106,8 +106,14 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     } catch {}
   }
 
+  // Format order number for display (e.g. "4521" → "#4521")
+  const orderNumber = dbOrder.order_number
+    ? `#${dbOrder.order_number}`.replace(/^#+/, '#')
+    : undefined;
+
   return {
     id: dbOrder.id,
+    orderNumber,
     customerName: dbOrder.customer_name || 'Cliente',
     customerPhone: dbOrder.customer_phone ?? dbOrder.phone ?? undefined,
     items,

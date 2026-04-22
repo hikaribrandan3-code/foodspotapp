@@ -4,7 +4,9 @@ import type { PanInfo } from 'framer-motion';
 import { Clock, AlertTriangle, PackageCheck, Circle, Bike, MapPin, ChevronRight, RefreshCw, DollarSign, CheckCircle2, Navigation, Phone } from 'lucide-react';
 import type { Order } from '@/types';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
+import { getDistanceKm, getETAMinutes } from '@/lib/utils';
 import { useOrders } from '@/hooks/useOrders';
+import { useBusiness } from '@/contexts/BusinessContext';
 
 interface OrderCardProps {
   order: Order;
@@ -201,28 +203,37 @@ export default function OrderCard({
           borderBottom: '1px solid var(--card-border)',
         }}
       >
-        {/* Top row: ID + Timer + Status */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <StatusIcon status={order.status} />
-            <span className="text-xs font-mono tracking-tight" style={{ color: 'var(--text-tertiary)' }}>{order.id}</span>
-            {order.priority === 'high' && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--badge-high-bg)', color: 'var(--badge-high-text)' }}>High</span>
+        {/* Top row: Order number LARGE + Timer + Status */}
+        <div className="flex items-start justify-between mb-2 gap-2">
+          <div className="flex-1">
+            {/* Order number — large and prominent for announcing to customers */}
+            {order.orderNumber && (
+              <div className="text-2xl font-black tracking-tight mb-1" style={{ color: 'var(--text-primary)' }}>
+                {order.orderNumber}
+              </div>
             )}
-            {isCashPending && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
-                Cash
-              </span>
-            )}
-            {order.offlineQueued && (
-              <RefreshCw size={12} style={{ color: 'var(--badge-queued)' }} className="animate-sync-spin" />
-            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              <StatusIcon status={order.status} />
+              {order.priority === 'high' && (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--badge-high-bg)', color: 'var(--badge-high-text)' }}>High</span>
+              )}
+              {isCashPending && (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                  Cash
+                </span>
+              )}
+              {order.offlineQueued && (
+                <RefreshCw size={12} style={{ color: 'var(--badge-queued)' }} className="animate-sync-spin" />
+              )}
+            </div>
           </div>
           {!isCashPending && (
-            <div className={`flex items-center gap-1.5 font-mono text-sm font-semibold font-mono-num ${urgency === 'critical' ? 'animate-number-pop' : ''}`} style={{ color: urgency === 'critical' ? 'var(--timer-critical)' : urgency === 'warning' ? 'var(--timer-warning)' : 'var(--timer-normal)' }}>
+            <div className={`flex flex-col items-end gap-1 font-mono text-sm font-semibold font-mono-num ${urgency === 'critical' ? 'animate-number-pop' : ''}`} style={{ color: urgency === 'critical' ? 'var(--timer-critical)' : urgency === 'warning' ? 'var(--timer-warning)' : 'var(--timer-normal)' }}>
               {urgency === 'critical' && <AlertTriangle size={14} style={{ color: 'var(--timer-critical)' }} />}
-              <Clock size={14} style={{ color: urgency === 'critical' ? 'var(--timer-critical)' : 'var(--text-tertiary)' }} />
-              {waitMins}m
+              <div className="flex items-center gap-1">
+                <Clock size={14} style={{ color: urgency === 'critical' ? 'var(--timer-critical)' : 'var(--text-tertiary)' }} />
+                {waitMins}m
+              </div>
             </div>
           )}
         </div>

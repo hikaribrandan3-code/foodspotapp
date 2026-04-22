@@ -16,6 +16,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  orderNumber?: string; // e.g. "#4521" for announcing to customers
   customerName: string;
   customerPhone?: string;
   items: OrderItem[];
