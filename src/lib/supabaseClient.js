@@ -2,35 +2,29 @@ import { createClient } from '@supabase/supabase-js'
 
 let supabaseInstance = null;
 
-// Lazy initialize Supabase client
 function getSupabase() {
   if (supabaseInstance) return supabaseInstance;
 
   try {
-    const url = 'https://buendqgmwpxdixwvlkhd.supabase.co';
-    const key = 'sb_secret_5g4u0yoOlkxcJ-beSRbnWg__eK_bc2E';
-
-    if (!url || !key) {
-      console.error('[Supabase] Missing credentials');
-      return null;
-    }
-
-    supabaseInstance = createClient(url, key, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-      global: {
-        fetch: (url, options = {}) => {
-          const headers = new Headers(options?.headers || {});
-          if (typeof window !== 'undefined') {
-            const guestToken = localStorage.getItem('fs_guest_token') || `guest-${Date.now()}`;
-            if (guestToken) headers.set('x-guest-token', guestToken);
-            const businessId = localStorage.getItem('fs_business_id');
-            if (businessId) headers.set('x-business-id', businessId);
+    supabaseInstance = createClient(
+      'https://buendqgmwpxdixwvlkhd.supabase.co',
+      'sb_secret_5g4u0yoOlkxcJ-beSRbnWg__eK_bc2E',
+      {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+        global: {
+          fetch: (url, options = {}) => {
+            const headers = new Headers(options?.headers || {});
+            if (typeof window !== 'undefined') {
+              const guestToken = localStorage.getItem('fs_guest_token') || `guest-${Date.now()}`;
+              if (guestToken) headers.set('x-guest-token', guestToken);
+              const businessId = localStorage.getItem('fs_business_id');
+              if (businessId) headers.set('x-business-id', businessId);
+            }
+            return fetch(url, { ...options, headers });
           }
-          return fetch(url, { ...options, headers });
         }
       }
-    });
-    console.log('[Supabase] ✅ Initialized');
+    );
   } catch (err) {
     console.error('[Supabase] Init failed:', err?.message);
   }
@@ -38,14 +32,13 @@ function getSupabase() {
   return supabaseInstance;
 }
 
-// Export getter that lazily initializes
-export const supabase = new Proxy({}, {
-  get: (target, prop) => {
-    const client = getSupabase();
-    if (!client) throw new Error('[Supabase] Client not initialized');
-    return client[prop];
-  }
-});
+export const supabase = {
+  get auth() { return getSupabase()?.auth },
+  get storage() { return getSupabase()?.storage },
+  channel: (...args) => getSupabase()?.channel(...args),
+  from: (...args) => getSupabase()?.from(...args),
+  removeChannel: (...args) => getSupabase()?.removeChannel(...args)
+};
 
 export async function uploadAsset(file, businessId, bucketName = 'assets') {
   if (!businessId) throw new Error('[SILO VIOLATION] uploadAsset requires businessId');
