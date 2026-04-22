@@ -196,36 +196,35 @@ export default function Menu({ config: configProp }) {
 
         const fetchMenu = async () => {
             try {
-                // PRIMARY: Read from menu_items table (relational)
-                const { data: items, error } = await supabase
-                    .from('menu_items')
-                    .select('*')
-                    .eq('business_id', businessId)
-                    .order('display_order', { ascending: true })
-                    .limit(100)
-
-                if (error) {
-                    console.log('[Menu] ⚠️ DB Error:', error.message)
-                }
-
-                if (items && items.length > 0) {
-                    console.log('[Menu] ✅ Loading from menu_items table:', items.length, 'items')
-                    const grouped = groupItemsByCategory(items)
-                    setMenu({ categories: grouped })
+                // PRIMARY: Use JSONB menu_data from tenantData (has all categories + images)
+                if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
+                    console.log('[Menu] ✅ Loading from JSONB:', tenantData.menu_data.categories.length, 'categories')
+                    setMenu(tenantData.menu_data)
                 } else {
-                    // FALLBACK: Try JSONB
-                    console.log('[Menu] 🔄 No relational data, checking JSONB...')
-                    if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
-                        console.log('[Menu] ☁️ Loading from JSONB')
-                        setMenu(tenantData.menu_data)
+                    // FALLBACK: Try relational menu_items table
+                    console.log('[Menu] 🔄 No JSONB data, checking menu_items table...')
+                    const { data: items, error } = await supabase
+                        .from('menu_items')
+                        .select('*')
+                        .eq('business_id', businessId)
+                        .limit(100)
+
+                    if (error) {
+                        console.log('[Menu] ⚠️ DB Error:', error.message)
+                    }
+
+                    if (items && items.length > 0) {
+                        console.log('[Menu] ☁️ Loading from menu_items table:', items.length, 'items')
+                        const grouped = groupItemsByCategory(items)
+                        setMenu({ categories: grouped })
                     } else {
                         console.log('[Menu] ⚠️ No menu items found for this business')
                         setMenu({ categories: [] })
                     }
                 }
             } catch (err) {
-                console.log('[Menu] ❌ Fetch error:', err)
-                setMenu(SEED_MENU)
+                console.error('[Menu] ❌ Fetch error:', err)
+                setMenu({ categories: [] })
             }
             setIsDataLoaded(true)
         }
