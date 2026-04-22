@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { formatPrice } from '../../config/menuData.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics.js'
-import { useOrdersRealtime } from '../../hooks/useOrdersRealtime.js'
+import { useOrdersPolling } from '../../hooks/useOrdersPolling.js'
 import { useStaff } from '../../contexts/StaffContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
@@ -116,7 +116,7 @@ function StaffDashboard() {
     }
 
     // 🛡️ HOOK INJECTION: SILO-HARDENED REALTIME DATA
-    const { orders, loading, refreshOrders: fetchOrders } = useOrdersRealtime(businessId)
+    const { orders, loading, refreshOrders: fetchOrders } = useOrdersPolling(businessId)
 
     // const [orders, setOrders] = useState([]) // Removed local state
     // const [loading, setLoading] = useState(true) // Removed local loading
