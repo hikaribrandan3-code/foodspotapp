@@ -72,8 +72,13 @@ if (typeof window !== 'undefined') {
 }
 
 // Supabase Project Credentials
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://buendqgmwpxdixwvlkhd.supabase.co'
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1ZW5kcWdtd3B4ZGl4d3Zsa2hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNjEzNzUsImV4cCI6MjA4MjkzNzM3NX0.oKSivOi-JhHZhM9Cp8W-uofbK_-I7slOPgTWtWLpysI'
+const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://buendqgmwpxdixwvlkhd.supabase.co'
+const SUPABASE_ANON_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_secret_5g4u0yoOlkxcJ-beSRbnWg__eK_bc2E'
+
+// Validate credentials exist before initializing
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('[Supabase] ❌ Missing credentials. URL:', !!SUPABASE_URL, 'KEY:', !!SUPABASE_ANON_KEY)
+}
 
 // Initialize the Supabase client
 
