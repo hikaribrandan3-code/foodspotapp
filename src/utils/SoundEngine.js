@@ -16,9 +16,10 @@ class SoundEngine {
     try {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = 0.3; // Master volume 30%
+      this.masterGain.gain.value = 0.5; // Master volume 50%
       this.masterGain.connect(this.ctx.destination);
       this.initialized = true;
+      console.log('[SoundEngine] Initialized - ctx.state:', this.ctx.state);
     } catch (e) {
       console.warn('[SoundEngine] AudioContext not available:', e);
     }
@@ -27,13 +28,17 @@ class SoundEngine {
   // Resume context (required after user interaction due to autoplay policy)
   resume() {
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(e => console.warn('[SoundEngine] Resume failed:', e));
     }
   }
 
   // 🔊 MUNCHBOY Boot Chime — C5 → C6 dual-tone GBA "bling"
   playBootChime() {
-    if (!this.enabled || !this.initialized) return;
+    console.log('[SoundEngine] playBootChime called - enabled:', this.enabled, 'initialized:', this.initialized);
+    if (!this.enabled || !this.initialized) {
+      console.warn('[SoundEngine] Cannot play - not initialized');
+      return;
+    }
     this.resume();
 
     const t = this.ctx.currentTime;
@@ -49,7 +54,7 @@ class SoundEngine {
     osc2.frequency.setValueAtTime(1046.50, t + 0.05); // C6
     osc2.frequency.setValueAtTime(2093.00, t + 0.13); // C7
 
-    gain.gain.setValueAtTime(0.15, t);
+    gain.gain.setValueAtTime(0.25, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
 
     osc1.connect(gain);
@@ -60,6 +65,7 @@ class SoundEngine {
     osc2.start(t);
     osc1.stop(t + 0.5);
     osc2.stop(t + 0.5);
+    console.log('[SoundEngine] Boot chime scheduled');
   }
 
   // 🎮 Game SFX — short blip for UI/actions
