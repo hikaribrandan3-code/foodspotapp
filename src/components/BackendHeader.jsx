@@ -78,7 +78,7 @@ function BackendHeader({ title, onLogout }) {
         setShowRoleDropdown(false)
         if (!tenantSlug) return
         // Staff-ops main.tsx requires fs_staff_member to render.
-        // Owners don't go through staff login, so we synthesize an entry here.
+        // Owners don't go through staff login, so we synthesize entries here.
         const businessId = localStorage.getItem('fs_business_id') || ''
         if (businessId) {
             const { data: { session } } = await supabase.auth.getSession()
@@ -90,6 +90,14 @@ function BackendHeader({ title, onLogout }) {
                 email: session?.user?.email || ''
             }
             localStorage.setItem('fs_staff_member', JSON.stringify(ownerEntry))
+            // Also set a synthetic shift so "Current Shift" shows "On Duty"
+            localStorage.setItem('fs_current_shift', JSON.stringify({
+                id: `owner-preview-${Date.now()}`,
+                staff_id: ownerEntry.id,
+                business_id: businessId,
+                clock_in_at: new Date().toISOString(),
+                status: 'active'
+            }))
         }
         navigate(`/${tenantSlug}/staff/dashboard`)
     }

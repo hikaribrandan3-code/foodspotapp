@@ -10,6 +10,8 @@ import { useAudioPref } from '@/hooks/useAudioPref';
 import { useBusiness } from '@/contexts/BusinessContext';
 // @ts-ignore
 import { supabase } from '../../lib/supabaseClient.js';
+// @ts-ignore
+import * as audio from '@/lib/audio';
 
 function getStored<T>(key: string, fallback: T): T {
   try {
@@ -80,6 +82,14 @@ export default function ProfileView() {
     const next = !autoSyncOn;
     setAutoSyncOn(next);
     localStorage.setItem('fs_staff_autosync', next ? 'on' : 'off');
+  };
+
+  const handleAudioToggle = () => {
+    toggleAudio();
+    // Play chime if enabling audio
+    if (!audioEnabled) {
+      try { audio.alertNewOrder?.('high'); } catch {}
+    }
   };
   const saveLanguage = (code: string) => {
     setLanguage(code);
@@ -167,7 +177,7 @@ export default function ProfileView() {
           <ToggleItem icon={theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
             label="Theme" value={theme === 'dark' ? 'Dark' : 'Light'} onClick={toggleTheme} />
           <ToggleItem icon={audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            label="Sound Alerts" value={audioEnabled ? 'On' : 'Off'} onClick={toggleAudio} />
+            label="Sound Alerts" value={audioEnabled ? 'On' : 'Off'} onClick={handleAudioToggle} />
           <ToggleItem icon={notificationsOn ? <Bell size={18} /> : <BellOff size={18} />}
             label="Notifications" value={notificationsOn ? 'On' : 'Off'} onClick={toggleNotifications} />
           <ToggleItem icon={autoSyncOn ? <Wifi size={18} /> : <WifiOff size={18} />}

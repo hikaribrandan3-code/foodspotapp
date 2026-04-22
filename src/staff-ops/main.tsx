@@ -3,6 +3,20 @@ import './index.css';
 import App from './App.tsx';
 import { BusinessProvider } from './contexts/BusinessContext.tsx';
 
+// ── Suppress Supabase realtime errors during page unload ────────────────────
+// The staff-ops realtime subscriptions can cause null reference errors in the
+// minified Supabase library when the page unloads. Suppress these gracefully.
+window.addEventListener('error', (e) => {
+  if (typeof e.message === 'string' && e.message.includes('null is not an object')) {
+    e.preventDefault();
+  }
+});
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason?.message?.includes('null is not an object') || e.reason?.toString?.().includes('null is not an object')) {
+    e.preventDefault();
+  }
+});
+
 // ── Read context from URL params (set by main app when redirecting) ──────────
 const params = new URLSearchParams(window.location.search);
 const businessId = params.get('bid') || localStorage.getItem('fs_business_id') || '';
