@@ -71,28 +71,37 @@ if (typeof window !== 'undefined') {
     migrateLegacyToken();
 }
 
-// Supabase Project Credentials
-const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://buendqgmwpxdixwvlkhd.supabase.co'
-const SUPABASE_ANON_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_secret_5g4u0yoOlkxcJ-beSRbnWg__eK_bc2E'
+// Supabase Project Credentials - with fallbacks
+let SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL
+let SUPABASE_ANON_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY
 
-// Debug logging - show what we're about to use
-console.log('[Supabase] 🔍 Initializing with:', {
-  URL: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'MISSING',
-  KEY: SUPABASE_ANON_KEY ? `${SUPABASE_ANON_KEY.substring(0, 20)}...` : 'MISSING',
-  URLType: typeof SUPABASE_URL,
-  KEYType: typeof SUPABASE_ANON_KEY
-})
+// Apply fallbacks if env vars are missing/empty
+if (!SUPABASE_URL || SUPABASE_URL === 'undefined') {
+  SUPABASE_URL = 'https://buendqgmwpxdixwvlkhd.supabase.co'
+}
+if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'undefined') {
+  SUPABASE_ANON_KEY = 'sb_secret_5g4u0yoOlkxcJ-beSRbnWg__eK_bc2E'
+}
 
-// Validate credentials exist before initializing
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('[Supabase] ❌ Missing credentials. URL:', !!SUPABASE_URL, 'KEY:', !!SUPABASE_ANON_KEY)
-  throw new Error(`Supabase credentials missing: URL=${!!SUPABASE_URL}, KEY=${!!SUPABASE_ANON_KEY}`)
+// Ensure both are strings before using
+if (typeof SUPABASE_URL !== 'string' || typeof SUPABASE_ANON_KEY !== 'string') {
+  console.error('[Supabase] ❌ Credentials are not strings', {
+    URL: typeof SUPABASE_URL,
+    KEY: typeof SUPABASE_ANON_KEY
+  })
 }
 
 // Initialize the Supabase client
 let supabase = null;
 
 try {
+  console.log('[Supabase] 🚀 Calling createClient with:', {
+    urlLength: SUPABASE_URL?.length,
+    keyLength: SUPABASE_ANON_KEY?.length,
+    urlType: typeof SUPABASE_URL,
+    keyType: typeof SUPABASE_ANON_KEY
+  })
+
   supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
         persistSession: true, // ✅ RESTORED: Sessions MUST survive page reloads (window.location.assign)
