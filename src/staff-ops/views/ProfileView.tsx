@@ -109,47 +109,43 @@ export default function ProfileView() {
   };
 
   const handleSignOut = async () => {
+    // Clear session data immediately
     localStorage.removeItem('fs_staff_member');
     localStorage.removeItem('fs_current_shift');
     localStorage.removeItem('x-staff-id');
 
-    // Clear all error handlers temporarily to prevent Supabase errors from blocking logout
-    const origError = window.onerror;
-    const origUnhandled = window.onunhandledrejection;
-    window.onerror = null;
-    window.onunhandledrejection = null;
+    // Suppress ALL errors during logout to prevent Supabase library errors from blocking navigation
+    window.onerror = () => true;
+    window.onunhandledrejection = () => true;
 
+    // Don't even try to cleanup Supabase - just navigate
+    // The app won't render without fs_staff_member anyway
     try {
-      const channels = supabase.getChannels?.() || [];
-      channels.forEach((c: any) => {
-        try { supabase.removeChannel(c); } catch {}
-      });
-    } catch {}
-
-    // Navigate immediately - don't wait
-    window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
+      window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
+    } catch {
+      // If location.replace fails, use href
+      window.location.href = tenantSlug ? `/${tenantSlug}/staff` : '/login/staff';
+    }
   };
 
   const handleResetPin = async () => {
+    // Clear session data immediately
     localStorage.removeItem('fs_staff_member');
     localStorage.removeItem('fs_current_shift');
     localStorage.removeItem('x-staff-id');
 
-    // Clear all error handlers temporarily to prevent Supabase errors from blocking logout
-    const origError = window.onerror;
-    const origUnhandled = window.onunhandledrejection;
-    window.onerror = null;
-    window.onunhandledrejection = null;
+    // Suppress ALL errors during logout to prevent Supabase library errors from blocking navigation
+    window.onerror = () => true;
+    window.onunhandledrejection = () => true;
 
+    // Don't even try to cleanup Supabase - just navigate
+    // The app won't render without fs_staff_member anyway
     try {
-      const channels = supabase.getChannels?.() || [];
-      channels.forEach((c: any) => {
-        try { supabase.removeChannel(c); } catch {}
-      });
-    } catch {}
-
-    // Navigate immediately - don't wait
-    window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
+      window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
+    } catch {
+      // If location.replace fails, use href
+      window.location.href = tenantSlug ? `/${tenantSlug}/staff` : '/login/staff';
+    }
   };
 
   const currentLang = LANGUAGES.find(l => l.code === language)?.label || 'English';

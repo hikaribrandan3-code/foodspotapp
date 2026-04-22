@@ -11,7 +11,14 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    try {
+      const saved = localStorage.getItem('fs_staff_theme');
+      return (saved as Theme) || 'light';
+    } catch {
+      return 'light';
+    }
+  });
 
   useEffect(() => {
     const root = document.documentElement;
@@ -20,6 +27,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } else {
       root.classList.remove('dark');
     }
+    // Persist theme preference
+    try {
+      localStorage.setItem('fs_staff_theme', theme);
+    } catch {}
   }, [theme]);
 
   const toggleTheme = () => {
