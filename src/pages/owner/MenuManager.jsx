@@ -10,6 +10,7 @@ import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import PrintMenu from '../../components/PrintMenu.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
 import './MenuStyles.css'
@@ -1149,6 +1150,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         </div>
                     </div>
                 </div>
+
+                {/* ==================== PRINT MENU ==================== */}
+                {false && (
+                <div style={{ marginTop: 24 }}>
+                    <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '0 0 24px 0' }} />
+                    <PrintMenu menu={menu} tenantData={tenantData} tenantSlug={tenantSlug} />
+                </div>
+                )}
 
                 {/* ==================== BRIDGED BRANDING SECTION - HIDDEN FOR MVP ==================== */}
                 {false && (

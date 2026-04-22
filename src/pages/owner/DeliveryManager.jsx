@@ -9,6 +9,7 @@ import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 
 /**
  * DELIVERY MANAGER
@@ -22,6 +23,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { t } = useLanguage()
+    const { businessId } = useTenant()
     const [orders, setOrders] = useState([])
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
@@ -36,10 +38,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             return
         }
 
-        if (!businessId) {
-            console.warn('[DeliveryManager] No businessId available — skipping fetch')
-            return
-        }
+        if (!businessId) return
 
         const fetchSupabaseOrders = async () => {
             const { data, error } = await supabase
