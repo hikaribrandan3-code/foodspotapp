@@ -73,12 +73,25 @@ function BackendHeader({ title, onLogout }) {
         }
     }
 
-    // Navigate to staff view
-    const handleGoToStaff = () => {
+    // Navigate to staff view — owner previewing staff ops
+    const handleGoToStaff = async () => {
         setShowRoleDropdown(false)
-        if (tenantSlug) {
-            navigate(`/${tenantSlug}/staff/dashboard`)
+        if (!tenantSlug) return
+        // Staff-ops main.tsx requires fs_staff_member to render.
+        // Owners don't go through staff login, so we synthesize an entry here.
+        const businessId = localStorage.getItem('fs_business_id') || ''
+        if (businessId) {
+            const { data: { session } } = await supabase.auth.getSession()
+            const ownerEntry = {
+                id: session?.user?.id || 'owner',
+                business_id: businessId,
+                name: tenantData?.venue_name || session?.user?.email || 'Owner',
+                role: 'owner',
+                email: session?.user?.email || ''
+            }
+            localStorage.setItem('fs_staff_member', JSON.stringify(ownerEntry))
         }
+        navigate(`/${tenantSlug}/staff/dashboard`)
     }
 
     // Navigate back to owner view
