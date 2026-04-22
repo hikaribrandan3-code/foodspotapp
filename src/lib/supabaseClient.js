@@ -75,9 +75,18 @@ if (typeof window !== 'undefined') {
 const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://buendqgmwpxdixwvlkhd.supabase.co'
 const SUPABASE_ANON_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_secret_5g4u0yoOlkxcJ-beSRbnWg__eK_bc2E'
 
+// Debug logging - show what we're about to use
+console.log('[Supabase] 🔍 Initializing with:', {
+  URL: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'MISSING',
+  KEY: SUPABASE_ANON_KEY ? `${SUPABASE_ANON_KEY.substring(0, 20)}...` : 'MISSING',
+  URLType: typeof SUPABASE_URL,
+  KEYType: typeof SUPABASE_ANON_KEY
+})
+
 // Validate credentials exist before initializing
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('[Supabase] ❌ Missing credentials. URL:', !!SUPABASE_URL, 'KEY:', !!SUPABASE_ANON_KEY)
+  throw new Error(`Supabase credentials missing: URL=${!!SUPABASE_URL}, KEY=${!!SUPABASE_ANON_KEY}`)
 }
 
 // Initialize the Supabase client
