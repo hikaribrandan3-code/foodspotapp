@@ -80,6 +80,15 @@ import TrialSignup from './pages/auth/TrialSignup.jsx'
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
 
+// Redirects to the isolated staff-ops Vite entry, passing business context via URL params
+function StaffOpsRedirect() {
+    const { tenantData, businessId } = useTenant();
+    const slug = tenantData?.slug || window.location.pathname.split('/')[1] || '';
+    const bid = businessId || localStorage.getItem('fs_business_id') || '';
+    window.location.replace(`/staff-ops.html?slug=${slug}&bid=${bid}`);
+    return null;
+}
+
 function App() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -513,6 +522,7 @@ function App() {
                                             <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
                                             <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
                                             <Route path="/:tenantSlug/staff/kds" element={<StaffKDS config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/staff/ops" element={<StaffOpsRedirect />} />
 
                                             <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
                                             <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
