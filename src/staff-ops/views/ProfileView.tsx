@@ -224,15 +224,15 @@ export default function ProfileView() {
         <Section title={t('system')}>
           <MenuItem icon={<Settings size={18} />} label={t('language')} value={currentLang}
             onClick={() => setSheet('language')} />
-          <MenuItem icon={<Shield size={18} />} label={t('privacy_security')} value={t('reset_pin')}
-            onClick={() => setSheet('resetPin')} />
         </Section>
 
-//         <motion.button whileTap={{ scale: 0.98 }} onClick={handleSignOut}
-//           className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm mt-2"
-//           style={{ backgroundColor: 'var(--signout-bg)', border: '1px solid var(--signout-border)', color: 'var(--signout-text)' }}>
-//           <LogOut size={18} /> {t('end_shift')}
-//         </motion.button>
+        {/* TODO MVP2: End Shift button disabled - causes Supabase cleanup error
+        <motion.button whileTap={{ scale: 0.98 }} onClick={handleSignOut}
+          className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm mt-2"
+          style={{ backgroundColor: 'var(--signout-bg)', border: '1px solid var(--signout-border)', color: 'var(--signout-text)' }}>
+          <LogOut size={18} /> {t('end_shift')}
+        </motion.button>
+        */}
       </div>
 
       {/* ── Bottom Sheets ── */}
