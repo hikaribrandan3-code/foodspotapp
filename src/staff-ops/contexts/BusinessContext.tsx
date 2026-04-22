@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 // @ts-ignore
-import { supabase } from '../lib/supabaseClient.js';
+import { supabase } from '../../lib/supabaseClient.js';
 
 interface BusinessContextValue {
   businessId: string;
