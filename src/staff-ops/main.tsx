@@ -6,13 +6,28 @@ import { BusinessProvider } from './contexts/BusinessContext.tsx';
 // ── Suppress Supabase realtime errors during page unload ────────────────────
 // The staff-ops realtime subscriptions can cause null reference errors in the
 // minified Supabase library when the page unloads. Suppress these gracefully.
+let isUnloading = false;
+window.addEventListener('beforeunload', () => { isUnloading = true; });
+
 window.addEventListener('error', (e) => {
-  if (typeof e.message === 'string' && e.message.includes('null is not an object')) {
+  // Suppress any errors during unload phase
+  if (isUnloading) {
+    e.preventDefault();
+    return;
+  }
+  // Also suppress the specific supabase error
+  if (typeof e.message === 'string' && (e.message.includes('null is not an object') || e.message.includes('f[x]'))) {
     e.preventDefault();
   }
 });
+
 window.addEventListener('unhandledrejection', (e) => {
-  if (e.reason?.message?.includes('null is not an object') || e.reason?.toString?.().includes('null is not an object')) {
+  if (isUnloading) {
+    e.preventDefault();
+    return;
+  }
+  const msg = e.reason?.message?.toString?.() || e.reason?.toString?.() || '';
+  if (msg.includes('null is not an object') || msg.includes('f[x]')) {
     e.preventDefault();
   }
 });

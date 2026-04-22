@@ -8,6 +8,7 @@ import {
 import { useTheme } from '@/hooks/useTheme';
 import { useAudioPref } from '@/hooks/useAudioPref';
 import { useBusiness } from '@/contexts/BusinessContext';
+import { t as translate } from '../lib/translations';
 // @ts-ignore
 import { supabase } from '../../lib/supabaseClient.js';
 // @ts-ignore
@@ -108,35 +109,55 @@ export default function ProfileView() {
   };
 
   const handleSignOut = async () => {
-    // Gracefully disconnect realtime before navigation to prevent crash
-    try { await supabase.realtime.disconnect(); } catch {}
+    // Disconnect all realtime channels before navigation
+    try {
+      const channels = supabase.getChannels?.() || [];
+      await Promise.all(channels.map((c: any) => supabase.removeChannel(c)));
+    } catch {}
+
     localStorage.removeItem('fs_staff_member');
     localStorage.removeItem('fs_current_shift');
     localStorage.removeItem('x-staff-id');
-    window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
+
+    // Delay navigation to let cleanup complete
+    setTimeout(() => {
+      window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
+    }, 50);
   };
 
   const handleResetPin = async () => {
-    try { await supabase.realtime.disconnect(); } catch {}
+    // Disconnect all realtime channels before navigation
+    try {
+      const channels = supabase.getChannels?.() || [];
+      await Promise.all(channels.map((c: any) => supabase.removeChannel(c)));
+    } catch {}
+
     localStorage.removeItem('fs_staff_member');
     localStorage.removeItem('fs_current_shift');
     localStorage.removeItem('x-staff-id');
-    window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
+
+    // Delay navigation to let cleanup complete
+    setTimeout(() => {
+      window.location.replace(tenantSlug ? `/${tenantSlug}/staff` : '/login/staff');
+    }, 50);
   };
 
   const currentLang = LANGUAGES.find(l => l.code === language)?.label || 'English';
   const driverSummary = driverProfile.transport
     ? [driverProfile.transport, driverProfile.plate].filter(Boolean).join(' · ')
-    : 'Not set';
+    : translate('not_set', language);
+
+  // Helper to translate using current language state
+  const t = (key: string) => translate(key, language);
 
   return (
     <div className="h-full w-full flex flex-col relative overflow-y-auto scrollbar-hide">
       <div className="px-4 pt-5 pb-4">
         <div className="flex items-center gap-2 mb-1">
           <User size={20} style={{ color: 'var(--text-tertiary)' }} />
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Profile</h1>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('profile_title')}</h1>
         </div>
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Account settings & shift management</p>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{t('profile_subtitle')}</p>
       </div>
 
       <div className="px-4 mb-4">
@@ -154,60 +175,60 @@ export default function ProfileView() {
             <div className="flex items-center gap-2 mt-1.5">
               <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide"
                 style={{ backgroundColor: isOnDuty ? 'var(--reception-bg)' : 'var(--btn-secondary-bg)', color: isOnDuty ? 'var(--reception-text)' : 'var(--text-secondary)' }}>
-                {isOnDuty ? 'On Duty' : 'Off Duty'}
+                {isOnDuty ? t('on_duty') : t('off_duty')}
               </span>
-              {isOnDuty && <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Since {shiftStart}</span>}
+              {isOnDuty && <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{t('since')} {shiftStart}</span>}
             </div>
           </div>
         </motion.div>
       </div>
 
       <div className="px-4 space-y-4 pb-32">
-        <Section title="Shift Management">
-          <MenuItem icon={<Clock size={18} />} label="Current Shift"
-            value={isOnDuty ? `Since ${shiftStart}` : 'Not clocked in'} />
+        <Section title={t('shift_management')}>
+          <MenuItem icon={<Clock size={18} />} label={t('current_shift')}
+            value={isOnDuty ? `${t('since')} ${shiftStart}` : t('not_clocked_in')} />
         </Section>
 
-        <Section title="Delivery Driver Info">
-          <MenuItem icon={<Bike size={18} />} label="Vehicle & Contact"
+        <Section title={t('driver_info')}>
+          <MenuItem icon={<Bike size={18} />} label={t('vehicle_contact')}
             value={driverSummary} onClick={() => { setDriverInput(driverProfile); setSheet('driver'); }} />
         </Section>
 
-        <Section title="Preferences">
+        <Section title={t('preferences')}>
           <ToggleItem icon={theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-            label="Theme" value={theme === 'dark' ? 'Dark' : 'Light'} onClick={toggleTheme} />
+            label={t('theme')} value={theme === 'dark' ? t('dark') : t('light')} onClick={toggleTheme} />
           <ToggleItem icon={audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            label="Sound Alerts" value={audioEnabled ? 'On' : 'Off'} onClick={handleAudioToggle} />
+            label={t('sound_alerts')} value={audioEnabled ? t('on') : t('off')} onClick={handleAudioToggle} />
           <ToggleItem icon={notificationsOn ? <Bell size={18} /> : <BellOff size={18} />}
-            label="Notifications" value={notificationsOn ? 'On' : 'Off'} onClick={toggleNotifications} />
+            label={t('notifications')} value={notificationsOn ? t('on') : t('off')} onClick={toggleNotifications} />
           <ToggleItem icon={autoSyncOn ? <Wifi size={18} /> : <WifiOff size={18} />}
-            label="Auto-Sync" value={autoSyncOn ? 'On' : 'Off'} onClick={toggleAutoSync} />
+            label={t('auto_sync')} value={autoSyncOn ? t('on') : t('off')} onClick={toggleAutoSync} />
         </Section>
 
-        <Section title="Emergency">
-          <MenuItem icon={<Phone size={18} />} label="Emergency Contact"
-            value={emergencyContact || 'Not set'}
+        <Section title={t('emergency')}>
+          <MenuItem icon={<Phone size={18} />} label={t('emergency_contact')}
+            value={emergencyContact || t('not_set')}
             onClick={() => { setEmergencyInput(emergencyContact); setSheet('emergency'); }} />
         </Section>
 
-        <Section title="System">
-          <MenuItem icon={<Settings size={18} />} label="Language" value={currentLang}
+        <Section title={t('system')}>
+          <MenuItem icon={<Settings size={18} />} label={t('language')} value={currentLang}
             onClick={() => setSheet('language')} />
-          <MenuItem icon={<Shield size={18} />} label="Privacy & Security" value="Reset PIN"
+          <MenuItem icon={<Shield size={18} />} label={t('privacy_security')} value={t('reset_pin')}
             onClick={() => setSheet('resetPin')} />
         </Section>
 
         <motion.button whileTap={{ scale: 0.98 }} onClick={handleSignOut}
           className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm mt-2"
           style={{ backgroundColor: 'var(--signout-bg)', border: '1px solid var(--signout-border)', color: 'var(--signout-text)' }}>
-          <LogOut size={18} /> End Shift & Sign Out
+          <LogOut size={18} /> {t('end_shift')}
         </motion.button>
       </div>
 
       {/* ── Bottom Sheets ── */}
       <AnimatePresence>
         {sheet === 'emergency' && (
-          <Sheet title="Emergency Contact" onClose={() => setSheet(null)}>
+          <Sheet title={t('emergency_contact')} onClose={() => setSheet(null)}>
             <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>Phone number to call in an emergency.</p>
             <input type="tel" value={emergencyInput} onChange={e => setEmergencyInput(e.target.value)}
               placeholder="+1 (555) 000-0000" autoFocus
@@ -218,7 +239,7 @@ export default function ProfileView() {
         )}
 
         {sheet === 'language' && (
-          <Sheet title="Language" onClose={() => setSheet(null)}>
+          <Sheet title={t('language')} onClose={() => setSheet(null)}>
             <div className="space-y-2">
               {LANGUAGES.map(lang => (
                 <button key={lang.code} onClick={() => saveLanguage(lang.code)}
@@ -233,14 +254,14 @@ export default function ProfileView() {
         )}
 
         {sheet === 'resetPin' && (
-          <Sheet title="Privacy & Security" onClose={() => setSheet(null)}>
+          <Sheet title={t('privacy_security')} onClose={() => setSheet(null)}>
             <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
               Clears your saved credentials. You'll need to log in again with your PIN.
             </p>
             <button onClick={handleResetPin}
               className="w-full py-3 rounded-xl font-semibold text-sm mb-2"
               style={{ backgroundColor: 'var(--signout-bg)', color: 'var(--signout-text)', border: '1px solid var(--signout-border)' }}>
-              Reset PIN & Sign Out
+              {t('reset_pin')} & {t('end_shift')}
             </button>
             <button onClick={() => setSheet(null)}
               className="w-full py-3 rounded-xl font-semibold text-sm"
@@ -251,7 +272,7 @@ export default function ProfileView() {
         )}
 
         {sheet === 'driver' && (
-          <Sheet title="Delivery Driver Info" onClose={() => setSheet(null)}>
+          <Sheet title={t('driver_info')} onClose={() => setSheet(null)}>
             <div className="space-y-3">
               <Field label="Contact Number">
                 <input type="tel" value={driverInput.contact}
@@ -263,11 +284,11 @@ export default function ProfileView() {
 
               <Field label="Mode of Transport">
                 <div className="grid grid-cols-3 gap-2">
-                  {TRANSPORT_MODES.map(t => (
-                    <button key={t.id} onClick={() => setDriverInput(p => ({ ...p, transport: t.id }))}
+                  {TRANSPORT_MODES.map(mode => (
+                    <button key={mode.id} onClick={() => setDriverInput(p => ({ ...p, transport: mode.id }))}
                       className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium"
-                      style={{ backgroundColor: driverInput.transport === t.id ? 'var(--filter-active-bg)' : 'var(--btn-secondary-bg)', color: driverInput.transport === t.id ? 'var(--filter-active-text)' : 'var(--text-secondary)' }}>
-                      {t.icon}{t.label}
+                      style={{ backgroundColor: driverInput.transport === mode.id ? 'var(--filter-active-bg)' : 'var(--btn-secondary-bg)', color: driverInput.transport === mode.id ? 'var(--filter-active-text)' : 'var(--text-secondary)' }}>
+                      {mode.icon}{mode.label}
                     </button>
                   ))}
                 </div>
@@ -364,11 +385,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function SaveButton({ onClick }: { onClick: () => void }) {
+  const language = localStorage.getItem('fs_staff_language') || 'en';
   return (
     <button onClick={onClick}
       className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 mt-1"
       style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}>
-      <Check size={16} /> Save
+      <Check size={16} /> {translate('save_btn', language)}
     </button>
   );
 }
