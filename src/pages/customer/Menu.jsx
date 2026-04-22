@@ -175,15 +175,15 @@ export default function Menu({ config: configProp }) {
     const groupItemsByCategory = (items) => {
         const grouped = {}
         items.forEach(item => {
-            const catId = item.category_id || 'cat-default'
-            if (!grouped[catId]) {
-                grouped[catId] = { id: catId, name: catId.replace('cat-', '').replace('-', ' '), icon: '🍽️', items: [] }
+            const catName = item.category_name || 'Otros'
+            if (!grouped[catName]) {
+                grouped[catName] = { id: `cat-${catName.toLowerCase().replace(' ', '-')}`, name: catName, icon: '🍽️', items: [] }
             }
-            grouped[catId].items.push({
+            grouped[catName].items.push({
                 id: item.id,
                 name: item.name,
                 price: item.price,
-                image: item.image,
+                image: item.image_url || item.image,
                 available: item.available !== false
             })
         })
@@ -219,8 +219,8 @@ export default function Menu({ config: configProp }) {
                         console.log('[Menu] ☁️ Loading from JSONB')
                         setMenu(tenantData.menu_data)
                     } else {
-                        console.log('[Menu] 🌱 Loading Seed Data (Fallback)')
-                        setMenu(SEED_MENU)
+                        console.log('[Menu] ⚠️ No menu items found for this business')
+                        setMenu({ categories: [] })
                     }
                 }
             } catch (err) {

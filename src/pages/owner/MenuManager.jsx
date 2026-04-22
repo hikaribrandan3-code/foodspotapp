@@ -564,26 +564,55 @@ function MenuManager({ config: configProp, demoMode = false }) {
             return
         }
 
-        // 2. 🛡️ DUAL-SYNC: UPSERT HERO ITEMS to menu_items table
+        // 2. 🛡️ DUAL-SYNC: UPSERT ALL MENU ITEMS to menu_items table
         // 🛡️ TENANT-SCOPED IDs: Prevents cross-tenant data collisions
+        const allItems = []
+
+        // Add all regular menu items
+        if (menuToSave?.categories) {
+            let displayOrder = 0
+            for (const category of menuToSave.categories) {
+                for (const item of category.items || []) {
+                    allItems.push({
+                        id: item.id,
+                        business_id: targetBusinessId,
+                        name: item.name,
+                        price: parseInt(item.price) || 0,
+                        image_url: item.image || null,
+                        available: item.available !== false,
+                        description: item.description || '',
+                        category_name: category.name,
+                        display_order: displayOrder++
+                    })
+                }
+            }
+        }
+
+        // Add featured items
         const heroItems = (localConfig.featuredPhotos || []).slice(0, 4).map((slot, index) => ({
             id: `${targetBusinessId}-hero-${index + 1}`,
             business_id: targetBusinessId,
             name: slot?.name || 'Destacado',
             price: parseInt(slot?.price) || 0,
-            image: slot?.image || null,
+            image_url: slot?.image || null,
             available: true,
-            description: 'Hero Item'
+            description: 'Featured Item',
+            is_featured: true,
+            display_order: -1 - index // Sort featured items first
         }))
 
-        const { error: menuError } = await supabase
-            .from('menu_items')
-            .upsert(heroItems, { onConflict: 'id' })
+        const itemsToSync = [...allItems, ...heroItems]
 
-        if (menuError) {
-            console.error('❌ Error Syncing Hero Items:', menuError)
-        } else {
-            console.log('✅ Hero Items Synced to DB')
+        if (itemsToSync.length > 0) {
+            const { error: menuError } = await supabase
+                .from('menu_items')
+                .upsert(itemsToSync, { onConflict: 'id' })
+
+            if (menuError) {
+                console.error('❌ Error Syncing Menu Items:', menuError)
+            } else {
+                console.log('✅ All Menu Items Synced to DB:', itemsToSync.length, 'items')
+            }
         }
 
         // 3. FINALIZE
