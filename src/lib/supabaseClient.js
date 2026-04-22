@@ -81,9 +81,10 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 // Initialize the Supabase client
+let supabase = null;
 
-// Initialize the Supabase client with Header Injection for RLS
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+try {
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
         persistSession: true, // ✅ RESTORED: Sessions MUST survive page reloads (window.location.assign)
         autoRefreshToken: true, // ✅ RESTORED: Keep session alive across tab switches
@@ -113,7 +114,18 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             return fetch(url, { ...options, headers })
         }
     }
-})
+  });
+  console.log('[Supabase] ✅ Client initialized successfully');
+} catch (error) {
+  console.error('[Supabase] 🔴 Failed to initialize:', error?.message || error);
+  // Create a stub that will error on use
+  supabase = {
+    auth: { onAuthStateChange: () => ({ subscription: { unsubscribe: () => {} } }) },
+    from: () => { throw new Error(`Supabase init failed: ${error?.message}`); }
+  };
+}
+
+export { supabase };
 
 /**
  * Upload an asset to Supabase Storage (Multi-Tenant)
