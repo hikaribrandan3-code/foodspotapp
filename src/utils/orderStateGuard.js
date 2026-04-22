@@ -1,14 +1,16 @@
 export const ORDER_STATUS_FLOW = {
-    pendiente: { label: 'Pendiente', next: 'confirmado', nextLabel: 'Confirmar →', class: 'status-pendiente' },
-    confirmado: { label: 'Confirmado', next: 'preparacion', nextLabel: 'A cocina →', class: 'status-confirmado' },
-    preparacion: { label: 'En preparación', next: 'listo', nextLabel: 'Listo →', class: 'status-preparacion' },
-    listo: {
-        pickup: { label: 'Listo para retirar', next: 'entregado', nextLabel: 'Entregar', class: 'status-listo' },
-        delivery: { label: 'Listo para envío', next: 'en_camino', nextLabel: 'Despachar 🚴', class: 'status-listo' }
+    pending_payment: { label: 'Pending Payment', next: 'paid_unreleased', nextLabel: 'Confirm Payment →', class: 'status-pending-payment' },
+    paid_unreleased: { label: 'Paid — Awaiting Release', next: 'released_to_kitchen', nextLabel: 'Release to Kitchen →', class: 'status-paid-unreleased' },
+    released_to_kitchen: { label: 'Released to Kitchen', next: 'preparing', nextLabel: 'Start Prep →', class: 'status-released' },
+    preparing: { label: 'Preparing', next: 'ready', nextLabel: 'Ready →', class: 'status-preparing' },
+    ready: {
+        pickup: { label: 'Ready for Pickup', next: 'delivered', nextLabel: 'Hand Over', class: 'status-ready' },
+        delivery: { label: 'Ready for Dispatch', next: 'dispatched', nextLabel: 'Dispatch 🚴', class: 'status-ready' }
     },
-    en_camino: { label: 'En camino', next: 'entregado', nextLabel: 'Confirmar Entrega', class: 'status-en-camino' },
-    entregado: { label: 'Entregado', next: null, nextLabel: null, class: 'status-entregado' },
-    cancelado: { label: 'Cancelado', next: null, nextLabel: null, class: 'status-cancelado' }
+    dispatched: { label: 'Dispatched', next: 'delivered', nextLabel: 'Confirm Delivery', class: 'status-dispatched' },
+    delivered: { label: 'Delivered', next: null, nextLabel: null, class: 'status-delivered' },
+    cancelled: { label: 'Cancelled', next: null, nextLabel: null, class: 'status-cancelled' },
+    refunded: { label: 'Refunded', next: null, nextLabel: null, class: 'status-refunded' }
 }
 
 /**
@@ -20,8 +22,8 @@ export const getOrderStatusInfo = (status, orderType = 'pickup') => {
     const info = ORDER_STATUS_FLOW[status]
     if (!info) return { label: status, next: null, nextLabel: null, class: '' }
 
-    // Handle split path for 'listo'
-    if (status === 'listo') {
+    // Handle split path for 'ready'
+    if (status === 'ready') {
         return info[orderType] || info.pickup
     }
 
@@ -55,7 +57,7 @@ export const canAdvanceOrder = (order, newStatus, config) => {
     // RULE 1: P0 - DELIVERY PREPAYMENT BLOCK
     // ===========================================
     if (orderType === 'delivery') {
-        if ((newStatus === 'preparacion' || newStatus === 'en_camino') && !paymentConfirmed) {
+        if ((newStatus === 'preparing' || newStatus === 'dispatched') && !paymentConfirmed) {
             return {
                 allowed: false,
                 reason: '⚠️ REGLA DE DESPACHO: El pedido debe estar PAGADO antes de preparar o enviar.'
@@ -67,7 +69,7 @@ export const canAdvanceOrder = (order, newStatus, config) => {
     // RULE 2: MODE A2 (CAFÉ) - STRICT PREPAYMENT
     // ===========================================
     if (orderMode === 'A2') {
-        if (newStatus === 'preparacion' && !paymentConfirmed) {
+        if (newStatus === 'preparing' && !paymentConfirmed) {
             return {
                 allowed: false,
                 reason: '⚠️ MODO CAFÉ (A2): Se requiere pago confirmado antes de marchar a cocina.'

@@ -768,8 +768,8 @@ function SuperAdmin({ config: configProp }) {
         )
     }
     // Badge counts for bottom nav
-    const activeOrders = orders.filter(o => o.status !== 'entregado')
-    const pendingDeliveries = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+    const activeOrders = orders.filter(o => o.status !== 'delivered')
+    const pendingDeliveries = orders.filter(o => o.order_type === 'delivery' && o.status !== 'delivered' && o.status !== 'cancelled')
     const navBadges = {
         orders: activeOrders.length,
         delivery: pendingDeliveries.length
@@ -1993,7 +1993,7 @@ function SuperAdmin({ config: configProp }) {
                                 </ul>
                             </div>
                             {(() => {
-                                const deliveryOrders = orders.filter(o => o.orderType === 'delivery' && o.status !== 'entregado' && o.status !== 'cancelado')
+                                const deliveryOrders = orders.filter(o => o.order_type === 'delivery' && o.status !== 'delivered' && o.status !== 'cancelled')
                                 if (deliveryOrders.length === 0) {
                                     return (
                                         <div style={{ ...cardStyle, textAlign: 'center', padding: 24 }}>
@@ -2035,8 +2035,8 @@ function SuperAdmin({ config: configProp }) {
                                                     borderRadius: 10,
                                                     fontSize: 11,
                                                     fontWeight: 600,
-                                                    background: order.status === 'en_camino' ? '#FFEDD5' : order.status === 'listo' ? '#DCFCE7' : '#E0E7FF',
-                                                    color: order.status === 'en_camino' ? '#9A3412' : order.status === 'listo' ? '#166534' : '#3730A3'
+                                                    background: order.status === 'dispatched' ? '#FFEDD5' : order.status === 'ready' ? '#DCFCE7' : '#E0E7FF',
+                                                    color: order.status === 'dispatched' ? '#9A3412' : order.status === 'ready' ? '#166534' : '#3730A3'
                                                 }}>
                                                     {statusInfo.label}
                                                 </span>
@@ -2065,8 +2065,8 @@ function SuperAdmin({ config: configProp }) {
 
                                             {/* Actions */}
                                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                                {/* Phone confirmation input for en_camino */}
-                                                {order.status === 'en_camino' && order.customerInfo && (
+                                                {/* Phone confirmation input for dispatched */}
+                                                {order.status === 'dispatched' && order.customerInfo && (
                                                     <div style={{ width: '100%', marginBottom: 8 }}>
                                                         <label style={{ fontSize: 10, color: '#6B7280', display: 'block', marginBottom: 4 }}>
                                                             Últimos 4 dígitos del teléfono para confirmar entrega
@@ -2094,8 +2094,8 @@ function SuperAdmin({ config: configProp }) {
                                                 {statusInfo.next && (
                                                     <button
                                                         onClick={() => {
-                                                            // Phone code verification for entregado
-                                                            if (statusInfo.next === 'entregado' && order.customerInfo) {
+                                                            // Phone code verification for delivered
+                                                            if (statusInfo.next === 'delivered' && order.customerInfo) {
                                                                 const code = deliveryConfirmCode[order.id] || ''
                                                                 if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
                                                                     alert('❌ Código incorrecto. Ingrese los últimos 4 dígitos del teléfono del cliente.')

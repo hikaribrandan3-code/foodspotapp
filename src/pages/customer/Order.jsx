@@ -478,7 +478,7 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: 'pending',
+            status: 'paid_unreleased', // WhatsApp = cash path, payment done, awaiting release
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
@@ -537,7 +537,7 @@ function Order({ config: configProp }) {
                 .select('*')
                 .eq('id', pendingOrderId)
                 .eq('business_id', businessId) // 🔒 SILO GUARD - REQUIRED
-                .eq('status', 'pendiente')
+                .eq('status', 'pending_payment')
                 .single()
 
             if (fetchError || !order) {

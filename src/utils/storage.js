@@ -98,7 +98,7 @@ export function updateOrder(orderId, updates) {
         // ============================================
         // ORDER LIFECYCLE V1: Auto-archive on entregado
         // ============================================
-        if (updates.status === 'entregado') {
+        if (updates.status === 'delivered') {
 
             // 1. Archive the completed order
             const completedOrder = {
