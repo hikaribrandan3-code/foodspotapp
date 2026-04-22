@@ -74,9 +74,9 @@ const getRouteMaps = (tenantSlug) => ({
         ai: `/${tenantSlug}/owner/ai`
     },
     staff: {
-        orders: `/${tenantSlug}/staff/dashboard/orders`,
-        delivery: `/${tenantSlug}/staff/dashboard/delivery`,
-        history: `/${tenantSlug}/staff/dashboard/history`
+        orders: `/${tenantSlug}/staff/ops`,
+        delivery: `/${tenantSlug}/staff/ops`,
+        history: `/${tenantSlug}/staff/ops`
     },
     demo: {
         summary: '/demo',

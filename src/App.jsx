@@ -519,8 +519,8 @@ function App() {
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
 
                                             <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
-                                            <Route path="/:tenantSlug/staff/dashboard" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
-                                            <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffDashboard config={safeConfig} orders={orders} updateOrder={updateOrder} setOrders={setOrders} />} />
+                                            <Route path="/:tenantSlug/staff/dashboard" element={<StaffOpsRedirect />} />
+                                            <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffOpsRedirect />} />
                                             <Route path="/:tenantSlug/staff/kds" element={<StaffKDS config={safeConfig} />} />
                                             <Route path="/:tenantSlug/staff/ops" element={<StaffOpsRedirect />} />
 
