@@ -7,7 +7,7 @@ import ManualOrderModal from '@/components/ManualOrderModal';
 import type { OrderStatus } from '@/types';
 
 export default function BoardView() {
-  const { state, toggleOnline, advanceOrderStatus } = useOrders();
+  const { state, toggleOnline } = useOrders();
   const [manualOrderOpen, setManualOrderOpen] = useState(false);
 
   // Active orders (excluding DONE)
@@ -35,7 +35,6 @@ export default function BoardView() {
   ).length;
 
   const cashPendingCount = statusCounts.PENDING_VERIFICATION;
-  const deliveredCount = statusCounts.DONE;
 
   return (
     <div className="h-full w-full flex flex-col relative">
@@ -61,7 +60,7 @@ export default function BoardView() {
           <LayoutDashboard size={20} style={{ color: 'var(--status-icon-prep)' }} />
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Mission Control</h1>
         </div>
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{activeOrders.length} active &bull; {cashPendingCount} cash pending &bull; {criticalCount} critical &bull; {deliveredCount} delivered</p>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{activeOrders.length} active &bull; {cashPendingCount} cash pending &bull; {criticalCount} critical &bull; {statusCounts.DONE} delivered</p>
       </div>
 
       {/* Status counters */}
@@ -80,7 +79,7 @@ export default function BoardView() {
         <div className="space-y-1">
           {activeOrders.map((order, idx) => (
             <motion.div key={order.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04, duration: 0.3 }}>
-              <OrderCard order={order} compact={false} onSwipeComplete={advanceOrderStatus} onAdvance={advanceOrderStatus} />
+              <OrderCard order={order} compact={false} />
             </motion.div>
           ))}
         </div>

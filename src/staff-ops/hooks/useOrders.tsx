@@ -314,6 +314,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'CONFIRM_DELIVERY', orderId });
 
     if (state.isOnline && businessId) {
+      // delivered_at is auto-stamped inside updateOrderCloud when status = 'entregado'
       updateOrderCloud(orderId, { status: 'entregado' }, businessId)
         .catch((e: Error) => console.error('[StaffOps] confirmDelivery:', e));
     }

@@ -622,6 +622,9 @@ export async function updateOrderCloud(orderId, updates, businessId) {
     if (updates.status !== undefined) dbUpdates.status = updates.status
     if (updates.paymentMethod !== undefined) dbUpdates.payment_method = updates.paymentMethod
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
+    if (updates.payment_confirmed !== undefined) dbUpdates.payment_confirmed = updates.payment_confirmed
+    // Stamp delivered_at when order is confirmed delivered
+    if (updates.status === 'entregado') dbUpdates.delivered_at = new Date().toISOString()
 
     const { data, error } = await supabase
         .from('orders')
@@ -798,4 +801,60 @@ export async function createOrderWithGuestToken(orderData, guestToken, businessI
         .single()
 
     return { data, error }
+}
+
+/**
+ * Clock in a staff member — inserts a shift record.
+ * Silently no-ops if the staff_shifts table doesn't exist yet.
+ */
+export async function clockInStaff(staffId, businessId) {
+    if (!staffId || !businessId) return { data: null, error: null }
+    const { data, error } = await supabase
+        .from('staff_shifts')
+        .insert({ staff_id: staffId, business_id: businessId, clock_in_at: new Date().toISOString() })
+        .select()
+        .single()
+    return { data, error }
+}
+
+/**
+ * Clock out a staff member — updates the open shift with clock_out_at.
+ */
+export async function clockOutStaff(staffId, businessId) {
+    if (!staffId || !businessId) return { data: null, error: null }
+    const now = new Date().toISOString()
+    const { data: openShift } = await supabase
+        .from('staff_shifts')
+        .select('id')
+        .eq('staff_id', staffId)
+        .eq('business_id', businessId)
+        .is('clock_out_at', null)
+        .order('clock_in_at', { ascending: false })
+        .limit(1)
+        .single()
+    if (!openShift) return { data: null, error: null }
+    const { data, error } = await supabase
+        .from('staff_shifts')
+        .update({ clock_out_at: now })
+        .eq('id', openShift.id)
+        .eq('business_id', businessId)
+        .select()
+        .single()
+    return { data, error }
+}
+
+/**
+ * Fetch shift history for a staff member (last 30 days).
+ */
+export async function getStaffShifts(staffId, businessId) {
+    if (!staffId || !businessId) return { data: [], error: null }
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const { data, error } = await supabase
+        .from('staff_shifts')
+        .select('*')
+        .eq('staff_id', staffId)
+        .eq('business_id', businessId)
+        .gte('clock_in_at', since)
+        .order('clock_in_at', { ascending: false })
+    return { data: data ?? [], error }
 }

@@ -6,14 +6,10 @@ import OrderCard from '@/components/OrderCard';
 import MapboxMap from '@/components/MapboxMap';
 
 export default function LogisticsView() {
-  const { state, advanceOrderStatus } = useOrders();
+  const { state } = useOrders();
   const [filter, setFilter] = useState<'READY' | 'DISPATCH' | 'DELIVERING'>('READY');
 
   const filteredOrders = state.orders.filter(o => o.status === filter);
-
-  const handleSwipeComplete = (orderId: string) => {
-    advanceOrderStatus(orderId);
-  };
 
   const readyCount = state.orders.filter(o => o.status === 'READY').length;
   const dispatchCount = state.orders.filter(o => o.status === 'DISPATCH').length;
@@ -79,9 +75,6 @@ export default function LogisticsView() {
 
                 <OrderCard
                   order={order}
-                  swipeable={filter === 'READY' || filter === 'DISPATCH'}
-                  swipeDirection={filter === 'READY' ? 'vertical' : 'horizontal'}
-                  onSwipeComplete={handleSwipeComplete}
                   showLocation
                   showConfirmDelivery={filter === 'DELIVERING'}
                 />

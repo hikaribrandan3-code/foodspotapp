@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
-import { Clock, AlertTriangle, PackageCheck, Circle, Bike, MapPin, ChevronRight, RefreshCw, DollarSign, CheckCircle2, Navigation } from 'lucide-react';
+import { Clock, AlertTriangle, PackageCheck, Circle, Bike, MapPin, ChevronRight, RefreshCw, DollarSign, CheckCircle2, Navigation, Phone } from 'lucide-react';
 import type { Order } from '@/types';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { useOrders } from '@/hooks/useOrders';
@@ -11,10 +11,10 @@ interface OrderCardProps {
   swipeable?: boolean;
   swipeDirection?: 'horizontal' | 'vertical';
   onSwipeComplete?: (orderId: string) => void;
+  onAdvance?: (orderId: string) => void;
   compact?: boolean;
   showLocation?: boolean;
   showConfirmDelivery?: boolean;
-  onAdvance?: (orderId: string) => void;
   showAdvanceButton?: boolean;
 }
 
@@ -33,16 +33,6 @@ function StatusIcon({ status }: { status: Order['status'] }) {
   }
 }
 
-function DeliveryTypeIcon({ type }: { type?: 'delivery' | 'pickup' | 'dine-in' }) {
-  const props = { size: 12, strokeWidth: 2.5 };
-  switch (type) {
-    case 'delivery': return <Bike {...props} style={{ color: 'var(--status-icon-dispatch)' }} />;
-    case 'pickup': return <PackageCheck {...props} style={{ color: 'var(--status-icon-ready)' }} />;
-    case 'dine-in': return <MapPin {...props} style={{ color: 'var(--has-notes)' }} />;
-    default: return null;
-  }
-}
-
 /** Deep-link to native maps using geo: scheme */
 function openNativeMaps(lat: number, lng: number) {
   const url = `geo:${lat},${lng}?q=${lat},${lng}(${encodeURIComponent('Delivery')})`;
@@ -54,10 +44,10 @@ export default function OrderCard({
   swipeable = false,
   swipeDirection = 'horizontal',
   onSwipeComplete,
+  onAdvance,
   compact = false,
   showLocation = false,
   showConfirmDelivery = false,
-  onAdvance,
   showAdvanceButton = false,
 }: OrderCardProps) {
   const { selectOrder, verifyCash, confirmDelivery } = useOrders();
@@ -152,6 +142,11 @@ export default function OrderCard({
     }
   }, [order.deliveryCoords]);
 
+  const handleAdvance = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onAdvance?.(order.id);
+  }, [onAdvance, order.id]);
+
   if (isRemoving) {
     return (
       <motion.div
@@ -236,18 +231,24 @@ export default function OrderCard({
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-base truncate" style={{ color: 'var(--text-primary)' }}>{order.customerName}</h3>
-            <p className="text-sm mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
-              <span>
-                {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
-                {order.items.some(i => i.specialInstructions) && <span className="ml-1.5 text-xs" style={{ color: 'var(--has-notes)' }}>&bull; has notes</span>}
-              </span>
-              {order.deliveryType && (
-                <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)' }}>
-                  <DeliveryTypeIcon type={order.deliveryType} />
-                  {order.deliveryType === 'dine-in' ? 'Dine-in' : order.deliveryType === 'pickup' ? 'Pickup' : 'Delivery'}
-                </span>
-              )}
+            <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+              {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+              {order.items.some(i => i.specialInstructions) && <span className="ml-1.5 text-xs" style={{ color: 'var(--has-notes)' }}>&bull; has notes</span>}
             </p>
+            {/* Delivery address — shown on logistics cards */}
+            {showLocation && order.deliveryAddress && (
+              <div className="flex items-start gap-1 mt-1.5">
+                <MapPin size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--status-icon-delivering)' }} />
+                <span className="text-xs leading-tight" style={{ color: 'var(--text-secondary)' }}>{order.deliveryAddress}</span>
+              </div>
+            )}
+            {showLocation && order.customerPhone && (
+              <a href={`tel:${order.customerPhone}`} onClick={e => e.stopPropagation()}
+                className="flex items-center gap-1 mt-1" style={{ color: 'var(--status-icon-dispatch)' }}>
+                <Phone size={12} />
+                <span className="text-xs">{order.customerPhone}</span>
+              </a>
+            )}
           </div>
           {showLocation && order.assignedTo && (
             <div className="text-right ml-2">
@@ -267,6 +268,20 @@ export default function OrderCard({
             >
               <DollarSign size={16} strokeWidth={2.5} />
               Verify Cash Payment
+            </button>
+          </div>
+        )}
+
+        {/* ── Advance button (Kitchen) ────────────────────────── */}
+        {showAdvanceButton && (
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+            <button
+              onClick={handleAdvance}
+              className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
+            >
+              <ChevronRight size={16} />
+              Advance
             </button>
           </div>
         )}
@@ -297,41 +312,12 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Quick-advance button (non-swipeable, non-delivery, non-cash) OR forced for kitchen */}
-        {!compact && !isCashPending && !showConfirmDelivery && (!swipeable || showAdvanceButton) && (() => {
-          const nextLabels: Record<string, string> = {
-            TODO: '▶ Start Prep',
-            PREP: '✓ Mark Ready',
-            READY: '🚴 Dispatch',
-            DISPATCH: '📍 Delivering',
-          };
-          const label = nextLabels[order.status];
-          return label ? (
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
-              <button
-                onClick={(e) => { e.stopPropagation(); onAdvance?.(order.id); }}
-                className="w-full py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-[0.97]"
-                style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)' }}
-              >
-                {label}
-              </button>
-            </div>
-          ) : (
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: 'var(--text-tertiary)' }}>{STATUS_LABELS[order.status]}</span>
-                <span className="text-xs" style={{ color: 'var(--tap-hint)' }}>Tap for details</span>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Compact / swipeable footer */}
-        {!compact && !isCashPending && !showConfirmDelivery && swipeable && (
+        {/* ── Expanded preview for non-compact ───────────────────── */}
+        {!compact && !isCashPending && !showConfirmDelivery && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: 'var(--text-tertiary)' }}>{STATUS_LABELS[order.status]}</span>
-              <span className="text-xs" style={{ color: 'var(--tap-hint)' }}>Swipe to advance</span>
+              <span className="text-xs" style={{ color: 'var(--tap-hint)' }}>Tap for details</span>
             </div>
           </div>
         )}

@@ -105,6 +105,11 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     es: 'Terminar Turno y Cerrar Sesión',
     pt: 'Terminar Turno e Sair',
   },
+  'sign_out': {
+    en: 'Sign Out',
+    es: 'Cerrar Sesión',
+    pt: 'Sair',
+  },
   'since': {
     en: 'Since',
     es: 'Desde',
@@ -139,6 +144,31 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     en: 'Save',
     es: 'Guardar',
     pt: 'Salvar',
+  },
+  'clock_in': {
+    en: 'Clock In',
+    es: 'Marcar Entrada',
+    pt: 'Registrar Entrada',
+  },
+  'clock_out': {
+    en: 'Clock Out',
+    es: 'Marcar Salida',
+    pt: 'Registrar Saída',
+  },
+  'days_worked': {
+    en: 'Days Worked',
+    es: 'Días Trabajados',
+    pt: 'Dias Trabalhados',
+  },
+  'total_hours': {
+    en: 'Total Hours',
+    es: 'Horas Totales',
+    pt: 'Horas Totais',
+  },
+  'shift_timer': {
+    en: 'Active Shift',
+    es: 'Turno Activo',
+    pt: 'Turno Ativo',
   },
 };
 

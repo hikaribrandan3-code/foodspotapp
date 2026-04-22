@@ -93,27 +93,23 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
   const waitMins = (Date.now() - createdAt) / 60000;
   const priority: 'normal' | 'high' = waitMins >= 8 ? 'high' : 'normal';
 
-  // Delivery address: can be string or JSONB object
-  let deliveryAddress: string | undefined;
-  const rawAddr = dbOrder.delivery_address;
-  if (typeof rawAddr === 'string') {
-    deliveryAddress = rawAddr;
-  } else if (rawAddr && typeof rawAddr === 'object') {
-    const parts = [rawAddr.street, rawAddr.city, rawAddr.state].filter(Boolean);
-    deliveryAddress = parts.join(', ') || rawAddr.formatted_address || undefined;
-  }
-
-  // Delivery type: delivery, pickup, or dine-in
-  let deliveryType: 'delivery' | 'pickup' | 'dine-in' | undefined;
-  const rawDeliveryType = dbOrder.delivery_type;
-  if (rawDeliveryType === 'delivery' || rawDeliveryType === 'pickup' || rawDeliveryType === 'dine-in') {
-    deliveryType = rawDeliveryType;
+  // Parse delivery coordinates from PostGIS point or JSON
+  let deliveryCoords: { lat: number; lng: number } | undefined;
+  if (dbOrder.delivery_lat && dbOrder.delivery_lng) {
+    deliveryCoords = { lat: Number(dbOrder.delivery_lat), lng: Number(dbOrder.delivery_lng) };
+  } else if (dbOrder.delivery_coords) {
+    try {
+      const c = typeof dbOrder.delivery_coords === 'string'
+        ? JSON.parse(dbOrder.delivery_coords)
+        : dbOrder.delivery_coords;
+      if (c?.lat && c?.lng) deliveryCoords = { lat: Number(c.lat), lng: Number(c.lng) };
+    } catch {}
   }
 
   return {
     id: dbOrder.id,
     customerName: dbOrder.customer_name || 'Cliente',
-    customerPhone: dbOrder.customer_phone ?? undefined,
+    customerPhone: dbOrder.customer_phone ?? dbOrder.phone ?? undefined,
     items,
     status,
     createdAt,
@@ -122,7 +118,8 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     paymentMethod,
     cashVerified: paymentConfirmed,
     offlineQueued: false,
-    deliveryAddress,
-    deliveryType,
+    deliveryAddress: dbOrder.delivery_address ?? dbOrder.address ?? undefined,
+    deliveryCoords,
+    deliveryType: dbOrder.delivery_type ?? dbOrder.order_type ?? undefined,
   };
 }

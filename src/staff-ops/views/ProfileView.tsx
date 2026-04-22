@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Settings, Bell, BellOff, Shield, Clock, Phone, LogOut,
@@ -10,7 +10,7 @@ import { useAudioPref } from '@/hooks/useAudioPref';
 import { useBusiness } from '@/contexts/BusinessContext';
 import { t as translate } from '../lib/translations';
 // @ts-ignore
-import { supabase } from '../../lib/supabaseClient.js';
+import { supabase, clockInStaff, clockOutStaff, getStaffShifts } from '../../lib/supabaseClient.js';
 // @ts-ignore
 import * as audio from '@/lib/audio';
 
@@ -24,6 +24,14 @@ function getStored<T>(key: string, fallback: T): T {
 function formatTime(iso: string | undefined) {
   if (!iso) return '—';
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }
 
 const LANGUAGES = [
@@ -43,14 +51,57 @@ const TRANSPORT_MODES = [
 export default function ProfileView() {
   const { theme, toggleTheme } = useTheme();
   const [audioEnabled, toggleAudio] = useAudioPref();
-  const { tenantSlug } = useBusiness();
+  const { tenantSlug, businessId } = useBusiness();
 
   const staffMember = getStored<any>('fs_staff_member', null);
-  const currentShift = getStored<any>('fs_current_shift', null);
+  const [currentShift, setCurrentShift] = useState(getStored<any>('fs_current_shift', null));
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [shiftHistory, setShiftHistory] = useState<any[]>(() => getStored('fs_shift_history', []));
   const staffName = staffMember?.name || 'Staff Member';
   const staffRole = staffMember?.role || 'Staff';
   const shiftStart = formatTime(currentShift?.clock_in_at);
   const isOnDuty = !!currentShift;
+
+  // Live timer for active shift
+  useEffect(() => {
+    if (!isOnDuty) return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const start = new Date(currentShift.clock_in_at).getTime();
+      setElapsedTime(now - start);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isOnDuty, currentShift]);
+
+  // Load shift history from backend, fall back to localStorage
+  useEffect(() => {
+    if (!staffMember?.id || !businessId) return;
+    getStaffShifts(staffMember.id, businessId)
+      .then(({ data }: { data: any[] }) => {
+        if (data && data.length > 0) {
+          setShiftHistory(data);
+          localStorage.setItem('fs_shift_history', JSON.stringify(data));
+        }
+      })
+      .catch(() => {}); // silently fall back to localStorage
+  }, [staffMember?.id, businessId]);
+
+  // Calculate shift statistics
+  const shiftStats = useMemo(() => {
+    const completed = shiftHistory.filter(s => s.clock_out_at);
+    const daysWorked = new Set(completed.map(s => {
+      const d = new Date(s.clock_in_at);
+      return d.toLocaleDateString();
+    })).size;
+    const totalMs = completed.reduce((sum, s) => {
+      const start = new Date(s.clock_in_at).getTime();
+      const end = new Date(s.clock_out_at).getTime();
+      return isNaN(end) ? sum : sum + (end - start);
+    }, 0);
+    const totalHours = Math.floor(totalMs / 3600000);
+    const totalMinutes = Math.floor((totalMs % 3600000) / 60000);
+    return { daysWorked, totalHours, totalMinutes };
+  }, [shiftHistory]);
 
   const [notificationsOn, setNotificationsOn] = useState(
     () => localStorage.getItem('fs_staff_notifications') !== 'off'
@@ -108,36 +159,23 @@ export default function ProfileView() {
     setSheet(null);
   };
 
-  const [shiftHistory, setShiftHistory] = useState<any[]>(
-    () => getStored('fs_shift_history', [])
-  );
-
-  const handleClockInOut = () => {
-    if (isOnDuty) {
-      // Clock out
-      const clockOutTime = new Date().toISOString();
-      const updated = {
-        ...currentShift,
-        clock_out_at: clockOutTime,
-      };
-      localStorage.removeItem('fs_current_shift');
-      const newHistory = [...shiftHistory, updated];
-      setShiftHistory(newHistory);
-      localStorage.setItem('fs_shift_history', JSON.stringify(newHistory));
-    } else {
-      // Clock in
-      const clockInTime = new Date().toISOString();
-      const newShift = {
-        id: `shift-${Date.now()}`,
-        staff_id: staffMember?.id,
-        clock_in_at: clockInTime,
-        clock_out_at: null,
-      };
-      localStorage.setItem('fs_current_shift', JSON.stringify(newShift));
+  const doSignOut = (clearShift = false) => {
+    if (clearShift) {
+      // Clock out if currently on duty before leaving
+      if (isOnDuty && staffMember?.id && businessId) {
+        clockOutStaff(staffMember.id, businessId).catch(() => {});
+      }
     }
-    // Force re-render
-    window.location.reload();
+    localStorage.removeItem('fs_staff_member');
+    localStorage.removeItem('fs_current_shift');
+    localStorage.removeItem('x-staff-id');
+    // Navigate first — Supabase channel cleanup happens in the unloading page
+    const dest = tenantSlug ? `/${tenantSlug}/staff` : '/login/staff';
+    window.location.replace(dest);
   };
+
+  const handleSignOut = () => doSignOut(true);
+  const handleResetPin = () => doSignOut(false);
 
   const currentLang = LANGUAGES.find(l => l.code === language)?.label || 'English';
   const driverSummary = driverProfile.transport
@@ -183,7 +221,38 @@ export default function ProfileView() {
       <div className="px-4 space-y-4 pb-32">
         <Section title={t('shift_management')}>
           <MenuItem icon={<Clock size={18} />} label={t('current_shift')}
-            value={isOnDuty ? `${t('since')} ${shiftStart}` : t('not_clocked_in')} />
+            value={isOnDuty ? `${formatElapsed(elapsedTime)} active` : t('not_clocked_in')} />
+          {shiftStats.daysWorked > 0 && (
+            <MenuItem icon={<Clock size={18} />} label={t('days_worked')}
+              value={shiftStats.daysWorked.toString()} />
+          )}
+          {shiftStats.totalHours > 0 || shiftStats.totalMinutes > 0 && (
+            <MenuItem icon={<Clock size={18} />} label={t('total_hours')}
+              value={`${shiftStats.totalHours}h ${shiftStats.totalMinutes}m`} />
+          )}
+          <motion.button whileTap={{ scale: 0.98 }} onClick={async () => {
+            if (isOnDuty) {
+              const now = new Date().toISOString();
+              const completedShift = { ...currentShift, clock_out_at: now };
+              const newHistory = [...shiftHistory, completedShift];
+              setShiftHistory(newHistory);
+              localStorage.setItem('fs_shift_history', JSON.stringify(newHistory));
+              localStorage.removeItem('fs_current_shift');
+              setCurrentShift(null);
+              // Push clock-out to backend (silent fail if table missing)
+              clockOutStaff(staffMember?.id, businessId).catch(() => {});
+            } else {
+              const shift = { clock_in_at: new Date().toISOString() };
+              localStorage.setItem('fs_current_shift', JSON.stringify(shift));
+              setCurrentShift(shift);
+              // Push clock-in to backend (silent fail if table missing)
+              clockInStaff(staffMember?.id, businessId).catch(() => {});
+            }
+          }}
+            className="w-full py-3 rounded-none flex items-center justify-center font-semibold text-sm border-t"
+            style={{ backgroundColor: isOnDuty ? 'var(--reception-bg)' : 'var(--filter-active-bg)', color: isOnDuty ? 'var(--reception-text)' : 'var(--filter-active-text)', borderColor: 'var(--card-border)' }}>
+            {isOnDuty ? t('clock_out') : t('clock_in')}
+          </motion.button>
         </Section>
 
         <Section title={t('driver_info')}>
@@ -211,21 +280,14 @@ export default function ProfileView() {
         <Section title={t('system')}>
           <MenuItem icon={<Settings size={18} />} label={t('language')} value={currentLang}
             onClick={() => setSheet('language')} />
+          <MenuItem icon={<Shield size={18} />} label={t('reset_pin')} danger
+            onClick={() => setSheet('resetPin')} />
         </Section>
 
-        {/* Clock In / Clock Out Button */}
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={handleClockInOut}
-          className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm mt-4"
-          style={{
-            backgroundColor: isOnDuty ? 'var(--urgency-critical-bg)' : 'var(--reception-bg)',
-            border: `1px solid ${isOnDuty ? 'var(--urgency-critical-border)' : 'var(--reception-border)'}`,
-            color: isOnDuty ? 'var(--timer-critical)' : 'var(--reception-text)',
-          }}
-        >
-          <Clock size={18} />
-          {isOnDuty ? `${t('off_duty')} - ${t('end_shift')}` : t('on_duty')}
+        <motion.button whileTap={{ scale: 0.98 }} onClick={handleSignOut}
+          className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm mt-2"
+          style={{ backgroundColor: 'var(--urgency-critical-bg)', border: '1px solid var(--urgency-critical-border)', color: 'var(--timer-critical)' }}>
+          <LogOut size={18} /> {t('sign_out')}
         </motion.button>
       </div>
 
