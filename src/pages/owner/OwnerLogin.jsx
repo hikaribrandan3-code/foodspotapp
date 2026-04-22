@@ -140,15 +140,15 @@ function OwnerLogin() {
             localStorage.setItem('fs_business_id', staff.business_id);
             localStorage.setItem('x-staff-id', staff.id);
 
-            if (shiftData) {
-                const shift = {
-                    id: shiftData,
-                    staff_id: staff.id,
-                    business_id: staff.business_id,
-                    status: 'active'
-                };
-                localStorage.setItem('fs_current_shift', JSON.stringify(shift));
-            }
+            // Always record a shift on login, even if the RPC is unavailable
+            const shift = {
+                id: shiftData || `local-${Date.now()}`,
+                staff_id: staff.id,
+                business_id: staff.business_id,
+                clock_in_at: new Date().toISOString(),
+                status: 'active'
+            };
+            localStorage.setItem('fs_current_shift', JSON.stringify(shift));
 
             window.location.replace(`/${tenantSlug}/staff/dashboard`);
         } catch (err) {

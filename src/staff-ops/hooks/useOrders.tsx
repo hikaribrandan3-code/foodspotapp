@@ -153,7 +153,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then(({ data }: { data: any[] | null }) => {
         if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
-      });
+      })
+      .catch(() => {}); // Prevent unhandled rejection on initial load
 
     let channel: any = null;
     let pollInterval: NodeJS.Timeout | null = null;
