@@ -5,7 +5,7 @@
     min-height: 100vh;
     background: #ffffff;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    padding-bottom: 80px; /* Precise height for GrubClub bottom nav */
+    padding-bottom: 60px; /* Reduced from 80px — tighter to nav bar */
 }
 
 /* Header */
@@ -80,7 +80,7 @@
     padding: 12px 16px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px; /* Reduced from 20px — tighter vertical rhythm */
 }
 
 /* Search Section */
@@ -432,7 +432,7 @@
 .ose-featured {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px; /* Reduced from 12px */
 }
 
 .ose-section-header {
@@ -462,14 +462,14 @@
 .ose-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 8px; /* Reduced from 12px */
 }
 
 .ose-card {
     background: #fff;
-    border-radius: 16px;
+    border-radius: 14px; /* Slightly tighter from 16px */
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); /* Lighter shadow */
     border: 1px solid #f0f0f0;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -477,7 +477,7 @@
 
 .ose-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .ose-card:active {
@@ -485,7 +485,7 @@
 }
 
 .ose-card-image {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 4 / 3; /* Changed from 1/1 square — ~14% shorter */
     width: 100%;
     overflow: hidden;
     position: relative;
@@ -516,14 +516,14 @@
 }
 
 .ose-card-content {
-    padding: 12px;
+    padding: 10px; /* Reduced from 12px */
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px; /* Reduced from 4px */
 }
 
 .ose-card-title {
-    font-size: 13px;
+    font-size: 12px; /* Reduced from 13px */
     font-weight: 700;
     color: #1a1a1a;
     margin: 0;
@@ -533,7 +533,7 @@
 }
 
 .ose-card-desc {
-    font-size: 11px;
+    font-size: 10px; /* Reduced from 11px */
     color: #888;
     margin: 0;
     white-space: nowrap;
@@ -545,18 +545,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 8px;
+    margin-top: 6px; /* Reduced from 8px */
 }
 
 .ose-card-price {
-    font-size: 15px;
+    font-size: 14px; /* Reduced from 15px */
     font-weight: 800;
     color: #1a1a1a;
 }
 
 .ose-card-add {
-    width: 32px;
-    height: 32px;
+    width: 28px; /* Reduced from 32px */
+    height: 28px; /* Reduced from 32px */
     border-radius: 50%;
     border: none;
     display: flex;
@@ -564,12 +564,12 @@
     justify-content: center;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .ose-card-add:hover {
     transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
 }
 
 .ose-card-add:active {
