@@ -87,7 +87,21 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 }
 
                 let displayItems = items || []
-                console.log('[OrderStatusEmpty] fetched items:', displayItems.length, displayItems)
+                // 🗑️ FILTER: Exclude seeded demo items with stock Unsplash URLs
+                displayItems = displayItems.filter(item => {
+                    const img = item.image || item.image_url || ''
+                    // Allow: real uploads (blob, data URI, Supabase storage, relative paths)
+                    // Block: known stock photo domains
+                    const blockedDomains = [
+                        'images.unsplash.com',
+                        'picsum.photos',
+                        'via.placeholder.com',
+                        'dummyimage.com',
+                        'lorempixel.com'
+                    ]
+                    return !blockedDomains.some(domain => img.includes(domain))
+                })
+                console.log('[OrderStatusEmpty] after stock filter:', displayItems.length, 'real items')
 
                 // Shuffle and pick 4 for variety
                 const shuffled = displayItems.sort(() => 0.5 - Math.random())
