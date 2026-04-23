@@ -86,11 +86,13 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                         .select('id, name, description, price, image, category_id, is_available')
                         .eq('business_id', businessId)
                         .eq('is_available', true)
-                        .limit(4)
+                        .limit(10)
                     displayItems = fallbackItems || []
                 }
 
-                setFeaturedItems(displayItems)
+                // Shuffle and pick 4 for variety
+                const shuffled = displayItems.sort(() => 0.5 - Math.random())
+                setFeaturedItems(shuffled.slice(0, 4))
 
                 // Fetch categories for the pills
                 const { data: cats, error: catsError } = await supabase
