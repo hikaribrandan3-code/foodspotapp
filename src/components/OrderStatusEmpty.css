@@ -263,8 +263,7 @@
 
 .ose-categories-scroll {
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    gap: 12px;
     overflow-x: auto;
     padding-bottom: 4px;
     scrollbar-width: none;
@@ -322,11 +321,16 @@
 }
 
 .ose-category-name {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     color: #333;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    max-width: 60px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* MunchBoy Arcade Card */
