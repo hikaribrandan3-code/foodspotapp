@@ -209,7 +209,6 @@ function Home({ config: configProp }) {
     useEffect(() => {
         isDraggingRef.current = false
         navigationBlockedRef.current = false
-    }, [location.pathname])
         setDragState(null)
         setIsEditMode(false)
         if (longPressTimerRef.current) {
