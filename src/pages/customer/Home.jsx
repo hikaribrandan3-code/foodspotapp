@@ -668,9 +668,7 @@ function Home({ config: configProp }) {
                 paddingBottom: 8
             }}
         >
-            <div style={{ maxHeight: 180, overflow: 'hidden' }}>
-                <HeaderClamp config={config} />
-            </div>
+            <HeaderClamp config={config} />
 
 
 

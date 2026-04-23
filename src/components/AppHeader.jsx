@@ -80,6 +80,7 @@ function AppHeader({ config: configProp }) {
                     style={{
                         width: '100%',
                         aspectRatio: '16 / 9',
+                        maxHeight: breakpoint === 'mobile' ? 160 : undefined,
                         position: 'relative',
                         overflow: 'hidden',
                         background: '#F1F5F9' // Clean skeleton background
