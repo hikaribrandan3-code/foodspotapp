@@ -17,7 +17,7 @@ import { processAndStoreImage } from '../utils/imageOptimizer.js'
 import { uploadAsset, updateBranding } from '../lib/supabaseClient.js'
 import Home from '../pages/customer/Home.jsx'
 
-const getAspectHeight = () => typeof window !== 'undefined' ? window.innerWidth * (9 / 16) : 230;
+const getAspectHeight = () => typeof window !== 'undefined' ? Math.min(window.innerWidth * (9 / 16), 180) : 180;
 
 const COVER_HEIGHTS = {
     mobile: getAspectHeight(),
