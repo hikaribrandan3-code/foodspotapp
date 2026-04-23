@@ -70,7 +70,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 // 🍔 Fetch ANY items for this business — aggressive, no filters
                 const { data: items, error: itemsError } = await supabase
                     .from('menu_items')
-                    .select('id, name, description, price, image, category_id')
+                    .select('id, name, description, price, image, image_url, category_id')
                     .eq('business_id', businessId)
                     .limit(10)
 
@@ -295,8 +295,8 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                     onClick={() => handleItemClick(item.id)}
                                 >
                                     <div className="ose-card-image">
-                                        {item.image ? (
-                                            <img src={item.image} alt={item.name} loading="lazy" />
+                                        {item.image || item.image_url ? (
+                                            <img src={item.image || item.image_url} alt={item.name} loading="lazy" />
                                         ) : (
                                             <div className="ose-card-placeholder">
                                                 <span>🍽️</span>
