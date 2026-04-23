@@ -205,6 +205,27 @@ function Home({ config: configProp }) {
     // Hero banner / featured photos have been killed. Menu items come from menu_data / menu_items only.
     const localFeaturedItems = []
 
+    // =========================================================================
+    // MENU DATA FOR HOME DISCOVERY
+    // =========================================================================
+    const [menuCategories, setMenuCategories] = useState([])
+    const [menuItems, setMenuItems] = useState([])
+
+    useEffect(() => {
+        if (!tenantData?.menu_data?.categories) return
+        const cats = tenantData.menu_data.categories.filter(c => c.enabled !== false)
+        setMenuCategories(cats)
+        // Flatten first 4 items from different categories for the grid
+        const items = []
+        for (const cat of cats) {
+            if (cat.items?.length > 0) {
+                items.push({ ...cat.items[0], categoryName: cat.name })
+            }
+            if (items.length >= 4) break
+        }
+        setMenuItems(items)
+    }, [tenantData?.menu_data])
+
     // CRITICAL: Reset drag state on route change
     useEffect(() => {
         isDraggingRef.current = false
@@ -401,15 +422,6 @@ function Home({ config: configProp }) {
                     const next = [...newOrder]
                     return next
                 })
-            } else {
-                // For featured items, reorder the local state
-                setLocalFeaturedItems(prevItems => {
-                    const reordered = [...prevItems]
-                    const [moved] = reordered.splice(itemIndex, 1)
-                    reordered.splice(targetIndex, 0, moved)
-                    // Deep clone to ensure React diffing catches it
-                    return reordered.map(item => ({ ...item }))
-                })
             }
 
             // ====== ATOMIC UPDATE: LOCAL STATE ONLY ======
@@ -578,6 +590,30 @@ function Home({ config: configProp }) {
         navigate(`/${tenantSlug}/${path}`)
     }, [navigate, isEditMode, tenantSlug])
 
+    // =========================================================================
+    // CATEGORY ICON MAPPER
+    // =========================================================================
+    const getCategoryIcon = (categoryName) => {
+        const name = (categoryName || '').toLowerCase()
+        if (name.includes('burger') || name.includes('hamburg')) return '🍔'
+        if (name.includes('drink') || name.includes('bebida') || name.includes('refresco')) return '🥤'
+        if (name.includes('alcohol') || name.includes('beer') || name.includes('wine') || name.includes('cerveza') || name.includes('vino')) return '🍺'
+        if (name.includes('appetizer') || name.includes('entrada') || name.includes('starter') || name.includes('snack')) return '🍟'
+        if (name.includes('dessert') || name.includes('postre') || name.includes('sweet') || name.includes('dulce')) return '🍰'
+        if (name.includes('coffee') || name.includes('cafe')) return '☕'
+        if (name.includes('pizza')) return '🍕'
+        if (name.includes('sushi') || name.includes('japanese')) return '🍣'
+        if (name.includes('salad') || name.includes('ensalada')) return '🥗'
+        if (name.includes('chicken') || name.includes('pollo')) return '🍗'
+        if (name.includes('steak') || name.includes('meat') || name.includes('carne') || name.includes('parrilla')) return '🥩'
+        if (name.includes('breakfast') || name.includes('desayuno')) return '🍳'
+        if (name.includes('sandwich') || name.includes('wrap')) return '🥪'
+        if (name.includes('ice cream') || name.includes('helado')) return '🍦'
+        if (name.includes('bakery') || name.includes('pan') || name.includes('pastry')) return '🥐'
+        if (name.includes('taco') || name.includes('mexican') || name.includes('burrito')) return '🌮'
+        return '🍽️'
+    }
+
     // ====== THE MISSING ATOMIC SEAL (HOME) ======
     const handlePlatformSave = async () => {
         if (!businessId) return
@@ -594,7 +630,7 @@ function Home({ config: configProp }) {
                         ...(currentAppConfig.homeConfig || {}),
                         primaryActions: localPrimaryActions // Your reordered icons
                     },
-                    featuredPhotos: localFeaturedItems // Your reordered featured grid
+                    featuredPhotos: [] // Featured photos system removed
                 }
             }
 
@@ -929,51 +965,6 @@ function Home({ config: configProp }) {
                             <span style={getTileTextStyle(dragState.itemId)}>{action.label}</span>
                         </div>
                     )
-                } else {
-                    const item = localFeaturedItems.find(i => i.id === dragState.itemId)
-                    if (!item) return null
-                    draggedContent = (
-                        <div style={{
-                            width: dragState.itemWidth,
-                            backgroundColor: '#FFFFFF',
-                            borderRadius: 16,
-                            overflow: 'hidden',
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
-                        }}>
-                            <div style={{
-                                height: 120,
-                                width: '100%',
-                                background: item.image
-                                    ? '#E5E0D8'
-                                    : '#E5E0D8',
-                                position: 'relative'
-                            }}>
-                                {item.image && (
-                                    <img
-                                        src={item.image}
-                                        alt=""
-                                        style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'cover'
-                                        }}
-                                    />
-                                )}
-                            </div>
-                            <div style={{ padding: '10px 12px' }}>
-                                <div style={{
-                                    fontSize: 12,
-                                    fontWeight: 'var(--font-weight-brand)',
-                                    color: '#4A4238'
-                                }}>
-                                    {item.name}
-                                </div>
-                            </div>
-                        </div>
-                    )
                 }
 
                 return (
@@ -993,7 +984,220 @@ function Home({ config: configProp }) {
                 )
             })()}
 
-            {/* Pause Orders Message */}
+            {/* ========================= SEARCH BAR ========================= */}
+            <div style={{
+                marginTop: 12,
+                marginBottom: 4,
+                position: 'relative'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'white',
+                    borderRadius: 24,
+                    padding: '10px 16px',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                    border: '1px solid rgba(0,0,0,0.06)',
+                    gap: 10
+                }}>
+                    <span style={{ fontSize: 18, color: '#9CA3AF', flexShrink: 0 }}>🔍</span>
+                    <input
+                        type="text"
+                        placeholder={t('search') || 'Buscar...'}
+                        onFocus={() => navigate(`/${tenantSlug}/menu`)}
+                        style={{
+                            border: 'none',
+                            background: 'none',
+                            outline: 'none',
+                            fontSize: 15,
+                            color: '#374151',
+                            width: '100%',
+                            fontWeight: 450,
+                            cursor: 'pointer'
+                        }}
+                        readOnly
+                    />
+                </div>
+            </div>
+
+            {/* ========================= CATEGORY RAIL ========================= */}
+            {menuCategories.length > 0 && (
+                <div style={{ marginTop: 16, marginBottom: 8 }}>
+                    <div style={{
+                        display: 'flex',
+                        gap: 12,
+                        overflowX: 'auto',
+                        padding: '4px 4px 12px 4px',
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none'
+                    }}>
+                        {menuCategories.slice(0, 8).map(cat => (
+                            <button
+                                key={cat.id}
+                                onClick={() => navigate(`/${tenantSlug}/menu?category=${encodeURIComponent(cat.name)}`)}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: '4px 8px',
+                                    cursor: 'pointer',
+                                    flexShrink: 0,
+                                    minWidth: 64
+                                }}
+                            >
+                                <div style={{
+                                    width: 56,
+                                    height: 56,
+                                    borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: 24,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                    border: '2px solid rgba(255,255,255,0.8)'
+                                }}>
+                                    {getCategoryIcon(cat.name)}
+                                </div>
+                                <span style={{
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    color: '#374151',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.02em',
+                                    maxWidth: 64,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}>
+                                    {cat.name}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                    <style>{`
+                        div::-webkit-scrollbar { display: none; }
+                    `}</style>
+                </div>
+            )}
+
+            {/* ========================= 4-SQUARE MENU GRID ========================= */}
+            {menuItems.length > 0 && (
+                <div style={{ marginTop: 8, marginBottom: 16 }}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 12,
+                        padding: '0 4px'
+                    }}>
+                        <h3 style={{
+                            margin: 0,
+                            fontSize: 16,
+                            fontWeight: 700,
+                            color: '#111827',
+                            letterSpacing: '-0.01em'
+                        }}>
+                            {t('popular') || 'Populares'}
+                        </h3>
+                        <button
+                            onClick={() => navigate(`/${tenantSlug}/menu`)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#6B7280',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4
+                            }}
+                        >
+                            {t('see_all') || 'Ver todo'}
+                            <span style={{ fontSize: 16 }}>›</span>
+                        </button>
+                    </div>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 12
+                    }}>
+                        {menuItems.map(item => (
+                            <div
+                                key={item.id}
+                                onClick={() => navigate(`/${tenantSlug}/menu?item=${item.id}`)}
+                                style={{
+                                    background: 'white',
+                                    borderRadius: 16,
+                                    overflow: 'hidden',
+                                    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                                    cursor: 'pointer',
+                                    border: '1px solid rgba(0,0,0,0.04)'
+                                }}
+                            >
+                                <div style={{
+                                    width: '100%',
+                                    aspectRatio: '1 / 1',
+                                    background: '#f3f4f6',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}>
+                                    {item.image ? (
+                                        <img
+                                            src={getOptimizedImageUrl(item.image, { width: 400, quality: 80, format: 'webp' })}
+                                            alt={item.name}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover'
+                                            }}
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    ) : (
+                                        <div style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: 32
+                                        }}>
+                                            🍽️
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={{ padding: '10px 12px' }}>
+                                    <p style={{
+                                        margin: '0 0 4px 0',
+                                        fontSize: 13,
+                                        fontWeight: 600,
+                                        color: '#111827',
+                                        lineHeight: 1.3,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}>
+                                        {item.name}
+                                    </p>
+                                    <p style={{
+                                        margin: 0,
+                                        fontSize: 14,
+                                        fontWeight: 700,
+                                        color: '#059669'
+                                    }}>
+                                        ${typeof item.price === 'number' ? item.price.toLocaleString('es-AR') : item.price}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
             {config.pauseOrders && (
                 <div style={{
                     marginTop: 20,
