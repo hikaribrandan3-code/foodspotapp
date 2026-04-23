@@ -67,34 +67,26 @@ const OrderStatusEmpty = ({ config: configProp }) => {
             if (!businessId) return
 
             try {
-                // Fetch featured items from menu_items
+                // 🍔 Fetch ANY items for this business — aggressive, no filters
                 const { data: items, error: itemsError } = await supabase
                     .from('menu_items')
-                    .select('id, name, description, price, image, category_id, is_featured, is_available')
+                    .select('id, name, description, price, image, category_id')
                     .eq('business_id', businessId)
-                    .eq('is_available', true)
-                    .or('is_featured.eq.true,featured.eq.true')
-                    .limit(4)
+                    .limit(10)
 
-                if (itemsError) throw itemsError
-
-                // If no featured items, fetch any available items
-                let displayItems = items || []
-                if (displayItems.length === 0) {
-                    const { data: fallbackItems } = await supabase
-                        .from('menu_items')
-                        .select('id, name, description, price, image, category_id, is_available')
-                        .eq('business_id', businessId)
-                        .eq('is_available', true)
-                        .limit(10)
-                    displayItems = fallbackItems || []
+                if (itemsError) {
+                    console.error('[OrderStatusEmpty] menu_items error:', itemsError)
+                    throw itemsError
                 }
+
+                let displayItems = items || []
+                console.log('[OrderStatusEmpty] fetched items:', displayItems.length, displayItems)
 
                 // Shuffle and pick 4 for variety
                 const shuffled = displayItems.sort(() => 0.5 - Math.random())
                 setFeaturedItems(shuffled.slice(0, 4))
 
-                // Fetch categories for the pills
+                // 📂 Fetch categories for the pills
                 const { data: cats, error: catsError } = await supabase
                     .from('menu_categories')
                     .select('id, name, icon, sort_order')
@@ -102,7 +94,9 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                     .order('sort_order', { ascending: true })
                     .limit(5)
 
-                if (catsError) throw catsError
+                if (catsError) {
+                    console.error('[OrderStatusEmpty] categories error:', catsError)
+                }
                 setCategories(cats || [])
 
             } catch (err) {
