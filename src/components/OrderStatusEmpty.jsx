@@ -28,6 +28,9 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     const [categories, setCategories] = useState([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
+    const [resolvedBusinessId, setResolvedBusinessId] = useState(null)
+    const [resolvedBusinessId, setResolvedBusinessId] = useState(null)
+    const [resolvedBusinessId, setResolvedBusinessId] = useState(null)
 
     // Derived values from tenant config
     const rawAddress = tenantData?.address || ''
@@ -61,11 +64,38 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     const translatedCategories = t('browse_categories')
     const categoriesText = translatedCategories !== 'browse_categories' ? translatedCategories : 'Browse Categories'
 
+    // Resolve businessId from URL slug (for guest/unauthenticated access)
+    useEffect(() => {
+        const resolveBusinessId = async () => {
+            if (!tenantSlug) return
+
+            try {
+                const { data, error } = await supabase
+                    .from('businesses')
+                    .select('id')
+                    .eq('slug', tenantSlug)
+                    .single()
+
+                if (!error && data) {
+                    console.log('[OrderStatusEmpty] Resolved businessId from slug:', data.id)
+                    setResolvedBusinessId(data.id)
+                } else {
+                    console.warn('[OrderStatusEmpty] Could not resolve businessId from slug:', tenantSlug, error)
+                }
+            } catch (err) {
+                console.error('[OrderStatusEmpty] Error resolving businessId:', err)
+            }
+        }
+
+        resolveBusinessId()
+    }, [tenantSlug])
+
     // Fetch featured items and categories
     useEffect(() => {
         const fetchData = async () => {
-            console.log('[OrderStatusEmpty] Starting fetch, businessId:', businessId)
-            if (!businessId) {
+            const effectiveBusinessId = resolvedBusinessId || businessId
+            console.log('[OrderStatusEmpty] Starting fetch, businessId:', effectiveBusinessId, '(resolved:', resolvedBusinessId, ', authenticated:', businessId, ')')
+            if (!effectiveBusinessId) {
                 console.warn('[OrderStatusEmpty] No businessId — skipping fetch')
                 setLoading(false)
                 return
@@ -76,7 +106,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 const { data: items, error: itemsError } = await supabase
                     .from('menu_items')
                     .select('id, name, description, price, image, image_url, category_id')
-                    .eq('business_id', businessId)
+                    .eq('business_id', effectiveBusinessId)
                     .limit(20)
 
                 console.log('[OrderStatusEmpty] Raw Supabase response:', { items, itemsError })
@@ -104,7 +134,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 const { data: cats, error: catsError } = await supabase
                     .from('categories')
                     .select('id, name, icon, sort_order')
-                    .eq('business_id', businessId)
+                    .eq('business_id', effectiveBusinessId)
                     .order('sort_order', { ascending: true })
                     .limit(5)
 
@@ -121,7 +151,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
         }
 
         fetchData()
-    }, [businessId])
+    }, [resolvedBusinessId, businessId])
 
     // Open maps with business address
     const handleLocationClick = () => {
@@ -351,7 +381,14 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                         ) : (
                             <div className="ose-empty-menu">
                                 <div className="ose-empty-icons">
-                                    <span>🍔</span><span>🍟</span><span>🍕</span><span>🍦</span>
+                                    {(categories.length > 0 ? categories : [
+                                        { name: 'burger' },
+                                        { name: 'fries' },
+                                        { name: 'pizza' },
+                                        { name: 'sweets' }
+                                    ]).slice(0, 4).map((cat, idx) => (
+                                        <span key={idx}>{getCategoryEmoji(cat.name)}</span>
+                                    ))}
                                 </div>
                                 <p className="ose-empty-title">Something delicious is coming</p>
                                 <p className="ose-empty-text">Our kitchen is stocking up. Check the full menu to see what's ready now.</p>
