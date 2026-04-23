@@ -468,17 +468,17 @@
 
 .ose-card {
     background: #fff;
-    border-radius: 14px; /* Slightly tighter from 16px */
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     border: 1px solid #f0f0f0;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ose-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .ose-card:active {
@@ -486,7 +486,7 @@
 }
 
 .ose-card-image {
-    aspect-ratio: 4 / 3; /* Changed from 1/1 square — ~14% shorter */
+    aspect-ratio: 16 / 10; /* Wider, shorter */
     width: 100%;
     overflow: hidden;
     position: relative;
@@ -517,47 +517,49 @@
 }
 
 .ose-card-content {
-    padding: 10px; /* Reduced from 12px */
+    padding: 8px; /* Reduced from 10px */
     display: flex;
     flex-direction: column;
-    gap: 2px; /* Reduced from 4px */
+    gap: 1px; /* Minimal gap */
 }
 
 .ose-card-title {
-    font-size: 12px; /* Reduced from 13px */
+    font-size: 11px; /* Back to 11px */
     font-weight: 700;
     color: #1a1a1a;
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.3;
 }
 
 .ose-card-desc {
-    font-size: 10px; /* Reduced from 11px */
-    color: #888;
+    font-size: 9px; /* Tiny description */
+    color: #999;
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.3;
 }
 
 .ose-card-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 6px; /* Reduced from 8px */
+    margin-top: 4px; /* Minimal */
 }
 
 .ose-card-price {
-    font-size: 14px; /* Reduced from 15px */
+    font-size: 13px; /* Compact */
     font-weight: 800;
     color: #1a1a1a;
 }
 
 .ose-card-add {
-    width: 28px; /* Reduced from 32px */
-    height: 28px; /* Reduced from 32px */
+    width: 24px; /* Tiny button */
+    height: 24px;
     border-radius: 50%;
     border: none;
     display: flex;
@@ -565,12 +567,17 @@
     justify-content: center;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    padding: 0;
+}
+
+.ose-card-add svg {
+    width: 14px;
+    height: 14px;
 }
 
 .ose-card-add:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+    transform: scale(1.08);
 }
 
 .ose-card-add:active {

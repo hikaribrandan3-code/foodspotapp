@@ -87,14 +87,16 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 }
 
                 let displayItems = items || []
-                // 🗑️ FILTER: Exclude demo items with NO images (emoji placeholders)
-                // Items with images = real owner items (even if stock photos)
-                // Items without images = fake seeded demo items
+                // 🗑️ FILTER: Exclude demo items — items without images AND items with generic demo names
                 displayItems = displayItems.filter(item => {
                     const hasImage = !!(item.image || item.image_url)
-                    return hasImage
+                    const name = (item.name || '').toLowerCase().trim()
+                    // Block generic demo/filler names (often empty or placeholder-like)
+                    const isGenericName = !name || name === '' || name === 'item' || name.startsWith('item ')
+                    // Real items have images; demo items have no image + generic name
+                    return hasImage && !isGenericName
                 })
-                console.log('[OrderStatusEmpty] after no-image filter:', displayItems.length, 'items with photos')
+                console.log('[OrderStatusEmpty] after demo filter:', displayItems.length, 'real items')
 
                 // Shuffle and pick 4 for variety
                 const shuffled = displayItems.sort(() => 0.5 - Math.random())
