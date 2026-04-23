@@ -87,53 +87,14 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 }
 
                 let displayItems = items || []
-                // 🗑️ FILTER: Exclude seeded demo items with stock photo URLs
+                // 🗑️ FILTER: Exclude demo items with NO images (emoji placeholders)
+                // Items with images = real owner items (even if stock photos)
+                // Items without images = fake seeded demo items
                 displayItems = displayItems.filter(item => {
-                    const img = item.image || item.image_url || ''
-                    const id = item.id || ''
-                    // Block known stock photo domains (comprehensive list)
-                    const blockedDomains = [
-                        'images.unsplash.com',
-                        'unsplash.com',
-                        'picsum.photos',
-                        'via.placeholder.com',
-                        'dummyimage.com',
-                        'lorempixel.com',
-                        'pexels.com',
-                        'pixabay.com',
-                        'freepik.com',
-                        'shutterstock.com',
-                        'istockphoto.com',
-                        'gettyimages.com',
-                        'adobe.stock',
-                        'canva.com',
-                        'rawpixel.com',
-                        'burst.shopify.com',
-                        'cdn.stocksnap.io',
-                        'gratisography.com',
-                        'kaboompics.com',
-                        'lifeofpix.com',
-                        ' negativespace.co',
-                        'splitshire.com',
-                        'picjumbo.com',
-                        'skitterphoto.com',
-                        'morguefile.com',
-                        'freeimages.com',
-                        'stockvault.net',
-                        'freerangestock.com',
-                        'pikwizard.com',
-                        'reshot.com',
-                        'isorepublic.com',
-                        'stockio.com',
-                        'photostockeditor.com',
-                        'focastock.com'
-                    ]
-                    // Also block known demo item IDs from MenuManager seed data
-                    const isDemoId = /^item-(bak|cafe|candy|bldg|night|evt|str|fine)-\d+$/.test(id)
-                    const isStockUrl = blockedDomains.some(domain => img.includes(domain))
-                    return !isDemoId && !isStockUrl
+                    const hasImage = !!(item.image || item.image_url)
+                    return hasImage
                 })
-                console.log('[OrderStatusEmpty] after stock filter:', displayItems.length, 'real items')
+                console.log('[OrderStatusEmpty] after no-image filter:', displayItems.length, 'items with photos')
 
                 // Shuffle and pick 4 for variety
                 const shuffled = displayItems.sort(() => 0.5 - Math.random())
