@@ -662,7 +662,7 @@ function Home({ config: configProp }) {
             style={{
                 maxWidth: '100%',
                 margin: '0 auto',
-                padding: '0 12px 8px 12px',
+                padding: '0 8px 8px 8px',
                 minHeight: 'auto',
                 flex: '0 0 auto',
                 paddingBottom: 8
