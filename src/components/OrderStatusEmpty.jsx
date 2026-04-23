@@ -64,7 +64,12 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     // Fetch featured items and categories
     useEffect(() => {
         const fetchData = async () => {
-            if (!businessId) return
+            console.log('[OrderStatusEmpty] Starting fetch, businessId:', businessId)
+            if (!businessId) {
+                console.warn('[OrderStatusEmpty] No businessId — skipping fetch')
+                setLoading(false)
+                return
+            }
 
             try {
                 // 🍔 Fetch ANY items for this business — aggressive, no filters
@@ -73,6 +78,8 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                     .select('id, name, description, price, image, image_url, category_id')
                     .eq('business_id', businessId)
                     .limit(20)
+
+                console.log('[OrderStatusEmpty] Raw Supabase response:', { items, itemsError })
 
                 if (itemsError) {
                     console.error('[OrderStatusEmpty] menu_items error:', itemsError)
