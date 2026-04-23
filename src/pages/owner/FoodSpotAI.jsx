@@ -1,6 +1,7 @@
 /**
- * FoodSpot AI - Tactical Kitchen Assistant
- * Merged "Perfect" UI with Gemini 2.0 Flash Engine
+ * FoodSpot AI - Business Advisor for Restaurant Owners
+ * Secure Gemini integration via Supabase edge functions
+ * Multilingual support (ES, EN, PT)
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
