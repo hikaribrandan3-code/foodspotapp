@@ -243,6 +243,7 @@ export default function Menu({ config: configProp }) {
         // 🛡️ PARAMS: 'ownerStart' detects owner but stays calm. 'editMode' forces jiggle.
         const ownerStart = params.get('ownerStart') === 'true'
         const forceEdit = params.get('editMode') === 'true' || params.get('editmode') === 'true'
+        const categoryParam = params.get('category')
 
         // 🔓 BYPASS LOGIC
         if (ownerStart || forceEdit) {
@@ -273,7 +274,26 @@ export default function Menu({ config: configProp }) {
             }
             checkOwnerStatus()
         }
-    }, [businessId, tenantData])
+
+        // 📂 CATEGORY SCROLL: If category param is present, scroll to it after menu loads
+        if (categoryParam && menu?.categories?.length > 0) {
+            const decodedCategory = decodeURIComponent(categoryParam).toLowerCase()
+            const matched = menu.categories.find(cat =>
+                cat.name?.toLowerCase() === decodedCategory ||
+                cat.slug?.toLowerCase() === decodedCategory
+            )
+            if (matched) {
+                setTimeout(() => scrollToCategory(matched.id), 300)
+            } else {
+                // Try partial match
+                const partial = menu.categories.find(cat =>
+                    cat.name?.toLowerCase().includes(decodedCategory) ||
+                    decodedCategory.includes(cat.name?.toLowerCase())
+                )
+                if (partial) setTimeout(() => scrollToCategory(partial.id), 300)
+            }
+        }
+    }, [businessId, tenantData, menu])
 
     // =========================================================================
     // 3. PHYSICS & 2.8S HOLD STATE

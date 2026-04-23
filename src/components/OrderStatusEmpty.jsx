@@ -9,7 +9,7 @@ import './OrderStatusEmpty.css'
 
 /**
  * OrderStatusEmpty - Pre-Order Status Empty State
- * 
+ *
  * Billion-dollar food app design:
  * - Hero banner with promo
  * - Category pills
@@ -179,7 +179,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </div>
-                        <button 
+                        <button
                             className="ose-search-btn"
                             onClick={() => navigate(`/${tenantSlug}/menu`)}
                         >
@@ -245,9 +245,9 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 <div className="ose-categories-scroll">
                     {(categories.length > 0 ? categories : [
                         { id: 'cat-1', name: t('burger') !== 'burger' ? t('burger') : 'Burger', slug: 'burger', staticEmoji: '🍔' },
-                        { id: 'cat-2', name: t('fries') !== 'fries' ? t('fries') : 'Fries', slug: 'fries', staticEmoji: '🍟' },
+                        { id: 'cat-2', name: t('fries') !== 'fries' ? t('fries') : 'Fries', slug: 'sides', staticEmoji: '🍟' },
                         { id: 'cat-3', name: t('drinks') !== 'drinks' ? t('drinks') : 'Drinks', slug: 'drinks', staticEmoji: '🍸' },
-                        { id: 'cat-4', name: t('sweets') !== 'sweets' ? t('sweets') : 'Sweets', slug: 'sweets', staticEmoji: '🍦' },
+                        { id: 'cat-4', name: t('sweets') !== 'sweets' ? t('sweets') : 'Sweets', slug: 'desserts', staticEmoji: '🍦' },
                         { id: 'cat-5', name: t('pizza') !== 'pizza' ? t('pizza') : 'Pizza', slug: 'pizza', staticEmoji: '🍕' }
                     ]).map((cat) => (
                         <button
@@ -281,7 +281,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 <section className="ose-featured">
                     <div className="ose-section-header">
                         <h3 className="ose-section-title">{recommendedText}</h3>
-                        <button 
+                        <button
                             className="ose-see-more"
                             style={{ backgroundColor: primaryColor }}
                             onClick={() => navigate(`/${tenantSlug}/menu`)}
@@ -323,81 +323,17 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                 </div>
                             ))
                         ) : (
-                            // Fallback static items if no data (using requested placeholders)
-                            <>
-                                <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
-                                    <div className="ose-card-image">
-                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAWWiBLsK1nG_Zs8Cs49OrPq2QJveck7-TN1iTpscNGt-fwJEw9vQK58KSKis6n5EytONT6JaxPbkB8dxrricAW7GrsaCKOfuoja3HM-c_B83d0bJsHxJy8kAosEuyru7EXNrtoxDBIyE-WaRnB6PmfervykO1sXBLpnLDZO8DpPn-V4gSxhD-WRjEgQzWzC1sxmETnytSnOjSuMQJ0O_rieloz2zc14aHaFpditC1tBijrkmPISFLzohr448R6Jwd-i3_Vuu_L2PE" alt="Classic Beef Stack" />
-                                    </div>
-                                    <div className="ose-card-content">
-                                        <h4 className="ose-card-title">Margarita Special</h4>
-                                        <p className="ose-card-desc">15-20 min • $2.00 fee</p>
-                                        <div className="ose-card-footer">
-                                            <span className="ose-card-price">$12.64</span>
-                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
-                                    <div className="ose-card-image">
-                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqekU5dfVWOw4ZP0b4v-KSVHl2YPgoBkCP31w2D6utoMxXNrMe6T1DpgujbI_VW9zSiC3AC2a1CrApwx8vwV0biz68cOJfxaqWE0CVvZvcQIr4Ib3gckl67g6vwCsOOVeRAahLhiVZ8W9IkQI9h4okdC8QDGA8u3dNpfjmiluCTxVzSGxLo8XGJgjvJsCsG9hPlIFvOJLmimm20sBKQc-LxIwCQbhojAFgTcoSQpCe3Smkp6aohHK3jmOMzoTGNSY7ZjRu4VjPq7xE" alt="Spicy Jalapeño" />
-                                    </div>
-                                    <div className="ose-card-content">
-                                        <h4 className="ose-card-title">Green Buddha Bowl</h4>
-                                        <p className="ose-card-desc">20-25 min • Free</p>
-                                        <div className="ose-card-footer">
-                                            <span className="ose-card-price">$9.50</span>
-                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
-                                    <div className="ose-card-image">
-                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSzl9rpOS_OdScAw4s70QODXMRHlQgJs-jyAC2czIXNUHLRVEoTaufzc7WBInzEMTxMzvikN7EBDYiCkM8lX7ziUCKgNnposqj5j9XEbBe8QotBjH2sxT-7FxwwhErqwqY3anNa8IGdWJ1VYx8zQfb24TLqd9eTGBq5ZETK9ANzJU4H4iyr9MJAq-B0BdgZEw6_iiLHAqARuxOZ9bE1JUNWOrvntob8KovOHY-xVZ-DOFwfrZDMGN22vZtz-fGmf5yMoJgq2tii_4A" alt="Rustic Pepperoni" />
-                                    </div>
-                                    <div className="ose-card-content">
-                                        <h4 className="ose-card-title">Street Tacos Trio</h4>
-                                        <p className="ose-card-desc">10-15 min • $1.50 fee</p>
-                                        <div className="ose-card-footer">
-                                            <span className="ose-card-price">$11.20</span>
-                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="ose-card" onClick={() => navigate(`/${tenantSlug}/menu`)}>
-                                    <div className="ose-card-image">
-                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwY3tF3soi0VSxERslFKaR4h5bHFl5ZmIk01SJf4nvstRi8G-O22Y4KUmZm106pBII-jxXhE-2nCCX8oCe4bkmcYWnbsKZMUo4ICAK63BZUe9m1htvu4uPx4QF1KHGcG_5Fsyd1ssJsaYigozp3utvNkUJvNJcCaG3g763uAZtqvaEREXHfwA9N205f0VsNvHqNqbaoDluoEfHfxFgwyPixKobeia5-0ihXtkrYNBofXf7GtOY3p4p8NoYnY6Vx6b9g1bziVoDZ_93" alt="Truffle Parm Fries" />
-                                    </div>
-                                    <div className="ose-card-content">
-                                        <h4 className="ose-card-title">Choco Lava Cake</h4>
-                                        <p className="ose-card-desc">15 min • Free</p>
-                                        <div className="ose-card-footer">
-                                            <span className="ose-card-price">$6.75</span>
-                                            <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
+                            <div className="ose-empty-menu">
+                                <span className="ose-empty-emoji">🍽️</span>
+                                <p className="ose-empty-text">Explore our full menu</p>
+                                <button
+                                    className="ose-empty-cta"
+                                    style={{ backgroundColor: primaryColor }}
+                                    onClick={() => navigate(`/${tenantSlug}/menu`)}
+                                >
+                                    Browse Menu
+                                </button>
+                            </div>
                         )}
                     </div>
                 </section>

@@ -385,6 +385,49 @@
         8px 8px 0 rgba(255, 255, 255, 0.1);
 }
 
+/* Empty Menu State */
+.ose-empty-menu {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px 20px;
+    text-align: center;
+}
+
+.ose-empty-emoji {
+    font-size: 48px;
+    line-height: 1;
+}
+
+.ose-empty-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #6B7280;
+    margin: 0;
+}
+
+.ose-empty-cta {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+}
+
+.ose-empty-cta:hover {
+    transform: scale(1.05);
+}
+
+.ose-empty-cta:active {
+    transform: scale(0.98);
+}
+
 /* Featured Section */
 .ose-featured {
     display: flex;
