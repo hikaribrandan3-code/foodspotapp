@@ -70,9 +70,9 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 // 🍔 Fetch ANY items for this business — aggressive, no filters
                 const { data: items, error: itemsError } = await supabase
                     .from('menu_items')
-                    .select('id, name, description, price, image, image_url, category_id')
+                    .select('id, name, description, price, image, image_url, category_id, is_featured')
                     .eq('business_id', businessId)
-                    .limit(10)
+                    .limit(20)
 
                 if (itemsError) {
                     console.error('[OrderStatusEmpty] menu_items error:', itemsError)
@@ -80,7 +80,9 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 }
 
                 let displayItems = items || []
-                console.log('[OrderStatusEmpty] fetched items:', displayItems.length, displayItems)
+                // 🛡️ FILTER: Exclude featured/hero banner items — only real food
+                displayItems = displayItems.filter(item => !item.is_featured)
+                console.log('[OrderStatusEmpty] fetched items:', displayItems.length, 'real items (excluded', (items?.length || 0) - displayItems.length, 'featured)')
 
                 // Shuffle and pick 4 for variety
                 const shuffled = displayItems.sort(() => 0.5 - Math.random())
