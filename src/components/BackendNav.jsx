@@ -241,6 +241,7 @@ function BackendNav({
 
     // Derive active tab from route if using routes
     const getActiveFromRoute = () => {
+        if (!ROUTE_MAPS) return activeTab
         const routes = ROUTE_MAPS[urlArea] // Use URL-derived area, not prop
         if (!routes) return activeTab
 
@@ -284,7 +285,7 @@ function BackendNav({
         }
 
         // Route-based navigation (uses dynamic tenant-scoped routes)
-        if (useRoutes) {
+        if (useRoutes && ROUTE_MAPS) {
             const routes = ROUTE_MAPS[urlArea] // 🏢 Use URL-derived area for consistency
             if (routes && routes[tabId]) {
                 navigate(routes[tabId])
