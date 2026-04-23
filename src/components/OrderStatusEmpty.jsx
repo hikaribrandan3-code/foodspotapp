@@ -88,8 +88,35 @@ const OrderStatusEmpty = ({ config: configProp }) => {
         resolveBusinessId()
     }, [tenantSlug])
 
-    // Fetch featured items and categories
-    useEffect(() => {
+    // 🍔 FALLBACK: Use tenantData.menu_data if available (faster, always present)
+    const menuDataCategories = tenantData?.menu_data?.categories || []
+    const menuDataItems = React.useMemo(() => {
+        const items = []
+        if (tenantData?.menu_data?.categories) {
+            for (const cat of tenantData.menu_data.categories) {
+                if (cat.items?.length > 0) {
+                    items.push({ ...cat.items[0], categoryName: cat.name })
+                }
+                if (items.length >= 4) break
+            }
+        }
+        return items
+    }, [tenantData?.menu_data])
+
+    // Merge DB categories with menu_data fallback
+    const displayCategories = categories.length > 0
+        ? categories
+        : menuDataCategories.length > 0
+            ? menuDataCategories.map(c => ({ id: c.id, name: c.name, icon: c.icon, slug: c.slug || c.name }))
+            : [
+                { id: 'cat-1', name: t('burger') !== 'burger' ? t('burger') : 'Burgers', slug: 'burger' },
+                { id: 'cat-2', name: t('appetizers') !== 'appetizers' ? t('appetizers') : 'Appetizers', slug: 'appetizers' },
+                { id: 'cat-3', name: t('drinks') !== 'drinks' ? t('drinks') : 'Drinks', slug: 'drinks' },
+                { id: 'cat-4', name: t('desserts') !== 'desserts' ? t('desserts') : 'Desserts', slug: 'desserts' }
+            ]
+
+    // Merge DB items with menu_data fallback for the 4-square grid
+    const displayItems = featuredItems.length > 0 ? featuredItems : menuDataItems
         const fetchData = async () => {
             const effectiveBusinessId = resolvedBusinessId || businessId
             console.log('[OrderStatusEmpty] Starting fetch, businessId:', effectiveBusinessId, '(resolved:', resolvedBusinessId, ', authenticated:', businessId, ')')
@@ -185,16 +212,24 @@ const OrderStatusEmpty = ({ config: configProp }) => {
 
     // Replace Material string icons with robust Emoji mapping
     const getCategoryEmoji = (categoryName) => {
-        const name = categoryName?.toLowerCase() || ''
-        if (name.includes('burger')) return '🍔'
-        if (name.includes('fries') || name.includes('side')) return '🍟'
-        if (name.includes('drink') || name.includes('bebida') || name.includes('beverage')) return '🍸'
-        if (name.includes('sweet') || name.includes('postre') || name.includes('dessert')) return '🍦'
+        const name = (categoryName || '').toLowerCase()
+        if (name.includes('burger') || name.includes('hamburg')) return '🍔'
+        if (name.includes('fries') || name.includes('side') || name.includes('entrada') || name.includes('appetizer') || name.includes('starter') || name.includes('snack')) return '🍟'
+        if (name.includes('cerveza') || name.includes('beer') || name.includes('alcohol') || name.includes('wine') || name.includes('vino')) return '🍺'
+        if (name.includes('drink') || name.includes('bebida') || name.includes('beverage') || name.includes('refresco')) return '🥤'
+        if (name.includes('sweet') || name.includes('postre') || name.includes('dessert') || name.includes('dulce')) return '🍰'
         if (name.includes('pizza')) return '🍕'
         if (name.includes('chicken') || name.includes('pollo')) return '🍗'
         if (name.includes('salad') || name.includes('ensalada') || name.includes('vegan')) return '🥗'
-        if (name.includes('taco')) return '🌮'
+        if (name.includes('taco') || name.includes('burrito') || name.includes('mexican')) return '🌮'
         if (name.includes('pasta')) return '🍝'
+        if (name.includes('sushi') || name.includes('japanese')) return '🍣'
+        if (name.includes('coffee') || name.includes('cafe')) return '☕'
+        if (name.includes('ice cream') || name.includes('helado')) return '🍦'
+        if (name.includes('sandwich') || name.includes('wrap')) return '🥪'
+        if (name.includes('steak') || name.includes('meat') || name.includes('carne') || name.includes('parrilla')) return '🥩'
+        if (name.includes('breakfast') || name.includes('desayuno')) return '🍳'
+        if (name.includes('bakery') || name.includes('pan') || name.includes('pastry')) return '🥐'
         return '🍽️'
     }
 
@@ -286,32 +321,25 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 )}
 
             {/* Categories */}
-            {/* Fallback to static Emoji layout if DB empty (matches user layout screenshot) */}
             <section className="ose-categories">
                 <h3 className="ose-section-title">{categoriesText}</h3>
                 <div className="ose-categories-scroll">
-                    {(categories.length > 0 ? categories : [
-                        { id: 'cat-1', name: t('burger') !== 'burger' ? t('burger') : 'Burger', slug: 'burger', staticEmoji: '🍔' },
-                        { id: 'cat-2', name: t('fries') !== 'fries' ? t('fries') : 'Fries', slug: 'sides', staticEmoji: '🍟' },
-                        { id: 'cat-3', name: t('drinks') !== 'drinks' ? t('drinks') : 'Drinks', slug: 'drinks', staticEmoji: '🍸' },
-                        { id: 'cat-4', name: t('sweets') !== 'sweets' ? t('sweets') : 'Sweets', slug: 'desserts', staticEmoji: '🍦' },
-                        { id: 'cat-5', name: t('pizza') !== 'pizza' ? t('pizza') : 'Pizza', slug: 'pizza', staticEmoji: '🍕' }
-                    ]).map((cat) => (
+                    {displayCategories.map((cat) => (
                         <button
                             key={cat.id}
                             className="ose-category"
                             onClick={() => handleCategoryClick(cat.slug || cat.name)}
                         >
-                                <div className="ose-category-icon">
-                                    <span style={{ fontSize: 24, paddingBottom: 2 }}>
-                                        {cat.staticEmoji || getCategoryEmoji(cat.name)}
-                                    </span>
-                                </div>
-                                <span className="ose-category-name">{cat.name}</span>
-                            </button>
-                        ))}
-                    </div>
-                </section>
+                            <div className="ose-category-icon">
+                                <span style={{ fontSize: 24, paddingBottom: 2 }}>
+                                    {getCategoryEmoji(cat.name)}
+                                </span>
+                            </div>
+                            <span className="ose-category-name">{cat.name}</span>
+                        </button>
+                    ))}
+                </div>
+            </section>
 
                 {/* MunchBoy Arcade Card */}
                 <section className="ose-arcade" onClick={() => setShowArcade(true)}>
@@ -338,8 +366,8 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                     </div>
 
                     <div className="ose-grid">
-                        {featuredItems.length > 0 ? (
-                            featuredItems.map((item) => (
+                        {displayItems.length > 0 ? (
+                            displayItems.map((item) => (
                                 <div
                                     key={item.id}
                                     className="ose-card"
@@ -358,7 +386,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                             />
                                         ) : null}
                                         <div className="ose-card-placeholder" style={{ display: (item.image || item.image_url) ? 'none' : 'flex' }}>
-                                            <span>{getCategoryEmoji(item.name)}</span>
+                                            <span>{getCategoryEmoji(item.categoryName || item.name)}</span>
                                         </div>
                                     </div>
                                     <div className="ose-card-content">
@@ -379,12 +407,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                         ) : (
                             <div className="ose-empty-menu">
                                 <div className="ose-empty-icons">
-                                    {(categories.length > 0 ? categories : [
-                                        { name: 'burger' },
-                                        { name: 'fries' },
-                                        { name: 'pizza' },
-                                        { name: 'sweets' }
-                                    ]).slice(0, 4).map((cat, idx) => (
+                                    {displayCategories.slice(0, 4).map((cat, idx) => (
                                         <span key={idx}>{getCategoryEmoji(cat.name)}</span>
                                     ))}
                                 </div>
