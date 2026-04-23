@@ -22,7 +22,8 @@ const MAX_LINES = 3
 const MIN_FONT_SIZE = 36
 const MAX_FONT_SIZE = 130
 
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+// API key is now handled server-side via Supabase edge function
+// Never expose VITE_GOOGLE_API_KEY to frontend
 
 const SYSTEM_PROMPT = `You are the FoodSpot Prep-Agent. You are a tactical kitchen assistant.
 Your job is to help kitchen staff understand orders, suggest prep workflows,
@@ -368,37 +369,22 @@ ${contextInfo}
 
 User Question: ${userText}`;
 
-            // Map messages for Gemini format
-            const geminiContents = newMessages.map(m => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: m.content }]
-            }));
-
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: geminiContents,
-                        systemInstruction: {
-                            parts: [{ text: SYSTEM_PROMPT }]
-                        },
-                        generationConfig: {
-                            temperature: 0.3,
-                            maxOutputTokens: 1000,
-                            topP: 0.8,
-                            topK: 40
-                        }
-                    })
+            // Call Supabase edge function (API key stays server-side)
+            const response = await supabase.functions.invoke('foodspot-ai', {
+                body: {
+                    messages: newMessages.map(m => ({
+                        role: m.role,
+                        content: m.content
+                    })),
+                    systemPrompt: SYSTEM_PROMPT
                 }
-            );
+            });
 
-            const data = await response.json();
+            const data = response.data;
 
-            if (data.error) throw new Error(data.error.message);
+            if (data?.error) throw new Error(data.detail || data.error);
 
-            let aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+            let aiResponse = data.reply ||
                             'No pude procesar eso. ¿Puedes reformular?';
             
             let draftPayload = null;
@@ -430,14 +416,6 @@ User Question: ${userText}`;
         if (hour < 12) return t('good_morning') || 'Buenos días'
         if (hour < 18) return t('good_afternoon') || 'Buenas tardes'
         return t('good_evening') || 'Buenas noches'
-    }
-
-    if (!GOOGLE_API_KEY) {
-        return (
-            <div style={{ padding: 20, color: '#c00', textAlign: 'center' }}>
-                ❌ Missing VITE_GOOGLE_API_KEY in .env
-            </div>
-        );
     }
 
     return (

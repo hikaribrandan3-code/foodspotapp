@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ClipboardList, Search, Plus, Minus, User, Phone, MapPin, Loader2, Hash } from 'lucide-react';
 import { useBusiness } from '@/contexts/BusinessContext';
 // @ts-ignore
-import { supabase, createOrderCloud } from '../../lib/supabaseClient.js';
+import { supabase, createOrderCloud, getNextOrderNumber } from '../../lib/supabaseClient.js';
 
 interface MenuItem {
   id: string;
@@ -104,15 +104,12 @@ export default function OrderView() {
     if (!customerName.trim() || cart.length === 0) return;
     setSubmitting(true);
     try {
-      const { data: lastOrder } = await supabase
-        .from('orders')
-        .select('order_number')
-        .eq('business_id', businessId)
-        .order('order_number', { ascending: false })
-        .limit(1)
-        .single();
-
-      const nextNumber = ((lastOrder?.order_number as number) || 0) + 1;
+      const { nextNumber, error: seqError } = await getNextOrderNumber(businessId);
+      if (seqError) {
+        console.error('[OrderView] Failed to get next order number:', seqError);
+        setSubmitting(false);
+        return;
+      }
 
       await createOrderCloud({
         orderNumber: nextNumber,

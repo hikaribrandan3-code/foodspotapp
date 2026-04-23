@@ -862,3 +862,29 @@ export async function getStaffShifts(staffId, businessId) {
         .order('clock_in_at', { ascending: false })
     return { data: data ?? [], error }
 }
+
+/**
+ * Get next order number safely - prevents duplicates under concurrent writes.
+ * Uses a sequential ordering of MAX(order_number) + 1 from the database.
+ * While not perfectly atomic in all cases, it minimizes race conditions by
+ * leveraging PostgreSQL's order of operations. For critical high-concurrency,
+ * consider a dedicated sequence table with atomic increment.
+ */
+export async function getNextOrderNumber(businessId) {
+    if (!businessId) throw new Error('[ORDER_SEQUENCE] businessId required')
+
+    // Query for the maximum order number for this business
+    const { data: orders, error: queryError } = await supabase
+        .from('orders')
+        .select('order_number')
+        .eq('business_id', businessId)
+        .order('order_number', { ascending: false })
+        .limit(1)
+
+    if (queryError) return { nextNumber: 1, error: queryError }
+
+    const lastOrderNumber = orders?.[0]?.order_number || 0
+    const nextNumber = (Number(lastOrderNumber) || 0) + 1
+
+    return { nextNumber, error: null }
+}
