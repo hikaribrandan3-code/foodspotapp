@@ -668,7 +668,9 @@ function Home({ config: configProp }) {
                 paddingBottom: 8
             }}
         >
-            <HeaderClamp config={config} />
+            <div style={{ maxHeight: 180, overflow: 'hidden' }}>
+                <HeaderClamp config={config} />
+            </div>
 
 
 
@@ -728,7 +730,7 @@ function Home({ config: configProp }) {
                     gap: 12,
                     marginBottom: 0,
                     width: '99%', /* Hero Authority: 3% Scale-Up */
-                    margin: '12px auto 0 auto' /* Gap from Hero, Centered */
+                    margin: '4px auto 0 auto' /* Tight gap from Hero, Centered */
                 }}
             >
                 {localPrimaryActions.map((actionId, index) => {
