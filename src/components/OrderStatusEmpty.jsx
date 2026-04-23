@@ -87,16 +87,14 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 }
 
                 let displayItems = items || []
-                // 🗑️ FILTER: Exclude demo items — items without images AND items with generic demo names
+                // 🗑️ FILTER: Only exclude items with no name
                 displayItems = displayItems.filter(item => {
-                    const hasImage = !!(item.image || item.image_url)
                     const name = (item.name || '').toLowerCase().trim()
-                    // Block generic demo/filler names (often empty or placeholder-like)
+                    // Block only truly empty/generic placeholder names
                     const isGenericName = !name || name === '' || name === 'item' || name.startsWith('item ')
-                    // Real items have images; demo items have no image + generic name
-                    return hasImage && !isGenericName
+                    return !isGenericName
                 })
-                console.log('[OrderStatusEmpty] after demo filter:', displayItems.length, 'real items')
+                console.log('[OrderStatusEmpty] after filter:', displayItems.length, 'items')
 
                 // Shuffle and pick 4 for variety
                 const shuffled = displayItems.sort(() => 0.5 - Math.random())
