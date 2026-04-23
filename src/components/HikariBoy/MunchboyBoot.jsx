@@ -62,38 +62,34 @@ export default function MunchboyBoot({ onComplete }) {
     setLettersDropped(true);
 
     // Hardcode: 8 letters * 110ms = 770ms total drop time for last letter
-    // slowing it down by ~0.3s overall (from 80ms to 110ms)
-    const SHAKE_DELAY = 770; 
-    const CHIME_DELAY = SHAKE_DELAY + 400; // 1170ms
-    const FINISH_DELAY = CHIME_DELAY + 750; // Speed up "PRESS START" by 2x
+    const SHAKE_DELAY = 770;
+    const FOOTER_DELAY = SHAKE_DELAY + 400; // 1170ms
+    const FINISH_DELAY = FOOTER_DELAY + 750; // "PRESS START" appears
 
     const shakeTimer = setTimeout(() => {
       setShake(true);
       setTimeout(() => setShake(false), 200);
     }, SHAKE_DELAY);
-    
-    const chimeTimer = setTimeout(() => {
-      playGbaChime();
+
+    const footerTimer = setTimeout(() => {
       setShowFooter(true);
-    }, CHIME_DELAY);
-    
+    }, FOOTER_DELAY);
+
     const finishTimer = setTimeout(() => {
       setShowPressStart(true);
     }, FINISH_DELAY);
-    
+
     return () => {
       clearTimeout(shakeTimer);
-      clearTimeout(chimeTimer);
+      clearTimeout(footerTimer);
       clearTimeout(finishTimer);
     };
   }, [onComplete]);
 
   const handleClick = async () => {
     if (showPressStart) {
-      // Ensure audio context is resumed if browser blocked initial autoplay
-      if (audioCtxRef.current?.state === 'suspended') {
-        await audioCtxRef.current.resume().catch(console.warn);
-      }
+      // Play chime on user interaction (fixes mobile autoplay restriction)
+      await playGbaChime();
       onComplete?.();
     }
   };
