@@ -46,17 +46,9 @@ const extractPrefetchUrls = (brandingData) => {
     }
     
     // 2. Top 5 featured menu items ONLY (no category items to prevent mobile network saturation)
-    const featuredPhotos = brandingData?.app_config?.featuredPhotos || brandingData?.featured_photos || []
-    featuredPhotos.slice(0, 5).forEach(photo => {
-        if (photo?.image && !photo.image.startsWith('blob:')) {
-            urls.push(photo.image)
-        }
-    })
-    
-    // 🚫 REMOVED: Category item prefetching to prevent mobile network saturation
-    // Previously fetched 5 items per category - now limited to hero + 5 featured max
-    
-    return urls.slice(0, 6) // Max 6 images (1 hero + 5 featured)
+    // 🗑️ featuredPhotos system removed — no prefetching needed
+
+    return urls.slice(0, 3) // Max 3 images (hero + menu items)
 }
 
 // Context Definition

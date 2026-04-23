@@ -250,7 +250,7 @@ const CORE_BRANDING_COLUMNS = [
     'hero_mode', 'hero_url', 'nav_icon_mode', 'hero_icon_mode',
     'is_paused', 'pause_message',
     'delivery_radius', 'delivery_fee', 'free_delivery_threshold',
-    'menu_data', 'featured_photos', 'app_config',
+    'menu_data', 'app_config',
     'updated_at'
 ];
 

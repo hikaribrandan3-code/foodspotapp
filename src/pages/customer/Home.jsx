@@ -201,47 +201,15 @@ function Home({ config: configProp }) {
         'medialuna-manteca': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80&format=webp'
     }
 
-    // Featured items with LOCAL STATE for optimistic updates
-    // 🛡️ CLOUD-FIRST ALIGNMENT: Source of truth is tenantData.featuredPhotos
-    // This removes the "ghost data" fallback to Latte/Seed.
-    // Check BOTH featured_photos (top-level) AND app_config.featuredPhotos
-    const featuredPhotos = 
-        tenantData?.app_config?.featuredPhotos || 
-        tenantData?.featured_photos || 
-        config?.featuredPhotos || 
-        []
-
-    const buildFeaturedItems = useCallback((photos) => {
-        // Enforce exactly 4 slots, populated strictly from the DB or null
-        return [0, 1, 2, 3].map(slotIndex => {
-            const slot = photos[slotIndex] || {}
-            // 🛡️ STRICT SYNC: If it's not in the DB, it's empty. No defaults.
-            return {
-                id: `featured-slot-${slotIndex}`,
-                name: slot.name || 'Destacado', // Only default string if DB has empty string but slot exists
-                image: (slot.image && !slot.image.startsWith('blob:')) ? slot.image : null,
-                price: slot.price || 0
-            }
-        })
-    }, [])
-
-    const [localFeaturedItems, setLocalFeaturedItems] = useState(
-        () => buildFeaturedItems(featuredPhotos)
-    )
-
-    // Sync featured items from config prop or tenantData when they change (but NOT during drag or edit)
-    // 🛡️ SNAPBACK FIX: Do NOT re-run when isEditMode changes
-    useEffect(() => {
-        if (!isDraggingRef.current && !isEditMode) {
-            setLocalFeaturedItems(buildFeaturedItems(featuredPhotos))
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [featuredPhotos, buildFeaturedItems]) // Removed isEditMode to prevent snapback
+    // 🗑️ FEATURED PHOTOS SYSTEM REMOVED
+    // Hero banner / featured photos have been killed. Menu items come from menu_data / menu_items only.
+    const localFeaturedItems = []
 
     // CRITICAL: Reset drag state on route change
     useEffect(() => {
         isDraggingRef.current = false
         navigationBlockedRef.current = false
+    }, [location.pathname])
         setDragState(null)
         setIsEditMode(false)
         if (longPressTimerRef.current) {

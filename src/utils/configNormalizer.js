@@ -125,10 +125,6 @@ export function normalizeTenantConfig(baseConfig, tenantData) {
             baseConfig?.heroIcons ||
             defaultConfig.heroIcons,
 
-        featuredPhotos: tenantData.featured_photos ||
-            baseConfig?.featuredPhotos ||
-            defaultConfig.featuredPhotos,
-
         homeConfig: tenantData.home_config ||
             baseConfig?.homeConfig ||
             defaultConfig.homeConfig,

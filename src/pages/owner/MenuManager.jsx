@@ -589,19 +589,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
 
         // Add featured items
-        const heroItems = (localConfig.featuredPhotos || []).slice(0, 4).map((slot, index) => ({
-            id: `${targetBusinessId}-hero-${index + 1}`,
-            business_id: targetBusinessId,
-            name: slot?.name || 'Destacado',
-            price: parseInt(slot?.price) || 0,
-            image_url: slot?.image || null,
-            available: true,
-            description: 'Featured Item',
-            is_featured: true,
-            display_order: -1 - index // Sort featured items first
-        }))
-
-        const itemsToSync = [...allItems, ...heroItems]
+        const itemsToSync = allItems
 
         if (itemsToSync.length > 0) {
             const { error: menuError } = await supabase

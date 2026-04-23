@@ -135,8 +135,7 @@ const Settings = () => {
         nav_icon_mode: 'white',
         hero_icon_mode: 'black',
         app_config: {},
-        menu_data: { categories: [] },
-        featured_photos: []
+        menu_data: { categories: [] }
     });
 
     // Dropdown states
@@ -205,7 +204,6 @@ const Settings = () => {
             hero_icon_mode: tenant.hero_icon_mode || 'black',
             app_config: tenant.app_config || {},
             menu_data: tenant.menu_data || { categories: [] },
-            featured_photos: tenant.featured_photos || [],
 
             // Payment & Fulfillment
             service_modes: tenant.service_modes || {
@@ -420,7 +418,6 @@ const Settings = () => {
                 munchboy_b_color: draft.munchboy_b_color,
                 app_config: draft.app_config,
                 menu_data: draft.menu_data,
-                featured_photos: draft.featured_photos,
                 service_modes: draft.service_modes,
                 payment_methods: draft.payment_methods,
             };
