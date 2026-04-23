@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTenant } from '../contexts/TenantContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabaseClient.js'
+import { HikariBoy } from './HikariBoy/HikariBoy'
 import BurgerLoader from './BurgerLoader'
 import './OrderStatusEmpty.css'
 
@@ -32,6 +33,8 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     const rawAddress = tenantData?.address || ''
     const extractedCity = rawAddress.includes(',') ? rawAddress.split(',')[0] : rawAddress
     const displayCity = extractedCity || tenantData?.city || ''
+
+    const [showArcade, setShowArcade] = useState(false)
 
     const primaryColor = config?.branding?.primaryColor || '#FF9500'
     const navBgColor = config?.branding?.navbar_color || primaryColor
@@ -263,6 +266,17 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                     </div>
                 </section>
 
+                {/* MunchBoy Arcade Card */}
+                <section className="ose-arcade" onClick={() => setShowArcade(true)}>
+                    <div className="ose-arcade-content">
+                        <span className="ose-arcade-icon">🎮</span>
+                        <span className="ose-arcade-text">Play a game!</span>
+                        <svg className="ose-arcade-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </div>
+                </section>
+
                 {/* Featured Items Grid */}
                 <section className="ose-featured">
                     <div className="ose-section-header">
@@ -391,6 +405,18 @@ const OrderStatusEmpty = ({ config: configProp }) => {
 
             {/* Spacer for bottom nav */}
             <div className="ose-bottom-spacer"></div>
+
+            {/* 🕹️ ARCADE OVERLAY */}
+            {showArcade && (
+                <HikariBoy
+                    onClose={() => setShowArcade(false)}
+                    controllerColor={tenantData?.primary_color || '#8B5CF6'}
+                    userId={tenantData?.business_name || 'guest'}
+                    munchboyShellColor={tenantData?.munchboy_shell_color}
+                    munchboyAColor={tenantData?.munchboy_a_color}
+                    munchboyBColor={tenantData?.munchboy_b_color}
+                />
+            )}
         </div>
     )
 }
