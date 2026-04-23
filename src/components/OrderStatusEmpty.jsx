@@ -117,6 +117,9 @@ const OrderStatusEmpty = ({ config: configProp }) => {
 
     // Merge DB items with menu_data fallback for the 4-square grid
     const displayItems = featuredItems.length > 0 ? featuredItems : menuDataItems
+
+    // Fetch featured items and categories
+    useEffect(() => {
         const fetchData = async () => {
             const effectiveBusinessId = resolvedBusinessId || businessId
             console.log('[OrderStatusEmpty] Starting fetch, businessId:', effectiveBusinessId, '(resolved:', resolvedBusinessId, ', authenticated:', businessId, ')')
