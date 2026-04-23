@@ -104,7 +104,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
 
                 // 📂 Fetch categories for the pills
                 const { data: cats, error: catsError } = await supabase
-                    .from('menu_categories')
+                    .from('categories')
                     .select('id, name, icon, sort_order')
                     .eq('business_id', businessId)
                     .order('sort_order', { ascending: true })
@@ -124,6 +124,15 @@ const OrderStatusEmpty = ({ config: configProp }) => {
 
         fetchData()
     }, [businessId])
+
+    // Open maps with business address
+    const handleLocationClick = () => {
+        const address = rawAddress || displayCity
+        if (address) {
+            const query = encodeURIComponent(address)
+            window.open(`https://maps.google.com/?q=${query}`, '_blank')
+        }
+    }
 
     // Navigation helpers
     const handleCategoryClick = (categorySlugOrName) => {
@@ -181,7 +190,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
             {displayCity && (
                 <header className="ose-header">
                     <div className="ose-header-content">
-                        <div className="ose-location">
+                        <button className="ose-location" onClick={handleLocationClick}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ose-location-icon">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                 <circle cx="12" cy="10" r="3"></circle>
@@ -190,7 +199,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ose-location-arrow" style={{marginTop: 2}}>
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
-                        </div>
+                        </button>
                         <button
                             className="ose-search-btn"
                             onClick={() => navigate(`/${tenantSlug}/menu`)}
@@ -312,12 +321,19 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                 >
                                     <div className="ose-card-image">
                                         {item.image || item.image_url ? (
-                                            <img src={item.image || item.image_url} alt={item.name} loading="lazy" />
-                                        ) : (
-                                            <div className="ose-card-placeholder">
-                                                <span>🍽️</span>
-                                            </div>
-                                        )}
+                                            <img
+                                                src={item.image || item.image_url}
+                                                alt={item.name}
+                                                loading="lazy"
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none'
+                                                    e.target.nextSibling.style.display = 'flex'
+                                                }}
+                                            />
+                                        ) : null}
+                                        <div className="ose-card-placeholder" style={{ display: (item.image || item.image_url) ? 'none' : 'flex' }}>
+                                            <span>{getCategoryEmoji(item.name)}</span>
+                                        </div>
                                     </div>
                                     <div className="ose-card-content">
                                         <h4 className="ose-card-title">{item.name}</h4>
@@ -336,14 +352,17 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                             ))
                         ) : (
                             <div className="ose-empty-menu">
-                                <span className="ose-empty-emoji">🍽️</span>
-                                <p className="ose-empty-text">Explore our full menu</p>
+                                <div className="ose-empty-icons">
+                                    <span>🍔</span><span>🍟</span><span>🍕</span><span>🍦</span>
+                                </div>
+                                <p className="ose-empty-title">Something delicious is coming</p>
+                                <p className="ose-empty-text">Our kitchen is stocking up. Check the full menu to see what's ready now.</p>
                                 <button
                                     className="ose-empty-cta"
                                     style={{ backgroundColor: primaryColor }}
                                     onClick={() => navigate(`/${tenantSlug}/menu`)}
                                 >
-                                    Browse Menu
+                                    See Full Menu →
                                 </button>
                             </div>
                         )}
