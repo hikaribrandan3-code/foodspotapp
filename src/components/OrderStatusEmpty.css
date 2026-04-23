@@ -461,8 +461,9 @@
 /* Product Grid */
 .ose-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px; /* Reduced from 12px */
+    grid-template-columns: 48% 48%;
+    gap: 6px;
+    justify-content: space-between;
 }
 
 .ose-card {
