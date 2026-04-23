@@ -211,7 +211,19 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         (o.status === 'delivered' || o.status === 'cancelled')
     )
 
-    // Today's delivery count — SNAKE_CASE
+    const formatAddress = (addr) => {
+        if (!addr) return ''
+        if (typeof addr === 'string') return addr
+        if (typeof addr === 'object') {
+            const parts = []
+            if (addr.street) parts.push(addr.street)
+            if (addr.number) parts.push(addr.number)
+            if (addr.floor) parts.push(`Piso ${addr.floor}`)
+            if (addr.notes) parts.push(`(${addr.notes})`)
+            return parts.join(', ')
+        }
+        return String(addr)
+    }
     const todayDeliveries = effectiveOrders.filter(o => 
         o.order_type === 'delivery' && 
         new Date(o.created_at).toDateString() === new Date().toDateString()
@@ -283,7 +295,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                     {(order.customer_name || order.customerInfo) && (
                                         <div style={{ fontSize: 13, color: '#4B5563', marginBottom: 12, background: '#F9FAFB', padding: 12, borderRadius: 10 }}>
                                             <p style={{ margin: 0, fontWeight: 600, color: '#374151' }}>📍 {order.customer_name || order.customerInfo?.name}</p>
-                                            <p style={{ margin: '4px 0 0' }}>{order.delivery_address || order.customerInfo?.address}</p>
+                                            <p style={{ margin: '4px 0 0' }}>{formatAddress(order.delivery_address || order.customerInfo?.address)}</p>
                                             <p style={{ margin: '4px 0 0', color: '#6B7280' }}>{t('tel_label')}***{getPhoneLast4(order.customer_phone || order.customerInfo?.phone)}</p>
                                         </div>
                                     )}
