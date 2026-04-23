@@ -29,8 +29,6 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [resolvedBusinessId, setResolvedBusinessId] = useState(null)
-    const [resolvedBusinessId, setResolvedBusinessId] = useState(null)
-    const [resolvedBusinessId, setResolvedBusinessId] = useState(null)
 
     // Derived values from tenant config
     const rawAddress = tenantData?.address || ''
