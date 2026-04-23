@@ -555,8 +555,12 @@ export async function createOrderCloud(orderData, businessId) {
             customer_name: orderData.customerName || null,
             customer_phone: orderData.customerPhone || null,
             delivery_mode: orderData.deliveryMode || false,
+            delivery_address: orderData.deliveryAddress || null,
             payment_method: orderData.paymentMethod || null,
             notes: orderData.notes || null,
+            staff_notes: orderData.staffNotes || null,
+            table_number: orderData.tableNumber || null,
+            delivery_type: orderData.deliveryType || null,
             created_at: new Date().toISOString()
         })
         .select()

@@ -1,14 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Wifi, WifiOff, LayoutDashboard, Clock, ChefHat, PackageCheck, Bike, DollarSign, Plus } from 'lucide-react';
+import { Wifi, WifiOff, LayoutDashboard, Clock, ChefHat, PackageCheck, Bike, DollarSign } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import OrderCard from '@/components/OrderCard';
-import ManualOrderModal from '@/components/ManualOrderModal';
 import type { OrderStatus } from '@/types';
 
 export default function BoardView() {
   const { state, toggleOnline } = useOrders();
-  const [manualOrderOpen, setManualOrderOpen] = useState(false);
 
   // Active orders (excluding DONE)
   const activeOrders = useMemo(() => {
@@ -92,18 +90,6 @@ export default function BoardView() {
         )}
       </div>
 
-      {/* Manual Order FAB */}
-      <motion.button
-        whileTap={{ scale: 0.92 }}
-        onClick={() => setManualOrderOpen(true)}
-        className="absolute bottom-24 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
-        style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
-        title="Create manual order"
-      >
-        <Plus size={22} />
-      </motion.button>
-
-      <ManualOrderModal open={manualOrderOpen} onClose={() => setManualOrderOpen(false)} />
     </div>
   );
 }

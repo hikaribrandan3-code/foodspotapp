@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
-import { LayoutDashboard, ChefHat, Bike, User } from 'lucide-react';
+import { LayoutDashboard, ChefHat, Bike, User, ClipboardList } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 
 const tabs: { id: TabId; icon: React.ReactNode; label: string }[] = [
   { id: 'board', icon: <LayoutDashboard size={22} strokeWidth={2.2} />, label: 'Board' },
   { id: 'prep', icon: <ChefHat size={22} strokeWidth={2.2} />, label: 'Prep' },
+  { id: 'order', icon: <ClipboardList size={22} strokeWidth={2.2} />, label: 'Order' },
   { id: 'logistics', icon: <Bike size={22} strokeWidth={2.2} />, label: 'Logistics' },
   { id: 'profile', icon: <User size={22} strokeWidth={2.2} />, label: 'Profile' },
 ];

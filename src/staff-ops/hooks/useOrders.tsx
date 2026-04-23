@@ -28,6 +28,7 @@ type Action =
   | { type: 'ADVANCE_STATUS'; orderId: string }
   | { type: 'VERIFY_CASH'; orderId: string }
   | { type: 'CONFIRM_DELIVERY'; orderId: string }
+  | { type: 'CLAIM_DELIVERY'; orderId: string; staffName: string }
   | { type: 'SET_ONLINE'; online: boolean }
   | { type: 'SELECT_ORDER'; orderId: string | null }
   | { type: 'SET_HANDOFF'; orderId: string | null }
@@ -93,6 +94,18 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'CLAIM_DELIVERY': {
+      hapticForTransition('status_advance');
+      return {
+        ...state,
+        orders: state.orders.map(o =>
+          o.id === action.orderId
+            ? { ...o, status: 'DISPATCH' as OrderStatus, assignedTo: action.staffName, offlineQueued: !state.isOnline }
+            : o,
+        ),
+      };
+    }
+
     case 'SET_ONLINE':     return { ...state, isOnline: action.online };
     case 'SELECT_ORDER':   return { ...state, selectedOrderId: action.orderId };
     case 'SET_HANDOFF':    return { ...state, handoffOrderId: action.orderId };
@@ -125,6 +138,7 @@ interface OrderContextValue {
   advanceOrderStatus: (orderId: string) => void;
   verifyCash: (orderId: string) => void;
   confirmDelivery: (orderId: string) => void;
+  claimDelivery: (orderId: string) => void;
   setTab: (tab: TabId) => void;
   selectOrder: (orderId: string | null) => void;
   toggleOnline: () => void;
@@ -323,6 +337,17 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     if (audioEnabled) audio.alertDeliveryConfirmed();
   }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
+  const claimDelivery = useCallback((orderId: string) => {
+    const staffMember = (() => { try { return JSON.parse(localStorage.getItem('fs_staff_member') || '{}'); } catch { return {}; } })();
+    const staffName = staffMember?.name || 'Staff';
+    dispatch({ type: 'CLAIM_DELIVERY', orderId, staffName });
+    if (state.isOnline && businessId) {
+      updateOrderCloud(orderId, { status: toDbStatus('DISPATCH') }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] claimDelivery:', e));
+    }
+    addToast({ type: 'cash_verified', title: 'Delivery Claimed', message: `${staffName} is taking this order`, orderId });
+  }, [state.isOnline, businessId, addToast]);
+
   const setTab = useCallback((tab: TabId) => dispatch({ type: 'SET_TAB', tab }), []);
   const selectOrder = useCallback((orderId: string | null) => dispatch({ type: 'SELECT_ORDER', orderId }), []);
   const toggleOnline = useCallback(() => dispatch({ type: 'SET_ONLINE', online: !state.isOnline }), [state.isOnline]);
@@ -330,7 +355,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   return (
     <OrderContext.Provider value={{
       state, dispatch, advanceOrderStatus, verifyCash,
-      confirmDelivery, setTab, selectOrder, toggleOnline,
+      confirmDelivery, claimDelivery, setTab, selectOrder, toggleOnline,
     }}>
       {children}
     </OrderContext.Provider>

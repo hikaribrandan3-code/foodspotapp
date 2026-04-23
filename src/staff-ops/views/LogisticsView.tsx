@@ -6,7 +6,7 @@ import OrderCard from '@/components/OrderCard';
 import MapboxMap from '@/components/MapboxMap';
 
 export default function LogisticsView() {
-  const { state } = useOrders();
+  const { state, claimDelivery } = useOrders();
   const [filter, setFilter] = useState<'READY' | 'DISPATCH' | 'DELIVERING'>('READY');
 
   const filteredOrders = state.orders.filter(o => o.status === filter);
@@ -77,6 +77,8 @@ export default function LogisticsView() {
                   order={order}
                   showLocation
                   showConfirmDelivery={filter === 'DELIVERING'}
+                  showClaimButton={filter === 'READY' && !order.assignedTo}
+                  onClaim={claimDelivery}
                 />
               </motion.div>
             ))}

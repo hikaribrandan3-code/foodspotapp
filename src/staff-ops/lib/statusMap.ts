@@ -106,10 +106,23 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     } catch {}
   }
 
-  // Format order number for display (e.g. "4521" → "#4521")
-  const orderNumber = dbOrder.order_number
-    ? `#${dbOrder.order_number}`.replace(/^#+/, '#')
+  // Format order number — pad to 3 digits minimum (#001, #023, #523)
+  const orderNumber = dbOrder.order_number != null
+    ? `#${String(dbOrder.order_number).padStart(3, '0')}`
     : undefined;
+
+  // Flatten delivery_address — DB stores it as JSON object {street, number, floor, notes}
+  let deliveryAddress: string | undefined;
+  const raw = dbOrder.delivery_address ?? dbOrder.address;
+  if (!raw) {
+    deliveryAddress = undefined;
+  } else if (typeof raw === 'string') {
+    deliveryAddress = raw;
+  } else if (typeof raw === 'object') {
+    const { street, number, floor, notes } = raw as Record<string, string | undefined>;
+    deliveryAddress = [street, number, floor ? `Apt/Floor: ${floor}` : undefined, notes]
+      .filter(Boolean).join(', ');
+  }
 
   return {
     id: dbOrder.id,
@@ -124,8 +137,10 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     paymentMethod,
     cashVerified: paymentConfirmed,
     offlineQueued: false,
-    deliveryAddress: dbOrder.delivery_address ?? dbOrder.address ?? undefined,
+    deliveryAddress,
     deliveryCoords,
     deliveryType: dbOrder.delivery_type ?? dbOrder.order_type ?? undefined,
+    tableNumber: dbOrder.table_number ?? undefined,
+    staffNotes: dbOrder.staff_notes ?? undefined,
   };
 }

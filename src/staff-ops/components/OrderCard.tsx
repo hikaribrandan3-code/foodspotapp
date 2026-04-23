@@ -18,6 +18,8 @@ interface OrderCardProps {
   showLocation?: boolean;
   showConfirmDelivery?: boolean;
   showAdvanceButton?: boolean;
+  showClaimButton?: boolean;
+  onClaim?: (orderId: string) => void;
 }
 
 const SWIPE_THRESHOLD = 100;
@@ -51,6 +53,8 @@ export default function OrderCard({
   showLocation = false,
   showConfirmDelivery = false,
   showAdvanceButton = false,
+  showClaimButton = false,
+  onClaim,
 }: OrderCardProps) {
   const { selectOrder, verifyCash, confirmDelivery } = useOrders();
   const { businessLat, businessLng } = useBusiness();
@@ -252,10 +256,27 @@ export default function OrderCard({
           )}
         </div>
 
-        {/* Customer + Items + ETA (if DISPATCH) */}
+        {/* Customer + Items + order type row */}
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base truncate" style={{ color: 'var(--text-primary)' }}>{order.customerName}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-base truncate" style={{ color: 'var(--text-primary)' }}>{order.customerName}</h3>
+              {/* Order type label — plain text, no emoji */}
+              {order.deliveryType && (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                  style={{
+                    backgroundColor: order.deliveryType === 'delivery' ? 'rgba(168,85,247,0.12)' : order.deliveryType === 'dine_in' ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.12)',
+                    color: order.deliveryType === 'delivery' ? 'var(--status-icon-delivering)' : order.deliveryType === 'dine_in' ? 'var(--status-icon-dispatch)' : 'var(--status-icon-prep)',
+                  }}>
+                  {order.deliveryType === 'delivery' ? 'Delivery' : order.deliveryType === 'dine_in' ? 'Dine In' : 'Pickup'}
+                </span>
+              )}
+              {order.tableNumber && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(16,185,129,0.12)', color: 'var(--status-icon-dispatch)' }}>
+                  Table {order.tableNumber}
+                </span>
+              )}
+            </div>
             <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
               {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
               {order.items.some(i => i.specialInstructions) && <span className="ml-1.5 text-xs" style={{ color: 'var(--has-notes)' }}>&bull; has notes</span>}
@@ -264,10 +285,10 @@ export default function OrderCard({
             {eta && (
               <div className="flex items-center gap-1 mt-1.5 px-2 py-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}>
                 <Clock size={12} />
-                <span className="text-xs font-semibold">{eta}m</span>
+                <span className="text-xs font-semibold">~{eta}m</span>
               </div>
             )}
-            {/* Delivery address — shown on logistics cards */}
+            {/* Delivery address — logistics view */}
             {showLocation && order.deliveryAddress && (
               <div className="flex items-start gap-1 mt-1.5">
                 <MapPin size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--status-icon-delivering)' }} />
@@ -281,9 +302,13 @@ export default function OrderCard({
                 <span className="text-xs">{order.customerPhone}</span>
               </a>
             )}
+            {/* Staff notes — visible to all staff */}
+            {order.staffNotes && (
+              <p className="text-xs mt-1.5 italic" style={{ color: 'var(--has-notes)' }}>Note: {order.staffNotes}</p>
+            )}
           </div>
-          {showLocation && order.assignedTo && (
-            <div className="text-right ml-2">
+          {order.assignedTo && (
+            <div className="text-right ml-2 shrink-0">
               <span className="text-xs font-medium" style={{ color: 'var(--status-icon-dispatch)' }}>{order.assignedTo}</span>
             </div>
           )}
@@ -304,7 +329,7 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Advance button (Kitchen) ────────────────────────── */}
+        {/* ── Kitchen action button — context-aware label ────── */}
         {showAdvanceButton && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <button
@@ -313,7 +338,21 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              Advance
+              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' ? 'Assign Delivery' : 'Advance'}
+            </button>
+          </div>
+        )}
+
+        {/* ── Claim delivery button (READY, no assignee) ───────── */}
+        {showClaimButton && (
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+            <button
+              onClick={e => { e.stopPropagation(); onClaim?.(order.id); }}
+              className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: 'var(--status-icon-dispatch)', color: '#fff' }}
+            >
+              <Bike size={15} />
+              I'll Take This
             </button>
           </div>
         )}

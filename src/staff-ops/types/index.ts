@@ -16,7 +16,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  orderNumber?: string; // e.g. "#4521" for announcing to customers
+  orderNumber?: string; // e.g. "#001" for announcing to customers
   customerName: string;
   customerPhone?: string;
   items: OrderItem[];
@@ -30,10 +30,12 @@ export interface Order {
   deliveredAt?: number;
   deliveryCoords?: { lat: number; lng: number };
   deliveryAddress?: string;
-  deliveryType?: 'delivery' | 'pickup' | 'dine-in';
+  deliveryType?: 'delivery' | 'pickup' | 'dine_in';
+  tableNumber?: number;
+  staffNotes?: string;
 }
 
-export type TabId = 'board' | 'prep' | 'logistics' | 'profile';
+export type TabId = 'board' | 'prep' | 'logistics' | 'order' | 'profile';
 
 export const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   PENDING_VERIFICATION: 'TODO',

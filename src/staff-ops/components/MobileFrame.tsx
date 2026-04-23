@@ -1,11 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, ChefHat, Bike, User } from 'lucide-react';
+import { LayoutDashboard, ChefHat, Bike, User, ClipboardList } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 import BoardView from '@/views/BoardView';
 import PrepView from '@/views/PrepView';
 import LogisticsView from '@/views/LogisticsView';
 import ProfileView from '@/views/ProfileView';
+import OrderView from '@/views/OrderView';
 import BottomNav from '@/components/BottomNav';
 import OrderDetailDrawer from '@/components/OrderDetailDrawer';
 
@@ -15,13 +16,10 @@ const pageVariants = {
   exit: { opacity: 0, y: -8 },
 };
 
-const tabOrder: Record<string, number> = {
-  board: 0, prep: 1, logistics: 2, profile: 3,
-};
-
 const sidebarTabs: { id: TabId; icon: React.ReactNode; label: string }[] = [
   { id: 'board', icon: <LayoutDashboard size={20} strokeWidth={2.2} />, label: 'Mission Control' },
   { id: 'prep', icon: <ChefHat size={20} strokeWidth={2.2} />, label: 'Kitchen' },
+  { id: 'order', icon: <ClipboardList size={20} strokeWidth={2.2} />, label: 'Take Order' },
   { id: 'logistics', icon: <Bike size={20} strokeWidth={2.2} />, label: 'Logistics' },
   { id: 'profile', icon: <User size={20} strokeWidth={2.2} />, label: 'Profile' },
 ];
@@ -75,6 +73,7 @@ export default function MobileFrame() {
     switch (state.currentTab) {
       case 'board': return <BoardView />;
       case 'prep': return <PrepView />;
+      case 'order': return <OrderView />;
       case 'logistics': return <LogisticsView />;
       case 'profile': return <ProfileView />;
       default: return <BoardView />;
