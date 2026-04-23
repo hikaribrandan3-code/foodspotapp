@@ -103,16 +103,16 @@ const OrderStatusEmpty = ({ config: configProp }) => {
         return items
     }, [tenantData?.menu_data])
 
-    // Merge DB categories with menu_data fallback
-    const displayCategories = categories.length > 0
-        ? categories
-        : menuDataCategories.length > 0
-            ? menuDataCategories.map(c => ({ id: c.id, name: c.name, icon: c.icon, slug: c.slug || c.name }))
+    // ✅ FIX: Use menu_data FIRST (what user set in menu builder), DB as fallback
+    const displayCategories = menuDataCategories.length > 0
+        ? menuDataCategories.map(c => ({ id: c.id, name: c.name, icon: c.icon, slug: c.slug || c.name }))
+        : categories.length > 0
+            ? categories
             : [
-                { id: 'cat-1', name: t('burger') !== 'burger' ? t('burger') : 'Burgers', slug: 'burger' },
-                { id: 'cat-2', name: t('appetizers') !== 'appetizers' ? t('appetizers') : 'Appetizers', slug: 'appetizers' },
-                { id: 'cat-3', name: t('drinks') !== 'drinks' ? t('drinks') : 'Drinks', slug: 'drinks' },
-                { id: 'cat-4', name: t('desserts') !== 'desserts' ? t('desserts') : 'Desserts', slug: 'desserts' }
+                { id: 'cat-1', name: 'Burgers', slug: 'burger' },
+                { id: 'cat-2', name: 'Appetizers', slug: 'appetizers' },
+                { id: 'cat-3', name: 'Drinks', slug: 'drinks' },
+                { id: 'cat-4', name: 'Desserts', slug: 'desserts' }
             ]
 
     // Merge DB items with menu_data fallback for the 4-square grid
@@ -361,15 +361,52 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                 </div>
             </section>
 
-                {/* MunchBoy Arcade Card */}
-                <section className="ose-arcade" onClick={() => setShowArcade(true)}>
-                    <div className="ose-arcade-content">
-                        <span className="ose-arcade-icon">🎮</span>
-                        <span className="ose-arcade-text">Play a game!</span>
-                        <svg className="ose-arcade-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {/* MunchBoy Arcade Card — Scrolling Game Marquee */}
+                <section className="ose-arcade" onClick={() => setShowArcade(true)} style={{ overflow: 'hidden', position: 'relative' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '14px 16px',
+                        position: 'relative',
+                        zIndex: 2
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 22 }}>🎮</span>
+                            <span style={{ fontWeight: 700, fontSize: 15, color: '#FFF' }}>Play a game!</span>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="9 18 15 12 9 6" />
                         </svg>
                     </div>
+                    {/* Scrolling emoji strip */}
+                    <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 32,
+                        overflow: 'hidden',
+                        opacity: 0.25,
+                        pointerEvents: 'none'
+                    }}>
+                        <div className="ose-game-marquee" style={{
+                            display: 'flex',
+                            gap: 20,
+                            whiteSpace: 'nowrap',
+                            animation: 'oseMarquee 8s linear infinite',
+                            fontSize: 20
+                        }}>
+                            <span>🍔</span><span>🍟</span><span>🥤</span><span>🍦</span><span>🍕</span><span>🍩</span><span>🌮</span><span>🍣</span>
+                            <span>🍔</span><span>🍟</span><span>🥤</span><span>🍦</span><span>🍕</span><span>🍩</span><span>🌮</span><span>🍣</span>
+                        </div>
+                    </div>
+                    <style>{`
+                        @keyframes oseMarquee {
+                            0% { transform: translateX(0); }
+                            100% { transform: translateX(-50%); }
+                        }
+                    `}</style>
                 </section>
 
                 {/* Featured Items Grid */}
