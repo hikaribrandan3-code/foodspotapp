@@ -421,7 +421,7 @@ Current Order Context:
 ` : '';
 
             // Get system prompt in owner's language
-            const ownerPrompt = getOwnerSystemPrompt(language, businessName, tenantData?.category);
+            const ownerPrompt = getOwnerSystemPrompt(lang, businessName, tenantData?.category);
 
             const fullPrompt = `${ownerPrompt}
 
