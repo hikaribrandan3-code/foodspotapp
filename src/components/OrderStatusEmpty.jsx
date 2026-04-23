@@ -214,13 +214,16 @@ const OrderStatusEmpty = ({ config: configProp }) => {
     }
 
     // Replace Material string icons with robust Emoji mapping
-    const getCategoryEmoji = (categoryName) => {
+    // Uses deterministic position-based fallback to ensure unique icons per category
+    const DRINK_EMOJIS = ['🥤', '🧃', '🥛', '🍹', '🧉', '☕', '🍵']
+    const getCategoryEmoji = (categoryName, index = 0) => {
         const name = (categoryName || '').toLowerCase()
+        
+        // Unique food categories
         if (name.includes('burger') || name.includes('hamburg')) return '🍔'
         if (name.includes('fries') || name.includes('side') || name.includes('entrada') || name.includes('appetizer') || name.includes('starter') || name.includes('snack')) return '🍟'
-        if (name.includes('cerveza') || name.includes('beer') || name.includes('alcohol') || name.includes('wine') || name.includes('vino')) return '🍺'
-        if (name.includes('drink') || name.includes('bebida') || name.includes('beverage') || name.includes('refresco')) return '🥤'
-        if (name.includes('sweet') || name.includes('postre') || name.includes('dessert') || name.includes('dulce')) return '🍰'
+        if (name.includes('cerveza') || name.includes('beer')) return '🍺'
+        if (name.includes('alcohol') || name.includes('wine') || name.includes('vino') || name.includes('whisky') || name.includes('vodka')) return '🍷'
         if (name.includes('pizza')) return '🍕'
         if (name.includes('chicken') || name.includes('pollo')) return '🍗'
         if (name.includes('salad') || name.includes('ensalada') || name.includes('vegan')) return '🥗'
@@ -233,6 +236,20 @@ const OrderStatusEmpty = ({ config: configProp }) => {
         if (name.includes('steak') || name.includes('meat') || name.includes('carne') || name.includes('parrilla')) return '🥩'
         if (name.includes('breakfast') || name.includes('desayuno')) return '🍳'
         if (name.includes('bakery') || name.includes('pan') || name.includes('pastry')) return '🥐'
+        if (name.includes('tarta') || name.includes('cake') || name.includes('pie')) return '🥧'
+        if (name.includes('empanada')) return '🥟'
+        if (name.includes('hot dog')) return '🌭'
+        if (name.includes('soup') || name.includes('sopa')) return '🍲'
+        if (name.includes('fish') || name.includes('pescado')) return '🐟'
+        
+        // Drinks/Bebidas — cycle through different emojis by index to guarantee uniqueness
+        if (name.includes('drink') || name.includes('bebida') || name.includes('beverage') || name.includes('refresco') || name.includes('gaseosa')) {
+            return DRINK_EMOJIS[index % DRINK_EMOJIS.length]
+        }
+        
+        // Desserts
+        if (name.includes('sweet') || name.includes('postre') || name.includes('dessert') || name.includes('dulce')) return '🍰'
+        
         return '🍽️'
     }
 
@@ -327,7 +344,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
             <section className="ose-categories">
                 <h3 className="ose-section-title">{categoriesText}</h3>
                 <div className="ose-categories-scroll">
-                    {displayCategories.map((cat) => (
+                    {displayCategories.map((cat, idx) => (
                         <button
                             key={cat.id}
                             className="ose-category"
@@ -335,7 +352,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                         >
                             <div className="ose-category-icon">
                                 <span style={{ fontSize: 24, paddingBottom: 2 }}>
-                                    {getCategoryEmoji(cat.name)}
+                                    {getCategoryEmoji(cat.name, idx)}
                                 </span>
                             </div>
                             <span className="ose-category-name">{cat.name}</span>
@@ -389,12 +406,16 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                                             />
                                         ) : null}
                                         <div className="ose-card-placeholder" style={{ display: (item.image || item.image_url) ? 'none' : 'flex' }}>
-                                            <span>{getCategoryEmoji(item.categoryName || item.name)}</span>
+                                            <span>{getCategoryEmoji(item.categoryName || item.name, 0)}</span>
                                         </div>
                                     </div>
                                     <div className="ose-card-content">
                                         <h4 className="ose-card-title">{item.name}</h4>
-                                        <p className="ose-card-desc">{item.description || item.name}</p>
+                                        <p className="ose-card-desc">
+                                            {item.description && item.description !== item.name
+                                                ? item.description
+                                                : item.categoryName || ''}
+                                        </p>
                                         <div className="ose-card-footer">
                                             <span className="ose-card-price">{formatPrice(item.price)}</span>
                                             <button className="ose-card-add" style={{ backgroundColor: primaryColor }}>
@@ -411,7 +432,7 @@ const OrderStatusEmpty = ({ config: configProp }) => {
                             <div className="ose-empty-menu">
                                 <div className="ose-empty-icons">
                                     {displayCategories.slice(0, 4).map((cat, idx) => (
-                                        <span key={idx}>{getCategoryEmoji(cat.name)}</span>
+                                        <span key={idx}>{getCategoryEmoji(cat.name, idx)}</span>
                                     ))}
                                 </div>
                                 <p className="ose-empty-title">Something delicious is coming</p>
