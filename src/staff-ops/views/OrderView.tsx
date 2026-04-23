@@ -179,40 +179,56 @@ export default function OrderView() {
                 <Loader2 size={22} className="animate-spin" style={{ color: 'var(--text-secondary)' }} />
               </div>
             ) : (
-              <div className="space-y-1.5">
-                {filtered.map(item => {
-                  const inCart = cart.find(c => c.id === item.id);
-                  return (
-                    <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                      style={{ backgroundColor: 'var(--card-bg)', border: `1px solid ${inCart ? 'var(--filter-active-bg)' : 'var(--card-border)'}` }}>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
-                        {item.category && <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{item.category}</p>}
-                      </div>
-                      <span className="text-xs font-mono shrink-0" style={{ color: 'var(--text-secondary)' }}>${item.price.toFixed(2)}</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {inCart && (
-                          <>
-                            <button onClick={() => removeFromCart(item.id)}
-                              className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--btn-secondary-bg)' }}>
-                              <Minus size={12} style={{ color: 'var(--text-primary)' }} />
-                            </button>
-                            <span className="text-sm font-bold w-4 text-center" style={{ color: 'var(--text-primary)' }}>{inCart.quantity}</span>
-                          </>
-                        )}
-                        <button onClick={() => addToCart(item)}
-                          className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--filter-active-bg)' }}>
-                          <Plus size={12} style={{ color: 'var(--filter-active-text)' }} />
-                        </button>
+              <div className="space-y-2">
+                {(() => {
+                  const grouped = new Map<string, MenuItem[]>();
+                  filtered.forEach(item => {
+                    const cat = item.category || 'Uncategorized';
+                    if (!grouped.has(cat)) grouped.set(cat, []);
+                    grouped.get(cat)!.push(item);
+                  });
+
+                  if (grouped.size === 0) {
+                    return <p className="text-center text-sm py-10" style={{ color: 'var(--text-secondary)' }}>
+                      {menuItems.length === 0 ? 'No menu data found' : 'No items match'}
+                    </p>;
+                  }
+
+                  return Array.from(grouped.entries()).map(([category, items]) => (
+                    <div key={category}>
+                      <p className="text-[10px] font-bold uppercase tracking-wider px-1 mb-1.5" style={{ color: 'var(--text-tertiary)' }}>{category}</p>
+                      <div className="space-y-1.5">
+                        {items.map(item => {
+                          const inCart = cart.find(c => c.id === item.id);
+                          return (
+                            <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                              style={{ backgroundColor: 'var(--card-bg)', border: `1px solid ${inCart ? 'var(--filter-active-bg)' : 'var(--card-border)'}` }}>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
+                              </div>
+                              <span className="text-xs font-mono shrink-0" style={{ color: 'var(--text-secondary)' }}>${item.price.toFixed(2)}</span>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {inCart && (
+                                  <>
+                                    <button onClick={() => removeFromCart(item.id)}
+                                      className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--btn-secondary-bg)' }}>
+                                      <Minus size={12} style={{ color: 'var(--text-primary)' }} />
+                                    </button>
+                                    <span className="text-sm font-bold w-4 text-center" style={{ color: 'var(--text-primary)' }}>{inCart.quantity}</span>
+                                  </>
+                                )}
+                                <button onClick={() => addToCart(item)}
+                                  className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--filter-active-bg)' }}>
+                                  <Plus size={12} style={{ color: 'var(--filter-active-text)' }} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  );
-                })}
-                {filtered.length === 0 && (
-                  <p className="text-center text-sm py-10" style={{ color: 'var(--text-secondary)' }}>
-                    {menuItems.length === 0 ? 'No menu data found' : 'No items match'}
-                  </p>
-                )}
+                  ));
+                })()}
               </div>
             )}
           </div>

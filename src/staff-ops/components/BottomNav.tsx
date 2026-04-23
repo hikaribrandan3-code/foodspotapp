@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutDashboard, ChefHat, Bike, User, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, ChefHat, ClipboardList, Bike, User } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 
