@@ -166,7 +166,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         <>
             <HeaderClamp config={config} />
             <div style={{
-                background: '#f5f5f4',
+                background: '#fff',
                 minHeight: '100vh',
                 padding: '24px 20px',
                 paddingBottom: 'calc(40px + env(safe-area-inset-bottom))',
