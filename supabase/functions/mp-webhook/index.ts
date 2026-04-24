@@ -270,7 +270,7 @@ serve(async (req: Request) => {
                     status: "released_to_kitchen",
                     payment_id: dataId,
                     paid_at: new Date().toISOString(),
-                    payment_status: "approved",
+                    payment_status: "paid",
                     payment_confirmed: true,
                     mp_payment_data: {
                         id: payment.id,

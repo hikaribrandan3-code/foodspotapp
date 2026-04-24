@@ -286,6 +286,14 @@ function Order({ config: configProp }) {
         const guestToken = getGuestToken()
         const isCashPath = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
 
+        // Payment-aware status assignment
+        const isMercadoPago = paymentMethod === 'mercadopago'
+        const orderStatus = isMercadoPago
+            ? 'pending_payment'      // MP: waiting for online payment
+            : 'released_to_kitchen'  // Cash/Dine-in: auto-accepted straight to kitchen
+
+        const orderPaymentStatus = 'pending'
+
         const newOrder = {
             business_id: businessId,
             guest_token: guestToken,
@@ -294,7 +302,8 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: 'pending', // 💎 PERSISTENT-FIRST: Saved immediately, payment resolved after
+            status: orderStatus,
+            payment_status: orderPaymentStatus,
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
@@ -469,6 +478,7 @@ function Order({ config: configProp }) {
             delivery_fee: actualDeliveryFee,
             total: total,
             status: 'paid_unreleased', // WhatsApp = cash path, payment done, awaiting release
+            payment_status: 'pending',
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,

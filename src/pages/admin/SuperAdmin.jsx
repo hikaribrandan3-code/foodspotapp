@@ -2257,22 +2257,38 @@ function SuperAdmin({ config: configProp }) {
                                 {orders.length === 0 ? (
                                     <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF' }}><p style={{ fontSize: 14 }}>No hay registros aún</p></div>
                                 ) : (
-                                    orders.slice(0, 15).map((order, i) => (
-                                        <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <div>
-                                                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
-                                                    <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
-                                                </div>
-                                                <div style={{ textAlign: 'right' }}>
-                                                    <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
-                                                        {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
-                                                    </span>
-                                                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
+                                    orders.slice(0, 15).map((order, i) => {
+                                        const isPaid = order.payment_status === 'paid' || order.paymentConfirmed;
+                                        const isMp = order.paymentMethod === 'mercadopago' || order.payment_method === 'mercadopago';
+                                        return (
+                                            <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <div>
+                                                        <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
+                                                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <span style={{
+                                                            display: 'inline-block',
+                                                            padding: '2px 8px',
+                                                            borderRadius: 10,
+                                                            fontSize: 11,
+                                                            fontWeight: 600,
+                                                            background: isPaid ? '#22C55E' : '#F59E0B',
+                                                            color: 'white',
+                                                            marginRight: 4
+                                                        }}>
+                                                            {isPaid ? '✅ Paid' : isMp ? '⏳ Pending' : '💵 Cash'}
+                                                        </span>
+                                                        <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
+                                                            {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
+                                                        </span>
+                                                        <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </>

@@ -105,7 +105,7 @@ async function syncOfflinePayment(payment) {
             .from('orders')
             .update({
                 status: 'released_to_kitchen',
-                payment_status: 'approved',
+                payment_status: 'paid',
                 payment_method: 'cash',
                 payment_confirmed: true,
                 paid_at: new Date().toISOString()

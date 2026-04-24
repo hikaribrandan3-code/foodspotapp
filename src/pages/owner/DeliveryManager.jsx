@@ -306,18 +306,35 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                 overflow: 'hidden',
                                 boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                             }}>
-                                <div style={{ padding: 16, borderBottom: '1px solid #F3F4F6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ padding: 16, borderBottom: '1px solid #F3F4F6', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                     <span style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>#{order.order_number || order.orderNumber} 🚚</span>
-                                    <span style={{
-                                        padding: '4px 10px',
-                                        borderRadius: 20,
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        background: statusInfo.bg,
-                                        color: statusInfo.color
-                                    }}>
-                                        {statusInfo.label}
-                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        {/* Payment Status Badge */}
+                                        <span style={{
+                                            padding: '2px 8px',
+                                            borderRadius: 10,
+                                            fontSize: 11,
+                                            fontWeight: 600,
+                                            background: (order.payment_status === 'paid' || order.payment_confirmed || order.paymentConfirmed) ? '#22C55E' : '#F59E0B',
+                                            color: 'white'
+                                        }}>
+                                            {(order.payment_status === 'paid' || order.payment_confirmed || order.paymentConfirmed)
+                                                ? '✅ Paid'
+                                                : order.payment_method === 'mercadopago' || order.paymentMethod === 'mercadopago'
+                                                    ? '⏳ Pending'
+                                                    : '💵 Cash'}
+                                        </span>
+                                        <span style={{
+                                            padding: '4px 10px',
+                                            borderRadius: 20,
+                                            fontSize: 12,
+                                            fontWeight: 600,
+                                            background: statusInfo.bg,
+                                            color: statusInfo.color
+                                        }}>
+                                            {statusInfo.label}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div style={{ padding: 16 }}>

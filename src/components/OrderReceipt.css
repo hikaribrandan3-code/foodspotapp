@@ -1,0 +1,266 @@
+/* OrderReceipt.css - Dense receipt card styles */
+
+.order-receipt {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* ── Banners ── */
+.or-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.or-banner--green {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.or-banner--yellow {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.or-banner--blue {
+    background: #DBEAFE;
+    color: #1E40AF;
+}
+
+.or-banner--red {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.or-banner__icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.or-banner__text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.or-banner__action {
+    margin-left: auto;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    background: #111827;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.or-banner__action:hover {
+    opacity: 0.9;
+}
+
+/* ── Header ── */
+.or-header {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.or-header__icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.or-header__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: 0.02em;
+    margin-bottom: 2px;
+}
+
+.or-header__number {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6B7280;
+    margin-bottom: 2px;
+}
+
+.or-header__date {
+    font-size: 12px;
+    color: #9CA3AF;
+}
+
+/* ── Business ── */
+.or-business {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.or-business__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 2px;
+}
+
+.or-business__address {
+    font-size: 12px;
+    color: #6B7280;
+}
+
+/* ── Divider ── */
+.or-divider {
+    height: 1px;
+    background: #E5E7EB;
+    margin: 10px 0;
+}
+
+.or-divider--dashed {
+    background: none;
+    border-top: 1px dashed #E5E7EB;
+    height: 0;
+}
+
+/* ── Items ── */
+.or-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.or-items__empty {
+    font-size: 13px;
+    color: #9CA3AF;
+    text-align: center;
+    padding: 8px 0;
+}
+
+.or-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 14px;
+    color: #1F2937;
+}
+
+.or-item__left {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.or-item__qty {
+    font-weight: 600;
+    color: #6B7280;
+    flex-shrink: 0;
+}
+
+.or-item__name {
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.or-item__price {
+    font-weight: 600;
+    color: #374151;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+/* ── Totals ── */
+.or-totals {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.or-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.or-total-row__label {
+    color: #6B7280;
+}
+
+.or-total-row__value {
+    font-weight: 500;
+    color: #374151;
+}
+
+.or-total-row--grand {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.or-total-row--grand .or-total-row__label {
+    color: #111827;
+}
+
+.or-total-row--grand .or-total-row__value {
+    color: #22C55E;
+}
+
+/* ── Payment ── */
+.or-payment {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #F3F4F6;
+}
+
+.or-payment-line {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+}
+
+/* ── Footer ── */
+.or-footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #F3F4F6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.or-estimated {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6B7280;
+}
+
+.or-track-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #111827;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.or-track-btn:hover {
+    opacity: 0.92;
+}

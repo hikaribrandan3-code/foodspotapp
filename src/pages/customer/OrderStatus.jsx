@@ -7,6 +7,7 @@ import { getGuestToken } from '../../utils/guestToken.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
+import OrderReceipt from '../../components/OrderReceipt.jsx'
 import ItemCard from '../../components/ItemCard'
 import { QRCodeSVG } from 'qrcode.react'
 import BurgerLoader from '../../components/BurgerLoader'
@@ -110,9 +111,32 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
     const [retrying, setRetrying] = useState(false)
     const [showTicket, setShowTicket] = useState(false)
+    const [retryingPayment, setRetryingPayment] = useState(false)
 
-    const paymentStatus = searchParams.get('payment')
+    const urlPaymentStatus = searchParams.get('payment')
     const primaryColor = tenantData?.primary_color || '#C4856A'
+
+    // Retry payment handler (for pending MP orders)
+    const handleRetryPayment = async () => {
+        if (!order?.id || retryingPayment) return
+        setRetryingPayment(true)
+        try {
+            const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
+                body: { order_id: order.id }
+            })
+            if (prefError) throw prefError
+            if (prefData?.init_point) {
+                window.location.href = prefData.init_point
+                return
+            }
+            throw new Error('No init_point returned')
+        } catch (err) {
+            console.error('[OrderStatus] Retry payment error:', err)
+            alert('Could not restart payment. Please contact support.')
+        } finally {
+            setRetryingPayment(false)
+        }
+    }
 
     // ============================================
     // 🔍 FETCH ORDER FROM SUPABASE
@@ -349,6 +373,32 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     {t('reorder_same')}
                 </button>
             </div>
+
+            {/* 🧾 ORDER RECEIPT */}
+            {order && !['cancelled', 'refunded'].includes(order.status) && (
+                <div style={{ width: '100%', maxWidth: 400, marginTop: 24 }}>
+                    <OrderReceipt
+                        order={order}
+                        tenantData={tenantData}
+                        paymentMethod={order.payment_method || order.paymentMethod}
+                        paymentStatus={order.payment_status || 'pending'}
+                        onRetryPayment={handleRetryPayment}
+                    />
+                </div>
+            )}
+
+            {/* Cancelled order receipt (without total) */}
+            {order && ['cancelled', 'refunded'].includes(order.status) && (
+                <div style={{ width: '100%', maxWidth: 400, marginTop: 24 }}>
+                    <OrderReceipt
+                        order={order}
+                        tenantData={tenantData}
+                        paymentMethod={order.payment_method || order.paymentMethod}
+                        paymentStatus={order.payment_status || 'pending'}
+                        onRetryPayment={handleRetryPayment}
+                    />
+                </div>
+            )}
 
             {/* 🎟️ TICKET BUTTON (if order has ticket items) */}
             {order && hasTicketItems(order) && (
