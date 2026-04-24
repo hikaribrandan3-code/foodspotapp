@@ -177,26 +177,27 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                 fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
             }}>
                 <div style={{
-                    width: 340,
+                    width: '90%',
+                    maxWidth: 540,
                     background: '#fff',
                     border: '1px solid #e5e5e5',
-                    padding: '24px 22px 20px'
+                    padding: '40px 32px 32px'
                 }}>
                     <div style={{
-                        fontSize: 11, color: '#a3a3a3', fontWeight: 400,
-                        letterSpacing: 0.2,
-                        marginBottom: 6
+                        fontSize: 12, color: '#a3a3a3', fontWeight: 500,
+                        letterSpacing: 0.3,
+                        marginBottom: 8
                     }}>
                         {tenantData?.business_name || 'Foodspot'}
                     </div>
 
                     <h1 style={{
-                        fontSize: 28,
+                        fontSize: 32,
                         lineHeight: 1.1,
                         fontWeight: order.status === 'pending_payment' ? 500 : 700,
                         color: order.status === 'pending_payment' ? '#525252' : '#0a0a0a',
                         letterSpacing: -0.8,
-                        margin: 0
+                        margin: '8px 0 0'
                     }}>
                         {order.status === 'delivered' ? 'Order Delivered' : order.status === 'pending_payment' ? 'Awaiting Confirmation' : 'Order Confirmed'}
                     </h1>
@@ -211,13 +212,13 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         Order #{order.order_number || 'N/A'} · {orderDate} · {orderTime}
                     </div>
 
-                    <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0 14px' }} />
+                    <div style={{ height: 1, background: '#e5e5e5', margin: '18px 0 16px' }} />
 
                     <div>
                         {order.items?.map((item, idx) => (
                             <div key={idx} style={{
                                 display: 'flex', alignItems: 'baseline', gap: 8,
-                                padding: '4px 0',
+                                padding: '6px 0',
                             }}>
                                 <span style={{ fontSize: 14, color: '#0a0a0a', fontWeight: 500, minWidth: 20 }}>
                                     {item.quantity}×
@@ -235,12 +236,12 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         ))}
                     </div>
 
-                    <div style={{ height: 1, background: '#e5e5e5', margin: '14px 0' }} />
+                    <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
 
                     <div>
                         <div style={{
                             display: 'flex', alignItems: 'baseline',
-                            padding: '3px 0', marginTop: 0,
+                            padding: '4px 0', marginTop: 0,
                         }}>
                             <span style={{
                                 fontSize: 13,
@@ -344,7 +345,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         </div>
                     </div>
 
-                    <div style={{ height: 1, background: '#e5e5e5', margin: '14px 0' }} />
+                    <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
 
                     <div>
                         {isDelivery && order.delivery_address && (
@@ -391,7 +392,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         <button
                             onClick={() => navigate(`/${tenantSlug}`)}
                             style={{
-                                width: '100%', height: 46, border: 'none',
+                                width: '100%', height: 50, border: 'none',
                                 background: primaryColor, color: '#fff',
                                 fontFamily: 'inherit', fontSize: 16, fontWeight: 700,
                                 letterSpacing: 0.1, cursor: 'pointer',
