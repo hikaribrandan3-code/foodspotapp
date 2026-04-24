@@ -101,6 +101,21 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         return statusConfig[status] || { label: status, next: null, nextLabel: null, class: '', bg: '#F3F4F6', color: '#6B7280' }
     }
 
+    // Map owner FSM statuses to database Spanish statuses for kitchen view
+    const getDbStatus = (ownerStatus) => {
+        const statusMap = {
+            pending_payment: 'pendiente',
+            paid_unreleased: 'confirmado',
+            released_to_kitchen: 'confirmado',
+            preparing: 'preparacion',
+            ready: 'listo',
+            dispatched: 'despachado',
+            delivered: 'entregado',
+            cancelled: 'cancelado'
+        }
+        return statusMap[ownerStatus] || ownerStatus
+    }
+
     // Handle status change with centralized payment validation
     const handleDeliveryStatusChange = async (orderId, newStatus, order) => {
         // Use centralized payment gate from orderStateGuard.js
@@ -110,12 +125,15 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             return
         }
 
+        // Map owner status to database status for kitchen FSM
+        const dbStatus = getDbStatus(newStatus)
+
         // Update Supabase database first (for real orders)
         const isRealOrder = !demoMode && !orderId.startsWith('demo-')
         if (isRealOrder && businessId) {
             await supabase
                 .from('orders')
-                .update({ status: newStatus })
+                .update({ status: dbStatus })
                 .eq('id', orderId)
                 .eq('business_id', businessId)
         }
