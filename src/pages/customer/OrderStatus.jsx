@@ -98,6 +98,19 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         }
     }, [order?.id])
 
+    useEffect(() => {
+        if (order?.status === 'delivered') {
+            const timer = setTimeout(() => {
+                if (tenantSlug) {
+                    navigate(`/${tenantSlug}`)
+                } else {
+                    navigate('/')
+                }
+            }, 3000)
+            return () => clearTimeout(timer)
+        }
+    }, [order?.status, tenantSlug, navigate])
+
     const handleReorder = () => {
         if (!order || !order.items) return
 
@@ -162,6 +175,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         return order.payment_method || 'Cash'
     }
 
+    const isPaid = order.status !== 'pending_payment'
+
     return (
         <>
             <HeaderClamp config={config} />
@@ -214,6 +229,11 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '18px 0 16px' }} />
 
+                    {!isPaid ? (
+                        <div style={{ textAlign: 'center', padding: '20px 0', color: '#737373', fontSize: 14 }}>
+                            Completing payment... your receipt will appear here.
+                        </div>
+                    ) : (
                     <div>
                         {order.items?.map((item, idx) => (
                             <div key={idx} style={{
@@ -385,6 +405,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             <span style={{ color: '#0a0a0a' }}>{getStatusText()}</span>
                         </div>
                     </div>
+                    )}
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
 
