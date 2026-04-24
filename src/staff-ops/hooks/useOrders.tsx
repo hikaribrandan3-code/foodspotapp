@@ -171,7 +171,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       .from('orders')
       .select('*')
       .eq('business_id', businessId)
-      .not('status', 'in', '("entregado","cancelado")')
+      .not('status', 'in', '("entregado","cancelado","cancelled")')
       .order('created_at', { ascending: false })
       .limit(100)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -204,7 +204,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
               if (audioEnabled) audio.alertNewOrder(order.priority);
             } else if (eventType === 'UPDATE') {
               const updated = mapDbOrderToKimi(newRow);
-              if (updated.status === 'DONE') {
+              if (updated.status === 'DONE' || newRow.status === 'cancelled' || newRow.status === 'cancelado') {
                 dispatch({ type: 'REMOVE_ORDER', orderId: updated.id });
               } else {
                 dispatch({ type: 'UPDATE_ORDER', order: updated });
@@ -223,7 +223,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
                 .from('orders')
                 .select('*')
                 .eq('business_id', businessId)
-                .not('status', 'in', '("entregado","cancelado")')
+                .not('status', 'in', '("entregado","cancelado","cancelled")')
                 .order('created_at', { ascending: false })
                 .limit(100)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -240,7 +240,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
           .from('orders')
           .select('*')
           .eq('business_id', businessId)
-          .not('status', 'in', '("entregado","cancelado")')
+          .not('status', 'in', '("entregado","cancelado","cancelled")')
           .order('created_at', { ascending: false })
           .limit(100)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -366,7 +366,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'CANCEL_ORDER', orderId });
 
     if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: 'cancelado' }, businessId)
+      updateOrderCloud(orderId, { status: 'cancelled' }, businessId)
         .catch((e: Error) => console.error('[StaffOps] cancelOrder:', e));
     }
 

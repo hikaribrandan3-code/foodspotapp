@@ -24,6 +24,8 @@ export function toKimiStatus(
     case 'en_camino':
       return 'DELIVERING';
     case 'entregado':
+    case 'cancelled':
+    case 'cancelado':
       return 'DONE';
     default:
       return 'TODO';
