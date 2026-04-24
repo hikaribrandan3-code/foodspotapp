@@ -1084,475 +1084,112 @@ const Settings = () => {
                 {/* ========== PAYMENT & FULFILLMENT ========== */}
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>💳 {t('payment_settings') || 'Payment & Fulfillment'}</h3>
+                        <h3>{t('payment_settings') || 'Payment & Fulfillment'}</h3>
                     </div>
 
                     {/* SERVICE MODES */}
-                    <div style={{
-                        background: '#FFFFFF',
-                        borderRadius: 12,
-                        padding: 16,
-                        marginBottom: 16,
-                        borderLeft: '4px solid #22C55E',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            marginBottom: 12,
-                            borderBottom: '1px solid #E5E7EB',
-                            paddingBottom: 12
-                        }}>
-                            <span style={{ fontSize: 20 }}>🍽️</span>
-                            <h4 style={{
-                                fontSize: 15,
-                                fontWeight: 700,
-                                color: '#111827',
-                                margin: 0
-                            }}>
-                                {t('service_modes') || 'Service Modes'}
-                            </h4>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                            {/* Pickup Toggle */}
-                            <div
-                                onClick={() => {
-                                    setDraft(d => ({
-                                        ...d,
-                                        service_modes: { ...d.service_modes, pickup: !(d.service_modes?.pickup ?? true) }
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '10px 12px',
-                                    background: (draft.service_modes?.pickup ?? true) ? '#F0FDF4' : '#F9FAFB',
-                                    borderRadius: 8,
-                                    border: `1px solid ${(draft.service_modes?.pickup ?? true) ? '#22C55E' : '#E5E7EB'}`,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 20 }}>📦</span>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Pickup</span>
-                                </div>
-                                <div style={{
-                                    width: 36,
-                                    height: 20,
-                                    borderRadius: 10,
-                                    background: (draft.service_modes?.pickup ?? true) ? '#22C55E' : '#D1D5DB',
-                                    position: 'relative',
-                                    transition: 'all 0.2s'
-                                }}>
-                                    <div style={{
-                                        width: 16,
-                                        height: 16,
-                                        borderRadius: '50%',
-                                        background: 'white',
-                                        position: 'absolute',
-                                        top: 2,
-                                        left: (draft.service_modes?.pickup ?? true) ? 18 : 2,
-                                        transition: 'all 0.2s'
-                                    }} />
-                                </div>
-                            </div>
-                            {/* Delivery Toggle */}
-                            <div
-                                onClick={() => {
-                                    setDraft(d => ({
-                                        ...d,
-                                        service_modes: { ...d.service_modes, delivery: !(d.service_modes?.delivery ?? true) }
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '10px 12px',
-                                    background: (draft.service_modes?.delivery ?? true) ? '#F0FDF4' : '#F9FAFB',
-                                    borderRadius: 8,
-                                    border: `1px solid ${(draft.service_modes?.delivery ?? true) ? '#22C55E' : '#E5E7EB'}`,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 20 }}>🚚</span>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Delivery</span>
-                                </div>
-                                <div style={{
-                                    width: 36,
-                                    height: 20,
-                                    borderRadius: 10,
-                                    background: (draft.service_modes?.delivery ?? true) ? '#22C55E' : '#D1D5DB',
-                                    position: 'relative',
-                                    transition: 'all 0.2s'
-                                }}>
-                                    <div style={{
-                                        width: 16,
-                                        height: 16,
-                                        borderRadius: '50%',
-                                        background: 'white',
-                                        position: 'absolute',
-                                        top: 2,
-                                        left: (draft.service_modes?.delivery ?? true) ? 18 : 2,
-                                        transition: 'all 0.2s'
-                                    }} />
-                                </div>
-                            </div>
-                            {/* Dine In Toggle */}
-                            <div
-                                onClick={() => {
-                                    setDraft(d => ({
-                                        ...d,
-                                        service_modes: { ...d.service_modes, dineIn: !(d.service_modes?.dineIn ?? false) }
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '10px 12px',
-                                    background: (draft.service_modes?.dineIn ?? false) ? '#F0FDF4' : '#F9FAFB',
-                                    borderRadius: 8,
-                                    border: `1px solid ${(draft.service_modes?.dineIn ?? false) ? '#22C55E' : '#E5E7EB'}`,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 20 }}>🍽️</span>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Dine In</span>
-                                </div>
-                                <div style={{
-                                    width: 36,
-                                    height: 20,
-                                    borderRadius: 10,
-                                    background: (draft.service_modes?.dineIn ?? false) ? '#22C55E' : '#D1D5DB',
-                                    position: 'relative',
-                                    transition: 'all 0.2s'
-                                }}>
-                                    <div style={{
-                                        width: 16,
-                                        height: 16,
-                                        borderRadius: '50%',
-                                        background: 'white',
-                                        position: 'absolute',
-                                        top: 2,
-                                        left: (draft.service_modes?.dineIn ?? false) ? 18 : 2,
-                                        transition: 'all 0.2s'
-                                    }} />
-                                </div>
-                            </div>
-                            {/* Events Toggle */}
-                            <div
-                                onClick={() => {
-                                    setDraft(d => ({
-                                        ...d,
-                                        service_modes: { ...d.service_modes, events: !(d.service_modes?.events ?? false) }
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '10px 12px',
-                                    background: (draft.service_modes?.events ?? false) ? '#F0FDF4' : '#F9FAFB',
-                                    borderRadius: 8,
-                                    border: `1px solid ${(draft.service_modes?.events ?? false) ? '#22C55E' : '#E5E7EB'}`,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 20 }}>🎉</span>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Events</span>
-                                </div>
-                                <div style={{
-                                    width: 36,
-                                    height: 20,
-                                    borderRadius: 10,
-                                    background: (draft.service_modes?.events ?? false) ? '#22C55E' : '#D1D5DB',
-                                    position: 'relative',
-                                    transition: 'all 0.2s'
-                                }}>
-                                    <div style={{
-                                        width: 16,
-                                        height: 16,
-                                        borderRadius: '50%',
-                                        background: 'white',
-                                        position: 'absolute',
-                                        top: 2,
-                                        left: (draft.service_modes?.events ?? false) ? 18 : 2,
-                                        transition: 'all 0.2s'
-                                    }} />
-                                </div>
-                            </div>
+                    <div style={{ marginBottom: 20 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
+                            {t('service_modes') || 'Service Modes'}
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                            {[
+                                { key: 'pickup',   label: 'Pickup',   defaultOn: true  },
+                                { key: 'delivery', label: 'Delivery', defaultOn: true  },
+                                { key: 'dineIn',   label: 'Dine In',  defaultOn: false },
+                                { key: 'events',   label: 'Events',   defaultOn: false },
+                            ].map(({ key, label, defaultOn }) => {
+                                const on = draft.service_modes?.[key] ?? defaultOn;
+                                return (
+                                    <div
+                                        key={key}
+                                        onClick={() => {
+                                            setDraft(d => ({ ...d, service_modes: { ...d.service_modes, [key]: !on } }));
+                                            setHasChanges(true);
+                                        }}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
+                                            background: on ? '#F0FDF4' : '#F9FAFB',
+                                            border: `1px solid ${on ? '#22C55E' : '#E5E7EB'}`
+                                        }}
+                                    >
+                                        <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
+                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#22C55E' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s' }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* DINE-IN PAYMENT TIMING */}
+                    {/* DINE-IN PAYMENT TIMING — only shown when Dine In is on */}
                     {draft.service_modes?.dineIn && (
-                        <div style={{
-                            background: '#FFFFFF',
-                            borderRadius: 12,
-                            padding: 16,
-                            marginBottom: 16,
-                            borderLeft: '4px solid #F59E0B',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 8,
-                                marginBottom: 12,
-                                borderBottom: '1px solid #E5E7EB',
-                                paddingBottom: 12
-                            }}>
-                                <span style={{ fontSize: 20 }}>🕐</span>
-                                <h4 style={{
-                                    fontSize: 15,
-                                    fontWeight: 700,
-                                    color: '#111827',
-                                    margin: 0
-                                }}>
-                                    {t('dine_in_payment') || 'Dine-In Payment'}
-                                </h4>
-                            </div>
+                        <div style={{ marginBottom: 20 }}>
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
+                                {t('dine_in_payment') || 'Dine-In Payment Timing'}
+                            </p>
                             <div style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                    onClick={() => {
-                                        setDraft(d => ({
-                                            ...d,
-                                            service_modes: { ...d.service_modes, dineInPayment: 'before' }
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '10px 16px',
-                                        borderRadius: 8,
-                                        border: 'none',
-                                        background: draft.service_modes?.dineInPayment === 'before' ? '#F59E0B' : '#F3F4F6',
-                                        color: draft.service_modes?.dineInPayment === 'before' ? 'white' : '#6B7280',
-                                        fontWeight: 600,
-                                        fontSize: 13,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    💳 Pay Before
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setDraft(d => ({
-                                            ...d,
-                                            service_modes: { ...d.service_modes, dineInPayment: 'after' }
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '10px 16px',
-                                        borderRadius: 8,
-                                        border: 'none',
-                                        background: draft.service_modes?.dineInPayment === 'after' ? '#F59E0B' : '#F3F4F6',
-                                        color: draft.service_modes?.dineInPayment === 'after' ? 'white' : '#6B7280',
-                                        fontWeight: 600,
-                                        fontSize: 13,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    🧾 Pay After
-                                </button>
+                                {[
+                                    { value: 'before', label: 'Pay Before (Upfront)' },
+                                    { value: 'after',  label: 'Pay After (At End)'  },
+                                ].map(({ value, label }) => {
+                                    const active = draft.service_modes?.dineInPayment === value;
+                                    return (
+                                        <button
+                                            key={value}
+                                            onClick={() => {
+                                                setDraft(d => ({ ...d, service_modes: { ...d.service_modes, dineInPayment: value } }));
+                                                setHasChanges(true);
+                                            }}
+                                            style={{
+                                                flex: 1, padding: '10px 12px', borderRadius: 8, border: `1px solid ${active ? '#F59E0B' : '#E5E7EB'}`,
+                                                background: active ? '#FFFBEB' : '#F9FAFB',
+                                                color: active ? '#92400E' : '#6B7280',
+                                                fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            {label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
 
                     {/* PAYMENT METHODS */}
-                    <div style={{
-                        background: '#FFFFFF',
-                        borderRadius: 12,
-                        padding: 16,
-                        marginBottom: 16,
-                        borderLeft: '4px solid #3B82F6',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            marginBottom: 12,
-                            borderBottom: '1px solid #E5E7EB',
-                            paddingBottom: 12
-                        }}>
-                            <span style={{ fontSize: 20 }}>💳</span>
-                            <h4 style={{
-                                fontSize: 15,
-                                fontWeight: 700,
-                                color: '#111827',
-                                margin: 0
-                            }}>
-                                {t('payment_methods') || 'Payment Methods'}
-                            </h4>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                            {/* Cash Toggle */}
-                            <div
-                                onClick={() => {
-                                    setDraft(d => ({
-                                        ...d,
-                                        payment_methods: { ...d.payment_methods, cash: !(d.payment_methods?.cash ?? true) }
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '10px 12px',
-                                    background: (draft.payment_methods?.cash ?? true) ? '#EFF6FF' : '#F9FAFB',
-                                    borderRadius: 8,
-                                    border: `1px solid ${(draft.payment_methods?.cash ?? true) ? '#3B82F6' : '#E5E7EB'}`,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 20 }}>💵</span>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Cash</span>
-                                </div>
-                                <div style={{
-                                    width: 36,
-                                    height: 20,
-                                    borderRadius: 10,
-                                    background: (draft.payment_methods?.cash ?? true) ? '#3B82F6' : '#D1D5DB',
-                                    position: 'relative',
-                                    transition: 'all 0.2s'
-                                }}>
-                                    <div style={{
-                                        width: 16,
-                                        height: 16,
-                                        borderRadius: '50%',
-                                        background: 'white',
-                                        position: 'absolute',
-                                        top: 2,
-                                        left: (draft.payment_methods?.cash ?? true) ? 18 : 2,
-                                        transition: 'all 0.2s'
-                                    }} />
-                                </div>
-                            </div>
-                            {/* Mercado Pago Toggle */}
-                            <div
-                                onClick={() => {
-                                    setDraft(d => ({
-                                        ...d,
-                                        payment_methods: { ...d.payment_methods, mercado_pago: !(d.payment_methods?.mercado_pago ?? true) }
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '10px 12px',
-                                    background: (draft.payment_methods?.mercado_pago ?? true) ? '#EFF6FF' : '#F9FAFB',
-                                    borderRadius: 8,
-                                    border: `1px solid ${(draft.payment_methods?.mercado_pago ?? true) ? '#3B82F6' : '#E5E7EB'}`,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 20 }}>💳</span>
-                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Mercado Pago</span>
-                                </div>
-                                <div style={{
-                                    width: 36,
-                                    height: 20,
-                                    borderRadius: 10,
-                                    background: (draft.payment_methods?.mercado_pago ?? true) ? '#3B82F6' : '#D1D5DB',
-                                    position: 'relative',
-                                    transition: 'all 0.2s'
-                                }}>
-                                    <div style={{
-                                        width: 16,
-                                        height: 16,
-                                        borderRadius: '50%',
-                                        background: 'white',
-                                        position: 'absolute',
-                                        top: 2,
-                                        left: (draft.payment_methods?.mercado_pago ?? true) ? 18 : 2,
-                                        transition: 'all 0.2s'
-                                    }} />
-                                </div>
-                            </div>
-                            {/* Card — Coming Soon */}
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '10px 12px',
-                                background: '#F3F4F6',
-                                borderRadius: 8,
-                                border: '1px solid #E5E7EB',
-                                opacity: 0.6,
-                                cursor: 'not-allowed'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 20 }}>🏦</span>
-                                    <div>
-                                        <div style={{ fontSize: 14, fontWeight: 500, color: '#9CA3AF' }}>Card</div>
+                    <div>
+                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
+                            {t('payment_methods') || 'Payment Methods'}
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                            {[
+                                { key: 'cash',         label: 'Cash'         },
+                                { key: 'mercado_pago', label: 'Mercado Pago' },
+                            ].map(({ key, label }) => {
+                                const on = draft.payment_methods?.[key] ?? true;
+                                return (
+                                    <div
+                                        key={key}
+                                        onClick={() => {
+                                            setDraft(d => ({ ...d, payment_methods: { ...d.payment_methods, [key]: !on } }));
+                                            setHasChanges(true);
+                                        }}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
+                                            background: on ? '#EFF6FF' : '#F9FAFB',
+                                            border: `1px solid ${on ? '#3B82F6' : '#E5E7EB'}`
+                                        }}
+                                    >
+                                        <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
+                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#3B82F6' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s' }} />
+                                        </div>
                                     </div>
-                                </div>
-                                <span style={{
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    color: '#9CA3AF',
-                                    background: '#E5E7EB',
-                                    padding: '2px 8px',
-                                    borderRadius: 12
-                                }}>
-                                    Coming Soon
-                                </span>
-                            </div>
-                            {/* Bank Transfer — Coming Soon */}
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '10px 12px',
-                                background: '#F3F4F6',
-                                borderRadius: 8,
-                                border: '1px solid #E5E7EB',
-                                opacity: 0.6,
-                                cursor: 'not-allowed'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 20 }}>🏧</span>
-                                    <div>
-                                        <div style={{ fontSize: 14, fontWeight: 500, color: '#9CA3AF' }}>Bank Transfer</div>
-                                    </div>
-                                </div>
-                                <span style={{
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    color: '#9CA3AF',
-                                    background: '#E5E7EB',
-                                    padding: '2px 8px',
-                                    borderRadius: 12
-                                }}>
-                                    Coming Soon
-                                </span>
-                            </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
