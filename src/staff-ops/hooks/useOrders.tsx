@@ -29,6 +29,7 @@ type Action =
   | { type: 'VERIFY_CASH'; orderId: string }
   | { type: 'CONFIRM_DELIVERY'; orderId: string }
   | { type: 'CLAIM_DELIVERY'; orderId: string; staffName: string }
+  | { type: 'CANCEL_ORDER'; orderId: string }
   | { type: 'SET_ONLINE'; online: boolean }
   | { type: 'SELECT_ORDER'; orderId: string | null }
   | { type: 'SET_HANDOFF'; orderId: string | null }
@@ -106,6 +107,14 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'CANCEL_ORDER': {
+      hapticForTransition('status_advance');
+      return {
+        ...state,
+        orders: state.orders.filter(o => o.id !== action.orderId),
+      };
+    }
+
     case 'SET_ONLINE':     return { ...state, isOnline: action.online };
     case 'SELECT_ORDER':   return { ...state, selectedOrderId: action.orderId };
     case 'SET_HANDOFF':    return { ...state, handoffOrderId: action.orderId };
@@ -139,6 +148,7 @@ interface OrderContextValue {
   verifyCash: (orderId: string) => void;
   confirmDelivery: (orderId: string) => void;
   claimDelivery: (orderId: string) => void;
+  cancelOrder: (orderId: string) => void;
   setTab: (tab: TabId) => void;
   selectOrder: (orderId: string | null) => void;
   toggleOnline: () => void;
@@ -348,6 +358,21 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     addToast({ type: 'cash_verified', title: 'Delivery Claimed', message: `${staffName} is taking this order`, orderId });
   }, [state.isOnline, businessId, addToast]);
 
+  const cancelOrder = useCallback((orderId: string) => {
+    const order = state.orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    if (!state.isOnline) queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
+    dispatch({ type: 'CANCEL_ORDER', orderId });
+
+    if (state.isOnline && businessId) {
+      updateOrderCloud(orderId, { status: 'cancelado' }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] cancelOrder:', e));
+    }
+
+    addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
+  }, [state.isOnline, state.orders, businessId, addToast]);
+
   const setTab = useCallback((tab: TabId) => dispatch({ type: 'SET_TAB', tab }), []);
   const selectOrder = useCallback((orderId: string | null) => dispatch({ type: 'SELECT_ORDER', orderId }), []);
   const toggleOnline = useCallback(() => dispatch({ type: 'SET_ONLINE', online: !state.isOnline }), [state.isOnline]);
@@ -355,7 +380,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   return (
     <OrderContext.Provider value={{
       state, dispatch, advanceOrderStatus, verifyCash,
-      confirmDelivery, claimDelivery, setTab, selectOrder, toggleOnline,
+      confirmDelivery, claimDelivery, cancelOrder, setTab, selectOrder, toggleOnline,
     }}>
       {children}
     </OrderContext.Provider>
