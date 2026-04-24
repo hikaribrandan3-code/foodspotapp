@@ -317,11 +317,11 @@ const ForgotPasswordModal = ({ onClose, onSuccess, lang }) => {
     setLoading(true)
     setError(null)
     try {
-      await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: window.location.origin + '/auth/callback'
+      await supabase.functions.invoke('generate-reset-code', {
+        body: { email: resetEmail }
       })
     } catch (_) {
-      // intentional: always advance to code step for security
+      // intentional: always advance to code step for security (no email enumeration)
     } finally {
       setLoading(false)
       setStep('code')
@@ -354,7 +354,7 @@ const ForgotPasswordModal = ({ onClose, onSuccess, lang }) => {
   const handleResetPassword = async (e) => {
     e.preventDefault()
     const code = codeDigits.join('')
-    if (code.length !== 6) { setError('Please enter the complete 6-digit code'); return }
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) { setError('Please enter the complete 6-digit code'); return }
     if (newPassword.length < 8) { setError('Password must be at least 8 characters'); return }
     if (newPassword !== confirmPassword) { setError("Passwords don't match"); return }
 
@@ -362,28 +362,33 @@ const ForgotPasswordModal = ({ onClose, onSuccess, lang }) => {
     setError(null)
 
     try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email: resetEmail,
-        token: code,
-        type: 'recovery'
+      // Step 1: verify the code via edge function (marks it as used)
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-reset-code', {
+        body: { email: resetEmail, code }
       })
-      if (verifyError) throw verifyError
+      if (verifyError || !verifyData?.valid) {
+        const msg = verifyData?.error || verifyError?.message || ''
+        throw Object.assign(new Error(msg || 'Invalid or expired code'), { isCodeError: true })
+      }
 
-      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
-      if (updateError) throw updateError
-
-      await supabase.auth.signOut()
+      // Step 2: update password via edge function (uses admin API, no session needed)
+      const { data: updateData, error: updateError } = await supabase.functions.invoke('update-password', {
+        body: { email: resetEmail, code, password: newPassword }
+      })
+      if (updateError || !updateData?.success) {
+        throw new Error(updateData?.error || updateError?.message || 'Failed to update password')
+      }
 
       setStep('success')
       setTimeout(() => onSuccess(), 2000)
     } catch (err) {
       const msg = err.message || ''
-      if (msg.includes('expired') || msg.includes('invalid') || msg.includes('otp')) {
+      if (err.isCodeError || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('expired')) {
         setError('Invalid or expired code')
         setStep('email')
         setCodeDigits(['', '', '', '', '', ''])
       } else {
-        setError('Something went wrong, try again')
+        setError(msg || 'Something went wrong, try again')
       }
     } finally {
       setLoading(false)
