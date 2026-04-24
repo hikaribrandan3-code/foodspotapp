@@ -230,15 +230,13 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
     const effectiveOrders = demoMode ? demoOrdersData : orders
 
-    // Filter for active vs completed delivery orders — SNAKE_CASE + ENGLISH
-    const deliveryOrders = effectiveOrders.filter(o => 
-        o.order_type === 'delivery' && 
-        o.status !== 'delivered' && 
+    // Filter for active vs completed orders (all types)
+    const deliveryOrders = effectiveOrders.filter(o =>
+        o.status !== 'delivered' &&
         o.status !== 'cancelled'
     )
-    const completedOrders = effectiveOrders.filter(o => 
-        o.order_type === 'delivery' && 
-        (o.status === 'delivered' || o.status === 'cancelled')
+    const completedOrders = effectiveOrders.filter(o =>
+        o.status === 'delivered' || o.status === 'cancelled'
     )
 
     const formatAddress = (addr) => {
@@ -254,15 +252,14 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         }
         return String(addr)
     }
-    const todayDeliveries = effectiveOrders.filter(o => 
-        o.order_type === 'delivery' && 
+    const todayOrders = effectiveOrders.filter(o =>
         new Date(o.created_at).toDateString() === new Date().toDateString()
     ).length
 
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F9FAFB' }}>
             <BackendHeader
-                title={demoMode ? t('demo_orders') : t('deliveries')}
+                title={demoMode ? t('demo_orders') : t('orders')}
                 onLogout={handleLogout}
             />
 
@@ -292,7 +289,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                         textAlign: 'center'
                     }}>
                         <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
-                        <p style={{ color: '#6B7280', margin: 0, fontSize: 14 }}>{t('no_active_deliveries')}</p>
+                        <p style={{ color: '#6B7280', margin: 0, fontSize: 14 }}>{t('no_active_orders') || 'No active orders'}</p>
                     </div>
                 ) : (
                     deliveryOrders.map(order => {
@@ -551,7 +548,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
                 {/* Today's delivery summary */}
                 <div style={{ textAlign: 'center', marginTop: 24, color: '#9CA3AF', fontSize: 13 }}>
-                    <p>{t('processed_today')}<strong style={{ color: '#F97316' }}>{todayDeliveries}</strong></p>
+                    <p>{t('processed_today')}<strong style={{ color: '#F97316' }}>{todayOrders}</strong></p>
                 </div>
             </div>
 

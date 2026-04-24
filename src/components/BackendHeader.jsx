@@ -289,7 +289,7 @@ function BackendHeader({ title, onLogout }) {
                                         textAlign: 'left'
                                     }}
                                 >
-                                    🧑‍🍳 {t('staff_view')}
+                                    {t('staff_view')}
                                 </button>
                             )}
 

@@ -98,7 +98,7 @@ const PaymentMethodLine = ({ paymentMethod, paymentStatus }) => {
     if (isDineIn) {
         return <div className="or-payment-line">🍽️ Pay at Table</div>
     }
-    return <div className="or-payment-line">💳 {paymentMethod}</div>
+    return <div className="or-payment-line">💳 Payment</div>
 }
 
 function OrderReceipt({ order, tenantData, paymentMethod, paymentStatus, onRetryPayment }) {
@@ -109,7 +109,6 @@ function OrderReceipt({ order, tenantData, paymentMethod, paymentStatus, onRetry
     const subtotal = order.subtotal || 0
     const deliveryFee = order.delivery_fee || 0
     const total = order.total || 0
-    const tax = Math.max(0, total - subtotal - deliveryFee)
 
     const businessName = tenantData?.business_name || 'Local'
     const businessAddress = tenantData?.address || ''
@@ -198,12 +197,6 @@ function OrderReceipt({ order, tenantData, paymentMethod, paymentStatus, onRetry
                         <div className="or-total-row">
                             <span className="or-total-row__label">Delivery</span>
                             <span className="or-total-row__value">{formatPrice(deliveryFee)}</span>
-                        </div>
-                    )}
-                    {tax > 0 && (
-                        <div className="or-total-row">
-                            <span className="or-total-row__label">Tax</span>
-                            <span className="or-total-row__value">{formatPrice(tax)}</span>
                         </div>
                     )}
                     <div className="or-divider or-divider--dashed" />

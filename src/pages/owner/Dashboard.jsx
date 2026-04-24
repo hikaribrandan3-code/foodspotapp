@@ -32,12 +32,13 @@ const playNotificationSound = () => {
 }
 
 // STATUS CONFIG (FSM Values)
-const KITCHEN_STAGES = ['released_to_kitchen', 'preparing', 'ready', 'dispatched'] // 'delivered' disappears
+const KITCHEN_STAGES = ['released_to_kitchen', 'preparing', 'ready', 'dispatched', 'delivered']
 const STAGE_LABELS = {
     'released_to_kitchen': '🔥 Nuevo Pedido',
     'preparing': '👨‍🍳 En Cocina',
     'ready': '✨ Listo',
-    'dispatched': '🚀 En Camino'
+    'dispatched': '🚀 En Camino',
+    'delivered': '✅ Entregado'
 }
 
 const NEXT_STEP = {
@@ -45,6 +46,14 @@ const NEXT_STEP = {
     'preparing': { next: 'ready', label: 'Marcar Listo' },
     'ready': { next: 'dispatched', label: 'Despachar / Enviar' },
     'dispatched': { next: 'delivered', label: 'Marcar Entregado' }
+}
+
+// For dine-in orders: skip dispatched, go directly to delivered
+const getNextStep = (order) => {
+    if (order.status === 'ready' && (order.order_type === 'dine_in' || order.order_type === 'pickup')) {
+        return { next: 'delivered', label: order.order_type === 'dine_in' ? 'Entregar a la Mesa' : 'Marcar Entregado' }
+    }
+    return NEXT_STEP[order.status]
 }
 
 export default function Dashboard() {
@@ -57,6 +66,9 @@ export default function Dashboard() {
     const [audioUnlocked, setAudioUnlocked] = useState(false)
     const [flashActive, setFlashActive] = useState(false)
     const flashTimerRef = useRef(null)
+    // Tracks orders that just completed — shown with green check for 10s then removed
+    const [completedIds, setCompletedIds] = useState(new Set())
+    const completedTimers = useRef({})
 
     const unlockAudio = () => {
         try {
@@ -148,23 +160,32 @@ export default function Dashboard() {
 
         return () => {
             sub.unsubscribe()
+            // Clear all pending green-check timers on unmount
+            Object.values(completedTimers.current).forEach(clearTimeout)
         }
     }, [businessId])
 
     // ============================================
     // 3. ACTIONS
     // ============================================
-    const advanceOrder = async (orderId, currentStatus) => {
-        const next = NEXT_STEP[currentStatus]
+    const advanceOrder = async (order) => {
+        const next = getNextStep(order)
         if (!next) return
+        const orderId = order.id
+        const currentStatus = order.status
 
         // Optimistic UI Update
-        setOrders(prev => prev.map(o => {
-            if (o.id === orderId) {
-                return { ...o, status: next.next }
-            }
-            return o
-        }).filter(o => KITCHEN_STAGES.includes(o.status))) // Filter out if moved to 'delivered'
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: next.next } : o))
+
+        // If transitioning to delivered: show green check for 10s then remove
+        if (next.next === 'delivered') {
+            setCompletedIds(prev => new Set([...prev, orderId]))
+            completedTimers.current[orderId] = setTimeout(() => {
+                setOrders(prev => prev.filter(o => o.id !== orderId))
+                setCompletedIds(prev => { const s = new Set(prev); s.delete(orderId); return s })
+                delete completedTimers.current[orderId]
+            }, 10000)
+        }
 
         // 🛡️ FSM RPC Call (replaces direct DB update)
         const { data, error } = await supabase.rpc('advance_order_status', {
@@ -246,22 +267,24 @@ export default function Dashboard() {
                     gap: 16
                 }}>
                     {orders.map(order => {
-                        const stepConfig = NEXT_STEP[order.status]
+                        const stepConfig = getNextStep(order)
                         const isUrgent = order.status === 'released_to_kitchen'
+                        const isCompleted = order.status === 'delivered' || completedIds.has(order.id)
 
                         return (
                             <div key={order.id} style={{
-                                background: '#1F2937',
+                                background: isCompleted ? '#064E3B' : '#1F2937',
                                 borderRadius: 12,
-                                border: isUrgent ? '2px solid #EF4444' : '1px solid #374151',
+                                border: isCompleted ? '2px solid #10B981' : (isUrgent ? '2px solid #EF4444' : '1px solid #374151'),
                                 overflow: 'hidden',
-                                display: 'flex', flexDirection: 'column'
+                                display: 'flex', flexDirection: 'column',
+                                opacity: isCompleted ? 0.85 : 1
                             }}>
                                 {/* Header */}
                                 <div style={{
                                     padding: 16, borderBottom: '1px solid #374151',
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                                    background: isUrgent ? 'rgba(239, 68, 68, 0.1)' : 'transparent'
+                                    background: isCompleted ? 'rgba(16, 185, 129, 0.15)' : (isUrgent ? 'rgba(239, 68, 68, 0.1)' : 'transparent')
                                 }}>
                                     <div>
                                         <div style={{ fontSize: 18, fontWeight: 700 }}>#{String(order.order_number).padStart(3, '0')}</div>
@@ -269,7 +292,7 @@ export default function Dashboard() {
                                     </div>
                                     <div style={{
                                         padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700,
-                                        background: isUrgent ? '#EF4444' : '#3B82F6', color: 'white'
+                                        background: isCompleted ? '#10B981' : (isUrgent ? '#EF4444' : '#3B82F6'), color: 'white'
                                     }}>
                                         {STAGE_LABELS[order.status]}
                                     </div>
@@ -323,8 +346,17 @@ export default function Dashboard() {
 
                                 {/* Footer Actions */}
                                 <div style={{ padding: 16, paddingTop: 0 }}>
+                                    {isCompleted ? (
+                                        <div style={{
+                                            width: '100%', padding: 14, borderRadius: 8,
+                                            background: '#10B981', color: 'white',
+                                            fontWeight: 700, fontSize: 15, textAlign: 'center'
+                                        }}>
+                                            ✅ {order.order_type === 'dine_in' ? 'Entregado a la Mesa' : 'Entregado'}
+                                        </div>
+                                    ) : (
                                     <button
-                                        onClick={() => advanceOrder(order.id, order.status)}
+                                        onClick={() => advanceOrder(order)}
                                         style={{
                                             width: '100%',
                                             padding: 14,
@@ -342,6 +374,7 @@ export default function Dashboard() {
                                     >
                                         {stepConfig?.label || 'Avanzar'} →
                                     </button>
+                                    )}
                                 </div>
                             </div>
                         )

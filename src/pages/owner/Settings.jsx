@@ -205,15 +205,15 @@ const Settings = () => {
             app_config: tenant.app_config || {},
             menu_data: tenant.menu_data || { categories: [] },
 
-            // Payment & Fulfillment
-            service_modes: tenant.service_modes || {
+            // Payment & Fulfillment — stored in app_config JSONB
+            service_modes: tenant.app_config?.service_modes || tenant.service_modes || {
                 pickup: true,
                 delivery: true,
                 dineIn: false,
                 dineInPayment: 'after',
                 events: false
             },
-            payment_methods: tenant.payment_methods || {
+            payment_methods: tenant.app_config?.payment_methods || tenant.payment_methods || {
                 cash: true,
                 mercado_pago: true,
                 card: false,
@@ -416,10 +416,12 @@ const Settings = () => {
                 munchboy_shell_color: draft.munchboy_shell_color,
                 munchboy_a_color: draft.munchboy_a_color,
                 munchboy_b_color: draft.munchboy_b_color,
-                app_config: draft.app_config,
+                app_config: {
+                    ...draft.app_config,
+                    service_modes: draft.service_modes,
+                    payment_methods: draft.payment_methods,
+                },
                 menu_data: draft.menu_data,
-                service_modes: draft.service_modes,
-                payment_methods: draft.payment_methods,
             };
 
             const { data: savedData, error: saveError } = await updateBranding(payload, businessId);

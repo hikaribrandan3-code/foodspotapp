@@ -739,23 +739,37 @@ function Order({ config: configProp }) {
 
             <div style={{ margin: '0 14px' }}>
                 <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
-                            {orderType === 'dine_in' ? t('dine_in_table') : t('your_order')}
+                    <div style={{ marginBottom: 12 }}>
+                        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
+                            {t('your_order')}
                         </h1>
-                        {serviceModes?.dineIn && serviceModes?.delivery && (
-                            <button
-                                onClick={() => setOrderType(prev => prev === 'dine_in' ? 'delivery' : 'dine_in')}
-                                style={{
-                                    fontSize: 12, padding: '6px 14px', borderRadius: 20,
-                                    background: 'white', border: '1px solid #E5E7EB',
-                                    color: '#4B5563', fontWeight: 600, cursor: 'pointer',
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                }}
-                            >
-                                Cambiar a {orderType === 'dine_in' ? 'Delivery' : 'Mesa'}
-                            </button>
-                        )}
+                        {/* Order type selector — only show when multiple modes are enabled */}
+                        {(() => {
+                            const modes = []
+                            if (serviceModes?.pickup) modes.push({ id: 'pickup', label: t('pickup') || 'Takeout' })
+                            if (serviceModes?.dineIn) modes.push({ id: 'dine_in', label: t('dine_in') || 'Dine In' })
+                            if (serviceModes?.delivery) modes.push({ id: 'delivery', label: t('delivery') || 'Delivery' })
+                            if (modes.length <= 1) return null
+                            return (
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    {modes.map(mode => (
+                                        <button
+                                            key={mode.id}
+                                            onClick={() => setOrderType(mode.id)}
+                                            style={{
+                                                flex: 1, padding: '8px 12px', borderRadius: 10, border: 'none',
+                                                background: orderType === mode.id ? (tenantData?.primary_color || '#C4856A') : '#F3F4F6',
+                                                color: orderType === mode.id ? 'white' : '#4B5563',
+                                                fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            {mode.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )
+                        })()}
                     </div>
 
                     {config.pauseOrders && (
@@ -863,7 +877,7 @@ function Order({ config: configProp }) {
                                 isTextArea={true}
                             />
                         </>
-                    ) : (
+                    ) : orderType === 'dine_in' ? (
                         <>
                             <InputGroup
                                 label={t('table_number_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" /><path d="M21 9H3" /><path d="M21 15H3" /><path d="M9 3v18" /><path d="M15 3v18" /></svg>}
@@ -877,6 +891,23 @@ function Order({ config: configProp }) {
                                 value={customerInfo.name}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
                                 placeholder={t('name_placeholder')}
+                            />
+                        </>
+                    ) : (
+                        /* pickup / takeout */
+                        <>
+                            <InputGroup
+                                label={t('name_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                                value={customerInfo.name}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
+                                placeholder={t('name_placeholder')}
+                            />
+                            <InputGroup
+                                label={t('phone_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
+                                value={customerInfo.phone}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
+                                placeholder={t('phone_label') + ' (ex: 1123456789)'}
+                                type="tel"
                             />
                         </>
                     )}

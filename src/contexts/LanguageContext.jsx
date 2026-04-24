@@ -10,12 +10,10 @@ export const LanguageProvider = ({ children }) => {
     const isLocked = useRef(false);
     const lockTimer = useRef(null);
 
-    // Default to 'es' if not set, prioritize tenantData value (prevents mount flicker)
-    // Also check staff-ops language preference for consistency
+    // Tenant language is always the source of truth — owner backend controls all UI language
     const [lang, setLang] = useState(() => {
-        const staffPref = localStorage.getItem('fs_staff_language');
-        const initial = tenantData?.language || staffPref || 'es';
-        console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (tenantData: ${tenantData?.language}, staff: ${staffPref})`);
+        const initial = tenantData?.language || 'es';
+        console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (tenantData: ${tenantData?.language})`);
         return initial;
     });
 
@@ -49,8 +47,6 @@ export const LanguageProvider = ({ children }) => {
         // Optimistic update + LOCK
         isLocked.current = true;
         setLang(newLang);
-        // Also save to localStorage for staff-ops sync
-        localStorage.setItem('fs_staff_language', newLang);
 
         // Clear existing timer if any
         if (lockTimer.current) clearTimeout(lockTimer.current);
