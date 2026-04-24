@@ -135,7 +135,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }
 
     if (!order) {
-        return <OrderStatusEmpty config={config} featuredItems={featuredItems} />
+        return <OrderStatusEmpty config={config} featuredItems={featuredItems} tenantSlug={tenantSlug} />
     }
 
     const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
