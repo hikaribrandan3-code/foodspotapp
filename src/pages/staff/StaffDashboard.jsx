@@ -534,49 +534,89 @@ function StaffDashboard() {
                                             )}
 
                                             {/* 🛡️ SAFETY CAGE: Status-Specific Action Button */}
-                                            {action ? (
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <div style={{ flex: 1 }}>
+                                                    {action ? (
+                                                        <button
+                                                            onClick={() => advanceStatus(order, action.targetStatus)}
+                                                            disabled={isProcessing}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '10px 14px',
+                                                                background: isProcessing ? '#4B5563' : action.color,
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: 8,
+                                                                fontWeight: 700,
+                                                                cursor: isProcessing ? 'wait' : 'pointer',
+                                                                opacity: isProcessing ? 0.6 : 1,
+                                                                fontSize: 13,
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                gap: 8,
+                                                                transition: 'all 0.2s ease',
+                                                                boxShadow: `0 2px 12px ${action.color}33`
+                                                            }}
+                                                        >
+                                                            {isProcessing ? '⏳ Procesando...' : action.label}
+                                                        </button>
+                                                    ) : (
+                                                        // No action = pending payment or terminal state
+                                                        status.id === 'pending_payment' && (
+                                                            <div style={{
+                                                                width: '100%',
+                                                                padding: '10px 14px',
+                                                                background: '#F9FAFB',
+                                                                border: '1px dashed #D1D5DB',
+                                                                borderRadius: 8,
+                                                                fontSize: 12,
+                                                                color: '#6B7280',
+                                                                textAlign: 'center',
+                                                                fontWeight: 500
+                                                            }}>
+                                                                ⏳ Esperando confimación
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </div>
+
+                                                {/* Cancel Button */}
                                                 <button
-                                                    onClick={() => advanceStatus(order, action.targetStatus)}
+                                                    onClick={async () => {
+                                                        if (confirm('¿Cancelar este pedido?')) {
+                                                            setProcessingOrderId(order.id);
+                                                            try {
+                                                                await supabase
+                                                                    .from('orders')
+                                                                    .update({ status: 'cancelled' })
+                                                                    .eq('id', order.id)
+                                                                    .eq('business_id', businessId);
+                                                                fetchOrders();
+                                                            } catch (err) {
+                                                                setErrorMessage('Error al cancelar pedido');
+                                                            } finally {
+                                                                setProcessingOrderId(null);
+                                                            }
+                                                        }
+                                                    }}
                                                     disabled={isProcessing}
                                                     style={{
-                                                        width: '100%',
-                                                        padding: '10px 14px',
-                                                        background: isProcessing ? '#4B5563' : action.color,
-                                                        color: 'white',
+                                                        padding: '10px 12px',
+                                                        background: '#FEE2E2',
+                                                        color: '#DC2626',
                                                         border: 'none',
                                                         borderRadius: 8,
-                                                        fontWeight: 700,
-                                                        cursor: isProcessing ? 'wait' : 'pointer',
-                                                        opacity: isProcessing ? 0.6 : 1,
+                                                        fontWeight: 600,
                                                         fontSize: 13,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        gap: 8,
-                                                        transition: 'all 0.2s ease',
-                                                        boxShadow: `0 2px 12px ${action.color}33`
+                                                        cursor: 'pointer',
+                                                        opacity: isProcessing ? 0.6 : 1,
+                                                        transition: 'all 0.2s ease'
                                                     }}
                                                 >
-                                                    {isProcessing ? '⏳ Procesando...' : action.label}
+                                                    ✕
                                                 </button>
-                                            ) : (
-                                                // No action = pending payment or terminal state
-                                                status.id === 'pending_payment' && (
-                                                    <div style={{
-                                                        width: '100%',
-                                                        padding: '10px 14px',
-                                                        background: '#F9FAFB',
-                                                        border: '1px dashed #D1D5DB',
-                                                        borderRadius: 8,
-                                                        fontSize: 12,
-                                                        color: '#6B7280',
-                                                        textAlign: 'center',
-                                                        fontWeight: 500
-                                                    }}>
-                                                        ⏳ Esperando confimación
-                                                    </div>
-                                                )
-                                            )}
+                                            </div>
                                         </div>
                                     )
                                 })}

@@ -369,8 +369,16 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
                                         {/* Cancel Order */}
                                         <button
-                                            onClick={() => {
+                                            onClick={async () => {
                                                 if (confirm('Are you sure you want to cancel this order?')) {
+                                                    const isRealOrder = !demoMode && !order.id.startsWith('demo-');
+                                                    if (isRealOrder && businessId) {
+                                                        await supabase
+                                                            .from('orders')
+                                                            .update({ status: 'cancelled' })
+                                                            .eq('id', order.id)
+                                                            .eq('business_id', businessId);
+                                                    }
                                                     updateOrder(order.id, { status: 'cancelled' });
                                                     setOrders(getOrders());
                                                 }
