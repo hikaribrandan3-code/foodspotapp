@@ -17,7 +17,6 @@ import {
 } from '../../utils/storage.js'
 import {
     isDeliveryMode,
-    isCashPaymentAllowed,
     validateDeliveryInfo,
     clearDeliveryMode,
     isWithinDeliveryRadius,
@@ -153,8 +152,6 @@ function Order({ config: configProp }) {
 
     // Payment method
     const [paymentMethod, setPaymentMethod] = useState('mercadopago')
-    const [cashAvailable, setCashAvailable] = useState(() => isCashPaymentAllowed())
-    const [cashFallbackNotice, setCashFallbackNotice] = useState(false)
     const [validationErrors, setValidationErrors] = useState([])
 
     // 🔄 PAYMENT RETRY STATE (Audit #7)
@@ -190,20 +187,13 @@ function Order({ config: configProp }) {
         }
     }, [customerInfo.lat, customerInfo.lon, storeCoords, deliveryRadius, orderType])
 
-    // Poll order and cash availability
+    // Poll order on interval
     useEffect(() => {
         const interval = setInterval(() => {
             setOrder(getCurrentOrder())
-            const nowCashAvailable = isCashPaymentAllowed()
-            if (cashAvailable && !nowCashAvailable && paymentMethod === 'efectivo') {
-                setPaymentMethod('mercadopago')
-                setCashFallbackNotice(true)
-                setTimeout(() => setCashFallbackNotice(false), 5000)
-            }
-            setCashAvailable(nowCashAvailable)
         }, 1000)
         return () => clearInterval(interval)
-    }, [cashAvailable, paymentMethod])
+    }, [])
 
     // CALCULATIONS
     const calculateSubtotal = () => {
@@ -903,7 +893,7 @@ function Order({ config: configProp }) {
                         />
                     )}
 
-                    {(cashAvailable || serviceModes?.dineInPayment === 'after') && (
+                    {(orderType !== 'dine_in' || serviceModes?.dineInPayment === 'after') && (
                         <PaymentMethodCard
                             id="efectivo"
                             selected={paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter'}
