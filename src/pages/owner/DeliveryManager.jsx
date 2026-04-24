@@ -58,9 +58,9 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             .channel(`delivery-orders-${businessId}`)
             .on(
                 'postgres_changes',
-                { 
-                    event: '*', 
-                    schema: 'public', 
+                {
+                    event: '*',
+                    schema: 'public',
                     table: 'orders',
                     filter: `business_id=eq.${businessId}` // 🔐 SILO FILTER
                 },
@@ -70,8 +70,8 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             )
             .subscribe()
 
-        // Fallback poll every 5s if subscription fails
-        const interval = setInterval(fetchSupabaseOrders, 5000)
+        // Fallback poll every 3s if subscription fails (more responsive than 5s)
+        const interval = setInterval(fetchSupabaseOrders, 3000)
 
         return () => {
             clearInterval(interval)
@@ -102,13 +102,25 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     }
 
     // Handle status change with centralized payment validation
-    const handleDeliveryStatusChange = (orderId, newStatus, order) => {
+    const handleDeliveryStatusChange = async (orderId, newStatus, order) => {
         // Use centralized payment gate from orderStateGuard.js
         const validation = canAdvanceOrder(order, newStatus, config)
         if (!validation.allowed) {
             alert(validation.reason)
             return
         }
+
+        // Update Supabase database first (for real orders)
+        const isRealOrder = !demoMode && !orderId.startsWith('demo-')
+        if (isRealOrder && businessId) {
+            await supabase
+                .from('orders')
+                .update({ status: newStatus })
+                .eq('id', orderId)
+                .eq('business_id', businessId)
+        }
+
+        // Then update local cache
         updateOrder(orderId, { status: newStatus })
         setOrders(getOrders())
     }
