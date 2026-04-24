@@ -17,12 +17,13 @@ import './OrderStatusEmpty.css'
  * - Clean, fast, familiar
  */
 
-const OrderStatusEmpty = ({ config: configProp }) => {
+const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) => {
     const config = configProp || {};
     const navigate = useNavigate()
     const { tenantData, businessId } = useTenant()
     const { t } = useLanguage()
-    const { tenantSlug } = useParams()
+    const { tenantSlug: tenantSlugParam } = useParams()
+    const tenantSlug = tenantSlugProp || tenantSlugParam
 
     const [featuredItems, setFeaturedItems] = useState([])
     const [categories, setCategories] = useState([])
