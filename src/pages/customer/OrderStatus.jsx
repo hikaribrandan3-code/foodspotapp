@@ -234,29 +234,30 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             Completing payment... your receipt will appear here.
                         </div>
                     ) : (
-                    <div>
-                        {order.items?.map((item, idx) => (
-                            <div key={idx} style={{
-                                display: 'flex', alignItems: 'baseline', gap: 8,
-                                padding: '6px 0',
-                            }}>
-                                <span style={{ fontSize: 14, color: '#0a0a0a', fontWeight: 500, minWidth: 20 }}>
-                                    {item.quantity}×
-                                </span>
-                                <span style={{ flex: 1, fontSize: 14, color: '#525252', lineHeight: 1.35 }}>
-                                    {item.name}
-                                </span>
-                                <span style={{
-                                    fontFamily: 'monospace', fontSize: 13.5, color: '#0a0a0a',
-                                    fontVariantNumeric: 'tabular-nums', fontWeight: 500,
-                                }}>
-                                    ${fmt(item.price || 0)}
-                                </span>
+                        <>
+                            <div>
+                                {order.items?.map((item, idx) => (
+                                    <div key={idx} style={{
+                                        display: 'flex', alignItems: 'baseline', gap: 8,
+                                        padding: '6px 0',
+                                    }}>
+                                        <span style={{ fontSize: 14, color: '#0a0a0a', fontWeight: 500, minWidth: 20 }}>
+                                            {item.quantity}×
+                                        </span>
+                                        <span style={{ flex: 1, fontSize: 14, color: '#525252', lineHeight: 1.35 }}>
+                                            {item.name}
+                                        </span>
+                                        <span style={{
+                                            fontFamily: 'monospace', fontSize: 13.5, color: '#0a0a0a',
+                                            fontVariantNumeric: 'tabular-nums', fontWeight: 500,
+                                        }}>
+                                            ${fmt(item.price || 0)}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
 
-                    <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
+                            <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
 
                     <div>
                         <div style={{
@@ -405,6 +406,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             <span style={{ color: '#0a0a0a' }}>{getStatusText()}</span>
                         </div>
                     </div>
+                        </>
                     )}
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
