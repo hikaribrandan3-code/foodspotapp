@@ -404,7 +404,7 @@ export function FoodSpotAI({ context = {} }) {
         if (!userText && !pendingImage) return
         if (isLoading) return
 
-        const newMessages = [...messages, { role: 'user', content: userText, attachedImage: previewUrl }]
+        const newMessages = [...messages, { id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, role: 'user', content: userText, attachedImage: previewUrl }]
         setMessages(newMessages)
         setInput(''); setIsLoading(true)
 
@@ -461,11 +461,11 @@ Question: ${userText}`;
             }
 
             aiResponse = aiResponse.replace(/\|\|\|\s*\{[\s\S]*?\}\s*\|\|\|/g, '').trim()
-            setMessages([...newMessages, { role: 'assistant', content: aiResponse, draftPayload }])
+            setMessages([...newMessages, { id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, role: 'assistant', content: aiResponse, draftPayload }])
 
         } catch (e) {
             console.error('AI Error:', e)
-            setMessages([...newMessages, { role: 'assistant', content: t('ai_error_reply') || 'Error de conexión con el asistente.' }])
+            setMessages([...newMessages, { id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, role: 'assistant', content: t('ai_error_reply') || 'Error de conexión con el asistente.' }])
         } finally { setIsLoading(false) }
     }
 
@@ -496,12 +496,12 @@ Question: ${userText}`;
                         </div>
                     )}
 
-                    {messages.map((msg, i) => {
+                    {messages.map((msg) => {
                         const isAssistant = msg.role === 'assistant'
                         const isStrategyCard = msg.draftPayload
 
                         return (
-                            <div key={i} style={{ display: 'flex', justifyContent: isAssistant ? 'flex-start' : 'flex-end', animation: 'fadeIn 0.3s ease' }}>
+                            <div key={msg.id} style={{ display: 'flex', justifyContent: isAssistant ? 'flex-start' : 'flex-end', animation: 'fadeIn 0.3s ease' }}>
                                 <div style={{
                                     maxWidth: msg.generatedImage ? '100%' : '85%',
                                     padding: msg.generatedImage ? 0 : '16px 20px',
@@ -598,8 +598,8 @@ Question: ${userText}`;
 
                     {messages.length < 5 && (
                         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-                            {quickPrompts.map((prompt, i) => (
-                                <button key={i} onClick={() => handleSend(prompt)} style={{
+                            {quickPrompts.map((prompt) => (
+                                <button key={prompt} onClick={() => handleSend(prompt)} style={{
                                     padding: '10px 18px',
                                     background: '#ffffff',
                                     border: '1px solid #e5e7eb',

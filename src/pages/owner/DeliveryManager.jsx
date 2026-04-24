@@ -367,6 +367,29 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                             </button>
                                         </div>
 
+                                        {/* Cancel Order */}
+                                        <button
+                                            onClick={() => {
+                                                if (confirm('Are you sure you want to cancel this order?')) {
+                                                    updateOrder(order.id, { status: 'cancelled' });
+                                                    setOrders(getOrders());
+                                                }
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px',
+                                                background: '#DC2626',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: 8,
+                                                fontWeight: 600,
+                                                fontSize: 13,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+
                                         {/* Delivery Confirmation Code Input — Only for dispatched */}
                                         {order.status === 'dispatched' && (order.customer_phone || order.customerInfo) && (
                                             <div>

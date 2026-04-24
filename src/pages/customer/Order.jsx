@@ -667,11 +667,11 @@ function Order({ config: configProp }) {
                         {orderType === 'dine_in' ? 'Avisando a cocina...' : 'Redirigiendo al estado...'}
                     </p>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                        {[0, 1, 2].map(i => (
-                            <div key={i} style={{
+                        {[0, 1, 2].map(dot => (
+                            <div key={dot} style={{
                                 width: 8, height: 8, borderRadius: '50%', background: '#D1D5DB',
                                 animation: `pulse 1.4s ease-in-out infinite`,
-                                animationDelay: `${i * 0.2}s`
+                                animationDelay: `${dot * 0.2}s`
                             }} />
                         ))}
                     </div>
@@ -795,8 +795,8 @@ function Order({ config: configProp }) {
                     {/* Validation Errors */}
                     {validationErrors.length > 0 && (
                         <div style={{ background: '#FEE2E2', padding: 12, borderRadius: 12, marginBottom: 20 }}>
-                            {validationErrors.map((err, i) => (
-                                <p key={i} style={{ color: '#DC2626', fontSize: 14, margin: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {validationErrors.map((err) => (
+                                <p key={err} style={{ color: '#DC2626', fontSize: 14, margin: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <span>⚠️</span> {err}
                                 </p>
                             ))}
@@ -920,7 +920,7 @@ function Order({ config: configProp }) {
                 <div style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>{t('summary')}</h3>
                     {order.items.map((item, index) => (
-                        <div key={index} style={{
+                        <div key={item.id ?? `item-${index}`} style={{
                             display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0',
                             borderBottom: index < order.items.length - 1 ? '1px solid #F3F4F6' : 'none'
                         }}>

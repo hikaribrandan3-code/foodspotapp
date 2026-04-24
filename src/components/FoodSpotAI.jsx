@@ -25,7 +25,7 @@ Rules:
 
 export function FoodSpotAI({ context = {} }) {
   const [messages, setMessages] = useState([
-    { role: 'model', text: '¡Hola! Soy tu asistente de cocina. ¿En qué puedo ayudarte?' }
+    { id: 'welcome', role: 'model', text: '¡Hola! Soy tu asistente de cocina. ¿En qué puedo ayudarte?' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,7 @@ export function FoodSpotAI({ context = {} }) {
     setError(null);
     
     // Add user message
-    setMessages(prev => [...prev, { role: 'user', text: userText }]);
+    setMessages(prev => [...prev, { id: `u-${Date.now()}`, role: 'user', text: userText }]);
     setLoading(true);
 
     try {
@@ -92,7 +92,7 @@ User Question: ${userText}`;
       const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
                         'No pude procesar eso. ¿Puedes reformular?';
 
-      setMessages(prev => [...prev, { role: 'model', text: aiResponse }]);
+      setMessages(prev => [...prev, { id: `m-${Date.now()}`, role: 'model', text: aiResponse }]);
 
     } catch (err) {
       console.error('AI Error:', err);
@@ -135,8 +135,8 @@ User Question: ${userText}`;
       )}
 
       <div style={styles.messages}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{
+        {messages.map((msg) => (
+          <div key={msg.id} style={{
             ...styles.message,
             ...(msg.role === 'user' ? styles.userMsg : styles.aiMsg)
           }}>

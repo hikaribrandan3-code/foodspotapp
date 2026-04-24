@@ -470,7 +470,7 @@ function StaffDashboard() {
                                             {/* Items Summary */}
                                             <div style={{ fontSize: 13, color: '#4B5563', marginBottom: 12 }}>
                                                 {(order.items || []).slice(0, 3).map((item, i) => (
-                                                    <div key={i}>{item.quantity}x {item.name}</div>
+                                                    <div key={item.id ?? `item-${i}`}>{item.quantity}x {item.name}</div>
                                                 ))}
                                                 {(order.items?.length || 0) > 3 && (
                                                     <div style={{ color: '#9CA3AF', fontStyle: 'italic' }}>+{order.items.length - 3} más...</div>
