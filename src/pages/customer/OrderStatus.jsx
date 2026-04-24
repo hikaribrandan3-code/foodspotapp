@@ -389,11 +389,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                 </div>
             )}
 
-            {/* 🎟️ DIGITAL TICKET OVERLAY */}
-            {showTicket && order && (
-=======
                 {/* Business name */}
->>>>>>> 065eea5 (refactor(OrderStatus): redesign receipt page with clean minimal layout)
                 <div style={{
                     fontSize: 11, color: '#a3a3a3', fontWeight: 400,
                     letterSpacing: 0.2,
