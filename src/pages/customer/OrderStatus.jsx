@@ -2,96 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { formatPrice } from '../../config/menuData.js'
 import { getGuestToken } from '../../utils/guestToken.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
-import OrderReceipt from '../../components/OrderReceipt.jsx'
-import ItemCard from '../../components/ItemCard'
-import { QRCodeSVG } from 'qrcode.react'
 import BurgerLoader from '../../components/BurgerLoader'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
-// ============================================
-// 📊 ORDER STATUS - REAL-TIME LIVE TRACKER
-// ============================================
-// Uses Supabase Channels for instant updates
-// Uber-style 4-step horizontal stepper
-// ============================================
-
-const CheckIcon = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12" />
-    </svg>
-)
-
-// Status step definitions (4-step Uber style)
-const getSTEPS = (t) => [
-    { id: 1, label: t('order_received'), icon: '📋' },
-    { id: 2, label: t('order_in_kitchen'), icon: '👨‍🍳' },
-    { id: 3, label: t('order_on_way'), icon: '🚗' },
-    { id: 4, label: t('order_delivered'), icon: '✅' }
-]
-
-// Map backend status to step number
-const getStepFromStatus = (status) => {
-    switch (status) {
-        case 'pending_payment':
-        case 'paid_unreleased':
-            return 0 // Not yet visible to staff
-        case 'released_to_kitchen':
-            return 1 // Recibido
-        case 'preparing':
-            return 2 // En Cocina
-        case 'ready':
-        case 'dispatched':
-            return 3 // En Camino / Listo
-        case 'delivered':
-            return 4 // Entregado
-        case 'cancelled':
-        case 'refunded':
-            return -1 // Terminal
-        default:
-            return 0
-    }
-}
-
-const getStatusLabel = (status, t) => {
-    switch (status) {
-        case 'pending_payment': return t('status_waiting_payment')
-        case 'paid_unreleased': return t('status_payment_received')
-        case 'released_to_kitchen': return t('status_confirmed')
-        case 'preparing': return t('status_preparing')
-        case 'ready': return t('status_ready_pickup')
-        case 'dispatched': return t('status_on_way')
-        case 'delivered': return t('status_delivered')
-        case 'cancelled': return t('status_cancelled')
-        case 'refunded': return t('status_refunded')
-        default: return status
-    }
-}
-
-const getStatusColor = (status) => {
-    switch (status) {
-        case 'pending_payment':
-            return { bg: '#FEF3C7', text: '#92400E', border: '#F59E0B' }
-        case 'paid_unreleased':
-        case 'released_to_kitchen':
-        case 'preparing':
-            return { bg: '#DBEAFE', text: '#1E40AF', border: '#3B82F6' }
-        case 'ready':
-            return { bg: '#CFFAFE', text: '#0E7490', border: '#06B6D4' }
-        case 'dispatched':
-            return { bg: '#E0E7FF', text: '#4338CA', border: '#6366F1' }
-        case 'delivered':
-            return { bg: '#DCFCE7', text: '#166534', border: '#22C55E' }
-        case 'cancelled':
-        case 'refunded':
-            return { bg: '#FEE2E2', text: '#991B1B', border: '#EF4444' }
-        default:
-            return { bg: '#F3F4F6', text: '#6B7280', border: '#9CA3AF' }
-    }
-}
 
 function OrderStatus({ config: configProp, featuredItems = [] }) {
     const { businessId, tenantData } = useTenant()
@@ -275,26 +191,75 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const whatsappNumber = tenantData?.whatsapp_number || ''
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hola, necesito ayuda con mi pedido #${order.order_number}`
 
+    // Format price helper
+    const formatPrice = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    // Determine order variant for status display
+    const getOrderVariant = () => {
+        if (order.status === 'delivered') return 'delivered'
+        if (order.status === 'pending_payment') return 'pending'
+        if (isDelivery) return 'delivery'
+        return 'dinein'
+    }
+
+    const orderVariant = getOrderVariant()
+    const orderDate = new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const orderTime = new Date(order.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+
+    // Calculate totals
+    const subtotal = order.items?.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0) || 0
+    const tax = order.tax || 0.01
+    const deliveryFee = isDelivery ? (order.delivery_fee || 0) : null
+    const total = order.total || (subtotal + (deliveryFee || 0) + tax)
+
+    // Map status for display
+    const getStatusText = () => {
+        switch (order.status) {
+            case 'pending_payment': return 'Awaiting confirmation'
+            case 'paid_unreleased': return 'Payment received'
+            case 'released_to_kitchen': return 'Confirmed'
+            case 'preparing': return 'In Kitchen'
+            case 'ready': return 'Ready'
+            case 'dispatched': return 'On the way'
+            case 'delivered': return 'Delivered'
+            case 'cancelled': return 'Cancelled'
+            default: return 'In Kitchen'
+        }
+    }
+
+    const getPaymentDisplay = () => {
+        if (order.payment_method === 'cash') return 'Cash'
+        if (order.payment_method === 'card_on_delivery') return 'Card on Delivery'
+        if (order.payment_method === 'mercado_pago') {
+            const lastFour = order.mp_card_last4 || '****'
+            return `Card · ${lastFour}`
+        }
+        return order.payment_method || 'Cash'
+    }
+
     return (
         <>
             <HeaderClamp config={config} />
             <div className="page" style={{
-                background: '#FFFFFF',
+                background: '#f5f5f4',
                 minHeight: '100vh',
                 padding: '24px 20px',
-                paddingBottom: 'calc(40px + env(safe-area-inset-bottom))', // Safe Area
+                paddingBottom: 'calc(40px + env(safe-area-inset-bottom))',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
             }}>
 
-            {/* HERO ANIMATION */}
+            {/* RECEIPT CARD */}
             <div style={{
-                marginBottom: 24,
-                position: 'relative',
-                animation: 'float 6s ease-in-out infinite'
+                width: 340,
+                background: '#fff',
+                border: '1px solid #e5e5e5',
+                padding: '24px 22px 20px'
             }}>
+<<<<<<< HEAD
                 {/* Red Box / Plate Icon */}
                 <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="50" cy="50" r="48" fill="#FEF2F2" />
@@ -426,155 +391,282 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
             {/* 🎟️ DIGITAL TICKET OVERLAY */}
             {showTicket && order && (
+=======
+                {/* Business name */}
+>>>>>>> 065eea5 (refactor(OrderStatus): redesign receipt page with clean minimal layout)
                 <div style={{
-                    position: 'fixed', inset: 0, zIndex: 200,
-                    background: 'rgba(0,0,0,0.85)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    padding: 24,
+                    fontSize: 11, color: '#a3a3a3', fontWeight: 400,
+                    letterSpacing: 0.2,
+                    marginBottom: 6
                 }}>
-                    {/* Close */}
-                    <button
-                        onClick={() => setShowTicket(false)}
-                        style={{
-                            position: 'absolute', top: 20, right: 20,
-                            background: 'rgba(255,255,255,0.1)', border: 'none',
-                            color: '#FFF', fontSize: 24, width: 44, height: 44,
-                            borderRadius: 12, cursor: 'pointer',
-                        }}
-                    >✕</button>
+                    {tenantData?.business_name || 'Foodspot'}
+                </div>
 
-                    {/* Ticket Card */}
-                    <div style={{
-                        background: '#FFFFFF', borderRadius: 24,
-                        padding: '32px 24px', maxWidth: 340, width: '100%',
-                        textAlign: 'center', position: 'relative',
-                        boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
-                        border: '3px solid #F59E0B',
-                    }}>
-                        {/* Event Title */}
-                        <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
-                            {tenantData?.business_name || 'FoodSpot'}
-                        </p>
-                        <h3 style={{ fontSize: 20, fontWeight: 800, color: '#1F2937', margin: '0 0 4px' }}>
-                            {getTicketItemName(order)}
-                        </h3>
-                        <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 20px' }}>
-                            Pedido #{order.order_number} · {order.customer_name || 'Invitado'}
-                        </p>
+                {/* Hero headline */}
+                <h1 style={{
+                    fontSize: 28,
+                    lineHeight: 1.1,
+                    fontWeight: order.status === 'pending_payment' ? 500 : 700,
+                    color: order.status === 'pending_payment' ? '#525252' : '#0a0a0a',
+                    letterSpacing: -0.8,
+                    margin: 0
+                }}>
+                    {order.status === 'delivered' ? 'Order Delivered' : order.status === 'pending_payment' ? 'Awaiting Confirmation' : 'Order Confirmed'}
+                </h1>
 
-                        {/* QR Code */}
-                        <div style={{
-                            background: '#FFFFFF', padding: 16, borderRadius: 16,
-                            display: 'inline-block',
-                            border: '2px dashed #E5E7EB',
+                {/* Metadata */}
+                <div style={{
+                    marginTop: 8,
+                    fontSize: 13,
+                    color: '#737373',
+                    fontFamily: 'monospace',
+                    fontVariantNumeric: 'tabular-nums'
+                }}>
+                    Order #{order.order_number || 'N/A'} · {orderDate} · {orderTime}
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0 14px' }} />
+
+                {/* Items */}
+                <div>
+                    {order.items?.map((item, idx) => (
+                        <div key={idx} style={{
+                            display: 'flex', alignItems: 'baseline', gap: 8,
+                            padding: '4px 0',
                         }}>
-                            <QRCodeSVG
-                                value={`FS-TICKET|${order.id}|${tenantSlug}`}
-                                size={200}
-                                level="H"
-                                includeMargin={false}
-                                bgColor="#FFFFFF"
-                                fgColor="#1F2937"
-                            />
-                        </div>
-
-                        <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 16, margin: '16px 0 0' }}>
-                            {t('ticket_redeem_instruction')}
-                        </p>
-
-                        {/* REDEEMED STAMP */}
-                        {isTicketRedeemed(order) && (
-                            <div style={{
-                                position: 'absolute', top: '50%', left: '50%',
-                                transform: 'translate(-50%, -50%) rotate(-15deg)',
-                                border: '4px solid #EF4444',
-                                borderRadius: 12, padding: '8px 24px',
-                                color: '#EF4444', fontSize: 28, fontWeight: 900,
-                                letterSpacing: '0.1em', opacity: 0.8,
-                                pointerEvents: 'none',
+                            <span style={{ fontSize: 14, color: '#0a0a0a', fontWeight: 500, minWidth: 20 }}>
+                                {item.quantity}×
+                            </span>
+                            <span style={{ flex: 1, fontSize: 14, color: '#525252', lineHeight: 1.35 }}>
+                                {item.name}
+                            </span>
+                            <span style={{
+                                fontFamily: 'monospace', fontSize: 13.5, color: '#0a0a0a',
+                                fontVariantNumeric: 'tabular-nums', fontWeight: 500,
                             }}>
-                                {t('ticket_redeemed_stamp')}
-                            </div>
-                        )}
+                                ${formatPrice(item.price || 0)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: 1, background: '#e5e5e5', margin: '14px 0' }} />
+
+                {/* Pricing */}
+                <div>
+                    {/* Subtotal */}
+                    <div style={{
+                        display: 'flex', alignItems: 'baseline',
+                        padding: '3px 0', marginTop: 0,
+                    }}>
+                        <span style={{
+                            fontSize: 13,
+                            fontWeight: 400,
+                            color: '#525252',
+                        }}>
+                            Subtotal
+                        </span>
+                        <span style={{
+                            flex: 1, margin: '0 6px',
+                            borderBottom: '1.5px dotted #d4d4d4',
+                            transform: 'translateY(-3px)',
+                        }} />
+                        <span style={{
+                            fontFamily: 'monospace', fontSize: 13,
+                            fontWeight: 500, color: '#0a0a0a',
+                            fontVariantNumeric: 'tabular-nums',
+                        }}>
+                            ${formatPrice(subtotal)}
+                        </span>
+                    </div>
+
+                    {/* Delivery Fee */}
+                    {deliveryFee !== null && (
+                        <div style={{
+                            display: 'flex', alignItems: 'baseline',
+                            padding: '3px 0',
+                        }}>
+                            <span style={{
+                                fontSize: 13,
+                                fontWeight: 400,
+                                color: '#525252',
+                            }}>
+                                Delivery fee
+                            </span>
+                            <span style={{
+                                flex: 1, margin: '0 6px',
+                                borderBottom: '1.5px dotted #d4d4d4',
+                                transform: 'translateY(-3px)',
+                            }} />
+                            <span style={{
+                                fontFamily: 'monospace', fontSize: 13,
+                                fontWeight: 500, color: '#0a0a0a',
+                                fontVariantNumeric: 'tabular-nums',
+                            }}>
+                                {deliveryFee === 0 ? 'Free' : `$${formatPrice(deliveryFee)}`}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Tax */}
+                    <div style={{
+                        display: 'flex', alignItems: 'baseline',
+                        padding: '3px 0',
+                    }}>
+                        <span style={{
+                            fontSize: 13,
+                            fontWeight: 400,
+                            color: '#525252',
+                        }}>
+                            Tax
+                        </span>
+                        <span style={{
+                            flex: 1, margin: '0 6px',
+                            borderBottom: '1.5px dotted #d4d4d4',
+                            transform: 'translateY(-3px)',
+                        }} />
+                        <span style={{
+                            fontFamily: 'monospace', fontSize: 13,
+                            fontWeight: 500, color: '#0a0a0a',
+                            fontVariantNumeric: 'tabular-nums',
+                        }}>
+                            ${formatPrice(tax)}
+                        </span>
+                    </div>
+
+                    {/* Total */}
+                    <div style={{
+                        display: 'flex', alignItems: 'baseline',
+                        padding: '8px 0 0', marginTop: 4,
+                    }}>
+                        <span style={{
+                            fontSize: 14,
+                            fontWeight: 700,
+                            color: '#0a0a0a',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                        }}>
+                            Total
+                        </span>
+                        <span style={{
+                            flex: 1, margin: '0 6px',
+                            borderBottom: '1.5px dotted #d4d4d4',
+                            transform: 'translateY(-3px)',
+                        }} />
+                        <span style={{
+                            fontFamily: 'monospace', fontSize: 18,
+                            fontWeight: 700, color: primaryColor,
+                            fontVariantNumeric: 'tabular-nums',
+                            letterSpacing: -0.2,
+                        }}>
+                            ${formatPrice(total)}
+                        </span>
                     </div>
                 </div>
-            )}
 
-            {/* LINKS */}
-            <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
-                <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                        fontSize: 14,
-                        color: '#6B7280',
-                        textDecoration: 'none',
-                        borderBottom: '1px dotted #9CA3AF'
-                    }}
-                >
-                    {t('need_help_contact')}
-                </a>
+                {/* Divider */}
+                <div style={{ height: 1, background: '#e5e5e5', margin: '14px 0' }} />
+
+                {/* Order details */}
+                <div>
+                    {isDelivery && order.delivery_address && (
+                        <div style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                            gap: 12, padding: '3px 0', fontSize: 13,
+                        }}>
+                            <span style={{ color: '#737373' }}>Delivery address</span>
+                            <span style={{ color: '#0a0a0a', textAlign: 'right', maxWidth: '70%', fontSize: 13 }}>
+                                {typeof order.delivery_address === 'object'
+                                    ? `${order.delivery_address.street} ${order.delivery_address.number}${order.delivery_address.floor ? ', ' + order.delivery_address.floor : ''}`
+                                    : order.delivery_address}
+                            </span>
+                        </div>
+                    )}
+                    {!isDelivery && order.table_number && (
+                        <div style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                            gap: 12, padding: '3px 0', fontSize: 13,
+                        }}>
+                            <span style={{ color: '#737373' }}>Table</span>
+                            <span style={{ color: '#0a0a0a' }}>Table {order.table_number}</span>
+                        </div>
+                    )}
+                    <div style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                        gap: 12, padding: '3px 0', fontSize: 13,
+                    }}>
+                        <span style={{ color: '#737373' }}>Payment</span>
+                        <span style={{ color: '#0a0a0a' }}>{getPaymentDisplay()}</span>
+                    </div>
+                    <div style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                        gap: 12, padding: '3px 0', fontSize: 13,
+                    }}>
+                        <span style={{ color: '#737373' }}>Status</span>
+                        <span style={{ color: '#0a0a0a' }}>{getStatusText()}</span>
+                    </div>
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
+
+                {/* Buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <button
+                        onClick={() => navigate(`/${tenantSlug}`)}
+                        style={{
+                            width: '100%', height: 46, border: 'none',
+                            background: primaryColor, color: '#fff',
+                            fontFamily: 'inherit', fontSize: 16, fontWeight: 700,
+                            letterSpacing: 0.1, cursor: 'pointer',
+                            borderRadius: 2,
+                        }}
+                    >
+                        Back to Home
+                    </button>
+                    <button
+                        onClick={handleReorder}
+                        style={{
+                            width: '100%', height: 46,
+                            background: 'transparent',
+                            border: '1px solid #d4d4d4',
+                            color: '#0a0a0a',
+                            fontFamily: 'inherit', fontSize: 16, fontWeight: 600,
+                            cursor: 'pointer',
+                            borderRadius: 2,
+                        }}
+                    >
+                        Order Again
+                    </button>
+                </div>
+
+                {/* Help footer */}
+                <div style={{
+                    textAlign: 'center',
+                    fontSize: 12, color: '#a3a3a3',
+                    marginTop: 18,
+                }}>
+                    ¿Necesitas ayuda?{' '}
+                    <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            color: '#525252',
+                            textDecoration: 'underline',
+                            textUnderlineOffset: 2,
+                            fontWeight: 500,
+                        }}
+                    >
+                        WhatsApp
+                    </a>
+                </div>
             </div>
-
-            {/* REAL-TIME STATUS PILL (Floats at top) */}
-            <div style={{
-                position: 'fixed',
-                top: 20,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: 'rgba(255,255,255,0.9)',
-                backdropFilter: 'blur(10px)',
-                padding: '8px 16px',
-                borderRadius: 20,
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                zIndex: 50,
-                border: '1px solid #F3F4F6'
-            }}>
-                <div style={{ width: 8, height: 8, background: '#22C55E', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
-                    {getStatusLabel(order.status, t)}
-                </span>
-            </div>
-
-            <style>{`
-                @keyframes float {
-                    0%, 100% { transform: translateY(0px); }
-                    50% { transform: translateY(-10px); }
-                }
-                @keyframes pulse {
-                    0% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                    100% { opacity: 1; }
-                }
-            `}</style>
             </div>
         </>
     )
-}
-
-// 🎟️ TICKET HELPERS
-const hasTicketItems = (order) => {
-    return order?.items?.some(item =>
-        item.name?.startsWith('🎟️') || item.isTicket === true
-    )
-}
-
-const getTicketItemName = (order) => {
-    const ticket = order?.items?.find(item =>
-        item.name?.startsWith('🎟️') || item.isTicket === true
-    )
-    return ticket?.name?.replace('🎟️ ', '') || 'Ticket'
-}
-
-const isTicketRedeemed = (order) => {
-    return order?.mp_payment_data?.ticket_redeemed === true
 }
 
 export default OrderStatus
