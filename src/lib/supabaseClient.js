@@ -91,6 +91,22 @@ if (typeof SUPABASE_URL !== 'string' || typeof SUPABASE_ANON_KEY !== 'string') {
   })
 }
 
+// Clear any corrupted auth tokens that would crash on JWT decode
+if (typeof window !== 'undefined') {
+  try {
+    const authKey = `sb-${SUPABASE_URL?.match(/\/\/([^.]+)/)?.[1]}-auth-token`
+    const raw = localStorage.getItem(authKey)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      const token = parsed?.access_token || parsed
+      if (typeof token === 'string' && token.split('.').length !== 3) {
+        localStorage.removeItem(authKey)
+        console.warn('[Supabase] Cleared malformed auth token')
+      }
+    }
+  } catch { /* ignore */ }
+}
+
 // Initialize the Supabase client
 let supabase = null;
 
