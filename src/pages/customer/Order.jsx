@@ -919,7 +919,7 @@ function Order({ config: configProp }) {
                     boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
                 }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>
-                        Método de Pago
+                        {t('payment_methods') || 'Payment Method'}
                     </h3>
 
                     {(orderType === 'delivery' || orderType === 'pickup' || serviceModes?.dineInPayment === 'before') && (
