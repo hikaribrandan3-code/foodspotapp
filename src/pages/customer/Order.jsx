@@ -953,9 +953,11 @@ function Order({ config: configProp }) {
                             display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0',
                             borderBottom: index < order.items.length - 1 ? '1px solid #F3F4F6' : 'none'
                         }}>
-                            <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: '#F3F0EB' }}>
-                                <img src={getItemImage(item, index)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />
-                            </div>
+                            {getItemImage(item, index) && (
+                                <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: '#F3F0EB' }}>
+                                    <img src={getItemImage(item, index)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />
+                                </div>
+                            )}
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{item.name}</div>
                                 <div style={{ fontSize: 14, color: '#6B7280' }}>{formatPrice(item.price)}</div>
