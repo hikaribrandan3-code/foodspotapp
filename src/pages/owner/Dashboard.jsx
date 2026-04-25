@@ -211,6 +211,10 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle }) {
               📞 <a href={`tel:${order.customer_phone}`} style={{ color: T.blueInk, fontWeight: 600, textDecoration: 'none' }}>{order.customer_phone}</a>
             </div>
           )}
+          {/* Payment status */}
+          <div style={{ fontSize: 13, color: T.body, marginBottom: 6, padding: '6px 8px', background: order.payment_status === 'paid' || order.payment_method === 'efectivo' ? T.greenBg : T.blueBg, borderRadius: 6 }}>
+            {order.payment_status === 'paid' || order.payment_method === 'efectivo' ? '✅ Paid' : '💳 Pending'}
+          </div>
           {isDineIn && order.table_number && (
             <div style={{ fontSize: 13, color: T.body, marginBottom: 6 }}>
               🪑 Table {order.table_number}

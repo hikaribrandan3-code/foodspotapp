@@ -125,6 +125,7 @@ function StaffDashboard() {
     const [errorMessage, setErrorMessage] = useState(null)
     const [userRole, setUserRole] = useState(null)
     const [showScanner, setShowScanner] = useState(false)
+    const [expandedOrderId, setExpandedOrderId] = useState(null)
 
     // ============================================
     // 🔐 AUTH (ROLE DETECTION FOR NAV)
@@ -182,6 +183,8 @@ function StaffDashboard() {
                 setTimeout(() => setErrorMessage(null), 4000)
             } else {
                 console.log('✅ FSM Transition:', data?.from_status, '→', data?.to_status)
+                // Refresh after successful transition
+                fetchOrders()
             }
         } catch (err) {
             console.error('Status Update Error:', err)
