@@ -1,394 +1,443 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { subscribeToOrders, updateOrderCloud } from '../../lib/supabaseClient'
-import ItemCard from '../../components/ItemCard'
-import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics' // Strike 17 Imports
+import { useOrdersPolling } from '../../hooks/useOrdersPolling'
+import { formatPrice } from '../../config/menuData'
+import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics'
 import BurgerLoader from '../../components/BurgerLoader'
 
-// 🔔 NOTIFICATION SOUND (Simple Beep)
-const playNotificationSound = () => {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)()
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(500, ctx.currentTime)
-        osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.1)
-
-        gain.gain.setValueAtTime(0.1, ctx.currentTime)
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5)
-
-        osc.start()
-        osc.stop(ctx.currentTime + 0.5)
-    } catch (e) {
-        console.error('Audio play failed', e)
-    }
+const T = {
+  bg:       '#F4F6F9',
+  card:     '#FFFFFF',
+  ink:      '#0F1B2D',
+  ink2:     '#1F2A3D',
+  body:     '#3D4A5C',
+  muted:    '#7A8699',
+  muted2:   '#9AA4B5',
+  line:     '#E6EAF0',
+  line2:    '#EEF1F5',
+  blueBg:   '#EAF1FB',
+  blueInk:  '#1B4FB1',
+  redBg:    '#FBECEC',
+  redInk:   '#B33A3A',
+  greenBg:  '#E2F5EA',
+  greenInk: '#1F7A45',
+  online:   '#1F7A45',
+  onlineBg: '#E7F6EE',
+  statCash: '#D9892F',
+  statTodo: '#5E6B7A',
+  statPrep: '#2563D9',
+  statReady:'#D9892F',
+  statOut:  '#2A8B5A',
 }
 
-// STATUS CONFIG (FSM Values)
-const KITCHEN_STAGES = ['released_to_kitchen', 'preparing', 'ready', 'dispatched', 'delivered']
-const STAGE_LABELS = {
-    'released_to_kitchen': '🔥 Nuevo Pedido',
-    'preparing': '👨‍🍳 En Cocina',
-    'ready': '✨ Listo',
-    'dispatched': '🚀 En Camino',
-    'delivered': '✅ Entregado'
+const OWNER_STATS = [
+  { key: 'cash', label: 'CASH', color: T.statCash, matches: ['pending_payment'] },
+  { key: 'todo', label: 'TO-DO', color: T.statTodo, matches: ['paid_unreleased'] },
+  { key: 'prep', label: 'PREP', color: T.statPrep, matches: ['released_to_kitchen', 'preparing'] },
+  { key: 'ready', label: 'READY', color: T.statReady, matches: ['ready'] },
+  { key: 'out', label: 'OUT', color: T.statOut, matches: ['dispatched'] },
+]
+
+const STATUS_FLOW = [
+  { key: 'pending_payment', label: 'Verify Payment' },
+  { key: 'paid_unreleased', label: 'Send to Kitchen' },
+  { key: 'released_to_kitchen', label: 'Mark Ready' },
+  { key: 'preparing', label: 'Mark Ready' },
+  { key: 'ready', label: 'Hand Off' },
+  { key: 'dispatched', label: 'Mark Delivered' },
+  { key: 'delivered', label: null },
+  { key: 'cancelled', label: null },
+]
+
+function statusToBucket(status) {
+  for (const s of OWNER_STATS) {
+    if (s.matches.includes(status)) return s.key
+  }
+  return null
 }
 
-const NEXT_STEP = {
-    'released_to_kitchen': { next: 'preparing', label: 'Empezar a Cocinar' },
-    'preparing': { next: 'ready', label: 'Marcar Listo' },
-    'ready': { next: 'dispatched', label: 'Despachar / Enviar' },
-    'dispatched': { next: 'delivered', label: 'Marcar Entregado' }
+function nextActionFor(status) {
+  const flow = STATUS_FLOW.find(f => f.key === status)
+  return flow?.label ? { label: flow.label, intent: 'blue' } : null
 }
 
-// For dine-in orders: skip dispatched, go directly to delivered
-const getNextStep = (order) => {
-    if (order.status === 'ready' && (order.order_type === 'dine_in' || order.order_type === 'pickup')) {
-        return { next: 'delivered', label: order.order_type === 'dine_in' ? 'Entregar a la Mesa' : 'Marcar Entregado' }
-    }
-    return NEXT_STEP[order.status]
+function Icon({ type, color = T.muted, size = 16 }) {
+  const icons = {
+    dollar: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 6.5a4 4 0 0 0-4-2.5h-2a3.5 3.5 0 0 0 0 7h2a3.5 3.5 0 0 1 0 7h-2.5A4 4 0 0 1 6.5 16" /></svg>,
+    clock: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>,
+    chef: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 14h12v5a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-5z" /><path d="M7 14a4 4 0 1 1 1.5-7.7A3.5 3.5 0 0 1 12 4a3.5 3.5 0 0 1 3.5 2.3A4 4 0 1 1 17 14" /></svg>,
+    box: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7zM3 7l9 4 9-4M12 11v10" /></svg>,
+    bike: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="17" r="3.5" /><circle cx="18" cy="17" r="3.5" /><path d="M6 17l4-9h4l3 9M10 8l-1-3h-2" /></svg>,
+    grid: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.4" /><rect x="14" y="3" width="7" height="7" rx="1.4" /><rect x="3" y="14" width="7" height="7" rx="1.4" /><rect x="14" y="14" width="7" height="7" rx="1.4" /></svg>,
+    chevron: <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>,
+    x: <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>,
+    trend: <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17l6-6 4 4 8-8M14 7h7v7" /></svg>,
+    wifi: <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.55a11 11 0 0 1 14 0M2 8.5a16 16 0 0 1 20 0M8.5 16.43a6 6 0 0 1 7 0" /><circle cx="12" cy="20" r="1" /></svg>,
+  }
+  return icons[type]
+}
+
+function StatTile({ statKey, label, count, accent }) {
+  const iconMap = { cash: 'dollar', todo: 'clock', prep: 'chef', ready: 'box', out: 'bike' }
+  return (
+    <button style={{
+      flex: 1, minWidth: 56, background: T.card, border: `1px solid ${T.line}`,
+      borderRadius: 12, padding: '10px 6px', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', gap: 4, boxShadow: '0 1px 0 rgba(15,27,45,0.02)',
+      cursor: 'pointer', fontFamily: 'inherit',
+    }}>
+      <div style={{
+        width: 28, height: 28, borderRadius: 999, background: accent + '1A',
+        display: 'grid', placeItems: 'center',
+      }}>
+        <Icon type={iconMap[statKey]} color={accent} size={16} />
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em', lineHeight: 1 }}>
+        {count}
+      </div>
+      <div style={{ fontSize: 10, color: T.muted, fontWeight: 600, letterSpacing: '0.08em' }}>
+        {label}
+      </div>
+    </button>
+  )
+}
+
+function TagPill({ children, tone = 'green' }) {
+  const tones = {
+    green: { bg: T.greenBg, fg: T.greenInk },
+    blue: { bg: T.blueBg, fg: T.blueInk },
+  }
+  const t = tones[tone]
+  return (
+    <span style={{
+      background: t.bg, color: t.fg, fontSize: 11.5, fontWeight: 600,
+      padding: '3px 9px', borderRadius: 6, letterSpacing: '-0.005em',
+    }}>
+      {children}
+    </span>
+  )
+}
+
+function ActionButton({ intent = 'blue', icon, children, onClick }) {
+  const styles = {
+    blue: { bg: T.blueBg, fg: T.blueInk },
+    red: { bg: T.redBg, fg: T.redInk },
+  }
+  const s = styles[intent]
+  return (
+    <button onClick={onClick} style={{
+      width: '100%', border: 'none', background: s.bg, color: s.fg, fontSize: 14.5,
+      fontWeight: 600, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+      fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      gap: 7, letterSpacing: '-0.005em',
+    }}>
+      {icon}{children}
+    </button>
+  )
+}
+
+function OrderCard({ order, onAdvance, onCancel }) {
+  const next = nextActionFor(order.status)
+  const isDelivery = order.order_type === 'delivery'
+  const bucket = statusToBucket(order.status)
+  const bucketLabel = OWNER_STATS.find(s => s.key === bucket)?.label || order.status.toUpperCase()
+  const placedTime = new Date(order.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
+  const timeStr = minsAgo < 1 ? 'just now' : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
+
+  return (
+    <div style={{
+      background: T.card, borderRadius: 14, boxShadow: '0 1px 2px rgba(15,27,45,0.04), 0 4px 12px rgba(15,27,45,0.04)',
+      padding: 16, marginBottom: 14,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em' }}>
+          #{String(order.order_number).padStart(3, '0')}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.muted, fontSize: 13, fontWeight: 500 }}>
+          <Icon type="clock" color={T.muted} size={14} />
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
+        </div>
+      </div>
+
+      <div style={{
+        width: 18, height: 18, borderRadius: 999, border: `1.5px solid ${T.muted2}`,
+        marginBottom: 10,
+      }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
+        <span style={{ fontSize: 17, fontWeight: 700, color: T.ink, letterSpacing: '-0.015em' }}>
+          {order.customer_name || 'Guest'}
+        </span>
+        <TagPill tone="green">{isDelivery ? 'DELIVERY' : 'PICKUP'}</TagPill>
+        {order.delivery_address && (
+          <TagPill tone="green">{order.delivery_address.split(' ').slice(0, 2).join(' ')}</TagPill>
+        )}
+      </div>
+
+      <div style={{ color: T.muted, fontSize: 14, marginBottom: 12 }}>
+        {(order.items || []).length} {(order.items || []).length === 1 ? 'item' : 'items'}
+        <span style={{ margin: '0 6px', color: T.muted2 }}>·</span>
+        <span style={{ fontWeight: 700, color: T.ink2, fontVariantNumeric: 'tabular-nums' }}>
+          {formatPrice(order.total)}
+        </span>
+      </div>
+
+      <div style={{ borderTop: `1px solid ${T.line2}`, margin: '0 -16px 12px' }} />
+
+      {next && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <ActionButton
+            intent="blue"
+            icon={<Icon type="chevron" color={T.blueInk} size={14} />}
+            onClick={() => onAdvance(order)}
+          >
+            {next.label}
+          </ActionButton>
+          <ActionButton
+            intent="red"
+            icon={<Icon type="x" color={T.redInk} size={14} />}
+            onClick={() => onCancel(order)}
+          >
+            Cancel Order
+          </ActionButton>
+        </div>
+      )}
+      {order.status === 'delivered' && (
+        <div style={{
+          textAlign: 'center', color: T.greenInk, fontWeight: 600, padding: '10px 0',
+          background: T.greenBg, borderRadius: 10, fontSize: 14,
+        }}>
+          ✓ Delivered
+        </div>
+      )}
+      {order.status === 'cancelled' && (
+        <div style={{
+          textAlign: 'center', color: T.redInk, fontWeight: 600, padding: '10px 0',
+          background: T.redBg, borderRadius: 10, fontSize: 14,
+        }}>
+          Cancelled
+        </div>
+      )}
+
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', marginTop: 12,
+        fontSize: 11, color: T.muted2, fontWeight: 600, letterSpacing: '0.06em',
+      }}>
+        <span>{bucketLabel}</span>
+        <span style={{ color: T.muted }}>Tap for details</span>
+      </div>
+    </div>
+  )
+}
+
+function ActiveTabPills({ tab, setTab, counts }) {
+  return (
+    <div style={{ display: 'flex', gap: 10, padding: '0 16px 14px' }}>
+      {[['active', 'Active', counts.active], ['completed', 'Completed', counts.completed]].map(([k, label, n]) => {
+        const on = tab === k
+        return (
+          <button key={k} onClick={() => setTab(k)} style={{
+            flex: 1, border: on ? `1.5px solid ${T.statPrep}` : `1px solid ${T.line}`,
+            background: T.card, color: on ? T.statPrep : T.muted, fontWeight: 600,
+            fontSize: 14, padding: '11px 0', borderRadius: 12, cursor: 'pointer',
+            fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 7, letterSpacing: '-0.005em',
+          }}>
+            <Icon type="clock" color={on ? T.statPrep : T.muted} size={14} />
+            {label}
+            <span style={{ color: on ? T.statPrep : T.muted2, fontWeight: 600, fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
+              {n}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function OnlinePill() {
+  return (
+    <div style={{
+      background: T.onlineBg, padding: '7px 14px', display: 'flex', alignItems: 'center',
+      borderBottom: `1px solid ${T.line2}`,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 7, color: T.online, fontWeight: 600,
+        fontSize: 11, letterSpacing: '0.06em',
+      }}>
+        <Icon type="wifi" color={T.online} size={13} />
+        ONLINE
+      </div>
+    </div>
+  )
 }
 
 export default function Dashboard() {
-    const { businessId, tenantData } = useTenant()
-    const { t } = useLanguage()
-    const [orders, setOrders] = useState([])
-    const [loading, setLoading] = useState(true)
+  const { businessId, tenantData } = useTenant()
+  const { orders, loading, refreshOrders } = useOrdersPolling(businessId)
+  const [tab, setTab] = useState('active')
+  const [filterBucket, setFilterBucket] = useState(null)
+  const [processingOrderId, setProcessingOrderId] = useState(null)
 
-    // 🔊 P0 #3: Audio unlock state (iOS/Safari blocks audio without user gesture)
-    const [audioUnlocked, setAudioUnlocked] = useState(false)
-    const [flashActive, setFlashActive] = useState(false)
-    const flashTimerRef = useRef(null)
-    // Tracks orders that just completed — shown with green check for 10s then removed
-    const [completedIds, setCompletedIds] = useState(new Set())
-    const completedTimers = useRef({})
-
-    const unlockAudio = () => {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)()
-            // Play a silent buffer to unlock
-            const buffer = ctx.createBuffer(1, 1, 22050)
-            const source = ctx.createBufferSource()
-            source.buffer = buffer
-            source.connect(ctx.destination)
-            source.start(0)
-            setAudioUnlocked(true)
-            console.log('🔊 Audio unlocked by user gesture')
-        } catch (e) {
-            // Fallback: mark as unlocked anyway so banner disappears
-            setAudioUnlocked(true)
-        }
+  const counts = useMemo(() => {
+    const bucket = {}
+    OWNER_STATS.forEach(s => bucket[s.key] = 0)
+    orders.forEach(o => {
+      const b = statusToBucket(o.status)
+      if (b) bucket[b]++
+    })
+    return {
+      ...bucket,
+      active: orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length,
+      completed: orders.filter(o => ['delivered', 'cancelled'].includes(o.status)).length,
+      delivered: orders.filter(o => o.status === 'delivered').length,
     }
+  }, [orders])
 
-    // Visual flash trigger
-    const triggerFlash = () => {
-        setFlashActive(true)
-        if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-        flashTimerRef.current = setTimeout(() => setFlashActive(false), 3000)
+  const filtered = useMemo(() => {
+    return orders.filter(o => {
+      const completed = ['delivered', 'cancelled'].includes(o.status)
+      if (tab === 'active' ? completed : !completed) return false
+      if (filterBucket) return statusToBucket(o.status) === filterBucket
+      return true
+    })
+  }, [orders, tab, filterBucket])
+
+  const advance = async (order) => {
+    const flowIdx = STATUS_FLOW.findIndex(f => f.key === order.status)
+    const next = STATUS_FLOW[flowIdx + 1]
+    if (!next) return
+
+    setProcessingOrderId(order.id)
+    try {
+      await supabase.rpc('advance_order_status', {
+        p_order_id: order.id,
+        p_target_status: next.key,
+      })
+      refreshOrders()
+    } finally {
+      setProcessingOrderId(null)
     }
+  }
 
-    // 🔐 AUTH SYNC: Ensure Global Client sends x-business-id for RLS
-    useEffect(() => {
-        if (businessId) {
-            localStorage.setItem('fs_business_id', businessId)
-        }
-    }, [businessId])
-
-    // ============================================
-    // 1. FETCH INITIAL ORDERS
-    // ============================================
-    useEffect(() => {
-        if (!businessId) return
-
-        const fetchOrders = async () => {
-            setLoading(true)
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('business_id', businessId)
-                .in('status', KITCHEN_STAGES)
-                .order('created_at', { ascending: true }) // Oldest first (FIFO)
-
-            if (!error && data) {
-                setOrders(data)
-            }
-            setLoading(false)
-        }
-
-        fetchOrders()
-    }, [businessId])
-
-    // ============================================
-    // 2. REAL-TIME SUBSCRIPTION
-    // ============================================
-    useEffect(() => {
-        if (!businessId) return
-
-        console.log('📡 Connecting to Live Kitchen Feed...')
-
-        // Use existing client subscription helper
-        const sub = subscribeToOrders(businessId,
-            (newOrder) => {
-                // INSERT handler
-                if (KITCHEN_STAGES.includes(newOrder.status)) {
-                    console.log('🔔 NEW ORDER:', newOrder.id)
-                    playNotificationSound()
-                    triggerFlash() // 🚨 P0 #3: Visual flash for muted screens
-                    setOrders(prev => [...prev, newOrder])
-                }
-            },
-            (orderId, updatedOrder) => {
-                // UPDATE handler
-                setOrders(prev => {
-                    // Check if it's still in kitchen stages
-                    if (!KITCHEN_STAGES.includes(updatedOrder.status)) {
-                        // Remove it (e.g. marked 'entregado')
-                        return prev.filter(o => o.id !== orderId)
-                    }
-                    // Update field
-                    return prev.map(o => o.id === orderId ? updatedOrder : o)
-                })
-            }
-        )
-
-        return () => {
-            sub.unsubscribe()
-            // Clear all pending green-check timers on unmount
-            Object.values(completedTimers.current).forEach(clearTimeout)
-        }
-    }, [businessId])
-
-    // ============================================
-    // 3. ACTIONS
-    // ============================================
-    const advanceOrder = async (order) => {
-        const next = getNextStep(order)
-        if (!next) return
-        const orderId = order.id
-        const currentStatus = order.status
-
-        // Optimistic UI Update
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: next.next } : o))
-
-        // If transitioning to delivered: show green check for 10s then remove
-        if (next.next === 'delivered') {
-            setCompletedIds(prev => new Set([...prev, orderId]))
-            completedTimers.current[orderId] = setTimeout(() => {
-                setOrders(prev => prev.filter(o => o.id !== orderId))
-                setCompletedIds(prev => { const s = new Set(prev); s.delete(orderId); return s })
-                delete completedTimers.current[orderId]
-            }, 10000)
-        }
-
-        // 🛡️ FSM RPC Call (replaces direct DB update)
-        const { data, error } = await supabase.rpc('advance_order_status', {
-            p_order_id: orderId,
-            p_target_status: next.next
-        })
-
-        if (error || (data && !data.success)) {
-            console.error('FSM Error:', error || data)
-            // Revert on failure
-            const { data: freshOrders } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('business_id', businessId)
-                .in('status', KITCHEN_STAGES)
-                .order('created_at', { ascending: true })
-            if (freshOrders) setOrders(freshOrders)
-        }
+  const cancel = async (order) => {
+    setProcessingOrderId(order.id)
+    try {
+      await supabase.from('orders').update({ status: 'cancelled' }).eq('id', order.id)
+      refreshOrders()
+    } finally {
+      setProcessingOrderId(null)
     }
+  }
 
-    // Helpers
-    const formatTime = (isoString) => {
-        const date = new Date(isoString)
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
+  const todayRev = orders.filter(o => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0)
 
-    if (loading) return <BurgerLoader />
+  if (loading) return <BurgerLoader />
 
-    return (
-        <div style={{
-            padding: 20,
-            background: '#111827',
-            minHeight: '100vh',
-            color: 'white',
-            fontFamily: 'Inter, system-ui, sans-serif',
-            // 🚨 P0 #3: Visual flash border when new order arrives
-            boxShadow: flashActive ? 'inset 0 0 0 6px #EF4444' : 'none',
-            animation: flashActive ? 'kitchenFlash 0.5s ease-in-out 6' : 'none',
-            transition: 'box-shadow 0.3s'
-        }}>
-            {/* 🔊 P0 #3: Audio Unlock Banner */}
-            {!audioUnlocked && (
-                <div
-                    onClick={unlockAudio}
-                    style={{
-                        background: '#FBBF24', color: '#78350F',
-                        padding: '14px 20px', borderRadius: 12, marginBottom: 16,
-                        textAlign: 'center', cursor: 'pointer', fontWeight: 700, fontSize: 15,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                        animation: 'pulse 1.5s infinite',
-                        boxShadow: '0 4px 12px rgba(251, 191, 36, 0.4)'
-                    }}
-                >
-                    🔔 Toca aquí para activar las alertas de sonido
-                </div>
-            )}
-            <header style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>👩‍🍳 Cocina en Vivo</h1>
-                <div style={{ display: 'flex', gap: 10 }}>
-                    <span style={{
-                        background: '#059669', padding: '4px 12px', borderRadius: 20,
-                        fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6
-                    }}>
-                        <span style={{ width: 8, height: 8, background: '#34D399', borderRadius: '50%', animation: 'pulse 1s infinite' }} />
-                        ONLINE
-                    </span>
-                </div>
-            </header>
+  return (
+    <div style={{
+      width: '100%', height: '100vh', background: T.bg, color: T.ink,
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      display: 'grid', gridTemplateRows: 'auto 1fr', overflow: 'hidden',
+    }}>
+      <OnlinePill />
 
-            {orders.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 60, color: '#6B7280' }}>
-                    <h2>{t('dashboard_empty_title')}</h2>
-                    <p>{t('dashboard_empty_desc')}</p>
-                </div>
-            ) : (
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                    gap: 16
-                }}>
-                    {orders.map(order => {
-                        const stepConfig = getNextStep(order)
-                        const isUrgent = order.status === 'released_to_kitchen'
-                        const isCompleted = order.status === 'delivered' || completedIds.has(order.id)
+      <div style={{ overflowY: 'auto' }}>
+        <div style={{ padding: '16px 16px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: T.statPrep, marginBottom: 4 }}>
+            <Icon type="grid" color={T.statPrep} size={22} />
+            <h1 style={{ margin: 0, color: T.ink, fontSize: 28, fontWeight: 800, letterSpacing: '-0.025em' }}>
+              Owner HQ
+            </h1>
+          </div>
+          <div style={{ color: T.muted, fontSize: 14, marginTop: 4 }}>
+            {counts.active} active · {counts.cash} cash pending · {counts.delivered} delivered today
+          </div>
 
-                        return (
-                            <div key={order.id} style={{
-                                background: isCompleted ? '#064E3B' : '#1F2937',
-                                borderRadius: 12,
-                                border: isCompleted ? '2px solid #10B981' : (isUrgent ? '2px solid #EF4444' : '1px solid #374151'),
-                                overflow: 'hidden',
-                                display: 'flex', flexDirection: 'column',
-                                opacity: isCompleted ? 0.85 : 1
-                            }}>
-                                {/* Header */}
-                                <div style={{
-                                    padding: 16, borderBottom: '1px solid #374151',
-                                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                                    background: isCompleted ? 'rgba(16, 185, 129, 0.15)' : (isUrgent ? 'rgba(239, 68, 68, 0.1)' : 'transparent')
-                                }}>
-                                    <div>
-                                        <div style={{ fontSize: 18, fontWeight: 700 }}>#{String(order.order_number).padStart(3, '0')}</div>
-                                        <div style={{ fontSize: 13, color: '#9CA3AF' }}>{formatTime(order.created_at)}</div>
-                                    </div>
-                                    <div style={{
-                                        padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700,
-                                        background: isCompleted ? '#10B981' : (isUrgent ? '#EF4444' : '#3B82F6'), color: 'white'
-                                    }}>
-                                        {STAGE_LABELS[order.status]}
-                                    </div>
-                                </div>
-
-                                {/* Items */}
-                                <div style={{ padding: 16, flex: 1 }}>
-                                    {order.items.map((item, idx) => (
-                                        <div key={idx} style={{ display: 'flex', marginBottom: 8, fontSize: 15 }}>
-                                            <span style={{ fontWeight: 700, marginRight: 8, color: '#FCD34D' }}>{item.quantity}x</span>
-                                            <span style={{ flex: 1 }}>{item.name}</span>
-                                        </div>
-                                    ))}
-                                    {order.notes && (
-                                        <div style={{ marginTop: 12, padding: 8, background: '#374151', borderRadius: 6, fontSize: 13, color: '#F3F4F6' }}>
-                                            📝 {order.notes}
-                                        </div>
-                                    )}
-
-                                    {/* 🚚 DELIVERY DETAILS (Strike 17) */}
-                                    {order.order_type === 'delivery' && (
-                                        <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #374151' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                                                <span style={{ fontSize: 16 }}>📍</span>
-                                                <span style={{ fontSize: 14, color: '#E5E7EB' }}>
-                                                    {formatAddressForDisplay(order.delivery_address)}
-                                                </span>
-                                            </div>
-
-                                            {/* Driver WhatsApp Button */}
-                                            <button
-                                                onClick={() => {
-                                                    const msg = generateDriverMessage(order)
-                                                    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`
-                                                    window.open(url, '_blank')
-                                                }}
-                                                style={{
-                                                    display: 'flex', alignItems: 'center', gap: 8,
-                                                    background: '#25D366', color: 'white', border: 'none',
-                                                    padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                                                    cursor: 'pointer', width: '100%', justifyContent: 'center'
-                                                }}
-                                            >
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
-                                                </svg>
-                                                Enviar a Repartidor
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Footer Actions */}
-                                <div style={{ padding: 16, paddingTop: 0 }}>
-                                    {isCompleted ? (
-                                        <div style={{
-                                            width: '100%', padding: 14, borderRadius: 8,
-                                            background: '#10B981', color: 'white',
-                                            fontWeight: 700, fontSize: 15, textAlign: 'center'
-                                        }}>
-                                            ✅ {order.order_type === 'dine_in' ? 'Entregado a la Mesa' : 'Entregado'}
-                                        </div>
-                                    ) : (
-                                    <button
-                                        onClick={() => advanceOrder(order)}
-                                        style={{
-                                            width: '100%',
-                                            padding: 14,
-                                            borderRadius: 8,
-                                            border: 'none',
-                                            background: isUrgent ? '#EF4444' : '#3B82F6',
-                                            color: 'white',
-                                            fontWeight: 700,
-                                            fontSize: 15,
-                                            cursor: 'pointer',
-                                            transition: 'transform 0.1s'
-                                        }}
-                                        onMouseDown={e => e.target.style.transform = 'scale(0.98)'}
-                                        onMouseUp={e => e.target.style.transform = 'scale(1)'}
-                                    >
-                                        {stepConfig?.label || 'Avanzar'} →
-                                    </button>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            )}
-
-            <style>{`
-                @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-                @keyframes kitchenFlash {
-                    0%, 100% { box-shadow: inset 0 0 0 6px #EF4444; }
-                    50% { box-shadow: inset 0 0 0 6px transparent; }
-                }
-            `}</style>
+          <div style={{
+            marginTop: 14, background: T.card, borderRadius: 14, border: `1px solid ${T.line}`,
+            padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 4 }}>
+                TODAY
+              </div>
+              <div style={{
+                fontSize: 26, fontWeight: 800, color: T.ink, letterSpacing: '-0.025em', lineHeight: 1,
+                fontVariantNumeric: 'tabular-nums',
+              }}>
+                {formatPrice(todayRev)}
+              </div>
+              <div style={{ color: T.muted, fontSize: 12.5, marginTop: 4 }}>
+                across {orders.filter(o => o.status !== 'cancelled').length} orders
+              </div>
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6, background: T.greenBg, color: T.greenInk,
+              padding: '7px 11px', borderRadius: 999, fontSize: 12.5, fontWeight: 600,
+            }}>
+              <Icon type="trend" color={T.greenInk} size={16} /> +18% vs yest
+            </div>
+          </div>
         </div>
-    )
+
+        <div style={{ padding: '0 16px 16px', display: 'flex', gap: 8 }}>
+          {OWNER_STATS.map(s => (
+            <button key={s.key}
+              onClick={() => setFilterBucket(filterBucket === s.key ? null : s.key)}
+              style={{
+                flex: 1, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer',
+                opacity: !filterBucket || filterBucket === s.key ? 1 : 0.45, transition: 'opacity 160ms',
+              }}>
+              <StatTile statKey={s.key} label={s.label} count={counts[s.key] || 0} accent={s.color} />
+            </button>
+          ))}
+        </div>
+
+        <ActiveTabPills tab={tab} setTab={setTab} counts={counts} />
+
+        <div style={{ padding: '0 16px 24px' }}>
+          {filterBucket && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 12px',
+            }}>
+              <div style={{ fontSize: 12, color: T.muted, fontWeight: 600, letterSpacing: '0.06em' }}>
+                FILTERED · {OWNER_STATS.find(s => s.key === filterBucket).label}
+              </div>
+              <button onClick={() => setFilterBucket(null)} style={{
+                border: 'none', background: 'transparent', color: T.statPrep, fontSize: 12.5, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}>
+                Clear ×
+              </button>
+            </div>
+          )}
+
+          {filtered.length === 0 ? (
+            <div style={{
+              background: T.card, borderRadius: 14, border: `1px dashed ${T.line}`,
+              padding: '40px 20px', textAlign: 'center', color: T.muted,
+            }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: T.ink2, marginBottom: 4 }}>
+                Nothing here.
+              </div>
+              <div style={{ fontSize: 13 }}>New {tab} orders will appear here.</div>
+            </div>
+          ) : (
+            filtered.map(o => (
+              <OrderCard
+                key={o.id}
+                order={o}
+                onAdvance={() => advance(o)}
+                onCancel={() => cancel(o)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
