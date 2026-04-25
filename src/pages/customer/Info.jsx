@@ -146,7 +146,7 @@ const Info = ({ config }) => {
                 </div>
 
                 {/* 3. FOOTER */}
-                <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+                <div style={{ marginTop: '20px', marginBottom: 'auto' }}>
                     <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                         {t('powered_by')}
                     </p>
