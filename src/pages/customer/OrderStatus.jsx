@@ -177,7 +177,9 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         return order.payment_method || 'Cash'
     }
 
-    const isPaid = order.status !== 'pending_payment'
+    const isCashMethod = order.payment_method === 'efectivo' || order.payment_method === 'cash'
+    const isActuallyPaid = order.payment_status === 'paid'
+    const isPaid = isActuallyPaid || (!isCashMethod && order.status !== 'pending_payment')
 
     return (
         <>
@@ -235,12 +237,22 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#dc2626', fontSize: 14 }}>
                             This order has been cancelled and cannot be completed.
                         </div>
-                    ) : !isPaid ? (
+                    ) : !isPaid && !isCashMethod ? (
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#737373', fontSize: 14 }}>
                             Completing payment... your receipt will appear here.
                         </div>
                     ) : (
                         <>
+                            {isCashMethod && !isActuallyPaid && (
+                                <div style={{
+                                    background: '#EFF6FF', border: '1px solid #BFDBFE',
+                                    borderRadius: 8, padding: '10px 14px', marginBottom: 16,
+                                    fontSize: 13, color: '#1E40AF', fontWeight: 500,
+                                    display: 'flex', alignItems: 'center', gap: 8
+                                }}>
+                                    💵 {isDelivery ? 'Pay the driver on delivery' : 'Pay at pickup — not charged yet'}
+                                </div>
+                            )}
                             <div>
                                 {order.items?.map((item, idx) => (
                                     <div key={idx} style={{

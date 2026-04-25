@@ -44,7 +44,7 @@ const OWNER_STATS = [
 const STATUS_FLOW = [
   { key: 'pending_payment', label: 'Verify Payment' },
   { key: 'paid_unreleased', label: 'Send to Kitchen' },
-  { key: 'released_to_kitchen', label: 'Mark Ready' },
+  { key: 'released_to_kitchen', label: 'Start Prep' },
   { key: 'preparing', label: 'Mark Ready' },
   { key: 'ready', label: 'Hand Off' },
   { key: 'dispatched', label: 'Mark Delivered' },
@@ -212,9 +212,21 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle }) {
             </div>
           )}
           {/* Payment status */}
-          <div style={{ fontSize: 13, color: T.body, marginBottom: 6, padding: '6px 8px', background: order.payment_status === 'paid' || order.payment_method === 'efectivo' ? T.greenBg : T.blueBg, borderRadius: 6 }}>
-            {order.payment_status === 'paid' || order.payment_method === 'efectivo' ? '✅ Paid' : '💳 Pending'}
-          </div>
+          {(() => {
+            const isPaid = order.payment_status === 'paid'
+            const isCash = order.payment_method === 'efectivo' || order.payment_method === 'cash'
+            const text = isPaid
+              ? '✅ Paid'
+              : isCash
+                ? order.order_type === 'delivery' ? '💵 Pay on Delivery' : '💵 Pay at Pickup'
+                : '💳 Payment Pending'
+            const bg = isPaid ? T.greenBg : T.blueBg
+            return (
+              <div style={{ fontSize: 13, color: isPaid ? T.greenInk : T.blueInk, marginBottom: 6, padding: '6px 8px', background: bg, borderRadius: 6, fontWeight: 600 }}>
+                {text}
+              </div>
+            )
+          })()}
           {isDineIn && order.table_number && (
             <div style={{ fontSize: 13, color: T.body, marginBottom: 6 }}>
               🪑 Table {order.table_number}
@@ -350,12 +362,21 @@ export default function Dashboard() {
     const next = STATUS_FLOW[flowIdx + 1]
     if (!next) return
 
+    // Pickup/dine-in skip dispatched — go directly to delivered
+    const targetStatus = (order.status === 'ready' && order.order_type !== 'delivery')
+      ? 'delivered'
+      : next.key
+
     setProcessingOrderId(order.id)
     try {
-      await supabase.rpc('advance_order_status', {
+      const { data, error } = await supabase.rpc('advance_order_status', {
         p_order_id: order.id,
-        p_target_status: next.key,
+        p_target_status: targetStatus,
       })
+      if (error) throw error
+      if (data && !data.success) {
+        console.warn('FSM rejection:', data.message)
+      }
       refreshOrders()
     } finally {
       setProcessingOrderId(null)
