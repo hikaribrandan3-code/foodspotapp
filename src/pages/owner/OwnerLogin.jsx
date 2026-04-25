@@ -24,6 +24,16 @@ function OwnerLogin() {
     const [loading, setLoading] = useState(false)
     const [loginMode, setLoginMode] = useState('owner')
 
+    // Forgot Password Modal State
+    const [showForgot, setShowForgot] = useState(false)
+    const [fpStep, setFpStep] = useState('email') // email | code | password | success
+    const [fpEmail, setFpEmail] = useState('')
+    const [fpCode, setFpCode] = useState(['', '', '', '', '', ''])
+    const [fpPassword, setFpPassword] = useState('')
+    const [fpConfirm, setFpConfirm] = useState('')
+    const [fpLoading, setFpLoading] = useState(false)
+    const [fpError, setFpError] = useState('')
+
     const t = useMemo(() => {
         const lang = tenantData?.language || 'es';
         return (key) => {
@@ -42,7 +52,17 @@ function OwnerLogin() {
                     pinLabel: 'Station PIN',
                     privacy: 'Privacidad',
                     terms: 'Términos',
-                    staffUsername: 'Staff Username'
+                    staffUsername: 'Staff Username',
+                    resetTitle: 'Restablecer Contraseña',
+                    resetSend: 'Enviar Código',
+                    resetVerify: 'Verificar',
+                    resetSave: 'Guardar Contraseña',
+                    resetSuccess: 'Contraseña actualizada',
+                    resetEmailLabel: 'Correo electrónico',
+                    resetCodeLabel: 'Código de 6 dígitos',
+                    resetNewLabel: 'Nueva contraseña',
+                    resetConfirmLabel: 'Confirmar contraseña',
+                    resetBack: 'Volver al login'
                 },
                 en: {
                     title: 'FoodSpot OS',
@@ -58,7 +78,17 @@ function OwnerLogin() {
                     pinLabel: 'Station PIN',
                     privacy: 'Privacy',
                     terms: 'Terms',
-                    staffUsername: 'Staff Username'
+                    staffUsername: 'Staff Username',
+                    resetTitle: 'Reset Password',
+                    resetSend: 'Send Code',
+                    resetVerify: 'Verify',
+                    resetSave: 'Save Password',
+                    resetSuccess: 'Password updated',
+                    resetEmailLabel: 'Email address',
+                    resetCodeLabel: '6-digit code',
+                    resetNewLabel: 'New password',
+                    resetConfirmLabel: 'Confirm password',
+                    resetBack: 'Back to login'
                 }
             };
             return translations[lang]?.[key] || translations['es'][key] || key;
@@ -84,6 +114,76 @@ function OwnerLogin() {
 
         return () => subscription?.unsubscribe()
     }, [tenantSlug])
+
+    const handleFpSendCode = async (e) => {
+        e.preventDefault()
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fpEmail)) {
+            setFpError('Please enter a valid email address')
+            return
+        }
+        setFpLoading(true)
+        setFpError('')
+        try {
+            await supabase.functions.invoke('generate-reset-code', { body: { email: fpEmail } })
+        } catch (_) {
+            // intentional: always advance for security
+        } finally {
+            setFpLoading(false)
+            setFpStep('code')
+        }
+    }
+
+    const handleFpDigitChange = (index, value) => {
+        if (!/^\d?$/.test(value)) return
+        const next = [...fpCode]
+        next[index] = value
+        setFpCode(next)
+    }
+
+    const handleFpReset = async (e) => {
+        e.preventDefault()
+        const code = fpCode.join('')
+        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+            setFpError('Please enter the complete 6-digit code')
+            return
+        }
+        if (fpPassword.length < 8) {
+            setFpError('Password must be at least 8 characters')
+            return
+        }
+        if (fpPassword !== fpConfirm) {
+            setFpError("Passwords don't match")
+            return
+        }
+        setFpLoading(true)
+        setFpError('')
+        try {
+            const { data: vData, error: vErr } = await supabase.functions.invoke('verify-reset-code', {
+                body: { email: fpEmail, code }
+            })
+            if (vErr || !vData?.valid) throw new Error(vData?.error || vErr?.message || 'Invalid code')
+
+            const { data: uData, error: uErr } = await supabase.functions.invoke('update-password', {
+                body: { email: fpEmail, code, password: fpPassword }
+            })
+            if (uErr || !uData?.success) throw new Error(uData?.error || uErr?.message || 'Failed to update')
+
+            setFpStep('success')
+            setTimeout(() => {
+                setShowForgot(false)
+                setFpStep('email')
+                setFpEmail('')
+                setFpCode(['', '', '', '', '', ''])
+                setFpPassword('')
+                setFpConfirm('')
+            }, 2000)
+        } catch (err) {
+            setFpError(err.message || 'Something went wrong')
+            setFpCode(['', '', '', '', '', ''])
+        } finally {
+            setFpLoading(false)
+        }
+    }
 
     const handleStaffLogin = async () => {
         if (!email.trim() || !password.trim()) {
@@ -556,23 +656,222 @@ function OwnerLogin() {
                     </div>
 
                     {/* Forgot Password */}
-                    <div style={{ textAlign: 'center', paddingTop: '8px' }}>
-                        <button 
-                            type="button"
-                            style={{ 
-                                background: 'none', 
-                                border: 'none', 
-                                fontSize: '12px', 
-                                fontWeight: 700, 
-                                color: 'rgba(25, 28, 30, 0.5)', 
-                                cursor: 'pointer' 
-                            }}
-                        >
-                            {t('forgot')}
-                        </button>
-                    </div>
+                    {loginMode === 'owner' && (
+                        <div style={{ textAlign: 'center', paddingTop: '8px' }}>
+                            <button
+                                type="button"
+                                onClick={() => setShowForgot(true)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    color: 'rgba(25, 28, 30, 0.5)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {t('forgot')}
+                            </button>
+                        </div>
+                    )}
                 </form>
             </main>
+
+            {/* Forgot Password Modal */}
+            {showForgot && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 9999,
+                    background: 'rgba(0,0,0,0.4)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '24px'
+                }} onClick={(e) => { if (e.target === e.currentTarget) setShowForgot(false) }}>
+                    <div style={{
+                        background: '#fff', borderRadius: '24px', padding: '32px 24px',
+                        width: '100%', maxWidth: '380px',
+                        display: 'flex', flexDirection: 'column', gap: '16px'
+                    }}>
+                        <h2 style={{
+                            fontFamily: '"Plus Jakarta Sans", sans-serif',
+                            fontSize: '22px', fontWeight: 800, color: '#191c1e',
+                            margin: 0, textAlign: 'center'
+                        }}>{t('resetTitle')}</h2>
+
+                        {fpError && (
+                            <p style={{
+                                color: '#ba1a1a', textAlign: 'center', fontSize: '13px',
+                                background: '#ffdad6', padding: '12px', borderRadius: '12px', margin: 0
+                            }}>{fpError}</p>
+                        )}
+
+                        {fpStep === 'email' && (
+                            <form onSubmit={handleFpSendCode} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div>
+                                    <label style={{
+                                        display: 'block', fontSize: '10px', fontWeight: 700,
+                                        textTransform: 'uppercase', letterSpacing: '0.05em',
+                                        color: '#554434', marginBottom: '8px', marginLeft: '16px'
+                                    }}>{t('resetEmailLabel')}</label>
+                                    <div style={{
+                                        display: 'flex', alignItems: 'center',
+                                        backgroundColor: '#f2f4f6',
+                                        border: '1px solid rgba(219, 194, 173, 0.2)',
+                                        borderRadius: '16px', padding: '16px'
+                                    }}>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                            <polyline points="22,6 12,13 2,6"/>
+                                        </svg>
+                                        <input
+                                            type="email"
+                                            value={fpEmail}
+                                            onChange={(e) => setFpEmail(e.target.value)}
+                                            placeholder="owner@restaurant.com"
+                                            disabled={fpLoading}
+                                            style={{
+                                                backgroundColor: 'transparent', border: 'none', outline: 'none',
+                                                width: '100%', color: '#191c1e', fontWeight: 500, fontSize: '16px'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                                <button type="submit" disabled={fpLoading} style={{
+                                    width: '100%', backgroundColor: '#ff9800', color: '#ffffff',
+                                    borderRadius: '16px', padding: '18px', fontSize: '15px', fontWeight: 900,
+                                    letterSpacing: '0.1em', border: 'none', cursor: fpLoading ? 'wait' : 'pointer',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    {fpLoading ? t('loading') : t('resetSend')}
+                                </button>
+                                <button type="button" onClick={() => setShowForgot(false)} style={{
+                                    background: 'none', border: 'none', fontSize: '13px',
+                                    fontWeight: 600, color: 'rgba(25,28,30,0.5)', cursor: 'pointer'
+                                }}>{t('resetBack')}</button>
+                            </form>
+                        )}
+
+                        {fpStep === 'code' && (
+                            <form onSubmit={(e) => { e.preventDefault(); setFpStep('password') }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <p style={{ textAlign: 'center', fontSize: '13px', color: '#554434', margin: 0 }}>
+                                    Enter the 6-digit code sent to {fpEmail}
+                                </p>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                    {fpCode.map((d, i) => (
+                                        <input
+                                            key={i}
+                                            type="text"
+                                            inputMode="numeric"
+                                            maxLength={1}
+                                            value={d}
+                                            onChange={(e) => {
+                                                handleFpDigitChange(i, e.target.value)
+                                                if (e.target.value && i < 5) {
+                                                    const next = e.target.parentElement?.children[i + 1]
+                                                    next?.focus()
+                                                }
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Backspace' && !fpCode[i] && i > 0) {
+                                                    const prev = e.target.parentElement?.children[i - 1]
+                                                    prev?.focus()
+                                                }
+                                            }}
+                                            onPaste={(e) => {
+                                                const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+                                                if (pasted.length === 6) {
+                                                    setFpCode(pasted.split(''))
+                                                }
+                                                e.preventDefault()
+                                            }}
+                                            style={{
+                                                width: '44px', height: '52px', textAlign: 'center',
+                                                fontSize: '20px', fontWeight: 700, color: '#191c1e',
+                                                background: '#f2f4f6', border: '1px solid rgba(219,194,173,0.3)',
+                                                borderRadius: '12px', outline: 'none'
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                                <button type="submit" style={{
+                                    width: '100%', backgroundColor: '#ff9800', color: '#ffffff',
+                                    borderRadius: '16px', padding: '18px', fontSize: '15px', fontWeight: 900,
+                                    letterSpacing: '0.1em', border: 'none', cursor: 'pointer',
+                                    textTransform: 'uppercase'
+                                }}>{t('resetVerify')}</button>
+                            </form>
+                        )}
+
+                        {fpStep === 'password' && (
+                            <form onSubmit={handleFpReset} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div>
+                                    <label style={{
+                                        display: 'block', fontSize: '10px', fontWeight: 700,
+                                        textTransform: 'uppercase', letterSpacing: '0.05em',
+                                        color: '#554434', marginBottom: '8px', marginLeft: '16px'
+                                    }}>{t('resetNewLabel')}</label>
+                                    <input
+                                        type="password"
+                                        value={fpPassword}
+                                        onChange={(e) => setFpPassword(e.target.value)}
+                                        disabled={fpLoading}
+                                        style={{
+                                            width: '100%', backgroundColor: '#f2f4f6',
+                                            border: '1px solid rgba(219, 194, 173, 0.2)',
+                                            borderRadius: '16px', padding: '16px',
+                                            color: '#191c1e', fontWeight: 500, fontSize: '16px',
+                                            boxSizing: 'border-box', outline: 'none'
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{
+                                        display: 'block', fontSize: '10px', fontWeight: 700,
+                                        textTransform: 'uppercase', letterSpacing: '0.05em',
+                                        color: '#554434', marginBottom: '8px', marginLeft: '16px'
+                                    }}>{t('resetConfirmLabel')}</label>
+                                    <input
+                                        type="password"
+                                        value={fpConfirm}
+                                        onChange={(e) => setFpConfirm(e.target.value)}
+                                        disabled={fpLoading}
+                                        style={{
+                                            width: '100%', backgroundColor: '#f2f4f6',
+                                            border: '1px solid rgba(219, 194, 173, 0.2)',
+                                            borderRadius: '16px', padding: '16px',
+                                            color: '#191c1e', fontWeight: 500, fontSize: '16px',
+                                            boxSizing: 'border-box', outline: 'none'
+                                        }}
+                                    />
+                                </div>
+                                <button type="submit" disabled={fpLoading} style={{
+                                    width: '100%', backgroundColor: '#ff9800', color: '#ffffff',
+                                    borderRadius: '16px', padding: '18px', fontSize: '15px', fontWeight: 900,
+                                    letterSpacing: '0.1em', border: 'none', cursor: fpLoading ? 'wait' : 'pointer',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    {fpLoading ? t('loading') : t('resetSave')}
+                                </button>
+                            </form>
+                        )}
+
+                        {fpStep === 'success' && (
+                            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                                <div style={{
+                                    width: '56px', height: '56px', borderRadius: '50%',
+                                    background: '#dcfce7', display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', margin: '0 auto 16px'
+                                }}>
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                </div>
+                                <p style={{ fontSize: '16px', fontWeight: 700, color: '#191c1e', margin: 0 }}>
+                                    {t('resetSuccess')}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Footer */}
             <footer style={{ 
