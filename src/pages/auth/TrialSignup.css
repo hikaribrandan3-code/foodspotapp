@@ -779,3 +779,148 @@
     right: 1rem;
   }
 }
+
+/* ============================================
+   FORGOT PASSWORD MODAL
+   ============================================ */
+.dm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.dm-modal {
+  background: #ffffff;
+  border-radius: 2rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.6);
+  animation: dm-modal-in 0.2s ease-out;
+}
+
+@keyframes dm-modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dm-modal__title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 1.375rem;
+  color: var(--dm-bg-dark);
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.025em;
+}
+
+.dm-modal__hint {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dm-text-muted);
+  margin: -0.75rem 0 1.25rem;
+}
+
+.dm-modal__back {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--dm-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  transition: opacity 0.2s;
+}
+
+.dm-modal__back:hover { opacity: 0.75; }
+
+/* OTP digit inputs */
+.dm-otp-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.dm-otp-input {
+  width: 3rem;
+  height: 3.5rem;
+  border: 1.5px solid var(--dm-border);
+  border-radius: 0.75rem;
+  text-align: center;
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--dm-bg-dark);
+  background: #fff;
+  transition: all 0.15s;
+  outline: none;
+}
+
+.dm-otp-input:focus {
+  border-color: var(--dm-primary);
+  box-shadow: 0 0 0 3px rgba(255, 87, 51, 0.2);
+}
+
+/* Success state */
+.dm-modal__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.dm-modal__success-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: #22C55E;
+  color: #fff;
+  font-size: 1.75rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dm-modal__success-text {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--dm-bg-dark);
+  text-align: center;
+  margin: 0;
+}
+
+/* Success toast */
+.dm-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  background: #22C55E;
+  color: #fff;
+  padding: 0.875rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
+  white-space: nowrap;
+  animation: dm-toast-in 0.25s ease-out;
+}
+
+@keyframes dm-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

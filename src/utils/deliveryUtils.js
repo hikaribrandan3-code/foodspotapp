@@ -87,30 +87,10 @@ export const buildWhatsAppSummary = (order, businessName, paymentMethod = 'efect
 
 /**
  * Check if cash payment is currently allowed
- * Cash is ONLY allowed between 10:00 and 18:00 local device time
  * @returns {boolean}
  */
 export function isCashPaymentAllowed() {
-    const now = new Date()
-    const hours = now.getHours()
-    const minutes = now.getMinutes()
-    const currentTime = hours * 60 + minutes
-
-    const startTime = 10 * 60  // 10:00 = 600 minutes
-    const endTime = 18 * 60    // 18:00 = 1080 minutes
-
-    return currentTime >= startTime && currentTime < endTime
-}
-
-/**
- * Get the cash payment time window for display
- * @returns {{ start: string, end: string }}
- */
-export function getCashTimeWindow() {
-    return {
-        start: '10:00',
-        end: '18:00'
-    }
+    return true
 }
 
 // ============================================

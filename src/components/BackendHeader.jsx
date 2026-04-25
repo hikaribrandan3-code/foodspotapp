@@ -19,7 +19,7 @@ import { supabase } from '../lib/supabaseClient.js'
 function BackendHeader({ title, onLogout }) {
     const params = useParams()
     const navigate = useNavigate()
-    const { tenantData, branding, slug: contextSlug } = useTenant()
+    const { tenantData, branding, slug: contextSlug, businessId: contextBusinessId } = useTenant()
     const { t } = useLanguage()
 
     // 🛡️ HARD-WIRE: Prioritize context slug over URL params to prevent "undefined" links
@@ -79,26 +79,24 @@ function BackendHeader({ title, onLogout }) {
         if (!tenantSlug) return
         // Staff-ops main.tsx requires fs_staff_member to render.
         // Owners don't go through staff login, so we synthesize entries here.
-        const businessId = localStorage.getItem('fs_business_id') || ''
-        if (businessId) {
-            const { data: { session } } = await supabase.auth.getSession()
-            const ownerEntry = {
-                id: session?.user?.id || 'owner',
-                business_id: businessId,
-                name: tenantData?.venue_name || session?.user?.email || 'Owner',
-                role: 'owner',
-                email: session?.user?.email || ''
-            }
-            localStorage.setItem('fs_staff_member', JSON.stringify(ownerEntry))
-            // Also set a synthetic shift so "Current Shift" shows "On Duty"
-            localStorage.setItem('fs_current_shift', JSON.stringify({
-                id: `owner-preview-${Date.now()}`,
-                staff_id: ownerEntry.id,
-                business_id: businessId,
-                clock_in_at: new Date().toISOString(),
-                status: 'active'
-            }))
+        const businessId = contextBusinessId || localStorage.getItem('fs_business_id') || ''
+        const { data: { session } } = await supabase.auth.getSession()
+        const ownerEntry = {
+            id: session?.user?.id || 'owner',
+            business_id: businessId,
+            name: tenantData?.venue_name || session?.user?.email || 'Owner',
+            role: 'owner',
+            email: session?.user?.email || ''
         }
+        localStorage.setItem('fs_staff_member', JSON.stringify(ownerEntry))
+        localStorage.setItem('fs_business_id', businessId)
+        localStorage.setItem('fs_current_shift', JSON.stringify({
+            id: `owner-preview-${Date.now()}`,
+            staff_id: ownerEntry.id,
+            business_id: businessId,
+            clock_in_at: new Date().toISOString(),
+            status: 'active'
+        }))
         navigate(`/${tenantSlug}/staff/dashboard`)
     }
 
@@ -289,7 +287,7 @@ function BackendHeader({ title, onLogout }) {
                                         textAlign: 'left'
                                     }}
                                 >
-                                    🧑‍🍳 {t('staff_view')}
+                                    {t('staff_view')}
                                 </button>
                             )}
 

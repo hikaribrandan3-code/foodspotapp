@@ -5,7 +5,7 @@
  * Uses external CSS (TrialSignup.css) for maintainability.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../../utils/storage.js'
@@ -74,7 +74,18 @@ const TRANSLATIONS = {
     headlinePrefix: ' That Turns Diners Into\n',
     headlineAccent: 'Content Creators !',
     headlineSuffix: '',
-    subheadline: 'Your menu. Their content. Your growth.'
+    subheadline: 'Your menu. Their content. Your growth.',
+    forgotPassword: 'Forgot Password?',
+    sendCode: 'Send Reset Code',
+    enterCode: 'Enter 6-digit code sent to your email',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm Password',
+    resetPassword: 'Reset Password',
+    backToLogin: 'Back to Login',
+    codeSent: 'Check your email for the reset code',
+    passwordUpdated: 'Password updated! Log in now.',
+    resetTitle: 'Reset Password',
+    enterEmail: 'Enter your email'
   },
   es: {
     createAccount: 'Crear cuenta empresarial',
@@ -112,7 +123,18 @@ const TRANSLATIONS = {
     headlinePrefix: ' Que Convierte Clientes En ',
     headlineAccent: 'Creadores De Contenido !',
     headlineSuffix: '',
-    subheadline: 'Tu menú. Su contenido. Tu crecimiento.'
+    subheadline: 'Tu menú. Su contenido. Tu crecimiento.',
+    forgotPassword: '¿Olvidaste tu contraseña?',
+    sendCode: 'Enviar Código',
+    enterCode: 'Ingresa el código de 6 dígitos enviado a tu email',
+    newPassword: 'Nueva Contraseña',
+    confirmPassword: 'Confirmar Contraseña',
+    resetPassword: 'Restablecer Contraseña',
+    backToLogin: 'Volver al inicio de sesión',
+    codeSent: 'Revisa tu email para el código',
+    passwordUpdated: '¡Contraseña actualizada! Inicia sesión ahora.',
+    resetTitle: 'Restablecer Contraseña',
+    enterEmail: 'Ingresa tu email'
   },
   pt: {
     createAccount: 'Criar conta empresarial',
@@ -150,7 +172,18 @@ const TRANSLATIONS = {
     headlinePrefix: ' Que Transforma Clientes Em ',
     headlineAccent: 'Criadores De Conteúdo !',
     headlineSuffix: '',
-    subheadline: 'Seu cardápio. O conteúdo deles. Seu crescimento.'
+    subheadline: 'Seu cardápio. O conteúdo deles. Seu crescimento.',
+    forgotPassword: 'Esqueceu sua senha?',
+    sendCode: 'Enviar Código',
+    enterCode: 'Insira o código de 6 dígitos enviado ao seu email',
+    newPassword: 'Nova Senha',
+    confirmPassword: 'Confirmar Senha',
+    resetPassword: 'Redefinir Senha',
+    backToLogin: 'Voltar ao login',
+    codeSent: 'Verifique seu email para o código',
+    passwordUpdated: 'Senha atualizada! Faça login agora.',
+    resetTitle: 'Redefinir Senha',
+    enterEmail: 'Insira seu email'
   }
 }
 
@@ -261,6 +294,216 @@ const FloatingBadge = ({ number, text }) => (
 )
 
 // ============================================
+// FORGOT PASSWORD MODAL
+// ============================================
+
+const ForgotPasswordModal = ({ onClose, onSuccess, lang }) => {
+  const l = TRANSLATIONS[lang]
+  const [step, setStep] = useState('email')
+  const [resetEmail, setResetEmail] = useState('')
+  const [codeDigits, setCodeDigits] = useState(['', '', '', '', '', ''])
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const codeInputRefs = useRef([])
+
+  const handleSendCode = async (e) => {
+    e.preventDefault()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
+      setError('Please enter a valid email address')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      await supabase.functions.invoke('generate-reset-code', {
+        body: { email: resetEmail }
+      })
+    } catch (_) {
+      // intentional: always advance to code step for security (no email enumeration)
+    } finally {
+      setLoading(false)
+      setStep('code')
+    }
+  }
+
+  const handleDigitChange = (index, value) => {
+    if (!/^\d?$/.test(value)) return
+    const next = [...codeDigits]
+    next[index] = value
+    setCodeDigits(next)
+    if (value && index < 5) codeInputRefs.current[index + 1]?.focus()
+  }
+
+  const handleDigitKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !codeDigits[index] && index > 0) {
+      codeInputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    if (pasted.length === 6) {
+      setCodeDigits(pasted.split(''))
+      codeInputRefs.current[5]?.focus()
+    }
+    e.preventDefault()
+  }
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    const code = codeDigits.join('')
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) { setError('Please enter the complete 6-digit code'); return }
+    if (newPassword.length < 8) { setError('Password must be at least 8 characters'); return }
+    if (newPassword !== confirmPassword) { setError("Passwords don't match"); return }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Step 1: verify the code via edge function (marks it as used)
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-reset-code', {
+        body: { email: resetEmail, code }
+      })
+      if (verifyError || !verifyData?.valid) {
+        const msg = verifyData?.error || verifyError?.message || ''
+        throw Object.assign(new Error(msg || 'Invalid or expired code'), { isCodeError: true })
+      }
+
+      // Step 2: update password via edge function (uses admin API, no session needed)
+      const { data: updateData, error: updateError } = await supabase.functions.invoke('update-password', {
+        body: { email: resetEmail, code, password: newPassword }
+      })
+      if (updateError || !updateData?.success) {
+        throw new Error(updateData?.error || updateError?.message || 'Failed to update password')
+      }
+
+      setStep('success')
+      setTimeout(() => onSuccess(), 2000)
+    } catch (err) {
+      const msg = err.message || ''
+      if (err.isCodeError || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('expired')) {
+        setError('Invalid or expired code')
+        setStep('email')
+        setCodeDigits(['', '', '', '', '', ''])
+      } else {
+        setError(msg || 'Something went wrong, try again')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="dm-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="dm-modal">
+
+        {step === 'email' && (
+          <>
+            <h3 className="dm-modal__title">🔑 {l.resetTitle}</h3>
+            {error && <div className="dm-error">{error}</div>}
+            <form onSubmit={handleSendCode} className="dm-form">
+              <div className="dm-field">
+                <label className="dm-input-label">{l.enterEmail}</label>
+                <div className="dm-input-box">
+                  <span className="dm-input__icon"><Icon name="mail" size={20} /></span>
+                  <input
+                    className="dm-input"
+                    type="email"
+                    placeholder={l.emailPlaceholder}
+                    value={resetEmail}
+                    onChange={e => setResetEmail(e.target.value)}
+                    disabled={loading}
+                    autoFocus
+                    required
+                  />
+                </div>
+              </div>
+              <button type="submit" disabled={loading} className="dm-btn-primary">
+                {loading ? l.processing : l.sendCode}
+              </button>
+            </form>
+            <button type="button" onClick={onClose} className="dm-modal__back">
+              {l.backToLogin}
+            </button>
+          </>
+        )}
+
+        {step === 'code' && (
+          <>
+            <h3 className="dm-modal__title">{l.enterCode}</h3>
+            <p className="dm-modal__hint">{l.codeSent}</p>
+            {error && <div className="dm-error">{error}</div>}
+            <form onSubmit={handleResetPassword} className="dm-form">
+              <div className="dm-otp-row" onPaste={handlePaste}>
+                {codeDigits.map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={el => { codeInputRefs.current[i] = el }}
+                    className="dm-otp-input"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={e => handleDigitChange(i, e.target.value)}
+                    onKeyDown={e => handleDigitKeyDown(i, e)}
+                    autoFocus={i === 0}
+                  />
+                ))}
+              </div>
+              <div className="dm-field">
+                <label className="dm-input-label">{l.newPassword}</label>
+                <div className="dm-input-box">
+                  <span className="dm-input__icon"><Icon name="lock" size={20} /></span>
+                  <input
+                    className="dm-input"
+                    type="password"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="dm-field">
+                <label className="dm-input-label">{l.confirmPassword}</label>
+                <div className="dm-input-box">
+                  <span className="dm-input__icon"><Icon name="lock" size={20} /></span>
+                  <input
+                    className="dm-input"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+              </div>
+              <button type="submit" disabled={loading} className="dm-btn-primary">
+                {loading ? l.processing : l.resetPassword}
+              </button>
+            </form>
+            <button type="button" onClick={() => { setStep('email'); setError(null); setCodeDigits(['','','','','','']) }} className="dm-modal__back">
+              {l.backToLogin}
+            </button>
+          </>
+        )}
+
+        {step === 'success' && (
+          <div className="dm-modal__success">
+            <div className="dm-modal__success-icon">✓</div>
+            <p className="dm-modal__success-text">{l.passwordUpdated}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -275,8 +518,16 @@ const TrialSignup = () => {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [successToast, setSuccessToast] = useState(null)
+
   const l = TRANSLATIONS[lang]
+
+  const handleResetSuccess = () => {
+    setShowResetModal(false)
+    setSuccessToast(l.passwordUpdated)
+    setTimeout(() => setSuccessToast(null), 4000)
+  }
 
   // Pre-fill business name from URL
   useEffect(() => {
@@ -442,6 +693,14 @@ const TrialSignup = () => {
 
   return (
     <>
+      {showResetModal && (
+        <ForgotPasswordModal
+          onClose={() => setShowResetModal(false)}
+          onSuccess={handleResetSuccess}
+          lang={lang}
+        />
+      )}
+      {successToast && <div className="dm-toast">{successToast}</div>}
       <HeroBackground />
 
       {/* Language Switcher */}
@@ -538,7 +797,7 @@ const TrialSignup = () => {
                         {l.alreadyHaveAccount}
                       </a>
                     ) : (
-                      <a href="#" className="dm-input-link" onClick={(e) => { e.preventDefault(); alert('Password reset coming soon') }}>
+                      <a href="#" className="dm-input-link" onClick={(e) => { e.preventDefault(); setShowResetModal(true) }}>
                         {l.forgot}
                       </a>
                     )}

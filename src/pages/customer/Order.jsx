@@ -17,7 +17,6 @@ import {
 } from '../../utils/storage.js'
 import {
     isDeliveryMode,
-    isCashPaymentAllowed,
     validateDeliveryInfo,
     clearDeliveryMode,
     isWithinDeliveryRadius,
@@ -95,9 +94,7 @@ const PaymentMethodCard = ({ id, selected, onClick, title, subtitle, icon, color
 )
 
 const placeholderImages = [
-    'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=100&h=100&fit=crop',
-    'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=100&h=100&fit=crop',
-    'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop',
+    '', '', '', // No placeholder images — show empty space
 ]
 
 function Order({ config: configProp }) {
@@ -153,8 +150,6 @@ function Order({ config: configProp }) {
 
     // Payment method
     const [paymentMethod, setPaymentMethod] = useState('mercadopago')
-    const [cashAvailable, setCashAvailable] = useState(() => isCashPaymentAllowed())
-    const [cashFallbackNotice, setCashFallbackNotice] = useState(false)
     const [validationErrors, setValidationErrors] = useState([])
 
     // 🔄 PAYMENT RETRY STATE (Audit #7)
@@ -190,20 +185,13 @@ function Order({ config: configProp }) {
         }
     }, [customerInfo.lat, customerInfo.lon, storeCoords, deliveryRadius, orderType])
 
-    // Poll order and cash availability
+    // Poll order on interval
     useEffect(() => {
         const interval = setInterval(() => {
             setOrder(getCurrentOrder())
-            const nowCashAvailable = isCashPaymentAllowed()
-            if (cashAvailable && !nowCashAvailable && paymentMethod === 'efectivo') {
-                setPaymentMethod('mercadopago')
-                setCashFallbackNotice(true)
-                setTimeout(() => setCashFallbackNotice(false), 5000)
-            }
-            setCashAvailable(nowCashAvailable)
         }, 1000)
         return () => clearInterval(interval)
-    }, [cashAvailable, paymentMethod])
+    }, [])
 
     // CALCULATIONS
     const calculateSubtotal = () => {
@@ -296,6 +284,14 @@ function Order({ config: configProp }) {
         const guestToken = getGuestToken()
         const isCashPath = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
 
+        // Payment-aware status assignment
+        const isMercadoPago = paymentMethod === 'mercadopago'
+        const orderStatus = isMercadoPago
+            ? 'pending_payment'      // MP: waiting for online payment
+            : 'released_to_kitchen'  // Cash/Dine-in: auto-accepted straight to kitchen
+
+        const orderPaymentStatus = 'pending'
+
         const newOrder = {
             business_id: businessId,
             guest_token: guestToken,
@@ -304,7 +300,8 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: 'pending', // 💎 PERSISTENT-FIRST: Saved immediately, payment resolved after
+            status: orderStatus,
+            payment_status: orderPaymentStatus,
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
@@ -479,6 +476,7 @@ function Order({ config: configProp }) {
             delivery_fee: actualDeliveryFee,
             total: total,
             status: 'paid_unreleased', // WhatsApp = cash path, payment done, awaiting release
+            payment_status: 'pending',
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
@@ -667,11 +665,11 @@ function Order({ config: configProp }) {
                         {orderType === 'dine_in' ? 'Avisando a cocina...' : 'Redirigiendo al estado...'}
                     </p>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                        {[0, 1, 2].map(i => (
-                            <div key={i} style={{
+                        {[0, 1, 2].map(dot => (
+                            <div key={dot} style={{
                                 width: 8, height: 8, borderRadius: '50%', background: '#D1D5DB',
                                 animation: `pulse 1.4s ease-in-out infinite`,
-                                animationDelay: `${i * 0.2}s`
+                                animationDelay: `${dot * 0.2}s`
                             }} />
                         ))}
                     </div>
@@ -723,39 +721,44 @@ function Order({ config: configProp }) {
         <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#F8F9FA' }}>
             <HeaderClamp config={config} />
 
-            {/* Divider Strip */}
-            {(() => {
-                const dividerPreset = getDividerPreset(config.dividerPresetId)
-                return (
-                    <div style={{ height: 64, margin: '0 14px 16px', borderRadius: 12, overflow: 'hidden' }}>
-                        {dividerPreset ? (
-                            <img src={dividerPreset.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #F5F0E8, #EDE8E0)' }} />
-                        )}
-                    </div>
-                )
-            })()}
+            {/* Divider Strip — no images, gradient only */}
+            <div style={{ height: 64, margin: '0 14px 16px', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #F5F0E8, #EDE8E0)' }} />
+            </div>
 
             <div style={{ margin: '0 14px' }}>
                 <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
-                            {orderType === 'dine_in' ? t('dine_in_table') : t('your_order')}
+                    <div style={{ marginBottom: 12 }}>
+                        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
+                            {t('your_order')}
                         </h1>
-                        {serviceModes?.dineIn && serviceModes?.delivery && (
-                            <button
-                                onClick={() => setOrderType(prev => prev === 'dine_in' ? 'delivery' : 'dine_in')}
-                                style={{
-                                    fontSize: 12, padding: '6px 14px', borderRadius: 20,
-                                    background: 'white', border: '1px solid #E5E7EB',
-                                    color: '#4B5563', fontWeight: 600, cursor: 'pointer',
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                }}
-                            >
-                                Cambiar a {orderType === 'dine_in' ? 'Delivery' : 'Mesa'}
-                            </button>
-                        )}
+                        {/* Order type selector — only show when multiple modes are enabled */}
+                        {(() => {
+                            const modes = []
+                            if (serviceModes?.pickup) modes.push({ id: 'pickup', label: t('pickup') || 'Takeout' })
+                            if (serviceModes?.dineIn) modes.push({ id: 'dine_in', label: t('dine_in') || 'Dine In' })
+                            if (serviceModes?.delivery) modes.push({ id: 'delivery', label: t('delivery') || 'Delivery' })
+                            if (modes.length <= 1) return null
+                            return (
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    {modes.map(mode => (
+                                        <button
+                                            key={mode.id}
+                                            onClick={() => setOrderType(mode.id)}
+                                            style={{
+                                                flex: 1, padding: '8px 12px', borderRadius: 10, border: 'none',
+                                                background: orderType === mode.id ? (tenantData?.primary_color || '#C4856A') : '#F3F4F6',
+                                                color: orderType === mode.id ? 'white' : '#4B5563',
+                                                fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            {mode.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )
+                        })()}
                     </div>
 
                     {config.pauseOrders && (
@@ -795,8 +798,8 @@ function Order({ config: configProp }) {
                     {/* Validation Errors */}
                     {validationErrors.length > 0 && (
                         <div style={{ background: '#FEE2E2', padding: 12, borderRadius: 12, marginBottom: 20 }}>
-                            {validationErrors.map((err, i) => (
-                                <p key={i} style={{ color: '#DC2626', fontSize: 14, margin: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {validationErrors.map((err) => (
+                                <p key={err} style={{ color: '#DC2626', fontSize: 14, margin: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <span>⚠️</span> {err}
                                 </p>
                             ))}
@@ -863,7 +866,7 @@ function Order({ config: configProp }) {
                                 isTextArea={true}
                             />
                         </>
-                    ) : (
+                    ) : orderType === 'dine_in' ? (
                         <>
                             <InputGroup
                                 label={t('table_number_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" /><path d="M21 9H3" /><path d="M21 15H3" /><path d="M9 3v18" /><path d="M15 3v18" /></svg>}
@@ -879,6 +882,23 @@ function Order({ config: configProp }) {
                                 placeholder={t('name_placeholder')}
                             />
                         </>
+                    ) : (
+                        /* pickup / takeout */
+                        <>
+                            <InputGroup
+                                label={t('name_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                                value={customerInfo.name}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
+                                placeholder={t('name_placeholder')}
+                            />
+                            <InputGroup
+                                label={t('phone_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
+                                value={customerInfo.phone}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
+                                placeholder={t('phone_label') + ' (ex: 1123456789)'}
+                                type="tel"
+                            />
+                        </>
                     )}
                 </div>
 
@@ -888,7 +908,7 @@ function Order({ config: configProp }) {
                     boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
                 }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>
-                        Método de Pago
+                        {t('payment_methods') || 'Payment Method'}
                     </h3>
 
                     {(orderType === 'delivery' || orderType === 'pickup' || serviceModes?.dineInPayment === 'before') && (
@@ -903,7 +923,7 @@ function Order({ config: configProp }) {
                         />
                     )}
 
-                    {(cashAvailable || serviceModes?.dineInPayment === 'after') && (
+                    {(orderType !== 'dine_in' || serviceModes?.dineInPayment === 'after') && (
                         <PaymentMethodCard
                             id="efectivo"
                             selected={paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter'}
@@ -920,13 +940,15 @@ function Order({ config: configProp }) {
                 <div style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>{t('summary')}</h3>
                     {order.items.map((item, index) => (
-                        <div key={index} style={{
+                        <div key={item.id ?? `item-${index}`} style={{
                             display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0',
                             borderBottom: index < order.items.length - 1 ? '1px solid #F3F4F6' : 'none'
                         }}>
-                            <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: '#F3F0EB' }}>
-                                <img src={getItemImage(item, index)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />
-                            </div>
+                            {getItemImage(item, index) && (
+                                <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: '#F3F0EB' }}>
+                                    <img src={getItemImage(item, index)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />
+                                </div>
+                            )}
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{item.name}</div>
                                 <div style={{ fontSize: 14, color: '#6B7280' }}>{formatPrice(item.price)}</div>

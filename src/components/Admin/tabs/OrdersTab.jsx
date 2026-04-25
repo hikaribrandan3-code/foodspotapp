@@ -4,6 +4,17 @@ import { verifyDeliveryCode, getPhoneLast4 } from '../../../utils/deliveryUtils.
 
 const cardStyle = { background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' };
 
+const formatAddress = (addr) => {
+    if (!addr) return '';
+    if (typeof addr === 'string') return addr;
+    const parts = [];
+    if (addr.street) parts.push(addr.street);
+    if (addr.number) parts.push(addr.number);
+    if (addr.floor) parts.push(`Piso ${addr.floor}`);
+    if (addr.notes) parts.push(`(${addr.notes})`);
+    return parts.join(', ');
+};
+
 export default function OrdersTab({ orders, config, updateOrder, setOrders, deliveryConfirmCode, setDeliveryConfirmCode, paymentMethodSelect, setPaymentMethodSelect }) {
     const today = new Date().toDateString();
     const todayOrders = orders?.filter(o => new Date(o.createdAt).toDateString() === today) || [];
@@ -27,19 +38,40 @@ export default function OrdersTab({ orders, config, updateOrder, setOrders, deli
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentConfirmed: true, paymentMethod: method } : o));
     };
 
+    const PaymentStatusBadge = ({ order }) => {
+        const isPaid = order.payment_status === 'paid' || order.paymentConfirmed;
+        const isMp = order.paymentMethod === 'mercadopago';
+        return (
+            <span style={{
+                padding: '2px 8px',
+                borderRadius: 10,
+                fontSize: 11,
+                fontWeight: 600,
+                background: isPaid ? '#22C55E' : '#F59E0B',
+                color: 'white',
+                marginRight: 6
+            }}>
+                {isPaid ? '✅ Paid' : isMp ? '⏳ Pending' : '💵 Cash'}
+            </span>
+        );
+    };
+
     const renderOrderCard = (order) => {
         const statusInfo = getOrderStatusInfo(order.status, order.orderType);
         return (
             <div key={order.id} style={{ ...cardStyle, marginBottom: 12, borderLeft: `4px solid ${statusInfo.color || '#E5E7EB'}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <span style={{ fontWeight: 700, fontSize: 16, color: '#374151' }}>#{order.orderNumber}</span>
-                    <span style={{ padding: '4px 10px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: statusInfo.bg, color: statusInfo.color }}>
-                        {statusInfo.label}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <PaymentStatusBadge order={order} />
+                        <span style={{ padding: '4px 10px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: statusInfo.bg, color: statusInfo.color }}>
+                            {statusInfo.label}
+                        </span>
+                    </div>
                 </div>
                 <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
                     {order.items?.map((item, i) => (
-                        <span key={i}>{item.quantity}x {item.name}{i < order.items.length - 1 ? ', ' : ''}</span>
+                        <span key={item.id ?? `item-${i}`}>{item.quantity}x {item.name}{i < order.items.length - 1 ? ', ' : ''}</span>
                     ))}
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#22C55E', marginBottom: 10 }}>${order.total?.toLocaleString()}</div>
@@ -77,12 +109,15 @@ export default function OrdersTab({ orders, config, updateOrder, setOrders, deli
                             <div key={order.id} style={{ ...cardStyle, marginBottom: 12, borderLeft: '4px solid #F97316' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                     <span style={{ fontWeight: 700, fontSize: 16, color: '#374151' }}>#{order.orderNumber} 🚚</span>
-                                    <span style={{ padding: '4px 10px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: statusInfo.bg, color: statusInfo.color }}>{statusInfo.label}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <PaymentStatusBadge order={order} />
+                                        <span style={{ padding: '4px 10px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: statusInfo.bg, color: statusInfo.color }}>{statusInfo.label}</span>
+                                    </div>
                                 </div>
                                 {order.customerInfo && (
                                     <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10, background: '#F0FDF4', padding: 10, borderRadius: 8 }}>
                                         <p style={{ margin: 0, fontWeight: 600, color: '#374151' }}>📍 {order.customerInfo.name}</p>
-                                        <p style={{ margin: '4px 0 0' }}>{order.customerInfo.address}</p>
+                                        <p style={{ margin: '4px 0 0' }}>{formatAddress(order.customerInfo.address)}</p>
                                         <p style={{ margin: '4px 0 0' }}>Tel: ***{getPhoneLast4(order.customerInfo.phone)}</p>
                                     </div>
                                 )}

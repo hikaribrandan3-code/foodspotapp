@@ -56,7 +56,7 @@ export default function OrderCard({
   showClaimButton = false,
   onClaim,
 }: OrderCardProps) {
-  const { selectOrder, verifyCash, confirmDelivery } = useOrders();
+  const { selectOrder, verifyCash, confirmDelivery, cancelOrder } = useOrders();
   const { businessLat, businessLng } = useBusiness();
   const [isRemoving, setIsRemoving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -383,9 +383,27 @@ export default function OrderCard({
           </div>
         )}
 
+        {/* ── Cancel button ──────────────────────────────────────── */}
+        {!compact && !isCashPending && !showConfirmDelivery && order.status !== 'DONE' && (
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm('Cancel this order?')) {
+                  cancelOrder(order.id);
+                }
+              }}
+              className="w-full py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: 'rgba(220, 38, 38, 0.1)', color: '#DC2626' }}
+            >
+              ✕ Cancel Order
+            </button>
+          </div>
+        )}
+
         {/* ── Expanded preview for non-compact ───────────────────── */}
         {!compact && !isCashPending && !showConfirmDelivery && (
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+          <div className="mt-3 pt-3" style={{ borderTop: 'none' }}>
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: 'var(--text-tertiary)' }}>{STATUS_LABELS[order.status]}</span>
               <span className="text-xs" style={{ color: 'var(--tap-hint)' }}>Tap for details</span>

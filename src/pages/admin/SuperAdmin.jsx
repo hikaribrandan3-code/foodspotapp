@@ -19,6 +19,17 @@ import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useBusinessId } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 
+const formatAddress = (addr) => {
+    if (!addr) return '';
+    if (typeof addr === 'string') return addr;
+    const parts = [];
+    if (addr.street) parts.push(addr.street);
+    if (addr.number) parts.push(addr.number);
+    if (addr.floor) parts.push(`Piso ${addr.floor}`);
+    if (addr.notes) parts.push(`(${addr.notes})`);
+    return parts.join(', ');
+};
+
 // Generate seeded demo analytics data (30 days)
 function generateDemoData() {
     const data = []
@@ -2046,7 +2057,7 @@ function SuperAdmin({ config: configProp }) {
                                             {order.customerInfo && (
                                                 <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10, background: '#F0FDF4', padding: 10, borderRadius: 8 }}>
                                                     <p style={{ margin: 0, fontWeight: 600, color: '#374151' }}>📍 {order.customerInfo.name}</p>
-                                                    <p style={{ margin: '4px 0 0' }}>{order.customerInfo.address}</p>
+                                                    <p style={{ margin: '4px 0 0' }}>{formatAddress(order.customerInfo.address)}</p>
                                                     <p style={{ margin: '4px 0 0' }}>Tel: ***{getPhoneLast4(order.customerInfo.phone)}</p>
                                                 </div>
                                             )}
@@ -2054,7 +2065,7 @@ function SuperAdmin({ config: configProp }) {
                                             {/* Order Items */}
                                             <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
                                                 {order.items?.map((item, i) => (
-                                                    <span key={i}>{item.quantity}x {item.name}{i < order.items.length - 1 ? ', ' : ''}</span>
+                                                    <span key={item.id ?? `item-${i}`}>{item.quantity}x {item.name}{i < order.items.length - 1 ? ', ' : ''}</span>
                                                 ))}
                                             </div>
 
@@ -2158,6 +2169,30 @@ function SuperAdmin({ config: configProp }) {
                                                     {order.paymentConfirmed ? `✅ ${order.paymentMethod === 'mercado_pago' ? 'MP' : 'Efectivo'}` : '💳 Confirmar Pago'}
                                                 </button>
                                             </div>
+
+                                            {/* Cancel Order */}
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Are you sure you want to cancel this order?')) {
+                                                        updateOrder(order.id, { status: 'cancelled' });
+                                                        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'cancelled' } : o));
+                                                    }
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px 14px',
+                                                    background: '#DC2626',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: 8,
+                                                    fontWeight: 600,
+                                                    fontSize: 12,
+                                                    cursor: 'pointer',
+                                                    marginTop: 8
+                                                }}
+                                            >
+                                                Cancel
+                                            </button>
                                         </div>
                                     )
                                 })
@@ -2202,7 +2237,7 @@ function SuperAdmin({ config: configProp }) {
                                     <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Últimos 15 días</p>
                                     <div style={{ height: 60, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
                                         {demoData.slice(-15).map((d, i) => (
-                                            <div key={i} style={{ flex: 1, height: `${(d.value / Math.max(...demoData.map(x => x.value))) * 100}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
+                                            <div key={d.date} style={{ flex: 1, height: `${(d.value / Math.max(...demoData.map(x => x.value))) * 100}%`, background: i % 2 === 0 ? '#B8A089' : '#C9B89A', borderRadius: '3px 3px 0 0', minHeight: 6 }} />
                                         ))}
                                     </div>
                                     <p style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', marginTop: 8 }}>⚠️ Datos de demostración</p>
@@ -2222,22 +2257,38 @@ function SuperAdmin({ config: configProp }) {
                                 {orders.length === 0 ? (
                                     <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF' }}><p style={{ fontSize: 14 }}>No hay registros aún</p></div>
                                 ) : (
-                                    orders.slice(0, 15).map((order, i) => (
-                                        <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <div>
-                                                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
-                                                    <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
-                                                </div>
-                                                <div style={{ textAlign: 'right' }}>
-                                                    <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
-                                                        {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
-                                                    </span>
-                                                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
+                                    orders.slice(0, 15).map((order, i) => {
+                                        const isPaid = order.payment_status === 'paid' || order.paymentConfirmed;
+                                        const isMp = order.paymentMethod === 'mercadopago' || order.payment_method === 'mercadopago';
+                                        return (
+                                            <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <div>
+                                                        <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', margin: 0 }}>Pedido #{order.orderNumber || i + 1}</p>
+                                                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <span style={{
+                                                            display: 'inline-block',
+                                                            padding: '2px 8px',
+                                                            borderRadius: 10,
+                                                            fontSize: 11,
+                                                            fontWeight: 600,
+                                                            background: isPaid ? '#22C55E' : '#F59E0B',
+                                                            color: 'white',
+                                                            marginRight: 4
+                                                        }}>
+                                                            {isPaid ? '✅ Paid' : isMp ? '⏳ Pending' : '💵 Cash'}
+                                                        </span>
+                                                        <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
+                                                            {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
+                                                        </span>
+                                                        <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </>

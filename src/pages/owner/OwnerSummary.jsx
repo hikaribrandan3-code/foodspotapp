@@ -40,7 +40,7 @@ function OwnerSummary() {
                 .select('id, total, status, payment_method, created_at')
                 .eq('business_id', businessId)
                 .gte('created_at', monthAgo.toISOString())
-                .neq('status', 'cancelado')
+                .not('status', 'in', '("cancelado","cancelled")')
                 .order('created_at', { ascending: false })
 
             if (!cancelled && !error && data) {
@@ -51,9 +51,30 @@ function OwnerSummary() {
 
         fetchOrders()
 
-        // Refresh every 30s instead of polling localStorage
+        // Subscribe to real-time changes (SILO-FILTERED)
+        const subscription = supabase
+            .channel(`summary-orders-${businessId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `business_id=eq.${businessId}` // 🔐 SILO FILTER
+                },
+                () => {
+                    if (!cancelled) fetchOrders()
+                }
+            )
+            .subscribe()
+
+        // Fallback poll every 30s if subscription fails
         const interval = setInterval(fetchOrders, 30000)
-        return () => { cancelled = true; clearInterval(interval) }
+        return () => {
+            cancelled = true
+            clearInterval(interval)
+            supabase.removeChannel(subscription)
+        }
     }, [businessId])
 
     // Ghost Wall scroll lock

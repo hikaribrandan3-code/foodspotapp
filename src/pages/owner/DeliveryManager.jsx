@@ -28,7 +28,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
 
-    // Fetch orders from Supabase for staff dashboard (real-time, SILO-FILTERED)
+    // Fetch orders from Supabase for staff dashboard (SILO-FILTERED)
     useEffect(() => {
         if (demoMode) {
             setOrders(getOrders())
@@ -83,14 +83,44 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         return statusConfig[status] || { label: status, next: null, nextLabel: null, class: '', bg: '#F3F4F6', color: '#6B7280' }
     }
 
+    // Map owner FSM statuses to database Spanish statuses for kitchen view
+    const getDbStatus = (ownerStatus) => {
+        const statusMap = {
+            pending_payment: 'pendiente',
+            paid_unreleased: 'confirmado',
+            released_to_kitchen: 'confirmado',
+            preparing: 'preparacion',
+            ready: 'listo',
+            dispatched: 'despachado',
+            delivered: 'entregado',
+            cancelled: 'cancelado'
+        }
+        return statusMap[ownerStatus] || ownerStatus
+    }
+
     // Handle status change with centralized payment validation
-    const handleDeliveryStatusChange = (orderId, newStatus, order) => {
+    const handleDeliveryStatusChange = async (orderId, newStatus, order) => {
         // Use centralized payment gate from orderStateGuard.js
         const validation = canAdvanceOrder(order, newStatus, config)
         if (!validation.allowed) {
             alert(validation.reason)
             return
         }
+
+        // Map owner status to database status for kitchen FSM
+        const dbStatus = getDbStatus(newStatus)
+
+        // Update Supabase database first (for real orders)
+        const isRealOrder = !demoMode && !orderId.startsWith('demo-')
+        if (isRealOrder && businessId) {
+            await supabase
+                .from('orders')
+                .update({ status: dbStatus })
+                .eq('id', orderId)
+                .eq('business_id', businessId)
+        }
+
+        // Then update local cache
         updateOrder(orderId, { status: newStatus })
         setOrders(getOrders())
     }
@@ -182,15 +212,13 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
     const effectiveOrders = demoMode ? demoOrdersData : orders
 
-    // Filter for active vs completed delivery orders — SNAKE_CASE + ENGLISH
-    const deliveryOrders = effectiveOrders.filter(o => 
-        o.order_type === 'delivery' && 
-        o.status !== 'delivered' && 
+    // Filter for active vs completed orders (all types)
+    const deliveryOrders = effectiveOrders.filter(o =>
+        o.status !== 'delivered' &&
         o.status !== 'cancelled'
     )
-    const completedOrders = effectiveOrders.filter(o => 
-        o.order_type === 'delivery' && 
-        (o.status === 'delivered' || o.status === 'cancelled')
+    const completedOrders = effectiveOrders.filter(o =>
+        o.status === 'delivered' || o.status === 'cancelled'
     )
 
     const formatAddress = (addr) => {
@@ -206,15 +234,14 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         }
         return String(addr)
     }
-    const todayDeliveries = effectiveOrders.filter(o => 
-        o.order_type === 'delivery' && 
+    const todayOrders = effectiveOrders.filter(o =>
         new Date(o.created_at).toDateString() === new Date().toDateString()
     ).length
 
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F9FAFB' }}>
             <BackendHeader
-                title={demoMode ? t('demo_orders') : t('deliveries')}
+                title={demoMode ? t('demo_orders') : t('orders')}
                 onLogout={handleLogout}
             />
 
@@ -244,7 +271,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                         textAlign: 'center'
                     }}>
                         <div style={{ fontSize: 32, marginBottom: 8 }}>🚚</div>
-                        <p style={{ color: '#6B7280', margin: 0, fontSize: 14 }}>{t('no_active_deliveries')}</p>
+                        <p style={{ color: '#6B7280', margin: 0, fontSize: 14 }}>{t('no_active_orders') || 'No active orders'}</p>
                     </div>
                 ) : (
                     deliveryOrders.map(order => {
@@ -258,18 +285,35 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                 overflow: 'hidden',
                                 boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                             }}>
-                                <div style={{ padding: 16, borderBottom: '1px solid #F3F4F6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ padding: 16, borderBottom: '1px solid #F3F4F6', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                     <span style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>#{order.order_number || order.orderNumber} 🚚</span>
-                                    <span style={{
-                                        padding: '4px 10px',
-                                        borderRadius: 20,
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        background: statusInfo.bg,
-                                        color: statusInfo.color
-                                    }}>
-                                        {statusInfo.label}
-                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        {/* Payment Status Badge */}
+                                        <span style={{
+                                            padding: '2px 8px',
+                                            borderRadius: 10,
+                                            fontSize: 11,
+                                            fontWeight: 600,
+                                            background: (order.payment_status === 'paid' || order.payment_confirmed || order.paymentConfirmed) ? '#22C55E' : '#F59E0B',
+                                            color: 'white'
+                                        }}>
+                                            {(order.payment_status === 'paid' || order.payment_confirmed || order.paymentConfirmed)
+                                                ? '✅ Paid'
+                                                : order.payment_method === 'mercadopago' || order.paymentMethod === 'mercadopago'
+                                                    ? '⏳ Pending'
+                                                    : '💵 Cash'}
+                                        </span>
+                                        <span style={{
+                                            padding: '4px 10px',
+                                            borderRadius: 20,
+                                            fontSize: 12,
+                                            fontWeight: 600,
+                                            background: statusInfo.bg,
+                                            color: statusInfo.color
+                                        }}>
+                                            {statusInfo.label}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div style={{ padding: 16 }}>
@@ -348,6 +392,37 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                     : t('confirm_payment')}
                                             </button>
                                         </div>
+
+                                        {/* Cancel Order */}
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('Are you sure you want to cancel this order?')) {
+                                                    const isRealOrder = !demoMode && !order.id.startsWith('demo-');
+                                                    if (isRealOrder && businessId) {
+                                                        await supabase
+                                                            .from('orders')
+                                                            .update({ status: 'cancelled' })
+                                                            .eq('id', order.id)
+                                                            .eq('business_id', businessId);
+                                                    }
+                                                    updateOrder(order.id, { status: 'cancelled' });
+                                                    setOrders(getOrders());
+                                                }
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px',
+                                                background: '#DC2626',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: 8,
+                                                fontWeight: 600,
+                                                fontSize: 13,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
 
                                         {/* Delivery Confirmation Code Input — Only for dispatched */}
                                         {order.status === 'dispatched' && (order.customer_phone || order.customerInfo) && (
@@ -455,7 +530,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
                 {/* Today's delivery summary */}
                 <div style={{ textAlign: 'center', marginTop: 24, color: '#9CA3AF', fontSize: 13 }}>
-                    <p>{t('processed_today')}<strong style={{ color: '#F97316' }}>{todayDeliveries}</strong></p>
+                    <p>{t('processed_today')}<strong style={{ color: '#F97316' }}>{todayOrders}</strong></p>
                 </div>
             </div>
 

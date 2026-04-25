@@ -62,7 +62,7 @@ const Analytics = () => {
     const [loading, setLoading] = useState(true)
     const [dateRange, setDateRange] = useState('today')
 
-    // FETCH ORDERS
+    // FETCH ORDERS + real-time subscription
     useEffect(() => {
         if (!businessId) return
         let cancelled = false
@@ -87,7 +87,17 @@ const Analytics = () => {
         }
 
         fetchOrders()
-        return () => { cancelled = true }
+
+        const subscription = supabase
+            .channel(`analytics-orders-${businessId}-${dateRange}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `business_id=eq.${businessId}` },
+                () => { if (!cancelled) fetchOrders() })
+            .subscribe()
+
+        return () => {
+            cancelled = true
+            supabase.removeChannel(subscription)
+        }
     }, [businessId, dateRange])
 
     // COMPUTED STATS

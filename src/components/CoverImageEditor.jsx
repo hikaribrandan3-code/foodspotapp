@@ -517,8 +517,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                                 { label: 'Envíos', icon: HeroDeliveryIcon },
                                 { label: 'Promos', icon: HeroPromosIcon },
                                 { label: 'Mini Game', icon: HeroGameIcon }
-                            ].map((action, i) => (
-                                <div key={i} style={{
+                            ].map((action) => (
+                                <div key={action.label} style={{
                                     background: 'white',
                                     borderRadius: 28,
                                     padding: 16,
@@ -536,18 +536,6 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                             ))}
                         </div>
 
-                        {/* GHOST GRID (2 Columns) */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            {[1, 2, 3, 4].map(n => (
-                                <div key={n} style={{
-                                    background: 'white', borderRadius: 16, overflow: 'hidden',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
-                                }}>
-                                    <div style={{ height: 120, background: '#E5E0D8' }} />
-                                    <div style={{ height: 40 }} />
-                                </div>
-                            ))}
-                        </div>
                     </div>
                 </div>
 
@@ -732,13 +720,13 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 width: '83%', height: '83%', border: '1px dashed rgba(255,255,255,0.5)',
                 pointerEvents: 'none', zIndex: 12, borderRadius: 8
             }}>
-                <div style={{ position: 'absolute', top: -18, left: 0, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>16:9 SAFE ZONE</div>
+                <div style={{ position: 'absolute', top: -18, left: 0, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Logo Safe Zone</div>
             </div>
 
             <div style={{ position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 10, maxWidth: '90%' }}>
                 <p style={{ margin: 0, fontSize: 11, color: '#9CA3AF', lineHeight: 1.4 }}>
                     💡 <strong>Safe Zone:</strong> Keep key content in the dashed box.<br />
-                    Works like Facebook/Instagram • Drag to center food
+                    Works like Facebook/Instagram • Center your logo here
                 </p>
             </div>
         </div>

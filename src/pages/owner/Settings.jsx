@@ -205,15 +205,15 @@ const Settings = () => {
             app_config: tenant.app_config || {},
             menu_data: tenant.menu_data || { categories: [] },
 
-            // Payment & Fulfillment
-            service_modes: tenant.service_modes || {
+            // Payment & Fulfillment — stored in app_config JSONB
+            service_modes: tenant.app_config?.service_modes || tenant.service_modes || {
                 pickup: true,
                 delivery: true,
                 dineIn: false,
                 dineInPayment: 'after',
                 events: false
             },
-            payment_methods: tenant.payment_methods || {
+            payment_methods: tenant.app_config?.payment_methods || tenant.payment_methods || {
                 cash: true,
                 mercado_pago: true,
                 card: false,
@@ -416,10 +416,12 @@ const Settings = () => {
                 munchboy_shell_color: draft.munchboy_shell_color,
                 munchboy_a_color: draft.munchboy_a_color,
                 munchboy_b_color: draft.munchboy_b_color,
-                app_config: draft.app_config,
+                app_config: {
+                    ...draft.app_config,
+                    service_modes: draft.service_modes,
+                    payment_methods: draft.payment_methods,
+                },
                 menu_data: draft.menu_data,
-                service_modes: draft.service_modes,
-                payment_methods: draft.payment_methods,
             };
 
             const { data: savedData, error: saveError } = await updateBranding(payload, businessId);
@@ -1084,171 +1086,112 @@ const Settings = () => {
                 {/* ========== PAYMENT & FULFILLMENT ========== */}
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>💳 {t('payment_settings') || 'Payment & Fulfillment'}</h3>
+                        <h3>{t('payment_settings') || 'Payment & Fulfillment'}</h3>
                     </div>
 
                     {/* SERVICE MODES */}
-                    <div style={{ marginBottom: 24 }}>
-                        <h4 style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 12 }}>
+                    <div style={{ marginBottom: 20 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
                             {t('service_modes') || 'Service Modes'}
-                        </h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={draft.service_modes?.pickup ?? true}
-                                    onChange={(e) => {
-                                        setDraft(d => ({
-                                            ...d,
-                                            service_modes: { ...d.service_modes, pickup: e.target.checked }
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <span style={{ fontSize: 13, color: '#374151' }}>📦 Pickup</span>
-                            </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={draft.service_modes?.delivery ?? true}
-                                    onChange={(e) => {
-                                        setDraft(d => ({
-                                            ...d,
-                                            service_modes: { ...d.service_modes, delivery: e.target.checked }
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <span style={{ fontSize: 13, color: '#374151' }}>🚚 Delivery</span>
-                            </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={draft.service_modes?.dineIn ?? false}
-                                    onChange={(e) => {
-                                        setDraft(d => ({
-                                            ...d,
-                                            service_modes: { ...d.service_modes, dineIn: e.target.checked }
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <span style={{ fontSize: 13, color: '#374151' }}>🍽️ Dine In</span>
-                            </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={draft.service_modes?.events ?? false}
-                                    onChange={(e) => {
-                                        setDraft(d => ({
-                                            ...d,
-                                            service_modes: { ...d.service_modes, events: e.target.checked }
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <span style={{ fontSize: 13, color: '#374151' }}>🎉 Events</span>
-                            </label>
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                            {[
+                                { key: 'pickup',   label: 'Pickup',   defaultOn: true  },
+                                { key: 'delivery', label: 'Delivery', defaultOn: true  },
+                                { key: 'dineIn',   label: 'Dine In',  defaultOn: false },
+                                { key: 'events',   label: 'Events',   defaultOn: false },
+                            ].map(({ key, label, defaultOn }) => {
+                                const on = draft.service_modes?.[key] ?? defaultOn;
+                                return (
+                                    <div
+                                        key={key}
+                                        onClick={() => {
+                                            setDraft(d => ({ ...d, service_modes: { ...d.service_modes, [key]: !on } }));
+                                            setHasChanges(true);
+                                        }}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
+                                            background: on ? '#F0FDF4' : '#F9FAFB',
+                                            border: `1px solid ${on ? '#22C55E' : '#E5E7EB'}`
+                                        }}
+                                    >
+                                        <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
+                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#22C55E' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s' }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* DINE-IN PAYMENT TIMING */}
+                    {/* DINE-IN PAYMENT TIMING — only shown when Dine In is on */}
                     {draft.service_modes?.dineIn && (
-                        <div style={{ marginBottom: 24, padding: 12, background: '#F0FDF4', borderRadius: 12 }}>
-                            <h4 style={{ fontSize: 14, fontWeight: 600, color: '#166534', marginBottom: 8 }}>
-                                🕐 {t('dine_in_payment') || 'Dine-In Payment'}
-                            </h4>
+                        <div style={{ marginBottom: 20 }}>
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
+                                {t('dine_in_payment') || 'Dine-In Payment Timing'}
+                            </p>
                             <div style={{ display: 'flex', gap: 8 }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-                                    <input
-                                        type="radio"
-                                        name="dineInPayment"
-                                        checked={draft.service_modes?.dineInPayment === 'before'}
-                                        onChange={() => {
-                                            setDraft(d => ({
-                                                ...d,
-                                                service_modes: { ...d.service_modes, dineInPayment: 'before' }
-                                            }));
-                                            setHasChanges(true);
-                                        }}
-                                    />
-                                    <span>💳 Pay Before (Upfront)</span>
-                                </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-                                    <input
-                                        type="radio"
-                                        name="dineInPayment"
-                                        checked={draft.service_modes?.dineInPayment === 'after'}
-                                        onChange={() => {
-                                            setDraft(d => ({
-                                                ...d,
-                                                service_modes: { ...d.service_modes, dineInPayment: 'after' }
-                                            }));
-                                            setHasChanges(true);
-                                        }}
-                                    />
-                                    <span>🧾 Pay After (At End)</span>
-                                </label>
+                                {[
+                                    { value: 'before', label: 'Pay Before (Upfront)' },
+                                    { value: 'after',  label: 'Pay After (At End)'  },
+                                ].map(({ value, label }) => {
+                                    const active = draft.service_modes?.dineInPayment === value;
+                                    return (
+                                        <button
+                                            key={value}
+                                            onClick={() => {
+                                                setDraft(d => ({ ...d, service_modes: { ...d.service_modes, dineInPayment: value } }));
+                                                setHasChanges(true);
+                                            }}
+                                            style={{
+                                                flex: 1, padding: '10px 12px', borderRadius: 8, border: `1px solid ${active ? '#F59E0B' : '#E5E7EB'}`,
+                                                background: active ? '#FFFBEB' : '#F9FAFB',
+                                                color: active ? '#92400E' : '#6B7280',
+                                                fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            {label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
 
                     {/* PAYMENT METHODS */}
                     <div>
-                        <h4 style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 12 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
                             {t('payment_methods') || 'Payment Methods'}
-                        </h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={draft.payment_methods?.cash ?? true}
-                                    onChange={(e) => {
-                                        setDraft(d => ({
-                                            ...d,
-                                            payment_methods: { ...d.payment_methods, cash: e.target.checked }
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <span style={{ fontSize: 13, color: '#374151' }}>💵 Cash</span>
-                            </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={draft.payment_methods?.mercado_pago ?? true}
-                                    onChange={(e) => {
-                                        setDraft(d => ({
-                                            ...d,
-                                            payment_methods: { ...d.payment_methods, mercado_pago: e.target.checked }
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <span style={{ fontSize: 13, color: '#374151' }}>💳 Mercado Pago</span>
-                            </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', opacity: 0.5 }}>
-                                <input
-                                    type="checkbox"
-                                    disabled
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <span style={{ fontSize: 13, color: '#9CA3AF' }}>🏦 Card (Coming Soon)</span>
-                            </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', opacity: 0.5 }}>
-                                <input
-                                    type="checkbox"
-                                    disabled
-                                    style={{ accentColor: '#22C55E' }}
-                                />
-                                <span style={{ fontSize: 13, color: '#9CA3AF' }}>🏧 Bank Transfer (Coming Soon)</span>
-                            </label>
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                            {[
+                                { key: 'cash',         label: 'Cash'         },
+                                { key: 'mercado_pago', label: 'Mercado Pago' },
+                            ].map(({ key, label }) => {
+                                const on = draft.payment_methods?.[key] ?? true;
+                                return (
+                                    <div
+                                        key={key}
+                                        onClick={() => {
+                                            setDraft(d => ({ ...d, payment_methods: { ...d.payment_methods, [key]: !on } }));
+                                            setHasChanges(true);
+                                        }}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
+                                            background: on ? '#EFF6FF' : '#F9FAFB',
+                                            border: `1px solid ${on ? '#3B82F6' : '#E5E7EB'}`
+                                        }}
+                                    >
+                                        <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
+                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#3B82F6' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s' }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
