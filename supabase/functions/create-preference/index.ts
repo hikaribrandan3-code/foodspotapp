@@ -147,7 +147,7 @@ serve(async (req: Request) => {
         // 5. BUILD MP PREFERENCE
         // ============================================
         // 🛡️ CRITICAL: notification_url points to the mp-webhook Edge Function, NOT the frontend
-        const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/mercadopago-handler`;
+        const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/mp-webhook`;
 
         // Build the frontend base URL for back_urls
         const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://foodspot.app";

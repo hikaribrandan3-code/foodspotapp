@@ -376,21 +376,12 @@ function Order({ config: configProp }) {
                     throw new Error('No init_point returned from Edge Function')
 
                 } catch (mpError) {
-                    // ========== SILENT MP FALLBACK ==========
-                    // Order already exists (Step 2). Patch it to cash.
-                    console.warn('[Order] MP fallback triggered:', mpError.message)
-
-                    await supabase
-                        .from('orders')
-                        .update({ payment_method: 'efectivo' })
-                        .eq('id', savedOrder.id)
-
-                    // Fire WhatsApp as the receipt for the now-cash order
-                    if (whatsappUrl) {
-                        window.open(whatsappUrl, '_blank')
-                    }
-
-                    showToast('✅ ' + t('cash_registered'))
+                    // ========== MP ERROR: SHOW TO USER, DON'T SILENT-FALLBACK ==========
+                    console.error('[Order] MP payment failed:', mpError.message)
+                    setRetryError(mpError.message || 'Payment failed. Please try again.')
+                    showToast('❌ ' + (mpError.message || 'Payment failed'))
+                    setIsSubmitting(false)
+                    return
                 }
             }
 

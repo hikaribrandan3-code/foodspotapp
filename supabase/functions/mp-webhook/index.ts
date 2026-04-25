@@ -186,25 +186,43 @@ serve(async (req: Request) => {
         // ============================================
         // 3. MULTI-TENANT TOKEN LOOKUP
         // ============================================
-        if (!mpUserId) {
-            console.error("❌ Missing user_id in webhook payload - Cannot identify tenant");
-            return new Response(JSON.stringify({ error: "Missing user_id" }), { status: 400, headers: corsHeaders });
+        let accessToken: string | null = null;
+        let businessId: string | null = null;
+
+        // Try branding_secrets first (proper multi-tenant path)
+        if (mpUserId) {
+            const { data: secretData, error: secretError } = await supabase
+                .from("branding_secrets")
+                .select("mp_access_token, id, business_id")
+                .eq("mp_user_id", mpUserId)
+                .single();
+
+            if (!secretError && secretData?.mp_access_token) {
+                accessToken = secretData.mp_access_token;
+                businessId = secretData.business_id;
+                console.log(`🏢 Tenant from branding_secrets: ${secretData.id}, Business: ${businessId}`);
+            }
         }
 
-        const { data: secretData, error: secretError } = await supabase
-            .from("branding_secrets")
-            .select("mp_access_token, id, business_id")
-            .eq("mp_user_id", mpUserId)
-            .single();
+        // FALLBACK: Try branding table directly (legacy / single-tenant setups)
+        if (!accessToken && existingOrder?.business_id) {
+            const { data: branding, error: brandingError } = await supabase
+                .from("branding")
+                .select("mp_access_token, business_id")
+                .eq("business_id", existingOrder.business_id)
+                .single();
 
-        if (secretError || !secretData || !secretData.mp_access_token) {
-            console.error(`❌ No tenant/token found for MP User ID: ${mpUserId}`);
-            return new Response(JSON.stringify({ error: "Tenant not found or no token" }), { status: 404, headers: corsHeaders });
+            if (!brandingError && branding?.mp_access_token) {
+                accessToken = branding.mp_access_token;
+                businessId = branding.business_id;
+                console.log(`🏢 Tenant from branding (fallback): Business: ${businessId}`);
+            }
         }
 
-        const accessToken = secretData.mp_access_token;
-        const businessId = secretData.business_id;
-        console.log(`🏢 Tenant Identified: ${secretData.id}, Business: ${businessId}`);
+        if (!accessToken) {
+            console.error(`❌ No MP access token found for order ${orderId}. Checked branding_secrets (mp_user_id=${mpUserId}) and branding fallback.`);
+            return new Response(JSON.stringify({ error: "No access token found" }), { status: 404, headers: corsHeaders });
+        }
 
         // ============================================
         // 4. FETCH PAYMENT DETAILS
