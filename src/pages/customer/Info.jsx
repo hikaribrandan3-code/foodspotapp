@@ -66,7 +66,7 @@ const Info = ({ config }) => {
             display: 'flex',
             flexDirection: 'column',
             padding: 0,
-            paddingBottom: '70px',
+            paddingBottom: '0',
             background: 'white',
             minHeight: '100vh',
             textAlign: 'center',
@@ -101,7 +101,7 @@ const Info = ({ config }) => {
                     {isPillEnabled('mercadoPago') && (
                         <button
                             style={{ ...buttonBase, background: getPillColor('mercadoPago') }}
-                            onClick={() => navigate(`/${tenantSlug}/checkout`)}
+                            onClick={() => navigate(`/${tenantSlug}/menu`)}
                         >
                             {t('info_mercado_pago')}
                         </button>
