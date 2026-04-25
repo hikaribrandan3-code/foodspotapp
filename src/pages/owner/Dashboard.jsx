@@ -6,6 +6,7 @@ import { useOrdersPolling } from '../../hooks/useOrdersPolling'
 import { formatPrice } from '../../config/menuData'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics'
 import BurgerLoader from '../../components/BurgerLoader'
+import BackendNav from '../../components/BackendNav'
 
 const T = {
   bg:       '#F4F6F9',
@@ -341,7 +342,7 @@ export default function Dashboard() {
     <div style={{
       width: '100%', height: '100vh', background: T.bg, color: T.ink,
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      display: 'grid', gridTemplateRows: 'auto 1fr', overflow: 'hidden',
+      display: 'grid', gridTemplateRows: 'auto 1fr auto', overflow: 'hidden',
     }}>
       <OnlinePill />
 
@@ -438,6 +439,8 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      <BackendNav />
     </div>
   )
 }
