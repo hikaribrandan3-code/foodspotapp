@@ -68,6 +68,7 @@ import Settings from './pages/owner/Settings.jsx'
 import Analytics from './pages/owner/Analytics.jsx'
 import FoodSpotAI from './pages/owner/FoodSpotAI.jsx'
 import DeliveryManager from './pages/owner/DeliveryManager.jsx'
+import Dashboard from './pages/owner/Dashboard.jsx'
 
 // Admin Pages (Lazy-loaded)
 const SuperAdmin = lazy(() => import('./pages/admin/SuperAdmin.jsx'))
@@ -531,8 +532,8 @@ function App() {
                                             <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
                                             <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/orders" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><DeliveryManager config={safeConfig} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/orders" element={<ProtectedRoute requiredRole="owner"><Dashboard /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><Dashboard /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
