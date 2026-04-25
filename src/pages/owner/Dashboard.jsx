@@ -173,7 +173,7 @@ function OrderCard({ order, onAdvance, onCancel }) {
           {order.customer_name || 'Guest'}
         </span>
         <TagPill tone="green">{isDelivery ? 'DELIVERY' : 'PICKUP'}</TagPill>
-        {order.delivery_address && (
+        {order.delivery_address && typeof order.delivery_address === 'string' && (
           <TagPill tone="green">{order.delivery_address.split(' ').slice(0, 2).join(' ')}</TagPill>
         )}
       </div>
