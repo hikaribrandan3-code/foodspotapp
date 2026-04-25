@@ -210,11 +210,11 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         fontSize: 32,
                         lineHeight: 1.1,
                         fontWeight: order.status === 'pending_payment' ? 500 : 700,
-                        color: order.status === 'pending_payment' ? '#525252' : '#0a0a0a',
+                        color: order.status === 'cancelled' ? '#dc2626' : order.status === 'pending_payment' ? '#525252' : '#0a0a0a',
                         letterSpacing: -0.8,
                         margin: '8px 0 0'
                     }}>
-                        {order.status === 'delivered' ? 'Order Delivered' : order.status === 'pending_payment' ? 'Awaiting Confirmation' : 'Order Confirmed'}
+                        {order.status === 'delivered' ? 'Order Delivered' : order.status === 'cancelled' ? 'Order Cancelled' : order.status === 'pending_payment' ? 'Awaiting Confirmation' : 'Order Confirmed'}
                     </h1>
 
                     <div style={{
@@ -229,7 +229,11 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '18px 0 16px' }} />
 
-                    {!isPaid ? (
+                    {order.status === 'cancelled' ? (
+                        <div style={{ textAlign: 'center', padding: '20px 0', color: '#dc2626', fontSize: 14 }}>
+                            This order has been cancelled and cannot be completed.
+                        </div>
+                    ) : !isPaid ? (
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#737373', fontSize: 14 }}>
                             Completing payment... your receipt will appear here.
                         </div>
