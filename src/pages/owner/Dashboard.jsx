@@ -440,7 +440,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <BackendNav />
+      <BackendNav useRoutes={true} role="owner" />
     </div>
   )
 }
