@@ -53,29 +53,11 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         // Fetch immediately
         fetchSupabaseOrders()
 
-        // Subscribe to real-time changes (SILO-FILTERED)
-        const subscription = supabase
-            .channel(`delivery-orders-${businessId}`)
-            .on(
-                'postgres_changes',
-                { 
-                    event: '*', 
-                    schema: 'public', 
-                    table: 'orders',
-                    filter: `business_id=eq.${businessId}` // 🔐 SILO FILTER
-                },
-                () => {
-                    fetchSupabaseOrders()
-                }
-            )
-            .subscribe()
-
-        // Fallback poll every 5s if subscription fails
+        // Poll every 5s (realtime subscription removed — was causing Supabase internals crash)
         const interval = setInterval(fetchSupabaseOrders, 5000)
 
         return () => {
             clearInterval(interval)
-            subscription.unsubscribe()
         }
     }, [demoMode, businessId])
 
