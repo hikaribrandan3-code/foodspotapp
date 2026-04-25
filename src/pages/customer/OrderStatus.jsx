@@ -154,6 +154,9 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const total = order.total || (subtotal + (deliveryFee || 0) + tax)
 
     const getStatusText = () => {
+        if (isCashMethod && !paid && order.status !== 'cancelled' && order.status !== 'delivered') {
+            return isDelivery ? 'Awaiting cash on delivery' : 'Awaiting payment at pickup'
+        }
         switch (order.status) {
             case 'pending_payment': return 'Awaiting confirmation'
             case 'paid_unreleased': return 'Payment received'
@@ -218,7 +221,11 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         letterSpacing: -0.8,
                         margin: '8px 0 0'
                     }}>
-                        {order.status === 'delivered' ? 'Order Delivered' : order.status === 'cancelled' ? 'Order Cancelled' : order.status === 'pending_payment' ? 'Awaiting Confirmation' : 'Order Confirmed'}
+                        {order.status === 'delivered' ? 'Order Delivered'
+                            : order.status === 'cancelled' ? 'Order Cancelled'
+                            : order.status === 'pending_payment' ? 'Awaiting Confirmation'
+                            : isCashMethod && !paid ? 'Order Confirmed — Unpaid'
+                            : 'Order Confirmed'}
                     </h1>
 
                     <div style={{
@@ -230,17 +237,6 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     }}>
                         Order #{order.order_number || 'N/A'} · {orderDate} · {orderTime}
                     </div>
-
-                    {isCashMethod && !paid && order.status !== 'cancelled' && (
-                        <div style={{
-                            background: '#EFF6FF', border: '1px solid #BFDBFE',
-                            borderRadius: 8, padding: '10px 14px', marginBottom: 16,
-                            fontSize: 13, color: '#1E40AF', fontWeight: 500,
-                            display: 'flex', alignItems: 'center', gap: 8
-                        }}>
-                            {isDelivery ? 'Pay the driver on delivery' : 'Pay at pickup — not charged yet'}
-                        </div>
-                    )}
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '18px 0 16px' }} />
 
