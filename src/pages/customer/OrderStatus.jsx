@@ -167,12 +167,13 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }
 
     const getPaymentDisplay = () => {
-        if (order.payment_method === 'cash') return 'Cash'
-        if (order.payment_method === 'card_on_delivery') return 'Card on Delivery'
+        if (order.payment_method === 'cash' || order.payment_method === 'efectivo') return 'Cash'
+        if (order.payment_method === 'card_on_delivery' || order.payment_method === 'tarjeta_envio') return 'Card on Delivery'
         if (order.payment_method === 'mercado_pago') {
             const lastFour = order.mp_card_last4 || '****'
             return `Card · ${lastFour}`
         }
+        if (order.payment_method === 'pay_at_counter' || order.payment_method === 'dine_in') return 'Pay at Table'
         return order.payment_method || 'Cash'
     }
 
