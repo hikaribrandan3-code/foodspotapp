@@ -83,7 +83,7 @@ function Home({ config: configProp }) {
         if (root) root.style.minHeight = '100dvh'
         if (appContainer) {
             appContainer.classList.add('app-home-tight')
-            appContainer.style.justifyContent = 'center'
+            appContainer.style.justifyContent = 'flex-start'
         }
         if (pageEl) {
             pageEl.style.flex = '0 0 auto'
@@ -652,7 +652,7 @@ function Home({ config: configProp }) {
                 }
                 .app-container.app-home-tight {
                     min-height: 100dvh !important;
-                    justify-content: center !important;
+                    justify-content: flex-start !important;
                     padding-bottom: 0 !important;
                 }
             `}</style>
