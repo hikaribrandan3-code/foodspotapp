@@ -155,30 +155,30 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
     const getStatusText = () => {
         if (isCashMethod && !paid && order.status !== 'cancelled' && order.status !== 'delivered') {
-            return isDelivery ? 'Awaiting cash on delivery' : 'Awaiting payment at pickup'
+            return isDelivery ? t('status_awaiting_delivery') : t('status_awaiting_pickup')
         }
         switch (order.status) {
-            case 'pending_payment': return 'Awaiting confirmation'
-            case 'paid_unreleased': return 'Payment received'
-            case 'released_to_kitchen': return 'Confirmed'
-            case 'preparing': return 'In Kitchen'
-            case 'ready': return 'Ready'
-            case 'dispatched': return 'On the way'
-            case 'delivered': return 'Delivered'
-            case 'cancelled': return 'Cancelled'
-            default: return 'In Kitchen'
+            case 'pending_payment': return t('status_awaiting_confirmation')
+            case 'paid_unreleased': return t('status_payment_received')
+            case 'released_to_kitchen': return t('status_confirmed')
+            case 'preparing': return t('status_preparing')
+            case 'ready': return t('status_ready_pickup')
+            case 'dispatched': return t('status_on_the_way')
+            case 'delivered': return t('status_delivered')
+            case 'cancelled': return t('status_cancelled')
+            default: return t('status_preparing')
         }
     }
 
     const getPaymentDisplay = () => {
-        if (order.payment_method === 'cash' || order.payment_method === 'efectivo') return 'Cash'
-        if (order.payment_method === 'card_on_delivery' || order.payment_method === 'tarjeta_envio') return 'Card on Delivery'
+        if (order.payment_method === 'cash' || order.payment_method === 'efectivo') return t('cash')
+        if (order.payment_method === 'card_on_delivery' || order.payment_method === 'tarjeta_envio') return t('card_on_delivery')
         if (order.payment_method === 'mercado_pago') {
             const lastFour = order.mp_card_last4 || '****'
-            return `Card · ${lastFour}`
+            return t('card_last4').replace('{last4}', lastFour)
         }
-        if (order.payment_method === 'pay_at_counter' || order.payment_method === 'dine_in') return 'Pay at Table'
-        return order.payment_method || 'Cash'
+        if (order.payment_method === 'pay_at_counter' || order.payment_method === 'dine_in') return t('pay_at_table')
+        return order.payment_method || t('cash')
     }
 
     const isCashMethod = order.payment_method === 'efectivo' || order.payment_method === 'cash'
@@ -221,11 +221,11 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         letterSpacing: -0.8,
                         margin: '8px 0 0'
                     }}>
-                        {order.status === 'delivered' ? 'Order Delivered'
-                            : order.status === 'cancelled' ? 'Order Cancelled'
-                            : order.status === 'pending_payment' ? 'Awaiting Confirmation'
-                            : isCashMethod && !paid ? 'Order Confirmed — Unpaid'
-                            : 'Order Confirmed'}
+                        {order.status === 'delivered' ? t('heading_order_delivered')
+                            : order.status === 'cancelled' ? t('heading_order_cancelled')
+                            : order.status === 'pending_payment' ? t('heading_awaiting_confirmation')
+                            : isCashMethod && !paid ? t('heading_confirmed_unpaid')
+                            : t('heading_order_confirmed')}
                     </h1>
 
                     <div style={{
@@ -235,7 +235,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         fontFamily: 'monospace',
                         fontVariantNumeric: 'tabular-nums'
                     }}>
-                        Order #{order.order_number || 'N/A'} · {orderDate} · {orderTime}
+                        {t('order_number')} {order.order_number || 'N/A'} · {orderDate} · {orderTime}
                     </div>
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '18px 0 16px' }} />
@@ -284,7 +284,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 fontWeight: 400,
                                 color: '#525252',
                             }}>
-                                Subtotal
+                                {t('subtotal')}
                             </span>
                             <span style={{
                                 flex: 1, margin: '0 6px',
@@ -310,7 +310,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                     fontWeight: 400,
                                     color: '#525252',
                                 }}>
-                                    Delivery fee
+                                    {t('shipping')}
                                 </span>
                                 <span style={{
                                     flex: 1, margin: '0 6px',
@@ -322,7 +322,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                     fontWeight: 500, color: '#0a0a0a',
                                     fontVariantNumeric: 'tabular-nums',
                                 }}>
-                                    {deliveryFee === 0 ? 'Free' : `$${fmt(deliveryFee)}`}
+                                    {deliveryFee === 0 ? t('free_label') : `$${fmt(deliveryFee)}`}
                                 </span>
                             </div>
                         )}
@@ -336,7 +336,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 fontWeight: 400,
                                 color: '#525252',
                             }}>
-                                Tax
+                                {t('tax')}
                             </span>
                             <span style={{
                                 flex: 1, margin: '0 6px',
@@ -363,7 +363,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 textTransform: 'uppercase',
                                 letterSpacing: 0.5,
                             }}>
-                                Total
+                                {t('total')}
                             </span>
                             <span style={{
                                 flex: 1, margin: '0 6px',
@@ -389,7 +389,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                                 gap: 12, padding: '3px 0', fontSize: 13,
                             }}>
-                                <span style={{ color: '#737373' }}>Delivery address</span>
+                                <span style={{ color: '#737373' }}>{t('delivery_address')}</span>
                                 <span style={{ color: '#0a0a0a', textAlign: 'right', maxWidth: '70%', fontSize: 13 }}>
                                     {typeof order.delivery_address === 'object'
                                         ? `${order.delivery_address.street} ${order.delivery_address.number}${order.delivery_address.floor ? ', ' + order.delivery_address.floor : ''}`
@@ -402,22 +402,22 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                                 gap: 12, padding: '3px 0', fontSize: 13,
                             }}>
-                                <span style={{ color: '#737373' }}>Table</span>
-                                <span style={{ color: '#0a0a0a' }}>Table {order.table_number}</span>
+                                <span style={{ color: '#737373' }}>{t('table')}</span>
+                                <span style={{ color: '#0a0a0a' }}>{t('table')} {order.table_number}</span>
                             </div>
                         )}
                         <div style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                             gap: 12, padding: '3px 0', fontSize: 13,
                         }}>
-                            <span style={{ color: '#737373' }}>Payment</span>
+                            <span style={{ color: '#737373' }}>{t('payment_method')}</span>
                             <span style={{ color: '#0a0a0a' }}>{getPaymentDisplay()}</span>
                         </div>
                         <div style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                             gap: 12, padding: '3px 0', fontSize: 13,
                         }}>
-                            <span style={{ color: '#737373' }}>Status</span>
+                            <span style={{ color: '#737373' }}>{t('status')}</span>
                             <span style={{ color: '#0a0a0a' }}>{getStatusText()}</span>
                         </div>
                     </div>
@@ -437,7 +437,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 borderRadius: 2,
                             }}
                         >
-                            Back to Home
+                            {t('back_to_home')}
                         </button>
                         <button
                             onClick={handleReorder}
@@ -451,7 +451,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 borderRadius: 2,
                             }}
                         >
-                            Order Again
+                            {t('order_again')}
                         </button>
                     </div>
 
@@ -460,7 +460,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         fontSize: 12, color: '#a3a3a3',
                         marginTop: 18,
                     }}>
-                        ¿Necesitas ayuda?{' '}
+                        {t('need_help')}{' '}
                         <a
                             href={whatsappUrl}
                             target="_blank"

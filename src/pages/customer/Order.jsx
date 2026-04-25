@@ -286,9 +286,12 @@ function Order({ config: configProp }) {
 
         // Payment-aware status assignment
         const isMercadoPago = paymentMethod === 'mercadopago'
+        const isCash = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
         const orderStatus = isMercadoPago
             ? 'pending_payment'      // MP: waiting for online payment
-            : 'released_to_kitchen'  // Cash/Dine-in: auto-accepted straight to kitchen
+            : isCash
+                ? 'paid_unreleased'  // Cash: owner must confirm payment before kitchen
+                : 'released_to_kitchen'  // Dine-in: auto-accepted straight to kitchen
 
         const orderPaymentStatus = 'pending'
 
@@ -302,6 +305,7 @@ function Order({ config: configProp }) {
             total: total,
             status: orderStatus,
             payment_status: orderPaymentStatus,
+            payment_confirmed: isCash ? false : undefined,
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,

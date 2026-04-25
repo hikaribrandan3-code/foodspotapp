@@ -29,15 +29,17 @@ const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
 // 🛡️ SAFETY CAGE: Status-Specific Action Buttons
 // ============================================
 // Each status has ONE clear action. No ambiguity.
-const getActionForStatus = (status, orderType) => {
+const getActionForStatus = (status, orderType, paymentConfirmed) => {
     switch (status) {
         case 'pending_payment':
             // ❌ NO BUTTON — Only webhook can advance this
             return null
 
         case 'paid_unreleased':
+            // Staff cannot accept unpaid cash orders — owner must confirm payment first
+            if (!paymentConfirmed) return null
             return {
-                label: '✅ ACEPTAR PEDIDO',
+                label: 'ACEPTAR PEDIDO',
                 targetStatus: 'released_to_kitchen',
                 color: '#22C55E',
                 confirm: false
@@ -45,7 +47,7 @@ const getActionForStatus = (status, orderType) => {
 
         case 'released_to_kitchen':
             return {
-                label: '👨‍🍳 ENVIAR A COCINA',
+                label: 'ENVIAR A COCINA',
                 targetStatus: 'preparing',
                 color: '#F97316',
                 confirm: false
@@ -53,7 +55,7 @@ const getActionForStatus = (status, orderType) => {
 
         case 'preparing':
             return {
-                label: '✨ MARCAR LISTO',
+                label: 'MARCAR LISTO',
                 targetStatus: 'ready',
                 color: '#06B6D4',
                 confirm: false
@@ -62,14 +64,14 @@ const getActionForStatus = (status, orderType) => {
         case 'ready':
             if (orderType === 'delivery') {
                 return {
-                    label: '🚗 DESPACHAR',
+                    label: 'DESPACHAR',
                     targetStatus: 'dispatched',
                     color: '#6366F1',
                     confirm: false
                 }
             } else {
                 return {
-                    label: '🏪 ENTREGAR',
+                    label: 'ENTREGAR',
                     targetStatus: 'delivered',
                     color: '#22C55E',
                     confirm: false
@@ -450,7 +452,7 @@ function StaffDashboard() {
                             {/* Order Cards */}
                             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {(ordersByStatus[status.id] || []).map(order => {
-                                    const action = getActionForStatus(order.status, order.order_type)
+                                    const action = getActionForStatus(order.status, order.order_type, order.payment_confirmed || order.paymentConfirmed)
                                     const isProcessing = processingOrderId === order.id
 
                                     return (

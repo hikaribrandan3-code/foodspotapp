@@ -216,10 +216,10 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle }) {
             const isPaid = order.payment_status === 'paid'
             const isCash = order.payment_method === 'efectivo' || order.payment_method === 'cash'
             const text = isPaid
-              ? '✅ Paid'
+              ? 'Paid'
               : isCash
-                ? order.order_type === 'delivery' ? '💵 Pay on Delivery' : '💵 Pay at Pickup'
-                : '💳 Payment Pending'
+                ? order.order_type === 'delivery' ? 'Pay on Delivery' : 'Pay at Pickup'
+                : 'Payment Pending'
             const bg = isPaid ? T.greenBg : T.blueBg
             return (
               <div style={{ fontSize: 13, color: isPaid ? T.greenInk : T.blueInk, marginBottom: 6, padding: '6px 8px', background: bg, borderRadius: 6, fontWeight: 600 }}>

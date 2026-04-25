@@ -36,26 +36,28 @@ const getStatusConfig = (status) => STATUS_PIPELINE.find(s => s.id === status) |
 const getActionForStatus = (status, orderType, paymentConfirmed) => {
     switch (status) {
         case 'pending_payment':
-            return paymentConfirmed ? null : { label: '💵 CONFIRMAR PAGO', action: 'confirm_payment', color: '#F59E0B' }
+            return paymentConfirmed ? null : { label: 'CONFIRMAR PAGO', action: 'confirm_payment', color: '#22C55E' }
 
         case 'paid_unreleased':
-            return { label: '✅ ACEPTAR PEDIDO', action: 'advance', targetStatus: 'released_to_kitchen', color: '#22C55E' }
+            return paymentConfirmed
+                ? { label: 'ACEPTAR PEDIDO', action: 'advance', targetStatus: 'released_to_kitchen', color: '#22C55E' }
+                : { label: 'CONFIRMAR PAGO', action: 'confirm_and_release', targetStatus: 'released_to_kitchen', color: '#22C55E' }
 
         case 'released_to_kitchen':
-            return { label: '👨‍🍳 ENVIAR A COCINA', action: 'advance', targetStatus: 'preparing', color: '#F97316' }
+            return { label: 'ENVIAR A COCINA', action: 'advance', targetStatus: 'preparing', color: '#F97316' }
 
         case 'preparing':
-            return { label: '✨ MARCAR LISTO', action: 'advance', targetStatus: 'ready', color: '#06B6D4' }
+            return { label: 'MARCAR LISTO', action: 'advance', targetStatus: 'ready', color: '#06B6D4' }
 
         case 'ready':
             if (orderType === 'delivery') {
-                return { label: '🚗 DESPACHAR', action: 'advance', targetStatus: 'dispatched', color: '#6366F1' }
+                return { label: 'DESPACHAR', action: 'advance', targetStatus: 'dispatched', color: '#6366F1' }
             } else {
-                return { label: '🏪 ENTREGAR', action: 'advance', targetStatus: 'delivered', color: '#22C55E' }
+                return { label: 'ENTREGAR', action: 'advance', targetStatus: 'delivered', color: '#22C55E' }
             }
 
         case 'dispatched':
-            return { label: '✅ CONFIRMAR ENTREGA', action: 'advance', targetStatus: 'delivered', color: '#22C55E' }
+            return { label: 'CONFIRMAR ENTREGA', action: 'advance', targetStatus: 'delivered', color: '#22C55E' }
 
         default:
             return null
@@ -172,6 +174,76 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
         updateOrder(orderId, { paymentConfirmed: true, paymentMethod: method })
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, payment_confirmed: true } : o))
+    }
+
+    const handleConfirmAndRelease = async (order, targetStatus) => {
+        if (processingOrderId) return
+        setProcessingOrderId(order.id)
+
+        // Step 1: Confirm payment
+        const method = paymentMethodSelect[order.id] || 'cash'
+        const isRealOrder = !demoMode && !order.id.startsWith('demo-')
+
+        if (isRealOrder && businessId) {
+            if (method === 'cash') {
+                const { data: dbOrder } = await supabase
+                    .from('orders')
+                    .select('id, total, business_id')
+                    .eq('id', order.id)
+                    .eq('business_id', businessId)
+                    .single()
+
+                if (dbOrder) {
+                    await handleCashPayment({
+                        orderId: order.id,
+                        amountCents: Math.round(dbOrder.total * 100),
+                        businessId: dbOrder.business_id,
+                        currency: 'ARS'
+                    })
+                }
+            }
+            await supabase
+                .from('orders')
+                .update({ payment_confirmed: true, paid_at: new Date().toISOString() })
+                .eq('id', order.id)
+                .eq('business_id', businessId)
+        }
+
+        updateOrder(order.id, { paymentConfirmed: true, paymentMethod: method })
+        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, payment_confirmed: true } : o))
+
+        // Step 2: Advance to target status (released_to_kitchen)
+        const validation = canAdvanceOrder({ ...order, payment_confirmed: true }, targetStatus, config)
+        if (!validation.allowed) {
+            alert(validation.reason)
+            setProcessingOrderId(null)
+            return
+        }
+
+        if (isRealOrder && businessId) {
+            const { data, error } = await supabase.rpc('advance_order_status', {
+                p_order_id: order.id,
+                p_target_status: targetStatus
+            })
+
+            if (error) {
+                console.error('RPC Error:', error)
+                alert('Error al actualizar pedido')
+                setProcessingOrderId(null)
+                return
+            }
+
+            if (data && !data.success) {
+                console.warn('FSM Rejection:', data.error, data.message)
+                alert(data.message || 'Error en transición')
+                setProcessingOrderId(null)
+                return
+            }
+        }
+
+        updateOrder(order.id, { status: targetStatus })
+        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: targetStatus, owner_status: targetStatus, payment_confirmed: true } : o))
+        setProcessingOrderId(null)
     }
 
     const handleAdvance = async (order, targetStatus) => {
@@ -378,7 +450,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                         onChange={(e) => setPaymentMethodSelect(prev => ({ ...prev, [order.id]: e.target.value }))}
                                                         style={{ padding: '8px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 12, background: 'white', minWidth: 100 }}
                                                     >
-                                                        <option value="cash">💵 Cash</option>
+                                                        <option value="cash">Cash</option>
                                                         <option value="mercado_pago">📱 MP</option>
                                                     </select>
                                                     <button
@@ -417,6 +489,8 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                         onClick={() => {
                                                             if (action.action === 'confirm_payment') {
                                                                 handlePaymentConfirm(order.id)
+                                                            } else if (action.action === 'confirm_and_release') {
+                                                                handleConfirmAndRelease(order, action.targetStatus)
                                                             } else if (action.action === 'advance') {
                                                                 if (action.targetStatus === 'delivered' && (order.customer_phone || order.customerInfo?.phone)) {
                                                                     const code = deliveryConfirmCode[order.id] || ''
