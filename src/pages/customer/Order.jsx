@@ -5,7 +5,6 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { getGuestToken } from '../../utils/guestToken.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
-import { getDividerPreset } from '../../config/dividerPresets.js'
 import { formatAddressForDisplay } from '../../utils/logistics.js' // Strike 17 Import
 import {
     getCurrentOrder,
@@ -721,10 +720,6 @@ function Order({ config: configProp }) {
         <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#F8F9FA' }}>
             <HeaderClamp config={config} />
 
-            {/* Divider Strip — no images, gradient only */}
-            <div style={{ height: 64, margin: '0 14px 16px', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #F5F0E8, #EDE8E0)' }} />
-            </div>
 
             <div style={{ margin: '0 14px' }}>
                 <div style={{ marginBottom: 20 }}>
