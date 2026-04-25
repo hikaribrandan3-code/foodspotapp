@@ -148,9 +148,19 @@ describe('Offline Payment Service', () => {
                 }
                 if (table === 'orders') {
                     return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                single: vi.fn().mockResolvedValue({
+                                    data: { status: 'paid_unreleased' },
+                                    error: null
+                                })
+                            })
+                        }),
                         update: vi.fn().mockReturnValue({
-                            eq: vi.fn().mockResolvedValue({
-                                error: null
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockResolvedValue({
+                                    error: null
+                                })
                             })
                         })
                     };
@@ -224,9 +234,19 @@ describe('Offline Payment Service', () => {
                 }
                 if (table === 'orders') {
                     return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                single: vi.fn().mockResolvedValue({
+                                    data: { status: 'paid_unreleased' },
+                                    error: null
+                                })
+                            })
+                        }),
                         update: vi.fn().mockReturnValue({
-                            eq: vi.fn().mockResolvedValue({
-                                error: null
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockResolvedValue({
+                                    error: null
+                                })
                             })
                         })
                     };
@@ -249,11 +269,25 @@ describe('Offline Payment Service', () => {
                 value: true,
             });
 
-            supabase.from.mockReturnValue({
-                insert: vi.fn().mockResolvedValue({
-                    data: null,
-                    error: new Error('Sync failed')
-                })
+            supabase.from.mockImplementation((table) => {
+                if (table === 'orders') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                single: vi.fn().mockResolvedValue({
+                                    data: { status: 'paid_unreleased' },
+                                    error: null
+                                })
+                            })
+                        })
+                    };
+                }
+                return {
+                    insert: vi.fn().mockResolvedValue({
+                        data: null,
+                        error: new Error('Sync failed')
+                    })
+                };
             });
 
             const result = await handleCashPayment({
@@ -314,9 +348,19 @@ describe('Offline Payment Service', () => {
                 }
                 if (table === 'orders') {
                     return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                single: vi.fn().mockResolvedValue({
+                                    data: { status: 'paid_unreleased' },
+                                    error: null
+                                })
+                            })
+                        }),
                         update: vi.fn().mockReturnValue({
-                            eq: vi.fn().mockResolvedValue({
-                                error: null
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockResolvedValue({
+                                    error: null
+                                })
                             })
                         })
                     };

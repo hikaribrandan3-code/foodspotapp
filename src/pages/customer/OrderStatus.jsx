@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { getGuestToken } from '../../utils/guestToken.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
-import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js'
+import { clearCurrentOrder, addToCurrentOrder, getScopedGuestToken } from '../../utils/storage.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
@@ -41,7 +40,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     if (fetchError) throw fetchError
                     setOrder(data)
                 } else {
-                    const guestToken = getGuestToken()
+                    const guestToken = getScopedGuestToken()
                     const storedPhone = localStorage.getItem('fs_customer_phone')
 
                     let query = supabase

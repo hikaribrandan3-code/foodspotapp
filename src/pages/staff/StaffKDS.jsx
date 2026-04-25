@@ -7,9 +7,9 @@ import { useCamTechListener } from '../../hooks/useCamTech';
 import BurgerLoader from '../../components/BurgerLoader';
 
 const KDS_COLUMNS = [
-    { id: 'paid', next: 'cooking', color: 'yellow' },
-    { id: 'cooking', next: 'ready', color: 'orange' },
-    { id: 'ready', next: 'completed', color: 'green' }
+    { id: 'released_to_kitchen', next: 'preparing', color: 'yellow' },
+    { id: 'preparing', next: 'ready', color: 'orange' },
+    { id: 'ready', next: null, color: 'green' } // next is order-type-aware
 ];
 
 export const StaffKDS = () => {
@@ -31,7 +31,7 @@ export const StaffKDS = () => {
     });
 
     const ordersByStatus = useMemo(() => {
-        const grouped = { paid: [], cooking: [], ready: [] };
+        const grouped = { released_to_kitchen: [], preparing: [], ready: [] };
         orders.forEach(order => {
             if (grouped[order.status]) {
                 grouped[order.status].push(order);
@@ -70,13 +70,18 @@ export const StaffKDS = () => {
                                             <div key={i}><strong>{item.quantity}x</strong> {item.name}</div>
                                         ))}
                                     </div>
-                                    <button 
+                                    <button
                                         disabled={order.isOptimistic}
-                                        onClick={() => transitionOrderState(order.id, order.status, col.next)}
+                                        onClick={() => {
+                                            const target = col.next || (order.order_type === 'delivery' ? 'dispatched' : 'delivered')
+                                            transitionOrderState(order.id, order.status, target)
+                                        }}
                                         className="btn-primary"
                                         style={{ width: '100%', padding: '12px', borderRadius: '8px', cursor: 'pointer' }}
                                     >
-                                        {t('ready_action')}
+                                        {col.next ? t('ready_action')
+                                            : order.order_type === 'delivery' ? 'Dispatch'
+                                            : 'Hand Over'}
                                     </button>
                                 </div>
                             ))}

@@ -80,6 +80,19 @@ export function queueOfflineCashPayment(paymentData) {
  */
 async function syncOfflinePayment(payment) {
     try {
+        // 🛡️ FETCH CURRENT STATUS FIRST — don't overwrite already-advanced orders
+        const { data: currentOrder, error: fetchError } = await supabase
+            .from('orders')
+            .select('status')
+            .eq('id', payment.order_id)
+            .single()
+
+        if (fetchError) throw fetchError
+
+        const currentStatus = currentOrder?.status
+        // Only advance status if order is still in a payment-pending state
+        const shouldAdvanceStatus = currentStatus === 'pending_payment' || currentStatus === 'paid_unreleased'
+
         // Create ledger entry
         const { data: ledgerData, error: ledgerError } = await supabase
             .from('transaction_ledger')
@@ -97,26 +110,30 @@ async function syncOfflinePayment(payment) {
             })
             .select()
             .single()
-        
+
         if (ledgerError) throw ledgerError
-        
-        // Update order status
-        const { error: orderError } = await supabase
-            .from('orders')
-            .update({
-                status: 'released_to_kitchen',
-                payment_status: 'paid',
-                payment_method: 'cash',
-                payment_confirmed: true,
-                paid_at: new Date().toISOString()
-            })
-            .eq('id', payment.order_id)
-        
-        if (orderError) throw orderError
-        
-        console.log('[OfflinePayment] ✅ Synced:', payment.id, 'Ledger:', ledgerData.id)
+
+        // Update order status ONLY if it hasn't been advanced by staff/owner yet
+        if (shouldAdvanceStatus) {
+            const { error: orderError } = await supabase
+                .from('orders')
+                .update({
+                    status: 'released_to_kitchen',
+                    owner_status: 'released_to_kitchen',
+                    payment_status: 'paid',
+                    payment_method: 'cash',
+                    payment_confirmed: true,
+                    paid_at: new Date().toISOString()
+                })
+                .eq('id', payment.order_id)
+                .eq('status', currentStatus) // 🛡️ extra guard against race conditions
+
+            if (orderError) throw orderError
+        }
+
+        console.log('[OfflinePayment] ✅ Synced:', payment.id, 'Ledger:', ledgerData.id, 'Advanced:', shouldAdvanceStatus)
         return { success: true, ledgerId: ledgerData.id }
-        
+
     } catch (error) {
         console.error('[OfflinePayment] ❌ Sync failed:', payment.id, error.message)
         return { success: false, error: error.message }

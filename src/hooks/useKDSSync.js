@@ -15,7 +15,7 @@ export const useKDSSync = (businessId) => {
             .from('orders')
             .select('*')
             .eq('business_id', businessId) // 🛡️ SILO GUARD
-            .in('status', ['paid', 'cooking', 'ready'])
+            .in('status', ['released_to_kitchen', 'preparing', 'ready'])
             .order('created_at', { ascending: true });
 
         if (!error && data) setOrders(data);
@@ -46,26 +46,26 @@ export const useKDSSync = (businessId) => {
                 
                 setOrders(current => {
                     if (eventType === 'INSERT') {
-                        if (['paid', 'cooking', 'ready'].includes(newRow.status)) {
+                        if (['released_to_kitchen', 'preparing', 'ready'].includes(newRow.status)) {
                             return [...current, newRow];
                         }
                         return current;
                     }
-                    
+
                     if (eventType === 'UPDATE') {
                         // 🛡️ SERVER CONFIRMATION: Clear snapback timer
                         if (snapbackTimers.current.has(newRow.id)) {
                             clearTimeout(snapbackTimers.current.get(newRow.id));
                             snapbackTimers.current.delete(newRow.id);
                         }
-                        
-                        if (['completed', 'cancelled', 'delivered'].includes(newRow.status)) {
+
+                        if (['dispatched', 'delivered', 'cancelled'].includes(newRow.status)) {
                             return current.filter(o => o.id !== newRow.id);
                         }
                         // Update order and remove optimistic flag
                         return current.map(o => o.id === newRow.id ? { ...newRow, isOptimistic: false } : o);
                     }
-                    
+
                     if (eventType === 'DELETE') return current.filter(o => o.id !== oldRow.id);
                     return current;
                 });
@@ -97,19 +97,22 @@ export const useKDSSync = (businessId) => {
         
         snapbackTimers.current.set(orderId, timer);
 
-        // 🛡️ 3. DATABASE MUTATION
-        const { error } = await supabase.rpc('transition_order_state', {
+        // 🛡️ 3. DATABASE MUTATION (via FSM RPC)
+        const { data, error } = await supabase.rpc('advance_order_status', {
             p_order_id: orderId,
-            p_new_status: newStatus
+            p_target_status: newStatus
         });
 
-        // If hard error (not just null return), rollback immediately
-        if (error) {
+        // If hard error or FSM rejection, rollback immediately
+        if (error || (data && !data.success)) {
             clearTimeout(timer);
             snapbackTimers.current.delete(orderId);
-            setOrders(current => current.map(o => 
+            setOrders(current => current.map(o =>
                 o.id === orderId ? { ...o, status: currentStatus, isOptimistic: false } : o
             ));
+            if (data && !data.success) {
+                console.warn('[KDS] FSM Rejection:', data.message)
+            }
         }
     }, []);
 

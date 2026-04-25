@@ -44,7 +44,7 @@ export function StaffKDSWithCamTech({ businessId }) {
         .from('orders')
         .select('*')
         .eq('business_id', businessId)
-        .in('status', ['paid', 'cooking', 'ready'])
+        .in('status', ['released_to_kitchen', 'preparing', 'ready'])
         .order('created_at', { ascending: true });
       
       if (error) throw error;
@@ -87,16 +87,19 @@ export function StaffKDSWithCamTech({ businessId }) {
   const updateStatus = async (orderId, newStatus) => {
     try {
       const { data, error } = await supabase
-        .rpc('transition_order_state', {
+        .rpc('advance_order_status', {
           p_order_id: orderId,
-          p_new_status: newStatus
+          p_target_status: newStatus
         });
-      
+
       if (error) throw error;
-      
+      if (data && !data.success) {
+        throw new Error(data.message || 'FSM transition rejected')
+      }
+
       // Refresh orders
       fetchOrders();
-      
+
     } catch (err) {
       console.error('[KDS] Status update error:', err);
       alert('Failed to update status: ' + err.message);
@@ -137,16 +140,16 @@ export function StaffKDSWithCamTech({ businessId }) {
             </div>
             
             <div style={styles.actions}>
-              {order.status === 'paid' && (
-                <button 
-                  onClick={() => updateStatus(order.id, 'cooking')}
+              {order.status === 'released_to_kitchen' && (
+                <button
+                  onClick={() => updateStatus(order.id, 'preparing')}
                   style={styles.cookingBtn}
                 >
-                  Start Cooking
+                  Start Prep
                 </button>
               )}
-              {order.status === 'cooking' && (
-                <button 
+              {order.status === 'preparing' && (
+                <button
                   onClick={() => updateStatus(order.id, 'ready')}
                   style={styles.readyBtn}
                 >
@@ -154,11 +157,11 @@ export function StaffKDSWithCamTech({ businessId }) {
                 </button>
               )}
               {order.status === 'ready' && (
-                <button 
-                  onClick={() => updateStatus(order.id, 'completed')}
+                <button
+                  onClick={() => updateStatus(order.id, order.order_type === 'delivery' ? 'dispatched' : 'delivered')}
                   style={styles.completeBtn}
                 >
-                  Complete
+                  {order.order_type === 'delivery' ? 'Dispatch' : 'Hand Over'}
                 </button>
               )}
             </div>
@@ -172,8 +175,8 @@ export function StaffKDSWithCamTech({ businessId }) {
 // Helper functions
 function getStatusStyle(status) {
   const styles = {
-    paid: { borderLeft: '4px solid #ffc107' },
-    cooking: { borderLeft: '4px solid #ff5722' },
+    released_to_kitchen: { borderLeft: '4px solid #ffc107' },
+    preparing: { borderLeft: '4px solid #ff5722' },
     ready: { borderLeft: '4px solid #4caf50' }
   };
   return styles[status] || {};
