@@ -679,38 +679,11 @@ function Order({ config: configProp }) {
     }
 
     // ============================================
-    // RENDER: EMPTY CART
+    // RENDER: EMPTY CART — Redirect to OrderStatusEmpty
     // ============================================
     if (!order?.items?.length) {
-        return (
-            <div style={{
-                minHeight: '100vh',
-                background: '#FAF9F7',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 20
-            }}>
-                <div style={{ fontSize: 64, marginBottom: 16 }}>🛒</div>
-                <p style={{ color: '#6B7280', marginBottom: 20 }}>Tu pedido está vacío</p>
-                <button
-                    onClick={() => navigate('../menu')}
-                    style={{
-                        padding: '14px 32px',
-                        background: tenantData?.primary_color || '#C4856A',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: 12,
-                        fontSize: 16,
-                        fontWeight: 600,
-                        cursor: 'pointer'
-                    }}
-                >
-                    Ver menú
-                </button>
-            </div>
-        )
+        navigate(`/${tenantSlug}/order/status`, { replace: true })
+        return null
     }
 
     // ============================================
