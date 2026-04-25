@@ -685,11 +685,16 @@ function OwnerLogin() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '24px'
                 }} onClick={(e) => { if (e.target === e.currentTarget) setShowForgot(false) }}>
-                    <div style={{
-                        background: '#fff', borderRadius: '24px', padding: '32px 24px',
-                        width: '100%', maxWidth: '380px',
-                        display: 'flex', flexDirection: 'column', gap: '16px'
-                    }}>
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        style={{
+                            background: '#fff', borderRadius: '24px', padding: '32px 24px',
+                            width: '100%', maxWidth: '380px',
+                            display: 'flex', flexDirection: 'column', gap: '16px',
+                            pointerEvents: 'auto'
+                        }}
+                    >
                         <h2 style={{
                             fontFamily: '"Plus Jakarta Sans", sans-serif',
                             fontSize: '22px', fontWeight: 800, color: '#191c1e',
@@ -727,6 +732,7 @@ function OwnerLogin() {
                                             onChange={(e) => setFpEmail(e.target.value)}
                                             placeholder="owner@restaurant.com"
                                             disabled={fpLoading}
+                                            autoFocus
                                             style={{
                                                 backgroundColor: 'transparent', border: 'none', outline: 'none',
                                                 width: '100%', color: '#191c1e', fontWeight: 500, fontSize: '16px'
@@ -813,6 +819,7 @@ function OwnerLogin() {
                                         value={fpPassword}
                                         onChange={(e) => setFpPassword(e.target.value)}
                                         disabled={fpLoading}
+                                        autoFocus
                                         style={{
                                             width: '100%', backgroundColor: '#f2f4f6',
                                             border: '1px solid rgba(219, 194, 173, 0.2)',
