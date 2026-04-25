@@ -66,7 +66,7 @@ const Info = ({ config }) => {
             display: 'flex',
             flexDirection: 'column',
             padding: 0,
-            paddingBottom: '120px',
+            paddingBottom: '70px',
             background: 'white',
             minHeight: '100vh',
             textAlign: 'center',
@@ -109,7 +109,7 @@ const Info = ({ config }) => {
 
                     {/* Rappi */}
                     {isPillEnabled('rappi') && (
-                        <button 
+                        <button
                             style={{ ...buttonBase, background: getPillColor('rappi') }}
                             onClick={() => {
                                 const rappiUrl = getPillContent('rappi');
@@ -122,7 +122,7 @@ const Info = ({ config }) => {
 
                     {/* PedidosYa */}
                     {isPillEnabled('pedidosYa') && (
-                        <button 
+                        <button
                             style={{ ...buttonBase, background: getPillColor('pedidosYa') }}
                             onClick={() => {
                                 const pyUrl = getPillContent('pedidosYa');
@@ -146,7 +146,7 @@ const Info = ({ config }) => {
                 </div>
 
                 {/* 3. FOOTER */}
-                <div style={{ marginTop: '40px' }}>
+                <div style={{ marginTop: '20px', marginBottom: 'auto' }}>
                     <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                         {t('powered_by')}
                     </p>
