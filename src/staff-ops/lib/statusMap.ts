@@ -72,10 +72,12 @@ function mapPaymentMethod(dbMethod: string | null): 'cash' | 'card' | 'online' {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapDbOrderToKimi(dbOrder: any): Order {
+  if (!dbOrder || typeof dbOrder !== 'object') return null as any;
+
   const paymentMethod = mapPaymentMethod(dbOrder.payment_method);
   const paymentConfirmed = dbOrder.payment_confirmed ?? false;
 
-  const status = toKimiStatus(dbOrder.status, paymentMethod, paymentConfirmed);
+  const status = toKimiStatus(String(dbOrder.status || 'pendiente'), paymentMethod, paymentConfirmed);
 
   const rawItems: { name: string; quantity: number; price?: number; specialInstructions?: string }[] =
     Array.isArray(dbOrder.items) ? dbOrder.items : [];

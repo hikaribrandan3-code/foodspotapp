@@ -171,7 +171,6 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       .from('orders')
       .select('*')
       .eq('business_id', businessId)
-      .not('status', 'in', '("entregado","cancelado","cancelled")')
       .order('created_at', { ascending: false })
       .limit(100)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -223,7 +222,6 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
                 .from('orders')
                 .select('*')
                 .eq('business_id', businessId)
-                .not('status', 'in', '("entregado","cancelado","cancelled")')
                 .order('created_at', { ascending: false })
                 .limit(100)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -240,7 +238,6 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
           .from('orders')
           .select('*')
           .eq('business_id', businessId)
-          .not('status', 'in', '("entregado","cancelado","cancelled")')
           .order('created_at', { ascending: false })
           .limit(100)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
