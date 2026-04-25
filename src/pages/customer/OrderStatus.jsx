@@ -5,6 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import { getGuestToken } from '../../utils/guestToken.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { clearCurrentOrder, addToCurrentOrder } from '../../utils/storage.js'
+import { isOrderPaid } from '../../utils/paymentStatus.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
@@ -178,8 +179,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }
 
     const isCashMethod = order.payment_method === 'efectivo' || order.payment_method === 'cash'
-    const isActuallyPaid = order.payment_status === 'paid'
-    const isPaid = isActuallyPaid || (!isCashMethod && order.status !== 'pending_payment')
+    const paid = isOrderPaid(order)
 
     return (
         <>
@@ -231,28 +231,29 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         Order #{order.order_number || 'N/A'} · {orderDate} · {orderTime}
                     </div>
 
+                    {isCashMethod && !paid && order.status !== 'cancelled' && (
+                        <div style={{
+                            background: '#EFF6FF', border: '1px solid #BFDBFE',
+                            borderRadius: 8, padding: '10px 14px', marginBottom: 16,
+                            fontSize: 13, color: '#1E40AF', fontWeight: 500,
+                            display: 'flex', alignItems: 'center', gap: 8
+                        }}>
+                            {isDelivery ? 'Pay the driver on delivery' : 'Pay at pickup — not charged yet'}
+                        </div>
+                    )}
+
                     <div style={{ height: 1, background: '#e5e5e5', margin: '18px 0 16px' }} />
 
                     {order.status === 'cancelled' ? (
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#dc2626', fontSize: 14 }}>
                             This order has been cancelled and cannot be completed.
                         </div>
-                    ) : !isPaid && !isCashMethod ? (
+                    ) : !paid && !isCashMethod ? (
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#737373', fontSize: 14 }}>
                             Completing payment... your receipt will appear here.
                         </div>
                     ) : (
                         <>
-                            {isCashMethod && !isActuallyPaid && (
-                                <div style={{
-                                    background: '#EFF6FF', border: '1px solid #BFDBFE',
-                                    borderRadius: 8, padding: '10px 14px', marginBottom: 16,
-                                    fontSize: 13, color: '#1E40AF', fontWeight: 500,
-                                    display: 'flex', alignItems: 'center', gap: 8
-                                }}>
-                                    💵 {isDelivery ? 'Pay the driver on delivery' : 'Pay at pickup — not charged yet'}
-                                </div>
-                            )}
                             <div>
                                 {order.items?.map((item, idx) => (
                                     <div key={idx} style={{

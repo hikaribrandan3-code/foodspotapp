@@ -5,7 +5,7 @@ export const ORDER_STATUS_FLOW = {
     preparing: { label: 'Preparing', next: 'ready', nextLabel: 'Ready →', class: 'status-preparing' },
     ready: {
         pickup: { label: 'Ready for Pickup', next: 'delivered', nextLabel: 'Hand Over', class: 'status-ready' },
-        delivery: { label: 'Ready for Dispatch', next: 'dispatched', nextLabel: 'Dispatch 🚴', class: 'status-ready' }
+        delivery: { label: 'Ready for Dispatch', next: 'dispatched', nextLabel: 'Dispatch', class: 'status-ready' }
     },
     dispatched: { label: 'Dispatched', next: 'delivered', nextLabel: 'Confirm Delivery', class: 'status-dispatched' },
     delivered: { label: 'Delivered', next: null, nextLabel: null, class: 'status-delivered' },
@@ -50,7 +50,8 @@ export const canAdvanceOrder = (order, newStatus, config) => {
         }
     }
 
-    const { orderType, paymentConfirmed } = order
+    const orderType = order.orderType || order.order_type
+    const paymentConfirmed = order.paymentConfirmed ?? order.payment_confirmed ?? false
     const orderMode = config?.orderMode || 'A1'
 
     // ===========================================

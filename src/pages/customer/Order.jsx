@@ -23,6 +23,7 @@ import {
 } from '../../utils/deliveryUtils.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { handleCashPayment } from '../../services/offlinePayment.js'
+import { isOrderPaid } from '../../utils/paymentStatus.js'
 
 // ============================================
 // 🛒 ORDER.JSX - THE UNIVERSAL CHECKOUT ENGINE

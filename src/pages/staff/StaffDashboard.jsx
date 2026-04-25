@@ -7,6 +7,7 @@ import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logi
 import { useOrdersPolling } from '../../hooks/useOrdersPolling.js'
 import { useStaff } from '../../contexts/StaffContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { isOrderPaid } from '../../utils/paymentStatus.js'
 import BurgerLoader from '../../components/BurgerLoader'
 
 // Lazy-load scanner to avoid camera bundle on every page load
@@ -497,7 +498,7 @@ function StaffDashboard() {
                                                     fontSize: 11,
                                                     fontWeight: 600
                                                 }}>
-                                                    {order.order_type === 'delivery' ? '🚗 Delivery' : '🏪 Pickup'}
+                                                    {order.order_type === 'delivery' ? 'Delivery' : 'Pickup'}
                                                 </span>
                                                 <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>
                                                     {formatPrice(order.total)}

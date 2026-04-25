@@ -5,6 +5,7 @@ import { formatPrice } from '../../config/menuData.js'
 import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.js'
 import { handleCashPayment } from '../../services/offlinePayment.js'
 import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
+import { isOrderPaid } from '../../utils/paymentStatus.js'
 import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
@@ -91,7 +92,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         const fetchSupabaseOrders = async () => {
             const { data, error } = await supabase
                 .from('orders')
-                .select('*')
+                .select('*, owner_status')
                 .eq('business_id', businessId)
                 .order('created_at', { ascending: false })
                 .limit(50)
@@ -184,27 +185,30 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             return
         }
 
-        const statusMap = {
-            paid_unreleased: 'confirmado',
-            released_to_kitchen: 'confirmado',
-            preparing: 'preparacion',
-            ready: 'listo',
-            dispatched: 'despachado',
-            delivered: 'entregado'
-        }
-        const dbStatus = statusMap[targetStatus] || targetStatus
-
         const isRealOrder = !demoMode && !order.id.startsWith('demo-')
         if (isRealOrder && businessId) {
-            await supabase
-                .from('orders')
-                .update({ status: dbStatus })
-                .eq('id', order.id)
-                .eq('business_id', businessId)
+            const { data, error } = await supabase.rpc('advance_order_status', {
+                p_order_id: order.id,
+                p_target_status: targetStatus
+            })
+
+            if (error) {
+                console.error('RPC Error:', error)
+                alert('Error al actualizar pedido')
+                setProcessingOrderId(null)
+                return
+            }
+
+            if (data && !data.success) {
+                console.warn('FSM Rejection:', data.error, data.message)
+                alert(data.message || 'Error en transición')
+                setProcessingOrderId(null)
+                return
+            }
         }
 
         updateOrder(order.id, { status: targetStatus })
-        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: targetStatus } : o))
+        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: targetStatus, owner_status: targetStatus } : o))
         setProcessingOrderId(null)
     }
 
@@ -308,7 +312,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                 {(ordersByStatus[status.id] || []).map(order => {
                                     const action = getActionForStatus(order.status, order.order_type, order.payment_confirmed || order.paymentConfirmed)
                                     const isProcessing = processingOrderId === order.id
-                                    const isPaid = order.payment_status === 'paid' || order.payment_confirmed || order.paymentConfirmed
+                                    const isPaid = isOrderPaid(order)
 
                                     return (
                                         <div key={order.id} style={{
@@ -352,7 +356,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                     color: 'white', padding: '2px 8px', borderRadius: 6,
                                                     fontSize: 11, fontWeight: 600
                                                 }}>
-                                                    {order.order_type === 'delivery' ? '🚗 Delivery' : '🏪 Pickup'}
+                                                    {order.order_type === 'delivery' ? 'Delivery' : 'Pickup'}
                                                 </span>
                                                 <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>
                                                     {formatPrice(order.total)}
@@ -362,7 +366,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                     color: isPaid ? '#15803D' : '#B45309',
                                                     padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600
                                                 }}>
-                                                    {isPaid ? '✅ Paid' : '⏳ Pending'}
+                                                    {isPaid ? 'Paid' : 'Pending'}
                                                 </span>
                                             </div>
 
@@ -443,7 +447,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                         border: '1px dashed #D1D5DB', borderRadius: 8,
                                                         fontSize: 12, color: '#6B7280', textAlign: 'center', fontWeight: 500
                                                     }}>
-                                                        {isPaid ? '✅ Pago confirmado' : '⏳ Esperando pago'}
+                                                        {isPaid ? 'Pago confirmado' : 'Esperando pago'}
                                                     </div>
                                                 )}
 
@@ -481,7 +485,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                 <div style={{ padding: 24 }}>
                     <div style={{ display: 'grid', gap: 12 }}>
                         {filteredOrders.map(order => {
-                            const statusConf = getStatusConfig(order.status)
+                            const statusConf = getStatusConfig(order.owner_status || order.status)
                             return (
                                 <div key={order.id} style={{
                                     background: '#FFFFFF', borderRadius: 12, padding: 16,
