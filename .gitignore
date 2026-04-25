@@ -5,3 +5,11 @@ dist
 .env.local
 .env.secure
 .env.production
+SECRETS.md
+*AUDIT*.md
+ghost_*.js
+audit_*.js
+check_ghost.js
+final_ghost.js
+scenario_d_check.js
+forensic-check.js
