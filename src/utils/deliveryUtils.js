@@ -169,6 +169,13 @@ export function isDeliveryMode() {
 }
 
 /**
+ * Set delivery mode in session storage
+ */
+export function setDeliveryMode() {
+    sessionStorage.setItem('foodspot_delivery_mode', 'true')
+}
+
+/**
  * Clear delivery mode from session
  */
 export function clearDeliveryMode() {

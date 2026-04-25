@@ -139,97 +139,130 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
   )
 }
 
-function OrderCard({ order, onAdvance, onCancel }) {
+function OrderCard({ order, onAdvance, onCancel, expanded, onToggle }) {
   const next = nextActionFor(order.status)
   const isDelivery = order.order_type === 'delivery'
+  const isDineIn = order.order_type === 'dine_in'
+  const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
   const bucket = statusToBucket(order.status)
   const bucketLabel = OWNER_STATS.find(s => s.key === bucket)?.label || order.status.toUpperCase()
-  const placedTime = new Date(order.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
   const timeStr = minsAgo < 1 ? 'just now' : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
 
   return (
     <div style={{
       background: T.card, borderRadius: 14, boxShadow: '0 1px 2px rgba(15,27,45,0.04), 0 4px 12px rgba(15,27,45,0.04)',
-      padding: 16, marginBottom: 14,
+      marginBottom: 14, overflow: 'hidden',
     }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em' }}>
-          #{String(order.order_number).padStart(3, '0')}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.muted, fontSize: 13, fontWeight: 500 }}>
-          <Icon type="clock" color={T.muted} size={14} />
-          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
-        </div>
-      </div>
-
-      <div style={{
-        width: 18, height: 18, borderRadius: 999, border: `1.5px solid ${T.muted2}`,
-        marginBottom: 10,
-      }} />
-
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-        <span style={{ fontSize: 17, fontWeight: 700, color: T.ink, letterSpacing: '-0.015em' }}>
-          {order.customer_name || 'Guest'}
-        </span>
-        <TagPill tone="green">{isDelivery ? 'DELIVERY' : 'PICKUP'}</TagPill>
-        {order.delivery_address && typeof order.delivery_address === 'string' && (
-          <TagPill tone="green">{order.delivery_address.split(' ').slice(0, 2).join(' ')}</TagPill>
-        )}
-      </div>
-
-      <div style={{ color: T.muted, fontSize: 14, marginBottom: 12 }}>
-        {(order.items || []).length} {(order.items || []).length === 1 ? 'item' : 'items'}
-        <span style={{ margin: '0 6px', color: T.muted2 }}>·</span>
-        <span style={{ fontWeight: 700, color: T.ink2, fontVariantNumeric: 'tabular-nums' }}>
-          {formatPrice(order.total)}
-        </span>
-      </div>
-
-      <div style={{ borderTop: `1px solid ${T.line2}`, margin: '0 -16px 12px' }} />
-
-      {next && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <ActionButton
-            intent="blue"
-            icon={<Icon type="chevron" color={T.blueInk} size={14} />}
-            onClick={() => onAdvance(order)}
-          >
-            {next.label}
-          </ActionButton>
-          <ActionButton
-            intent="red"
-            icon={<Icon type="x" color={T.redInk} size={14} />}
-            onClick={() => onCancel(order)}
-          >
-            Cancel Order
-          </ActionButton>
-        </div>
-      )}
-      {order.status === 'delivered' && (
-        <div style={{
-          textAlign: 'center', color: T.greenInk, fontWeight: 600, padding: '10px 0',
-          background: T.greenBg, borderRadius: 10, fontSize: 14,
-        }}>
-          ✓ Delivered
-        </div>
-      )}
-      {order.status === 'cancelled' && (
-        <div style={{
-          textAlign: 'center', color: T.redInk, fontWeight: 600, padding: '10px 0',
-          background: T.redBg, borderRadius: 10, fontSize: 14,
-        }}>
-          Cancelled
-        </div>
-      )}
-
-      <div style={{
-        display: 'flex', justifyContent: 'space-between', marginTop: 12,
-        fontSize: 11, color: T.muted2, fontWeight: 600, letterSpacing: '0.06em',
+      {/* Tappable header */}
+      <button onClick={onToggle} style={{
+        width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+        padding: 16, textAlign: 'left', fontFamily: 'inherit',
       }}>
-        <span>{bucketLabel}</span>
-        <span style={{ color: T.muted }}>Tap for details</span>
-      </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em' }}>
+            #{String(order.order_number).padStart(3, '0')}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.muted, fontSize: 13, fontWeight: 500 }}>
+            <Icon type="clock" color={T.muted} size={14} />
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: T.ink, letterSpacing: '-0.015em' }}>
+            {order.customer_name || 'Guest'}
+          </span>
+          <TagPill tone={isDelivery ? 'blue' : 'green'}>{typeLabel}</TagPill>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ color: T.muted, fontSize: 14 }}>
+            {(order.items || []).length} {(order.items || []).length === 1 ? 'item' : 'items'}
+            <span style={{ margin: '0 6px', color: T.muted2 }}>·</span>
+            <span style={{ fontWeight: 700, color: T.ink2, fontVariantNumeric: 'tabular-nums' }}>
+              {formatPrice(order.total)}
+            </span>
+          </div>
+          <span style={{ fontSize: 11, color: T.statPrep, fontWeight: 600 }}>
+            {expanded ? '▲ Less' : '▼ Details'}
+          </span>
+        </div>
+      </button>
+
+      {/* Expanded detail panel */}
+      {expanded && (
+        <div style={{ padding: '0 16px 16px' }}>
+          <div style={{ borderTop: `1px solid ${T.line2}`, marginBottom: 12 }} />
+
+          {/* Items list */}
+          <div style={{ marginBottom: 12 }}>
+            {(order.items || []).map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: T.body, padding: '3px 0' }}>
+                <span>{item.quantity}× {item.name}</span>
+                <span style={{ color: T.muted, fontVariantNumeric: 'tabular-nums' }}>{formatPrice(item.price * item.quantity)}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Customer info */}
+          {order.customer_phone && (
+            <div style={{ fontSize: 13, color: T.body, marginBottom: 6 }}>
+              📞 <a href={`tel:${order.customer_phone}`} style={{ color: T.blueInk, fontWeight: 600, textDecoration: 'none' }}>{order.customer_phone}</a>
+            </div>
+          )}
+          {isDineIn && order.table_number && (
+            <div style={{ fontSize: 13, color: T.body, marginBottom: 6 }}>
+              🪑 Table {order.table_number}
+            </div>
+          )}
+          {isDelivery && order.delivery_address && (
+            <div style={{ fontSize: 13, color: T.body, marginBottom: 12 }}>
+              📍 {formatAddressForDisplay(order.delivery_address)}
+            </div>
+          )}
+          {isDelivery && (
+            <button
+              onClick={() => {
+                const msg = generateDriverMessage(order)
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                width: '100%', background: '#25D366', color: 'white', border: 'none',
+                padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', marginBottom: 12,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" /></svg>
+              Send to Driver
+            </button>
+          )}
+
+          <div style={{ borderTop: `1px solid ${T.line2}`, marginBottom: 12 }} />
+
+          {next && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <ActionButton intent="blue" icon={<Icon type="chevron" color={T.blueInk} size={14} />} onClick={() => onAdvance(order)}>
+                {next.label}
+              </ActionButton>
+              <ActionButton intent="red" icon={<Icon type="x" color={T.redInk} size={14} />} onClick={() => onCancel(order)}>
+                Cancel Order
+              </ActionButton>
+            </div>
+          )}
+          {order.status === 'delivered' && (
+            <div style={{ textAlign: 'center', color: T.greenInk, fontWeight: 600, padding: '10px 0', background: T.greenBg, borderRadius: 10, fontSize: 14 }}>
+              ✓ Delivered
+            </div>
+          )}
+          {order.status === 'cancelled' && (
+            <div style={{ textAlign: 'center', color: T.redInk, fontWeight: 600, padding: '10px 0', background: T.redBg, borderRadius: 10, fontSize: 14 }}>
+              Cancelled
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -282,6 +315,7 @@ export default function Dashboard() {
   const [tab, setTab] = useState('active')
   const [filterBucket, setFilterBucket] = useState(null)
   const [processingOrderId, setProcessingOrderId] = useState(null)
+  const [expandedOrderId, setExpandedOrderId] = useState(null)
 
   const counts = useMemo(() => {
     const bucket = {}
@@ -434,6 +468,8 @@ export default function Dashboard() {
                 order={o}
                 onAdvance={() => advance(o)}
                 onCancel={() => cancel(o)}
+                expanded={expandedOrderId === o.id}
+                onToggle={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
               />
             ))
           )}

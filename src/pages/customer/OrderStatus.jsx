@@ -115,9 +115,10 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         if (!order || !order.items) return
 
         clearCurrentOrder()
+        // Re-read after clear to guarantee fresh cart before adding
         let addedCount = 0
         order.items.forEach(item => {
-            addToCurrentOrder(item, item.quantity, item.extras || [], item.variants || [])
+            addToCurrentOrder({ ...item, quantity: 1 }, item.quantity, item.extras || [], item.variants || [])
             addedCount++
         })
 

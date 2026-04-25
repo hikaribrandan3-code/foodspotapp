@@ -7,24 +7,25 @@
  * Enforces data normalization via configNormalizer.js to prevent "Silo Orphan" issues.
  */
 
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useTenant } from '../../contexts/TenantContext'
 import { normalizeTenantConfig } from '../../utils/configNormalizer'
+import { setDeliveryMode } from '../../utils/deliveryUtils'
 import Menu from './Menu.jsx'
 
 export default function Envio({ config: configProp }) {
     const { tenantData, loading } = useTenant()
 
-    // 🛡️ THE ENVÍO SEAL: Strict normalization
-    // Unlike the generic Menu, this wrapper guarantees the config is pre-scrubbed
-    // before it even touches the Menu component props.
+    useEffect(() => {
+        setDeliveryMode()
+    }, [])
+
     const normalizedConfig = useMemo(() =>
         normalizeTenantConfig(configProp, tenantData),
         [configProp, tenantData])
 
-    // Wait for tenant data to prevent flash of unstyled content
     if (loading) {
-        return null // framework or parent skeleton will handle loading
+        return null
     }
 
     return (
