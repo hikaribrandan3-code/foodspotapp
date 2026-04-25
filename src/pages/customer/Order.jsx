@@ -682,7 +682,7 @@ function Order({ config: configProp }) {
     // RENDER: EMPTY CART — Redirect to OrderStatusEmpty
     // ============================================
     if (!order?.items?.length) {
-        navigate(`/${tenantSlug}/order/status`, { replace: true })
+        navigate(`/${tenantSlug}/status`, { replace: true })
         return null
     }
 
