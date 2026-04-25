@@ -56,9 +56,9 @@ function mockChannel() {
 }
 
 const MOCK_KDS_ORDERS = [
-    { id: 'order-1', business_id: 'biz-999', status: 'paid',    created_at: '2026-04-23T08:00:00Z' },
-    { id: 'order-2', business_id: 'biz-999', status: 'cooking', created_at: '2026-04-23T08:05:00Z' },
-    { id: 'order-3', business_id: 'biz-999', status: 'ready',   created_at: '2026-04-23T08:10:00Z' },
+    { id: 'order-1', business_id: 'biz-999', status: 'released_to_kitchen', created_at: '2026-04-23T08:00:00Z' },
+    { id: 'order-2', business_id: 'biz-999', status: 'preparing',           created_at: '2026-04-23T08:05:00Z' },
+    { id: 'order-3', business_id: 'biz-999', status: 'ready',               created_at: '2026-04-23T08:10:00Z' },
 ]
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ describe('useKDSSync', () => {
         const { result } = renderHook(() => useKDSSync('biz-999'))
         await waitFor(() => expect(result.current.loading).toBe(false))
 
-        expect(inMock).toHaveBeenCalledWith('status', ['paid', 'cooking', 'ready'])
+        expect(inMock).toHaveBeenCalledWith('status', ['released_to_kitchen', 'preparing', 'ready'])
     })
 
     it('queries with the correct business_id guard', async () => {
@@ -151,9 +151,9 @@ describe('useKDSSync', () => {
             await result.current.transitionOrderState('order-2', 'cooking', 'ready')
         })
 
-        expect(supabase.rpc).toHaveBeenCalledWith('transition_order_state', {
+        expect(supabase.rpc).toHaveBeenCalledWith('advance_order_status', {
             p_order_id: 'order-2',
-            p_new_status: 'ready',
+            p_target_status: 'ready',
         })
     })
 
@@ -294,7 +294,7 @@ describe('useKDSSync', () => {
 
         expect(supabase.rpc).not.toHaveBeenCalled()
         const order = result.current.orders.find(o => o.id === 'order-2')
-        expect(order?.status).toBe('cooking')
+        expect(order?.status).toBe('preparing')
     })
 
     // ── Realtime event handling ───────────────────────────────────────────────
@@ -308,7 +308,7 @@ describe('useKDSSync', () => {
         act(() => {
             capture.fn?.({
                 eventType: 'INSERT',
-                new: { id: 'order-new', business_id: 'biz-999', status: 'paid', created_at: '2026-04-23T09:00:00Z' },
+                new: { id: 'order-new', business_id: 'biz-999', status: 'released_to_kitchen', created_at: '2026-04-23T09:00:00Z' },
                 old: null,
             })
         })
@@ -336,7 +336,7 @@ describe('useKDSSync', () => {
         expect(result.current.orders.length).toBe(countBefore)
     })
 
-    it('removes an order from KDS when realtime UPDATE sets status to completed', async () => {
+    it('removes an order from KDS when realtime UPDATE sets status to delivered', async () => {
         mockFromChain({ data: MOCK_KDS_ORDERS })
         const { capture } = mockChannel()
 
@@ -346,7 +346,7 @@ describe('useKDSSync', () => {
         act(() => {
             capture.fn?.({
                 eventType: 'UPDATE',
-                new: { id: 'order-3', business_id: 'biz-999', status: 'completed' },
+                new: { id: 'order-3', business_id: 'biz-999', status: 'delivered' },
                 old: { id: 'order-3', business_id: 'biz-999', status: 'ready' },
             })
         })
@@ -390,7 +390,7 @@ describe('useKDSSync', () => {
         })
 
         // Order should remain unchanged
-        expect(result.current.orders.find(o => o.id === 'order-2')?.status).toBe('cooking')
+        expect(result.current.orders.find(o => o.id === 'order-2')?.status).toBe('preparing')
     })
 
     // ── Exposed API shape ─────────────────────────────────────────────────────
