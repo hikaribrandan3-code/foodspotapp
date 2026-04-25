@@ -150,7 +150,7 @@ serve(async (req: Request) => {
         const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/mp-webhook`;
 
         // Build the frontend base URL for back_urls
-        const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://foodspot.app";
+        const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://foodspotapp.vercel.app";
         const statusBase = slug ? `${APP_BASE_URL}/${slug}/status` : `${APP_BASE_URL}/status`;
 
         const preferenceBody = {
