@@ -721,19 +721,10 @@ function Order({ config: configProp }) {
         <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#F8F9FA' }}>
             <HeaderClamp config={config} />
 
-            {/* Divider Strip */}
-            {(() => {
-                const dividerPreset = getDividerPreset(config.dividerPresetId)
-                return (
-                    <div style={{ height: 64, margin: '0 14px 16px', borderRadius: 12, overflow: 'hidden' }}>
-                        {dividerPreset ? (
-                            <img src={dividerPreset.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #F5F0E8, #EDE8E0)' }} />
-                        )}
-                    </div>
-                )
-            })()}
+            {/* Divider Strip — no images, gradient only */}
+            <div style={{ height: 64, margin: '0 14px 16px', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #F5F0E8, #EDE8E0)' }} />
+            </div>
 
             <div style={{ margin: '0 14px' }}>
                 <div style={{ marginBottom: 20 }}>
