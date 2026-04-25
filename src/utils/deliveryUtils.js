@@ -140,6 +140,7 @@ export function validateDeliveryInfo(info) {
  * @returns {string} Last 4 digits
  */
 export function getPhoneLast4(phone) {
+    if (!phone) return '----'
     const digits = phone.replace(/\D/g, '')
     return digits.slice(-4)
 }
