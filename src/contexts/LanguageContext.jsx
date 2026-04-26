@@ -9,6 +9,7 @@ export const LanguageProvider = ({ children }) => {
     const { tenantData, businessId, refreshTenantData } = useTenant();
     const isLocked = useRef(false);
     const lockTimer = useRef(null);
+    const hasInitialized = useRef(false);
 
     // Tenant language is always the source of truth — owner backend controls all UI language
     const [lang, setLang] = useState(() => {
@@ -21,7 +22,19 @@ export const LanguageProvider = ({ children }) => {
         // Trace logging as requested
         console.log(`[LanguageContext] 🔍 State Fight: Current Lang: ${lang} | DB Lang: ${tenantData?.language || 'es'}`);
 
-        if (tenantData?.language && tenantData.language !== lang) {
+        if (!tenantData?.language) return;
+
+        // 🏁 FIRST LOAD: Always adopt the DB language once tenantData is available
+        if (!hasInitialized.current) {
+            hasInitialized.current = true;
+            if (lang !== tenantData.language) {
+                console.log(`[LanguageContext] 🔄 Initial Sync: Setting to ${tenantData.language}`);
+                setLang(tenantData.language);
+            }
+            return;
+        }
+
+        if (tenantData.language !== lang) {
             if (isLocked.current) {
                 console.log(`[LanguageContext] 🛡️ Revert Prevented: Context is LOCKED during manual toggle.`);
                 return;
@@ -30,6 +43,13 @@ export const LanguageProvider = ({ children }) => {
             setLang(tenantData.language);
         }
     }, [tenantData?.language, lang]);
+
+    // 🧹 Cleanup lock timer on unmount
+    useEffect(() => {
+        return () => {
+            if (lockTimer.current) clearTimeout(lockTimer.current);
+        };
+    }, []);
 
     const t = (key) => {
         if (!translations[key]) {
@@ -56,6 +76,7 @@ export const LanguageProvider = ({ children }) => {
             // 🛡️ SCHEMA GUARD: Use the real tenant PK (id) from tenantData
             if (!tenantData?.id) {
                 console.warn("[LanguageContext] ⚠️ Cannot update: tenantData.id missing.");
+                isLocked.current = false;
                 return;
             }
 
@@ -69,13 +90,11 @@ export const LanguageProvider = ({ children }) => {
                 console.error('Full Update Context:', { id: businessId, newLang });
             }
 
-            // Refresh tenant data to sync across app
-            await refreshTenantData();
-
-            // Unlock after a short delay to allow background sync to settle
+            // Delay refresh to allow Supabase replication to settle, then unlock
             lockTimer.current = setTimeout(() => {
                 isLocked.current = false;
                 console.log(`[LanguageContext] 🔓 Context UNLOCKED.`);
+                refreshTenantData();
             }, 2500);
 
         } catch (err) {

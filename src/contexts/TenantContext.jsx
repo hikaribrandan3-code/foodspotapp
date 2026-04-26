@@ -204,15 +204,28 @@ export function TenantProvider({ children }) {
                 .single()
 
             if (!brandingError && brandingData) {
-                // 📡 DOUBLE-FETCH: Get language from tenants table using venue_name
-                // 🛡️ UNIVERSAL CASE FIX: Use .ilike()
+                // 📡 RELIABLE FETCH: Use known tenant PK first, then fallback to venue_name / owner_id
                 let { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
                     .select('id, language, venue_name, owner_id')
-                    .ilike('venue_name', brandingData.slug)
+                    .eq('id', tenantData?.id)
                     .single()
 
-                // 🆘 ULTIMATE FAILSAFE: Fetch by owner ID if slug fails
+                // 🆘 FALLBACK 1: venue_name match (for edge cases where id is missing)
+                if ((langError || !tenantRow) && tenantData?.venue_name) {
+                    const venueFallback = await supabase
+                        .from('tenants')
+                        .select('id, language, venue_name, owner_id')
+                        .ilike('venue_name', tenantData.venue_name)
+                        .single();
+
+                    if (!venueFallback.error && venueFallback.data) {
+                        tenantRow = venueFallback.data;
+                        langError = null;
+                    }
+                }
+
+                // 🆘 FALLBACK 2: Authenticated owner lookup
                 if (langError || !tenantRow) {
                     const { data: { user } } = await supabase.auth.getUser();
                     if (user) {
@@ -233,7 +246,13 @@ export function TenantProvider({ children }) {
                     console.error("SUPABASE ERROR (Tenants Refresh):", langError.message, langError.details);
                 }
 
-                const data = { ...brandingData, id: tenantRow?.id, venue_name: tenantRow?.venue_name, language: tenantRow?.language || 'es' }
+                // 🛡️ PRESERVE EXISTING LANGUAGE: Only fall back to 'es' if we truly have no data
+                const data = {
+                    ...brandingData,
+                    id: tenantRow?.id ?? tenantData?.id,
+                    venue_name: tenantRow?.venue_name ?? tenantData?.venue_name,
+                    language: tenantRow?.language ?? tenantData?.language ?? 'es'
+                }
                 setTenantData(data)
                 console.log('✅ GLOBAL REFRESH COMPLETE')
             }
