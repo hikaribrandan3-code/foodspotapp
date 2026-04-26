@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 /**
  * 🔐 SECURE VERSION: StaffAgenticUI
@@ -49,7 +51,7 @@ function StaffAgenticUI({ config }) {
             .from('orders')
             .select('id, order_number, status, items, created_at')
             .eq('business_id', businessId)
-            .in('status', ['pending_payment', 'paid_unreleased', 'released_to_kitchen', 'preparing', 'ready', 'dispatched'])
+            .in('status', [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PAID_UNRELEASED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED])
             .order('created_at', { ascending: false })
             .limit(20)
 

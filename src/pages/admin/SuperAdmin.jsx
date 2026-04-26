@@ -18,6 +18,8 @@ import BackendNav from '../../components/BackendNav.jsx'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useBusinessId } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 const formatAddress = (addr) => {
     if (!addr) return '';
@@ -779,8 +781,8 @@ function SuperAdmin({ config: configProp }) {
         )
     }
     // Badge counts for bottom nav
-    const activeOrders = orders.filter(o => o.status !== 'delivered')
-    const pendingDeliveries = orders.filter(o => o.order_type === 'delivery' && o.status !== 'delivered' && o.status !== 'cancelled')
+    const activeOrders = orders.filter(o => o.status !== ORDER_STATUS.DELIVERED)
+    const pendingDeliveries = orders.filter(o => o.order_type === 'delivery' && o.status !== ORDER_STATUS.DELIVERED && o.status !== ORDER_STATUS.CANCELLED)
     const navBadges = {
         orders: activeOrders.length,
         delivery: pendingDeliveries.length
@@ -2004,7 +2006,7 @@ function SuperAdmin({ config: configProp }) {
                                 </ul>
                             </div>
                             {(() => {
-                                const deliveryOrders = orders.filter(o => o.order_type === 'delivery' && o.status !== 'delivered' && o.status !== 'cancelled')
+                                const deliveryOrders = orders.filter(o => o.order_type === 'delivery' && o.status !== ORDER_STATUS.DELIVERED && o.status !== ORDER_STATUS.CANCELLED)
                                 if (deliveryOrders.length === 0) {
                                     return (
                                         <div style={{ ...cardStyle, textAlign: 'center', padding: 24 }}>
@@ -2046,8 +2048,8 @@ function SuperAdmin({ config: configProp }) {
                                                     borderRadius: 10,
                                                     fontSize: 11,
                                                     fontWeight: 600,
-                                                    background: order.status === 'dispatched' ? '#FFEDD5' : order.status === 'ready' ? '#DCFCE7' : '#E0E7FF',
-                                                    color: order.status === 'dispatched' ? '#9A3412' : order.status === 'ready' ? '#166534' : '#3730A3'
+                                                    background: order.status === ORDER_STATUS.DISPATCHED ? '#FFEDD5' : order.status === ORDER_STATUS.READY ? '#DCFCE7' : '#E0E7FF',
+                                                    color: order.status === ORDER_STATUS.DISPATCHED ? '#9A3412' : order.status === ORDER_STATUS.READY ? '#166534' : '#3730A3'
                                                 }}>
                                                     {statusInfo.label}
                                                 </span>
@@ -2077,7 +2079,7 @@ function SuperAdmin({ config: configProp }) {
                                             {/* Actions */}
                                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                                 {/* Phone confirmation input for dispatched */}
-                                                {order.status === 'dispatched' && order.customerInfo && (
+                                                {order.status === ORDER_STATUS.DISPATCHED && order.customerInfo && (
                                                     <div style={{ width: '100%', marginBottom: 8 }}>
                                                         <label style={{ fontSize: 10, color: '#6B7280', display: 'block', marginBottom: 4 }}>
                                                             Últimos 4 dígitos del teléfono para confirmar entrega
@@ -2106,7 +2108,7 @@ function SuperAdmin({ config: configProp }) {
                                                     <button
                                                         onClick={() => {
                                                             // Phone code verification for delivered
-                                                            if (statusInfo.next === 'delivered' && order.customerInfo) {
+                                                            if (statusInfo.next === ORDER_STATUS.DELIVERED && order.customerInfo) {
                                                                 const code = deliveryConfirmCode[order.id] || ''
                                                                 if (!verifyDeliveryCode(order.customerInfo.phone, code)) {
                                                                     alert('❌ Código incorrecto. Ingrese los últimos 4 dígitos del teléfono del cliente.')
@@ -2174,8 +2176,8 @@ function SuperAdmin({ config: configProp }) {
                                             <button
                                                 onClick={() => {
                                                     if (confirm('Are you sure you want to cancel this order?')) {
-                                                        updateOrder(order.id, { status: 'cancelled' });
-                                                        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'cancelled' } : o));
+                                                        updateOrder(order.id, { status: ORDER_STATUS.CANCELLED });
+                                                        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: ORDER_STATUS.CANCELLED } : o));
                                                     }
                                                 }}
                                                 style={{

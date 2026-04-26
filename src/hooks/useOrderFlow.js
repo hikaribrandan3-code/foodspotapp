@@ -1,6 +1,8 @@
 // src/hooks/useOrderFlow.js
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient.js';
+import { ORDER_STATUS } from '../constants/database.js';
+
 
 /**
  * useOrderFlow
@@ -16,7 +18,7 @@ import { supabase } from '../lib/supabaseClient.js';
  *   any → cancelado  (cancel path)
  *
  * Payment-method rules (enforced by the caller via orderData.status):
- *   cash          → status 'paid_unreleased'
+ *   cash          → status ORDER_STATUS.PAID_UNRELEASED
  *   mercadopago   → status 'pending'
  */
 export function useOrderFlow() {
@@ -28,7 +30,7 @@ export function useOrderFlow() {
      * @param {object} orderData - Order payload. Must include `paymentMethod`.
      *   Pass `status` explicitly, or let this hook derive the correct initial
      *   status from `paymentMethod`:
-     *     'cash'        → 'paid_unreleased'
+     *     'cash'        → ORDER_STATUS.PAID_UNRELEASED
      *     'mercadopago' → 'pending'
      * @returns {Promise<{ success: boolean, order?: object, error?: string }>}
      */
@@ -42,7 +44,7 @@ export function useOrderFlow() {
             let status = orderData.status;
             if (!status) {
                 status = orderData.paymentMethod === 'cash'
-                    ? 'paid_unreleased'
+                    ? ORDER_STATUS.PAID_UNRELEASED
                     : 'pending';
             }
 
@@ -117,7 +119,7 @@ export function useOrderFlow() {
         try {
             const { error: dbError } = await supabase
                 .from('orders')
-                .update({ status: 'cancelled' })
+                .update({ status: ORDER_STATUS.CANCELLED })
                 .eq('id', orderId);
 
             if (dbError) throw dbError;

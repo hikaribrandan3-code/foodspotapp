@@ -7,6 +7,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useCamTechListener } from '../hooks/useCamTech';
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 export function StaffKDSWithCamTech({ businessId }) {
   const [orders, setOrders] = useState([]);
@@ -44,7 +46,7 @@ export function StaffKDSWithCamTech({ businessId }) {
         .from('orders')
         .select('*')
         .eq('business_id', businessId)
-        .in('status', ['released_to_kitchen', 'preparing', 'ready'])
+        .in('status', [ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY])
         .order('created_at', { ascending: true });
       
       if (error) throw error;
@@ -140,25 +142,25 @@ export function StaffKDSWithCamTech({ businessId }) {
             </div>
             
             <div style={styles.actions}>
-              {order.status === 'released_to_kitchen' && (
+              {order.status === ORDER_STATUS.RELEASED_TO_KITCHEN && (
                 <button
-                  onClick={() => updateStatus(order.id, 'preparing')}
+                  onClick={() => updateStatus(order.id, ORDER_STATUS.PREPARING)}
                   style={styles.cookingBtn}
                 >
                   Start Prep
                 </button>
               )}
-              {order.status === 'preparing' && (
+              {order.status === ORDER_STATUS.PREPARING && (
                 <button
-                  onClick={() => updateStatus(order.id, 'ready')}
+                  onClick={() => updateStatus(order.id, ORDER_STATUS.READY)}
                   style={styles.readyBtn}
                 >
                   Mark Ready
                 </button>
               )}
-              {order.status === 'ready' && (
+              {order.status === ORDER_STATUS.READY && (
                 <button
-                  onClick={() => updateStatus(order.id, order.order_type === 'delivery' ? 'dispatched' : 'delivered')}
+                  onClick={() => updateStatus(order.id, order.order_type === 'delivery' ? ORDER_STATUS.DISPATCHED : ORDER_STATUS.DELIVERED)}
                   style={styles.completeBtn}
                 >
                   {order.order_type === 'delivery' ? 'Dispatch' : 'Hand Over'}

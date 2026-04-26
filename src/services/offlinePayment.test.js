@@ -8,6 +8,8 @@ import {
     handleCashPayment
 } from './offlinePayment.js';
 import { supabase } from '../lib/supabaseClient.js';
+import { ORDER_STATUS } from '../constants/database.js';
+
 
 vi.mock('../lib/supabaseClient.js');
 
@@ -151,7 +153,7 @@ describe('Offline Payment Service', () => {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockReturnValue({
                                 single: vi.fn().mockResolvedValue({
-                                    data: { status: 'paid_unreleased' },
+                                    data: { status: ORDER_STATUS.PAID_UNRELEASED },
                                     error: null
                                 })
                             })
@@ -237,7 +239,7 @@ describe('Offline Payment Service', () => {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockReturnValue({
                                 single: vi.fn().mockResolvedValue({
-                                    data: { status: 'paid_unreleased' },
+                                    data: { status: ORDER_STATUS.PAID_UNRELEASED },
                                     error: null
                                 })
                             })
@@ -275,7 +277,7 @@ describe('Offline Payment Service', () => {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockReturnValue({
                                 single: vi.fn().mockResolvedValue({
-                                    data: { status: 'paid_unreleased' },
+                                    data: { status: ORDER_STATUS.PAID_UNRELEASED },
                                     error: null
                                 })
                             })
@@ -351,7 +353,7 @@ describe('Offline Payment Service', () => {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockReturnValue({
                                 single: vi.fn().mockResolvedValue({
-                                    data: { status: 'paid_unreleased' },
+                                    data: { status: ORDER_STATUS.PAID_UNRELEASED },
                                     error: null
                                 })
                             })

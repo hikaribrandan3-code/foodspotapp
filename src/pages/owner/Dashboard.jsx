@@ -7,6 +7,8 @@ import { formatPrice } from '../../config/menuData'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics'
 import BurgerLoader from '../../components/BurgerLoader'
 import BackendNav from '../../components/BackendNav'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 const T = {
   bg:       '#F4F6F9',
@@ -34,22 +36,22 @@ const T = {
 }
 
 const OWNER_STATS = [
-  { key: 'cash', label: 'CASH', color: T.statCash, matches: ['pending_payment'] },
-  { key: 'todo', label: 'TO-DO', color: T.statTodo, matches: ['paid_unreleased'] },
-  { key: 'prep', label: 'PREP', color: T.statPrep, matches: ['released_to_kitchen', 'preparing'] },
-  { key: 'ready', label: 'READY', color: T.statReady, matches: ['ready'] },
-  { key: 'out', label: 'OUT', color: T.statOut, matches: ['dispatched'] },
+  { key: 'cash', label: 'CASH', color: T.statCash, matches: [ORDER_STATUS.PENDING_PAYMENT] },
+  { key: 'todo', label: 'TO-DO', color: T.statTodo, matches: [ORDER_STATUS.PAID_UNRELEASED] },
+  { key: 'prep', label: 'PREP', color: T.statPrep, matches: [ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING] },
+  { key: ORDER_STATUS.READY, label: 'READY', color: T.statReady, matches: [ORDER_STATUS.READY] },
+  { key: 'out', label: 'OUT', color: T.statOut, matches: [ORDER_STATUS.DISPATCHED] },
 ]
 
 const STATUS_FLOW = [
-  { key: 'pending_payment', label: 'Verify Payment' },
-  { key: 'paid_unreleased', label: 'Send to Kitchen' },
-  { key: 'released_to_kitchen', label: 'Start Prep' },
-  { key: 'preparing', label: 'Mark Ready' },
-  { key: 'ready', label: 'Hand Off' },
-  { key: 'dispatched', label: 'Mark Delivered' },
-  { key: 'delivered', label: null },
-  { key: 'cancelled', label: null },
+  { key: ORDER_STATUS.PENDING_PAYMENT, label: 'Verify Payment' },
+  { key: ORDER_STATUS.PAID_UNRELEASED, label: 'Send to Kitchen' },
+  { key: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Start Prep' },
+  { key: ORDER_STATUS.PREPARING, label: 'Mark Ready' },
+  { key: ORDER_STATUS.READY, label: 'Hand Off' },
+  { key: ORDER_STATUS.DISPATCHED, label: 'Mark Delivered' },
+  { key: ORDER_STATUS.DELIVERED, label: null },
+  { key: ORDER_STATUS.CANCELLED, label: null },
 ]
 
 function statusToBucket(status) {
@@ -267,12 +269,12 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle }) {
               </ActionButton>
             </div>
           )}
-          {order.status === 'delivered' && (
+          {order.status === ORDER_STATUS.DELIVERED && (
             <div style={{ textAlign: 'center', color: T.greenInk, fontWeight: 600, padding: '10px 0', background: T.greenBg, borderRadius: 10, fontSize: 14 }}>
               ✓ Delivered
             </div>
           )}
-          {order.status === 'cancelled' && (
+          {order.status === ORDER_STATUS.CANCELLED && (
             <div style={{ textAlign: 'center', color: T.redInk, fontWeight: 600, padding: '10px 0', background: T.redBg, borderRadius: 10, fontSize: 14 }}>
               Cancelled
             </div>
@@ -342,15 +344,15 @@ export default function Dashboard() {
     })
     return {
       ...bucket,
-      active: orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length,
-      completed: orders.filter(o => ['delivered', 'cancelled'].includes(o.status)).length,
-      delivered: orders.filter(o => o.status === 'delivered').length,
+      active: orders.filter(o => ![ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)).length,
+      completed: orders.filter(o => [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)).length,
+      delivered: orders.filter(o => o.status === ORDER_STATUS.DELIVERED).length,
     }
   }, [orders])
 
   const filtered = useMemo(() => {
     return orders.filter(o => {
-      const completed = ['delivered', 'cancelled'].includes(o.status)
+      const completed = [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)
       if (tab === 'active' ? completed : !completed) return false
       if (filterBucket) return statusToBucket(o.status) === filterBucket
       return true
@@ -363,8 +365,8 @@ export default function Dashboard() {
     if (!next) return
 
     // Pickup/dine-in skip dispatched — go directly to delivered
-    const targetStatus = (order.status === 'ready' && order.order_type !== 'delivery')
-      ? 'delivered'
+    const targetStatus = (order.status === ORDER_STATUS.READY && order.order_type !== 'delivery')
+      ? ORDER_STATUS.DELIVERED
       : next.key
 
     setProcessingOrderId(order.id)
@@ -386,14 +388,14 @@ export default function Dashboard() {
   const cancel = async (order) => {
     setProcessingOrderId(order.id)
     try {
-      await supabase.from('orders').update({ status: 'cancelled' }).eq('id', order.id)
+      await supabase.from('orders').update({ status: ORDER_STATUS.CANCELLED }).eq('id', order.id)
       refreshOrders()
     } finally {
       setProcessingOrderId(null)
     }
   }
 
-  const todayRev = orders.filter(o => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0)
+  const todayRev = orders.filter(o => o.status !== ORDER_STATUS.CANCELLED).reduce((a, o) => a + o.total, 0)
 
   if (loading) return <BurgerLoader />
 
@@ -432,7 +434,7 @@ export default function Dashboard() {
                 {formatPrice(todayRev)}
               </div>
               <div style={{ color: T.muted, fontSize: 12.5, marginTop: 4 }}>
-                across {orders.filter(o => o.status !== 'cancelled').length} orders
+                across {orders.filter(o => o.status !== ORDER_STATUS.CANCELLED).length} orders
               </div>
             </div>
             <div style={{

@@ -8,6 +8,8 @@ import { isOrderPaid } from '../../utils/paymentStatus.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 function OrderStatus({ config: configProp, featuredItems = [] }) {
     const { businessId, tenantData } = useTenant()
@@ -99,7 +101,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }, [order?.id])
 
     useEffect(() => {
-        if (order?.status === 'delivered') {
+        if (order?.status === ORDER_STATUS.DELIVERED) {
             const timer = setTimeout(() => {
                 if (tenantSlug) {
                     navigate(`/${tenantSlug}`)
@@ -153,18 +155,18 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const total = order.total || (subtotal + (deliveryFee || 0) + tax)
 
     const getStatusText = () => {
-        if (isCashMethod && !paid && order.status !== 'cancelled' && order.status !== 'delivered') {
+        if (isCashMethod && !paid && order.status !== ORDER_STATUS.CANCELLED && order.status !== ORDER_STATUS.DELIVERED) {
             return isDelivery ? t('status_awaiting_delivery') : t('status_awaiting_pickup')
         }
         switch (order.status) {
-            case 'pending_payment': return t('status_awaiting_confirmation')
-            case 'paid_unreleased': return t('status_payment_received')
-            case 'released_to_kitchen': return t('status_confirmed')
-            case 'preparing': return t('status_preparing')
-            case 'ready': return t('status_ready_pickup')
-            case 'dispatched': return t('status_on_the_way')
-            case 'delivered': return t('status_delivered')
-            case 'cancelled': return t('status_cancelled')
+            case ORDER_STATUS.PENDING_PAYMENT: return t('status_awaiting_confirmation')
+            case ORDER_STATUS.PAID_UNRELEASED: return t('status_payment_received')
+            case ORDER_STATUS.RELEASED_TO_KITCHEN: return t('status_confirmed')
+            case ORDER_STATUS.PREPARING: return t('status_preparing')
+            case ORDER_STATUS.READY: return t('status_ready_pickup')
+            case ORDER_STATUS.DISPATCHED: return t('status_on_the_way')
+            case ORDER_STATUS.DELIVERED: return t('status_delivered')
+            case ORDER_STATUS.CANCELLED: return t('status_cancelled')
             default: return t('status_preparing')
         }
     }
@@ -215,14 +217,14 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     <h1 style={{
                         fontSize: 32,
                         lineHeight: 1.1,
-                        fontWeight: order.status === 'pending_payment' ? 500 : 700,
-                        color: order.status === 'cancelled' ? '#dc2626' : order.status === 'pending_payment' ? '#525252' : '#0a0a0a',
+                        fontWeight: order.status === ORDER_STATUS.PENDING_PAYMENT ? 500 : 700,
+                        color: order.status === ORDER_STATUS.CANCELLED ? '#dc2626' : order.status === ORDER_STATUS.PENDING_PAYMENT ? '#525252' : '#0a0a0a',
                         letterSpacing: -0.8,
                         margin: '8px 0 0'
                     }}>
-                        {order.status === 'delivered' ? t('heading_order_delivered')
-                            : order.status === 'cancelled' ? t('heading_order_cancelled')
-                            : order.status === 'pending_payment' ? t('heading_awaiting_confirmation')
+                        {order.status === ORDER_STATUS.DELIVERED ? t('heading_order_delivered')
+                            : order.status === ORDER_STATUS.CANCELLED ? t('heading_order_cancelled')
+                            : order.status === ORDER_STATUS.PENDING_PAYMENT ? t('heading_awaiting_confirmation')
                             : isCashMethod && !paid ? t('heading_confirmed_unpaid')
                             : t('heading_order_confirmed')}
                     </h1>
@@ -239,7 +241,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '18px 0 16px' }} />
 
-                    {order.status === 'cancelled' ? (
+                    {order.status === ORDER_STATUS.CANCELLED ? (
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#dc2626', fontSize: 14 }}>
                             This order has been cancelled and cannot be completed.
                         </div>

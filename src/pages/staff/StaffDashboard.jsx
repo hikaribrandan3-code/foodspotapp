@@ -9,6 +9,8 @@ import { useStaff } from '../../contexts/StaffContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
 import BurgerLoader from '../../components/BurgerLoader'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 // Lazy-load scanner to avoid camera bundle on every page load
 const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
@@ -31,57 +33,57 @@ const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
 // Each status has ONE clear action. No ambiguity.
 const getActionForStatus = (status, orderType, paymentConfirmed) => {
     switch (status) {
-        case 'pending_payment':
+        case ORDER_STATUS.PENDING_PAYMENT:
             // ❌ NO BUTTON — Only webhook can advance this
             return null
 
-        case 'paid_unreleased':
+        case ORDER_STATUS.PAID_UNRELEASED:
             // Staff cannot accept unpaid cash orders — owner must confirm payment first
             if (!paymentConfirmed) return null
             return {
                 label: 'ACEPTAR PEDIDO',
-                targetStatus: 'released_to_kitchen',
+                targetStatus: ORDER_STATUS.RELEASED_TO_KITCHEN,
                 color: '#22C55E',
                 confirm: false
             }
 
-        case 'released_to_kitchen':
+        case ORDER_STATUS.RELEASED_TO_KITCHEN:
             return {
                 label: 'ENVIAR A COCINA',
-                targetStatus: 'preparing',
+                targetStatus: ORDER_STATUS.PREPARING,
                 color: '#F97316',
                 confirm: false
             }
 
-        case 'preparing':
+        case ORDER_STATUS.PREPARING:
             return {
                 label: 'MARCAR LISTO',
-                targetStatus: 'ready',
+                targetStatus: ORDER_STATUS.READY,
                 color: '#06B6D4',
                 confirm: false
             }
 
-        case 'ready':
+        case ORDER_STATUS.READY:
             if (orderType === 'delivery') {
                 return {
                     label: 'DESPACHAR',
-                    targetStatus: 'dispatched',
+                    targetStatus: ORDER_STATUS.DISPATCHED,
                     color: '#6366F1',
                     confirm: false
                 }
             } else {
                 return {
                     label: 'ENTREGAR',
-                    targetStatus: 'delivered',
+                    targetStatus: ORDER_STATUS.DELIVERED,
                     color: '#22C55E',
                     confirm: false
                 }
             }
 
-        case 'dispatched':
+        case ORDER_STATUS.DISPATCHED:
             return {
                 label: '✅ CONFIRMAR ENTREGA',
-                targetStatus: 'delivered',
+                targetStatus: ORDER_STATUS.DELIVERED,
                 color: '#22C55E',
                 confirm: false
             }
@@ -104,13 +106,13 @@ function StaffDashboard() {
     // 🔄 FSM STATUS PIPELINE (Professional)
     // ============================================
     const STATUS_PIPELINE = [
-        { id: 'pending_payment', label: 'Esperando Pago', color: '#F59E0B', bg: '#FEF3C7' },
-        { id: 'paid_unreleased', label: 'Pago Recibido', color: '#8B5CF6', bg: '#EDE9FE' },
-        { id: 'released_to_kitchen', label: 'Recibido', color: primaryColor, bg: `${primaryColor}22` }, // 🚀 BRAND SYNC
-        { id: 'preparing', label: 'En Cocina', color: '#F97316', bg: '#FFF7ED' },
-        { id: 'ready', label: 'Listo', color: '#06B6D4', bg: '#CFFAFE' },
-        { id: 'dispatched', label: 'En Camino', color: '#6366F1', bg: '#E0E7FF' },
-        { id: 'delivered', label: 'Entregado', color: '#22C55E', bg: '#DCFCE7' }
+        { id: ORDER_STATUS.PENDING_PAYMENT, label: 'Esperando Pago', color: '#F59E0B', bg: '#FEF3C7' },
+        { id: ORDER_STATUS.PAID_UNRELEASED, label: 'Pago Recibido', color: '#8B5CF6', bg: '#EDE9FE' },
+        { id: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Recibido', color: primaryColor, bg: `${primaryColor}22` }, // 🚀 BRAND SYNC
+        { id: ORDER_STATUS.PREPARING, label: 'En Cocina', color: '#F97316', bg: '#FFF7ED' },
+        { id: ORDER_STATUS.READY, label: 'Listo', color: '#06B6D4', bg: '#CFFAFE' },
+        { id: ORDER_STATUS.DISPATCHED, label: 'En Camino', color: '#6366F1', bg: '#E0E7FF' },
+        { id: ORDER_STATUS.DELIVERED, label: 'Entregado', color: '#22C55E', bg: '#DCFCE7' }
     ];
 
     // Get status config by id
@@ -202,8 +204,8 @@ function StaffDashboard() {
     // 🗂️ FILTER ORDERS
     // ============================================
     // Active statuses for the kanban view (excludes terminal + cart)
-    const ACTIVE_STATUSES = ['pending_payment', 'paid_unreleased', 'released_to_kitchen', 'preparing', 'ready', 'dispatched']
-    const TERMINAL_STATUSES = ['delivered', 'cancelled', 'refunded']
+    const ACTIVE_STATUSES = [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PAID_UNRELEASED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED]
+    const TERMINAL_STATUSES = [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED, ORDER_STATUS.REFUNDED]
 
     const filteredOrders = useMemo(() => {
         if (activeTab === 'active') {
@@ -230,9 +232,9 @@ function StaffDashboard() {
 
     // Stats
     const stats = useMemo(() => ({
-        pending: orders.filter(o => ['pending_payment', 'paid_unreleased'].includes(o.status)).length,
+        pending: orders.filter(o => [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PAID_UNRELEASED].includes(o.status)).length,
         active: orders.filter(o => ACTIVE_STATUSES.includes(o.status)).length,
-        completed: orders.filter(o => o.status === 'delivered').length
+        completed: orders.filter(o => o.status === ORDER_STATUS.DELIVERED).length
     }), [orders])
 
     // ============================================
@@ -569,7 +571,7 @@ function StaffDashboard() {
                                                         </button>
                                                     ) : (
                                                         // No action = pending payment or terminal state
-                                                        status.id === 'pending_payment' && (
+                                                        status.id === ORDER_STATUS.PENDING_PAYMENT && (
                                                             <div style={{
                                                                 width: '100%',
                                                                 padding: '10px 14px',
@@ -595,7 +597,7 @@ function StaffDashboard() {
                                                             try {
                                                                 await supabase
                                                                     .from('orders')
-                                                                    .update({ status: 'cancelled' })
+                                                                    .update({ status: ORDER_STATUS.CANCELLED })
                                                                     .eq('id', order.id)
                                                                     .eq('business_id', businessId);
                                                                 fetchOrders();

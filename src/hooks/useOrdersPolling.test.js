@@ -10,6 +10,8 @@ vi.mock('../lib/supabaseClient', () => ({
 }))
 
 import { supabase } from '../lib/supabaseClient'
+import { ORDER_STATUS } from '../constants/database.js';
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -29,8 +31,8 @@ function mockFromChain({ data = [], error = null } = {}) {
 }
 
 const MOCK_ORDERS = [
-    { id: 'order-1', business_id: 'biz-123', status: 'preparing', created_at: '2026-04-23T10:00:00Z' },
-    { id: 'order-2', business_id: 'biz-123', status: 'ready',     created_at: '2026-04-23T09:00:00Z' },
+    { id: 'order-1', business_id: 'biz-123', status: ORDER_STATUS.PREPARING, created_at: '2026-04-23T10:00:00Z' },
+    { id: 'order-2', business_id: 'biz-123', status: ORDER_STATUS.READY,     created_at: '2026-04-23T09:00:00Z' },
 ]
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -71,7 +73,7 @@ describe('useOrdersPolling', () => {
     // ── 3. Filters active orders correctly ────────────────────────────────────
     it('stores only the data Supabase returns (DB-side filtering via .eq)', async () => {
         // The hook performs no client-side filtering — it trusts the DB response.
-        const activeOnly = MOCK_ORDERS.filter(o => o.status === 'preparing')
+        const activeOnly = MOCK_ORDERS.filter(o => o.status === ORDER_STATUS.PREPARING)
         mockFromChain({ data: activeOnly })
 
         const { result } = renderHook(() => useOrdersPolling('biz-123'))

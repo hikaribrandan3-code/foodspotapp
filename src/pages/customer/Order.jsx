@@ -24,6 +24,8 @@ import {
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { handleCashPayment } from '../../services/offlinePayment.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 // ============================================
 // 🛒 ORDER.JSX - THE UNIVERSAL CHECKOUT ENGINE
@@ -164,7 +166,7 @@ function Order({ config: configProp }) {
         const paymentStatus = urlParams.get('status')
         const orderId = urlParams.get('order_id')
 
-        if ((paymentStatus === 'rejected' || paymentStatus === 'cancelled') && orderId) {
+        if ((paymentStatus === 'rejected' || paymentStatus === ORDER_STATUS.CANCELLED) && orderId) {
             console.log('💳 Payment failure detected, entering retry mode:', orderId)
             setIsRetryMode(true)
             setPendingOrderId(orderId)
@@ -288,10 +290,10 @@ function Order({ config: configProp }) {
         const isMercadoPago = paymentMethod === 'mercadopago'
         const isCash = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
         const orderStatus = isMercadoPago
-            ? 'pending_payment'      // MP: waiting for online payment
+            ? ORDER_STATUS.PENDING_PAYMENT      // MP: waiting for online payment
             : isCash
-                ? 'paid_unreleased'  // Cash: owner must confirm payment before kitchen
-                : 'released_to_kitchen'  // Dine-in: auto-accepted straight to kitchen
+                ? ORDER_STATUS.PAID_UNRELEASED  // Cash: owner must confirm payment before kitchen
+                : ORDER_STATUS.RELEASED_TO_KITCHEN  // Dine-in: auto-accepted straight to kitchen
 
         const orderPaymentStatus = 'pending'
 
@@ -470,7 +472,7 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: 'paid_unreleased', // WhatsApp = cash path, payment done, awaiting release
+            status: ORDER_STATUS.PAID_UNRELEASED, // WhatsApp = cash path, payment done, awaiting release
             payment_status: 'pending',
             order_type: orderType,
             customer_name: customerInfo.name || null,
@@ -530,7 +532,7 @@ function Order({ config: configProp }) {
                 .select('*')
                 .eq('id', pendingOrderId)
                 .eq('business_id', businessId) // 🔒 SILO GUARD - REQUIRED
-                .eq('status', 'pending_payment')
+                .eq('status', ORDER_STATUS.PENDING_PAYMENT)
                 .single()
 
             if (fetchError || !order) {
@@ -566,7 +568,7 @@ function Order({ config: configProp }) {
             // SILO GUARD: Cancel the pending order
             await supabase
                 .from('orders')
-                .update({ status: 'cancelled', cancel_reason: 'payment_abandoned' })
+                .update({ status: ORDER_STATUS.CANCELLED, cancel_reason: 'payment_abandoned' })
                 .eq('id', pendingOrderId)
                 .eq('business_id', businessId) // 🔒 SILO GUARD
         }

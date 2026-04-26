@@ -12,6 +12,8 @@ import BackendNav from '../../components/BackendNav.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 // ============================================
 // 🎯 OWNER ORDERS — KANBAN DASHBOARD
@@ -20,14 +22,14 @@ import BurgerLoader from '../../components/BurgerLoader'
 
 // 🔄 FSM STATUS PIPELINE
 const STATUS_PIPELINE = [
-    { id: 'pending_payment',    label: 'Esperando Pago',    color: '#F59E0B', bg: '#FEF3C7' },
-    { id: 'paid_unreleased',    label: 'Pago Recibido',     color: '#8B5CF6', bg: '#EDE9FE' },
-    { id: 'released_to_kitchen', label: 'Recibido',         color: '#C4856A', bg: '#C4856A22' },
-    { id: 'preparing',          label: 'En Cocina',         color: '#F97316', bg: '#FFF7ED' },
-    { id: 'ready',              label: 'Listo',             color: '#06B6D4', bg: '#CFFAFE' },
-    { id: 'dispatched',         label: 'En Camino',         color: '#6366F1', bg: '#E0E7FF' },
-    { id: 'delivered',          label: 'Entregado',         color: '#22C55E', bg: '#DCFCE7' },
-    { id: 'cancelled',          label: 'Cancelado',         color: '#DC2626', bg: '#FEE2E2' }
+    { id: ORDER_STATUS.PENDING_PAYMENT,    label: 'Esperando Pago',    color: '#F59E0B', bg: '#FEF3C7' },
+    { id: ORDER_STATUS.PAID_UNRELEASED,    label: 'Pago Recibido',     color: '#8B5CF6', bg: '#EDE9FE' },
+    { id: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Recibido',         color: '#C4856A', bg: '#C4856A22' },
+    { id: ORDER_STATUS.PREPARING,          label: 'En Cocina',         color: '#F97316', bg: '#FFF7ED' },
+    { id: ORDER_STATUS.READY,              label: 'Listo',             color: '#06B6D4', bg: '#CFFAFE' },
+    { id: ORDER_STATUS.DISPATCHED,         label: 'En Camino',         color: '#6366F1', bg: '#E0E7FF' },
+    { id: ORDER_STATUS.DELIVERED,          label: 'Entregado',         color: '#22C55E', bg: '#DCFCE7' },
+    { id: ORDER_STATUS.CANCELLED,          label: 'Cancelado',         color: '#DC2626', bg: '#FEE2E2' }
 ]
 
 const getStatusConfig = (status) => STATUS_PIPELINE.find(s => s.id === status) || { label: status, color: '#9CA3AF', bg: '#F3F4F6' }
@@ -35,29 +37,29 @@ const getStatusConfig = (status) => STATUS_PIPELINE.find(s => s.id === status) |
 // 🛡️ OWNER ACTION BUTTONS
 const getActionForStatus = (status, orderType, paymentConfirmed) => {
     switch (status) {
-        case 'pending_payment':
+        case ORDER_STATUS.PENDING_PAYMENT:
             return paymentConfirmed ? null : { label: 'CONFIRMAR PAGO', action: 'confirm_payment', color: '#22C55E' }
 
-        case 'paid_unreleased':
+        case ORDER_STATUS.PAID_UNRELEASED:
             return paymentConfirmed
-                ? { label: 'ACEPTAR PEDIDO', action: 'advance', targetStatus: 'released_to_kitchen', color: '#22C55E' }
-                : { label: 'CONFIRMAR PAGO', action: 'confirm_and_release', targetStatus: 'released_to_kitchen', color: '#22C55E' }
+                ? { label: 'ACEPTAR PEDIDO', action: 'advance', targetStatus: ORDER_STATUS.RELEASED_TO_KITCHEN, color: '#22C55E' }
+                : { label: 'CONFIRMAR PAGO', action: 'confirm_and_release', targetStatus: ORDER_STATUS.RELEASED_TO_KITCHEN, color: '#22C55E' }
 
-        case 'released_to_kitchen':
-            return { label: 'ENVIAR A COCINA', action: 'advance', targetStatus: 'preparing', color: '#F97316' }
+        case ORDER_STATUS.RELEASED_TO_KITCHEN:
+            return { label: 'ENVIAR A COCINA', action: 'advance', targetStatus: ORDER_STATUS.PREPARING, color: '#F97316' }
 
-        case 'preparing':
-            return { label: 'MARCAR LISTO', action: 'advance', targetStatus: 'ready', color: '#06B6D4' }
+        case ORDER_STATUS.PREPARING:
+            return { label: 'MARCAR LISTO', action: 'advance', targetStatus: ORDER_STATUS.READY, color: '#06B6D4' }
 
-        case 'ready':
+        case ORDER_STATUS.READY:
             if (orderType === 'delivery') {
-                return { label: 'DESPACHAR', action: 'advance', targetStatus: 'dispatched', color: '#6366F1' }
+                return { label: 'DESPACHAR', action: 'advance', targetStatus: ORDER_STATUS.DISPATCHED, color: '#6366F1' }
             } else {
-                return { label: 'ENTREGAR', action: 'advance', targetStatus: 'delivered', color: '#22C55E' }
+                return { label: 'ENTREGAR', action: 'advance', targetStatus: ORDER_STATUS.DELIVERED, color: '#22C55E' }
             }
 
-        case 'dispatched':
-            return { label: 'CONFIRMAR ENTREGA', action: 'advance', targetStatus: 'delivered', color: '#22C55E' }
+        case ORDER_STATUS.DISPATCHED:
+            return { label: 'CONFIRMAR ENTREGA', action: 'advance', targetStatus: ORDER_STATUS.DELIVERED, color: '#22C55E' }
 
         default:
             return null
@@ -113,8 +115,8 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     // ============================================
     // 🗂️ FILTERS
     // ============================================
-    const ACTIVE_STATUSES = ['pending_payment', 'paid_unreleased', 'released_to_kitchen', 'preparing', 'ready', 'dispatched']
-    const TERMINAL_STATUSES = ['delivered', 'cancelled', 'refunded']
+    const ACTIVE_STATUSES = [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PAID_UNRELEASED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED]
+    const TERMINAL_STATUSES = [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED, ORDER_STATUS.REFUNDED]
 
     const filteredOrders = useMemo(() => {
         if (activeTab === 'active') {
@@ -137,7 +139,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
     const stats = useMemo(() => ({
         active: orders.filter(o => ACTIVE_STATUSES.includes(o.status)).length,
-        completed: orders.filter(o => o.status === 'delivered').length
+        completed: orders.filter(o => o.status === ORDER_STATUS.DELIVERED).length
     }), [orders])
 
     // ============================================
@@ -292,13 +294,13 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
         if (isRealOrder && businessId) {
             await supabase
                 .from('orders')
-                .update({ status: 'cancelled' })
+                .update({ status: ORDER_STATUS.CANCELLED })
                 .eq('id', orderId)
                 .eq('business_id', businessId)
         }
 
-        updateOrder(orderId, { status: 'cancelled' })
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'cancelled' } : o))
+        updateOrder(orderId, { status: ORDER_STATUS.CANCELLED })
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: ORDER_STATUS.CANCELLED } : o))
         setProcessingOrderId(null)
     }
 
@@ -443,7 +445,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                             </div>
 
                                             {/* Payment Controls (owner only, pending cash) */}
-                                            {order.status === 'pending_payment' && !isPaid && (
+                                            {order.status === ORDER_STATUS.PENDING_PAYMENT && !isPaid && (
                                                 <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                                                     <select
                                                         value={paymentMethodSelect[order.id] || 'cash'}
@@ -468,7 +470,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                             )}
 
                                             {/* Delivery Code (dispatched only) */}
-                                            {order.status === 'dispatched' && (order.customer_phone || order.customerInfo?.phone) && (
+                                            {order.status === ORDER_STATUS.DISPATCHED && (order.customer_phone || order.customerInfo?.phone) && (
                                                 <div style={{ marginBottom: 12 }}>
                                                     <input
                                                         type="text" maxLength={4} placeholder="Código"
@@ -492,7 +494,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                             } else if (action.action === 'confirm_and_release') {
                                                                 handleConfirmAndRelease(order, action.targetStatus)
                                                             } else if (action.action === 'advance') {
-                                                                if (action.targetStatus === 'delivered' && (order.customer_phone || order.customerInfo?.phone)) {
+                                                                if (action.targetStatus === ORDER_STATUS.DELIVERED && (order.customer_phone || order.customerInfo?.phone)) {
                                                                     const code = deliveryConfirmCode[order.id] || ''
                                                                     if (!verifyDeliveryCode(order.customer_phone || order.customerInfo?.phone, code)) {
                                                                         alert('Código incorrecto')

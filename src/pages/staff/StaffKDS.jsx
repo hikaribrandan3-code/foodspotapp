@@ -5,11 +5,13 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useKDSSync } from '../../hooks/useKDSSync';
 import { useCamTechListener } from '../../hooks/useCamTech';
 import BurgerLoader from '../../components/BurgerLoader';
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 const KDS_COLUMNS = [
-    { id: 'released_to_kitchen', next: 'preparing', color: 'yellow' },
-    { id: 'preparing', next: 'ready', color: 'orange' },
-    { id: 'ready', next: null, color: 'green' } // next is order-type-aware
+    { id: ORDER_STATUS.RELEASED_TO_KITCHEN, next: ORDER_STATUS.PREPARING, color: 'yellow' },
+    { id: ORDER_STATUS.PREPARING, next: ORDER_STATUS.READY, color: 'orange' },
+    { id: ORDER_STATUS.READY, next: null, color: 'green' } // next is order-type-aware
 ];
 
 export const StaffKDS = () => {
@@ -73,7 +75,7 @@ export const StaffKDS = () => {
                                     <button
                                         disabled={order.isOptimistic}
                                         onClick={() => {
-                                            const target = col.next || (order.order_type === 'delivery' ? 'dispatched' : 'delivered')
+                                            const target = col.next || (order.order_type === 'delivery' ? ORDER_STATUS.DISPATCHED : ORDER_STATUS.DELIVERED)
                                             transitionOrderState(order.id, order.status, target)
                                         }}
                                         className="btn-primary"

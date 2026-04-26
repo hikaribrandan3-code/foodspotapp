@@ -1,13 +1,13 @@
 export const ORDER_STATUS_FLOW = {
-    pending_payment: { label: 'Pending Payment', next: 'paid_unreleased', nextLabel: 'Confirm Payment →', class: 'status-pending-payment' },
-    paid_unreleased: { label: 'Paid — Awaiting Release', next: 'released_to_kitchen', nextLabel: 'Release to Kitchen →', class: 'status-paid-unreleased' },
-    released_to_kitchen: { label: 'Released to Kitchen', next: 'preparing', nextLabel: 'Start Prep →', class: 'status-released' },
-    preparing: { label: 'Preparing', next: 'ready', nextLabel: 'Ready →', class: 'status-preparing' },
+    pending_payment: { label: 'Pending Payment', next: ORDER_STATUS.PAID_UNRELEASED, nextLabel: 'Confirm Payment →', class: 'status-pending-payment' },
+    paid_unreleased: { label: 'Paid — Awaiting Release', next: ORDER_STATUS.RELEASED_TO_KITCHEN, nextLabel: 'Release to Kitchen →', class: 'status-paid-unreleased' },
+    released_to_kitchen: { label: 'Released to Kitchen', next: ORDER_STATUS.PREPARING, nextLabel: 'Start Prep →', class: 'status-released' },
+    preparing: { label: 'Preparing', next: ORDER_STATUS.READY, nextLabel: 'Ready →', class: 'status-preparing' },
     ready: {
-        pickup: { label: 'Ready for Pickup', next: 'delivered', nextLabel: 'Hand Over', class: 'status-ready' },
-        delivery: { label: 'Ready for Dispatch', next: 'dispatched', nextLabel: 'Dispatch', class: 'status-ready' }
+        pickup: { label: 'Ready for Pickup', next: ORDER_STATUS.DELIVERED, nextLabel: 'Hand Over', class: 'status-ready' },
+        delivery: { label: 'Ready for Dispatch', next: ORDER_STATUS.DISPATCHED, nextLabel: 'Dispatch', class: 'status-ready' }
     },
-    dispatched: { label: 'Dispatched', next: 'delivered', nextLabel: 'Confirm Delivery', class: 'status-dispatched' },
+    dispatched: { label: 'Dispatched', next: ORDER_STATUS.DELIVERED, nextLabel: 'Confirm Delivery', class: 'status-dispatched' },
     delivered: { label: 'Delivered', next: null, nextLabel: null, class: 'status-delivered' },
     cancelled: { label: 'Cancelled', next: null, nextLabel: null, class: 'status-cancelled' },
     refunded: { label: 'Refunded', next: null, nextLabel: null, class: 'status-refunded' }
@@ -22,8 +22,8 @@ export const getOrderStatusInfo = (status, orderType = 'pickup') => {
     const info = ORDER_STATUS_FLOW[status]
     if (!info) return { label: status, next: null, nextLabel: null, class: '' }
 
-    // Handle split path for 'ready'
-    if (status === 'ready') {
+    // Handle split path for ORDER_STATUS.READY
+    if (status === ORDER_STATUS.READY) {
         return info[orderType] || info.pickup
     }
 
@@ -58,7 +58,7 @@ export const canAdvanceOrder = (order, newStatus, config) => {
     // RULE 1: P0 - DELIVERY PREPAYMENT BLOCK
     // ===========================================
     if (orderType === 'delivery') {
-        if ((newStatus === 'preparing' || newStatus === 'dispatched') && !paymentConfirmed) {
+        if ((newStatus === ORDER_STATUS.PREPARING || newStatus === ORDER_STATUS.DISPATCHED) && !paymentConfirmed) {
             return {
                 allowed: false,
                 reason: '⚠️ REGLA DE DESPACHO: El pedido debe estar PAGADO antes de preparar o enviar.'
@@ -70,7 +70,7 @@ export const canAdvanceOrder = (order, newStatus, config) => {
     // RULE 2: MODE A2 (CAFÉ) - STRICT PREPAYMENT
     // ===========================================
     if (orderMode === 'A2') {
-        if (newStatus === 'preparing' && !paymentConfirmed) {
+        if (newStatus === ORDER_STATUS.PREPARING && !paymentConfirmed) {
             return {
                 allowed: false,
                 reason: '⚠️ MODO CAFÉ (A2): Se requiere pago confirmado antes de marchar a cocina.'

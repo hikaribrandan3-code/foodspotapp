@@ -13,6 +13,8 @@ vi.mock('../lib/supabaseClient', () => ({
 }))
 
 import { supabase } from '../lib/supabaseClient'
+import { ORDER_STATUS } from '../constants/database.js';
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,9 +58,9 @@ function mockChannel() {
 }
 
 const MOCK_KDS_ORDERS = [
-    { id: 'order-1', business_id: 'biz-999', status: 'released_to_kitchen', created_at: '2026-04-23T08:00:00Z' },
-    { id: 'order-2', business_id: 'biz-999', status: 'preparing',           created_at: '2026-04-23T08:05:00Z' },
-    { id: 'order-3', business_id: 'biz-999', status: 'ready',               created_at: '2026-04-23T08:10:00Z' },
+    { id: 'order-1', business_id: 'biz-999', status: ORDER_STATUS.RELEASED_TO_KITCHEN, created_at: '2026-04-23T08:00:00Z' },
+    { id: 'order-2', business_id: 'biz-999', status: ORDER_STATUS.PREPARING,           created_at: '2026-04-23T08:05:00Z' },
+    { id: 'order-3', business_id: 'biz-999', status: ORDER_STATUS.READY,               created_at: '2026-04-23T08:10:00Z' },
 ]
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -93,7 +95,7 @@ describe('useKDSSync', () => {
         const { result } = renderHook(() => useKDSSync('biz-999'))
         await waitFor(() => expect(result.current.loading).toBe(false))
 
-        expect(inMock).toHaveBeenCalledWith('status', ['released_to_kitchen', 'preparing', 'ready'])
+        expect(inMock).toHaveBeenCalledWith('status', [ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY])
     })
 
     it('queries with the correct business_id guard', async () => {
@@ -148,12 +150,12 @@ describe('useKDSSync', () => {
         await waitFor(() => expect(result.current.loading).toBe(false))
 
         await act(async () => {
-            await result.current.transitionOrderState('order-2', 'cooking', 'ready')
+            await result.current.transitionOrderState('order-2', 'cooking', ORDER_STATUS.READY)
         })
 
         expect(supabase.rpc).toHaveBeenCalledWith('advance_order_status', {
             p_order_id: 'order-2',
-            p_target_status: 'ready',
+            p_target_status: ORDER_STATUS.READY,
         })
     })
 
@@ -176,12 +178,12 @@ describe('useKDSSync', () => {
 
         // Start the transition without awaiting it
         act(() => {
-            result.current.transitionOrderState('order-2', 'cooking', 'ready')
+            result.current.transitionOrderState('order-2', 'cooking', ORDER_STATUS.READY)
         })
 
         // Optimistic update is synchronous — visible before RPC finishes
         const optimisticOrder = result.current.orders.find(o => o.id === 'order-2')
-        expect(optimisticOrder?.status).toBe('ready')
+        expect(optimisticOrder?.status).toBe(ORDER_STATUS.READY)
         expect(optimisticOrder?.isOptimistic).toBe(true)
 
         // Clean up pending timers
@@ -198,21 +200,21 @@ describe('useKDSSync', () => {
         await waitFor(() => expect(result.current.loading).toBe(false))
 
         await act(async () => {
-            await result.current.transitionOrderState('order-2', 'cooking', 'ready')
+            await result.current.transitionOrderState('order-2', 'cooking', ORDER_STATUS.READY)
         })
 
         // Simulate server confirmation via realtime UPDATE
         act(() => {
             capture.fn?.({
                 eventType: 'UPDATE',
-                new: { id: 'order-2', business_id: 'biz-999', status: 'ready', isOptimistic: false },
+                new: { id: 'order-2', business_id: 'biz-999', status: ORDER_STATUS.READY, isOptimistic: false },
                 old: { id: 'order-2', business_id: 'biz-999', status: 'cooking' },
             })
         })
 
         const confirmed = result.current.orders.find(o => o.id === 'order-2')
         expect(confirmed?.isOptimistic).toBe(false)
-        expect(confirmed?.status).toBe('ready')
+        expect(confirmed?.status).toBe(ORDER_STATUS.READY)
     })
 
     // ── 4. Handles failed transitions ─────────────────────────────────────────
@@ -225,7 +227,7 @@ describe('useKDSSync', () => {
         await waitFor(() => expect(result.current.loading).toBe(false))
 
         await act(async () => {
-            await result.current.transitionOrderState('order-2', 'cooking', 'ready')
+            await result.current.transitionOrderState('order-2', 'cooking', ORDER_STATUS.READY)
         })
 
         const rolledBack = result.current.orders.find(o => o.id === 'order-2')
@@ -246,11 +248,11 @@ describe('useKDSSync', () => {
         await act(async () => { await Promise.resolve() })
 
         await act(async () => {
-            await result.current.transitionOrderState('order-2', 'cooking', 'ready')
+            await result.current.transitionOrderState('order-2', 'cooking', ORDER_STATUS.READY)
         })
 
         // Optimistic update applied
-        expect(result.current.orders.find(o => o.id === 'order-2')?.status).toBe('ready')
+        expect(result.current.orders.find(o => o.id === 'order-2')?.status).toBe(ORDER_STATUS.READY)
 
         // Advance past the 8-second snapback timeout
         act(() => { vi.advanceTimersByTime(8001) })
@@ -289,12 +291,12 @@ describe('useKDSSync', () => {
         await waitFor(() => expect(result.current.loading).toBe(false))
 
         await act(async () => {
-            await result.current.transitionOrderState('order-2', 'cooking', 'ready')
+            await result.current.transitionOrderState('order-2', 'cooking', ORDER_STATUS.READY)
         })
 
         expect(supabase.rpc).not.toHaveBeenCalled()
         const order = result.current.orders.find(o => o.id === 'order-2')
-        expect(order?.status).toBe('preparing')
+        expect(order?.status).toBe(ORDER_STATUS.PREPARING)
     })
 
     // ── Realtime event handling ───────────────────────────────────────────────
@@ -308,7 +310,7 @@ describe('useKDSSync', () => {
         act(() => {
             capture.fn?.({
                 eventType: 'INSERT',
-                new: { id: 'order-new', business_id: 'biz-999', status: 'released_to_kitchen', created_at: '2026-04-23T09:00:00Z' },
+                new: { id: 'order-new', business_id: 'biz-999', status: ORDER_STATUS.RELEASED_TO_KITCHEN, created_at: '2026-04-23T09:00:00Z' },
                 old: null,
             })
         })
@@ -328,7 +330,7 @@ describe('useKDSSync', () => {
         act(() => {
             capture.fn?.({
                 eventType: 'INSERT',
-                new: { id: 'order-delivered', business_id: 'biz-999', status: 'delivered' },
+                new: { id: 'order-delivered', business_id: 'biz-999', status: ORDER_STATUS.DELIVERED },
                 old: null,
             })
         })
@@ -346,8 +348,8 @@ describe('useKDSSync', () => {
         act(() => {
             capture.fn?.({
                 eventType: 'UPDATE',
-                new: { id: 'order-3', business_id: 'biz-999', status: 'delivered' },
-                old: { id: 'order-3', business_id: 'biz-999', status: 'ready' },
+                new: { id: 'order-3', business_id: 'biz-999', status: ORDER_STATUS.DELIVERED },
+                old: { id: 'order-3', business_id: 'biz-999', status: ORDER_STATUS.READY },
             })
         })
 
@@ -384,13 +386,13 @@ describe('useKDSSync', () => {
         act(() => {
             capture.fn?.({
                 eventType: 'UPDATE',
-                new: { id: 'order-2', business_id: 'biz-999', status: 'ready' },
+                new: { id: 'order-2', business_id: 'biz-999', status: ORDER_STATUS.READY },
                 old: { id: 'order-2', business_id: 'biz-999', status: 'cooking' },
             })
         })
 
         // Order should remain unchanged
-        expect(result.current.orders.find(o => o.id === 'order-2')?.status).toBe('preparing')
+        expect(result.current.orders.find(o => o.id === 'order-2')?.status).toBe(ORDER_STATUS.PREPARING)
     })
 
     // ── Exposed API shape ─────────────────────────────────────────────────────

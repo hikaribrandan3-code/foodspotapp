@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { ORDER_STATUS } from '../constants/database.js';
+
 
 const SNAPBACK_TIMEOUT_MS = 8000;
 
@@ -15,7 +17,7 @@ export const useKDSSync = (businessId) => {
             .from('orders')
             .select('*')
             .eq('business_id', businessId) // 🛡️ SILO GUARD
-            .in('status', ['released_to_kitchen', 'preparing', 'ready'])
+            .in('status', [ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY])
             .order('created_at', { ascending: true });
 
         if (!error && data) setOrders(data);
@@ -46,7 +48,7 @@ export const useKDSSync = (businessId) => {
                 
                 setOrders(current => {
                     if (eventType === 'INSERT') {
-                        if (['released_to_kitchen', 'preparing', 'ready'].includes(newRow.status)) {
+                        if ([ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY].includes(newRow.status)) {
                             return [...current, newRow];
                         }
                         return current;
@@ -59,7 +61,7 @@ export const useKDSSync = (businessId) => {
                             snapbackTimers.current.delete(newRow.id);
                         }
 
-                        if (['dispatched', 'delivered', 'cancelled'].includes(newRow.status)) {
+                        if ([ORDER_STATUS.DISPATCHED, ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(newRow.status)) {
                             return current.filter(o => o.id !== newRow.id);
                         }
                         // Update order and remove optimistic flag

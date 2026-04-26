@@ -8,6 +8,8 @@ import { formatPrice } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 /**
  * OwnerSummary - Summary dashboard for Owner
@@ -40,7 +42,7 @@ function OwnerSummary() {
                 .select('id, total, status, payment_method, created_at')
                 .eq('business_id', businessId)
                 .gte('created_at', monthAgo.toISOString())
-                .neq('status', 'cancelled')
+                .neq('status', ORDER_STATUS.CANCELLED)
                 .order('created_at', { ascending: false })
 
             if (!cancelled && !error && data) {
@@ -160,7 +162,7 @@ function OwnerSummary() {
                     onClick={async () => {
                         setOrdersLoading(true)
                         const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30)
-                        const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', 'cancelled').order('created_at', { ascending: false })
+                        const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', ORDER_STATUS.CANCELLED).order('created_at', { ascending: false })
                         if (data) setOrders(data)
                         setOrdersLoading(false)
                     }}

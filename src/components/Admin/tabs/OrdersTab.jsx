@@ -1,6 +1,8 @@
 import React from 'react';
 import { canAdvanceOrder, getOrderStatusInfo } from '../../../utils/orderStateGuard.js';
 import { verifyDeliveryCode, getPhoneLast4 } from '../../../utils/deliveryUtils.js';
+import { ORDER_STATUS } from '../../../constants/database.js';
+
 
 const cardStyle = { background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' };
 
@@ -18,9 +20,9 @@ const formatAddress = (addr) => {
 export default function OrdersTab({ orders, config, updateOrder, setOrders, deliveryConfirmCode, setDeliveryConfirmCode, paymentMethodSelect, setPaymentMethodSelect }) {
     const today = new Date().toDateString();
     const todayOrders = orders?.filter(o => new Date(o.createdAt).toDateString() === today) || [];
-    const pendingOrders = todayOrders.filter(o => o.status === 'pending_payment');
-    const preparingOrders = todayOrders.filter(o => o.status === 'preparing');
-    const deliveryOrders = todayOrders.filter(o => o.orderType === 'delivery' && !['delivered', 'cancelled'].includes(o.status));
+    const pendingOrders = todayOrders.filter(o => o.status === ORDER_STATUS.PENDING_PAYMENT);
+    const preparingOrders = todayOrders.filter(o => o.status === ORDER_STATUS.PREPARING);
+    const deliveryOrders = todayOrders.filter(o => o.orderType === 'delivery' && ![ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status));
 
     const handleStatusChange = (orderId, newStatus, order) => {
         const validation = canAdvanceOrder(order, newStatus, config);
@@ -121,7 +123,7 @@ export default function OrdersTab({ orders, config, updateOrder, setOrders, deli
                                         <p style={{ margin: '4px 0 0' }}>Tel: ***{getPhoneLast4(order.customerInfo.phone)}</p>
                                     </div>
                                 )}
-                                {order.status === 'dispatched' && order.customerInfo && (
+                                {order.status === ORDER_STATUS.DISPATCHED && order.customerInfo && (
                                     <div style={{ width: '100%', marginBottom: 8 }}>
                                         <label style={{ fontSize: 10, color: '#6B7280', display: 'block', marginBottom: 4 }}>Últimos 4 dígitos del teléfono</label>
                                         <input type="text" maxLength={4} placeholder="****" value={deliveryConfirmCode[order.id] || ''} onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))} style={{ width: '100%', padding: '8px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 18, textAlign: 'center', letterSpacing: 6 }} />
@@ -129,7 +131,7 @@ export default function OrdersTab({ orders, config, updateOrder, setOrders, deli
                                 )}
                                 {statusInfo.next && (
                                     <button onClick={() => {
-                                        if (statusInfo.next === 'delivered' && order.customerInfo) {
+                                        if (statusInfo.next === ORDER_STATUS.DELIVERED && order.customerInfo) {
                                             const code = deliveryConfirmCode[order.id] || '';
                                             if (!verifyDeliveryCode(code, order.customerInfo.phone)) { alert('Código incorrecto'); return; }
                                         }

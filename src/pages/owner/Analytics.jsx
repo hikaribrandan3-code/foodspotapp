@@ -7,6 +7,8 @@ import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { formatPrice } from '../../config/menuData.js'
 import { logout } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { ORDER_STATUS } from '../../constants/database.js';
+
 
 // ============================================
 // 📊 ANALYTICS — REAL SUPABASE DATA (P0 #9)
@@ -103,9 +105,9 @@ const Analytics = () => {
     // COMPUTED STATS
     const stats = useMemo(() => {
         const completed = orders.filter(o =>
-            ['delivered', 'ready', 'dispatched', 'released_to_kitchen', 'preparing'].includes(o.status)
+            [ORDER_STATUS.DELIVERED, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING].includes(o.status)
         )
-        const delivered = orders.filter(o => o.status === 'delivered')
+        const delivered = orders.filter(o => o.status === ORDER_STATUS.DELIVERED)
         const totalRevenue = completed.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
         const deliveryCount = completed.filter(o => o.order_type === 'delivery').length
         const pickupCount = completed.filter(o => o.order_type === 'pickup').length
@@ -203,7 +205,7 @@ const Analytics = () => {
                                 <h3 style={valueStyle}>{formatPrice(stats.avgTicket)}</h3>
                             </div>
                             <div style={cardStyle}>
-                                <span style={labelStyle}>{t('delivered')}</span>
+                                <span style={labelStyle}>{t(ORDER_STATUS.DELIVERED)}</span>
                                 <h3 style={valueStyle}>{stats.deliveredCount}</h3>
                             </div>
                         </div>

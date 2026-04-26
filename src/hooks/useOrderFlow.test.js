@@ -3,6 +3,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useOrderFlow } from './useOrderFlow.js';
 import { supabase } from '../lib/supabaseClient.js';
+import { ORDER_STATUS } from '../constants/database.js';
+
 
 vi.mock('../lib/supabaseClient.js');
 
@@ -49,7 +51,7 @@ describe('useOrderFlow', () => {
         it('sets status to paid_unreleased for cash payment', async () => {
             const mockOrder = {
                 id: 'order-001',
-                status: 'paid_unreleased',
+                status: ORDER_STATUS.PAID_UNRELEASED,
                 paymentMethod: 'cash',
                 total: 5000,
             };
@@ -72,11 +74,11 @@ describe('useOrderFlow', () => {
             });
 
             expect(response.success).toBe(true);
-            expect(response.order.status).toBe('paid_unreleased');
+            expect(response.order.status).toBe(ORDER_STATUS.PAID_UNRELEASED);
 
             // Verify the payload sent to insert included the correct status.
             expect(ordersMock.insert).toHaveBeenCalledWith(
-                expect.objectContaining({ status: 'paid_unreleased' })
+                expect.objectContaining({ status: ORDER_STATUS.PAID_UNRELEASED })
             );
         });
 
@@ -144,7 +146,7 @@ describe('useOrderFlow', () => {
         it('returns the current order state for a given orderId', async () => {
             const mockOrder = {
                 id: 'order-003',
-                status: 'preparing',
+                status: ORDER_STATUS.PREPARING,
                 total: 3500,
             };
 
@@ -162,7 +164,7 @@ describe('useOrderFlow', () => {
 
             expect(response.success).toBe(true);
             expect(response.order.id).toBe('order-003');
-            expect(response.order.status).toBe('preparing');
+            expect(response.order.status).toBe(ORDER_STATUS.PREPARING);
 
             // Verify select() was called, then eq('id', orderId) was chained on.
             expect(ordersMock.select).toHaveBeenCalled();
@@ -203,7 +205,7 @@ describe('useOrderFlow', () => {
             expect(response.success).toBe(true);
 
             // Verify update({ status: 'cancelado' }) was called, then .eq('id', ...)
-            expect(ordersMock.update).toHaveBeenCalledWith({ status: 'cancelled' });
+            expect(ordersMock.update).toHaveBeenCalledWith({ status: ORDER_STATUS.CANCELLED });
             const updateChain = ordersMock.update.mock.results[0].value;
             expect(updateChain.eq).toHaveBeenCalledWith('id', 'order-004');
         });

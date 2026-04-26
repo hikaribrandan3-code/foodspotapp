@@ -6,6 +6,8 @@
 // ============================================
 
 import { supabase } from '../lib/supabaseClient.js'
+import { ORDER_STATUS } from '../constants/database.js';
+
 
 const OFFLINE_PAYMENTS_KEY = 'fs_offline_payments_queue'
 const SYNC_STATUS_KEY = 'fs_sync_status'
@@ -91,7 +93,7 @@ async function syncOfflinePayment(payment) {
 
         const currentStatus = currentOrder?.status
         // Only advance status if order is still in a payment-pending state
-        const shouldAdvanceStatus = currentStatus === 'pending_payment' || currentStatus === 'paid_unreleased'
+        const shouldAdvanceStatus = currentStatus === ORDER_STATUS.PENDING_PAYMENT || currentStatus === ORDER_STATUS.PAID_UNRELEASED
 
         // Create ledger entry
         const { data: ledgerData, error: ledgerError } = await supabase
@@ -118,8 +120,8 @@ async function syncOfflinePayment(payment) {
             const { error: orderError } = await supabase
                 .from('orders')
                 .update({
-                    status: 'released_to_kitchen',
-                    owner_status: 'released_to_kitchen',
+                    status: ORDER_STATUS.RELEASED_TO_KITCHEN,
+                    owner_status: ORDER_STATUS.RELEASED_TO_KITCHEN,
                     payment_status: 'paid',
                     payment_method: 'cash',
                     payment_confirmed: true,
