@@ -8,6 +8,8 @@ import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logi
 import BurgerLoader from '../../components/BurgerLoader'
 import BackendNav from '../../components/BackendNav'
 import { ORDER_STATUS } from '../../constants/database.js';
+import { PAYMENT_METHOD } from '../../constants/database.js';
+
 
 
 const T = {
@@ -216,7 +218,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle }) {
           {/* Payment status */}
           {(() => {
             const isPaid = order.payment_status === 'paid'
-            const isCash = order.payment_method === 'efectivo' || order.payment_method === 'cash'
+            const isCash = order.payment_method === PAYMENT_METHOD.CASH
             const text = isPaid
               ? 'Paid'
               : isCash

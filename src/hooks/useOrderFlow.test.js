@@ -4,6 +4,8 @@ import { renderHook, act } from '@testing-library/react';
 import { useOrderFlow } from './useOrderFlow.js';
 import { supabase } from '../lib/supabaseClient.js';
 import { ORDER_STATUS } from '../constants/database.js';
+import { PAYMENT_METHOD } from '../constants/database.js';
+
 
 
 vi.mock('../lib/supabaseClient.js');
@@ -52,7 +54,7 @@ describe('useOrderFlow', () => {
             const mockOrder = {
                 id: 'order-001',
                 status: ORDER_STATUS.PAID_UNRELEASED,
-                paymentMethod: 'cash',
+                paymentMethod: PAYMENT_METHOD.CASH,
                 total: 5000,
             };
 
@@ -67,7 +69,7 @@ describe('useOrderFlow', () => {
             let response;
             await act(async () => {
                 response = await result.current.createOrder({
-                    paymentMethod: 'cash',
+                    paymentMethod: PAYMENT_METHOD.CASH,
                     total: 5000,
                     items: [],
                 });
@@ -86,7 +88,7 @@ describe('useOrderFlow', () => {
             const mockOrder = {
                 id: 'order-002',
                 status: 'pending',
-                paymentMethod: 'mercadopago',
+                paymentMethod: PAYMENT_METHOD.MERCADO_PAGO,
                 total: 8000,
             };
 
@@ -100,7 +102,7 @@ describe('useOrderFlow', () => {
             let response;
             await act(async () => {
                 response = await result.current.createOrder({
-                    paymentMethod: 'mercadopago',
+                    paymentMethod: PAYMENT_METHOD.MERCADO_PAGO,
                     total: 8000,
                     items: [],
                 });
@@ -126,7 +128,7 @@ describe('useOrderFlow', () => {
             let response;
             await act(async () => {
                 response = await result.current.createOrder({
-                    paymentMethod: 'cash',
+                    paymentMethod: PAYMENT_METHOD.CASH,
                     total: 1000,
                     items: [],
                 });
@@ -268,12 +270,12 @@ describe('useOrderFlow', () => {
             const { result } = renderHook(() => useOrderFlow());
 
             await act(async () => {
-                await result.current.createOrder({ paymentMethod: 'mercadopago', items: [] });
+                await result.current.createOrder({ paymentMethod: PAYMENT_METHOD.MERCADO_PAGO, items: [] });
             });
             expect(result.current.error).toBe('Temporary failure');
 
             await act(async () => {
-                await result.current.createOrder({ paymentMethod: 'mercadopago', items: [] });
+                await result.current.createOrder({ paymentMethod: PAYMENT_METHOD.MERCADO_PAGO, items: [] });
             });
             expect(result.current.error).toBeNull();
         });

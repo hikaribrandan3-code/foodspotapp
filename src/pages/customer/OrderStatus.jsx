@@ -9,6 +9,8 @@ import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
+import { PAYMENT_METHOD } from '../../constants/database.js';
+
 
 
 function OrderStatus({ config: configProp, featuredItems = [] }) {
@@ -172,17 +174,17 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }
 
     const getPaymentDisplay = () => {
-        if (order.payment_method === 'cash' || order.payment_method === 'efectivo') return t('cash')
-        if (order.payment_method === 'card_on_delivery' || order.payment_method === 'tarjeta_envio') return t('card_on_delivery')
+        if (order.payment_method === PAYMENT_METHOD.CASH) return t('cash')
+        if (order.payment_method === 'card_on_delivery' || order.payment_method === PAYMENT_METHOD.CARD_ON_DELIVERY) return t('card_on_delivery')
         if (order.payment_method === 'mercado_pago') {
             const lastFour = order.mp_card_last4 || '****'
             return t('card_last4').replace('{last4}', lastFour)
         }
-        if (order.payment_method === 'pay_at_counter' || order.payment_method === 'dine_in') return t('pay_at_table')
+        if (order.payment_method === PAYMENT_METHOD.CASH || order.payment_method === 'dine_in') return t('pay_at_table')
         return order.payment_method || t('cash')
     }
 
-    const isCashMethod = order.payment_method === 'efectivo' || order.payment_method === 'cash'
+    const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
     const paid = isOrderPaid(order)
 
     return (

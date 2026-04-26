@@ -21,6 +21,8 @@ export const PAYMENT_METHOD = {
   CARD_ON_DELIVERY: 'card_on_delivery',
 };
 
+// Legacy values (pre-migration): 'efectivo', 'mercadopago', 'pay_at_counter', 'tarjeta_envio'
+
 export const ORDER_TYPE = {
   PICKUP: 'pickup',
   DELIVERY: 'delivery',

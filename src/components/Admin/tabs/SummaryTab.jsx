@@ -1,4 +1,6 @@
 import React from 'react';
+import { PAYMENT_METHOD } from '../../../constants/database.js';
+
 
 const cardStyle = { background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' };
 const labelStyle = { fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' };
@@ -19,8 +21,8 @@ export default function SummaryTab({ config, updateBusinessInfoCloud, updateConf
         monthAgo.setDate(monthAgo.getDate() - 30);
         return orderDate >= monthAgo;
     }) || [];
-    const mpOrders = todayOrders.filter(o => o.paymentMethod === 'mercadopago');
-    const cashOrders = todayOrders.filter(o => o.paymentMethod === 'cash');
+    const mpOrders = todayOrders.filter(o => o.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO);
+    const cashOrders = todayOrders.filter(o => o.paymentMethod === PAYMENT_METHOD.CASH);
     const mpTotal = mpOrders.reduce((sum, o) => sum + (o.total || 0), 0);
     const cashTotal = cashOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 

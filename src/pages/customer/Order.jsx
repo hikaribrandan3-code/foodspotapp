@@ -25,6 +25,8 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { handleCashPayment } from '../../services/offlinePayment.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
 import { ORDER_STATUS } from '../../constants/database.js';
+import { PAYMENT_METHOD } from '../../constants/database.js';
+
 
 
 // ============================================
@@ -73,7 +75,7 @@ const PaymentMethodCard = ({ id, selected, onClick, title, subtitle, icon, color
         onClick={onClick}
         style={{
             position: 'relative', padding: 16, marginBottom: 12,
-            background: selected ? (id === 'mercadopago' ? '#EFF6FF' : '#F0FDF4') : '#FFFFFF',
+            background: selected ? (id === PAYMENT_METHOD.MERCADO_PAGO ? '#EFF6FF' : '#F0FDF4') : '#FFFFFF',
             border: selected ? `2px solid ${color}` : '1px solid #E5E7EB',
             borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease',
             display: 'flex', alignItems: 'center', gap: 16,
@@ -151,7 +153,7 @@ function Order({ config: configProp }) {
     })
 
     // Payment method
-    const [paymentMethod, setPaymentMethod] = useState('mercadopago')
+    const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHOD.MERCADO_PAGO)
     const [validationErrors, setValidationErrors] = useState([])
 
     // 🔄 PAYMENT RETRY STATE (Audit #7)
@@ -284,11 +286,11 @@ function Order({ config: configProp }) {
 
         const orderNumber = generateOrderNumber()
         const guestToken = getGuestToken()
-        const isCashPath = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
+        const isCashPath = paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY || paymentMethod === PAYMENT_METHOD.CASH
 
         // Payment-aware status assignment
-        const isMercadoPago = paymentMethod === 'mercadopago'
-        const isCash = paymentMethod === 'efectivo' || paymentMethod === 'tarjeta_envio' || paymentMethod === 'pay_at_counter'
+        const isMercadoPago = paymentMethod === PAYMENT_METHOD.MERCADO_PAGO
+        const isCash = paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY || paymentMethod === PAYMENT_METHOD.CASH
         const orderStatus = isMercadoPago
             ? ORDER_STATUS.PENDING_PAYMENT      // MP: waiting for online payment
             : isCash
@@ -345,7 +347,7 @@ function Order({ config: configProp }) {
             }
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
-            if (paymentMethod === 'mercadopago') {
+            if (paymentMethod === PAYMENT_METHOD.MERCADO_PAGO) {
                 // ========== MERCADO PAGO BRANCH ==========
                 try {
                     const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
@@ -479,7 +481,7 @@ function Order({ config: configProp }) {
             customer_phone: customerInfo.phone || null,
             delivery_address: isDelivery ? (customerInfo.address || null) : null,
             table_number: orderType === 'dine_in' ? customerInfo.tableNumber : null,
-            payment_method: 'efectivo',
+            payment_method: PAYMENT_METHOD.CASH,
             distance_km: isDelivery ? distanceResult.distanceKm : null,
             created_at: new Date().toISOString()
         }
@@ -880,8 +882,8 @@ function Order({ config: configProp }) {
                     {(orderType === 'delivery' || orderType === 'pickup' || serviceModes?.dineInPayment === 'before') && (
                         <PaymentMethodCard
                             id="mercadopago"
-                            selected={paymentMethod === 'mercadopago'}
-                            onClick={() => setPaymentMethod('mercadopago')}
+                            selected={paymentMethod === PAYMENT_METHOD.MERCADO_PAGO}
+                            onClick={() => setPaymentMethod(PAYMENT_METHOD.MERCADO_PAGO)}
                             title={t('mercado_pago')}
                             subtitle={t('mp_subtitle')}
                             color="#009EE3"
@@ -892,8 +894,8 @@ function Order({ config: configProp }) {
                     {(orderType !== 'dine_in' || serviceModes?.dineInPayment === 'after') && (
                         <PaymentMethodCard
                             id="efectivo"
-                            selected={paymentMethod === 'efectivo' || paymentMethod === 'pay_at_counter'}
-                            onClick={() => setPaymentMethod(orderType === 'dine_in' ? 'pay_at_counter' : 'efectivo')}
+                            selected={paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === PAYMENT_METHOD.CASH}
+                            onClick={() => setPaymentMethod(orderType === 'dine_in' ? PAYMENT_METHOD.CASH : PAYMENT_METHOD.CASH)}
                             title={orderType === 'dine_in' ? t('pay_at_end_table') : t('cash')}
                             subtitle={orderType === 'dine_in' ? t('pay_at_end_desc') : t('cash_delivery')}
                             color="#22C55E"

@@ -2,6 +2,8 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { getGuestToken } from '../utils/guestToken';
+import { PAYMENT_METHOD } from '../constants/database.js';
+
 
 export function useSplitPayment(businessId) {
     const [loading, setLoading] = useState(false);
@@ -72,7 +74,7 @@ export function useSplitPayment(businessId) {
                     participant_token: `${getGuestToken()}_${i}_${Date.now()}`,
                     amount: amounts[i],
                     status: 'pending',
-                    payment_method: 'mercadopago'
+                    payment_method: PAYMENT_METHOD.MERCADO_PAGO
                 });
             }
 

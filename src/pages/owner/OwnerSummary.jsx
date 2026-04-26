@@ -9,6 +9,8 @@ import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
+import { PAYMENT_METHOD } from '../../constants/database.js';
+
 
 
 /**
@@ -103,8 +105,8 @@ function OwnerSummary() {
         const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
 
         const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today)
-        const mpOrders = todayOrders.filter(o => o.payment_method === 'mercadopago')
-        const cashOrders = todayOrders.filter(o => o.payment_method === 'efectivo' || o.payment_method === 'pay_at_counter')
+        const mpOrders = todayOrders.filter(o => o.payment_method === PAYMENT_METHOD.MERCADO_PAGO)
+        const cashOrders = todayOrders.filter(o => o.payment_method === PAYMENT_METHOD.CASH)
         const mpTotal = mpOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
         const cashTotal = cashOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
 

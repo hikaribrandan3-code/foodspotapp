@@ -2,6 +2,8 @@ import React from 'react';
 import { canAdvanceOrder, getOrderStatusInfo } from '../../../utils/orderStateGuard.js';
 import { verifyDeliveryCode, getPhoneLast4 } from '../../../utils/deliveryUtils.js';
 import { ORDER_STATUS } from '../../../constants/database.js';
+import { PAYMENT_METHOD } from '../../../constants/database.js';
+
 
 
 const cardStyle = { background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' };
@@ -42,7 +44,7 @@ export default function OrdersTab({ orders, config, updateOrder, setOrders, deli
 
     const PaymentStatusBadge = ({ order }) => {
         const isPaid = order.payment_status === 'paid' || order.paymentConfirmed;
-        const isMp = order.paymentMethod === 'mercadopago';
+        const isMp = order.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO;
         return (
             <span style={{
                 padding: '2px 8px',
@@ -166,7 +168,7 @@ export default function OrdersTab({ orders, config, updateOrder, setOrders, deli
                                 <p style={{ fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>Confirmado por: {order.confirmedBy || 'staff'}</p>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                                <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>{order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}</span>
+                                <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO ? '#0D9488' : '#92400E', fontWeight: 500 }}>{order.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO ? 'MP' : 'Efectivo'}</span>
                                 <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
                             </div>
                         </div>
