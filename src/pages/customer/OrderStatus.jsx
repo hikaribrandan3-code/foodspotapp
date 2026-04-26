@@ -174,14 +174,14 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }
 
     const getPaymentDisplay = () => {
-        if (order.payment_method === PAYMENT_METHOD.CASH) return t('cash')
-        if (order.payment_method === 'card_on_delivery' || order.payment_method === PAYMENT_METHOD.CARD_ON_DELIVERY) return t('card_on_delivery')
-        if (order.payment_method === 'mercado_pago') {
+        if (order.payment_method === PAYMENT_METHOD.CASH) return t(PAYMENT_METHOD.CASH)
+        if (order.payment_method === PAYMENT_METHOD.CARD_ON_DELIVERY || order.payment_method === PAYMENT_METHOD.CARD_ON_DELIVERY) return t(PAYMENT_METHOD.CARD_ON_DELIVERY)
+        if (order.payment_method === PAYMENT_METHOD.MERCADO_PAGO) {
             const lastFour = order.mp_card_last4 || '****'
             return t('card_last4').replace('{last4}', lastFour)
         }
         if (order.payment_method === PAYMENT_METHOD.CASH || order.payment_method === 'dine_in') return t('pay_at_table')
-        return order.payment_method || t('cash')
+        return order.payment_method || t(PAYMENT_METHOD.CASH)
     }
 
     const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH

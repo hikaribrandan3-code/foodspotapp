@@ -37,7 +37,7 @@ export default function OrdersTab({ orders, config, updateOrder, setOrders, deli
     };
 
     const handlePaymentConfirm = (orderId) => {
-        const method = paymentMethodSelect[orderId] || 'cash';
+        const method = paymentMethodSelect[orderId] || PAYMENT_METHOD.CASH;
         updateOrder(orderId, { paymentConfirmed: true, paymentMethod: method });
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentConfirmed: true, paymentMethod: method } : o));
     };

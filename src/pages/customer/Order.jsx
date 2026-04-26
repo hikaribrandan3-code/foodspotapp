@@ -884,7 +884,7 @@ function Order({ config: configProp }) {
                             id="mercadopago"
                             selected={paymentMethod === PAYMENT_METHOD.MERCADO_PAGO}
                             onClick={() => setPaymentMethod(PAYMENT_METHOD.MERCADO_PAGO)}
-                            title={t('mercado_pago')}
+                            title={t(PAYMENT_METHOD.MERCADO_PAGO)}
                             subtitle={t('mp_subtitle')}
                             color="#009EE3"
                             icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
@@ -896,7 +896,7 @@ function Order({ config: configProp }) {
                             id="efectivo"
                             selected={paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === PAYMENT_METHOD.CASH}
                             onClick={() => setPaymentMethod(orderType === 'dine_in' ? PAYMENT_METHOD.CASH : PAYMENT_METHOD.CASH)}
-                            title={orderType === 'dine_in' ? t('pay_at_end_table') : t('cash')}
+                            title={orderType === 'dine_in' ? t('pay_at_end_table') : t(PAYMENT_METHOD.CASH)}
                             subtitle={orderType === 'dine_in' ? t('pay_at_end_desc') : t('cash_delivery')}
                             color="#22C55E"
                             icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}

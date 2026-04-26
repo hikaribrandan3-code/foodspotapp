@@ -38,7 +38,7 @@ const T = {
 }
 
 const OWNER_STATS = [
-  { key: 'cash', label: 'CASH', color: T.statCash, matches: [ORDER_STATUS.PENDING_PAYMENT] },
+  { key: PAYMENT_METHOD.CASH, label: 'CASH', color: T.statCash, matches: [ORDER_STATUS.PENDING_PAYMENT] },
   { key: 'todo', label: 'TO-DO', color: T.statTodo, matches: [ORDER_STATUS.PAID_UNRELEASED] },
   { key: 'prep', label: 'PREP', color: T.statPrep, matches: [ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING] },
   { key: ORDER_STATUS.READY, label: 'READY', color: T.statReady, matches: [ORDER_STATUS.READY] },
