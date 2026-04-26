@@ -290,11 +290,23 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
 
         const isRealOrder = !demoMode && !orderId.startsWith('demo-')
         if (isRealOrder && businessId) {
-            await supabase
-                .from('orders')
-                .update({ status: 'cancelled' })
-                .eq('id', orderId)
-                .eq('business_id', businessId)
+            const { data, error } = await supabase.rpc('advance_order_status', {
+                p_order_id: orderId,
+                p_target_status: 'cancelled',
+                p_cancel_reason: 'Cancelled by owner from delivery manager'
+            })
+            if (error) {
+                console.error('[DeliveryManager] Cancel RPC error:', error)
+                alert('Error al cancelar pedido')
+                setProcessingOrderId(null)
+                return
+            }
+            if (data && !data.success) {
+                console.warn('[DeliveryManager] FSM rejection:', data.error, data.message)
+                alert(data.message || 'No se puede cancelar este pedido')
+                setProcessingOrderId(null)
+                return
+            }
         }
 
         updateOrder(orderId, { status: 'cancelled' })

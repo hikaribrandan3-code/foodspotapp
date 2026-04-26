@@ -563,12 +563,14 @@ function Order({ config: configProp }) {
 
     const handleCancelRetry = async () => {
         if (pendingOrderId && businessId) {
-            // SILO GUARD: Cancel the pending order
-            await supabase
-                .from('orders')
-                .update({ status: 'cancelado', cancel_reason: 'payment_abandoned' })
-                .eq('id', pendingOrderId)
-                .eq('business_id', businessId) // 🔒 SILO GUARD
+            const { error } = await supabase.rpc('advance_order_status', {
+                p_order_id: pendingOrderId,
+                p_target_status: 'cancelled',
+                p_cancel_reason: 'payment_abandoned'
+            })
+            if (error) {
+                console.error('[Order] Cancel retry RPC error:', error)
+            }
         }
 
         setIsRetryMode(false)

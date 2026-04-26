@@ -115,12 +115,16 @@ export function useOrderFlow() {
         setError(null);
 
         try {
-            const { error: dbError } = await supabase
-                .from('orders')
-                .update({ status: 'cancelado' })
-                .eq('id', orderId);
+            const { data, error: dbError } = await supabase.rpc('advance_order_status', {
+                p_order_id: orderId,
+                p_target_status: 'cancelled',
+                p_cancel_reason: 'Cancelled via order flow'
+            });
 
             if (dbError) throw dbError;
+            if (data && !data.success) {
+                return { success: false, error: data.message || data.error || 'FSM rejection' };
+            }
 
             return { success: true };
         } catch (e) {

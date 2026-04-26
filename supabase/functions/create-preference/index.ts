@@ -81,11 +81,15 @@ serve(async (req: Request) => {
                     if (dbItem.available === false) {
                         console.error(`🚫 Item AGOTADO: ${dbItem.name} (${dbItem.id})`);
 
-                        // Mark order as failed
-                        await supabase
-                            .from("orders")
-                            .update({ status: "cancelled", cancel_reason: `Item agotado: ${dbItem.name}` })
-                            .eq("id", order_id);
+                        // Cancel via FSM RPC (writes order_transitions audit row + sets cancelled_at)
+                        const { error: cancelError } = await supabase.rpc('advance_order_status', {
+                            p_order_id: order_id,
+                            p_target_status: 'cancelled',
+                            p_cancel_reason: `Item agotado: ${dbItem.name}`
+                        });
+                        if (cancelError) {
+                            console.error('[create-preference] AGOTADO cancel RPC error:', cancelError);
+                        }
 
                         return new Response(
                             JSON.stringify({
@@ -101,11 +105,15 @@ serve(async (req: Request) => {
                     if (dbItem.price !== cartItem.price) {
                         console.warn(`💰 Price mismatch for ${dbItem.name}: cart=$${cartItem.price}, db=$${dbItem.price}`);
 
-                        // Mark order as needing attention
-                        await supabase
-                            .from("orders")
-                            .update({ status: "cancelled", cancel_reason: `Precio actualizado: ${dbItem.name} ($${cartItem.price} → $${dbItem.price})` })
-                            .eq("id", order_id);
+                        // Cancel via FSM RPC (writes order_transitions audit row + sets cancelled_at)
+                        const { error: cancelError } = await supabase.rpc('advance_order_status', {
+                            p_order_id: order_id,
+                            p_target_status: 'cancelled',
+                            p_cancel_reason: `Precio actualizado: ${dbItem.name} ($${cartItem.price} → $${dbItem.price})`
+                        });
+                        if (cancelError) {
+                            console.error('[create-preference] INFLATION cancel RPC error:', cancelError);
+                        }
 
                         return new Response(
                             JSON.stringify({

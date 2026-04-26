@@ -593,11 +593,18 @@ function StaffDashboard() {
                                                         if (confirm('¿Cancelar este pedido?')) {
                                                             setProcessingOrderId(order.id);
                                                             try {
-                                                                await supabase
-                                                                    .from('orders')
-                                                                    .update({ status: 'cancelled' })
-                                                                    .eq('id', order.id)
-                                                                    .eq('business_id', businessId);
+                                                                const { data: rpcData, error: rpcError } = await supabase.rpc('advance_order_status', {
+                                                                    p_order_id: order.id,
+                                                                    p_target_status: 'cancelled',
+                                                                    p_cancel_reason: 'Cancelled by staff from dashboard'
+                                                                });
+                                                                if (rpcError) {
+                                                                    console.error('[StaffDashboard] Cancel RPC error:', rpcError);
+                                                                    setErrorMessage('Error al cancelar pedido');
+                                                                } else if (rpcData && !rpcData.success) {
+                                                                    console.warn('[StaffDashboard] FSM rejection:', rpcData.error, rpcData.message);
+                                                                    setErrorMessage(rpcData.message || 'No se puede cancelar este pedido');
+                                                                }
                                                                 fetchOrders();
                                                             } catch (err) {
                                                                 setErrorMessage('Error al cancelar pedido');

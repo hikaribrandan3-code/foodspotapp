@@ -187,10 +187,10 @@ describe('useOrderFlow', () => {
     // cancelOrder
     // -----------------------------------------------------------------------
     describe('cancelOrder', () => {
-        it('transitions any order to cancelado', async () => {
-            const ordersMock = buildOrdersMock({ error: null });
-            supabase.from.mockImplementation((table) => {
-                if (table === 'orders') return ordersMock;
+        it('cancels via advance_order_status RPC with the correct status enum', async () => {
+            supabase.rpc = vi.fn().mockResolvedValue({
+                data: { success: true, from_status: 'preparing', to_status: 'cancelled' },
+                error: null,
             });
 
             const { result } = renderHook(() => useOrderFlow());
@@ -202,10 +202,12 @@ describe('useOrderFlow', () => {
 
             expect(response.success).toBe(true);
 
-            // Verify update({ status: 'cancelado' }) was called, then .eq('id', ...)
-            expect(ordersMock.update).toHaveBeenCalledWith({ status: 'cancelado' });
-            const updateChain = ordersMock.update.mock.results[0].value;
-            expect(updateChain.eq).toHaveBeenCalledWith('id', 'order-004');
+            // Verify the FSM RPC was called with the correct (NOT 'cancelado') enum.
+            expect(supabase.rpc).toHaveBeenCalledWith('advance_order_status', {
+                p_order_id: 'order-004',
+                p_target_status: 'cancelled',
+                p_cancel_reason: 'Cancelled via order flow',
+            });
         });
 
         it('returns an error when no orderId is provided', async () => {
@@ -220,12 +222,9 @@ describe('useOrderFlow', () => {
             expect(response.error).toBe('No order ID provided');
         });
 
-        it('fails gracefully when the DB update errors', async () => {
-            const dbError = new Error('Row not found');
-
-            supabase.from.mockImplementation((table) => {
-                if (table === 'orders') return buildOrdersMock({ error: dbError });
-            });
+        it('fails gracefully when the RPC errors', async () => {
+            const rpcError = new Error('Row not found');
+            supabase.rpc = vi.fn().mockResolvedValue({ data: null, error: rpcError });
 
             const { result } = renderHook(() => useOrderFlow());
 
@@ -236,6 +235,23 @@ describe('useOrderFlow', () => {
 
             expect(response.success).toBe(false);
             expect(response.error).toBe('Row not found');
+        });
+
+        it('returns the FSM rejection message when the RPC reports !success', async () => {
+            supabase.rpc = vi.fn().mockResolvedValue({
+                data: { success: false, error: 'INVALID_TRANSITION', message: 'No se puede cancelar' },
+                error: null,
+            });
+
+            const { result } = renderHook(() => useOrderFlow());
+
+            let response;
+            await act(async () => {
+                response = await result.current.cancelOrder('order-006');
+            });
+
+            expect(response.success).toBe(false);
+            expect(response.error).toBe('No se puede cancelar');
         });
     });
 

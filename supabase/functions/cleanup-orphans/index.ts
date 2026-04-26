@@ -44,23 +44,44 @@ serve(async (req) => {
 
         console.log(`⏱️ Scanning for orders older than: ${thresholdTime}`);
 
-        // 4. Execute Purge
-        // Safety Lock: ONLY touch 'awaiting_payment'. 
-        // This implicitly protects 'confirmado', 'en_cocina', etc.
-        const { data, error, count } = await supabase
+        // 4. Find ghost orders (still in pending_payment after threshold)
+        // Safety Lock: ONLY touch 'pending_payment'. The FSM RPC enforces
+        // that other states are not affected by this cancel.
+        const { data: ghostOrders, error: fetchError } = await supabase
             .from("orders")
-            .update({ status: "expired" })
-            .eq("status", "awaiting_payment")
-            .lt("created_at", thresholdTime)
-            .select();
+            .select("id")
+            .eq("status", "pending_payment")
+            .lt("created_at", thresholdTime);
 
-        if (error) {
-            console.error("❌ cleanup-orphans: Database Error", error);
-            throw error;
+        if (fetchError) {
+            console.error("❌ cleanup-orphans: Fetch Error", fetchError);
+            throw fetchError;
         }
 
-        const expiredCount = data?.length || 0;
-        console.log(`✅ cleanup-orphans: Operation Complete. Expired ${expiredCount} ghost orders.`);
+        // 5. Cancel each via the FSM RPC (audit log + cancelled_at set automatically)
+        let expiredCount = 0;
+        const failures: { id: string; error: string }[] = [];
+        for (const order of ghostOrders ?? []) {
+            const { data: rpcData, error: rpcError } = await supabase.rpc('advance_order_status', {
+                p_order_id: order.id,
+                p_target_status: 'cancelled',
+                p_cancel_reason: 'Order expired - no payment received within 1 hour'
+            });
+            if (rpcError) {
+                failures.push({ id: order.id, error: rpcError.message });
+                continue;
+            }
+            if (rpcData && !rpcData.success) {
+                failures.push({ id: order.id, error: rpcData.message || rpcData.error });
+                continue;
+            }
+            expiredCount++;
+        }
+
+        if (failures.length > 0) {
+            console.warn(`⚠️ cleanup-orphans: ${failures.length} cancellations failed`, failures);
+        }
+        console.log(`✅ cleanup-orphans: Operation Complete. Cancelled ${expiredCount} ghost orders.`);
 
         return new Response(
             JSON.stringify({

@@ -129,6 +129,26 @@ async function syncOfflinePayment(payment) {
                 .eq('status', currentStatus) // 🛡️ extra guard against race conditions
 
             if (orderError) throw orderError
+
+            // 📝 AUDIT LOG: record the system-driven cash payment transition.
+            // Cash sync bypasses advance_order_status because pending_payment is
+            // locked to non-system actors. Insert manually for chargeback defense.
+            // Wrapped in try/catch so a failed audit insert never breaks the sync.
+            try {
+                const { error: auditError } = await supabase
+                    .from('order_transitions')
+                    .insert({
+                        order_id: payment.order_id,
+                        from_status: currentStatus,
+                        to_status: 'released_to_kitchen',
+                        actor_id: null  // system actor (offline cash sync)
+                    })
+                if (auditError) {
+                    console.error('[OfflinePayment] order_transitions insert failed:', auditError)
+                }
+            } catch (auditEx) {
+                console.error('[OfflinePayment] order_transitions insert threw:', auditEx?.message)
+            }
         }
 
         console.log('[OfflinePayment] ✅ Synced:', payment.id, 'Ledger:', ledgerData.id, 'Advanced:', shouldAdvanceStatus)
