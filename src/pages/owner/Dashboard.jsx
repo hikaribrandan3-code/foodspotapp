@@ -9,6 +9,7 @@ import BurgerLoader from '../../components/BurgerLoader'
 import BackendNav from '../../components/BackendNav'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
+import { canAdvanceOrder } from '../../utils/orderStateGuard'
 
 
 
@@ -371,17 +372,29 @@ export default function Dashboard() {
       ? ORDER_STATUS.DELIVERED
       : next.key
 
+    // 🛡️ FSM VALIDATION: Prevent invalid transitions
+    const validation = canAdvanceOrder(order, targetStatus, { orderMode: 'A1' })
+    if (!validation.allowed) {
+      alert(validation.reason)
+      return
+    }
+
     setProcessingOrderId(order.id)
     try {
-      const { data, error } = await supabase.rpc('advance_order_status', {
-        p_order_id: order.id,
-        p_target_status: targetStatus,
-      })
-      if (error) throw error
-      if (data && !data.success) {
-        console.warn('FSM rejection:', data.message)
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: targetStatus })
+        .eq('id', order.id)
+
+      if (error) {
+        console.error('Advance failed:', error)
+        alert('Error: ' + error.message)
+      } else {
+        refreshOrders()
       }
-      refreshOrders()
+    } catch (err) {
+      console.error('Advance exception:', err)
+      alert('Error advancing order')
     } finally {
       setProcessingOrderId(null)
     }
