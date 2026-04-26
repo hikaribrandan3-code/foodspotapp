@@ -203,7 +203,7 @@ describe('useOrderFlow', () => {
             expect(response.success).toBe(true);
 
             // Verify update({ status: 'cancelado' }) was called, then .eq('id', ...)
-            expect(ordersMock.update).toHaveBeenCalledWith({ status: 'cancelado' });
+            expect(ordersMock.update).toHaveBeenCalledWith({ status: 'cancelled' });
             const updateChain = ordersMock.update.mock.results[0].value;
             expect(updateChain.eq).toHaveBeenCalledWith('id', 'order-004');
         });

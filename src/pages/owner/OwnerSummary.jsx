@@ -160,7 +160,7 @@ function OwnerSummary() {
                     onClick={async () => {
                         setOrdersLoading(true)
                         const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30)
-                        const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', 'cancelado').order('created_at', { ascending: false })
+                        const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', 'cancelled').order('created_at', { ascending: false })
                         if (data) setOrders(data)
                         setOrdersLoading(false)
                     }}

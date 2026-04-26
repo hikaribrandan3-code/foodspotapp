@@ -203,7 +203,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
               if (audioEnabled) audio.alertNewOrder(order.priority);
             } else if (eventType === 'UPDATE') {
               const updated = mapDbOrderToKimi(newRow);
-              if (updated.status === 'DONE' || newRow.status === 'cancelled' || newRow.status === 'cancelado') {
+              if (updated.status === 'DONE' || newRow.status === 'cancelled') {
                 dispatch({ type: 'REMOVE_ORDER', orderId: updated.id });
               } else {
                 dispatch({ type: 'UPDATE_ORDER', order: updated });
@@ -319,7 +319,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'VERIFY_CASH', orderId });
 
     if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: 'confirmado', payment_confirmed: true }, businessId)
+      // TODO: Migrate to FSM RPC instead of direct update (tech debt)
+      updateOrderCloud(orderId, { status: 'released_to_kitchen', payment_confirmed: true }, businessId)
         .catch((e: Error) => console.error('[StaffOps] verifyCash:', e));
     }
 
@@ -335,8 +336,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'CONFIRM_DELIVERY', orderId });
 
     if (state.isOnline && businessId) {
-      // delivered_at is auto-stamped inside updateOrderCloud when status = 'entregado'
-      updateOrderCloud(orderId, { status: 'entregado' }, businessId)
+      // TODO: Migrate to FSM RPC instead of direct update (tech debt)
+      // delivered_at is auto-stamped inside updateOrderCloud when status = 'delivered'
+      updateOrderCloud(orderId, { status: 'delivered' }, businessId)
         .catch((e: Error) => console.error('[StaffOps] confirmDelivery:', e));
     }
 

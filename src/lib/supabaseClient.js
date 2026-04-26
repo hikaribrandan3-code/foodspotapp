@@ -646,7 +646,7 @@ export async function updateOrderCloud(orderId, updates, businessId) {
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
     if (updates.payment_confirmed !== undefined) dbUpdates.payment_confirmed = updates.payment_confirmed
     // Stamp delivered_at when order is confirmed delivered
-    if (updates.status === 'entregado') dbUpdates.delivered_at = new Date().toISOString()
+    if (updates.status === 'delivered') dbUpdates.delivered_at = new Date().toISOString()
 
     const { data, error } = await supabase
         .from('orders')

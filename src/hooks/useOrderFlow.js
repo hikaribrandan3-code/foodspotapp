@@ -117,7 +117,7 @@ export function useOrderFlow() {
         try {
             const { error: dbError } = await supabase
                 .from('orders')
-                .update({ status: 'cancelado' })
+                .update({ status: 'cancelled' })
                 .eq('id', orderId);
 
             if (dbError) throw dbError;

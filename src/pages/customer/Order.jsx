@@ -566,7 +566,7 @@ function Order({ config: configProp }) {
             // SILO GUARD: Cancel the pending order
             await supabase
                 .from('orders')
-                .update({ status: 'cancelado', cancel_reason: 'payment_abandoned' })
+                .update({ status: 'cancelled', cancel_reason: 'payment_abandoned' })
                 .eq('id', pendingOrderId)
                 .eq('business_id', businessId) // 🔒 SILO GUARD
         }
