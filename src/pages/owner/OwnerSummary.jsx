@@ -40,7 +40,7 @@ function OwnerSummary() {
                 .select('id, total, status, payment_method, created_at')
                 .eq('business_id', businessId)
                 .gte('created_at', monthAgo.toISOString())
-                .not('status', 'in', '("cancelado","cancelled")')
+                .neq('status', 'cancelled')
                 .order('created_at', { ascending: false })
 
             if (!cancelled && !error && data) {

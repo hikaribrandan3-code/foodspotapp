@@ -115,7 +115,7 @@ export default function OrderView() {
         orderNumber: nextNumber,
         items: cart.map(c => ({ name: c.name, quantity: c.quantity, price: c.price })),
         total: cartTotal,
-        status: 'pendiente',
+        status: 'pending_payment',
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim() || null,
         deliveryMode: orderType === 'delivery',
