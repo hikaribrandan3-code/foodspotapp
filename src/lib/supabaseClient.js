@@ -82,9 +82,7 @@ if (!SUPABASE_URL || SUPABASE_URL === 'undefined') {
   SUPABASE_URL = 'https://buendqgmwpxdixwvlkhd.supabase.co'
 }
 if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'undefined') {
-  // 🚨 NEVER use service_role key here. This runs in the browser.
-  // Fallback to anon key for local dev only. Production MUST set VITE_SUPABASE_ANON_KEY.
-  SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1ZW5kcWdtd3B4ZGl4d3Zsa2hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNjEzNzUsImV4cCI6MjA4MjkzNzM3NX0.oKSivOi-JhHZhM9Cp8W-uofbK_-I7slOPgTWtWLpysI'
+  console.error('[Supabase] ❌ VITE_SUPABASE_ANON_KEY is missing. Add it to your environment variables.')
 }
 
 // Ensure both are strings before using
