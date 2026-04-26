@@ -310,6 +310,29 @@ serve(async (req: Request) => {
             }
 
             // ============================================
+            // 6b. AUDIT LOG: record the system-driven transition
+            // ============================================
+            // Webhook bypasses advance_order_status RPC because pending_payment
+            // is locked to non-system actors. Insert the transition row manually
+            // so dispute/chargeback investigations can reconstruct the flow.
+            // Wrapped so a failed audit insert never fails the webhook.
+            try {
+                const { error: auditError } = await supabase
+                    .from("order_transitions")
+                    .insert({
+                        order_id: orderId,
+                        from_status: existingOrder.status,
+                        to_status: "released_to_kitchen",
+                        actor_id: null  // system actor (webhook)
+                    });
+                if (auditError) {
+                    console.error(`[mp-webhook] order_transitions insert failed:`, auditError);
+                }
+            } catch (auditEx) {
+                console.error(`[mp-webhook] order_transitions insert threw:`, (auditEx as Error)?.message);
+            }
+
+            // ============================================
             // 7. CREATE/UPDATE LEDGER ENTRY (NEW)
             // ============================================
             const ledgerResult = await upsertLedgerEntry(supabase, orderId, payment, businessId || existingOrder.business_id);

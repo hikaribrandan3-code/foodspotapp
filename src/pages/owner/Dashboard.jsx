@@ -386,7 +386,18 @@ export default function Dashboard() {
   const cancel = async (order) => {
     setProcessingOrderId(order.id)
     try {
-      await supabase.from('orders').update({ status: 'cancelled' }).eq('id', order.id)
+      const { data, error } = await supabase.rpc('advance_order_status', {
+        p_order_id: order.id,
+        p_target_status: 'cancelled',
+        p_cancel_reason: 'Cancelled by owner from dashboard'
+      })
+      if (error) {
+        console.error('[Dashboard] Cancel RPC error:', error)
+        alert('Error al cancelar pedido')
+      } else if (data && !data.success) {
+        console.warn('[Dashboard] FSM rejection:', data.error, data.message)
+        alert(data.message || 'No se puede cancelar este pedido')
+      }
       refreshOrders()
     } finally {
       setProcessingOrderId(null)
