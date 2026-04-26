@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -7,6 +7,7 @@ import { formatPrice } from '../../config/menuData'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics'
 import BurgerLoader from '../../components/BurgerLoader'
 import BackendNav from '../../components/BackendNav'
+import BackendHeader from '../../components/BackendHeader'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import { canAdvanceOrder } from '../../utils/orderStateGuard'
@@ -412,6 +413,27 @@ export default function Dashboard() {
 
   const todayRev = orders.filter(o => o.status !== ORDER_STATUS.CANCELLED).reduce((a, o) => a + o.total, 0)
 
+  // 🔔 Notification sound for new orders
+  const prevOrderCountRef = useRef(orders.length)
+  useEffect(() => {
+    if (orders.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+        const oscillator = audioCtx.createOscillator()
+        const gainNode = audioCtx.createGain()
+        oscillator.connect(gainNode)
+        gainNode.connect(audioCtx.destination)
+        oscillator.frequency.value = 880
+        oscillator.type = 'sine'
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5)
+        oscillator.start()
+        oscillator.stop(audioCtx.currentTime + 0.5)
+      } catch (e) { /* ignore audio errors */ }
+    }
+    prevOrderCountRef.current = orders.length
+  }, [orders.length])
+
   if (loading) return <BurgerLoader />
 
   return (
@@ -420,6 +442,7 @@ export default function Dashboard() {
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       display: 'grid', gridTemplateRows: 'auto 1fr auto', overflow: 'hidden',
     }}>
+      <BackendHeader title="Orders" />
       <OnlinePill />
 
       <div style={{ overflowY: 'auto' }}>

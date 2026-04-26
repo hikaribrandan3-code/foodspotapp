@@ -172,6 +172,10 @@ function StaffDashboard() {
 
             console.log('✅ Status Transition:', order.status, '→', targetStatus)
             fetchOrders()
+            // Auto-switch to completed tab when order reaches terminal state
+            if (targetStatus === ORDER_STATUS.DELIVERED || targetStatus === ORDER_STATUS.CANCELLED) {
+                setActiveTab('completed')
+            }
         } catch (err) {
             console.error('Status Update Error:', err)
             setErrorMessage('❌ Error: ' + err.message)
@@ -209,7 +213,13 @@ function StaffDashboard() {
     }, [filteredOrders])
 
     // The columns to show in the kanban (only active pipeline statuses)
-    const kanbanColumns = STATUS_PIPELINE.filter(s => ACTIVE_STATUSES.includes(s.id))
+    // Hide DISPATCHED column if no delivery orders are visible (pickup/dine-in skip this step)
+    const hasDeliveryOrders = filteredOrders.some(o => o.order_type === 'delivery')
+    const hasDispatchedOrders = filteredOrders.some(o => o.status === ORDER_STATUS.DISPATCHED)
+    const visibleStatuses = (hasDeliveryOrders || hasDispatchedOrders)
+        ? ACTIVE_STATUSES
+        : ACTIVE_STATUSES.filter(s => s !== ORDER_STATUS.DISPATCHED)
+    const kanbanColumns = STATUS_PIPELINE.filter(s => visibleStatuses.includes(s.id))
 
     // Stats
     const stats = useMemo(() => ({
