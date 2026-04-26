@@ -13,14 +13,14 @@ export const LanguageProvider = ({ children }) => {
 
     // Tenant language is always the source of truth — owner backend controls all UI language
     const [lang, setLang] = useState(() => {
-        const initial = tenantData?.language || 'es';
+        const initial = tenantData?.language || 'en';
         console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (tenantData: ${tenantData?.language})`);
         return initial;
     });
 
     useEffect(() => {
         // Trace logging as requested
-        console.log(`[LanguageContext] 🔍 State Fight: Current Lang: ${lang} | DB Lang: ${tenantData?.language || 'es'}`);
+        console.log(`[LanguageContext] 🔍 State Fight: Current Lang: ${lang} | DB Lang: ${tenantData?.language || 'en'}`);
 
         if (!tenantData?.language) return;
 
@@ -56,7 +56,7 @@ export const LanguageProvider = ({ children }) => {
             console.warn(`Translation key missing: ${key}`);
             return key;
         }
-        return translations[key][lang] || translations[key]['es'] || key;
+        return translations[key][lang] || translations[key]['en'] || key;
     };
 
     const changeLanguage = async (newLang) => {

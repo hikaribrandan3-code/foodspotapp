@@ -161,7 +161,8 @@ export function TenantProvider({ children }) {
                 }
 
                 // MERGE: Ensure we keep the actual tenant PK (id) and venue_name
-                const data = { ...brandingData, id: tenantRow?.id, venue_name: tenantRow?.venue_name, language: tenantRow?.language || 'es' }
+                // 🛡️ LANGUAGE GUARD: Don't force Spanish on empty DB fields — preserve existing or default to English
+                const data = { ...brandingData, id: tenantRow?.id, venue_name: tenantRow?.venue_name, language: tenantRow?.language || tenantData?.language || 'en' }
 
                 if (mounted) {
                     setTenantData(data)
@@ -246,12 +247,12 @@ export function TenantProvider({ children }) {
                     console.error("SUPABASE ERROR (Tenants Refresh):", langError.message, langError.details);
                 }
 
-                // 🛡️ PRESERVE EXISTING LANGUAGE: Only fall back to 'es' if we truly have no data
+                // 🛡️ PRESERVE EXISTING LANGUAGE: Only fall back to 'en' if we truly have no data
                 const data = {
                     ...brandingData,
                     id: tenantRow?.id ?? tenantData?.id,
                     venue_name: tenantRow?.venue_name ?? tenantData?.venue_name,
-                    language: tenantRow?.language ?? tenantData?.language ?? 'es'
+                    language: tenantRow?.language ?? tenantData?.language ?? 'en'
                 }
                 setTenantData(data)
                 console.log('✅ GLOBAL REFRESH COMPLETE')
