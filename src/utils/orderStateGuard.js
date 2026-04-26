@@ -1,3 +1,5 @@
+import { ORDER_STATUS } from '../constants/database.js';
+
 export const ORDER_STATUS_FLOW = {
     pending_payment: { label: 'Pending Payment', next: ORDER_STATUS.PAID_UNRELEASED, nextLabel: 'Confirm Payment →', class: 'status-pending-payment' },
     paid_unreleased: { label: 'Paid — Awaiting Release', next: ORDER_STATUS.RELEASED_TO_KITCHEN, nextLabel: 'Release to Kitchen →', class: 'status-paid-unreleased' },
