@@ -336,6 +336,8 @@ function Order({ config: configProp }) {
             if (customerInfo?.phone) {
                 localStorage.setItem('fs_customer_phone', customerInfo.phone)
             }
+            // 💾 Remember order so customer can find it after closing tab
+            localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
 
             // ─── STEP 3: THE SHADOW RECEIPT (WhatsApp) ────────
             // Pre-build the WhatsApp URL so it's ready for any branch
@@ -498,6 +500,8 @@ function Order({ config: configProp }) {
             if (customerInfo?.phone) {
                 localStorage.setItem('fs_customer_phone', customerInfo.phone)
             }
+            // 💾 Remember order so customer can find it after closing tab
+            localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
 
             // Open WhatsApp
             const whatsappUrl = buildWhatsAppUrl(newOrder)

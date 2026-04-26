@@ -125,10 +125,43 @@ function Home({ config: configProp }) {
     const [hasChanges, setHasChanges] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [showArcade, setShowArcade] = useState(false)
+    const [activeOrder, setActiveOrder] = useState(null)
 
     useEffect(() => {
         // console.log('🕹️ ARCADE STATE:', { showArcade, isEditMode, isOwnerMode })
     }, [showArcade, isEditMode, isOwnerMode])
+
+    // 🔄 Check for active order from previous session
+    useEffect(() => {
+        if (!tenantSlug || !businessId) return
+        const lastOrderId = localStorage.getItem(`fs_${tenantSlug}_last_order_id`)
+        if (!lastOrderId) return
+
+        const fetchActiveOrder = async () => {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('id, order_number, status, created_at')
+                .eq('id', lastOrderId)
+                .eq('business_id', businessId)
+                .single()
+
+            if (error || !data) {
+                localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
+                return
+            }
+
+            // Only show banner if order is still active
+            const terminalStatuses = ['delivered', 'cancelled', 'refunded']
+            if (terminalStatuses.includes(data.status)) {
+                localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
+                return
+            }
+
+            setActiveOrder(data)
+        }
+
+        fetchActiveOrder()
+    }, [tenantSlug, businessId])
 
     // Detect 'Ver Tienda' edit intent from URL
     // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
@@ -670,7 +703,40 @@ function Home({ config: configProp }) {
         >
             <HeaderClamp config={config} />
 
-
+            {/* 🛎️ ACTIVE ORDER BANNER — persists even if customer closes tab */}
+            {activeOrder && (
+                <button
+                    onClick={() => navigate(`/${tenantSlug}/status?orderId=${activeOrder.id}`)}
+                    style={{
+                        width: '100%',
+                        marginTop: 10,
+                        padding: '12px 16px',
+                        background: '#FFF7ED',
+                        border: '1px solid #FDBA74',
+                        borderRadius: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit'
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 20 }}>🛎️</span>
+                        <div style={{ textAlign: 'left' }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#9A3412' }}>
+                                Order #{String(activeOrder.order_number).padStart(3, '0')}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#C2410C', textTransform: 'capitalize' }}>
+                                {activeOrder.status.replace(/_/g, ' ')}
+                            </div>
+                        </div>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#EA580C' }}>
+                        Track →
+                    </span>
+                </button>
+            )}
 
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (

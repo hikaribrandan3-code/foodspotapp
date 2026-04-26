@@ -103,15 +103,21 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }, [order?.id])
 
     useEffect(() => {
-        if (order?.status === ORDER_STATUS.DELIVERED) {
-            const timer = setTimeout(() => {
-                if (tenantSlug) {
-                    navigate(`/${tenantSlug}`)
-                } else {
-                    navigate('/')
-                }
-            }, 3000)
-            return () => clearTimeout(timer)
+        if (order?.status === ORDER_STATUS.DELIVERED || order?.status === ORDER_STATUS.CANCELLED) {
+            // 🧹 Clear remembered order once it's done
+            if (tenantSlug) {
+                localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
+            }
+            if (order?.status === ORDER_STATUS.DELIVERED) {
+                const timer = setTimeout(() => {
+                    if (tenantSlug) {
+                        navigate(`/${tenantSlug}`)
+                    } else {
+                        navigate('/')
+                    }
+                }, 3000)
+                return () => clearTimeout(timer)
+            }
         }
     }, [order?.status, tenantSlug, navigate])
 
