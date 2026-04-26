@@ -99,22 +99,27 @@ export const useKDSSync = (businessId) => {
         
         snapbackTimers.current.set(orderId, timer);
 
-        // 🛡️ 3. DATABASE MUTATION (via FSM RPC)
-        const { data, error } = await supabase.rpc('advance_order_status', {
-            p_order_id: orderId,
-            p_target_status: newStatus
-        });
+        // 🛡️ 3. DATABASE MUTATION (direct update)
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: newStatus })
+            .eq('id', orderId);
 
-        // If hard error or FSM rejection, rollback immediately
-        if (error || (data && !data.success)) {
+        // If error, rollback immediately
+        if (error) {
             clearTimeout(timer);
             snapbackTimers.current.delete(orderId);
             setOrders(current => current.map(o =>
                 o.id === orderId ? { ...o, status: currentStatus, isOptimistic: false } : o
             ));
-            if (data && !data.success) {
-                console.warn('[KDS] FSM Rejection:', data.message)
-            }
+            console.warn('[KDS] Update error:', error.message)
+        } else {
+            // Success: clear snapback timer
+            clearTimeout(timer);
+            snapbackTimers.current.delete(orderId);
+            setOrders(current => current.map(o =>
+                o.id === orderId ? { ...o, status: newStatus, isOptimistic: false } : o
+            ));
         }
     }, []);
 

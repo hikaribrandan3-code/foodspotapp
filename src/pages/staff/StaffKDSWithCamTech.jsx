@@ -88,16 +88,12 @@ export function StaffKDSWithCamTech({ businessId }) {
   // Handle order status change
   const updateStatus = async (orderId, newStatus) => {
     try {
-      const { data, error } = await supabase
-        .rpc('advance_order_status', {
-          p_order_id: orderId,
-          p_target_status: newStatus
-        });
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
 
       if (error) throw error;
-      if (data && !data.success) {
-        throw new Error(data.message || 'FSM transition rejected')
-      }
 
       // Refresh orders
       fetchOrders();

@@ -163,34 +163,15 @@ function StaffDashboard() {
         setErrorMessage(null)
 
         try {
-            const { data, error } = await supabase.rpc('advance_order_status', {
-                p_order_id: order.id,
-                p_target_status: targetStatus
-            })
+            const { error } = await supabase
+                .from('orders')
+                .update({ status: targetStatus })
+                .eq('id', order.id)
 
             if (error) throw error
 
-            // Handle RPC response
-            if (data && !data.success) {
-                // RPC returned a controlled error
-                console.warn('⚠️ FSM Rejection:', data.error, data.message)
-
-                if (data.error === 'INVALID_TRANSITION') {
-                    setErrorMessage(`⚠️ ${data.message}`)
-                    // Refresh to get current state
-                    fetchOrders()
-                } else if (data.error === 'PAYMENT_PENDING') {
-                    setErrorMessage('⏳ Esperando confirmación de pago automática')
-                } else {
-                    setErrorMessage(data.message || 'Error desconocido')
-                }
-
-                setTimeout(() => setErrorMessage(null), 4000)
-            } else {
-                console.log('✅ FSM Transition:', data?.from_status, '→', data?.to_status)
-                // Refresh after successful transition
-                fetchOrders()
-            }
+            console.log('✅ Status Transition:', order.status, '→', targetStatus)
+            fetchOrders()
         } catch (err) {
             console.error('Status Update Error:', err)
             setErrorMessage('❌ Error: ' + err.message)
