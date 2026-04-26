@@ -6,6 +6,7 @@
 // ============================================
 
 import { supabase } from '../lib/supabaseClient.js'
+import { PAYMENT_METHOD } from '../constants/database.js'
 import { ORDER_STATUS } from '../constants/database.js';
 
 
@@ -62,7 +63,7 @@ export function queueOfflineCashPayment(paymentData) {
         status: 'pending_sync',
         amount_gross_cents: paymentData.amount_cents,
         currency: paymentData.currency || 'ARS',
-        payment_method: 'cash',
+        payment_method: PAYMENT_METHOD.CASH,
         external_reference: `CASH-${paymentData.order_id}`,
         created_at: new Date().toISOString(),
         synced_at: null,
@@ -105,7 +106,7 @@ async function syncOfflinePayment(payment) {
                 status: 'completed',
                 amount_gross_cents: payment.amount_gross_cents,
                 currency: payment.currency,
-                payment_method: 'cash',
+                payment_method: PAYMENT_METHOD.CASH,
                 external_reference: payment.external_reference,
                 processed_at: new Date().toISOString(),
                 offline_sync: true
@@ -123,7 +124,7 @@ async function syncOfflinePayment(payment) {
                     status: ORDER_STATUS.RELEASED_TO_KITCHEN,
                     owner_status: ORDER_STATUS.RELEASED_TO_KITCHEN,
                     payment_status: 'paid',
-                    payment_method: 'cash',
+                    payment_method: PAYMENT_METHOD.CASH,
                     payment_confirmed: true,
                     paid_at: new Date().toISOString()
                 })

@@ -8,6 +8,7 @@ import {
     handleCashPayment
 } from './offlinePayment.js';
 import { supabase } from '../lib/supabaseClient.js';
+import { PAYMENT_METHOD } from '../constants/database.js';
 import { ORDER_STATUS } from '../constants/database.js';
 
 
@@ -50,7 +51,7 @@ describe('Offline Payment Service', () => {
 
             expect(result.order_id).toBe('order-123');
             expect(result.status).toBe('pending_sync');
-            expect(result.payment_method).toBe('cash');
+            expect(result.payment_method).toBe(PAYMENT_METHOD.CASH);
             expect(result.amount_gross_cents).toBe(5000);
         });
 

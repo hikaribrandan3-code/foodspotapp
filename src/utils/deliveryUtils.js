@@ -57,16 +57,16 @@ export const isWithinDeliveryRadius = (storeCoords, customerCoords, radiusKm) =>
  * Build a WhatsApp summary string for an order (Cash/Manual path).
  * @param {Object} order - The order object
  * @param {string} businessName - The business name
- * @param {string} paymentMethod - Payment method ('efectivo' | 'tarjeta_envio')
+ * @param {string} paymentMethod - Payment method (PAYMENT_METHOD.CASH | PAYMENT_METHOD.CARD_ON_DELIVERY)
  * @returns {string} WhatsApp-formatted summary
  */
-export const buildWhatsAppSummary = (order, businessName, paymentMethod = 'efectivo') => {
+export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMENT_METHOD.CASH) => {
     const items = order.items.map(item =>
         `• ${item.quantity}x ${item.name} - $${item.price * item.quantity}`
     ).join('\n');
 
-    const paymentNote = paymentMethod === 'tarjeta_envio' ? '\n\n⚠️ *TRAER POS*' : '';
-    const paymentLabel = paymentMethod === 'efectivo' ? '💵 Efectivo' : '💳 Tarjeta';
+    const paymentNote = paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY ? '\n\n⚠️ *TRAER POS*' : '';
+    const paymentLabel = paymentMethod === PAYMENT_METHOD.CASH ? '💵 Efectivo' : '💳 Tarjeta';
 
     return `🍔 *NUEVO PEDIDO - ${businessName}*\n` +
         `📋 Pedido #${order.orderNumber}\n\n` +

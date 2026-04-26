@@ -1,6 +1,8 @@
 import React from 'react'
 import { formatPrice } from '../config/menuData.js'
 import './OrderReceipt.css'
+import { PAYMENT_METHOD } from '../constants/database.js';
+
 
 /**
  * OrderReceipt - Dense receipt card for customer Status tab
@@ -11,9 +13,9 @@ import './OrderReceipt.css'
 
 const PaymentBanner = ({ paymentStatus, paymentMethod, onRetry }) => {
     // Map internal payment method values to display labels
-    const isMercadoPago = paymentMethod === 'mercadopago'
-    const isCash = paymentMethod === 'efectivo' || paymentMethod === 'cash'
-    const isDineIn = paymentMethod === 'pay_at_counter' || paymentMethod === 'dine_in'
+    const isMercadoPago = paymentMethod === PAYMENT_METHOD.MERCADO_PAGO
+    const isCash = paymentMethod === PAYMENT_METHOD.CASH
+    const isDineIn = paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === 'dine_in'
 
     if (paymentStatus === 'paid') {
         return (
@@ -72,9 +74,9 @@ const PaymentBanner = ({ paymentStatus, paymentMethod, onRetry }) => {
 }
 
 const PaymentMethodLine = ({ paymentMethod, paymentStatus }) => {
-    const isMercadoPago = paymentMethod === 'mercadopago'
-    const isCash = paymentMethod === 'efectivo' || paymentMethod === 'cash'
-    const isDineIn = paymentMethod === 'pay_at_counter' || paymentMethod === 'dine_in'
+    const isMercadoPago = paymentMethod === PAYMENT_METHOD.MERCADO_PAGO
+    const isCash = paymentMethod === PAYMENT_METHOD.CASH
+    const isDineIn = paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === 'dine_in'
 
     if (paymentStatus === 'paid') {
         if (isMercadoPago) {

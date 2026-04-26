@@ -19,6 +19,8 @@ import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useBusinessId } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
+import { PAYMENT_METHOD } from '../../constants/database.js';
+
 
 
 const formatAddress = (addr) => {
@@ -268,8 +270,8 @@ function SuperAdmin({ config: configProp }) {
     // Stats calculations
     const today = new Date().toDateString()
     const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today)
-    const mpOrders = todayOrders.filter(o => o.paymentMethod === 'mercadopago')
-    const cashOrders = todayOrders.filter(o => o.paymentMethod === 'efectivo' || !o.paymentMethod)
+    const mpOrders = todayOrders.filter(o => o.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO)
+    const cashOrders = todayOrders.filter(o => o.paymentMethod === PAYMENT_METHOD.CASH || !o.paymentMethod)
     const mpTotal = mpOrders.reduce((sum, o) => sum + (o.total || 0), 0)
     const cashTotal = cashOrders.reduce((sum, o) => sum + (o.total || 0), 0)
     const totalToday = mpTotal + cashTotal
@@ -2261,7 +2263,7 @@ function SuperAdmin({ config: configProp }) {
                                 ) : (
                                     orders.slice(0, 15).map((order, i) => {
                                         const isPaid = order.payment_status === 'paid' || order.paymentConfirmed;
-                                        const isMp = order.paymentMethod === 'mercadopago' || order.payment_method === 'mercadopago';
+                                        const isMp = order.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO || order.payment_method === PAYMENT_METHOD.MERCADO_PAGO;
                                         return (
                                             <div key={order.orderNumber || i} style={{ padding: '12px 14px', borderBottom: i < Math.min(orders.length, 15) - 1 ? '1px solid #F3F4F6' : 'none' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -2282,8 +2284,8 @@ function SuperAdmin({ config: configProp }) {
                                                         }}>
                                                             {isPaid ? '✅ Paid' : isMp ? '⏳ Pending' : '💵 Cash'}
                                                         </span>
-                                                        <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === 'mercadopago' ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === 'mercadopago' ? '#0D9488' : '#92400E', fontWeight: 500 }}>
-                                                            {order.paymentMethod === 'mercadopago' ? 'MP' : 'Efectivo'}
+                                                        <span style={{ display: 'inline-block', padding: '2px 6px', background: order.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO ? '#E0F2F1' : '#FEF3C7', borderRadius: 4, fontSize: 9, color: order.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO ? '#0D9488' : '#92400E', fontWeight: 500 }}>
+                                                            {order.paymentMethod === PAYMENT_METHOD.MERCADO_PAGO ? 'MP' : 'Efectivo'}
                                                         </span>
                                                         <p style={{ fontSize: 13, fontWeight: 600, color: '#1F2937', margin: '4px 0 0' }}>${(order.total || 0).toLocaleString()}</p>
                                                     </div>

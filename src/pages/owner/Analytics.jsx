@@ -8,6 +8,8 @@ import { formatPrice } from '../../config/menuData.js'
 import { logout } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
+import { PAYMENT_METHOD } from '../../constants/database.js';
+
 
 
 // ============================================
@@ -113,8 +115,8 @@ const Analytics = () => {
         const pickupCount = completed.filter(o => o.order_type === 'pickup').length
         const dineInCount = completed.filter(o => o.order_type === 'dine_in').length
         const avgTicket = completed.length > 0 ? totalRevenue / completed.length : 0
-        const mpCount = completed.filter(o => o.payment_method === 'mercadopago').length
-        const cashCount = completed.filter(o => o.payment_method === 'efectivo' || o.payment_method === 'pay_at_counter').length
+        const mpCount = completed.filter(o => o.payment_method === PAYMENT_METHOD.MERCADO_PAGO).length
+        const cashCount = completed.filter(o => o.payment_method === PAYMENT_METHOD.CASH).length
 
         // Top items
         const itemMap = {}
