@@ -21,7 +21,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { ORDER_STATUS } from '../constants/database.js';
+
 
 
 // 🛡️ INLINE GUEST TOKEN UTILITIES (Breaks circular dependency with storage.js)
@@ -571,7 +571,7 @@ export async function createOrderCloud(orderData, businessId) {
             order_number: orderData.orderNumber,
             items: orderData.items,
             total: orderData.total,
-            status: orderData.status || ORDER_STATUS.PENDING_PAYMENT,
+            status: orderData.status || 'pending_payment',
             customer_name: orderData.customerName || null,
             customer_phone: orderData.customerPhone || null,
             delivery_mode: orderData.deliveryMode || false,
@@ -648,7 +648,7 @@ export async function updateOrderCloud(orderId, updates, businessId) {
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
     if (updates.payment_confirmed !== undefined) dbUpdates.payment_confirmed = updates.payment_confirmed
     // Stamp delivered_at when order is confirmed delivered
-    if (updates.status === ORDER_STATUS.DELIVERED) dbUpdates.delivered_at = new Date().toISOString()
+    if (updates.status === 'delivered') dbUpdates.delivered_at = new Date().toISOString()
 
     const { data, error } = await supabase
         .from('orders')
@@ -812,7 +812,7 @@ export async function createOrderWithGuestToken(orderData, guestToken, businessI
             order_number: orderData.orderNumber,
             items: orderData.items,
             total: orderData.total,
-            status: orderData.status || ORDER_STATUS.PENDING_PAYMENT,
+            status: orderData.status || 'pending_payment',
             customer_name: orderData.customerName || null,
             customer_phone: orderData.customerPhone || null,
             delivery_mode: orderData.deliveryMode || false,
