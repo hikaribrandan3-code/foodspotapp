@@ -440,7 +440,7 @@ export default function Dashboard() {
     <div style={{
       width: '100%', height: '100vh', background: T.bg, color: T.ink,
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      display: 'grid', gridTemplateRows: 'auto 1fr auto', overflow: 'hidden',
+      display: 'grid', gridTemplateRows: 'auto auto 1fr auto', overflow: 'hidden',
     }}>
       <BackendHeader title="Orders" />
       <OnlinePill />
