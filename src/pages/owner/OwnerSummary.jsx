@@ -599,7 +599,7 @@ function TeamManagement({ businessId, t, primaryColor }) {
     ]
 
     return (
-        <div style={{ marginTop: 32, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
+        <div style={{ marginTop: 8, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -609,12 +609,9 @@ function TeamManagement({ businessId, t, primaryColor }) {
             }}
             onClick={() => setShowTeamPanel(!showTeamPanel)}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 24 }}>👥</span>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>
-                        {t('team_management') || 'Gestión de Equipo'}
-                    </span>
-                </div>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>
+                    {t('team_management') || 'Gestión de Equipo'}
+                </span>
                 <span style={{ fontSize: 20, transform: showTeamPanel ? 'rotate(180deg)' : 'rotate(0)', transition: '0.2s' }}>▼</span>
             </div>
 
