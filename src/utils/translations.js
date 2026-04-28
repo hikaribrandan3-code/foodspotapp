@@ -41,6 +41,7 @@ export const translations = {
     username: { es: "Usuario", en: "Username", pt: "Nome de Usuário" },
     role: { es: "Rol", en: "Role", pt: "Função" },
     "4_digits": { es: "4 dígitos", en: "4 digits", pt: "4 dígitos" },
+    language_setting: { es: "Idioma / Lenguaje", en: "Language / Idioma", pt: "Idioma / Língua" },
 
     // Owner Summary
     daily_payments: { es: "PAGOS DEL DÍA", en: "DAILY PAYMENTS", pt: "PAGAMENTOS DO DIA" },
