@@ -149,7 +149,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
   const isCash = order.payment_method === PAYMENT_METHOD.CASH
-  const needsPaymentConfirm = order.status === ORDER_STATUS.PENDING_PAYMENT && isCash && !order.payment_confirmed
+  const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
   const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'blue' } : nextActionFor(order.status)
   const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
   const bucket = statusToBucket(order.status, t)
@@ -368,7 +368,7 @@ export default function Dashboard() {
 
   const advance = async (order) => {
     const isCash = order.payment_method === PAYMENT_METHOD.CASH
-    const needsPaymentConfirm = order.status === ORDER_STATUS.PENDING_PAYMENT && isCash && !order.payment_confirmed
+    const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
 
     // For cash orders in PENDING_PAYMENT, first confirm payment (don't advance status)
     if (needsPaymentConfirm) {

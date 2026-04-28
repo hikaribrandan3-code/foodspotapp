@@ -34,20 +34,20 @@ const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
 const getActionForStatus = (status, orderType, paymentMethod, paymentConfirmed, t) => {
     switch (status) {
         case ORDER_STATUS.PENDING_PAYMENT:
-            // Staff can confirm cash payments before owner does
+            return null
+
+        case ORDER_STATUS.PAID_UNRELEASED:
+            // Staff can confirm cash payments if not yet confirmed
             if (paymentMethod === PAYMENT_METHOD.CASH && !paymentConfirmed) {
                 return {
                     label: 'Confirm Payment',
-                    targetStatus: ORDER_STATUS.PENDING_PAYMENT,
+                    targetStatus: ORDER_STATUS.PAID_UNRELEASED,
                     color: '#22C55E',
                     confirm: false,
                     isPaymentConfirm: true
                 }
             }
-            return null
-
-        case ORDER_STATUS.PAID_UNRELEASED:
-            // Staff cannot accept unpaid cash orders — owner must confirm payment first
+            // After payment confirmed, staff can accept order
             if (!paymentConfirmed) return null
             return {
                 label: t('confirm_action') || 'ACEPTAR PEDIDO',
