@@ -469,23 +469,48 @@ export default function Dashboard() {
 
   const todayRev = displayOrders.filter(o => o.status !== ORDER_STATUS.CANCELLED).reduce((a, o) => a + o.total, 0)
 
-  // 🔔 Notification sound for new orders
+  // 🔔 Browser notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {})
+    }
+  }, [])
+
+  // 🔔 Notification sound + push for new orders
   const prevOrderCountRef = useRef(displayOrders.length)
   useEffect(() => {
     if (displayOrders.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
+      const latestOrder = displayOrders[0]
+      // Audio ping (sharp double-chime like a service bell)
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-        const oscillator = audioCtx.createOscillator()
-        const gainNode = audioCtx.createGain()
-        oscillator.connect(gainNode)
-        gainNode.connect(audioCtx.destination)
-        oscillator.frequency.value = 880
-        oscillator.type = 'sine'
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5)
-        oscillator.start()
-        oscillator.stop(audioCtx.currentTime + 0.5)
+        const playTone = (freq, delay, dur, vol) => {
+          const osc = audioCtx.createOscillator()
+          const gain = audioCtx.createGain()
+          osc.type = 'sine'
+          osc.frequency.value = freq
+          gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay)
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur)
+          osc.connect(gain)
+          gain.connect(audioCtx.destination)
+          osc.start(audioCtx.currentTime + delay)
+          osc.stop(audioCtx.currentTime + delay + dur)
+        }
+        playTone(880, 0, 0.15, 0.25)
+        playTone(1100, 0.15, 0.2, 0.25)
       } catch (e) { /* ignore audio errors */ }
+
+      // Browser push notification (works even when tab is backgrounded)
+      if ('Notification' in window && Notification.permission === 'granted' && latestOrder) {
+        try {
+          new Notification(`New Order #${String(latestOrder.order_number).padStart(3, '0')}`, {
+            body: `${latestOrder.customer_name || 'Guest'} — ${(latestOrder.items || []).length} item${(latestOrder.items || []).length !== 1 ? 's' : ''} · ${formatPrice(latestOrder.total)}`,
+            icon: '/pwa-icons/icon-192x192.png',
+            tag: latestOrder.id,
+            requireInteraction: true,
+          })
+        } catch { /* noop */ }
+      }
     }
     prevOrderCountRef.current = displayOrders.length
   }, [displayOrders.length])
