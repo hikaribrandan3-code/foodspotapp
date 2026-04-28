@@ -30,6 +30,7 @@ type Action =
   | { type: 'CONFIRM_DELIVERY'; orderId: string }
   | { type: 'CLAIM_DELIVERY'; orderId: string; staffName: string }
   | { type: 'CANCEL_ORDER'; orderId: string }
+  | { type: 'MARK_DONE'; orderId: string }
   | { type: 'SET_ONLINE'; online: boolean }
   | { type: 'SELECT_ORDER'; orderId: string | null }
   | { type: 'SET_HANDOFF'; orderId: string | null }
@@ -130,6 +131,18 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'MARK_DONE': {
+      hapticForTransition('status_advance');
+      return {
+        ...state,
+        orders: state.orders.map(o =>
+          o.id === action.orderId
+            ? { ...o, status: 'DONE' as OrderStatus, offlineQueued: !state.isOnline }
+            : o,
+        ),
+      };
+    }
+
     case 'SET_ONLINE':     return { ...state, isOnline: action.online };
     case 'SELECT_ORDER':   return { ...state, selectedOrderId: action.orderId };
     case 'SET_HANDOFF':    return { ...state, handoffOrderId: action.orderId };
@@ -194,6 +207,11 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {}); // Prevent unhandled rejection on initial load
 
+    // Request browser notification permission on load
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
     let channel: any = null;
     let pollInterval: NodeJS.Timeout | null = null;
 
@@ -216,13 +234,21 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
                 orderId: order.id,
               });
               if (audioEnabled) audio.alertNewOrder(order.priority);
+              // Browser push notification (works even when tab is backgrounded)
+              if ('Notification' in window && Notification.permission === 'granted') {
+                try {
+                  new Notification(`New Order #${newRow.order_number ?? ''}`, {
+                    body: `${order.customerName} — ${order.items.length} item${order.items.length !== 1 ? 's' : ''}`,
+                    icon: '/pwa-icons/icon-192x192.png',
+                    tag: order.id,
+                    requireInteraction: true,
+                  });
+                } catch { /* noop */ }
+              }
             } else if (eventType === 'UPDATE') {
               const updated = mapDbOrderToKimi(newRow);
-              if (updated.status === 'DONE' || newRow.status === 'cancelled') {
-                dispatch({ type: 'REMOVE_ORDER', orderId: updated.id });
-              } else {
-                dispatch({ type: 'UPDATE_ORDER', order: updated });
-              }
+              // Always keep done/cancelled orders in state so they stay in the Completed tab
+              dispatch({ type: 'UPDATE_ORDER', order: updated });
             } else if (eventType === 'DELETE') {
               dispatch({ type: 'REMOVE_ORDER', orderId: oldRow.id });
             }
@@ -387,6 +413,21 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
   }, [state.isOnline, state.orders, businessId, addToast]);
 
+  const markDone = useCallback((orderId: string) => {
+    const order = state.orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    if (!state.isOnline) queueAction({ orderId, type: 'mark_done', timestamp: Date.now() });
+    dispatch({ type: 'MARK_DONE', orderId });
+
+    if (state.isOnline && businessId) {
+      updateOrderCloud(orderId, { status: 'delivered' }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] markDone:', e));
+    }
+
+    addToast({ type: 'delivery_done', title: 'Order Completed', message: `${order.customerName} — moved to completed`, orderId });
+  }, [state.isOnline, state.orders, businessId, addToast]);
+
   const setTab = useCallback((tab: TabId) => dispatch({ type: 'SET_TAB', tab }), []);
   const selectOrder = useCallback((orderId: string | null) => dispatch({ type: 'SELECT_ORDER', orderId }), []);
   const toggleOnline = useCallback(() => dispatch({ type: 'SET_ONLINE', online: !state.isOnline }), [state.isOnline]);
@@ -394,7 +435,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   return (
     <OrderContext.Provider value={{
       state, dispatch, advanceOrderStatus, verifyCash,
-      confirmDelivery, claimDelivery, cancelOrder, setTab, selectOrder, toggleOnline,
+      confirmDelivery, claimDelivery, cancelOrder, markDone, setTab, selectOrder, toggleOnline,
     }}>
       {children}
     </OrderContext.Provider>
