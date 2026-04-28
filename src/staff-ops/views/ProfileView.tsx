@@ -8,7 +8,7 @@ import {
 import { useTheme } from '@/hooks/useTheme';
 import { useAudioPref } from '@/hooks/useAudioPref';
 import { useBusiness } from '@/contexts/BusinessContext';
-import { t as translate } from '../lib/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 // @ts-ignore
 import { supabase, clockInStaff, clockOutStaff, getStaffShifts } from '../../lib/supabaseClient.js';
 // @ts-ignore
@@ -109,9 +109,7 @@ export default function ProfileView() {
   const [autoSyncOn, setAutoSyncOn] = useState(
     () => localStorage.getItem('fs_staff_autosync') !== 'off'
   );
-  const [language, setLanguage] = useState(
-    () => localStorage.getItem('fs_staff_language') || 'en'
-  );
+  const { language, setLanguage, t } = useLanguage();
   const [emergencyContact, setEmergencyContact] = useState(
     () => localStorage.getItem('fs_staff_emergency') || ''
   );
@@ -145,7 +143,6 @@ export default function ProfileView() {
   };
   const saveLanguage = (code: string) => {
     setLanguage(code);
-    localStorage.setItem('fs_staff_language', code);
     setSheet(null);
   };
   const saveEmergency = () => {
@@ -180,10 +177,7 @@ export default function ProfileView() {
   const currentLang = LANGUAGES.find(l => l.code === language)?.label || 'English';
   const driverSummary = driverProfile.transport
     ? [driverProfile.transport, driverProfile.plate].filter(Boolean).join(' · ')
-    : translate('not_set', language);
-
-  // Helper to translate using current language state
-  const t = (key: string) => translate(key, language);
+    : t('not_set');
 
   return (
     <div className="h-full w-full flex flex-col relative overflow-y-auto scrollbar-hide">
@@ -456,7 +450,7 @@ function SaveButton({ onClick }: { onClick: () => void }) {
     <button onClick={onClick}
       className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 mt-1"
       style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}>
-      <Check size={16} /> {translate('save_btn', language)}
+      <Check size={16} /> {translate('save_btn', localStorage.getItem('fs_staff_language') || 'en')}
     </button>
   );
 }

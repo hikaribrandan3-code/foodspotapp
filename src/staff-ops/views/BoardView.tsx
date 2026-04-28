@@ -2,11 +2,13 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Wifi, WifiOff, LayoutDashboard, Clock, ChefHat, PackageCheck, Bike, DollarSign } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
+import { useLanguage } from '@/contexts/LanguageContext';
 import OrderCard from '@/components/OrderCard';
 import type { OrderStatus } from '@/types';
 
 export default function BoardView() {
   const { state, toggleOnline } = useOrders();
+  const { t } = useLanguage();
 
   // Active orders (excluding DONE)
   const activeOrders = useMemo(() => {
@@ -47,7 +49,7 @@ export default function BoardView() {
       >
         <div className="flex items-center gap-1.5">
           {state.isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
-          <span>{state.isOnline ? 'ONLINE' : 'OFFLINE — Actions Queued'}</span>
+          <span>{state.isOnline ? t('online') : t('offline')}</span>
         </div>
         <button onClick={toggleOnline} className="underline opacity-70">{state.isOnline ? 'Test offline' : 'Restore'}</button>
       </div>
@@ -56,19 +58,24 @@ export default function BoardView() {
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-center gap-2 mb-1">
           <LayoutDashboard size={20} style={{ color: 'var(--status-icon-prep)' }} />
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Mission Control</h1>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('board_title')}</h1>
         </div>
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{activeOrders.length} active &bull; {cashPendingCount} cash pending &bull; {criticalCount} critical &bull; {statusCounts.DONE} delivered</p>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+          {t('active_orders_summary', { count: activeOrders.length })} &bull; 
+          {t('cash_pending_summary', { count: cashPendingCount })} &bull; 
+          {t('critical_summary', { count: criticalCount })} &bull; 
+          {t('delivered_summary', { count: statusCounts.DONE })}
+        </p>
       </div>
 
       {/* Status counters */}
       <div className="px-4 pb-3">
         <div className="grid grid-cols-5 gap-2">
-          <StatusBadge icon={<DollarSign size={14} />} label="Cash" count={cashPendingCount} color="var(--status-icon-ready)" />
-          <StatusBadge icon={<Clock size={14} />} label="To-Do" count={statusCounts.TODO} color="var(--status-icon-todo)" />
-          <StatusBadge icon={<ChefHat size={14} />} label="Prep" count={statusCounts.PREP} color="var(--status-icon-prep)" />
-          <StatusBadge icon={<PackageCheck size={14} />} label="Ready" count={statusCounts.READY} color="var(--status-icon-ready)" />
-          <StatusBadge icon={<Bike size={14} />} label="Out" count={statusCounts.DISPATCH + statusCounts.DELIVERING} color="var(--status-icon-dispatch)" />
+          <StatusBadge icon={<DollarSign size={14} />} label={t('cash')} count={cashPendingCount} color="var(--status-icon-ready)" />
+          <StatusBadge icon={<Clock size={14} />} label={t('todo')} count={statusCounts.TODO} color="var(--status-icon-todo)" />
+          <StatusBadge icon={<ChefHat size={14} />} label={t('prep')} count={statusCounts.PREP} color="var(--status-icon-prep)" />
+          <StatusBadge icon={<PackageCheck size={14} />} label={t('ready')} count={statusCounts.READY} color="var(--status-icon-ready)" />
+          <StatusBadge icon={<Bike size={14} />} label={t('out')} count={statusCounts.DISPATCH + statusCounts.DELIVERING} color="var(--status-icon-dispatch)" />
         </div>
       </div>
 
@@ -85,7 +92,7 @@ export default function BoardView() {
         {activeOrders.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16" style={{ color: 'var(--text-secondary)' }}>
             <PackageCheck size={48} className="mb-3" style={{ color: 'var(--empty-icon)' }} />
-            <p className="text-sm">All orders cleared</p>
+            <p className="text-sm">{t('all_orders_cleared')}</p>
           </div>
         )}
       </div>

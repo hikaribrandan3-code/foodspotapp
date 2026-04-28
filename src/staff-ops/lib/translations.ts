@@ -170,6 +170,117 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     es: 'Turno Activo',
     pt: 'Turno Ativo',
   },
+  // Board & Logistics
+  'board_title': {
+    en: 'Mission Control',
+    es: 'Control de Misión',
+    pt: 'Controle de Missão',
+  },
+  'logistics_title': {
+    en: 'Logistics',
+    es: 'Logística',
+    pt: 'Logística',
+  },
+  'ready': {
+    en: 'Ready',
+    es: 'Listo',
+    pt: 'Pronto',
+  },
+  'dispatch': {
+    en: 'Dispatch',
+    es: 'Despacho',
+    pt: 'Despacho',
+  },
+  'out': {
+    en: 'Out',
+    es: 'En Camino',
+    pt: 'Saiu',
+  },
+  'prep': {
+    en: 'Prep',
+    es: 'Cocina',
+    pt: 'Cozinha',
+  },
+  'todo': {
+    en: 'To-Do',
+    es: 'Pendiente',
+    pt: 'Pendente',
+  },
+  'cash': {
+    en: 'Cash',
+    es: 'Efectivo',
+    pt: 'Dinheiro',
+  },
+  'active_orders_summary': {
+    en: '{count} active',
+    es: '{count} activos',
+    pt: '{count} ativos',
+  },
+  'cash_pending_summary': {
+    en: '{count} cash pending',
+    es: '{count} efec. pendiente',
+    pt: '{count} din. pendente',
+  },
+  'critical_summary': {
+    en: '{count} critical',
+    es: '{count} críticos',
+    pt: '{count} críticos',
+  },
+  'delivered_summary': {
+    en: '{count} delivered',
+    es: '{count} entregados',
+    pt: '{count} entregues',
+  },
+  'all_orders_cleared': {
+    en: 'All orders cleared',
+    es: 'Todos los pedidos despejados',
+    pt: 'Todos os pedidos limpos',
+  },
+  'no_orders_ready': {
+    en: 'No orders ready for pickup',
+    es: 'No hay pedidos listos',
+    pt: 'Nenhum pedido pronto',
+  },
+  'no_orders_dispatch': {
+    en: 'No orders waiting for riders',
+    es: 'Sin pedidos para repartidores',
+    pt: 'Sem pedidos para entregadores',
+  },
+  'no_orders_delivering': {
+    en: 'No deliveries in progress',
+    es: 'Sin entregas en progreso',
+    pt: 'Sem entregas em progresso',
+  },
+  'online': {
+    en: 'ONLINE',
+    es: 'EN LÍNEA',
+    pt: 'ONLINE',
+  },
+  'offline': {
+    en: 'OFFLINE — Actions Queued',
+    es: 'DESCONECTADO — Acciones en Cola',
+    pt: 'OFFLINE — Ações em Fila',
+  },
+  'kitchen': {
+    en: 'Kitchen',
+    es: 'Cocina',
+    pt: 'Cozinha',
+  },
+  'take_order': {
+    en: 'Take Order',
+    es: 'Tomar Pedido',
+    pt: 'Novo Pedido',
+  },
+  'live': {
+    en: 'LIVE',
+    es: 'EN VIVO',
+    pt: 'AO VIVO',
+  },
+  'staff_ops': {
+    en: 'Staff Operations',
+    es: 'Operaciones de Staff',
+    pt: 'Operações de Equipe',
+  }
 };
 
 export function t(key: string, lang: string = 'en'): string {
