@@ -362,7 +362,7 @@ export default function Dashboard() {
       if (filterBucket) return statusToBucket(o.status, t) === filterBucket
       return true
     })
-  }, [orders, tab, filterBucket])
+  }, [orders, tab, filterBucket, t])
 
   const advance = async (order) => {
     const flowIdx = STATUS_FLOW.findIndex(f => f.key === order.status)
