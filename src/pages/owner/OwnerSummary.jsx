@@ -290,32 +290,62 @@ function OwnerSummary() {
                     </div>
                     <input type="text" placeholder={t('pedidosya_placeholder')} value={appConfig?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
 
-                    {/* Mercado Pago Setup */}
-                    <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                        <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6, fontWeight: 600 }}>💳 {t('mercado_pago_setup')}</span>
+                    {/* Mercado Pago Setup - Premium Card */}
+                    <div style={{ paddingTop: 14, borderTop: '1px solid #F3F4F6', marginTop: 16 }}>
+                        <div style={{ background: '#F0F9FF', borderRadius: 14, padding: 16, border: '2px solid #E0F2FE', marginBottom: 16 }}>
+                            <div style={{ display: 'flex', alignItems: 'start', gap: 12, marginBottom: 12 }}>
+                                <span style={{ fontSize: 28 }}>💳</span>
+                                <div>
+                                    <h4 style={{ fontSize: 15, fontWeight: 700, color: '#0369A1', margin: '0 0 4px 0' }}>Connect Mercado Pago</h4>
+                                    <p style={{ fontSize: 13, color: '#0C4A6E', margin: 0, lineHeight: 1.4 }}>Your customers pay directly to your account. No middleman.</p>
+                                </div>
+                            </div>
 
-                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 600 }}>{t('mp_access_token')} *</label>
-                        <input
-                            type="password"
-                            placeholder="APP_1234567890..."
-                            value={appConfig?.mp_access_token || ''}
-                            onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
-                            style={inputStyle}
-                        />
-                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 12 }}>
-                            🔒 {t('mp_secure_note')}
-                            <br />👉 <strong>{t('mp_how_to')}:</strong> mercadopago.com.ar → {t('settings')} → {t('developers')} → {t('credentials')} → {t('copy_access_token')}
-                        </p>
+                            {/* Why Section */}
+                            <div style={{ background: 'white', borderRadius: 8, padding: 12, marginBottom: 12, border: '1px solid #BAE6FD' }}>
+                                <p style={{ fontSize: 12, fontWeight: 600, color: '#0369A1', margin: '0 0 6px 0' }}>Why you need this:</p>
+                                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: '#064E3B' }}>
+                                    <li>Customers can pay with card (Visa, Mastercard, etc)</li>
+                                    <li>Money goes straight to your MP account</li>
+                                    <li>FoodSpot takes no commission on payments</li>
+                                </ul>
+                            </div>
 
-                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('mp_alias_label')}</label>
-                        <input
-                            type="text"
-                            placeholder={t('mp_alias_placeholder')}
-                            value={appConfig?.payments?.mercadoPagoAlias || ''}
-                            onChange={(e) => updatePayments({ mercadoPagoAlias: e.target.value })}
-                            style={inputStyle}
-                        />
-                        <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>{t('empty_info')}</p>
+                            {/* Steps */}
+                            <div style={{ background: 'white', borderRadius: 8, padding: 12, marginBottom: 14, border: '1px solid #BAE6FD' }}>
+                                <p style={{ fontSize: 12, fontWeight: 600, color: '#0369A1', margin: '0 0 10px 0' }}>How to get your code (takes 2 min):</p>
+                                <div style={{ fontSize: 12, color: '#075985', lineHeight: 1.6 }}>
+                                    <div style={{ marginBottom: 8 }}><strong>1.</strong> Go to mercadopago.com.ar and sign in</div>
+                                    <div style={{ marginBottom: 8 }}><strong>2.</strong> Click your name → Configuración (Settings)</div>
+                                    <div style={{ marginBottom: 8 }}><strong>3.</strong> Click Desarrolladores (Developers) → Credenciales</div>
+                                    <div style={{ marginBottom: 8 }}><strong>4.</strong> Copy the code that starts with <code style={{ background: '#F5F5F5', padding: '2px 6px', borderRadius: 4 }}>APP_</code></div>
+                                    <div><strong>5.</strong> Paste it below and save</div>
+                                </div>
+                            </div>
+
+                            {/* Input Field */}
+                            <label style={{ fontSize: 12, color: '#0369A1', display: 'block', marginBottom: 6, fontWeight: 600 }}>Your Access Token *</label>
+                            <input
+                                type="password"
+                                placeholder="APP_1234567890abcdef..."
+                                value={appConfig?.mp_access_token || ''}
+                                onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
+                                style={{ ...inputStyle, borderColor: appConfig?.mp_access_token ? '#10B981' : '#E5E7EB' }}
+                            />
+                            {appConfig?.mp_access_token && <p style={{ fontSize: 11, color: '#059669', margin: 0, marginBottom: 12 }}>✅ Token saved securely</p>}
+                            {!appConfig?.mp_access_token && <p style={{ fontSize: 11, color: '#DC2626', margin: 0, marginBottom: 12 }}>⚠️ Required to accept card payments</p>}
+
+                            {/* Alias (Optional) */}
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>MP Alias (optional)</label>
+                            <input
+                                type="text"
+                                placeholder="yourstore.mp"
+                                value={appConfig?.payments?.mercadoPagoAlias || ''}
+                                onChange={(e) => updatePayments({ mercadoPagoAlias: e.target.value })}
+                                style={{ ...inputStyle, marginBottom: 6 }}
+                            />
+                            <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>Shows in the Info page if filled in</p>
+                        </div>
                     </div>
                 </div>
 
