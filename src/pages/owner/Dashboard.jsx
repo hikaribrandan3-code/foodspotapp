@@ -333,6 +333,7 @@ function OnlinePill() {
 
 export default function Dashboard() {
   const { businessId, tenantData } = useTenant()
+  const t = useLanguage()
   const { orders, loading, refreshOrders } = useOrdersPolling(businessId)
   const [tab, setTab] = useState('active')
   const [filterBucket, setFilterBucket] = useState(null)
@@ -341,9 +342,9 @@ export default function Dashboard() {
 
   const counts = useMemo(() => {
     const bucket = {}
-    OWNER_STATS.forEach(s => bucket[s.key] = 0)
+    OWNER_STATS(t).forEach(s => bucket[s.key] = 0)
     orders.forEach(o => {
-      const b = statusToBucket(o.status)
+      const b = statusToBucket(o.status, t)
       if (b) bucket[b]++
     })
     return {
@@ -352,7 +353,7 @@ export default function Dashboard() {
       completed: orders.filter(o => [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)).length,
       delivered: orders.filter(o => o.status === ORDER_STATUS.DELIVERED).length,
     }
-  }, [orders])
+  }, [orders, t])
 
   const filtered = useMemo(() => {
     return orders.filter(o => {
