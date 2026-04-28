@@ -9,7 +9,7 @@ import { useStaff } from '../../contexts/StaffContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
 import BurgerLoader from '../../components/BurgerLoader'
-import { ORDER_STATUS } from '../../constants/database.js';
+import { ORDER_STATUS, PAYMENT_METHOD } from '../../constants/database.js';
 
 
 // Lazy-load scanner to avoid camera bundle on every page load
@@ -31,15 +31,24 @@ const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
 // 🛡️ SAFETY CAGE: Status-Specific Action Buttons
 // ============================================
 // Each status has ONE clear action. No ambiguity.
-const getActionForStatus = (status, orderType, paymentConfirmed, t) => {
+const getActionForStatus = (status, orderType, paymentMethod, paymentConfirmed, t) => {
     switch (status) {
         case ORDER_STATUS.PENDING_PAYMENT:
-            // ❌ NO BUTTON — Only webhook can advance this
             return null
 
         case ORDER_STATUS.PAID_UNRELEASED:
-            // Staff cannot accept unpaid cash orders — owner must confirm payment first
-            if (!paymentConfirmed) return null
+            // Staff can confirm cash payments if not yet confirmed
+            const isCash = (paymentMethod === PAYMENT_METHOD.CASH)
+            if (isCash && !paymentConfirmed) {
+                return {
+                    label: 'Confirm Payment',
+                    targetStatus: ORDER_STATUS.PAID_UNRELEASED,
+                    color: '#22C55E',
+                    confirm: false,
+                    isPaymentConfirm: true
+                }
+            }
+            // After payment confirmed (or non-cash), staff can accept order
             return {
                 label: t('confirm_action') || 'ACEPTAR PEDIDO',
                 targetStatus: ORDER_STATUS.RELEASED_TO_KITCHEN,
@@ -156,21 +165,28 @@ function StaffDashboard() {
     // ============================================
     // 🔄 FSM STATUS ADVANCE (via RPC)
     // ============================================
-    const advanceStatus = async (order, targetStatus) => {
+    const advanceStatus = async (order, targetStatus, isPaymentConfirm = false) => {
         if (processingOrderId) return // Prevent double-clicks
 
         setProcessingOrderId(order.id)
         setErrorMessage(null)
 
         try {
-            // 💳 PAYMENT + STATUS SYNC: When releasing to kitchen, also confirm payment
-            const updatePayload = { status: targetStatus }
+            const updatePayload = {}
 
-            // If advancing from paid_unreleased → released_to_kitchen, staff
-            // is confirming payment was received (cash). Mark it so receipt updates.
-            if (order.status === ORDER_STATUS.PAID_UNRELEASED && targetStatus === ORDER_STATUS.RELEASED_TO_KITCHEN) {
+            // If confirming cash payment, just update payment fields
+            if (isPaymentConfirm) {
                 updatePayload.payment_confirmed = true
                 updatePayload.payment_status = 'paid'
+            } else {
+                updatePayload.status = targetStatus
+
+                // If advancing from paid_unreleased → released_to_kitchen, staff
+                // is confirming payment was received (cash). Mark it so receipt updates.
+                if (order.status === ORDER_STATUS.PAID_UNRELEASED && targetStatus === ORDER_STATUS.RELEASED_TO_KITCHEN) {
+                    updatePayload.payment_confirmed = true
+                    updatePayload.payment_status = 'paid'
+                }
             }
 
             const { error } = await supabase
@@ -453,7 +469,7 @@ function StaffDashboard() {
                             {/* Order Cards */}
                             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {(ordersByStatus[status.id] || []).map(order => {
-                                    const action = getActionForStatus(order.status, order.order_type, order.payment_confirmed || order.paymentConfirmed, langT)
+                                    const action = getActionForStatus(order.status, order.order_type, order.payment_method, order.payment_confirmed || order.paymentConfirmed, langT)
                                     const isProcessing = processingOrderId === order.id
 
                                     return (
@@ -545,7 +561,7 @@ function StaffDashboard() {
                                                 <div style={{ flex: 1 }}>
                                                     {action ? (
                                                         <button
-                                                            onClick={() => advanceStatus(order, action.targetStatus)}
+                                                            onClick={() => advanceStatus(order, action.targetStatus, action.isPaymentConfirm)}
                                                             disabled={isProcessing}
                                                             style={{
                                                                 width: '100%',

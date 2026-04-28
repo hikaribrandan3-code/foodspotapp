@@ -146,13 +146,15 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
   )
 }
 
-function OrderCard({ order, onAdvance, onCancel, expanded, onToggle }) {
-  const next = nextActionFor(order.status)
+function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
+  const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
+  const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
+  const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'blue' } : nextActionFor(order.status)
   const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
-  const bucket = statusToBucket(order.status)
-  const bucketLabel = OWNER_STATS.find(s => s.key === bucket)?.label || order.status.toUpperCase()
+  const bucket = statusToBucket(order.status, t)
+  const bucketLabel = OWNER_STATS(t).find(s => s.key === bucket)?.label || order.status.toUpperCase()
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
   const timeStr = minsAgo < 1 ? 'just now' : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
 
@@ -348,7 +350,8 @@ export default function Dashboard() {
   }, [fetchedOrders])
 
   const counts = useMemo(() => {
-    const bucket = { cash: 0, todo: 0, prep: 0, ready: 0, out: 0 }
+    const bucket = {}
+    OWNER_STATS(t).forEach(s => bucket[s.key] = 0)
     displayOrders.forEach(o => {
       const b = statusToBucket(o.status, t)
       if (b) bucket[b]++
@@ -371,6 +374,32 @@ export default function Dashboard() {
   }, [displayOrders, tab, filterBucket, t])
 
   const advance = async (order) => {
+    const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
+    const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
+
+    // For cash orders awaiting payment — confirm payment AND release to kitchen in one click
+    if (needsPaymentConfirm) {
+      setProcessingOrderId(order.id)
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ payment_confirmed: true, payment_status: 'paid', status: ORDER_STATUS.RELEASED_TO_KITCHEN })
+          .eq('id', order.id)
+        if (error) {
+          console.error('Payment confirm failed:', error)
+          alert('Error: ' + error.message)
+        } else {
+          refreshOrders()
+        }
+      } catch (err) {
+        console.error('Payment confirm exception:', err)
+        alert('Error confirming payment')
+      } finally {
+        setProcessingOrderId(null)
+      }
+      return
+    }
+
     const flowIdx = STATUS_FLOW.findIndex(f => f.key === order.status)
     const next = STATUS_FLOW[flowIdx + 1]
     if (!next) return
@@ -532,7 +561,7 @@ export default function Dashboard() {
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 12px',
             }}>
               <div style={{ fontSize: 12, color: T.muted, fontWeight: 600, letterSpacing: '0.06em' }}>
-                FILTERED · {OWNER_STATS.find(s => s.key === filterBucket).label}
+                FILTERED · {OWNER_STATS(t).find(s => s.key === filterBucket).label}
               </div>
               <button onClick={() => setFilterBucket(null)} style={{
                 border: 'none', background: 'transparent', color: T.statPrep, fontSize: 12.5, fontWeight: 600,
@@ -562,6 +591,7 @@ export default function Dashboard() {
                 onCancel={() => cancel(o)}
                 expanded={expandedOrderId === o.id}
                 onToggle={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
+                t={t}
               />
             ))
           )}

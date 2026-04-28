@@ -143,6 +143,17 @@ function OwnerSummary() {
         await refreshTenantData()
     }
 
+    const updateBrandingCloud = async (field, value) => {
+        const columnMap = {
+            mercadoPagoAccessToken: 'mp_access_token'
+        }
+        const column = columnMap[field]
+        if (!column) return
+
+        await supabase.from('branding').update({ [column]: value }).eq('business_id', businessId)
+        await refreshTenantData()
+    }
+
     // Card style helper
     const cardStyle = { background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }
     const labelStyle = { fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }
@@ -279,49 +290,97 @@ function OwnerSummary() {
                     </div>
                     <input type="text" placeholder={t('pedidosya_placeholder')} value={appConfig?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
 
-                    {/* Mercado Pago Alias */}
-                    <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                        <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>{t('mp_alias_label')}</span>
-                        <input
-                            type="text"
-                            placeholder={t('mp_alias_placeholder')}
-                            value={appConfig?.payments?.mercadoPagoAlias || ''}
-                            onChange={(e) => updatePayments({ mercadoPagoAlias: e.target.value })}
-                            style={inputStyle}
-                        />
-                        <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>{t('empty_info')}</p>
+                    {/* Mercado Pago Setup - Premium Card */}
+                    <div style={{ paddingTop: 14, borderTop: '1px solid #F3F4F6', marginTop: 16 }}>
+                        <div style={{ background: '#F0F9FF', borderRadius: 14, padding: 16, border: '2px solid #E0F2FE', marginBottom: 16 }}>
+                            <div style={{ display: 'flex', alignItems: 'start', gap: 12, marginBottom: 12 }}>
+                                <span style={{ fontSize: 28 }}>💳</span>
+                                <div>
+                                    <h4 style={{ fontSize: 15, fontWeight: 700, color: '#0369A1', margin: '0 0 4px 0' }}>{t('mp_connect_title')}</h4>
+                                    <p style={{ fontSize: 13, color: '#0C4A6E', margin: 0, lineHeight: 1.4 }}>{t('mp_connect_subtitle')}</p>
+                                </div>
+                            </div>
+
+                            {/* Why Section */}
+                            <div style={{ background: 'white', borderRadius: 8, padding: 12, marginBottom: 12, border: '1px solid #BAE6FD' }}>
+                                <p style={{ fontSize: 12, fontWeight: 600, color: '#0369A1', margin: '0 0 6px 0' }}>{t('mp_why_title')}</p>
+                                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: '#064E3B' }}>
+                                    <li>{t('mp_benefit_1')}</li>
+                                    <li>{t('mp_benefit_2')}</li>
+                                    <li>{t('mp_benefit_3')}</li>
+                                </ul>
+                            </div>
+
+                            {/* Steps */}
+                            <div style={{ background: 'white', borderRadius: 8, padding: 12, marginBottom: 14, border: '1px solid #BAE6FD' }}>
+                                <p style={{ fontSize: 12, fontWeight: 600, color: '#0369A1', margin: '0 0 10px 0' }}>{t('mp_how_to_title')}</p>
+                                <div style={{ fontSize: 12, color: '#075985', lineHeight: 1.6 }}>
+                                    <div style={{ marginBottom: 8 }}><strong>1.</strong> {t('mp_step_1')}</div>
+                                    <div style={{ marginBottom: 8 }}><strong>2.</strong> {t('mp_step_2')}</div>
+                                    <div style={{ marginBottom: 8 }}><strong>3.</strong> {t('mp_step_3')}</div>
+                                    <div style={{ marginBottom: 8 }}><strong>4.</strong> {t('mp_step_4')} <code style={{ background: '#F5F5F5', padding: '2px 6px', borderRadius: 4 }}>APP_</code></div>
+                                    <div><strong>5.</strong> {t('mp_step_5')}</div>
+                                </div>
+                            </div>
+
+                            {/* Input Field */}
+                            <label style={{ fontSize: 12, color: '#0369A1', display: 'block', marginBottom: 6, fontWeight: 600 }}>{t('mp_access_token')}</label>
+                            <input
+                                type="password"
+                                placeholder="APP_1234567890abcdef..."
+                                value={appConfig?.mp_access_token || ''}
+                                onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
+                                style={{ ...inputStyle, borderColor: appConfig?.mp_access_token ? '#10B981' : '#E5E7EB' }}
+                            />
+                            {appConfig?.mp_access_token && <p style={{ fontSize: 11, color: '#059669', margin: 0, marginBottom: 12 }}>{t('mp_token_saved')}</p>}
+                            {!appConfig?.mp_access_token && <p style={{ fontSize: 11, color: '#DC2626', margin: 0, marginBottom: 12 }}>{t('mp_token_required')}</p>}
+
+                            {/* Alias (Optional) */}
+                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('mp_alias_optional')}</label>
+                            <input
+                                type="text"
+                                placeholder="yourstore.mp"
+                                value={appConfig?.payments?.mercadoPagoAlias || ''}
+                                onChange={(e) => updatePayments({ mercadoPagoAlias: e.target.value })}
+                                style={{ ...inputStyle, marginBottom: 6 }}
+                            />
+                            <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{t('mp_alias_info')}</p>
+                        </div>
                     </div>
                 </div>
 
-                {/* 🌎 LANGUAGE TOGGLE (High-End SaaS Style) */}
-                <div style={{
-                    marginTop: 32,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 24,
-                    padding: '16px 0',
-                    borderTop: '1px solid #E5E7EB'
-                }}>
-                    {['EN', 'ES', 'PT'].map((l) => (
-                        <button
-                            key={l}
-                            onClick={() => changeLanguage(l.toLowerCase())}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: lang === l.toLowerCase() ? '#111827' : '#9CA3AF',
-                                fontWeight: lang === l.toLowerCase() ? 700 : 500,
-                                fontSize: 13,
-                                letterSpacing: '0.1em',
-                                cursor: 'pointer',
-                                padding: '4px 8px',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {l}
-                        </button>
-                    ))}
+                {/* 🌎 LANGUAGE TOGGLE */}
+                <div style={{ marginTop: 24 }}>
+                    <h3 style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        🌍 {t('language_setting') || 'Language / Idioma'}
+                    </h3>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 24,
+                        padding: '12px 0'
+                    }}>
+                        {['EN', 'ES', 'PT'].map((l) => (
+                            <button
+                                key={l}
+                                onClick={() => changeLanguage(l.toLowerCase())}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: lang === l.toLowerCase() ? '#111827' : '#9CA3AF',
+                                    fontWeight: lang === l.toLowerCase() ? 700 : 500,
+                                    fontSize: 13,
+                                    letterSpacing: '0.1em',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {l}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
             </div>
@@ -540,7 +599,7 @@ function TeamManagement({ businessId, t, primaryColor }) {
     ]
 
     return (
-        <div style={{ marginTop: 32, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
+        <div style={{ marginTop: 2, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -550,12 +609,9 @@ function TeamManagement({ businessId, t, primaryColor }) {
             }}
             onClick={() => setShowTeamPanel(!showTeamPanel)}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 24 }}>👥</span>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>
-                        {t('team_management') || 'Gestión de Equipo'}
-                    </span>
-                </div>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>
+                    {t('team_management') || 'Gestión de Equipo'}
+                </span>
                 <span style={{ fontSize: 20, transform: showTeamPanel ? 'rotate(180deg)' : 'rotate(0)', transition: '0.2s' }}>▼</span>
             </div>
 
@@ -581,48 +637,57 @@ function TeamManagement({ businessId, t, primaryColor }) {
                         </button>
                     ) : (
                         <div style={{ background: 'white', padding: 16, borderRadius: 12, marginBottom: 16 }}>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('name') || 'Name'}</label>
                             <input
                                 type="text"
-                                placeholder={t('name') || 'Nombre'}
+                                placeholder="Juan García"
                                 value={newStaff.name}
                                 onChange={(e) => setNewStaff(p => ({ ...p, name: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
                             />
+
+                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('username') || 'Username'}</label>
                             <input
                                 type="text"
-                                placeholder={t('email') || 'Email/Usuario'}
+                                placeholder="juan_kitchen"
                                 value={newStaff.email}
                                 onChange={(e) => setNewStaff(p => ({ ...p, email: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
                             />
+
+                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>PIN ({t('4_digits') || '4 digits'})</label>
                             <input
                                 type="password"
-                                placeholder={t('pin_4_digits')}
+                                placeholder="1234"
                                 value={newStaff.pin}
                                 onChange={(e) => setNewStaff(p => ({ ...p, pin: e.target.value }))}
                                 maxLength={4}
-                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                                inputMode="numeric"
+                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
                             />
+
+                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('role') || 'Role'}</label>
                             <select
                                 value={newStaff.role}
                                 onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
                             >
                                 {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                             </select>
+
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <button
                                     onClick={handleAddStaff}
                                     disabled={saving || !newStaff.name || !newStaff.email || !newStaff.pin}
-                                    style={{ flex: 1, padding: 10, background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    style={{ flex: 1, padding: 12, background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
                                 >
-                                    {saving ? '...' : (t('save') || 'Guardar')}
+                                    {saving ? '...' : (t('save') || 'Save')}
                                 </button>
                                 <button
                                     onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
-                                    style={{ flex: 1, padding: 10, background: '#E5E7EB', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    style={{ flex: 1, padding: 12, background: '#E5E7EB', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
                                 >
-                                    {t('cancel') || 'Cancelar'}
+                                    {t('cancel') || 'Cancel'}
                                 </button>
                             </div>
                         </div>
@@ -648,7 +713,7 @@ function TeamManagement({ businessId, t, primaryColor }) {
                                 }}>
                                     <div>
                                         <div style={{ fontWeight: 600, color: '#1F2937' }}>{staff.name}</div>
-                                        <div style={{ fontSize: 12, color: '#6B7280' }}>{staff.role} • {staff.email}</div>
+                                        <div style={{ fontSize: 12, color: '#6B7280' }}>@{staff.email} • {staff.role}</div>
                                     </div>
                                     <button
                                         onClick={() => handleDeleteStaff(staff.id)}

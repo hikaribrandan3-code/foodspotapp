@@ -38,6 +38,10 @@ export const translations = {
     price: { es: "Precio", en: "Price", pt: "Preço" },
     visible: { es: "Visible", en: "Visible", pt: "Visível" },
     hidden: { es: "Oculto", en: "Hidden", pt: "Oculto" },
+    username: { es: "Usuario", en: "Username", pt: "Nome de Usuário" },
+    role: { es: "Rol", en: "Role", pt: "Função" },
+    "4_digits": { es: "4 dígitos", en: "4 digits", pt: "4 dígitos" },
+    language_setting: { es: "Idioma / Lenguaje", en: "Language / Idioma", pt: "Idioma / Língua" },
 
     // Owner Summary
     daily_payments: { es: "PAGOS DEL DÍA", en: "DAILY PAYMENTS", pt: "PAGAMENTOS DO DIA" },
@@ -162,6 +166,26 @@ export const translations = {
     pedidosya_placeholder: { es: "Link de PedidosYa", en: "PedidosYa Link", pt: "Link do PedidosYa" },
     mp_alias_label: { es: "Mercado Pago (Alias)", en: "Mercado Pago (Alias)", pt: "Mercado Pago (Alias)" },
     mp_alias_placeholder: { es: "ej: grubclub.mp", en: "ex: yourstore.mp", pt: "ex: sualoja.mp" },
+
+    // Mercado Pago Setup
+    mp_connect_title: { es: "Conecta Mercado Pago", en: "Connect Mercado Pago", pt: "Conecte Mercado Pago" },
+    mp_connect_subtitle: { es: "Tus clientes pagan directo a tu cuenta. Sin intermediarios.", en: "Your customers pay directly to your account. No middleman.", pt: "Seus clientes pagam diretamente em sua conta. Sem intermediários." },
+    mp_why_title: { es: "Por qué lo necesitas:", en: "Why you need this:", pt: "Por que você precisa disso:" },
+    mp_benefit_1: { es: "Los clientes pueden pagar con tarjeta (Visa, Mastercard, etc)", en: "Customers can pay with card (Visa, Mastercard, etc)", pt: "Os clientes podem pagar com cartão (Visa, Mastercard, etc)" },
+    mp_benefit_2: { es: "El dinero va directo a tu cuenta de MP", en: "Money goes straight to your MP account", pt: "O dinheiro vai direto para sua conta MP" },
+    mp_benefit_3: { es: "FoodSpot no toma comisión en pagos", en: "FoodSpot takes no commission on payments", pt: "FoodSpot não cobra comissão sobre pagamentos" },
+    mp_how_to_title: { es: "Cómo obtener tu código (tarda 2 min):", en: "How to get your code (takes 2 min):", pt: "Como obter seu código (leva 2 min):" },
+    mp_step_1: { es: "Ve a mercadopago.com.ar e inicia sesión", en: "Go to mercadopago.com.ar and sign in", pt: "Vá para mercadopago.com.ar e faça login" },
+    mp_step_2: { es: "Haz clic en tu nombre → Configuración", en: "Click your name → Settings", pt: "Clique seu nome → Configurações" },
+    mp_step_3: { es: "Haz clic en Desarrolladores → Credenciales", en: "Click Developers → Credentials", pt: "Clique em Desenvolvedores → Credenciais" },
+    mp_step_4: { es: "Copia el código que comienza con APP_", en: "Copy the code that starts with APP_", pt: "Copie o código que começa com APP_" },
+    mp_step_5: { es: "Pégalo aquí abajo y guarda", en: "Paste it below and save", pt: "Cole aqui embaixo e salve" },
+    mp_access_token: { es: "Tu Código de Acceso *", en: "Your Access Token *", pt: "Seu Código de Acesso *" },
+    mp_token_saved: { es: "✅ Código guardado de forma segura", en: "✅ Token saved securely", pt: "✅ Código salvo com segurança" },
+    mp_token_required: { es: "⚠️ Requerido para aceptar pagos con tarjeta", en: "⚠️ Required to accept card payments", pt: "⚠️ Obrigatório para aceitar pagamentos com cartão" },
+    mp_alias_optional: { es: "Alias de MP (opcional)", en: "MP Alias (optional)", pt: "Alias MP (opcional)" },
+    mp_alias_info: { es: "Se está lleno, se muestra en la página de Info", en: "Shows in the Info page if filled in", pt: "Aparece na página de Info se preenchido" },
+
     bar_color_title: { es: "Color de Barra", en: "Bar Color", pt: "Cor da Barra" },
     admin_login: { es: "Admin Login", en: "Admin Login", pt: "Login Admin" },
     loading_vault: { es: "Cargando Bóveda...", en: "Loading Vault...", pt: "Carregando Cofre..." },

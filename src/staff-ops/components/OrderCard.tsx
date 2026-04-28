@@ -7,6 +7,7 @@ import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { getDistanceKm, getETAMinutes } from '@/lib/utils';
 import { useOrders } from '@/hooks/useOrders';
 import { useBusiness } from '@/contexts/BusinessContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OrderCardProps {
   order: Order;
@@ -58,6 +59,7 @@ export default function OrderCard({
 }: OrderCardProps) {
   const { selectOrder, verifyCash, confirmDelivery, cancelOrder } = useOrders();
   const { businessLat, businessLng } = useBusiness();
+  const { t } = useLanguage();
   const [isRemoving, setIsRemoving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const x = useMotionValue(0);
@@ -83,7 +85,7 @@ export default function OrderCard({
     return getETAMinutes(distKm);
   })();
 
-  const isCashPending = order.status === 'PENDING_VERIFICATION';
+  const isCashPending = order.status === 'PENDING_VERIFICATION' || (order.status === 'TODO' && order.paymentMethod === 'cash' && !order.cashVerified);
   const isDelivering = order.status === 'DELIVERING';
 
   const getCardStyles = () => {
@@ -317,14 +319,14 @@ export default function OrderCard({
         {/* ── Verify Cash button (PENDING_VERIFICATION only) ───── */}
         {isCashPending && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
-            <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>Payment must be verified before kitchen sees this order.</p>
+            <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>{t('payment_verify_required') || 'Payment must be verified before kitchen sees this order.'}</p>
             <button
               onClick={handleVerifyCash}
               className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               style={{ backgroundColor: '#22C55E', color: '#fff' }}
             >
               <DollarSign size={16} strokeWidth={2.5} />
-              Verify Cash Payment
+              {t('confirm_payment') || 'Verify Cash Payment'}
             </button>
           </div>
         )}

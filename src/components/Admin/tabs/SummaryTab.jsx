@@ -6,7 +6,7 @@ const cardStyle = { background: 'white', borderRadius: 12, padding: 16, boxShado
 const labelStyle = { fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' };
 const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 14, marginBottom: 12 };
 
-export default function SummaryTab({ config, updateBusinessInfoCloud, updateConfig }) {
+export default function SummaryTab({ config, updateBusinessInfoCloud, updateBrandingCloud, updateConfig }) {
     const today = new Date().toDateString();
     const todayOrders = config.orders?.filter(o => new Date(o.createdAt).toDateString() === today) || [];
     const weekOrders = config.orders?.filter(o => {
@@ -92,9 +92,18 @@ export default function SummaryTab({ config, updateBusinessInfoCloud, updateConf
                 <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
 
                 <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                    <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago (Alias)</span>
+                    <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago Setup</span>
+
+                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 600 }}>Código de Acceso (Access Token) *Requerido</label>
+                    <input type="password" placeholder="APP_1234567890..." value={config.mp_access_token || ''} onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)} style={inputStyle} />
+                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 12 }}>
+                        🔒 Privado. Tu dinero va directo a tu cuenta de MP.
+                        <br />👉 <strong>Cómo obtenerlo:</strong> mercadopago.com.ar → Configuración → Desarrolladores → Credenciales → Copiar "Access Token"
+                    </p>
+
+                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Alias / Usuario (para Info página)</label>
                     <input type="text" placeholder="ej: grubclub.mp" value={config.payments?.mercadoPagoAlias || ''} onChange={(e) => { const c = config.payments || {}; updateConfig({ payments: { ...c, mercadoPagoAlias: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={inputStyle} />
-                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Si está vacío, no aparece en Info</p>
+                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Opcional. Si está vacío, no aparece en Info</p>
                 </div>
             </div>
         </>
