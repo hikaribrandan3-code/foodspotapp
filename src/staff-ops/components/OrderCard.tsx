@@ -83,7 +83,7 @@ export default function OrderCard({
     return getETAMinutes(distKm);
   })();
 
-  const isCashPending = order.status === 'PENDING_VERIFICATION';
+  const isCashPending = order.status === 'PENDING_VERIFICATION' || (order.status === 'TODO' && order.paymentMethod === 'cash' && !order.cashVerified);
   const isDelivering = order.status === 'DELIVERING';
 
   const getCardStyles = () => {
