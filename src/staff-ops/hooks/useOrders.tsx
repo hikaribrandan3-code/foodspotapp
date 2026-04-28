@@ -299,8 +299,12 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const advanceOrderStatus = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
-    const nextStatus = STATUS_FLOW[order.status];
+
+    // Pickup/dine-in skip DISPATCH/DELIVERING — go directly to DONE
+    const isDelivery = order.deliveryType === 'delivery';
+    let nextStatus = STATUS_FLOW[order.status];
     if (!nextStatus) return;
+    if (order.status === 'READY' && !isDelivery) nextStatus = 'DONE';
 
     if (!state.isOnline) queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });
     dispatch({ type: 'ADVANCE_STATUS', orderId });

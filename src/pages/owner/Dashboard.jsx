@@ -370,13 +370,13 @@ export default function Dashboard() {
     const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
     const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
 
-    // For cash orders in PENDING_PAYMENT, first confirm payment (don't advance status)
+    // For cash orders awaiting payment — confirm payment AND release to kitchen in one click
     if (needsPaymentConfirm) {
       setProcessingOrderId(order.id)
       try {
         const { error } = await supabase
           .from('orders')
-          .update({ payment_confirmed: true, payment_status: 'paid' })
+          .update({ payment_confirmed: true, payment_status: 'paid', status: ORDER_STATUS.RELEASED_TO_KITCHEN })
           .eq('id', order.id)
         if (error) {
           console.error('Payment confirm failed:', error)

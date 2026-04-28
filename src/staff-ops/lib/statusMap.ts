@@ -7,49 +7,49 @@ export function toKimiStatus(
   paymentMethod?: string,
   paymentConfirmed?: boolean,
 ): OrderStatus {
-  // Cash orders that haven't been physically verified sit in PENDING_VERIFICATION
-  if (dbStatus === 'pendiente' && paymentMethod === 'cash' && !paymentConfirmed) {
+  // Cash orders that haven't been confirmed sit in PENDING_VERIFICATION
+  if (dbStatus === 'paid_unreleased' && paymentMethod === 'cash' && !paymentConfirmed) {
     return 'PENDING_VERIFICATION';
   }
   switch (dbStatus) {
-    case 'pendiente':
-    case 'confirmado':
+    case 'pending_payment':
+    case 'paid_unreleased':
+    case 'released_to_kitchen':
       return 'TODO';
-    case 'preparacion':
+    case 'preparing':
       return 'PREP';
-    case 'listo':
+    case 'ready':
       return 'READY';
-    case 'despachado':
+    case 'dispatched':
       return 'DISPATCH';
-    case 'en_camino':
+    case 'delivering':
       return 'DELIVERING';
-    case 'entregado':
+    case 'delivered':
     case 'cancelled':
-    case 'cancelado':
       return 'DONE';
     default:
       return 'TODO';
   }
 }
 
-// ── UI (Kimi) → DB (Spanish) ─────────────────────────────────────────────────
+// ── UI (Kimi) → DB (English) ──────────────────────────────────────────────────
 
 export function toDbStatus(kimiStatus: OrderStatus): string {
   switch (kimiStatus) {
     case 'PENDING_VERIFICATION':
-      return 'pendiente';
+      return 'paid_unreleased';
     case 'TODO':
-      return 'confirmado';
+      return 'released_to_kitchen';
     case 'PREP':
-      return 'preparacion';
+      return 'preparing';
     case 'READY':
-      return 'listo';
+      return 'ready';
     case 'DISPATCH':
-      return 'despachado';
+      return 'dispatched';
     case 'DELIVERING':
-      return 'en_camino';
+      return 'delivering';
     case 'DONE':
-      return 'entregado';
+      return 'delivered';
   }
 }
 
