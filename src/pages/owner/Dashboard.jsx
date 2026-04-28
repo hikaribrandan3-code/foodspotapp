@@ -145,13 +145,13 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
   )
 }
 
-function OrderCard({ order, onAdvance, onCancel, expanded, onToggle }) {
+function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const next = nextActionFor(order.status)
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
   const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
-  const bucket = statusToBucket(order.status)
-  const bucketLabel = OWNER_STATS.find(s => s.key === bucket)?.label || order.status.toUpperCase()
+  const bucket = statusToBucket(order.status, t)
+  const bucketLabel = OWNER_STATS(t).find(s => s.key === bucket)?.label || order.status.toUpperCase()
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
   const timeStr = minsAgo < 1 ? 'just now' : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
 
@@ -516,7 +516,7 @@ export default function Dashboard() {
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 12px',
             }}>
               <div style={{ fontSize: 12, color: T.muted, fontWeight: 600, letterSpacing: '0.06em' }}>
-                FILTERED · {OWNER_STATS.find(s => s.key === filterBucket).label}
+                FILTERED · {OWNER_STATS(t).find(s => s.key === filterBucket).label}
               </div>
               <button onClick={() => setFilterBucket(null)} style={{
                 border: 'none', background: 'transparent', color: T.statPrep, fontSize: 12.5, fontWeight: 600,
@@ -546,6 +546,7 @@ export default function Dashboard() {
                 onCancel={() => cancel(o)}
                 expanded={expandedOrderId === o.id}
                 onToggle={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
+                t={t}
               />
             ))
           )}
