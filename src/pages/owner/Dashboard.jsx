@@ -382,9 +382,19 @@ export default function Dashboard() {
 
     setProcessingOrderId(order.id)
     try {
+      // 💳 PAYMENT + STATUS SYNC: When releasing to kitchen, also confirm payment
+      const updatePayload = { status: targetStatus }
+
+      // If advancing from paid_unreleased → released_to_kitchen, the owner
+      // is implicitly confirming they received payment (cash). Mark it.
+      if (order.status === ORDER_STATUS.PAID_UNRELEASED && targetStatus === ORDER_STATUS.RELEASED_TO_KITCHEN) {
+        updatePayload.payment_confirmed = true
+        updatePayload.payment_status = 'paid'
+      }
+
       const { error } = await supabase
         .from('orders')
-        .update({ status: targetStatus })
+        .update(updatePayload)
         .eq('id', order.id)
 
       if (error) {

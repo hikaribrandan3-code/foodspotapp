@@ -252,7 +252,7 @@ function Order({ config: configProp }) {
 
         // ─── STEP 1: VALIDATION ───────────────────────────
         const errors = []
-        if (!customerInfo.name || customerInfo.name.length < 2) errors.push('Nombre requerido')
+        if (!customerInfo.name || customerInfo.name.length < 2) errors.push(t('required_fields'))
 
         // 🛡️ P0 #2: Phone validation (strip non-digits, require 8+ digits)
         if (customerInfo.phone) {
@@ -442,14 +442,14 @@ function Order({ config: configProp }) {
 
         // Validation (same as handleSubmit)
         const errors = []
-        if (!customerInfo.name || customerInfo.name.length < 2) errors.push('Nombre requerido')
+        if (!customerInfo.name || customerInfo.name.length < 2) errors.push(t('required_fields'))
         if (customerInfo.phone) {
             const digitsOnly = customerInfo.phone.replace(/\D/g, '')
-            if (digitsOnly.length < 8) errors.push('Número de teléfono inválido (mínimo 8 dígitos)')
+            if (digitsOnly.length < 8) errors.push(t('phone_invalid'))
         }
         if (orderType === 'delivery') {
             if (!customerInfo.phone || customerInfo.phone.replace(/\D/g, '').length < 8) {
-                errors.push('WhatsApp requerido para delivery')
+                errors.push(t('whatsapp_required'))
             }
             const validation = validateDeliveryInfo(customerInfo)
             if (!validation.valid) errors.push(...validation.errors)
@@ -662,10 +662,10 @@ function Order({ config: configProp }) {
                         </svg>
                     </div>
                     <h2 style={{ fontSize: 20, fontWeight: 600, color: '#1F2937', marginBottom: 8 }}>
-                        ¡Pedido enviado!
+                        {t('order_sent')}
                     </h2>
                     <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 24 }}>
-                        {orderType === 'dine_in' ? 'Avisando a cocina...' : 'Redirigiendo al estado...'}
+                        {orderType === 'dine_in' ? t('notifying_kitchen') : t('redirecting_status')}
                     </p>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
                         {[0, 1, 2].map(dot => (
@@ -883,6 +883,7 @@ function Order({ config: configProp }) {
                         {t('payment_methods') || 'Payment Method'}
                     </h3>
 
+                    {/* Mercado Pago — always available for pickup/delivery, dine-in only if pay-before */}
                     {(orderType === 'delivery' || orderType === 'pickup' || serviceModes?.dineInPayment === 'before') && (
                         <PaymentMethodCard
                             id="mercadopago"
@@ -895,17 +896,16 @@ function Order({ config: configProp }) {
                         />
                     )}
 
-                    {(orderType !== 'dine_in' || serviceModes?.dineInPayment === 'after') && (
-                        <PaymentMethodCard
-                            id="efectivo"
-                            selected={paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === PAYMENT_METHOD.CASH}
-                            onClick={() => setPaymentMethod(orderType === 'dine_in' ? PAYMENT_METHOD.CASH : PAYMENT_METHOD.CASH)}
-                            title={orderType === 'dine_in' ? t('pay_at_end_table') : t(PAYMENT_METHOD.CASH)}
-                            subtitle={orderType === 'dine_in' ? t('pay_at_end_desc') : t('cash_delivery')}
-                            color="#22C55E"
-                            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
-                        />
-                    )}
+                    {/* Cash — always available for ALL order types including dine-in */}
+                    <PaymentMethodCard
+                        id="efectivo"
+                        selected={paymentMethod === PAYMENT_METHOD.CASH}
+                        onClick={() => setPaymentMethod(PAYMENT_METHOD.CASH)}
+                        title={orderType === 'dine_in' ? t('pay_at_end_table') : t(PAYMENT_METHOD.CASH)}
+                        subtitle={orderType === 'dine_in' ? t('pay_at_end_desc') : t('cash_delivery')}
+                        color="#22C55E"
+                        icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
+                    />
                 </div>
 
                 {/* 4. ORDER ITEMS */}

@@ -163,9 +163,19 @@ function StaffDashboard() {
         setErrorMessage(null)
 
         try {
+            // 💳 PAYMENT + STATUS SYNC: When releasing to kitchen, also confirm payment
+            const updatePayload = { status: targetStatus }
+
+            // If advancing from paid_unreleased → released_to_kitchen, staff
+            // is confirming payment was received (cash). Mark it so receipt updates.
+            if (order.status === ORDER_STATUS.PAID_UNRELEASED && targetStatus === ORDER_STATUS.RELEASED_TO_KITCHEN) {
+                updatePayload.payment_confirmed = true
+                updatePayload.payment_status = 'paid'
+            }
+
             const { error } = await supabase
                 .from('orders')
-                .update({ status: targetStatus })
+                .update(updatePayload)
                 .eq('id', order.id)
 
             if (error) throw error

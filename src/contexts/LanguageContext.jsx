@@ -9,7 +9,6 @@ export const LanguageProvider = ({ children }) => {
     const { tenantData, businessId, refreshTenantData } = useTenant();
     const isLocked = useRef(false);
     const lockTimer = useRef(null);
-    const hasInitialized = useRef(false);
 
     // Tenant language is always the source of truth — owner backend controls all UI language
     const [lang, setLang] = useState(() => {
@@ -18,31 +17,24 @@ export const LanguageProvider = ({ children }) => {
         return initial;
     });
 
+    // 🔄 REACTIVE SYNC: Always adopt tenantData.language unless we're mid-toggle
+    // The isLocked ref protects against reverts during manual owner toggles.
+    // No hasInitialized guard — this must fire every time tenantData.language changes
+    // so that ALL tabs re-render with the new language immediately.
     useEffect(() => {
-        // Trace logging as requested
-        console.log(`[LanguageContext] 🔍 State Fight: Current Lang: ${lang} | DB Lang: ${tenantData?.language || 'en'}`);
+        console.log(`[LanguageContext] 🔍 Sync Check: Current=${lang} | DB=${tenantData?.language || 'null'} | Locked=${isLocked.current}`);
 
         if (!tenantData?.language) return;
-
-        // 🏁 FIRST LOAD: Always adopt the DB language once tenantData is available
-        if (!hasInitialized.current) {
-            hasInitialized.current = true;
-            if (lang !== tenantData.language) {
-                console.log(`[LanguageContext] 🔄 Initial Sync: Setting to ${tenantData.language}`);
-                setLang(tenantData.language);
-            }
-            return;
-        }
 
         if (tenantData.language !== lang) {
             if (isLocked.current) {
                 console.log(`[LanguageContext] 🛡️ Revert Prevented: Context is LOCKED during manual toggle.`);
                 return;
             }
-            console.log(`[LanguageContext] 🔄 System Sync: Reverting from ${lang} to ${tenantData.language}`);
+            console.log(`[LanguageContext] 🔄 Syncing to DB language: ${tenantData.language}`);
             setLang(tenantData.language);
         }
-    }, [tenantData?.language, lang]);
+    }, [tenantData?.language]);
 
     // 🧹 Cleanup lock timer on unmount
     useEffect(() => {
@@ -72,7 +64,6 @@ export const LanguageProvider = ({ children }) => {
         if (lockTimer.current) clearTimeout(lockTimer.current);
 
         try {
-            // Update the tenants table as requested
             // 🛡️ SCHEMA GUARD: Use the real tenant PK (id) from tenantData
             if (!tenantData?.id) {
                 console.warn("[LanguageContext] ⚠️ Cannot update: tenantData.id missing.");
@@ -90,12 +81,15 @@ export const LanguageProvider = ({ children }) => {
                 console.error('Full Update Context:', { id: businessId, newLang });
             }
 
-            // Delay refresh to allow Supabase replication to settle, then unlock
+            // Refresh tenant data immediately (DB write is already complete).
+            // Keep lock for 1500ms to prevent the refresh result from reverting
+            // the optimistic update before it settles.
+            refreshTenantData();
+
             lockTimer.current = setTimeout(() => {
                 isLocked.current = false;
-                console.log(`[LanguageContext] 🔓 Context UNLOCKED.`);
-                refreshTenantData();
-            }, 2500);
+                console.log(`[LanguageContext] 🔓 Context UNLOCKED after toggle settle.`);
+            }, 1500);
 
         } catch (err) {
             console.error('Failed to change language:', err);

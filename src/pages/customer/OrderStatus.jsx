@@ -115,7 +115,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     } else {
                         navigate('/')
                     }
-                }, 3000)
+                }, 15000)
                 return () => clearTimeout(timer)
             }
         }
@@ -165,6 +165,9 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const getStatusText = () => {
         if (isCashMethod && !paid && order.status !== ORDER_STATUS.CANCELLED && order.status !== ORDER_STATUS.DELIVERED) {
             return isDelivery ? t('status_awaiting_delivery') : t('status_awaiting_pickup')
+        }
+        if (isCashMethod && paid && order.status !== ORDER_STATUS.DELIVERED && order.status !== ORDER_STATUS.CANCELLED) {
+            return '✅ ' + t('status_payment_received')
         }
         switch (order.status) {
             case ORDER_STATUS.PENDING_PAYMENT: return t('status_awaiting_confirmation')
@@ -420,7 +423,17 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             gap: 12, padding: '3px 0', fontSize: 13,
                         }}>
                             <span style={{ color: '#737373' }}>{t('payment_method')}</span>
-                            <span style={{ color: '#0a0a0a' }}>{getPaymentDisplay()}</span>
+                            <span style={{ color: '#0a0a0a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                {getPaymentDisplay()}
+                                {paid && (
+                                    <span style={{
+                                        background: '#DCFCE7', color: '#16A34A',
+                                        fontSize: 11, fontWeight: 700,
+                                        padding: '2px 8px', borderRadius: 4,
+                                        letterSpacing: 0.3
+                                    }}>PAID ✓</span>
+                                )}
+                            </span>
                         </div>
                         <div style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
