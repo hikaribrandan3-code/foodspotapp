@@ -143,6 +143,17 @@ function OwnerSummary() {
         await refreshTenantData()
     }
 
+    const updateBrandingCloud = async (field, value) => {
+        const columnMap = {
+            mercadoPagoAccessToken: 'mp_access_token'
+        }
+        const column = columnMap[field]
+        if (!column) return
+
+        await supabase.from('branding').update({ [column]: value }).eq('business_id', businessId)
+        await refreshTenantData()
+    }
+
     // Card style helper
     const cardStyle = { background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }
     const labelStyle = { fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }
@@ -279,9 +290,24 @@ function OwnerSummary() {
                     </div>
                     <input type="text" placeholder={t('pedidosya_placeholder')} value={appConfig?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
 
-                    {/* Mercado Pago Alias */}
+                    {/* Mercado Pago Setup */}
                     <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                        <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>{t('mp_alias_label')}</span>
+                        <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6, fontWeight: 600 }}>💳 {t('mercado_pago_setup')}</span>
+
+                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 600 }}>{t('mp_access_token')} *</label>
+                        <input
+                            type="password"
+                            placeholder="APP_1234567890..."
+                            value={appConfig?.mp_access_token || ''}
+                            onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
+                            style={inputStyle}
+                        />
+                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 12 }}>
+                            🔒 {t('mp_secure_note')}
+                            <br />👉 <strong>{t('mp_how_to')}:</strong> mercadopago.com.ar → {t('settings')} → {t('developers')} → {t('credentials')} → {t('copy_access_token')}
+                        </p>
+
+                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('mp_alias_label')}</label>
                         <input
                             type="text"
                             placeholder={t('mp_alias_placeholder')}

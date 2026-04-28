@@ -344,7 +344,8 @@ function SuperAdmin({ config: configProp }) {
             businessName: 'business_name',
             primaryColor: 'primary_color',
             fontFamily: 'font_family',
-            fontWeight: 'font_weight'
+            fontWeight: 'font_weight',
+            mercadoPagoAccessToken: 'mp_access_token'
         }
         const column = columnMap[field]
         if (!column) return
