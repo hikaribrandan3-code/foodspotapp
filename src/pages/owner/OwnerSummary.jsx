@@ -599,7 +599,7 @@ function TeamManagement({ businessId, t, primaryColor }) {
     ]
 
     return (
-        <div style={{ marginTop: 8, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
+        <div style={{ marginTop: 2, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
