@@ -38,7 +38,7 @@ const getActionForStatus = (status, orderType, paymentMethod, paymentConfirmed, 
 
         case ORDER_STATUS.PAID_UNRELEASED:
             // Staff can confirm cash payments if not yet confirmed
-            const isCash = paymentMethod === PAYMENT_METHOD.CASH
+            const isCash = (paymentMethod === PAYMENT_METHOD.CASH)
             if (isCash && !paymentConfirmed) {
                 return {
                     label: 'Confirm Payment',
@@ -48,8 +48,7 @@ const getActionForStatus = (status, orderType, paymentMethod, paymentConfirmed, 
                     isPaymentConfirm: true
                 }
             }
-            // After payment confirmed, staff can accept order
-            if (!paymentConfirmed) return null
+            // After payment confirmed (or non-cash), staff can accept order
             return {
                 label: t('confirm_action') || 'ACEPTAR PEDIDO',
                 targetStatus: ORDER_STATUS.RELEASED_TO_KITCHEN,
