@@ -637,48 +637,57 @@ function TeamManagement({ businessId, t, primaryColor }) {
                         </button>
                     ) : (
                         <div style={{ background: 'white', padding: 16, borderRadius: 12, marginBottom: 16 }}>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('name') || 'Name'}</label>
                             <input
                                 type="text"
-                                placeholder={t('name') || 'Nombre'}
+                                placeholder="Juan García"
                                 value={newStaff.name}
                                 onChange={(e) => setNewStaff(p => ({ ...p, name: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
                             />
+
+                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('username') || 'Username'}</label>
                             <input
                                 type="text"
-                                placeholder={t('email') || 'Email/Usuario'}
+                                placeholder="juan_kitchen"
                                 value={newStaff.email}
                                 onChange={(e) => setNewStaff(p => ({ ...p, email: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
                             />
+
+                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>PIN ({t('4_digits') || '4 digits'})</label>
                             <input
                                 type="password"
-                                placeholder={t('pin_4_digits')}
+                                placeholder="1234"
                                 value={newStaff.pin}
                                 onChange={(e) => setNewStaff(p => ({ ...p, pin: e.target.value }))}
                                 maxLength={4}
-                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                                inputMode="numeric"
+                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
                             />
+
+                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('role') || 'Role'}</label>
                             <select
                                 value={newStaff.role}
                                 onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 10, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
                             >
                                 {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                             </select>
+
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <button
                                     onClick={handleAddStaff}
                                     disabled={saving || !newStaff.name || !newStaff.email || !newStaff.pin}
-                                    style={{ flex: 1, padding: 10, background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    style={{ flex: 1, padding: 12, background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
                                 >
-                                    {saving ? '...' : (t('save') || 'Guardar')}
+                                    {saving ? '...' : (t('save') || 'Save')}
                                 </button>
                                 <button
                                     onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
-                                    style={{ flex: 1, padding: 10, background: '#E5E7EB', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                                    style={{ flex: 1, padding: 12, background: '#E5E7EB', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
                                 >
-                                    {t('cancel') || 'Cancelar'}
+                                    {t('cancel') || 'Cancel'}
                                 </button>
                             </div>
                         </div>
@@ -704,7 +713,7 @@ function TeamManagement({ businessId, t, primaryColor }) {
                                 }}>
                                     <div>
                                         <div style={{ fontWeight: 600, color: '#1F2937' }}>{staff.name}</div>
-                                        <div style={{ fontSize: 12, color: '#6B7280' }}>{staff.role} • {staff.email}</div>
+                                        <div style={{ fontSize: 12, color: '#6B7280' }}>@{staff.email} • {staff.role}</div>
                                     </div>
                                     <button
                                         onClick={() => handleDeleteStaff(staff.id)}

@@ -38,6 +38,9 @@ export const translations = {
     price: { es: "Precio", en: "Price", pt: "Preço" },
     visible: { es: "Visible", en: "Visible", pt: "Visível" },
     hidden: { es: "Oculto", en: "Hidden", pt: "Oculto" },
+    username: { es: "Usuario", en: "Username", pt: "Nome de Usuário" },
+    role: { es: "Rol", en: "Role", pt: "Função" },
+    "4_digits": { es: "4 dígitos", en: "4 digits", pt: "4 dígitos" },
 
     // Owner Summary
     daily_payments: { es: "PAGOS DEL DÍA", en: "DAILY PAYMENTS", pt: "PAGAMENTOS DO DIA" },
