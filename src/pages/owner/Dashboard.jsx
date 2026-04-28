@@ -333,8 +333,7 @@ function OnlinePill() {
 
 export default function Dashboard() {
   const { businessId, tenantData } = useTenant()
-  const context = useLanguage()
-  const t = context?.t || ((key) => key) // Fallback if t is undefined
+  const { t } = useLanguage()
   const { orders, loading, refreshOrders } = useOrdersPolling(businessId)
   const [tab, setTab] = useState('active')
   const [filterBucket, setFilterBucket] = useState(null)
