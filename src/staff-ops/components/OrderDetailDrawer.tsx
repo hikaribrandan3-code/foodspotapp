@@ -26,10 +26,11 @@ export default function OrderDetailDrawer() {
   const isDone = order.status === 'DONE';
 
   // Next status label for the advance button
+  const isDeliveryOrder = order.deliveryType === 'delivery';
   const nextLabels: Record<string, string> = {
     TODO: '▶ Start Prep',
     PREP: '✓ Mark Ready',
-    READY: '🚴 Dispatch',
+    READY: isDeliveryOrder ? '🚴 Dispatch' : '✓ Mark Delivered',
     DISPATCH: '📍 Mark Delivering',
   };
   const nextLabel = nextLabels[order.status];
@@ -174,7 +175,7 @@ export default function OrderDetailDrawer() {
                 <button
                   onClick={() => { verifyCash(order.id); selectOrder(null); }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
+                  style={{ backgroundColor: '#22C55E', color: '#fff' }}
                 >
                   <DollarSign size={16} strokeWidth={2.5} />
                   Verify Cash Payment

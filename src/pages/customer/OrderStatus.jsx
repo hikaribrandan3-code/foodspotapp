@@ -163,23 +163,12 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const total = order.total || (subtotal + (deliveryFee || 0) + tax)
 
     const getStatusText = () => {
-        if (isCashMethod && !paid && order.status !== ORDER_STATUS.CANCELLED && order.status !== ORDER_STATUS.DELIVERED) {
-            return isDelivery ? t('status_awaiting_delivery') : t('status_awaiting_pickup')
-        }
-        if (isCashMethod && paid && order.status !== ORDER_STATUS.DELIVERED && order.status !== ORDER_STATUS.CANCELLED) {
-            return '✅ ' + t('status_payment_received')
-        }
-        switch (order.status) {
-            case ORDER_STATUS.PENDING_PAYMENT: return t('status_awaiting_confirmation')
-            case ORDER_STATUS.PAID_UNRELEASED: return t('status_payment_received')
-            case ORDER_STATUS.RELEASED_TO_KITCHEN: return t('status_confirmed')
-            case ORDER_STATUS.PREPARING: return t('status_preparing')
-            case ORDER_STATUS.READY: return t('status_ready_pickup')
-            case ORDER_STATUS.DISPATCHED: return t('status_on_the_way')
-            case ORDER_STATUS.DELIVERED: return t('status_delivered')
-            case ORDER_STATUS.CANCELLED: return t('status_cancelled')
-            default: return t('status_preparing')
-        }
+        if (order.status === ORDER_STATUS.CANCELLED) return t('status_cancelled')
+        if (order.status === ORDER_STATUS.DELIVERED) return t('status_delivered')
+        if (order.status === ORDER_STATUS.READY) return isDelivery ? t('status_on_the_way') : t('status_ready_pickup')
+        if (order.status === ORDER_STATUS.DISPATCHED) return t('status_on_the_way')
+        if (paid) return '✅ ' + t('status_payment_received')
+        return isDelivery ? t('status_awaiting_delivery') : t('status_awaiting_pickup')
     }
 
     const getPaymentDisplay = () => {
@@ -228,14 +217,15 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     <h1 style={{
                         fontSize: 32,
                         lineHeight: 1.1,
-                        fontWeight: order.status === ORDER_STATUS.PENDING_PAYMENT ? 500 : 700,
-                        color: order.status === ORDER_STATUS.CANCELLED ? '#dc2626' : order.status === ORDER_STATUS.PENDING_PAYMENT ? '#525252' : '#0a0a0a',
+                        fontWeight: 700,
+                        color: order.status === ORDER_STATUS.CANCELLED ? '#dc2626' : '#0a0a0a',
                         letterSpacing: -0.8,
                         margin: '8px 0 0'
                     }}>
                         {order.status === ORDER_STATUS.DELIVERED ? t('heading_order_delivered')
                             : order.status === ORDER_STATUS.CANCELLED ? t('heading_order_cancelled')
-                            : order.status === ORDER_STATUS.PENDING_PAYMENT ? t('heading_awaiting_confirmation')
+                            : order.status === ORDER_STATUS.READY ? (isDelivery ? t('status_on_the_way') : t('status_ready_pickup'))
+                            : order.status === ORDER_STATUS.DISPATCHED ? t('status_on_the_way')
                             : isCashMethod && !paid ? t('heading_confirmed_unpaid')
                             : t('heading_order_confirmed')}
                     </h1>

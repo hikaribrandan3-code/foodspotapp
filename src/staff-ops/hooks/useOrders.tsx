@@ -50,6 +50,17 @@ const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   DONE: null,
 };
 
+/** Compute next status respecting order type (pickup/dine-in skip dispatch/delivering) */
+function getNextStatus(order: Order): OrderStatus | null {
+  let next = STATUS_FLOW[order.status];
+  if (!next) return null;
+  // Pickup/dine-in skip DISPATCH/DELIVERING — go directly to DONE
+  if (order.status === 'READY' && order.deliveryType !== 'delivery') {
+    next = 'DONE';
+  }
+  return next;
+}
+
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_TAB':
@@ -58,7 +69,7 @@ function reducer(state: AppState, action: Action): AppState {
     case 'ADVANCE_STATUS': {
       const order = state.orders.find(o => o.id === action.orderId);
       if (!order) return state;
-      const nextStatus = STATUS_FLOW[order.status];
+      const nextStatus = getNextStatus(order);
       if (!nextStatus) return state;
       hapticForTransition('status_advance');
       const newOrders = state.orders.map(o =>
@@ -111,7 +122,11 @@ function reducer(state: AppState, action: Action): AppState {
       hapticForTransition('status_advance');
       return {
         ...state,
-        orders: state.orders.filter(o => o.id !== action.orderId),
+        orders: state.orders.map(o =>
+          o.id === action.orderId
+            ? { ...o, status: 'DONE' as OrderStatus }
+            : o,
+        ),
       };
     }
 
@@ -299,7 +314,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const advanceOrderStatus = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
-    const nextStatus = STATUS_FLOW[order.status];
+    const nextStatus = getNextStatus(order);
     if (!nextStatus) return;
 
     if (!state.isOnline) queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });

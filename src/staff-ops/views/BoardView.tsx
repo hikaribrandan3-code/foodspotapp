@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Wifi, WifiOff, LayoutDashboard, Clock, ChefHat, PackageCheck, Bike, DollarSign } from 'lucide-react';
+import { Wifi, WifiOff, LayoutDashboard, Clock, ChefHat, PackageCheck, Bike, DollarSign, CheckCircle2 } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrderCard from '@/components/OrderCard';
@@ -9,6 +9,7 @@ import type { OrderStatus } from '@/types';
 export default function BoardView() {
   const { state, toggleOnline } = useOrders();
   const { t } = useLanguage();
+  const [tab, setTab] = useState<'active' | 'completed'>('active');
 
   // Active orders (excluding DONE)
   const activeOrders = useMemo(() => {
@@ -19,6 +20,13 @@ export default function BoardView() {
         const urgencyB = (Date.now() - b.createdAt) / 60000;
         return urgencyB - urgencyA;
       });
+  }, [state.orders]);
+
+  // Completed orders
+  const completedOrders = useMemo(() => {
+    return state.orders
+      .filter(o => o.status === 'DONE')
+      .sort((a, b) => b.createdAt - a.createdAt);
   }, [state.orders]);
 
   const statusCounts = useMemo(() => {
@@ -79,20 +87,45 @@ export default function BoardView() {
         </div>
       </div>
 
+      {/* Active / Completed tabs */}
+      <div className="px-4 pb-3">
+        <div className="flex gap-2">
+          <TabButton active={tab === 'active'} onClick={() => setTab('active')} label="Active" count={activeOrders.length} />
+          <TabButton active={tab === 'completed'} onClick={() => setTab('completed')} label="Completed" count={completedOrders.length} />
+        </div>
+      </div>
+
       {/* Order stream */}
       <div className="flex-1 overflow-y-auto px-4 pb-24 scrollbar-hide">
-        <div className="space-y-1">
-          {activeOrders.map((order, idx) => (
-            <motion.div key={order.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04, duration: 0.3 }}>
-              <OrderCard order={order} compact={false} />
-            </motion.div>
-          ))}
-        </div>
+        {tab === 'active' ? (
+          <div className="space-y-1">
+            {activeOrders.map((order, idx) => (
+              <motion.div key={order.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04, duration: 0.3 }}>
+                <OrderCard order={order} compact={false} />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {completedOrders.map((order, idx) => (
+              <motion.div key={order.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04, duration: 0.3 }}>
+                <OrderCard order={order} compact={false} />
+              </motion.div>
+            ))}
+          </div>
+        )}
 
-        {activeOrders.length === 0 && (
+        {tab === 'active' && activeOrders.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16" style={{ color: 'var(--text-secondary)' }}>
             <PackageCheck size={48} className="mb-3" style={{ color: 'var(--empty-icon)' }} />
             <p className="text-sm">{t('all_orders_cleared')}</p>
+          </div>
+        )}
+
+        {tab === 'completed' && completedOrders.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16" style={{ color: 'var(--text-secondary)' }}>
+            <CheckCircle2 size={48} className="mb-3" style={{ color: 'var(--empty-icon)' }} />
+            <p className="text-sm">No completed orders yet</p>
           </div>
         )}
       </div>
@@ -110,5 +143,23 @@ function StatusBadge({ icon, label, count, color }: {
       <span className="text-base font-bold font-mono-num" style={{ color: 'var(--counter-count)' }}>{count}</span>
       <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>{label}</span>
     </div>
+  );
+}
+
+function TabButton({ active, onClick, label, count }: {
+  active: boolean; onClick: () => void; label: string; count: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all"
+      style={{
+        backgroundColor: active ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
+        color: active ? 'var(--filter-active-text)' : 'var(--text-secondary)',
+        border: `1px solid ${active ? 'var(--filter-active-border, var(--card-border))' : 'var(--counter-border)'}`,
+      }}
+    >
+      {label} ({count})
+    </button>
   );
 }

@@ -321,7 +321,7 @@ export default function OrderCard({
             <button
               onClick={handleVerifyCash}
               className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-              style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
+              style={{ backgroundColor: '#22C55E', color: '#fff' }}
             >
               <DollarSign size={16} strokeWidth={2.5} />
               Verify Cash Payment
@@ -338,7 +338,7 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' ? 'Assign Delivery' : 'Advance'}
+              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' ? (order.deliveryType === 'delivery' ? 'Assign Delivery' : 'Mark Delivered') : 'Advance'}
             </button>
           </div>
         )}

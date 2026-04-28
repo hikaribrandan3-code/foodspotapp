@@ -48,12 +48,12 @@ const OWNER_STATS = (t) => [
 ]
 
 const STATUS_FLOW = [
-  { key: ORDER_STATUS.PENDING_PAYMENT, label: 'Verify Payment' },
-  { key: ORDER_STATUS.PAID_UNRELEASED, label: 'Send to Kitchen' },
-  { key: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Start Prep' },
-  { key: ORDER_STATUS.PREPARING, label: 'Mark Ready' },
-  { key: ORDER_STATUS.READY, label: 'Hand Off' },
-  { key: ORDER_STATUS.DISPATCHED, label: 'Mark Delivered' },
+  { key: ORDER_STATUS.PENDING_PAYMENT, label: 'Confirm Payment', intent: 'green' },
+  { key: ORDER_STATUS.PAID_UNRELEASED, label: 'Confirm Payment', intent: 'green' },
+  { key: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Start Prep', intent: 'blue' },
+  { key: ORDER_STATUS.PREPARING, label: 'Mark Ready', intent: 'blue' },
+  { key: ORDER_STATUS.READY, label: 'Hand Off', intent: 'blue' },
+  { key: ORDER_STATUS.DISPATCHED, label: 'Mark Delivered', intent: 'blue' },
   { key: ORDER_STATUS.DELIVERED, label: null },
   { key: ORDER_STATUS.CANCELLED, label: null },
 ]
@@ -67,7 +67,7 @@ function statusToBucket(status, t) {
 
 function nextActionFor(status) {
   const flow = STATUS_FLOW.find(f => f.key === status)
-  return flow?.label ? { label: flow.label, intent: 'blue' } : null
+  return flow?.label ? { label: flow.label, intent: flow.intent || 'blue' } : null
 }
 
 function Icon({ type, color = T.muted, size = 16 }) {
@@ -130,6 +130,7 @@ function TagPill({ children, tone = 'green' }) {
 function ActionButton({ intent = 'blue', icon, children, onClick }) {
   const styles = {
     blue: { bg: T.blueBg, fg: T.blueInk },
+    green: { bg: T.greenBg, fg: T.greenInk },
     red: { bg: T.redBg, fg: T.redInk },
   }
   const s = styles[intent]
@@ -333,61 +334,71 @@ function OnlinePill() {
 
 export default function Dashboard() {
   const { businessId, tenantData } = useTenant()
-  const { orders, loading, refreshOrders } = useOrdersPolling(businessId)
+  const { orders: fetchedOrders, loading, refreshOrders } = useOrdersPolling(businessId)
+  const { t } = useLanguage()
   const [tab, setTab] = useState('active')
   const [filterBucket, setFilterBucket] = useState(null)
   const [processingOrderId, setProcessingOrderId] = useState(null)
   const [expandedOrderId, setExpandedOrderId] = useState(null)
 
+  // 🚀 OPTIMISTIC STATE: Mirrors fetched orders but allows instant local updates
+  const [displayOrders, setDisplayOrders] = useState([])
+  useEffect(() => {
+    setDisplayOrders(fetchedOrders)
+  }, [fetchedOrders])
+
   const counts = useMemo(() => {
-    const bucket = {}
-    OWNER_STATS.forEach(s => bucket[s.key] = 0)
-    orders.forEach(o => {
-      const b = statusToBucket(o.status)
+    const bucket = { cash: 0, todo: 0, prep: 0, ready: 0, out: 0 }
+    displayOrders.forEach(o => {
+      const b = statusToBucket(o.status, t)
       if (b) bucket[b]++
     })
     return {
       ...bucket,
-      active: orders.filter(o => ![ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)).length,
-      completed: orders.filter(o => [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)).length,
-      delivered: orders.filter(o => o.status === ORDER_STATUS.DELIVERED).length,
+      active: displayOrders.filter(o => ![ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)).length,
+      completed: displayOrders.filter(o => [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)).length,
+      delivered: displayOrders.filter(o => o.status === ORDER_STATUS.DELIVERED).length,
     }
-  }, [orders])
+  }, [displayOrders, t])
 
   const filtered = useMemo(() => {
-    return orders.filter(o => {
+    return displayOrders.filter(o => {
       const completed = [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)
       if (tab === 'active' ? completed : !completed) return false
       if (filterBucket) return statusToBucket(o.status, t) === filterBucket
       return true
     })
-  }, [orders, tab, filterBucket])
+  }, [displayOrders, tab, filterBucket, t])
 
   const advance = async (order) => {
     const flowIdx = STATUS_FLOW.findIndex(f => f.key === order.status)
     const next = STATUS_FLOW[flowIdx + 1]
     if (!next) return
 
-    // Pickup/dine-in skip dispatched — go directly to delivered
-    const targetStatus = (order.status === ORDER_STATUS.READY && order.order_type !== 'delivery')
-      ? ORDER_STATUS.DELIVERED
-      : next.key
+    let targetStatus = next.key
+    // Cash payment confirmation: skip PAID_UNRELEASED, go straight to kitchen
+    if (order.status === ORDER_STATUS.PENDING_PAYMENT || order.status === ORDER_STATUS.PAID_UNRELEASED) {
+      targetStatus = ORDER_STATUS.RELEASED_TO_KITCHEN
+    }
+    // Non-delivery orders skip DISPATCHED
+    if (order.status === ORDER_STATUS.READY && order.order_type !== 'delivery') {
+      targetStatus = ORDER_STATUS.DELIVERED
+    }
 
-    // 🛡️ FSM VALIDATION: Prevent invalid transitions
     const validation = canAdvanceOrder(order, targetStatus, { orderMode: 'A1' })
     if (!validation.allowed) {
       alert(validation.reason)
       return
     }
 
+    // ⚡ INSTANT MOVE: Update UI immediately
+    const prevOrders = [...displayOrders]
+    setDisplayOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: targetStatus } : o))
+
     setProcessingOrderId(order.id)
     try {
-      // 💳 PAYMENT + STATUS SYNC: When releasing to kitchen, also confirm payment
       const updatePayload = { status: targetStatus }
-
-      // If advancing from paid_unreleased → released_to_kitchen, the owner
-      // is implicitly confirming they received payment (cash). Mark it.
-      if (order.status === ORDER_STATUS.PAID_UNRELEASED && targetStatus === ORDER_STATUS.RELEASED_TO_KITCHEN) {
+      if ((order.status === ORDER_STATUS.PENDING_PAYMENT || order.status === ORDER_STATUS.PAID_UNRELEASED) && targetStatus === ORDER_STATUS.RELEASED_TO_KITCHEN) {
         updatePayload.payment_confirmed = true
         updatePayload.payment_status = 'paid'
       }
@@ -399,34 +410,40 @@ export default function Dashboard() {
 
       if (error) {
         console.error('Advance failed:', error)
+        setDisplayOrders(prevOrders) // Revert on failure
         alert('Error: ' + error.message)
-      } else {
-        refreshOrders()
       }
+      refreshOrders()
     } catch (err) {
       console.error('Advance exception:', err)
-      alert('Error advancing order')
+      setDisplayOrders(prevOrders) // Revert on failure
     } finally {
       setProcessingOrderId(null)
     }
   }
 
   const cancel = async (order) => {
+    const prevOrders = [...displayOrders]
+    setDisplayOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: ORDER_STATUS.CANCELLED } : o))
+
     setProcessingOrderId(order.id)
     try {
-      await supabase.from('orders').update({ status: ORDER_STATUS.CANCELLED }).eq('id', order.id)
+      const { error } = await supabase.from('orders').update({ status: ORDER_STATUS.CANCELLED }).eq('id', order.id)
+      if (error) setDisplayOrders(prevOrders)
       refreshOrders()
+    } catch (err) {
+      setDisplayOrders(prevOrders)
     } finally {
       setProcessingOrderId(null)
     }
   }
 
-  const todayRev = orders.filter(o => o.status !== ORDER_STATUS.CANCELLED).reduce((a, o) => a + o.total, 0)
+  const todayRev = displayOrders.filter(o => o.status !== ORDER_STATUS.CANCELLED).reduce((a, o) => a + o.total, 0)
 
   // 🔔 Notification sound for new orders
-  const prevOrderCountRef = useRef(orders.length)
+  const prevOrderCountRef = useRef(displayOrders.length)
   useEffect(() => {
-    if (orders.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
+    if (displayOrders.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
         const oscillator = audioCtx.createOscillator()
@@ -441,8 +458,8 @@ export default function Dashboard() {
         oscillator.stop(audioCtx.currentTime + 0.5)
       } catch (e) { /* ignore audio errors */ }
     }
-    prevOrderCountRef.current = orders.length
-  }, [orders.length])
+    prevOrderCountRef.current = displayOrders.length
+  }, [displayOrders.length])
 
   if (loading) return <BurgerLoader />
 
@@ -482,7 +499,7 @@ export default function Dashboard() {
                 {formatPrice(todayRev)}
               </div>
               <div style={{ color: T.muted, fontSize: 12.5, marginTop: 4 }}>
-                {t('across') || 'across'} {orders.filter(o => o.status !== ORDER_STATUS.CANCELLED).length} {t('orders_count')}
+                {t('across') || 'across'} {displayOrders.filter(o => o.status !== ORDER_STATUS.CANCELLED).length} {t('orders_count')}
               </div>
             </div>
             <div style={{
