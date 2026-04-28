@@ -11,17 +11,20 @@ export default function LogisticsView() {
   const { t } = useLanguage();
   const [filter, setFilter] = useState<'READY' | 'DISPATCH' | 'DELIVERING'>('READY');
 
-  const filteredOrders = state.orders.filter(o => o.status === filter);
+  // LogisticsView is delivery-only — pickup/dine-in never appear here
+  const isDelivery = (o: typeof state.orders[0]) => o.deliveryType === 'delivery';
 
-  const readyCount = state.orders.filter(o => o.status === 'READY').length;
-  const dispatchCount = state.orders.filter(o => o.status === 'DISPATCH').length;
-  const deliveringCount = state.orders.filter(o => o.status === 'DELIVERING').length;
+  const filteredOrders = state.orders.filter(o => o.status === filter && isDelivery(o));
 
-  const handoffOrder = state.orders.find(o => o.id === state.handoffOrderId);
+  const readyCount = state.orders.filter(o => o.status === 'READY' && isDelivery(o)).length;
+  const dispatchCount = state.orders.filter(o => o.status === 'DISPATCH' && isDelivery(o)).length;
+  const deliveringCount = state.orders.filter(o => o.status === 'DELIVERING' && isDelivery(o)).length;
+
+  const handoffOrder = state.orders.find(o => o.id === state.handoffOrderId && isDelivery(o));
 
   // Orders with coords for the map (all active delivery states)
   const mapOrders = state.orders.filter(
-    o => (o.status === 'READY' || o.status === 'DISPATCH' || o.status === 'DELIVERING') && o.deliveryCoords,
+    o => (o.status === 'READY' || o.status === 'DISPATCH' || o.status === 'DELIVERING') && isDelivery(o) && o.deliveryCoords,
   );
 
   return (
@@ -79,7 +82,7 @@ export default function LogisticsView() {
                   order={order}
                   showLocation
                   showConfirmDelivery={filter === 'DELIVERING'}
-                  showClaimButton={filter === 'READY' && !order.assignedTo}
+                  showClaimButton={filter === 'READY' && !order.assignedTo && order.deliveryType === 'delivery'}
                   onClaim={claimDelivery}
                 />
               </motion.div>

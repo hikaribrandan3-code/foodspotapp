@@ -147,10 +147,19 @@ function reducer(state: AppState, action: Action): AppState {
     case 'SELECT_ORDER':   return { ...state, selectedOrderId: action.orderId };
     case 'SET_HANDOFF':    return { ...state, handoffOrderId: action.orderId };
     case 'RESET_HANDOFF':  return { ...state, handoffOrderId: null };
-    case 'ADD_ORDER':      return { ...state, orders: [action.order, ...state.orders] };
+    case 'ADD_ORDER': {
+      // Prevent duplicate from Supabase realtime replay on reconnect
+      if (state.orders.some(o => o.id === action.order.id)) return state;
+      return { ...state, orders: [action.order, ...state.orders] };
+    }
     case 'UPDATE_ORDER':   return { ...state, orders: state.orders.map(o => o.id === action.order.id ? action.order : o) };
     case 'REMOVE_ORDER':   return { ...state, orders: state.orders.filter(o => o.id !== action.orderId) };
-    case 'HYDRATE_ORDERS': return { ...state, orders: action.orders };
+    case 'HYDRATE_ORDERS': {
+      // Deduplicate by ID — Supabase can return stale rows during polling overlap
+      const byId = new Map();
+      for (const o of action.orders) byId.set(o.id, o);
+      return { ...state, orders: Array.from(byId.values()) };
+    }
     case 'SET_DRIVER_POSITION': return { ...state, driverPosition: action.pos };
     default: return state;
   }
@@ -388,6 +397,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
   const claimDelivery = useCallback((orderId: string) => {
+    const order = state.orders.find(o => o.id === orderId);
+    if (!order || order.deliveryType !== 'delivery') return;
+
     const staffMember = (() => { try { return JSON.parse(localStorage.getItem('fs_staff_member') || '{}'); } catch { return {}; } })();
     const staffName = staffMember?.name || 'Staff';
     dispatch({ type: 'CLAIM_DELIVERY', orderId, staffName });
@@ -396,7 +408,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         .catch((e: Error) => console.error('[StaffOps] claimDelivery:', e));
     }
     addToast({ type: 'cash_verified', title: 'Delivery Claimed', message: `${staffName} is taking this order`, orderId });
-  }, [state.isOnline, businessId, addToast]);
+  }, [state.isOnline, state.orders, businessId, addToast]);
 
   const cancelOrder = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
