@@ -39,12 +39,12 @@ const T = {
   statOut:  '#2A8B5A',
 }
 
-const OWNER_STATS = [
-  { key: PAYMENT_METHOD.CASH, label: 'CASH', color: T.statCash, matches: [ORDER_STATUS.PENDING_PAYMENT] },
+const OWNER_STATS = (t) => [
+  { key: PAYMENT_METHOD.CASH, label: t('cash').toUpperCase(), color: T.statCash, matches: [ORDER_STATUS.PENDING_PAYMENT] },
   { key: 'todo', label: 'TO-DO', color: T.statTodo, matches: [ORDER_STATUS.PAID_UNRELEASED] },
   { key: 'prep', label: 'PREP', color: T.statPrep, matches: [ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING] },
-  { key: ORDER_STATUS.READY, label: 'READY', color: T.statReady, matches: [ORDER_STATUS.READY] },
-  { key: 'out', label: 'OUT', color: T.statOut, matches: [ORDER_STATUS.DISPATCHED] },
+  { key: ORDER_STATUS.READY, label: t('ready_status').toUpperCase(), color: T.statReady, matches: [ORDER_STATUS.READY] },
+  { key: 'out', label: t('on_way_status').toUpperCase(), color: T.statOut, matches: [ORDER_STATUS.DISPATCHED] },
 ]
 
 const STATUS_FLOW = [
@@ -58,8 +58,8 @@ const STATUS_FLOW = [
   { key: ORDER_STATUS.CANCELLED, label: null },
 ]
 
-function statusToBucket(status) {
-  for (const s of OWNER_STATS) {
+function statusToBucket(status, t) {
+  for (const s of OWNER_STATS(t)) {
     if (s.matches.includes(status)) return s.key
   }
   return null
@@ -358,7 +358,7 @@ export default function Dashboard() {
     return orders.filter(o => {
       const completed = [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)
       if (tab === 'active' ? completed : !completed) return false
-      if (filterBucket) return statusToBucket(o.status) === filterBucket
+      if (filterBucket) return statusToBucket(o.status, t) === filterBucket
       return true
     })
   }, [orders, tab, filterBucket])
@@ -452,7 +452,7 @@ export default function Dashboard() {
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       display: 'grid', gridTemplateRows: 'auto auto 1fr auto', overflow: 'hidden',
     }}>
-      <BackendHeader title="Orders" />
+      <BackendHeader title={t('orders')} />
       <OnlinePill />
 
       <div style={{ overflowY: 'auto' }}>
@@ -464,7 +464,7 @@ export default function Dashboard() {
             </h1>
           </div>
           <div style={{ color: T.muted, fontSize: 14, marginTop: 4 }}>
-            {counts.active} active · {counts.cash} cash pending · {counts.delivered} delivered today
+            {counts.active} {t('active_orders').toLowerCase()} · {counts.cash} {t('cash').toLowerCase()} {t('pendent_status').toLowerCase()} · {counts.delivered} {t('delivered_status').toLowerCase()} {t('analytics_today').toLowerCase()}
           </div>
 
           <div style={{
@@ -473,7 +473,7 @@ export default function Dashboard() {
           }}>
             <div>
               <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 4 }}>
-                TODAY
+                {t('analytics_today').toUpperCase()}
               </div>
               <div style={{
                 fontSize: 26, fontWeight: 800, color: T.ink, letterSpacing: '-0.025em', lineHeight: 1,
@@ -482,7 +482,7 @@ export default function Dashboard() {
                 {formatPrice(todayRev)}
               </div>
               <div style={{ color: T.muted, fontSize: 12.5, marginTop: 4 }}>
-                across {orders.filter(o => o.status !== ORDER_STATUS.CANCELLED).length} orders
+                {t('across') || 'across'} {orders.filter(o => o.status !== ORDER_STATUS.CANCELLED).length} {t('orders_count')}
               </div>
             </div>
             <div style={{
@@ -495,7 +495,7 @@ export default function Dashboard() {
         </div>
 
         <div style={{ padding: '0 16px 16px', display: 'flex', gap: 8 }}>
-          {OWNER_STATS.map(s => (
+          {OWNER_STATS(t).map(s => (
             <button key={s.key}
               onClick={() => setFilterBucket(filterBucket === s.key ? null : s.key)}
               style={{

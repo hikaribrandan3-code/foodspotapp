@@ -34,7 +34,7 @@ export const LanguageProvider = ({ children }) => {
             console.log(`[LanguageContext] 🔄 Syncing to DB language: ${tenantData.language}`);
             setLang(tenantData.language);
         }
-    }, [tenantData?.language]);
+    }, [tenantData?.language, lang]);
 
     // 🧹 Cleanup lock timer on unmount
     useEffect(() => {

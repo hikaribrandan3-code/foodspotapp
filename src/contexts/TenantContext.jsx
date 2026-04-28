@@ -185,12 +185,41 @@ export function TenantProvider({ children }) {
 
         resolveIdentity()
 
+        // 📡 REAL-TIME IDENTITY SYNC: Listen for changes to the tenant (language, venue_name, etc.)
+        // This ensures the Customer side reacts immediately when the Owner changes settings.
+        const tenantChannel = supabase
+            .channel('tenant-sync')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'tenants',
+                    filter: businessId ? `business_id=eq.${businessId}` : undefined
+                },
+                (payload) => {
+                    console.log('[TenantLock] 🔄 Real-time Update Received:', payload.new);
+                    setTenantData(prev => ({
+                        ...prev,
+                        ...payload.new,
+                        // Ensure ID and venue_name are preserved if payload is partial
+                        id: payload.new.id || prev.id,
+                        venue_name: payload.new.venue_name || prev.venue_name,
+                        language: payload.new.language || prev.language || 'en'
+                    }));
+                }
+            )
+            .subscribe();
+
         if (forceRefresh > 0 && businessId) {
             refreshTenantData()
         }
 
-        return () => { mounted = false }
-    }, [forceRefresh])
+        return () => {
+            mounted = false;
+            supabase.removeChannel(tenantChannel);
+        }
+    }, [forceRefresh, businessId])
 
     // 🔄 GLOBAL REFRESH Action
     const refreshTenantData = async () => {

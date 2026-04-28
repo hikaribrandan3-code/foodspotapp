@@ -31,7 +31,7 @@ const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
 // 🛡️ SAFETY CAGE: Status-Specific Action Buttons
 // ============================================
 // Each status has ONE clear action. No ambiguity.
-const getActionForStatus = (status, orderType, paymentConfirmed) => {
+const getActionForStatus = (status, orderType, paymentConfirmed, t) => {
     switch (status) {
         case ORDER_STATUS.PENDING_PAYMENT:
             // ❌ NO BUTTON — Only webhook can advance this
@@ -41,7 +41,7 @@ const getActionForStatus = (status, orderType, paymentConfirmed) => {
             // Staff cannot accept unpaid cash orders — owner must confirm payment first
             if (!paymentConfirmed) return null
             return {
-                label: 'ACEPTAR PEDIDO',
+                label: t('confirm_action') || 'ACEPTAR PEDIDO',
                 targetStatus: ORDER_STATUS.RELEASED_TO_KITCHEN,
                 color: '#22C55E',
                 confirm: false
@@ -49,7 +49,7 @@ const getActionForStatus = (status, orderType, paymentConfirmed) => {
 
         case ORDER_STATUS.RELEASED_TO_KITCHEN:
             return {
-                label: 'ENVIAR A COCINA',
+                label: t('to_kitchen_action') || 'ENVIAR A COCINA',
                 targetStatus: ORDER_STATUS.PREPARING,
                 color: '#F97316',
                 confirm: false
@@ -57,7 +57,7 @@ const getActionForStatus = (status, orderType, paymentConfirmed) => {
 
         case ORDER_STATUS.PREPARING:
             return {
-                label: 'MARCAR LISTO',
+                label: t('ready_action') || 'MARCAR LISTO',
                 targetStatus: ORDER_STATUS.READY,
                 color: '#06B6D4',
                 confirm: false
@@ -66,14 +66,14 @@ const getActionForStatus = (status, orderType, paymentConfirmed) => {
         case ORDER_STATUS.READY:
             if (orderType === 'delivery') {
                 return {
-                    label: 'DESPACHAR',
+                    label: t('dispatch_action') || 'DESPACHAR',
                     targetStatus: ORDER_STATUS.DISPATCHED,
                     color: '#6366F1',
                     confirm: false
                 }
             } else {
                 return {
-                    label: 'ENTREGAR',
+                    label: t('delivered_action') || 'ENTREGAR',
                     targetStatus: ORDER_STATUS.DELIVERED,
                     color: '#22C55E',
                     confirm: false
@@ -82,7 +82,7 @@ const getActionForStatus = (status, orderType, paymentConfirmed) => {
 
         case ORDER_STATUS.DISPATCHED:
             return {
-                label: '✅ CONFIRMAR ENTREGA',
+                label: '✅ ' + (t('status_delivered') || 'CONFIRMAR ENTREGA'),
                 targetStatus: ORDER_STATUS.DELIVERED,
                 color: '#22C55E',
                 confirm: false
@@ -106,13 +106,13 @@ function StaffDashboard() {
     // 🔄 FSM STATUS PIPELINE (Professional)
     // ============================================
     const STATUS_PIPELINE = [
-        { id: ORDER_STATUS.PENDING_PAYMENT, label: 'Esperando Pago', color: '#F59E0B', bg: '#FEF3C7' },
-        { id: ORDER_STATUS.PAID_UNRELEASED, label: 'Pago Recibido', color: '#8B5CF6', bg: '#EDE9FE' },
-        { id: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Recibido', color: primaryColor, bg: `${primaryColor}22` }, // 🚀 BRAND SYNC
-        { id: ORDER_STATUS.PREPARING, label: 'En Cocina', color: '#F97316', bg: '#FFF7ED' },
-        { id: ORDER_STATUS.READY, label: 'Listo', color: '#06B6D4', bg: '#CFFAFE' },
-        { id: ORDER_STATUS.DISPATCHED, label: 'En Camino', color: '#6366F1', bg: '#E0E7FF' },
-        { id: ORDER_STATUS.DELIVERED, label: 'Entregado', color: '#22C55E', bg: '#DCFCE7' }
+        { id: ORDER_STATUS.PENDING_PAYMENT, label: langT('status_awaiting_payment'), color: '#F59E0B', bg: '#FEF3C7' },
+        { id: ORDER_STATUS.PAID_UNRELEASED, label: langT('status_payment_received'), color: '#8B5CF6', bg: '#EDE9FE' },
+        { id: ORDER_STATUS.RELEASED_TO_KITCHEN, label: langT('order_received'), color: primaryColor, bg: `${primaryColor}22` }, // 🚀 BRAND SYNC
+        { id: ORDER_STATUS.PREPARING, label: langT('status_in_kitchen'), color: '#F97316', bg: '#FFF7ED' },
+        { id: ORDER_STATUS.READY, label: langT('status_ready_pickup'), color: '#06B6D4', bg: '#CFFAFE' },
+        { id: ORDER_STATUS.DISPATCHED, label: langT('status_on_the_way'), color: '#6366F1', bg: '#E0E7FF' },
+        { id: ORDER_STATUS.DELIVERED, label: langT('status_delivered'), color: '#22C55E', bg: '#DCFCE7' }
     ];
 
     // Get status config by id
@@ -315,13 +315,12 @@ function StaffDashboard() {
                             boxShadow: '0 0 8px #22C55E'
                         }} />
                         <span style={{ fontSize: 11, color: '#6B7280', fontWeight: '600', textTransform: 'uppercase' }}>
-                            En Vivo
+                            {langT('live') || 'LIVE'}
                         </span>
                         {currentShift && (
                             <button
                                 onClick={async () => {
-                                    const confirmMsg = lang === 'en' ? 'End shift and log out?' : '¿Terminar turno y cerrar sesión?';
-                                    if (confirm(confirmMsg)) {
+                                    if (confirm(langT('end_shift_confirm'))) {
                                         if (currentShift.id) {
                                             await supabase.rpc('clock_out', {
                                                 p_shift_id: currentShift.id,
@@ -330,8 +329,7 @@ function StaffDashboard() {
                                             });
                                         }
                                         clearStaff();
-                                        const logoutMsg = lang === 'en' ? 'Shift ended' : 'Turno terminado';
-                                        alert(logoutMsg);
+                                        alert(langT('shift_ended'));
                                         navigate(`/${tenantSlug}/login`);
                                     }
                                 }}
@@ -350,7 +348,7 @@ function StaffDashboard() {
                                     gap: 4
                                 }}
                             >
-                                🚪 {lang === 'en' ? 'End Shift' : 'Fin Turno'}
+                                🚪 {langT('end_shift')}
                             </button>
                         )}
                     </div>
@@ -387,7 +385,7 @@ function StaffDashboard() {
                         boxShadow: activeTab === 'active' ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)'
                     }}
                 >
-                    🔥 Activos ({stats.active})
+                    🔥 {langT('active_orders')} ({stats.active})
                 </button>
                 <button
                     onClick={() => setActiveTab('completed')}
@@ -404,7 +402,7 @@ function StaffDashboard() {
                         boxShadow: activeTab === 'completed' ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)'
                     }}
                 >
-                    ✅ Completados ({stats.completed})
+                    ✅ {langT('delivered')} ({stats.completed})
                 </button>
             </div>
 
@@ -455,7 +453,7 @@ function StaffDashboard() {
                             {/* Order Cards */}
                             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {(ordersByStatus[status.id] || []).map(order => {
-                                    const action = getActionForStatus(order.status, order.order_type, order.payment_confirmed || order.paymentConfirmed)
+                                    const action = getActionForStatus(order.status, order.order_type, order.payment_confirmed || order.paymentConfirmed, langT)
                                     const isProcessing = processingOrderId === order.id
 
                                     return (
