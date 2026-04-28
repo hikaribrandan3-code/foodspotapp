@@ -349,35 +349,38 @@ function OwnerSummary() {
                     </div>
                 </div>
 
-                {/* 🌎 LANGUAGE TOGGLE (High-End SaaS Style) */}
-                <div style={{
-                    marginTop: 32,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 24,
-                    padding: '16px 0',
-                    borderTop: '1px solid #E5E7EB'
-                }}>
-                    {['EN', 'ES', 'PT'].map((l) => (
-                        <button
-                            key={l}
-                            onClick={() => changeLanguage(l.toLowerCase())}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: lang === l.toLowerCase() ? '#111827' : '#9CA3AF',
-                                fontWeight: lang === l.toLowerCase() ? 700 : 500,
-                                fontSize: 13,
-                                letterSpacing: '0.1em',
-                                cursor: 'pointer',
-                                padding: '4px 8px',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {l}
-                        </button>
-                    ))}
+                {/* 🌎 LANGUAGE TOGGLE */}
+                <div style={{ marginTop: 24 }}>
+                    <h3 style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        🌍 {t('language_setting') || 'Language / Idioma'}
+                    </h3>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 24,
+                        padding: '12px 0'
+                    }}>
+                        {['EN', 'ES', 'PT'].map((l) => (
+                            <button
+                                key={l}
+                                onClick={() => changeLanguage(l.toLowerCase())}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: lang === l.toLowerCase() ? '#111827' : '#9CA3AF',
+                                    fontWeight: lang === l.toLowerCase() ? 700 : 500,
+                                    fontSize: 13,
+                                    letterSpacing: '0.1em',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {l}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
             </div>
