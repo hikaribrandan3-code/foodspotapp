@@ -280,6 +280,16 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     en: 'Staff Operations',
     es: 'Operaciones de Staff',
     pt: 'Operações de Equipe',
+  },
+  'confirm_payment': {
+    en: 'Confirm Payment',
+    es: 'Confirmar Pago',
+    pt: 'Confirmar Pagamento',
+  },
+  'payment_verify_required': {
+    en: 'Payment must be verified before kitchen sees this order.',
+    es: 'El pago debe verificarse antes de que la cocina vea este pedido.',
+    pt: 'O pagamento deve ser verificado antes que a cozinha veja este pedido.',
   }
 };
 
