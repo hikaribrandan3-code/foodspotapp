@@ -146,9 +146,11 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
 }
 
 function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
-  const next = nextActionFor(order.status)
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
+  const isCash = order.payment_method === PAYMENT_METHOD.CASH
+  const needsPaymentConfirm = order.status === ORDER_STATUS.PENDING_PAYMENT && isCash && !order.payment_confirmed
+  const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'blue' } : nextActionFor(order.status)
   const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
   const bucket = statusToBucket(order.status, t)
   const bucketLabel = OWNER_STATS(t).find(s => s.key === bucket)?.label || order.status.toUpperCase()
@@ -365,6 +367,32 @@ export default function Dashboard() {
   }, [orders, tab, filterBucket, t])
 
   const advance = async (order) => {
+    const isCash = order.payment_method === PAYMENT_METHOD.CASH
+    const needsPaymentConfirm = order.status === ORDER_STATUS.PENDING_PAYMENT && isCash && !order.payment_confirmed
+
+    // For cash orders in PENDING_PAYMENT, first confirm payment (don't advance status)
+    if (needsPaymentConfirm) {
+      setProcessingOrderId(order.id)
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ payment_confirmed: true, payment_status: 'paid' })
+          .eq('id', order.id)
+        if (error) {
+          console.error('Payment confirm failed:', error)
+          alert('Error: ' + error.message)
+        } else {
+          refreshOrders()
+        }
+      } catch (err) {
+        console.error('Payment confirm exception:', err)
+        alert('Error confirming payment')
+      } finally {
+        setProcessingOrderId(null)
+      }
+      return
+    }
+
     const flowIdx = STATUS_FLOW.findIndex(f => f.key === order.status)
     const next = STATUS_FLOW[flowIdx + 1]
     if (!next) return
@@ -383,15 +411,7 @@ export default function Dashboard() {
 
     setProcessingOrderId(order.id)
     try {
-      // 💳 PAYMENT + STATUS SYNC: When releasing to kitchen, also confirm payment
       const updatePayload = { status: targetStatus }
-
-      // If advancing from paid_unreleased → released_to_kitchen, the owner
-      // is implicitly confirming they received payment (cash). Mark it.
-      if (order.status === ORDER_STATUS.PAID_UNRELEASED && targetStatus === ORDER_STATUS.RELEASED_TO_KITCHEN) {
-        updatePayload.payment_confirmed = true
-        updatePayload.payment_status = 'paid'
-      }
 
       const { error } = await supabase
         .from('orders')
