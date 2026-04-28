@@ -10,38 +10,32 @@ export const LanguageProvider = ({ children }) => {
     const isLocked = useRef(false);
     const lockTimer = useRef(null);
 
-    // Tenant language is always the source of truth — owner backend controls all UI language
+    // 🛡️ PERSONAL TRACK: Load staff preference from local storage if it exists
     const [lang, setLang] = useState(() => {
+        const staffPref = localStorage.getItem('fs_staff_lang');
+        if (staffPref) return staffPref;
+
         const initial = tenantData?.language || 'en';
         console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (tenantData: ${tenantData?.language})`);
         return initial;
     });
 
-    // 🔄 REACTIVE SYNC: Always adopt tenantData.language unless we're mid-toggle
-    // The isLocked ref protects against reverts during manual owner toggles.
-    // No hasInitialized guard — this must fire every time tenantData.language changes
-    // so that ALL tabs re-render with the new language immediately.
+    // 🔄 GLOBAL TRACK SYNC: Only sync from DB if there is NO staff preference locked in
     useEffect(() => {
-        console.log(`[LanguageContext] 🔍 Sync Check: Current=${lang} | DB=${tenantData?.language || 'null'} | Locked=${isLocked.current}`);
+        const staffPref = localStorage.getItem('fs_staff_lang');
+        if (staffPref) {
+            if (lang !== staffPref) setLang(staffPref);
+            return; // Staff preference overrides Global Sync
+        }
 
         if (!tenantData?.language) return;
 
         if (tenantData.language !== lang) {
-            if (isLocked.current) {
-                console.log(`[LanguageContext] 🛡️ Revert Prevented: Context is LOCKED during manual toggle.`);
-                return;
-            }
-            console.log(`[LanguageContext] 🔄 Syncing to DB language: ${tenantData.language}`);
+            if (isLocked.current) return;
+            console.log(`[LanguageContext] 🔄 Global Syncing to DB language: ${tenantData.language}`);
             setLang(tenantData.language);
         }
     }, [tenantData?.language, lang]);
-
-    // 🧹 Cleanup lock timer on unmount
-    useEffect(() => {
-        return () => {
-            if (lockTimer.current) clearTimeout(lockTimer.current);
-        };
-    }, []);
 
     const t = (key) => {
         if (!translations[key]) {
@@ -54,46 +48,40 @@ export const LanguageProvider = ({ children }) => {
     const changeLanguage = async (newLang) => {
         if (!businessId) return;
 
-        console.log(`[LanguageContext] ⚡ MANUAL TOGGLE: Setting to ${newLang}. Locking context...`);
+        // 1. Check if user is Staff or Owner
+        const { data: { session } } = await supabase.auth.getSession();
+        const role = session?.user?.user_metadata?.role;
+        const isOwner = role === 'owner' || role === 'superadmin';
 
-        // Optimistic update + LOCK
-        isLocked.current = true;
-        setLang(newLang);
+        if (isOwner) {
+            // 🌎 GLOBAL CHANGE: Updates DB for all Customers
+            console.log(`[LanguageContext] 🌎 OWNER CHANGE: Setting Global to ${newLang}`);
+            isLocked.current = true;
+            setLang(newLang);
+            localStorage.removeItem('fs_staff_lang'); // Owners shouldn't have sticky personal prefs
 
-        // Clear existing timer if any
-        if (lockTimer.current) clearTimeout(lockTimer.current);
+            if (lockTimer.current) clearTimeout(lockTimer.current);
 
-        try {
-            // 🛡️ SCHEMA GUARD: Use the real tenant PK (id) from tenantData
-            if (!tenantData?.id) {
-                console.warn("[LanguageContext] ⚠️ Cannot update: tenantData.id missing.");
+            try {
+                if (!tenantData?.id) return;
+                const { error } = await supabase
+                    .from('tenants')
+                    .update({ language: newLang })
+                    .eq('id', tenantData.id);
+
+                refreshTenantData();
+                lockTimer.current = setTimeout(() => {
+                    isLocked.current = false;
+                }, 1500);
+            } catch (err) {
+                console.error('Owner language update failed:', err);
                 isLocked.current = false;
-                return;
             }
-
-            const { error } = await supabase
-                .from('tenants')
-                .update({ language: newLang })
-                .eq('id', tenantData.id);
-
-            if (error) {
-                console.error("SUPABASE ERROR (Language Update):", error.message, error.details);
-                console.error('Full Update Context:', { id: businessId, newLang });
-            }
-
-            // Refresh tenant data immediately (DB write is already complete).
-            // Keep lock for 1500ms to prevent the refresh result from reverting
-            // the optimistic update before it settles.
-            refreshTenantData();
-
-            lockTimer.current = setTimeout(() => {
-                isLocked.current = false;
-                console.log(`[LanguageContext] 🔓 Context UNLOCKED after toggle settle.`);
-            }, 1500);
-
-        } catch (err) {
-            console.error('Failed to change language:', err);
-            isLocked.current = false;
+        } else {
+            // 👤 PERSONAL CHANGE: Local Staff Preference Only
+            console.log(`[LanguageContext] 👤 STAFF CHANGE: Setting Personal Preference to ${newLang}`);
+            setLang(newLang);
+            localStorage.setItem('fs_staff_lang', newLang);
         }
     };
 
