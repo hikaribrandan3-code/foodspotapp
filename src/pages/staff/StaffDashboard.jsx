@@ -38,7 +38,8 @@ const getActionForStatus = (status, orderType, paymentMethod, paymentConfirmed, 
 
         case ORDER_STATUS.PAID_UNRELEASED:
             // Staff can confirm cash payments if not yet confirmed
-            if (paymentMethod === PAYMENT_METHOD.CASH && !paymentConfirmed) {
+            const isCash = paymentMethod === PAYMENT_METHOD.CASH
+            if (isCash && !paymentConfirmed) {
                 return {
                     label: 'Confirm Payment',
                     targetStatus: ORDER_STATUS.PAID_UNRELEASED,
