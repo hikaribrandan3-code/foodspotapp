@@ -246,7 +246,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
           })()}
           {isDineIn && order.table_number && (
             <div style={{ fontSize: 13, color: T.body, marginBottom: 6 }}>
-              🪑 Table {order.table_number}
+              Table {order.table_number}
             </div>
           )}
           {order.notes && (

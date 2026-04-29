@@ -444,6 +444,7 @@ export const translations = {
     dine_in_payment: { es: "Pago en Mesa", en: "Dine-In Payment", pt: "Pagamento na Mesa" },
     pay_before_upfront: { es: "💳 Pagar Antes (Adelante)", en: "💳 Pay Before (Upfront)", pt: "💳 Pagar Antes (Adiantado)" },
     pay_after_table: { es: "🧾 Pagar Después (Al Final)", en: "🧾 Pay After (At End)", pt: "🧾 Pagar Depois (No Final)" },
+    dine_in_pay_at_end_message: { es: "😊 Pagás al final — ¡que disfrutes tu comida!", en: "😊 You pay at the end — enjoy your meal!", pt: "😊 Você paga no final — aproveite sua refeição!" },
     payment_methods_label: { es: "Métodos de Pago", en: "Payment Methods", pt: "Métodos de Pagamento" },
     coming_soon: { es: "Próximamente", en: "Coming Soon", pt: "Em Breve" },
     dashboard_empty_title: { es: "Todo tranquilo por ahora... 😴", en: "All quiet for now... 😴", pt: "Tudo tranquilo por enquanto... 😴" },

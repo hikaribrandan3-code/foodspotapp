@@ -898,8 +898,7 @@ function Order({ config: configProp }) {
                     }}>
                         <span style={{ fontSize: 32 }}>😊</span>
                         <div>
-                            <div style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>You pay at the end</div>
-                            <div style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>Cash, card or Mercado Pago — settle up when you're done</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>{t('dine_in_pay_at_end_message')}</div>
                         </div>
                     </div>
                 ) : (
