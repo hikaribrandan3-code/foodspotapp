@@ -148,6 +148,7 @@ function Order({ config: configProp }) {
         phone: '',
         address: { street: '', number: '', floor: '', notes: '' }, // 🛡️ STRUCTURED ADDRESS (Strike 17)
         tableNumber: '', // Dine-In Only
+        specialRequests: '', // Kitchen notes/special requests
         lat: null,
         lon: null
     })
@@ -290,14 +291,17 @@ function Order({ config: configProp }) {
 
         // Payment-aware status assignment
         const isMercadoPago = paymentMethod === PAYMENT_METHOD.MERCADO_PAGO
-        const isCash = paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY || paymentMethod === PAYMENT_METHOD.CASH
+        const isCash = paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
+        const isDineInPayAfter = orderType === 'dine_in' && isCash
         const orderStatus = isMercadoPago
             ? ORDER_STATUS.PENDING_PAYMENT      // MP: waiting for online payment
-            : isCash
-                ? ORDER_STATUS.PAID_UNRELEASED  // Cash: owner must confirm payment before kitchen
-                : ORDER_STATUS.RELEASED_TO_KITCHEN  // Dine-in: auto-accepted straight to kitchen
+            : isDineInPayAfter
+                ? 'todo'                        // Dine-in pay-after: skip payment, go straight to kitchen
+                : isCash
+                    ? ORDER_STATUS.PAID_UNRELEASED  // Pickup/delivery pay-after: owner must confirm payment
+                    : ORDER_STATUS.RELEASED_TO_KITCHEN
 
-        const orderPaymentStatus = 'pending'
+        const orderPaymentStatus = isDineInPayAfter ? 'unpaid' : 'pending'
 
         const newOrder = {
             business_id: businessId,
@@ -310,11 +314,12 @@ function Order({ config: configProp }) {
             status: orderStatus,
             payment_status: orderPaymentStatus,
             payment_confirmed: isCash ? false : undefined,
-            order_type: orderType,
+            delivery_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
             delivery_address: isDelivery ? (customerInfo.address || null) : null,
             table_number: orderType === 'dine_in' ? customerInfo.tableNumber : null,
+            notes: customerInfo.specialRequests || null,
             payment_method: paymentMethod,
             distance_km: isDelivery ? distanceResult.distanceKm : null,
             created_at: new Date().toISOString()
@@ -852,6 +857,13 @@ function Order({ config: configProp }) {
                                 value={customerInfo.name}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
                                 placeholder={t('name_placeholder')}
+                            />
+                            <InputGroup
+                                label="Special Requests" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>}
+                                value={customerInfo.specialRequests}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, specialRequests: e.target.value }))}
+                                placeholder="Allergies, preferences, special requests..."
+                                isTextArea={true}
                             />
                         </>
                     ) : (
