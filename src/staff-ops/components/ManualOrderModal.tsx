@@ -449,16 +449,6 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                           style={{ color: 'var(--text-primary)' }}
                         />
                       </Field>
-                      <Field icon={<Phone size={14} />} label="Phone">
-                        <input
-                          value={customerPhone}
-                          onChange={e => setCustomerPhone(e.target.value)}
-                          placeholder="Optional"
-                          type="tel"
-                          className="w-full bg-transparent text-sm outline-none"
-                          style={{ color: 'var(--text-primary)' }}
-                        />
-                      </Field>
                       {orderType === 'delivery' && (
                         <Field icon={<MapPin size={14} />} label="Delivery Address *">
                           <input
@@ -548,10 +538,10 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                     disabled={!isValid}
                     className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
                     style={{
-                      backgroundColor: isValid ? '#10b981' : 'var(--btn-secondary-bg)',
-                      color: isValid ? 'white' : 'var(--text-tertiary)',
+                      backgroundColor: submitting ? '#10b981' : (isValid ? '#f97316' : 'var(--btn-secondary-bg)'),
+                      color: submitting || isValid ? 'white' : 'var(--text-tertiary)',
                       cursor: isValid ? 'pointer' : 'not-allowed',
-                      opacity: isValid ? 1 : 0.6,
+                      opacity: isValid || submitting ? 1 : 0.6,
                     }}
                   >
                     {submitting
