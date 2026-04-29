@@ -348,6 +348,25 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
   /* ── Action creators ─────────────────────────────────────────────── */
 
+  // Direct DB update — matches owner pattern exactly, no RPC
+  const dbUpdate = useCallback((orderId: string, updates: Record<string, any>) => {
+    return supabase
+      .from('orders')
+      .update(updates)
+      .eq('id', orderId)
+      .then(() => {
+        return supabase
+          .from('orders')
+          .select('*')
+          .eq('business_id', businessId)
+          .order('created_at', { ascending: false })
+          .limit(100)
+          .then(({ data }: { data: any[] | null }) => {
+            if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
+          });
+      });
+  }, [businessId]);
+
   const advanceOrderStatus = useCallback((orderId: string) => {
     if (pendingOpsRef.current.has(orderId)) return;
 
@@ -360,27 +379,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     if (!state.isOnline) queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });
     dispatch({ type: 'ADVANCE_STATUS', orderId });
 
-    if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: toDbStatus(nextStatus) }, businessId)
-        .then(() => {
-          supabase
-            .from('orders')
-            .select('*')
-            .eq('business_id', businessId)
-            .order('created_at', { ascending: false })
-            .limit(100)
-            .then(({ data }: { data: any[] | null }) => {
-              if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
-            });
-        })
-        .catch((e: Error) => {
-          addToast({ type: 'critical', title: 'Update Failed', message: e.message, orderId });
-        })
+    if (state.isOnline) {
+      dbUpdate(orderId, { status: toDbStatus(nextStatus) })
+        .catch((e: Error) => addToast({ type: 'critical', title: 'Update Failed', message: e.message, orderId }))
         .finally(() => pendingOpsRef.current.delete(orderId));
     } else {
       pendingOpsRef.current.delete(orderId);
     }
-  }, [state.isOnline, state.orders, businessId, addToast]);
+  }, [state.isOnline, state.orders, dbUpdate, addToast]);
 
   const verifyCash = useCallback((orderId: string) => {
     if (pendingOpsRef.current.has(orderId)) return;
@@ -392,34 +398,20 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     if (!state.isOnline) queueAction({ orderId, type: 'verify_cash', timestamp: Date.now() });
     dispatch({ type: 'VERIFY_CASH', orderId });
 
-    if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: 'released_to_kitchen', payment_confirmed: true }, businessId)
+    if (state.isOnline) {
+      dbUpdate(orderId, { status: 'released_to_kitchen', payment_confirmed: true, payment_status: 'paid' })
         .then(() => {
-          supabase
-            .from('orders')
-            .select('*')
-            .eq('business_id', businessId)
-            .order('created_at', { ascending: false })
-            .limit(100)
-            .then(({ data }: { data: any[] | null }) => {
-              if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
-              addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
-              if (audioEnabled) audio.alertCashVerified();
-            });
+          addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
+          if (audioEnabled) audio.alertCashVerified();
         })
-        .catch((e: Error) => {
-          console.error('[StaffOps] verifyCash failed:', e);
-          addToast({ type: 'critical', title: 'Verify Failed', message: e.message, orderId });
-        })
-        .finally(() => {
-          pendingOpsRef.current.delete(orderId);
-        });
+        .catch((e: Error) => addToast({ type: 'critical', title: 'Verify Failed', message: e.message, orderId }))
+        .finally(() => pendingOpsRef.current.delete(orderId));
     } else {
       addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
       if (audioEnabled) audio.alertCashVerified();
       pendingOpsRef.current.delete(orderId);
     }
-  }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
+  }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled]);
 
   const confirmDelivery = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
@@ -428,16 +420,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     if (!state.isOnline) queueAction({ orderId, type: 'confirm_delivery', timestamp: Date.now() });
     dispatch({ type: 'CONFIRM_DELIVERY', orderId });
 
-    if (state.isOnline && businessId) {
-      callAdvanceOrderStatusRpc(orderId, 'delivered').catch((e: Error) => {
-        console.error('[StaffOps] confirmDelivery RPC failed:', e);
-        addToast({ type: 'critical', title: 'Confirm Failed', message: e.message, orderId });
-      });
+    if (state.isOnline) {
+      dbUpdate(orderId, { status: 'delivered', delivered_at: new Date().toISOString() })
+        .catch((e: Error) => addToast({ type: 'critical', title: 'Confirm Failed', message: e.message, orderId }));
     }
 
     addToast({ type: 'delivery_done', title: 'Delivered', message: `${order.customerName} — completed`, orderId });
     if (audioEnabled) audio.alertDeliveryConfirmed();
-  }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
+  }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled]);
 
   const claimDelivery = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
@@ -446,14 +436,12 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     const staffMember = (() => { try { return JSON.parse(localStorage.getItem('fs_staff_member') || '{}'); } catch { return {}; } })();
     const staffName = staffMember?.name || 'Staff';
     dispatch({ type: 'CLAIM_DELIVERY', orderId, staffName });
-    if (state.isOnline && businessId) {
-      callAdvanceOrderStatusRpc(orderId, 'dispatched').catch((e: Error) => {
-        console.error('[StaffOps] claimDelivery RPC failed:', e);
-        addToast({ type: 'critical', title: 'Claim Failed', message: e.message, orderId });
-      });
+    if (state.isOnline) {
+      dbUpdate(orderId, { status: 'dispatched', assigned_to: staffName })
+        .catch((e: Error) => addToast({ type: 'critical', title: 'Claim Failed', message: e.message, orderId }));
     }
     addToast({ type: 'cash_verified', title: 'Delivery Claimed', message: `${staffName} is taking this order`, orderId });
-  }, [state.isOnline, state.orders, businessId, addToast]);
+  }, [state.isOnline, state.orders, dbUpdate, addToast]);
 
   const cancelOrder = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
@@ -462,11 +450,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     if (!state.isOnline) queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
     dispatch({ type: 'CANCEL_ORDER', orderId });
 
-    if (state.isOnline && businessId) {
-      callAdvanceOrderStatusRpc(orderId, 'cancelled').catch((e: Error) => {
-        console.error('[StaffOps] cancelOrder RPC failed:', e);
-        addToast({ type: 'critical', title: 'Cancel Failed', message: e.message, orderId });
-      });
+    if (state.isOnline) {
+      dbUpdate(orderId, { status: 'cancelled' })
+        .catch((e: Error) => addToast({ type: 'critical', title: 'Cancel Failed', message: e.message, orderId }));
     }
 
     addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
