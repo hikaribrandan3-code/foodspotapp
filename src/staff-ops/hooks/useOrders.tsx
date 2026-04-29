@@ -28,6 +28,7 @@ type Action =
   | { type: 'ADVANCE_STATUS'; orderId: string }
   | { type: 'VERIFY_CASH'; orderId: string }
   | { type: 'CONFIRM_DELIVERY'; orderId: string }
+  | { type: 'CONFIRM_PAYMENT'; orderId: string }
   | { type: 'CLAIM_DELIVERY'; orderId: string; staffName: string }
   | { type: 'CANCEL_ORDER'; orderId: string }
   | { type: 'SET_ONLINE'; online: boolean }
@@ -105,6 +106,18 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'CONFIRM_PAYMENT': {
+      hapticForTransition('verify_cash');
+      return {
+        ...state,
+        orders: state.orders.map(o =>
+          o.id === action.orderId
+            ? { ...o, paymentStatus: 'paid', offlineQueued: !state.isOnline }
+            : o,
+        ),
+      };
+    }
+
     case 'CLAIM_DELIVERY': {
       hapticForTransition('status_advance');
       return {
@@ -170,6 +183,7 @@ interface OrderContextValue {
   advanceOrderStatus: (orderId: string) => void;
   verifyCash: (orderId: string) => void;
   confirmDelivery: (orderId: string) => void;
+  confirmPayment: (orderId: string) => void;
   claimDelivery: (orderId: string) => void;
   cancelOrder: (orderId: string) => void;
   setTab: (tab: TabId) => void;
@@ -458,6 +472,31 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
   }, [state.isOnline, state.orders, businessId, addToast]);
 
+  const confirmPayment = useCallback((orderId: string) => {
+    if (pendingOpsRef.current.has(orderId)) return;
+
+    const order = state.orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    pendingOpsRef.current.add(orderId);
+    if (!state.isOnline) queueAction({ orderId, type: 'verify_cash', timestamp: Date.now() });
+    dispatch({ type: 'CONFIRM_PAYMENT', orderId });
+
+    if (state.isOnline) {
+      dbUpdate(orderId, { payment_status: 'paid', payment_confirmed: true })
+        .then(() => {
+          addToast({ type: 'cash_verified', title: 'Payment Confirmed', message: `${order.customerName} — paid`, orderId });
+          if (audioEnabled) audio.alertCashVerified();
+        })
+        .catch((e: Error) => addToast({ type: 'critical', title: 'Confirm Failed', message: e.message, orderId }))
+        .finally(() => pendingOpsRef.current.delete(orderId));
+    } else {
+      addToast({ type: 'cash_verified', title: 'Payment Confirmed', message: `${order.customerName} — paid`, orderId });
+      if (audioEnabled) audio.alertCashVerified();
+      pendingOpsRef.current.delete(orderId);
+    }
+  }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled]);
+
   const setTab = useCallback((tab: TabId) => dispatch({ type: 'SET_TAB', tab }), []);
   const selectOrder = useCallback((orderId: string | null) => dispatch({ type: 'SELECT_ORDER', orderId }), []);
   const toggleOnline = useCallback(() => dispatch({ type: 'SET_ONLINE', online: !state.isOnline }), [state.isOnline]);
@@ -465,7 +504,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   return (
     <OrderContext.Provider value={{
       state, dispatch, advanceOrderStatus, verifyCash,
-      confirmDelivery, claimDelivery, cancelOrder, setTab, selectOrder, toggleOnline,
+      confirmDelivery, confirmPayment, claimDelivery, cancelOrder, setTab, selectOrder, toggleOnline,
     }}>
       {children}
     </OrderContext.Provider>

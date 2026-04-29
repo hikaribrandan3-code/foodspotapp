@@ -56,7 +56,7 @@ export default function OrderCard({
   showClaimButton = false,
   onClaim,
 }: OrderCardProps) {
-  const { selectOrder, verifyCash, confirmDelivery, cancelOrder } = useOrders();
+  const { selectOrder, verifyCash, confirmDelivery, cancelOrder, confirmPayment } = useOrders();
   const { businessLat, businessLng } = useBusiness();
   const { t } = useLanguage();
   const [isRemoving, setIsRemoving] = useState(false);
@@ -380,6 +380,20 @@ export default function OrderCard({
                 Confirm Delivery
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ── Dine-in payment confirmation (DONE + unpaid) ─────────── */}
+        {order.deliveryType === 'dine_in' && order.status === 'DONE' && order.paymentStatus !== 'paid' && (
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+            <button
+              onClick={() => confirmPayment(order.id)}
+              className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: '#22C55E', color: '#fff' }}
+            >
+              <DollarSign size={16} />
+              Confirm Payment
+            </button>
           </div>
         )}
 
