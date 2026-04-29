@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
-import { useTenant } from '@/contexts/TenantContext';
+import { useTenant } from '../../contexts/TenantContext';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 
 function openWhatsApp(phone: string, customerName: string) {
