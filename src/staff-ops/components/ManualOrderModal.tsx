@@ -25,6 +25,8 @@ interface ManualOrderModalProps {
 export default function ManualOrderModal({ open, onClose }: ManualOrderModalProps) {
   const { businessId } = useBusiness();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Array<{ name: string; items: MenuItem[] }>>([]);
+  const [activeCategory, setActiveCategory] = useState<string>('');
   const [loadingMenu, setLoadingMenu] = useState(false);
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -52,21 +54,32 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
         if (!data?.menu_data) { setLoadingMenu(false); return; }
         const menuData = data.menu_data;
         const items: MenuItem[] = [];
+        const categoryGroups: Array<{ name: string; items: MenuItem[] }> = [];
 
         // menu_data can be: { categories: [...] } or an array of categories
-        const categories = Array.isArray(menuData) ? menuData : (menuData.categories || menuData.sections || []);
-        categories.forEach((cat: { name?: string; items?: { id?: string; name: string; price: number }[] }) => {
+        const cats = Array.isArray(menuData) ? menuData : (menuData.categories || menuData.sections || []);
+        cats.forEach((cat: { name?: string; items?: { id?: string; name: string; price: number }[] }) => {
+          const categoryItems: MenuItem[] = [];
           (cat.items || []).forEach((item) => {
-            items.push({
+            const menuItem: MenuItem = {
               id: item.id || `${cat.name}-${item.name}`,
               name: item.name,
               price: item.price ?? 0,
               category: cat.name,
-            });
+            };
+            items.push(menuItem);
+            categoryItems.push(menuItem);
           });
+          if (categoryItems.length > 0) {
+            categoryGroups.push({ name: cat.name || 'Uncategorized', items: categoryItems });
+          }
         });
 
         setMenuItems(items);
+        setCategories(categoryGroups);
+        if (categoryGroups.length > 0) {
+          setActiveCategory(categoryGroups[0].name);
+        }
         setLoadingMenu(false);
       });
   }, [open, businessId]);
@@ -217,6 +230,26 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
             <div className="flex-1 overflow-y-auto px-4 py-3">
               {step === 'items' && (
                 <div className="space-y-3">
+                  {/* Category tabs */}
+                  {categories.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {categories.map(cat => (
+                        <button
+                          key={cat.name}
+                          onClick={() => setActiveCategory(cat.name)}
+                          className="px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all"
+                          style={{
+                            backgroundColor: activeCategory === cat.name ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
+                            color: activeCategory === cat.name ? 'var(--filter-active-text)' : 'var(--text-secondary)',
+                            border: `1px solid ${activeCategory === cat.name ? 'var(--filter-active-border)' : 'var(--counter-border)'}`,
+                          }}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Search */}
                   <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl" style={{ backgroundColor: 'var(--counter-bg)', border: '1px solid var(--counter-border)' }}>
                     <Search size={14} style={{ color: 'var(--text-tertiary)' }} />
@@ -234,43 +267,90 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                       <Loader2 size={20} className="animate-spin" style={{ color: 'var(--text-secondary)' }} />
                     </div>
                   ) : (
-                    <div className="space-y-1.5">
-                      {filteredItems.map(item => {
-                        const inCart = cart.find(c => c.id === item.id);
-                        return (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                            style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
-                              {item.category && <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{item.category}</p>}
-                            </div>
-                            <span className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>
-                              ${item.price.toFixed(2)}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                              {inCart ? (
-                                <>
-                                  <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--btn-secondary-bg)' }}>
-                                    <Minus size={12} style={{ color: 'var(--text-primary)' }} />
+                    <div className="space-y-3">
+                      {search ? (
+                        // Search mode: show flat filtered list
+                        <div className="space-y-1.5">
+                          {filteredItems.map(item => {
+                            const inCart = cart.find(c => c.id === item.id);
+                            return (
+                              <div
+                                key={item.id}
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                                style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
+                                  {item.category && <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{item.category}</p>}
+                                </div>
+                                <span className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>
+                                  ${item.price.toFixed(2)}
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  {inCart ? (
+                                    <>
+                                      <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--btn-secondary-bg)' }}>
+                                        <Minus size={12} style={{ color: 'var(--text-primary)' }} />
+                                      </button>
+                                      <span className="text-sm font-bold w-4 text-center" style={{ color: 'var(--text-primary)' }}>{inCart.quantity}</span>
+                                    </>
+                                  ) : null}
+                                  <button onClick={() => addToCart(item)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--filter-active-bg)' }}>
+                                    <Plus size={12} style={{ color: 'var(--filter-active-text)' }} />
                                   </button>
-                                  <span className="text-sm font-bold w-4 text-center" style={{ color: 'var(--text-primary)' }}>{inCart.quantity}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {filteredItems.length === 0 && <p className="text-center text-sm py-6" style={{ color: 'var(--text-secondary)' }}>No items match</p>}
+                        </div>
+                      ) : (
+                        // Category mode: show grouped items
+                        <>
+                          {categories.map(cat => (
+                            <div key={cat.name} className={search ? 'hidden' : ''}>
+                              {(search || activeCategory === '' || activeCategory === cat.name) && (
+                                <>
+                                  <p className="text-xs font-bold uppercase tracking-wider px-1" style={{ color: 'var(--text-tertiary)' }}>
+                                    {cat.name}
+                                  </p>
+                                  <div className="space-y-1.5">
+                                    {cat.items.map(item => {
+                                      const inCart = cart.find(c => c.id === item.id);
+                                      return (
+                                        <div
+                                          key={item.id}
+                                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                                          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+                                        >
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
+                                          </div>
+                                          <span className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>
+                                            ${item.price.toFixed(2)}
+                                          </span>
+                                          <div className="flex items-center gap-1.5">
+                                            {inCart ? (
+                                              <>
+                                                <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--btn-secondary-bg)' }}>
+                                                  <Minus size={12} style={{ color: 'var(--text-primary)' }} />
+                                                </button>
+                                                <span className="text-sm font-bold w-4 text-center" style={{ color: 'var(--text-primary)' }}>{inCart.quantity}</span>
+                                              </>
+                                            ) : null}
+                                            <button onClick={() => addToCart(item)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--filter-active-bg)' }}>
+                                              <Plus size={12} style={{ color: 'var(--filter-active-text)' }} />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 </>
-                              ) : null}
-                              <button onClick={() => addToCart(item)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--filter-active-bg)' }}>
-                                <Plus size={12} style={{ color: 'var(--filter-active-text)' }} />
-                              </button>
+                              )}
                             </div>
-                          </div>
-                        );
-                      })}
-
-                      {filteredItems.length === 0 && !loadingMenu && (
-                        <p className="text-center text-sm py-6" style={{ color: 'var(--text-secondary)' }}>
-                          {menuItems.length === 0 ? 'No menu data available' : 'No items match'}
-                        </p>
+                          ))}
+                        </>
                       )}
                     </div>
                   )}
@@ -426,10 +506,10 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                 <button
                   onClick={handleSubmit}
                   disabled={submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim())}
-                  className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+                  className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-opacity"
                   style={{
-                    backgroundColor: 'var(--filter-active-bg)',
-                    color: 'var(--filter-active-text)',
+                    backgroundColor: submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim()) ? 'var(--btn-secondary-bg)' : '#10b981',
+                    color: submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim()) ? 'var(--text-tertiary)' : 'white',
                     opacity: submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim()) ? 0.6 : 1,
                   }}
                 >
