@@ -547,7 +547,7 @@ function StaffDashboard() {
                                                     fontSize: 11,
                                                     fontWeight: 600
                                                 }}>
-                                                    {order.order_type === 'delivery' ? 'Delivery' : order.order_type === 'dine_in' ? `🪑 Mesa ${order.table_number || ''}` : 'Pickup'}
+                                                    {order.order_type === 'delivery' ? 'Delivery' : order.order_type === 'dine_in' ? `${lang === 'es' ? 'Mesa' : 'Table'} ${order.table_number || ''}` : 'Pickup'}
                                                 </span>
                                                 <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>
                                                     {formatPrice(order.total)}
