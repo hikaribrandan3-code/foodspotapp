@@ -7,7 +7,7 @@ import OrderCard from '@/components/OrderCard';
 import type { OrderStatus } from '@/types';
 
 export default function BoardView() {
-  const { state, toggleOnline, advanceOrderStatus } = useOrders();
+  const { state, toggleOnline, advanceOrderStatus, verifyCash, claimDelivery, confirmDelivery } = useOrders();
   const { t } = useLanguage();
   const [tab, setTab] = useState<'active' | 'completed'>('active');
 
@@ -101,7 +101,15 @@ export default function BoardView() {
           <div className="space-y-1">
             {activeOrders.map((order, idx) => (
               <motion.div key={order.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04, duration: 0.3 }}>
-                <OrderCard order={order} compact={false} />
+                <OrderCard
+                  order={order}
+                  compact={false}
+                  showAdvanceButton={order.status !== 'PENDING_VERIFICATION'}
+                  onAdvance={advanceOrderStatus}
+                  showClaimButton={order.status === 'READY' && !order.assignedTo && order.deliveryType === 'delivery'}
+                  onClaim={claimDelivery}
+                  showConfirmDelivery={order.status === 'DISPATCH'}
+                />
               </motion.div>
             ))}
           </div>

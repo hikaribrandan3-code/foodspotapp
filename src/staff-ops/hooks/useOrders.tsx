@@ -198,6 +198,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const { addToast } = useToasts();
   const [audioEnabled] = useAudioPref();
   const watchIdRef = useRef<number | null>(null);
+  const pendingOpsRef = useRef(new Set<string>());
   const { businessId } = useBusiness();
 
   /* ── Fetch real orders + subscribe to Supabase real-time ─────────── */
@@ -379,21 +380,33 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   }, [state.isOnline, state.orders, businessId, addToast]);
 
   const verifyCash = useCallback((orderId: string) => {
+    if (pendingOpsRef.current.has(orderId)) return;
+
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
+    pendingOpsRef.current.add(orderId);
     if (!state.isOnline) queueAction({ orderId, type: 'verify_cash', timestamp: Date.now() });
     dispatch({ type: 'VERIFY_CASH', orderId });
 
     if (state.isOnline && businessId) {
-      callAdvanceOrderStatusRpc(orderId, 'released_to_kitchen').catch((e: Error) => {
-        console.error('[StaffOps] verifyCash RPC failed:', e);
-        addToast({ type: 'critical', title: 'Verify Failed', message: e.message, orderId });
-      });
+      callAdvanceOrderStatusRpc(orderId, 'released_to_kitchen')
+        .then(() => {
+          addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
+          if (audioEnabled) audio.alertCashVerified();
+        })
+        .catch((e: Error) => {
+          console.error('[StaffOps] verifyCash RPC failed:', e);
+          addToast({ type: 'critical', title: 'Verify Failed', message: e.message, orderId });
+        })
+        .finally(() => {
+          pendingOpsRef.current.delete(orderId);
+        });
+    } else {
+      addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
+      if (audioEnabled) audio.alertCashVerified();
+      pendingOpsRef.current.delete(orderId);
     }
-
-    addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
-    if (audioEnabled) audio.alertCashVerified();
   }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
   const confirmDelivery = useCallback((orderId: string) => {
