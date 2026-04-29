@@ -26,6 +26,8 @@ function OwnerSummary() {
     const [showAuditor, setShowAuditor] = useState(false)
     const debounceTimerRef = useRef(null)
     const [mpAliasInput, setMpAliasInput] = useState('')
+    const [mpAliasSaved, setMpAliasSaved] = useState(false)
+    const [mpAliasSaving, setMpAliasSaving] = useState(false)
     const mpAliasInitialized = useRef(false)
 
     // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
@@ -155,6 +157,23 @@ function OwnerSummary() {
             await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
             await refreshTenantData()
         }, 1000)
+    }
+
+    const saveMpAlias = async () => {
+        setMpAliasSaving(true)
+        setMpAliasSaved(false)
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+        try {
+            const updatedConfig = { ...appConfig, payments: { ...appConfig?.payments, mercadoPagoAlias: mpAliasInput } }
+            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+            await refreshTenantData()
+            setMpAliasSaved(true)
+            setTimeout(() => setMpAliasSaved(false), 3000)
+        } catch (err) {
+            console.error('Failed to save MP Alias:', err)
+        } finally {
+            setMpAliasSaving(false)
+        }
     }
 
     const updateBrandingCloud = async (field, value) => {
@@ -351,17 +370,35 @@ function OwnerSummary() {
 
                             {/* Alias (Optional) */}
                             <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('mp_alias_optional')}</label>
-                            <input
-                                type="text"
-                                placeholder="yourstore.mp"
-                                value={mpAliasInput}
-                                onChange={(e) => {
-                                    setMpAliasInput(e.target.value)
-                                    updatePayments({ mercadoPagoAlias: e.target.value })
-                                }}
-                                style={{ ...inputStyle, marginBottom: 6 }}
-                            />
-                            <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{t('mp_alias_info')}</p>
+                            <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                                <input
+                                    type="text"
+                                    placeholder="yourstore.mp"
+                                    value={mpAliasInput}
+                                    onChange={(e) => setMpAliasInput(e.target.value)}
+                                    style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                                />
+                                <button
+                                    onClick={saveMpAlias}
+                                    disabled={mpAliasSaving}
+                                    style={{
+                                        padding: '12px 16px',
+                                        border: 'none',
+                                        borderRadius: 10,
+                                        fontSize: 14,
+                                        fontWeight: 600,
+                                        cursor: mpAliasSaving ? 'not-allowed' : 'pointer',
+                                        background: mpAliasSaved ? '#10B981' : '#3B82F6',
+                                        color: '#fff',
+                                        opacity: mpAliasSaving ? 0.7 : 1,
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {mpAliasSaving ? '⏳' : mpAliasSaved ? '✓' : 'Save'}
+                                </button>
+                            </div>
+                            {mpAliasSaved && <p style={{ fontSize: 11, color: '#10B981', margin: 0, marginBottom: 12 }}>✓ Alias saved</p>}
+                            {!mpAliasSaved && <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, marginBottom: 12 }}>{t('mp_alias_info')}</p>}
                         </div>
                     </div>
                 </div>
