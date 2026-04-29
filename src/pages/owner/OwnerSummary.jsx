@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { clearAuth } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
@@ -24,6 +24,7 @@ function OwnerSummary() {
     const { lang, t, changeLanguage } = useLanguage()
     const appConfig = tenantData?.app_config || {}
     const [showAuditor, setShowAuditor] = useState(false)
+    const debounceTimerRef = useRef(null)
 
     // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
     const [orders, setOrders] = useState([])
@@ -137,10 +138,13 @@ function OwnerSummary() {
         await refreshTenantData()
     }
 
-    const updatePayments = async (updates) => {
-        const updatedConfig = { ...appConfig, payments: { ...appConfig?.payments, ...updates } }
-        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-        await refreshTenantData()
+    const updatePayments = (updates) => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = setTimeout(async () => {
+            const updatedConfig = { ...appConfig, payments: { ...appConfig?.payments, ...updates } }
+            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+            await refreshTenantData()
+        }, 1000)
     }
 
     const updateBrandingCloud = async (field, value) => {
