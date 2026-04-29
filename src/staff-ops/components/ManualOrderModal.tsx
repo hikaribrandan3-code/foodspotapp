@@ -248,7 +248,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
               {step === 'items' && (
                 <div className="space-y-3">
                   {/* Category tabs */}
-                  {categories.length > 1 && (
+                  {categories.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto pb-2">
                       {categories.map(cat => (
                         <button
@@ -266,18 +266,6 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                       ))}
                     </div>
                   )}
-
-                  {/* Search */}
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl" style={{ backgroundColor: 'var(--counter-bg)', border: '1px solid var(--counter-border)' }}>
-                    <Search size={14} style={{ color: 'var(--text-tertiary)' }} />
-                    <input
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                      placeholder="Search menu..."
-                      className="flex-1 bg-transparent text-sm outline-none"
-                      style={{ color: 'var(--text-primary)' }}
-                    />
-                  </div>
 
                   {loadingMenu ? (
                     <div className="flex justify-center py-8">
