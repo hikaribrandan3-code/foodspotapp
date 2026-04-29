@@ -146,6 +146,15 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
         staffNotes: notes.trim() || null,
       }, businessId);
 
+      // Wait 500ms to ensure order is in DB, then force refetch to show immediately
+      await new Promise(r => setTimeout(r, 500));
+      supabase
+        .from('orders')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
       setCart([]);
       setTableNumber('');
       setCustomerName('');
