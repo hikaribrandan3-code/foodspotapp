@@ -8,7 +8,7 @@ import { useAudioPref } from '@/hooks/useAudioPref';
 import { useBusiness } from '@/contexts/BusinessContext';
 import { toDbStatus, mapDbOrderToKimi } from '@/lib/statusMap';
 // @ts-ignore — JS module without type declarations
-import { supabase } from '../../lib/supabaseClient.js';
+import { supabase, updateOrderCloud } from '../../lib/supabaseClient.js';
 
 /* ------------------------------------------------------------------ */
 /*  State                                                               */
