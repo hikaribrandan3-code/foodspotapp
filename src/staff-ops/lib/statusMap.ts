@@ -141,6 +141,6 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     deliveryCoords,
     deliveryType: dbOrder.delivery_type ?? dbOrder.order_type ?? undefined,
     tableNumber: dbOrder.table_number ?? undefined,
-    staffNotes: dbOrder.staff_notes ?? undefined,
+    staffNotes: dbOrder.staff_notes ?? dbOrder.notes ?? undefined,
   };
 }

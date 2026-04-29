@@ -108,7 +108,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             if (tenantSlug) {
                 localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
             }
-            if (order?.status === ORDER_STATUS.DELIVERED) {
+            if (order?.status === ORDER_STATUS.DELIVERED && order?.order_type !== 'dine_in') {
                 const timer = setTimeout(() => {
                     if (tenantSlug) {
                         navigate(`/${tenantSlug}`)
@@ -406,6 +406,15 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             }}>
                                 <span style={{ color: '#737373' }}>{t('table')}</span>
                                 <span style={{ color: '#0a0a0a' }}>{t('table')} {order.table_number}</span>
+                            </div>
+                        )}
+                        {order.notes && (
+                            <div style={{
+                                padding: '8px 10px', marginTop: 6, marginBottom: 2,
+                                background: '#f5f5f5', borderRadius: 4, fontSize: 13,
+                            }}>
+                                <span style={{ color: '#737373', fontWeight: 500 }}>📝 Special Requests: </span>
+                                <span style={{ color: '#0a0a0a' }}>{order.notes}</span>
                             </div>
                         )}
                         <div style={{

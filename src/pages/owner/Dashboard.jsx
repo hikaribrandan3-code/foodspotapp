@@ -155,7 +155,10 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
   const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
-  const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
+  const needsPaymentConfirm = (
+    (order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed) ||
+    (isDineIn && order.status === ORDER_STATUS.DELIVERED && order.payment_status !== 'paid')
+  )
   const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'green' } : nextActionFor(order.status, order.order_type)
   const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
   const bucket = statusToBucket(order.status, t)
@@ -232,7 +235,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
             const text = isPaid
               ? 'Paid'
               : isCash
-                ? order.order_type === 'delivery' ? 'Pay on Delivery' : 'Pay at Pickup'
+                ? order.order_type === 'delivery' ? 'Pay on Delivery' : order.order_type === 'dine_in' ? 'Pay at Table' : 'Pay at Pickup'
                 : 'Payment Pending'
             const bg = isPaid ? T.greenBg : T.blueBg
             return (
@@ -244,6 +247,11 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
           {isDineIn && order.table_number && (
             <div style={{ fontSize: 13, color: T.body, marginBottom: 6 }}>
               🪑 Table {order.table_number}
+            </div>
+          )}
+          {order.notes && (
+            <div style={{ fontSize: 13, color: T.body, marginBottom: 6, padding: '6px 8px', background: T.blueBg, borderRadius: 6 }}>
+              📝 {order.notes}
             </div>
           )}
           {isDelivery && order.delivery_address && (
@@ -380,9 +388,33 @@ export default function Dashboard() {
 
   const advance = async (order) => {
     const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
-    const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
+    const isDineInDelivered = order.order_type === 'dine_in' && order.status === ORDER_STATUS.DELIVERED && order.payment_status !== 'paid'
+    const needsPaymentConfirm = (order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed) || isDineInDelivered
 
-    // For cash orders awaiting payment — confirm payment AND release to kitchen in one click
+    // For dine-in at DELIVERED — confirm payment only, status stays DELIVERED
+    if (isDineInDelivered) {
+      setProcessingOrderId(order.id)
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ payment_confirmed: true, payment_status: 'paid' })
+          .eq('id', order.id)
+        if (error) {
+          console.error('Dine-in payment confirm failed:', error)
+          alert('Error: ' + error.message)
+        } else {
+          refreshOrders()
+        }
+      } catch (err) {
+        console.error('Dine-in payment confirm exception:', err)
+        alert('Error confirming payment')
+      } finally {
+        setProcessingOrderId(null)
+      }
+      return
+    }
+
+    // For cash pickup/delivery orders awaiting payment — confirm payment AND release to kitchen
     if (needsPaymentConfirm) {
       setProcessingOrderId(order.id)
       try {

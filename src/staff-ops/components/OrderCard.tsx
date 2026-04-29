@@ -397,8 +397,8 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Cancel button (only during payment verification) ───── */}
-        {!compact && order.status === 'PENDING_VERIFICATION' && (
+        {/* ── Cancel button ───── */}
+        {!compact && (order.status === 'PENDING_VERIFICATION' || (order.deliveryType === 'dine_in' && (order.status === 'TODO' || order.status === 'PREP'))) && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <button
               onClick={(e) => {

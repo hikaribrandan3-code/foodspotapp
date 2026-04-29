@@ -38,6 +38,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card_on_delivery' | 'transfer'>('cash');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [step, setStep] = useState<'items' | 'details'>('items');
 
   // Fetch menu items from branding.menu_data
@@ -115,6 +116,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
     if (orderType !== 'dine_in' && !customerName.trim()) return;
     if (orderType === 'delivery' && !deliveryAddress.trim()) return;
     setSubmitting(true);
+    setSubmitError('');
 
     try {
       const { data: lastOrder } = await supabase
@@ -152,6 +154,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
       onClose();
     } catch (e) {
       console.error('[ManualOrder] Submit failed:', e);
+      setSubmitError('Order failed to send. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -373,23 +376,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                     </div>
                   </div>
 
-                  {/* Order type selector */}
-                  <div className="flex gap-2">
-                    {(['dine_in', 'pickup', 'delivery'] as const).map(t => (
-                      <button
-                        key={t}
-                        onClick={() => setOrderType(t)}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
-                        style={{
-                          backgroundColor: orderType === t ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
-                          color: orderType === t ? 'var(--filter-active-text)' : 'var(--text-secondary)',
-                          border: `1px solid ${orderType === t ? 'var(--filter-active-border)' : 'var(--counter-border)'}`,
-                        }}
-                      >
-                        {t === 'dine_in' ? 'Dine In' : t === 'pickup' ? 'Pickup' : 'Delivery'}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Order type — dine-in only for staff table orders; picker hidden */}
 
                   {/* Dine-in: table + special requests only */}
                   {orderType === 'dine_in' && (
@@ -489,6 +476,9 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
 
             {/* Footer */}
             <div className="px-4 pb-8 pt-3 border-t" style={{ borderColor: 'var(--card-border)' }}>
+              {submitError && (
+                <p className="text-xs text-center mb-2 font-medium" style={{ color: '#DC2626' }}>{submitError}</p>
+              )}
               {step === 'items' ? (
                 <button
                   onClick={() => setStep('details')}
