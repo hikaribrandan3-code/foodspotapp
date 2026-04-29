@@ -135,12 +135,14 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
         items: cart.map(c => ({ name: c.name, quantity: c.quantity, price: c.price })),
         total: cartTotal,
         status: isDineIn ? 'released_to_kitchen' : 'pending_payment',
-        customerName: isDineIn ? `Table ${tableNumber.trim()}` : customerName.trim(),
+        customerName: isDineIn ? `Mesa ${tableNumber.trim()}` : customerName.trim(),
         customerPhone: customerPhone.trim() || null,
         deliveryType: orderType,
         tableNumber: isDineIn ? tableNumber.trim() : null,
         deliveryAddress: orderType === 'delivery' ? deliveryAddress.trim() || null : null,
         paymentMethod: isDineIn ? 'cash' : paymentMethod,
+        paymentStatus: isDineIn ? 'unpaid' : 'pending',
+        paymentConfirmed: false,
         notes: notes.trim() || null,
       }, businessId);
 
@@ -403,7 +405,6 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                       </Field>
                     </>
                   )}
-
                   {/* Pickup / Delivery: full customer fields */}
                   {orderType !== 'dine_in' && (
                     <>
@@ -437,6 +438,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                           />
                         </Field>
                       )}
+                      {/* 🛡️ PAYMENT SELECTOR: Only for pickup/delivery — dine-in always pays at the end */}
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1" style={{ color: 'var(--text-tertiary)' }}>Payment Method</p>
                         <div className="grid grid-cols-3 gap-1.5">

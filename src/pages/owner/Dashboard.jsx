@@ -65,8 +65,12 @@ function statusToBucket(status, t) {
   return null
 }
 
-function nextActionFor(status, orderType) {
+function nextActionFor(status, orderType, paymentStatus) {
   const flow = STATUS_FLOW.find(f => f.key === status)
+  // 🛡️ DINE-IN PAY-AFTER: Delivered + unpaid = show payment button
+  if (status === ORDER_STATUS.DELIVERED && orderType === 'dine_in' && paymentStatus === 'unpaid') {
+    return { label: '💳 Confirm Payment', intent: 'green', isPaymentConfirm: true }
+  }
   if (!flow?.label) return null
   // Pickup/dine-in at READY skips dispatch — label should reflect the actual action
   if (status === ORDER_STATUS.READY && orderType !== 'delivery') {
@@ -155,11 +159,8 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
   const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
-  const needsPaymentConfirm = (
-    (order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed) ||
-    (isDineIn && order.status === ORDER_STATUS.DELIVERED && order.payment_status !== 'paid')
-  )
-  const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'green' } : nextActionFor(order.status, order.order_type)
+  const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
+  const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'green' } : nextActionFor(order.status, order.order_type, order.payment_status)
   const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
   const bucket = statusToBucket(order.status, t)
   const bucketLabel = OWNER_STATS(t).find(s => s.key === bucket)?.label || order.status.toUpperCase()
@@ -391,8 +392,9 @@ export default function Dashboard() {
     const isDineInDelivered = order.order_type === 'dine_in' && order.status === ORDER_STATUS.DELIVERED && order.payment_status !== 'paid'
     const needsPaymentConfirm = (order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed) || isDineInDelivered
 
-    // For dine-in at DELIVERED — confirm payment only, status stays DELIVERED
-    if (isDineInDelivered) {
+    // 🛡️ DINE-IN PAY-AFTER: Confirm payment on a delivered order
+    const isDineInPayAfterConfirm = order.status === ORDER_STATUS.DELIVERED && order.order_type === 'dine_in' && order.payment_status === 'unpaid'
+    if (isDineInPayAfterConfirm) {
       setProcessingOrderId(order.id)
       try {
         const { error } = await supabase
@@ -414,7 +416,7 @@ export default function Dashboard() {
       return
     }
 
-    // For cash pickup/delivery orders awaiting payment — confirm payment AND release to kitchen
+    // For cash orders awaiting payment — confirm payment AND release to kitchen in one click
     if (needsPaymentConfirm) {
       setProcessingOrderId(order.id)
       try {

@@ -575,6 +575,8 @@ export async function createOrderCloud(orderData, businessId) {
             delivery_mode: orderData.deliveryMode || false,
             delivery_address: orderData.deliveryAddress || null,
             payment_method: orderData.paymentMethod || null,
+            payment_status: orderData.paymentStatus || 'pending',
+            payment_confirmed: orderData.paymentConfirmed ?? false,
             notes: orderData.notes || null,
             staff_notes: orderData.staffNotes || null,
             table_number: orderData.tableNumber || null,

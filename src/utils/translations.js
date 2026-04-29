@@ -476,6 +476,14 @@ export const translations = {
     staff_validates: { es: "El staff puede validar tu visita", en: "Staff can validate your visit", pt: "A equipe pode validar sua visita" },
     active_session: { es: "Sesión activa", en: "Active session", pt: "Sessão ativa" },
     table_number_required_error: { es: "Número de mesa requerido", en: "Table number required", pt: "Número da mesa obrigatório" },
-    table_number_optional: { es: "Número de mesa (opcional)", en: "Table number (optional)", pt: "Número da mesa (opcional)" }
+    table_number_optional: { es: "Número de mesa (opcional)", en: "Table number (optional)", pt: "Número da mesa (opcional)" },
+
+    // Staff Dashboard
+    live: { es: "EN VIVO", en: "LIVE", pt: "AO VIVO" },
+    status_awaiting_payment: { es: "Esperando Pago", en: "Awaiting Payment", pt: "Aguardando Pagamento" },
+    pickup: { es: "Para llevar", en: "Takeout", pt: "Para viagem" },
+    special_requests: { es: "Solicitudes Especiales", en: "Special Requests", pt: "Solicitações Especiais" },
+    no_orders_column: { es: "Sin pedidos", en: "No orders", pt: "Sem pedidos" },
+    no_completed_today: { es: "No hay pedidos completados hoy", en: "No completed orders today", pt: "Nenhum pedido concluído hoje" }
 };
 

@@ -31,7 +31,7 @@ const TicketScanner = lazy(() => import('../../components/TicketScanner.jsx'))
 // 🛡️ SAFETY CAGE: Status-Specific Action Buttons
 // ============================================
 // Each status has ONE clear action. No ambiguity.
-const getActionForStatus = (status, orderType, paymentMethod, paymentConfirmed, t) => {
+const getActionForStatus = (status, orderType, paymentMethod, paymentConfirmed, t, paymentStatus) => {
     switch (status) {
         case ORDER_STATUS.PENDING_PAYMENT:
             return null
@@ -97,8 +97,21 @@ const getActionForStatus = (status, orderType, paymentMethod, paymentConfirmed, 
                 confirm: false
             }
 
+        case ORDER_STATUS.DELIVERED:
+            // 🛡️ DINE-IN PAY-AFTER: Show "Confirm Payment" only when food is on the table and unpaid
+            if (orderType === 'dine_in' && paymentStatus === 'unpaid') {
+                return {
+                    label: '💳 ' + (t('confirm_payment') || 'Confirmar Pago'),
+                    targetStatus: ORDER_STATUS.DELIVERED,
+                    color: '#F59E0B',
+                    confirm: false,
+                    isPaymentConfirm: true
+                }
+            }
+            return null // Terminal for non-dine-in or already paid
+
         default:
-            return null // Terminal states: delivered, cancelled, refunded
+            return null // Terminal states: cancelled, refunded
     }
 }
 
@@ -121,7 +134,7 @@ function StaffDashboard() {
         { id: ORDER_STATUS.PREPARING, label: langT('status_in_kitchen'), color: '#F97316', bg: '#FFF7ED' },
         { id: ORDER_STATUS.READY, label: langT('status_ready_pickup'), color: '#06B6D4', bg: '#CFFAFE' },
         { id: ORDER_STATUS.DISPATCHED, label: langT('status_on_the_way'), color: '#6366F1', bg: '#E0E7FF' },
-        { id: ORDER_STATUS.DELIVERED, label: langT('status_delivered'), color: '#22C55E', bg: '#DCFCE7' }
+        { id: ORDER_STATUS.DELIVERED, label: langT('confirm_payment') || 'Awaiting Payment', color: '#F59E0B', bg: '#FEF3C7' }
     ];
 
     // Get status config by id
@@ -215,14 +228,26 @@ function StaffDashboard() {
     // 🗂️ FILTER ORDERS
     // ============================================
     // Active statuses for the kanban view (excludes terminal + cart)
-    const ACTIVE_STATUSES = [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PAID_UNRELEASED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED]
+    const ACTIVE_STATUSES = [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PAID_UNRELEASED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED, ORDER_STATUS.DELIVERED]
     const TERMINAL_STATUSES = [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED, ORDER_STATUS.REFUNDED]
 
     const filteredOrders = useMemo(() => {
         if (activeTab === 'active') {
-            return orders.filter(o => ACTIVE_STATUSES.includes(o.status))
+            return orders.filter(o => {
+                // 🛡️ DELIVERED orders stay in active view ONLY if dine-in + unpaid
+                if (o.status === ORDER_STATUS.DELIVERED) {
+                    return o.order_type === 'dine_in' && o.payment_status === 'unpaid'
+                }
+                return ACTIVE_STATUSES.includes(o.status) && !TERMINAL_STATUSES.includes(o.status)
+            })
         } else {
-            return orders.filter(o => TERMINAL_STATUSES.includes(o.status))
+            return orders.filter(o => {
+                // Completed = terminal states + delivered orders that ARE paid
+                if (o.status === ORDER_STATUS.DELIVERED && o.order_type === 'dine_in' && o.payment_status === 'unpaid') {
+                    return false // Still active
+                }
+                return TERMINAL_STATUSES.includes(o.status)
+            })
         }
     }, [orders, activeTab])
 
@@ -242,9 +267,14 @@ function StaffDashboard() {
     // Hide DISPATCHED column if no delivery orders are visible (pickup/dine-in skip this step)
     const hasDeliveryOrders = filteredOrders.some(o => o.order_type === 'delivery')
     const hasDispatchedOrders = filteredOrders.some(o => o.status === ORDER_STATUS.DISPATCHED)
-    const visibleStatuses = (hasDeliveryOrders || hasDispatchedOrders)
-        ? ACTIVE_STATUSES
-        : ACTIVE_STATUSES.filter(s => s !== ORDER_STATUS.DISPATCHED)
+    const hasDineInUnpaid = filteredOrders.some(o => o.status === ORDER_STATUS.DELIVERED && o.order_type === 'dine_in' && o.payment_status === 'unpaid')
+    let visibleStatuses = ACTIVE_STATUSES
+    if (!hasDeliveryOrders && !hasDispatchedOrders) {
+        visibleStatuses = visibleStatuses.filter(s => s !== ORDER_STATUS.DISPATCHED)
+    }
+    if (!hasDineInUnpaid) {
+        visibleStatuses = visibleStatuses.filter(s => s !== ORDER_STATUS.DELIVERED)
+    }
     const kanbanColumns = STATUS_PIPELINE.filter(s => visibleStatuses.includes(s.id))
 
     // Stats
@@ -304,7 +334,7 @@ function StaffDashboard() {
                                     transition: 'all 0.2s'
                                 }}
                             >
-                                ← Volver
+                                ← {langT('back') || 'Volver'}
                             </button>
                         )}
                         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#111827', marginLeft: isOwner ? 0 : 8 }}>
@@ -469,7 +499,7 @@ function StaffDashboard() {
                             {/* Order Cards */}
                             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {(ordersByStatus[status.id] || []).map(order => {
-                                    const action = getActionForStatus(order.status, order.order_type, order.payment_method, order.payment_confirmed || order.paymentConfirmed, langT)
+                                    const action = getActionForStatus(order.status, order.order_type, order.payment_method, order.payment_confirmed || order.paymentConfirmed, langT, order.payment_status)
                                     const isProcessing = processingOrderId === order.id
 
                                     return (
@@ -517,7 +547,7 @@ function StaffDashboard() {
                                                     fontSize: 11,
                                                     fontWeight: 600
                                                 }}>
-                                                    {order.order_type === 'delivery' ? 'Delivery' : 'Pickup'}
+                                                    {order.order_type === 'delivery' ? 'Delivery' : order.order_type === 'dine_in' ? `🪑 Mesa ${order.table_number || ''}` : 'Pickup'}
                                                 </span>
                                                 <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>
                                                     {formatPrice(order.total)}
@@ -598,7 +628,7 @@ function StaffDashboard() {
                                                                 textAlign: 'center',
                                                                 fontWeight: 500
                                                             }}>
-                                                                ⏳ Esperando confimación
+                                                                ⏳ {langT('status_awaiting_confirmation') || 'Esperando confirmación'}
                                                             </div>
                                                         )
                                                     )}
@@ -652,7 +682,7 @@ function StaffDashboard() {
                                         color: '#6B7280',
                                         fontSize: 14
                                     }}>
-                                        Sin pedidos
+                                        {langT('no_orders_column') || 'Sin pedidos'}
                                     </div>
                                 )}
                             </div>
@@ -704,7 +734,7 @@ function StaffDashboard() {
                         {filteredOrders.length === 0 && (
                             <div style={{ textAlign: 'center', padding: 48, color: '#6B7280' }}>
                                 <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>
-                                <p>No hay pedidos completados hoy</p>
+                                <p>{langT('no_completed_today') || 'No hay pedidos completados hoy'}</p>
                             </div>
                         )}
                     </div>
