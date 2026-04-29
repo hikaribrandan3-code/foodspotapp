@@ -249,7 +249,17 @@ export function saveCurrentOrder(order) {
 }
 
 export function clearCurrentOrder() {
-    return removeItem(STORAGE_KEYS.CURRENT_ORDER);
+    removeItem(STORAGE_KEYS.CURRENT_ORDER);
+    removeItem(STORAGE_KEYS.ORDER_STATUS);
+    
+    // 🛡️ NUCLEAR CLEAR: Also wipe global fallback to prevent "ghost" items
+    // This solves the issue where items reappear during tenant resolution.
+    try {
+        localStorage.removeItem("fs_global_" + STORAGE_KEYS.CURRENT_ORDER);
+        localStorage.removeItem("fs_global_" + STORAGE_KEYS.ORDER_STATUS);
+    } catch (e) {
+        console.warn('[Storage] Nuclear clear failed:', e);
+    }
 }
 
 export function addToCurrentOrder(item, quantity = 1, selectedExtras = [], selectedVariants = []) {

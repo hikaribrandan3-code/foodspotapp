@@ -191,12 +191,9 @@ function Order({ config: configProp }) {
         }
     }, [customerInfo.lat, customerInfo.lon, storeCoords, deliveryRadius, orderType])
 
-    // Poll order on interval
+    // Sync order state from storage on mount (CartContext handles the rest)
     useEffect(() => {
-        const interval = setInterval(() => {
-            setOrder(getCurrentOrder())
-        }, 1000)
-        return () => clearInterval(interval)
+        setOrder(getCurrentOrder())
     }, [])
 
     // CALCULATIONS
