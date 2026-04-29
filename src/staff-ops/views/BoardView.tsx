@@ -113,7 +113,7 @@ export default function BoardView() {
                 <OrderCard
                   order={order}
                   compact={false}
-                  showAdvanceButton={order.status !== 'PENDING_VERIFICATION'}
+                  showAdvanceButton={order.status !== 'PENDING_VERIFICATION' && order.status !== 'DONE'}
                   onAdvance={advanceOrderStatus}
                   showClaimButton={order.status === 'READY' && !order.assignedTo && order.deliveryType === 'delivery'}
                   onClaim={claimDelivery}

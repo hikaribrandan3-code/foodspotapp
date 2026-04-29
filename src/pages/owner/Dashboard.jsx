@@ -285,9 +285,11 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
               <ActionButton intent={next.intent || 'blue'} icon={<Icon type="chevron" color={next.intent === 'green' ? T.greenInk : T.blueInk} size={14} />} onClick={() => onAdvance(order)}>
                 {next.label}
               </ActionButton>
-              <ActionButton intent="red" icon={<Icon type="x" color={T.redInk} size={14} />} onClick={() => onCancel(order)}>
-                Cancel Order
-              </ActionButton>
+              {!(order.status === ORDER_STATUS.DELIVERED && isDineIn) && (
+                <ActionButton intent="red" icon={<Icon type="x" color={T.redInk} size={14} />} onClick={() => onCancel(order)}>
+                  Cancel Order
+                </ActionButton>
+              )}
             </div>
           )}
           {order.status === ORDER_STATUS.DELIVERED && (
