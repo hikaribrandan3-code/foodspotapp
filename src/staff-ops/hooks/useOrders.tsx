@@ -238,7 +238,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
               dispatch({ type: 'ADD_ORDER', order });
               addToast({
                 type: 'new_order',
-                title: `New Order #${newRow.order_number ?? ''}`,
+                title: `New Order ${order.orderNumber}`,
                 message: `${order.customerName} — ${order.items.length} item${order.items.length !== 1 ? 's' : ''}`,
                 orderId: order.id,
               });
@@ -246,7 +246,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
               // Browser push notification (works even when tab is backgrounded)
               if ('Notification' in window && Notification.permission === 'granted') {
                 try {
-                  new Notification(`New Order #${newRow.order_number ?? ''}`, {
+                  new Notification(`New Order ${order.orderNumber}`, {
                     body: `${order.customerName} — ${order.items.length} item${order.items.length !== 1 ? 's' : ''}`,
                     icon: '/pwa-icons/icon-192x192.png',
                     tag: order.id,
@@ -358,10 +358,23 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
     if (state.isOnline && businessId) {
       const targetDbStatus = toDbStatus(nextStatus);
-      callAdvanceOrderStatusRpc(orderId, targetDbStatus).catch((e: Error) => {
-        console.error('[StaffOps] advance RPC failed:', e);
-        addToast({ type: 'critical', title: 'Update Failed', message: e.message, orderId });
-      });
+      callAdvanceOrderStatusRpc(orderId, targetDbStatus)
+        .then(() => {
+          // Refresh orders to ensure DB change is reflected (matches owner backend pattern)
+          supabase
+            .from('orders')
+            .select('*')
+            .eq('business_id', businessId)
+            .order('created_at', { ascending: false })
+            .limit(100)
+            .then(({ data }: { data: any[] | null }) => {
+              if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
+            });
+        })
+        .catch((e: Error) => {
+          console.error('[StaffOps] advance RPC failed:', e);
+          addToast({ type: 'critical', title: 'Update Failed', message: e.message, orderId });
+        });
     }
   }, [state.isOnline, state.orders, businessId, addToast]);
 
