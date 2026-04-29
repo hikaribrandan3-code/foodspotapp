@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
@@ -14,7 +15,9 @@ function callPhone(phone: string) {
 }
 
 export default function OrderDetailDrawer() {
-  const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus } = useOrders();
+  const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
   const order = state.orders.find(o => o.id === state.selectedOrderId);
 
   if (!order) return null;
@@ -24,6 +27,8 @@ export default function OrderDetailDrawer() {
   const isCashPending = order.status === 'PENDING_VERIFICATION';
   const isDispatch = order.status === 'DISPATCH';
   const isDone = order.status === 'DONE';
+  const isDineIn = order.deliveryType === 'dine_in';
+  const isUnpaid = order.paymentStatus !== 'paid';
 
   // Next status label for the advance button
   const isDeliveryOrder = order.deliveryType === 'delivery';
@@ -206,7 +211,18 @@ export default function OrderDetailDrawer() {
                 </button>
               )}
 
-              {isDone && (
+              {isDone && isDineIn && isUnpaid && (
+                <button
+                  onClick={() => setPaymentModalOpen(true)}
+                  className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  style={{ backgroundColor: '#f97316', color: '#fff' }}
+                >
+                  <DollarSign size={16} />
+                  Confirm Payment
+                </button>
+              )}
+
+              {isDone && !(isDineIn && isUnpaid) && (
                 <div className="text-center text-sm py-2" style={{ color: 'var(--text-tertiary)' }}>
                   ✓ Order completed
                 </div>
@@ -221,6 +237,57 @@ export default function OrderDetailDrawer() {
               </button>
             </div>
           </motion.div>
+
+          {/* Payment method modal */}
+          {paymentModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[80] flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+              onClick={() => !paymentProcessing && setPaymentModalOpen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                onClick={(e) => e.stopPropagation()}
+                className="rounded-2xl p-6 shadow-2xl"
+                style={{ backgroundColor: 'var(--detail-drawer-bg)', maxWidth: 320 }}
+              >
+                <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>How did they pay?</h3>
+                <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Order #{order.orderNumber}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={async () => {
+                      setPaymentProcessing(true);
+                      confirmPayment(order.id);
+                      await new Promise(resolve => setTimeout(resolve, 2000));
+                      setPaymentModalOpen(false);
+                      setPaymentProcessing(false);
+                    }}
+                    disabled={paymentProcessing}
+                    className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+                    style={{ backgroundColor: '#10b981', color: '#fff', opacity: paymentProcessing ? 0.7 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                  >
+                    {paymentProcessing ? 'Processing…' : '💵 Cash'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPaymentProcessing(true);
+                      confirmPayment(order.id);
+                      setTimeout(() => {
+                        setPaymentModalOpen(false);
+                        setPaymentProcessing(false);
+                      }, 2000);
+                    }}
+                    disabled={paymentProcessing}
+                    className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+                    style={{ backgroundColor: '#f97316', color: '#fff', opacity: paymentProcessing ? 0.7 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                  >
+                    {paymentProcessing ? 'Verified…' : '📲 MP Alias'}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
         </>
       )}
     </AnimatePresence>
