@@ -15,16 +15,6 @@ function callPhone(phone: string) {
   window.open(`tel:${phone}`, '_self');
 }
 
-function openWhatsApp(phone: string, customerName: string) {
-  const clean = phone.replace(/\D/g, '');
-  const msg = encodeURIComponent(`Hola ${customerName} 👋, tu pedido está en camino. ¡Gracias por tu compra!`);
-  window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
-}
-
-function callPhone(phone: string) {
-  window.open(`tel:${phone}`, '_self');
-}
-
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
   const { tenantData } = useTenant();
