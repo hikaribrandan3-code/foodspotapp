@@ -572,7 +572,6 @@ export async function createOrderCloud(orderData, businessId) {
             status: orderData.status || 'pending_payment',
             customer_name: orderData.customerName || null,
             customer_phone: orderData.customerPhone || null,
-            delivery_mode: orderData.deliveryMode || false,
             delivery_address: orderData.deliveryAddress || null,
             payment_method: orderData.paymentMethod || null,
             payment_status: orderData.paymentStatus || 'pending',
@@ -616,7 +615,7 @@ export async function getOrdersCloud(businessId) {
             status: order.status,
             customerName: order.customer_name,
             customerPhone: order.customer_phone,
-            deliveryMode: order.delivery_mode,
+            orderType: order.order_type,
             deliveryAddress: order.delivery_address,
             paymentMethod: order.payment_method,
             notes: order.notes,
@@ -693,7 +692,7 @@ export function subscribeToOrders(businessId, onInsert, onUpdate) {
                 status: order.status,
                 customerName: order.customer_name,
                 customerPhone: order.customer_phone,
-                deliveryMode: order.delivery_mode,
+                orderType: order.order_type,
                 deliveryAddress: order.delivery_address,
                 createdAt: order.created_at
             })
@@ -741,7 +740,7 @@ export async function getOrdersByGuestToken(guestToken, businessId) {
             status: order.status,
             customerName: order.customer_name,
             customerPhone: order.customer_phone,
-            deliveryMode: order.delivery_mode,
+            orderType: order.order_type,
             deliveryAddress: order.delivery_address,
             paymentMethod: order.payment_method,
             createdAt: order.created_at
@@ -780,7 +779,7 @@ export async function getOrdersByPhone(phoneNumber, businessId) {
             status: order.status,
             customerName: order.customer_name,
             customerPhone: order.customer_phone,
-            deliveryMode: order.delivery_mode,
+            orderType: order.order_type,
             deliveryAddress: order.delivery_address,
             createdAt: order.created_at
         }))
@@ -815,9 +814,9 @@ export async function createOrderWithGuestToken(orderData, guestToken, businessI
             status: orderData.status || 'pending_payment',
             customer_name: orderData.customerName || null,
             customer_phone: orderData.customerPhone || null,
-            delivery_mode: orderData.deliveryMode || false,
             delivery_address: orderData.deliveryAddress || null,
             payment_method: orderData.paymentMethod || null,
+            order_type: orderData.orderType || orderData.deliveryType || null,
             guest_token: guestToken,
             created_at: new Date().toISOString()
         })
