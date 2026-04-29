@@ -14,7 +14,12 @@ export default function BoardView() {
   // Active orders (excluding DONE)
   const activeOrders = useMemo(() => {
     return state.orders
-      .filter(o => o.status !== 'DONE')
+      .filter(o => {
+        // Keep in active if not DONE, OR if it's a DONE dine-in order that hasn't been paid
+        if (o.status !== 'DONE') return true;
+        if (o.deliveryType === 'dine_in' && o.paymentStatus !== 'paid') return true;
+        return false;
+      })
       .sort((a, b) => {
         const urgencyA = (Date.now() - a.createdAt) / 60000;
         const urgencyB = (Date.now() - b.createdAt) / 60000;
@@ -25,7 +30,11 @@ export default function BoardView() {
   // Completed orders
   const completedOrders = useMemo(() => {
     return state.orders
-      .filter(o => o.status === 'DONE')
+      .filter(o => {
+        if (o.status !== 'DONE') return false;
+        if (o.deliveryType === 'dine_in' && o.paymentStatus !== 'paid') return false;
+        return true;
+      })
       .sort((a, b) => b.createdAt - a.createdAt);
   }, [state.orders]);
 

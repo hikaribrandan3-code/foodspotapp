@@ -84,7 +84,7 @@ export default function OrderCard({
     return getETAMinutes(distKm);
   })();
 
-  const isCashPending = order.status === 'PENDING_VERIFICATION' || (order.status === 'TODO' && order.paymentMethod === 'cash' && !order.cashVerified);
+  const isCashPending = (order.status === 'PENDING_VERIFICATION' || (order.status === 'TODO' && order.paymentMethod === 'cash' && !order.cashVerified)) && order.deliveryType !== 'dine_in';
 
   const getCardStyles = () => {
     if (urgency === 'critical' && !isCashPending) return 'animate-urgent-pulse';
@@ -338,7 +338,7 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' ? (order.deliveryType === 'delivery' ? 'Assign Delivery' : 'Mark Delivered') : order.status === 'DISPATCH' ? 'Confirm Delivery' : 'Advance'}
+              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' ? (order.deliveryType === 'delivery' ? 'Assign Delivery' : order.deliveryType === 'dine_in' ? 'Mark Served' : 'Mark Delivered') : order.status === 'DISPATCH' ? 'Confirm Delivery' : 'Advance'}
             </button>
           </div>
         )}

@@ -101,7 +101,7 @@ export default function OrderView() {
   };
 
   const handleSubmit = async () => {
-    if (!customerName.trim() || cart.length === 0) return;
+    if ((orderType !== 'dine_in' && !customerName.trim()) || cart.length === 0) return;
     setSubmitting(true);
     try {
       const { nextNumber, error: seqError } = await getNextOrderNumber(businessId);
@@ -111,18 +111,23 @@ export default function OrderView() {
         return;
       }
 
+      const isDineIn = orderType === 'dine_in';
+      const actualCustomerName = isDineIn ? `Mesa ${tableNumber.trim()}` : customerName.trim();
+
       await createOrderCloud({
         orderNumber: nextNumber,
         items: cart.map(c => ({ name: c.name, quantity: c.quantity, price: c.price })),
         total: cartTotal,
-        status: 'pending_payment',
-        customerName: customerName.trim(),
+        status: isDineIn ? 'released_to_kitchen' : 'pending_payment',
+        customerName: actualCustomerName,
         customerPhone: customerPhone.trim() || null,
         deliveryMode: orderType === 'delivery',
         deliveryAddress: orderType === 'delivery' ? deliveryAddress.trim() || null : null,
-        paymentMethod,
+        paymentMethod: isDineIn ? 'cash' : paymentMethod,
+        paymentStatus: isDineIn ? 'unpaid' : 'pending',
+        paymentConfirmed: false,
         notes: staffNotes.trim() || null,
-        tableNumber: orderType === 'dine_in' && tableNumber ? Number(tableNumber) : null,
+        tableNumber: isDineIn && tableNumber ? Number(tableNumber) : null,
         deliveryType: orderType,
       }, businessId);
 
@@ -247,10 +252,12 @@ export default function OrderView() {
               </div>
             </div>
 
-            <Field label="Customer Name *">
-              <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Full name"
-                className="w-full bg-transparent text-sm outline-none" style={{ color: 'var(--text-primary)' }} />
-            </Field>
+            {orderType !== 'dine_in' && (
+              <Field label="Customer Name *">
+                <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Full name"
+                  className="w-full bg-transparent text-sm outline-none" style={{ color: 'var(--text-primary)' }} />
+              </Field>
+            )}
 
             <Field label="Phone (optional)">
               <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+1 555 000 0000"
@@ -298,26 +305,28 @@ export default function OrderView() {
             )}
 
             {/* Payment */}
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1" style={{ color: 'var(--text-tertiary)' }}>Payment</p>
-              <div className="grid grid-cols-3 gap-1.5">
-                {([
-                  { value: 'cash', label: 'Cash' },
-                  { value: 'card_on_delivery', label: 'Card' },
-                  { value: 'transfer', label: 'Transfer' },
-                ] as const).map(({ value, label }) => (
-                  <button key={value} onClick={() => setPaymentMethod(value)}
-                    className="py-2 rounded-xl text-xs font-semibold"
-                    style={{
-                      backgroundColor: paymentMethod === value ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
-                      color: paymentMethod === value ? 'var(--filter-active-text)' : 'var(--text-secondary)',
-                      border: `1px solid ${paymentMethod === value ? 'var(--filter-active-border, var(--card-border))' : 'var(--counter-border)'}`,
-                    }}>
-                    {label}
-                  </button>
-                ))}
+            {orderType !== 'dine_in' && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1" style={{ color: 'var(--text-tertiary)' }}>Payment</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {([
+                    { value: 'cash', label: 'Cash' },
+                    { value: 'card_on_delivery', label: 'Card' },
+                    { value: 'transfer', label: 'Transfer' },
+                  ] as const).map(({ value, label }) => (
+                    <button key={value} onClick={() => setPaymentMethod(value)}
+                      className="py-2 rounded-xl text-xs font-semibold"
+                      style={{
+                        backgroundColor: paymentMethod === value ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
+                        color: paymentMethod === value ? 'var(--filter-active-text)' : 'var(--text-secondary)',
+                        border: `1px solid ${paymentMethod === value ? 'var(--filter-active-border, var(--card-border))' : 'var(--counter-border)'}`,
+                      }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Staff notes */}
             <Field label="Staff Notes (optional)">
@@ -348,12 +357,12 @@ export default function OrderView() {
             Continue — {cartCount} item{cartCount !== 1 ? 's' : ''} · ${cartTotal.toFixed(2)}
           </button>
         ) : (
-          <button onClick={handleSubmit} disabled={submitting || !customerName.trim()}
+          <button onClick={handleSubmit} disabled={submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim())}
             className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
             style={{
               backgroundColor: 'var(--filter-active-bg)',
               color: 'var(--filter-active-text)',
-              opacity: submitting || !customerName.trim() ? 0.6 : 1,
+              opacity: submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) ? 0.6 : 1,
             }}>
             {submitting ? <><Loader2 size={16} className="animate-spin" /> Placing order…</> : `Place Order · $${cartTotal.toFixed(2)}`}
           </button>
