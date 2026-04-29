@@ -349,19 +349,20 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   /* ── Action creators ─────────────────────────────────────────────── */
 
   const advanceOrderStatus = useCallback((orderId: string) => {
+    if (pendingOpsRef.current.has(orderId)) return;
+
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
     const nextStatus = getNextStatus(order);
     if (!nextStatus) return;
 
+    pendingOpsRef.current.add(orderId);
     if (!state.isOnline) queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });
     dispatch({ type: 'ADVANCE_STATUS', orderId });
 
     if (state.isOnline && businessId) {
-      const targetDbStatus = toDbStatus(nextStatus);
-      callAdvanceOrderStatusRpc(orderId, targetDbStatus)
+      updateOrderCloud(orderId, { status: toDbStatus(nextStatus) }, businessId)
         .then(() => {
-          // Refresh orders to ensure DB change is reflected (matches owner backend pattern)
           supabase
             .from('orders')
             .select('*')
@@ -373,9 +374,11 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
             });
         })
         .catch((e: Error) => {
-          console.error('[StaffOps] advance RPC failed:', e);
           addToast({ type: 'critical', title: 'Update Failed', message: e.message, orderId });
-        });
+        })
+        .finally(() => pendingOpsRef.current.delete(orderId));
+    } else {
+      pendingOpsRef.current.delete(orderId);
     }
   }, [state.isOnline, state.orders, businessId, addToast]);
 
