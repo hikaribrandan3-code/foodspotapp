@@ -268,7 +268,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
 
           {next && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <ActionButton intent="blue" icon={<Icon type="chevron" color={T.blueInk} size={14} />} onClick={() => onAdvance(order)}>
+              <ActionButton intent={next.intent || 'blue'} icon={<Icon type="chevron" color={next.intent === 'green' ? T.greenInk : T.blueInk} size={14} />} onClick={() => onAdvance(order)}>
                 {next.label}
               </ActionButton>
               <ActionButton intent="red" icon={<Icon type="x" color={T.redInk} size={14} />} onClick={() => onCancel(order)}>
