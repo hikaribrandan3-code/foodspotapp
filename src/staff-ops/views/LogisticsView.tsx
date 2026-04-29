@@ -2,28 +2,24 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bike, PackageCheck, MapPin, CheckCircle } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
-import { useLanguage } from '@/contexts/LanguageContext';
 import OrderCard from '@/components/OrderCard';
 import MapboxMap from '@/components/MapboxMap';
 
 export default function LogisticsView() {
   const { state, claimDelivery } = useOrders();
-  const { t } = useLanguage();
-  const [filter, setFilter] = useState<'READY' | 'DISPATCH'>('READY');
+  const [filter, setFilter] = useState<'READY' | 'DISPATCH' | 'DELIVERING'>('READY');
 
-  // LogisticsView is delivery-only — pickup/dine-in never appear here
-  const isDelivery = (o: typeof state.orders[0]) => o.deliveryType === 'delivery';
+  const filteredOrders = state.orders.filter(o => o.status === filter && o.deliveryType !== 'dine_in');
 
-  const filteredOrders = state.orders.filter(o => o.status === filter && isDelivery(o));
+  const readyCount = state.orders.filter(o => o.status === 'READY' && o.deliveryType !== 'dine_in').length;
+  const dispatchCount = state.orders.filter(o => o.status === 'DISPATCH').length;
+  const deliveringCount = state.orders.filter(o => o.status === 'DELIVERING').length;
 
-  const readyCount = state.orders.filter(o => o.status === 'READY' && isDelivery(o)).length;
-  const dispatchCount = state.orders.filter(o => o.status === 'DISPATCH' && isDelivery(o)).length;
+  const handoffOrder = state.orders.find(o => o.id === state.handoffOrderId);
 
-  const handoffOrder = state.orders.find(o => o.id === state.handoffOrderId && isDelivery(o));
-
-  // Orders with coords for the map (all active delivery states)
+  // Orders with coords for the map (all active delivery states, excluding dine-in)
   const mapOrders = state.orders.filter(
-    o => (o.status === 'READY' || o.status === 'DISPATCH') && isDelivery(o) && o.deliveryCoords,
+    o => (o.status === 'READY' || o.status === 'DISPATCH' || o.status === 'DELIVERING') && o.deliveryCoords && o.deliveryType !== 'dine_in',
   );
 
   return (
@@ -35,13 +31,14 @@ export default function LogisticsView() {
         <div className="px-4 pt-5 pb-3">
           <div className="flex items-center gap-2 mb-3">
             <Bike size={20} style={{ color: 'var(--status-icon-dispatch)' }} />
-            <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('logistics_title')}</h1>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Logistics</h1>
           </div>
 
           {/* Filter tabs */}
-          <div className="grid grid-cols-2 gap-2">
-            <FilterTab active={filter === 'READY'} onClick={() => setFilter('READY')} label={t('ready')} count={readyCount} icon={<PackageCheck size={13} />} activeBorder="var(--status-icon-ready)" activeBg="var(--urgency-warning-bg)" activeText="var(--status-icon-ready)" />
-            <FilterTab active={filter === 'DISPATCH'} onClick={() => setFilter('DISPATCH')} label={t('dispatch')} count={dispatchCount} icon={<Bike size={13} />} activeBorder="var(--status-icon-dispatch)" activeBg="rgba(16,185,129,0.08)" activeText="var(--status-icon-dispatch)" />
+          <div className="grid grid-cols-3 gap-2">
+            <FilterTab active={filter === 'READY'} onClick={() => setFilter('READY')} label="Ready" count={readyCount} icon={<PackageCheck size={13} />} activeBorder="var(--status-icon-ready)" activeBg="var(--urgency-warning-bg)" activeText="var(--status-icon-ready)" />
+            <FilterTab active={filter === 'DISPATCH'} onClick={() => setFilter('DISPATCH')} label="Dispatch" count={dispatchCount} icon={<Bike size={13} />} activeBorder="var(--status-icon-dispatch)" activeBg="rgba(16,185,129,0.08)" activeText="var(--status-icon-dispatch)" />
+            <FilterTab active={filter === 'DELIVERING'} onClick={() => setFilter('DELIVERING')} label="Out" count={deliveringCount} icon={<MapPin size={13} />} activeBorder="var(--status-icon-delivering)" activeBg="rgba(168,85,247,0.08)" activeText="var(--status-icon-delivering)" />
           </div>
         </div>
 
@@ -71,7 +68,7 @@ export default function LogisticsView() {
                   >
                     <div className="rounded-xl px-4 py-2 flex items-center gap-2" style={{ backgroundColor: 'var(--reception-bg)', border: '1px solid var(--reception-border)' }}>
                       <CheckCircle size={14} style={{ color: 'var(--reception-text)' }} />
-                      <span className="text-xs font-semibold" style={{ color: 'var(--reception-text)' }}>{t('order_handed_off_kitchen') || 'Order handed off from kitchen'}</span>
+                      <span className="text-xs font-semibold" style={{ color: 'var(--reception-text)' }}>Order handed off from kitchen</span>
                     </div>
                   </motion.div>
                 )}
@@ -79,8 +76,8 @@ export default function LogisticsView() {
                 <OrderCard
                   order={order}
                   showLocation
-                  showConfirmDelivery={filter === 'DISPATCH'}
-                  showClaimButton={filter === 'READY' && !order.assignedTo && order.deliveryType === 'delivery'}
+                  showConfirmDelivery={filter === 'DELIVERING'}
+                  showClaimButton={filter === 'READY' && !order.assignedTo}
                   onClaim={claimDelivery}
                 />
               </motion.div>
@@ -96,10 +93,14 @@ export default function LogisticsView() {
             >
               <Bike size={48} className="mb-3" style={{ color: 'var(--empty-icon)' }} />
               <p className="text-sm">
-                {filter === 'READY' ? t('no_orders_ready') : t('no_orders_dispatch')}
+                {filter === 'READY' ? 'No orders ready for pickup' :
+                 filter === 'DISPATCH' ? 'No orders waiting for riders' :
+                 'No deliveries in progress'}
               </p>
               <p className="text-xs mt-1 opacity-60">
-                {filter === 'READY' ? 'Swipe up on ready orders to dispatch' : 'Confirm delivery when order is handed to customer'}
+                {filter === 'READY' ? 'Swipe up on ready orders to dispatch' :
+                 filter === 'DISPATCH' ? 'Riders will be assigned automatically' :
+                 'Deliveries update in real-time'}
               </p>
             </motion.div>
           )}

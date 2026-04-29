@@ -46,20 +46,10 @@ const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   TODO: 'PREP',
   PREP: 'READY',
   READY: 'DISPATCH',
-  DISPATCH: 'DONE',
+  DISPATCH: 'DELIVERING',
+  DELIVERING: 'DONE',
   DONE: null,
 };
-
-/** Compute next status respecting order type (pickup/dine-in skip dispatch) */
-function getNextStatus(order: Order): OrderStatus | null {
-  let next = STATUS_FLOW[order.status];
-  if (!next) return null;
-  // Pickup/dine-in skip DISPATCH — go directly to DONE
-  if (order.status === 'READY' && order.deliveryType !== 'delivery') {
-    next = 'DONE';
-  }
-  return next;
-}
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -69,7 +59,7 @@ function reducer(state: AppState, action: Action): AppState {
     case 'ADVANCE_STATUS': {
       const order = state.orders.find(o => o.id === action.orderId);
       if (!order) return state;
-      const nextStatus = getNextStatus(order);
+      const nextStatus = STATUS_FLOW[order.status];
       if (!nextStatus) return state;
       hapticForTransition('status_advance');
       const newOrders = state.orders.map(o =>
@@ -107,12 +97,12 @@ function reducer(state: AppState, action: Action): AppState {
     }
 
     case 'CONFIRM_PAYMENT': {
-      hapticForTransition('verify_cash');
+      hapticForTransition('confirm_delivery');
       return {
         ...state,
         orders: state.orders.map(o =>
           o.id === action.orderId
-            ? { ...o, paymentStatus: 'paid', offlineQueued: !state.isOnline }
+            ? { ...o, status: 'DONE' as OrderStatus, cashVerified: true, offlineQueued: !state.isOnline }
             : o,
         ),
       };
@@ -134,11 +124,7 @@ function reducer(state: AppState, action: Action): AppState {
       hapticForTransition('status_advance');
       return {
         ...state,
-        orders: state.orders.map(o =>
-          o.id === action.orderId
-            ? { ...o, status: 'DONE' as OrderStatus }
-            : o,
-        ),
+        orders: state.orders.filter(o => o.id !== action.orderId),
       };
     }
 
@@ -146,19 +132,10 @@ function reducer(state: AppState, action: Action): AppState {
     case 'SELECT_ORDER':   return { ...state, selectedOrderId: action.orderId };
     case 'SET_HANDOFF':    return { ...state, handoffOrderId: action.orderId };
     case 'RESET_HANDOFF':  return { ...state, handoffOrderId: null };
-    case 'ADD_ORDER': {
-      // Prevent duplicate from Supabase realtime replay on reconnect
-      if (state.orders.some(o => o.id === action.order.id)) return state;
-      return { ...state, orders: [action.order, ...state.orders] };
-    }
+    case 'ADD_ORDER':      return { ...state, orders: [action.order, ...state.orders] };
     case 'UPDATE_ORDER':   return { ...state, orders: state.orders.map(o => o.id === action.order.id ? action.order : o) };
     case 'REMOVE_ORDER':   return { ...state, orders: state.orders.filter(o => o.id !== action.orderId) };
-    case 'HYDRATE_ORDERS': {
-      // Deduplicate by ID — Supabase can return stale rows during polling overlap
-      const byId = new Map();
-      for (const o of action.orders) byId.set(o.id, o);
-      return { ...state, orders: Array.from(byId.values()) };
-    }
+    case 'HYDRATE_ORDERS': return { ...state, orders: action.orders };
     case 'SET_DRIVER_POSITION': return { ...state, driverPosition: action.pos };
     default: return state;
   }
@@ -183,10 +160,9 @@ interface OrderContextValue {
   advanceOrderStatus: (orderId: string) => void;
   verifyCash: (orderId: string) => void;
   confirmDelivery: (orderId: string) => void;
-  confirmPayment: (orderId: string, method?: string) => void;
+  confirmPayment: (orderId: string) => void;
   claimDelivery: (orderId: string) => void;
   cancelOrder: (orderId: string) => void;
-  refreshOrders: () => Promise<void>;
   setTab: (tab: TabId) => void;
   selectOrder: (orderId: string | null) => void;
   toggleOnline: () => void;
@@ -194,26 +170,11 @@ interface OrderContextValue {
 
 const OrderContext = createContext<OrderContextValue | null>(null);
 
-/** Call the FSM RPC that validates and executes status transitions */
-async function callAdvanceOrderStatusRpc(orderId: string, targetDbStatus: string) {
-  const { data, error } = await supabase.rpc('advance_order_status', {
-    p_order_id: orderId,
-    p_target_status: targetDbStatus,
-  });
-  if (error) throw new Error(error.message);
-  if (data && !data.success) {
-    const msg = data.message || `FSM rejected: ${data.error || 'unknown'}`;
-    throw new Error(msg);
-  }
-  return data;
-}
-
 export function OrderProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { addToast } = useToasts();
   const [audioEnabled] = useAudioPref();
   const watchIdRef = useRef<number | null>(null);
-  const pendingOpsRef = useRef(new Set<string>());
   const { businessId } = useBusiness();
 
   /* ── Fetch real orders + subscribe to Supabase real-time ─────────── */
@@ -232,11 +193,6 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {}); // Prevent unhandled rejection on initial load
 
-    // Request browser notification permission on load
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
-    }
-
     let channel: any = null;
     let pollInterval: NodeJS.Timeout | null = null;
 
@@ -254,26 +210,18 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
               dispatch({ type: 'ADD_ORDER', order });
               addToast({
                 type: 'new_order',
-                title: `New Order ${order.orderNumber}`,
+                title: `New Order #${newRow.order_number ?? ''}`,
                 message: `${order.customerName} — ${order.items.length} item${order.items.length !== 1 ? 's' : ''}`,
                 orderId: order.id,
               });
               if (audioEnabled) audio.alertNewOrder(order.priority);
-              // Browser push notification (works even when tab is backgrounded)
-              if ('Notification' in window && Notification.permission === 'granted') {
-                try {
-                  new Notification(`New Order ${order.orderNumber}`, {
-                    body: `${order.customerName} — ${order.items.length} item${order.items.length !== 1 ? 's' : ''}`,
-                    icon: '/pwa-icons/icon-192x192.png',
-                    tag: order.id,
-                    requireInteraction: true,
-                  });
-                } catch { /* noop */ }
-              }
             } else if (eventType === 'UPDATE') {
               const updated = mapDbOrderToKimi(newRow);
-              // Always keep done/cancelled orders in state so they stay in the Completed tab
-              dispatch({ type: 'UPDATE_ORDER', order: updated });
+              if (updated.status === 'DONE' || newRow.status === 'cancelled' || newRow.status === 'cancelado') {
+                dispatch({ type: 'REMOVE_ORDER', orderId: updated.id });
+              } else {
+                dispatch({ type: 'UPDATE_ORDER', order: updated });
+              }
             } else if (eventType === 'DELETE') {
               dispatch({ type: 'REMOVE_ORDER', orderId: oldRow.id });
             }
@@ -282,7 +230,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         .subscribe((status: string, err?: Error) => {
           if (err || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn('[useOrders] Realtime unavailable, falling back to polling:', status, err?.message);
-            // Fallback: poll every 3 seconds for instant staff feedback
+            // Fallback: poll every 15 seconds
             pollInterval = setInterval(() => {
               supabase
                 .from('orders')
@@ -294,12 +242,11 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
                 .then(({ data }: { data: any[] | null }) => {
                   if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
                 });
-            }, 3000);
+            }, 15000);
           }
         });
     } catch (err) {
       console.warn('[useOrders] Realtime init failed, using polling:', (err as Error)?.message);
-      // Fallback: poll every 3 seconds
       pollInterval = setInterval(() => {
         supabase
           .from('orders')
@@ -311,7 +258,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
           .then(({ data }: { data: any[] | null }) => {
             if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
           });
-      }, 3000);
+      }, 15000);
     }
 
     return () => {
@@ -355,14 +302,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       actions.forEach(async (qa) => {
         if (qa.type === 'status_advance') dispatch({ type: 'ADVANCE_STATUS', orderId: qa.orderId });
         else if (qa.type === 'verify_cash') dispatch({ type: 'VERIFY_CASH', orderId: qa.orderId });
-        else if (qa.type === 'confirm_payment') {
-          dispatch({ type: 'CONFIRM_PAYMENT', orderId: qa.orderId });
-          if (state.isOnline && qa.payload?.method) {
-            dbUpdate(qa.orderId, { payment_status: 'paid', payment_confirmed: true, payment_method: qa.payload.method as string, paid_at: new Date().toISOString() }).catch(() => {});
-          }
-        }
         else if (qa.type === 'confirm_delivery') dispatch({ type: 'CONFIRM_DELIVERY', orderId: qa.orderId });
-        else if (qa.type === 'cancel_order') dispatch({ type: 'CANCEL_ORDER', orderId: qa.orderId });
         await removeQueuedAction(qa.id);
       });
     });
@@ -370,70 +310,51 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
   /* ── Action creators ─────────────────────────────────────────────── */
 
-  // Direct DB update — matches owner pattern exactly, no RPC
-  const dbUpdate = useCallback((orderId: string, updates: Record<string, any>) => {
-    return supabase
-      .from('orders')
-      .update(updates)
-      .eq('id', orderId)
-      .then(() => {
-        return supabase
-          .from('orders')
-          .select('*')
-          .eq('business_id', businessId)
-          .order('created_at', { ascending: false })
-          .limit(100)
-          .then(({ data }: { data: any[] | null }) => {
-            if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
-          });
-      });
-  }, [businessId]);
-
   const advanceOrderStatus = useCallback((orderId: string) => {
-    if (pendingOpsRef.current.has(orderId)) return;
-
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
-    const nextStatus = getNextStatus(order);
+    const nextStatus = STATUS_FLOW[order.status];
     if (!nextStatus) return;
 
-    pendingOpsRef.current.add(orderId);
     if (!state.isOnline) queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });
     dispatch({ type: 'ADVANCE_STATUS', orderId });
 
-    if (state.isOnline) {
-      dbUpdate(orderId, { status: toDbStatus(nextStatus) })
-        .catch((e: Error) => addToast({ type: 'critical', title: 'Update Failed', message: e.message, orderId }))
-        .finally(() => pendingOpsRef.current.delete(orderId));
-    } else {
-      pendingOpsRef.current.delete(orderId);
+    if (state.isOnline && businessId) {
+      updateOrderCloud(orderId, { status: toDbStatus(nextStatus) }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] advance:', e));
     }
-  }, [state.isOnline, state.orders, dbUpdate, addToast]);
+  }, [state.isOnline, state.orders, businessId]);
 
   const verifyCash = useCallback((orderId: string) => {
-    if (pendingOpsRef.current.has(orderId)) return;
-
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
-    pendingOpsRef.current.add(orderId);
     if (!state.isOnline) queueAction({ orderId, type: 'verify_cash', timestamp: Date.now() });
     dispatch({ type: 'VERIFY_CASH', orderId });
 
-    if (state.isOnline) {
-      dbUpdate(orderId, { status: 'released_to_kitchen', payment_confirmed: true, payment_status: 'paid' })
-        .then(() => {
-          addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
-          if (audioEnabled) audio.alertCashVerified();
-        })
-        .catch((e: Error) => addToast({ type: 'critical', title: 'Verify Failed', message: e.message, orderId }))
-        .finally(() => pendingOpsRef.current.delete(orderId));
-    } else {
-      addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
-      if (audioEnabled) audio.alertCashVerified();
-      pendingOpsRef.current.delete(orderId);
+    if (state.isOnline && businessId) {
+      updateOrderCloud(orderId, { status: 'confirmado', payment_confirmed: true }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] verifyCash:', e));
     }
-  }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled]);
+
+    addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
+    if (audioEnabled) audio.alertCashVerified();
+  }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
+
+  const confirmPayment = useCallback((orderId: string) => {
+    const order = state.orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    dispatch({ type: 'CONFIRM_PAYMENT', orderId });
+
+    if (state.isOnline && businessId) {
+      updateOrderCloud(orderId, { status: 'entregado', payment_confirmed: true }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] confirmPayment:', e));
+    }
+
+    addToast({ type: 'delivery_done', title: 'Payment Confirmed', message: `${order.customerName} — dine-in complete`, orderId });
+    if (audioEnabled) audio.alertDeliveryConfirmed();
+  }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
   const confirmDelivery = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
@@ -442,115 +363,41 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     if (!state.isOnline) queueAction({ orderId, type: 'confirm_delivery', timestamp: Date.now() });
     dispatch({ type: 'CONFIRM_DELIVERY', orderId });
 
-    if (state.isOnline) {
-      dbUpdate(orderId, { status: 'delivered', delivered_at: new Date().toISOString() })
-        .catch((e: Error) => addToast({ type: 'critical', title: 'Confirm Failed', message: e.message, orderId }));
+    if (state.isOnline && businessId) {
+      // delivered_at is auto-stamped inside updateOrderCloud when status = 'entregado'
+      updateOrderCloud(orderId, { status: 'entregado' }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] confirmDelivery:', e));
     }
 
     addToast({ type: 'delivery_done', title: 'Delivered', message: `${order.customerName} — completed`, orderId });
     if (audioEnabled) audio.alertDeliveryConfirmed();
-  }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled]);
+  }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
   const claimDelivery = useCallback((orderId: string) => {
-    const order = state.orders.find(o => o.id === orderId);
-    if (!order || order.deliveryType !== 'delivery') return;
-
     const staffMember = (() => { try { return JSON.parse(localStorage.getItem('fs_staff_member') || '{}'); } catch { return {}; } })();
     const staffName = staffMember?.name || 'Staff';
     dispatch({ type: 'CLAIM_DELIVERY', orderId, staffName });
-    if (state.isOnline) {
-      dbUpdate(orderId, { status: 'dispatched', assigned_to: staffName })
-        .catch((e: Error) => addToast({ type: 'critical', title: 'Claim Failed', message: e.message, orderId }));
+    if (state.isOnline && businessId) {
+      updateOrderCloud(orderId, { status: toDbStatus('DISPATCH') }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] claimDelivery:', e));
     }
     addToast({ type: 'cash_verified', title: 'Delivery Claimed', message: `${staffName} is taking this order`, orderId });
-  }, [state.isOnline, state.orders, dbUpdate, addToast]);
+  }, [state.isOnline, businessId, addToast]);
 
   const cancelOrder = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
-    if (!state.isOnline) {
-      queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
-      dispatch({ type: 'REMOVE_ORDER', orderId });
-      addToast({ type: 'order_cancelled', title: 'Order Deleted', message: `${order.customerName} — deleted`, orderId });
-      return;
+    if (!state.isOnline) queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
+    dispatch({ type: 'CANCEL_ORDER', orderId });
+
+    if (state.isOnline && businessId) {
+      updateOrderCloud(orderId, { status: 'cancelled' }, businessId)
+        .catch((e: Error) => console.error('[StaffOps] cancelOrder:', e));
     }
 
-    // Delete from DB first, THEN remove from UI only if successful
-    supabase
-      .from('orders')
-      .delete()
-      .eq('id', orderId)
-      .then(() => {
-        dispatch({ type: 'REMOVE_ORDER', orderId });
-        addToast({ type: 'order_cancelled', title: 'Order Deleted', message: `${order.customerName} — deleted`, orderId });
-      })
-      .catch((e: Error) => addToast({ type: 'critical', title: 'Cancel Failed', message: e.message, orderId }));
+    addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
   }, [state.isOnline, state.orders, businessId, addToast]);
-
-  const refreshOrders = useCallback(async () => {
-    if (!businessId) return;
-    try {
-      const { data } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
-    } catch (e) {
-      console.error('[useOrders] Refresh failed:', e);
-    }
-  }, [businessId]);
-
-  const confirmPayment = useCallback(async (orderId: string, method?: string) => {
-    if (pendingOpsRef.current.has(orderId)) return;
-
-    const order = state.orders.find(o => o.id === orderId);
-    if (!order) return;
-
-    pendingOpsRef.current.add(orderId);
-    const paymentMethod = method || 'cash';
-    const now = new Date().toISOString();
-
-    if (!state.isOnline) {
-      queueAction({ orderId, type: 'confirm_payment', payload: { method: paymentMethod }, timestamp: Date.now() });
-      dispatch({ type: 'CONFIRM_PAYMENT', orderId });
-      addToast({ type: 'cash_verified', title: 'Payment Confirmed (offline)', message: `${order.customerName} — will sync when online`, orderId });
-      if (audioEnabled) audio.alertCashVerified();
-      pendingOpsRef.current.delete(orderId);
-      return;
-    }
-
-    try {
-      const { error: ledgerError } = await supabase
-        .from('transaction_ledger')
-        .insert({
-          order_id: orderId,
-          business_id: businessId,
-          transaction_type: 'payment',
-          status: 'completed',
-          amount_gross_cents: Math.round((Number(order.total) || 0) * 100),
-          currency: 'ARS',
-          payment_method: paymentMethod,
-          external_reference: `${paymentMethod.toUpperCase()}-${orderId}`,
-          processed_at: now,
-          offline_sync: false,
-        });
-      if (ledgerError) {
-        console.error('[Staff] Ledger insert failed:', ledgerError);
-      }
-
-      await dbUpdate(orderId, { payment_status: 'paid', payment_confirmed: true, payment_method: paymentMethod, paid_at: now });
-      dispatch({ type: 'CONFIRM_PAYMENT', orderId });
-      addToast({ type: 'cash_verified', title: 'Payment Confirmed', message: `${order.customerName} — paid`, orderId });
-      if (audioEnabled) audio.alertCashVerified();
-    } catch (e: any) {
-      addToast({ type: 'critical', title: 'Confirm Failed', message: e.message, orderId });
-    } finally {
-      pendingOpsRef.current.delete(orderId);
-    }
-  }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled, businessId]);
 
   const setTab = useCallback((tab: TabId) => dispatch({ type: 'SET_TAB', tab }), []);
   const selectOrder = useCallback((orderId: string | null) => dispatch({ type: 'SELECT_ORDER', orderId }), []);
@@ -558,8 +405,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <OrderContext.Provider value={{
-      state, dispatch, advanceOrderStatus, verifyCash,
-      confirmDelivery, confirmPayment, claimDelivery, cancelOrder, refreshOrders, setTab, selectOrder, toggleOnline,
+      state, dispatch, advanceOrderStatus, verifyCash, confirmDelivery, confirmPayment,
+      claimDelivery, cancelOrder, setTab, selectOrder, toggleOnline,
     }}>
       {children}
     </OrderContext.Provider>

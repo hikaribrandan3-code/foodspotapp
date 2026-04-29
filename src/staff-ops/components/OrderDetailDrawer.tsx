@@ -1,12 +1,7 @@
-import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
-import { useBusiness } from '@/contexts/BusinessContext';
-import { supabase } from '../../lib/supabaseClient.js';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
-import { ORDER_STATUS } from '../../constants/database.js';
-import { sendPaymentRequestToDiscord } from '../../utils/discordNotifications.js';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -20,51 +15,22 @@ function callPhone(phone: string) {
 
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
-  const { businessId } = useBusiness();
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [showingAlias, setShowingAlias] = useState(false);
-  const [mpAlias, setMpAlias] = useState<string | undefined>(undefined);
-  const [discordWebhookUrl, setDiscordWebhookUrl] = useState<string | undefined>(undefined);
-  const [sendingToDiscord, setSendingToDiscord] = useState(false);
   const order = state.orders.find(o => o.id === state.selectedOrderId);
-
-  useEffect(() => {
-    if (!businessId) return;
-    supabase
-      .from('branding')
-      .select('app_config')
-      .eq('business_id', businessId)
-      .single()
-      .then(({ data }: { data: any }) => {
-        const alias = data?.app_config?.payments?.mercadoPagoAlias;
-        const webhook = data?.app_config?.notifications?.discordWebhookUrl;
-        setMpAlias(alias || undefined);
-        setDiscordWebhookUrl(webhook || undefined);
-      })
-      .catch(() => {
-        setMpAlias(undefined);
-        setDiscordWebhookUrl(undefined);
-      });
-  }, [businessId]);
 
   if (!order) return null;
 
   const urgency = getUrgencyLevel(order.createdAt);
   const waitMins = getWaitMinutes(order.createdAt);
   const isCashPending = order.status === 'PENDING_VERIFICATION';
-  const isDispatch = order.status === ORDER_STATUS.DISPATCHED;
-  const isDone = order.status === ORDER_STATUS.DELIVERED;
-  const isDineIn = order.deliveryType === 'dine_in';
-  const isUnpaid = order.paymentStatus !== 'paid';
+  const isDelivering = order.status === 'DELIVERING';
+  const isDone = order.status === 'DONE';
 
   // Next status label for the advance button
-  const isDeliveryOrder = order.deliveryType === 'delivery';
   const nextLabels: Record<string, string> = {
     TODO: '▶ Start Prep',
     PREP: '✓ Mark Ready',
-    READY: isDeliveryOrder ? '🚴 Dispatch' : '✓ Mark Delivered',
-    DISPATCH: '📦 Confirm Delivery',
+    READY: order.deliveryType === 'dine_in' ? '💰 Confirm Payment & Done' : '🚴 Dispatch',
+    DISPATCH: '📍 Mark Delivering',
   };
   const nextLabel = nextLabels[order.status];
 
@@ -104,7 +70,7 @@ export default function OrderDetailDrawer() {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{order.id.slice(0, 8)}…</span>
-                  <h2 className="text-xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{isDineIn ? `Table ${order.tableNumber}` : order.customerName}</h2>
+                  <h2 className="text-xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{order.customerName}</h2>
                 </div>
                 <button
                   onClick={() => selectOrder(null)}
@@ -163,21 +129,12 @@ export default function OrderDetailDrawer() {
 
               {/* Delivery info */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
-                  {isDineIn ? 'Table Info' : 'Customer & Delivery'}
-                </h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>Customer & Delivery</h3>
                 <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: 'var(--detail-item-bg)', border: '1px solid var(--detail-item-border)' }}>
-                  {isDineIn ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin size={14} style={{ color: 'var(--text-tertiary)' }} />
-                      <span style={{ color: 'var(--text-muted)' }}>Table {order.tableNumber}</span>
-                    </div>
-                  ) : (
                   <div className="flex items-center gap-2 text-sm">
                     <User size={14} style={{ color: 'var(--text-tertiary)' }} />
                     <span style={{ color: 'var(--text-muted)' }}>{order.customerName}</span>
                   </div>
-                  )}
 
                   {order.deliveryAddress && (
                     <div className="flex items-start gap-2 text-sm">
@@ -187,7 +144,7 @@ export default function OrderDetailDrawer() {
                   )}
 
                   {/* Contact buttons */}
-                  {!isDineIn && order.customerPhone && (
+                  {order.customerPhone && (
                     <div className="flex gap-2 pt-1">
                       <button
                         onClick={() => openWhatsApp(order.customerPhone!, order.customerName)}
@@ -217,17 +174,24 @@ export default function OrderDetailDrawer() {
                 <button
                   onClick={() => { verifyCash(order.id); selectOrder(null); }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: '#22C55E', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
                 >
                   <DollarSign size={16} strokeWidth={2.5} />
                   Verify Cash Payment
                 </button>
               )}
 
-              {/* Advance status (TODO → PREP → READY → DISPATCH → DONE) */}
+              {/* Advance status (TODO → PREP → READY → DISPATCH → DELIVERING, or dine-in READY → DONE) */}
               {nextLabel && !isCashPending && (
                 <button
-                  onClick={() => { advanceOrderStatus(order.id); selectOrder(null); }}
+                  onClick={() => {
+                    if (order.deliveryType === 'dine_in' && order.status === 'READY') {
+                      confirmPayment(order.id);
+                    } else {
+                      advanceOrderStatus(order.id);
+                    }
+                    selectOrder(null);
+                  }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                   style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)', border: '1px solid var(--status-icon-prep)' }}
                 >
@@ -237,7 +201,7 @@ export default function OrderDetailDrawer() {
               )}
 
               {/* Confirm Delivery */}
-              {isDispatch && (
+              {isDelivering && (
                 <button
                   onClick={() => { confirmDelivery(order.id); selectOrder(null); }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
@@ -248,18 +212,7 @@ export default function OrderDetailDrawer() {
                 </button>
               )}
 
-              {(isDone && isDineIn && isUnpaid) || (isDispatch && isDeliveryOrder && isUnpaid) ? (
-                <button
-                  onClick={() => setPaymentModalOpen(true)}
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: '#f97316', color: '#fff' }}
-                >
-                  <DollarSign size={16} />
-                  {isDispatch ? 'Collect Payment' : 'Confirm Payment'}
-                </button>
-              ) : null}
-
-              {isDone && !(isDineIn && isUnpaid) && (
+              {isDone && (
                 <div className="text-center text-sm py-2" style={{ color: 'var(--text-tertiary)' }}>
                   ✓ Order completed
                 </div>
@@ -274,126 +227,6 @@ export default function OrderDetailDrawer() {
               </button>
             </div>
           </motion.div>
-
-          {/* Payment method modal */}
-          {paymentModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 z-[80] flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(15, 27, 45, 0.4)' }}
-              onClick={() => !paymentProcessing && !showingAlias && setPaymentModalOpen(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                onClick={(e) => e.stopPropagation()}
-                className="rounded-2xl shadow-2xl"
-                style={{ backgroundColor: 'var(--detail-drawer-bg)', maxWidth: 380, padding: 32, border: '1px solid var(--line-2)' }}
-              >
-                {!showingAlias ? (
-                  <>
-                    <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>{isDispatch ? 'Collect Payment' : 'How did they pay?'}</h3>
-                    <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>Order #{order.orderNumber}{isDispatch && ' — At Door'}</p>
-
-                    {isDispatch && discordWebhookUrl && (
-                      <button
-                        onClick={async () => {
-                          setSendingToDiscord(true);
-                          const result = await sendPaymentRequestToDiscord(discordWebhookUrl, {
-                            orderNumber: order.orderNumber,
-                            customerName: order.customerName,
-                            total: order.total || 0,
-                            paymentMethod: 'cash',
-                            deliveryAddress: order.deliveryAddress,
-                            customerPhone: order.customerPhone,
-                            itemCount: order.items?.length || 0
-                          });
-                          setSendingToDiscord(false);
-                          if (result.success) {
-                            alert('Payment request sent to Discord!');
-                            setPaymentModalOpen(false);
-                          } else {
-                            alert('Failed to send Discord message');
-                          }
-                        }}
-                        disabled={sendingToDiscord || paymentProcessing}
-                        className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 mb-3"
-                        style={{ backgroundColor: '#7c3aed', color: '#fff', opacity: (sendingToDiscord || paymentProcessing) ? 0.6 : 1, cursor: (sendingToDiscord || paymentProcessing) ? 'not-allowed' : 'pointer' }}
-                        onMouseEnter={(e) => !(sendingToDiscord || paymentProcessing) && (e.currentTarget.style.backgroundColor = '#6d28d9')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#7c3aed')}
-                      >
-                        {sendingToDiscord ? 'Sending...' : '🤖 Send to Discord'}
-                      </button>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={async () => {
-                          setPaymentProcessing(true);
-                          await confirmPayment(order.id, 'cash');
-                          await new Promise(resolve => setTimeout(resolve, 800));
-                          setPaymentModalOpen(false);
-                          setPaymentProcessing(false);
-                          setShowingAlias(false);
-                        }}
-                        disabled={paymentProcessing}
-                        className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                        style={{ backgroundColor: '#E2F5EA', color: '#1F7A45', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
-                        onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#d4f5e9')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#E2F5EA')}
-                      >
-                        {paymentProcessing ? 'Processing...' : 'Cash'}
-                      </button>
-                      <button
-                        onClick={() => setShowingAlias(true)}
-                        disabled={paymentProcessing}
-                        className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                        style={{ backgroundColor: '#fed7aa', color: '#b45309', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
-                        onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#feccaa')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fed7aa')}
-                      >
-                        MP Alias
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>Customer pays via Alias</h3>
-                    <div className="mb-6 p-5 rounded-xl text-center" style={{ backgroundColor: '#fed7aa', border: '2px solid #f97316' }}>
-                      <p className="text-xs font-semibold mb-2" style={{ color: '#92400e', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MP Alias</p>
-                      <p className="text-2xl font-bold" style={{ color: '#b45309', margin: 0, fontFamily: 'monospace', fontSize: 28, fontWeight: 800 }}>{mpAlias}</p>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        setPaymentProcessing(true);
-                        await confirmPayment(order.id, 'mercado_pago');
-                        await new Promise(resolve => setTimeout(resolve, 800));
-                        setPaymentModalOpen(false);
-                        setPaymentProcessing(false);
-                        setShowingAlias(false);
-                      }}
-                      disabled={paymentProcessing}
-                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 mb-2"
-                      style={{ backgroundColor: '#E2F5EA', color: '#1F7A45', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
-                      onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#d4f5e9')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#E2F5EA')}
-                    >
-                      {paymentProcessing ? 'Verified…' : '✓ Verified'}
-                    </button>
-                    <button
-                      onClick={() => setShowingAlias(false)}
-                      disabled={paymentProcessing}
-                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
-                      style={{ backgroundColor: '#f3f4f6', color: 'var(--text-primary)', border: '1px solid var(--line-2)', cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
-                      onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#e5e7eb')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
-                    >
-                      ← Back
-                    </button>
-                  </>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
         </>
       )}
     </AnimatePresence>

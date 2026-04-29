@@ -7,7 +7,6 @@ import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { getDistanceKm, getETAMinutes } from '@/lib/utils';
 import { useOrders } from '@/hooks/useOrders';
 import { useBusiness } from '@/contexts/BusinessContext';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OrderCardProps {
   order: Order;
@@ -33,6 +32,7 @@ function StatusIcon({ status }: { status: Order['status'] }) {
     case 'PREP': return <Clock {...props} style={{ color: 'var(--status-icon-prep)' }} />;
     case 'READY': return <PackageCheck {...props} style={{ color: 'var(--status-icon-ready)' }} />;
     case 'DISPATCH': return <Bike {...props} style={{ color: 'var(--status-icon-dispatch)' }} />;
+    case 'DELIVERING': return <MapPin {...props} style={{ color: 'var(--status-icon-delivering)' }} />;
     case 'DONE': return <CheckCircle2 {...props} style={{ color: 'var(--status-icon-done)' }} />;
   }
 }
@@ -58,7 +58,6 @@ export default function OrderCard({
 }: OrderCardProps) {
   const { selectOrder, verifyCash, confirmDelivery, cancelOrder, confirmPayment } = useOrders();
   const { businessLat, businessLng } = useBusiness();
-  const { t } = useLanguage();
   const [isRemoving, setIsRemoving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const x = useMotionValue(0);
@@ -84,7 +83,8 @@ export default function OrderCard({
     return getETAMinutes(distKm);
   })();
 
-  const isCashPending = (order.status === 'PENDING_VERIFICATION' || (order.status === 'TODO' && order.paymentMethod === 'cash' && !order.cashVerified)) && order.deliveryType !== 'dine_in';
+  const isCashPending = order.status === 'PENDING_VERIFICATION';
+  const isDelivering = order.status === 'DELIVERING';
 
   const getCardStyles = () => {
     if (urgency === 'critical' && !isCashPending) return 'animate-urgent-pulse';
@@ -164,8 +164,12 @@ export default function OrderCard({
 
   const handleAdvance = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onAdvance?.(order.id);
-  }, [onAdvance, order.id]);
+    if (order.deliveryType === 'dine_in' && order.status === 'READY') {
+      confirmPayment(order.id);
+    } else {
+      onAdvance?.(order.id);
+    }
+  }, [onAdvance, order.id, order.deliveryType, order.status, confirmPayment]);
 
   if (isRemoving) {
     return (
@@ -268,7 +272,7 @@ export default function OrderCard({
                     backgroundColor: order.deliveryType === 'delivery' ? 'rgba(168,85,247,0.12)' : order.deliveryType === 'dine_in' ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.12)',
                     color: order.deliveryType === 'delivery' ? 'var(--status-icon-delivering)' : order.deliveryType === 'dine_in' ? 'var(--status-icon-dispatch)' : 'var(--status-icon-prep)',
                   }}>
-                  {order.deliveryType === 'delivery' ? 'Delivery' : order.deliveryType === 'dine_in' ? 'Dine In' : 'Take Out'}
+                  {order.deliveryType === 'delivery' ? 'Delivery' : order.deliveryType === 'dine_in' ? 'Dine In' : 'Pickup'}
                 </span>
               )}
               {order.tableNumber && (
@@ -317,14 +321,14 @@ export default function OrderCard({
         {/* ── Verify Cash button (PENDING_VERIFICATION only) ───── */}
         {isCashPending && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
-            <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>{t('payment_verify_required') || 'Payment must be verified before kitchen sees this order.'}</p>
+            <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>Payment must be verified before kitchen sees this order.</p>
             <button
               onClick={handleVerifyCash}
               className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-              style={{ backgroundColor: '#22C55E', color: '#fff' }}
+              style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
             >
               <DollarSign size={16} strokeWidth={2.5} />
-              {t('confirm_payment') || 'Verify Cash Payment'}
+              Verify Cash Payment
             </button>
           </div>
         )}
@@ -338,7 +342,7 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' ? (order.deliveryType === 'delivery' ? 'Assign Delivery' : order.deliveryType === 'dine_in' ? 'Mark Served' : 'Mark Delivered') : order.status === 'DISPATCH' ? 'Confirm Delivery' : 'Advance'}
+              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' && order.deliveryType === 'dine_in' ? 'Confirm Payment' : order.status === 'READY' ? 'Assign Delivery' : 'Advance'}
             </button>
           </div>
         )}
@@ -357,8 +361,8 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Delivery action bar (DISPATCH — confirm delivery) ─ */}
-        {showConfirmDelivery && order.status === 'DISPATCH' && (
+        {/* ── Delivery action bar (DELIVERING only) ────────────── */}
+        {showConfirmDelivery && isDelivering && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <div className="flex gap-2">
               {order.deliveryCoords && (
@@ -383,22 +387,8 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Dine-in payment confirmation (DONE + unpaid) — opens drawer for method selection ─── */}
-        {order.deliveryType === 'dine_in' && order.status === 'DONE' && order.paymentStatus !== 'paid' && (
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
-            <button
-              onClick={(e) => { e.stopPropagation(); selectOrder(order.id); }}
-              className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-              style={{ backgroundColor: '#f97316', color: '#fff' }}
-            >
-              <DollarSign size={16} />
-              Confirm Payment
-            </button>
-          </div>
-        )}
-
-        {/* ── Cancel button ───── */}
-        {!compact && (order.status === 'PENDING_VERIFICATION' || (order.deliveryType === 'dine_in' && (order.status === 'TODO' || order.status === 'PREP'))) && (
+        {/* ── Cancel button ──────────────────────────────────────── */}
+        {!compact && !isCashPending && !showConfirmDelivery && order.status !== 'DONE' && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <button
               onClick={(e) => {
