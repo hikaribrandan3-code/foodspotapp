@@ -74,7 +74,7 @@ function nextActionFor(status, orderType, paymentStatus) {
   if (!flow?.label) return null
   // Pickup/dine-in at READY skips dispatch — label should reflect the actual action
   if (status === ORDER_STATUS.READY && orderType !== 'delivery') {
-    return { label: 'Mark Delivered', intent: 'green' }
+    return { label: orderType === 'dine_in' ? 'Mark Served' : 'Mark Delivered', intent: 'green' }
   }
   return { label: flow.label, intent: flow.intent || 'blue' }
 }
@@ -380,7 +380,9 @@ export default function Dashboard() {
 
   const filtered = useMemo(() => {
     return displayOrders.filter(o => {
-      const completed = [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status)
+      const isUnpaidDineInDone = o.order_type === 'dine_in' && o.status === ORDER_STATUS.DELIVERED && o.payment_status !== 'paid'
+      const completed = [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(o.status) && !isUnpaidDineInDone
+      
       if (tab === 'active' ? completed : !completed) return false
       if (filterBucket) return statusToBucket(o.status, t) === filterBucket
       return true
