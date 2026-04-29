@@ -31,7 +31,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [orderType, setOrderType] = useState<'pickup' | 'delivery'>('pickup');
+  const [orderType, setOrderType] = useState<'dine_in' | 'pickup' | 'delivery'>('dine_in');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card_on_delivery' | 'transfer'>('cash');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -97,6 +97,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
 
   const handleSubmit = async () => {
     if (!customerName.trim() || cart.length === 0) return;
+    if (orderType === 'delivery' && !deliveryAddress.trim()) return;
     setSubmitting(true);
 
     try {
@@ -111,14 +112,18 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
 
       const nextNumber = ((lastOrder?.order_number as number) || 0) + 1;
 
+      // Dine-in orders skip payment confirmation and go straight to kitchen
+      const isPayAfter = orderType === 'dine_in';
+      const initialStatus = isPayAfter ? 'todo' : 'pending_payment';
+
       await createOrderCloud({
         orderNumber: nextNumber,
         items: cart.map(c => ({ name: c.name, quantity: c.quantity, price: c.price })),
         total: cartTotal,
-        status: 'pending_payment',
+        status: initialStatus,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim() || null,
-        deliveryMode: orderType === 'delivery',
+        delivery_type: orderType,
         deliveryAddress: orderType === 'delivery' ? deliveryAddress.trim() || null : null,
         paymentMethod,
         notes: notes.trim() || null,
@@ -311,7 +316,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
 
                   {/* Order type */}
                   <div className="flex gap-2">
-                    {(['pickup', 'delivery'] as const).map(t => (
+                    {(['dine_in', 'pickup', 'delivery'] as const).map(t => (
                       <button
                         key={t}
                         onClick={() => setOrderType(t)}
@@ -322,13 +327,13 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                           border: `1px solid ${orderType === t ? 'var(--filter-active-border)' : 'var(--counter-border)'}`,
                         }}
                       >
-                        {t}
+                        {t === 'dine_in' ? 'dine in' : t}
                       </button>
                     ))}
                   </div>
 
                   {orderType === 'delivery' && (
-                    <Field icon={<MapPin size={14} />} label="Delivery Address">
+                    <Field icon={<MapPin size={14} />} label="Delivery Address *">
                       <input
                         value={deliveryAddress}
                         onChange={e => setDeliveryAddress(e.target.value)}
@@ -397,12 +402,12 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
               ) : (
                 <button
                   onClick={handleSubmit}
-                  disabled={submitting || !customerName.trim()}
+                  disabled={submitting || !customerName.trim() || (orderType === 'delivery' && !deliveryAddress.trim())}
                   className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
                   style={{
                     backgroundColor: 'var(--filter-active-bg)',
                     color: 'var(--filter-active-text)',
-                    opacity: submitting || !customerName.trim() ? 0.6 : 1,
+                    opacity: submitting || !customerName.trim() || (orderType === 'delivery' && !deliveryAddress.trim()) ? 0.6 : 1,
                   }}
                 >
                   {submitting
