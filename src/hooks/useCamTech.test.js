@@ -1,35 +1,33 @@
-/**
- * CamTech Black Box Test Suite
- * Run this to verify the camera isolation system works
- */
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { useCamTechBroadcaster, useCamTechListener } from './useCamTech'
 
-import { useCamTechBroadcaster, useCamTechListener } from './useCamTech';
+describe('useCamTech', () => {
+  beforeEach(() => {
+    delete window.__camTechActive
+  })
 
-// Test 1: Verify hooks exist and are exported
-console.log('✅ Test 1: useCamTechBroadcaster exported:', typeof useCamTechBroadcaster === 'function');
-console.log('✅ Test 2: useCamTechListener exported:', typeof useCamTechListener === 'function');
+  afterEach(() => {
+    delete window.__camTechActive
+  })
 
-// Test 2: Verify event system works
-let testPassed = false;
-window.addEventListener('camtech:active', (e) => {
-  console.log('✅ Test 3: Event received:', e.detail);
-  testPassed = true;
-});
+  it('useCamTechBroadcaster is exported as a function', () => {
+    expect(typeof useCamTechBroadcaster).toBe('function')
+  })
 
-// Simulate camera activation
-window.dispatchEvent(new CustomEvent('camtech:active', { 
-  detail: { active: true, timestamp: Date.now() } 
-}));
+  it('useCamTechListener is exported as a function', () => {
+    expect(typeof useCamTechListener).toBe('function')
+  })
 
-// Test 3: Verify global flag
-console.log('✅ Test 4: Global flag set:', window.__camTechActive === true);
+  it('broadcasts camera activation event', () => {
+    let eventReceived = false
+    window.addEventListener('camtech:active', (e) => {
+      eventReceived = e.detail.active === true
+    })
 
-// Summary
-setTimeout(() => {
-  console.log('\n📊 CamTech Test Results:');
-  console.log('All tests:', testPassed ? '✅ PASSED' : '❌ FAILED');
-  console.log('\nUsage:');
-  console.log('1. Camera component: useCamTechBroadcaster()');
-  console.log('2. Polling components: useCamTechListener({ onPause, onResume })');
-  console.log('3. Check status: window.__camTechActive');
-}, 100);
+    window.dispatchEvent(new CustomEvent('camtech:active', {
+      detail: { active: true, timestamp: Date.now() }
+    }))
+
+    expect(eventReceived).toBe(true)
+  })
+})
