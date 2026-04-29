@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Search, ShoppingBag, User, Phone, MapPin, CreditCard, Loader2 } from 'lucide-react';
 import { useBusiness } from '@/contexts/BusinessContext';
+import { useOrders } from '@/staff-ops/hooks/useOrders';
 // @ts-ignore
 import { supabase, createOrderCloud } from '../../lib/supabaseClient.js';
 
@@ -24,6 +25,7 @@ interface ManualOrderModalProps {
 
 export default function ManualOrderModal({ open, onClose }: ManualOrderModalProps) {
   const { businessId } = useBusiness();
+  const { refreshOrders } = useOrders();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Array<{ name: string; items: MenuItem[] }>>([]);
   const [activeCategory, setActiveCategory] = useState<string>('');
@@ -146,14 +148,8 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
         staffNotes: notes.trim() || null,
       }, businessId);
 
-      // Wait 500ms to ensure order is in DB, then force refetch to show immediately
-      await new Promise(r => setTimeout(r, 500));
-      supabase
-        .from('orders')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // Refresh orders immediately so new order appears in Mission Control
+      await refreshOrders();
 
       setCart([]);
       setTableNumber('');

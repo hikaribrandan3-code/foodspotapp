@@ -186,6 +186,7 @@ interface OrderContextValue {
   confirmPayment: (orderId: string) => void;
   claimDelivery: (orderId: string) => void;
   cancelOrder: (orderId: string) => void;
+  refreshOrders: () => Promise<void>;
   setTab: (tab: TabId) => void;
   selectOrder: (orderId: string | null) => void;
   toggleOnline: () => void;
@@ -462,19 +463,39 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
-    if (!state.isOnline) queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
-    dispatch({ type: 'REMOVE_ORDER', orderId });
-
-    if (state.isOnline) {
-      supabase
-        .from('orders')
-        .delete()
-        .eq('id', orderId)
-        .catch((e: Error) => addToast({ type: 'critical', title: 'Cancel Failed', message: e.message, orderId }));
+    if (!state.isOnline) {
+      queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
+      dispatch({ type: 'REMOVE_ORDER', orderId });
+      addToast({ type: 'order_cancelled', title: 'Order Deleted', message: `${order.customerName} — deleted`, orderId });
+      return;
     }
 
-    addToast({ type: 'order_cancelled', title: 'Order Deleted', message: `${order.customerName} — deleted`, orderId });
+    // Delete from DB first, THEN remove from UI only if successful
+    supabase
+      .from('orders')
+      .delete()
+      .eq('id', orderId)
+      .then(() => {
+        dispatch({ type: 'REMOVE_ORDER', orderId });
+        addToast({ type: 'order_cancelled', title: 'Order Deleted', message: `${order.customerName} — deleted`, orderId });
+      })
+      .catch((e: Error) => addToast({ type: 'critical', title: 'Cancel Failed', message: e.message, orderId }));
   }, [state.isOnline, state.orders, businessId, addToast]);
+
+  const refreshOrders = useCallback(async () => {
+    if (!businessId) return;
+    try {
+      const { data } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
+    } catch (e) {
+      console.error('[useOrders] Refresh failed:', e);
+    }
+  }, [businessId]);
 
   const confirmPayment = useCallback((orderId: string) => {
     if (pendingOpsRef.current.has(orderId)) return;
@@ -508,7 +529,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   return (
     <OrderContext.Provider value={{
       state, dispatch, advanceOrderStatus, verifyCash,
-      confirmDelivery, confirmPayment, claimDelivery, cancelOrder, setTab, selectOrder, toggleOnline,
+      confirmDelivery, confirmPayment, claimDelivery, cancelOrder, refreshOrders, setTab, selectOrder, toggleOnline,
     }}>
       {children}
     </OrderContext.Provider>
