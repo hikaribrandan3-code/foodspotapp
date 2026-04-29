@@ -296,9 +296,9 @@ function Order({ config: configProp }) {
         const orderStatus = isMercadoPago
             ? ORDER_STATUS.PENDING_PAYMENT      // MP: waiting for online payment
             : isDineInPayAfter
-                ? 'todo'                        // Dine-in pay-after: skip payment, go straight to kitchen
+                ? ORDER_STATUS.RELEASED_TO_KITCHEN  // Dine-in pay-after: skip payment gate, go straight to kitchen
                 : isCash
-                    ? ORDER_STATUS.PAID_UNRELEASED  // Pickup/delivery pay-after: owner must confirm payment
+                    ? ORDER_STATUS.PAID_UNRELEASED  // Pickup/delivery cash: owner must confirm payment
                     : ORDER_STATUS.RELEASED_TO_KITCHEN
 
         const orderPaymentStatus = isDineInPayAfter ? 'unpaid' : 'pending'

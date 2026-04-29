@@ -114,7 +114,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
 
       // Dine-in orders skip payment confirmation and go straight to kitchen
       const isPayAfter = orderType === 'dine_in';
-      const initialStatus = isPayAfter ? 'todo' : 'pending_payment';
+      const initialStatus = isPayAfter ? 'released_to_kitchen' : 'pending_payment';
 
       await createOrderCloud({
         orderNumber: nextNumber,
@@ -123,7 +123,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
         status: initialStatus,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim() || null,
-        delivery_type: orderType,
+        deliveryType: orderType,
         deliveryAddress: orderType === 'delivery' ? deliveryAddress.trim() || null : null,
         paymentMethod,
         notes: notes.trim() || null,
