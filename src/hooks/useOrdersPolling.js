@@ -17,7 +17,7 @@ export function useOrdersPolling(businessId) {
                 .select('*')
                 .eq('business_id', businessId)
                 .order('created_at', { ascending: false })
-                .limit(50)
+                .limit(100)
 
             if (!error && data) {
                 setOrders(data)
