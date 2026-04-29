@@ -39,7 +39,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [step, setStep] = useState<'items' | 'details'>('items');
+  const [step, setStep] = useState<'items' | 'order-type' | 'details'>('items');
 
   // Fetch menu items from branding.menu_data
   useEffect(() => {
@@ -143,7 +143,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
         paymentMethod: isDineIn ? 'cash' : paymentMethod,
         paymentStatus: isDineIn ? 'unpaid' : 'pending',
         paymentConfirmed: false,
-        notes: notes.trim() || null,
+        staffNotes: notes.trim() || null,
       }, businessId);
 
       setCart([]);
@@ -152,6 +152,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
       setCustomerPhone('');
       setDeliveryAddress('');
       setNotes('');
+      setOrderType('dine_in');
       setStep('items');
       onClose();
     } catch (e) {
@@ -166,6 +167,11 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
     setCart([]);
     setSearch('');
     setTableNumber('');
+    setCustomerName('');
+    setCustomerPhone('');
+    setDeliveryAddress('');
+    setNotes('');
+    setOrderType('dine_in');
     setStep('items');
     onClose();
   };
@@ -215,18 +221,24 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
 
             {/* Step tabs */}
             <div className="flex px-4 pt-3 gap-2">
-              {(['items', 'details'] as const).map(s => (
+              {(['items', 'order-type', 'details'] as const).map(s => (
                 <button
                   key={s}
-                  onClick={() => s === 'details' && cart.length > 0 ? setStep(s) : setStep('items')}
+                  onClick={() => {
+                    if (s === 'items') setStep('items');
+                    else if (s === 'order-type' && cart.length > 0) setStep('order-type');
+                    else if (s === 'details' && cart.length > 0) setStep('details');
+                  }}
                   className="flex-1 py-2 rounded-xl text-xs font-semibold capitalize transition-all"
                   style={{
                     backgroundColor: step === s ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
                     color: step === s ? 'var(--filter-active-text)' : 'var(--text-secondary)',
                     border: `1px solid ${step === s ? 'var(--filter-active-border)' : 'var(--counter-border)'}`,
+                    opacity: (s !== 'items' && cart.length === 0) ? 0.5 : 1,
                   }}
+                  disabled={s !== 'items' && cart.length === 0}
                 >
-                  {s === 'items' ? `Items${cartCount > 0 ? ` (${cartCount})` : ''}` : 'Customer Details'}
+                  {s === 'items' ? `Items${cartCount > 0 ? ` (${cartCount})` : ''}` : s === 'order-type' ? 'Order Type' : 'Details'}
                 </button>
               ))}
             </div>
@@ -362,6 +374,33 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                 </div>
               )}
 
+              {step === 'order-type' && (
+                <div className="space-y-4 pt-4">
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>What type of order?</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      { value: 'dine_in' as const, label: 'Dine In', icon: '🍽️' },
+                      { value: 'pickup' as const, label: 'Pickup', icon: '🛍️' },
+                      { value: 'delivery' as const, label: 'Delivery', icon: '🚗' },
+                    ]).map(({ value, label, icon }) => (
+                      <button
+                        key={value}
+                        onClick={() => setOrderType(value)}
+                        className="p-4 rounded-xl text-xs font-semibold text-center transition-all"
+                        style={{
+                          backgroundColor: orderType === value ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
+                          color: orderType === value ? 'var(--filter-active-text)' : 'var(--text-secondary)',
+                          border: `1px solid ${orderType === value ? 'var(--filter-active-border)' : 'var(--counter-border)'}`,
+                        }}
+                      >
+                        <div style={{ fontSize: 24, marginBottom: 4 }}>{icon}</div>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {step === 'details' && (
                 <div className="space-y-3">
                   {/* Order summary */}
@@ -481,9 +520,9 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
               {submitError && (
                 <p className="text-xs text-center mb-2 font-medium" style={{ color: '#DC2626' }}>{submitError}</p>
               )}
-              {step === 'items' ? (
+              {step === 'items' && (
                 <button
-                  onClick={() => setStep('details')}
+                  onClick={() => setStep('order-type')}
                   disabled={cart.length === 0}
                   className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-opacity"
                   style={{
@@ -494,7 +533,20 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                 >
                   Continue — {cartCount} item{cartCount !== 1 ? 's' : ''} · ${cartTotal.toFixed(2)}
                 </button>
-              ) : (
+              )}
+              {step === 'order-type' && (
+                <button
+                  onClick={() => setStep('details')}
+                  className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-opacity"
+                  style={{
+                    backgroundColor: 'var(--filter-active-bg)',
+                    color: 'var(--filter-active-text)',
+                  }}
+                >
+                  Next →
+                </button>
+              )}
+              {step === 'details' && (
                 <button
                   onClick={handleSubmit}
                   disabled={submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim())}
