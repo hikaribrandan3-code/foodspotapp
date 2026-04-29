@@ -390,13 +390,22 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'VERIFY_CASH', orderId });
 
     if (state.isOnline && businessId) {
-      callAdvanceOrderStatusRpc(orderId, 'released_to_kitchen')
+      updateOrderCloud(orderId, { status: 'released_to_kitchen', payment_confirmed: true }, businessId)
         .then(() => {
-          addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
-          if (audioEnabled) audio.alertCashVerified();
+          supabase
+            .from('orders')
+            .select('*')
+            .eq('business_id', businessId)
+            .order('created_at', { ascending: false })
+            .limit(100)
+            .then(({ data }: { data: any[] | null }) => {
+              if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
+              addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
+              if (audioEnabled) audio.alertCashVerified();
+            });
         })
         .catch((e: Error) => {
-          console.error('[StaffOps] verifyCash RPC failed:', e);
+          console.error('[StaffOps] verifyCash failed:', e);
           addToast({ type: 'critical', title: 'Verify Failed', message: e.message, orderId });
         })
         .finally(() => {
