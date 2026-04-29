@@ -137,7 +137,7 @@ export default function MapboxMap({ orders, driverPosition }: MapboxMapProps) {
     orders.forEach(order => {
       if (!order.deliveryCoords) return;
 
-      const color = order.status === 'DELIVERING' ? '#a855f7' : order.status === 'DISPATCH' ? '#10b981' : '#f59e0b';
+      const color = order.status === 'DISPATCH' ? '#10b981' : '#f59e0b';
       const el = document.createElement('div');
       el.style.cssText = `
         width: 34px;

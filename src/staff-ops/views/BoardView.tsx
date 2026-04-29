@@ -32,7 +32,7 @@ export default function BoardView() {
   const statusCounts = useMemo(() => {
     const counts: Record<OrderStatus, number> = {
       PENDING_VERIFICATION: 0, TODO: 0, PREP: 0, READY: 0,
-      DISPATCH: 0, DELIVERING: 0, DONE: 0,
+      DISPATCH: 0, DONE: 0,
     };
     state.orders.forEach(o => { counts[o.status]++; });
     return counts;
@@ -83,7 +83,7 @@ export default function BoardView() {
           <StatusBadge icon={<Clock size={14} />} label={t('todo')} count={statusCounts.TODO} color="var(--status-icon-todo)" />
           <StatusBadge icon={<ChefHat size={14} />} label={t('prep')} count={statusCounts.PREP} color="var(--status-icon-prep)" />
           <StatusBadge icon={<PackageCheck size={14} />} label={t('ready')} count={statusCounts.READY} color="var(--status-icon-ready)" />
-          <StatusBadge icon={<Bike size={14} />} label={t('out')} count={statusCounts.DISPATCH + statusCounts.DELIVERING} color="var(--status-icon-dispatch)" />
+          <StatusBadge icon={<Bike size={14} />} label={t('out')} count={statusCounts.DISPATCH} color="var(--status-icon-dispatch)" />
         </div>
       </div>
 

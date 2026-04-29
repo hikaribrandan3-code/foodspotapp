@@ -4,7 +4,6 @@ export type OrderStatus =
   | 'PREP'
   | 'READY'
   | 'DISPATCH'
-  | 'DELIVERING'
   | 'DONE';
 
 export interface OrderItem {
@@ -42,8 +41,7 @@ export const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   TODO: 'PREP',
   PREP: 'READY',
   READY: 'DISPATCH',
-  DISPATCH: 'DELIVERING',
-  DELIVERING: 'DONE',
+  DISPATCH: 'DONE',
   DONE: null,
 };
 
@@ -53,7 +51,6 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
   PREP: 'Prepping',
   READY: 'Ready',
   DISPATCH: 'Dispatched',
-  DELIVERING: 'Delivering',
   DONE: 'Delivered',
 };
 
@@ -63,14 +60,13 @@ export const STATUS_COLORS: Record<OrderStatus, string> = {
   PREP: 'text-blue-400 border-blue-400 bg-blue-400/10',
   READY: 'text-amber-400 border-amber-400 bg-amber-400/10',
   DISPATCH: 'text-emerald-400 border-emerald-400 bg-emerald-400/10',
-  DELIVERING: 'text-purple-400 border-purple-400 bg-purple-400/10',
   DONE: 'text-slate-500 border-slate-500 bg-slate-500/10',
 };
 
 export interface QueuedAction {
   id: string;
   orderId: string;
-  type: 'status_advance' | 'verify_cash' | 'confirm_delivery';
+  type: 'status_advance' | 'verify_cash' | 'confirm_delivery' | 'cancel_order';
   payload?: Record<string, unknown>;
   timestamp: number;
 }

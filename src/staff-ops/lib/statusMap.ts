@@ -22,8 +22,6 @@ export function toKimiStatus(
       return 'READY';
     case 'dispatched':
       return 'DISPATCH';
-    case 'delivering':
-      return 'DELIVERING';
     case 'delivered':
     case 'cancelled':
       return 'DONE';
@@ -46,8 +44,6 @@ export function toDbStatus(kimiStatus: OrderStatus): string {
       return 'ready';
     case 'DISPATCH':
       return 'dispatched';
-    case 'DELIVERING':
-      return 'delivering';
     case 'DONE':
       return 'delivered';
   }

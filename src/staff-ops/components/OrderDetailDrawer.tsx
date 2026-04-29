@@ -22,7 +22,7 @@ export default function OrderDetailDrawer() {
   const urgency = getUrgencyLevel(order.createdAt);
   const waitMins = getWaitMinutes(order.createdAt);
   const isCashPending = order.status === 'PENDING_VERIFICATION';
-  const isDelivering = order.status === 'DELIVERING';
+  const isDispatch = order.status === 'DISPATCH';
   const isDone = order.status === 'DONE';
 
   // Next status label for the advance button
@@ -31,7 +31,7 @@ export default function OrderDetailDrawer() {
     TODO: '▶ Start Prep',
     PREP: '✓ Mark Ready',
     READY: isDeliveryOrder ? '🚴 Dispatch' : '✓ Mark Delivered',
-    DISPATCH: '📍 Mark Delivering',
+    DISPATCH: '📦 Confirm Delivery',
   };
   const nextLabel = nextLabels[order.status];
 
@@ -182,7 +182,7 @@ export default function OrderDetailDrawer() {
                 </button>
               )}
 
-              {/* Advance status (TODO → PREP → READY → DISPATCH → DELIVERING) */}
+              {/* Advance status (TODO → PREP → READY → DISPATCH → DONE) */}
               {nextLabel && !isCashPending && (
                 <button
                   onClick={() => { advanceOrderStatus(order.id); selectOrder(null); }}
@@ -195,7 +195,7 @@ export default function OrderDetailDrawer() {
               )}
 
               {/* Confirm Delivery */}
-              {isDelivering && (
+              {isDispatch && (
                 <button
                   onClick={() => { confirmDelivery(order.id); selectOrder(null); }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"

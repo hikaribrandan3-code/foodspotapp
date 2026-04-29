@@ -33,7 +33,6 @@ function StatusIcon({ status }: { status: Order['status'] }) {
     case 'PREP': return <Clock {...props} style={{ color: 'var(--status-icon-prep)' }} />;
     case 'READY': return <PackageCheck {...props} style={{ color: 'var(--status-icon-ready)' }} />;
     case 'DISPATCH': return <Bike {...props} style={{ color: 'var(--status-icon-dispatch)' }} />;
-    case 'DELIVERING': return <MapPin {...props} style={{ color: 'var(--status-icon-delivering)' }} />;
     case 'DONE': return <CheckCircle2 {...props} style={{ color: 'var(--status-icon-done)' }} />;
   }
 }
@@ -86,7 +85,6 @@ export default function OrderCard({
   })();
 
   const isCashPending = order.status === 'PENDING_VERIFICATION' || (order.status === 'TODO' && order.paymentMethod === 'cash' && !order.cashVerified);
-  const isDelivering = order.status === 'DELIVERING';
 
   const getCardStyles = () => {
     if (urgency === 'critical' && !isCashPending) return 'animate-urgent-pulse';
@@ -340,7 +338,7 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' ? (order.deliveryType === 'delivery' ? 'Assign Delivery' : 'Mark Delivered') : 'Advance'}
+              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' ? (order.deliveryType === 'delivery' ? 'Assign Delivery' : 'Mark Delivered') : order.status === 'DISPATCH' ? 'Confirm Delivery' : 'Advance'}
             </button>
           </div>
         )}
@@ -359,8 +357,8 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Delivery action bar (DELIVERING only) ────────────── */}
-        {showConfirmDelivery && isDelivering && (
+        {/* ── Delivery action bar (DISPATCH — confirm delivery) ─ */}
+        {showConfirmDelivery && order.status === 'DISPATCH' && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <div className="flex gap-2">
               {order.deliveryCoords && (

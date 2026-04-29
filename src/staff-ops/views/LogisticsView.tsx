@@ -9,7 +9,7 @@ import MapboxMap from '@/components/MapboxMap';
 export default function LogisticsView() {
   const { state, claimDelivery } = useOrders();
   const { t } = useLanguage();
-  const [filter, setFilter] = useState<'READY' | 'DISPATCH' | 'DELIVERING'>('READY');
+  const [filter, setFilter] = useState<'READY' | 'DISPATCH'>('READY');
 
   // LogisticsView is delivery-only — pickup/dine-in never appear here
   const isDelivery = (o: typeof state.orders[0]) => o.deliveryType === 'delivery';
@@ -18,13 +18,12 @@ export default function LogisticsView() {
 
   const readyCount = state.orders.filter(o => o.status === 'READY' && isDelivery(o)).length;
   const dispatchCount = state.orders.filter(o => o.status === 'DISPATCH' && isDelivery(o)).length;
-  const deliveringCount = state.orders.filter(o => o.status === 'DELIVERING' && isDelivery(o)).length;
 
   const handoffOrder = state.orders.find(o => o.id === state.handoffOrderId && isDelivery(o));
 
   // Orders with coords for the map (all active delivery states)
   const mapOrders = state.orders.filter(
-    o => (o.status === 'READY' || o.status === 'DISPATCH' || o.status === 'DELIVERING') && isDelivery(o) && o.deliveryCoords,
+    o => (o.status === 'READY' || o.status === 'DISPATCH') && isDelivery(o) && o.deliveryCoords,
   );
 
   return (
@@ -40,10 +39,9 @@ export default function LogisticsView() {
           </div>
 
           {/* Filter tabs */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <FilterTab active={filter === 'READY'} onClick={() => setFilter('READY')} label={t('ready')} count={readyCount} icon={<PackageCheck size={13} />} activeBorder="var(--status-icon-ready)" activeBg="var(--urgency-warning-bg)" activeText="var(--status-icon-ready)" />
             <FilterTab active={filter === 'DISPATCH'} onClick={() => setFilter('DISPATCH')} label={t('dispatch')} count={dispatchCount} icon={<Bike size={13} />} activeBorder="var(--status-icon-dispatch)" activeBg="rgba(16,185,129,0.08)" activeText="var(--status-icon-dispatch)" />
-            <FilterTab active={filter === 'DELIVERING'} onClick={() => setFilter('DELIVERING')} label={t('out')} count={deliveringCount} icon={<MapPin size={13} />} activeBorder="var(--status-icon-delivering)" activeBg="rgba(168,85,247,0.08)" activeText="var(--status-icon-delivering)" />
           </div>
         </div>
 
@@ -81,7 +79,7 @@ export default function LogisticsView() {
                 <OrderCard
                   order={order}
                   showLocation
-                  showConfirmDelivery={filter === 'DELIVERING'}
+                  showConfirmDelivery={filter === 'DISPATCH'}
                   showClaimButton={filter === 'READY' && !order.assignedTo && order.deliveryType === 'delivery'}
                   onClaim={claimDelivery}
                 />
@@ -98,14 +96,10 @@ export default function LogisticsView() {
             >
               <Bike size={48} className="mb-3" style={{ color: 'var(--empty-icon)' }} />
               <p className="text-sm">
-                {filter === 'READY' ? t('no_orders_ready') :
-                 filter === 'DISPATCH' ? t('no_orders_dispatch') :
-                 t('no_orders_delivering')}
+                {filter === 'READY' ? t('no_orders_ready') : t('no_orders_dispatch')}
               </p>
               <p className="text-xs mt-1 opacity-60">
-                {filter === 'READY' ? 'Swipe up on ready orders to dispatch' :
-                 filter === 'DISPATCH' ? 'Riders will be assigned automatically' :
-                 'Deliveries update in real-time'}
+                {filter === 'READY' ? 'Swipe up on ready orders to dispatch' : 'Confirm delivery when order is handed to customer'}
               </p>
             </motion.div>
           )}

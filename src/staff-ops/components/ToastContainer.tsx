@@ -1,10 +1,10 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertTriangle, Package, DollarSign } from 'lucide-react';
+import { X, AlertTriangle, Package, DollarSign, Ban } from 'lucide-react';
 
 interface Toast {
   id: string;
-  type: 'new_order' | 'critical' | 'cash_verified' | 'delivery_done';
+  type: 'new_order' | 'critical' | 'cash_verified' | 'delivery_done' | 'order_cancelled';
   title: string;
   message: string;
   orderId?: string;
@@ -54,6 +54,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   ? 'var(--urgency-warning-bg)'
                   : toast.type === 'delivery_done'
                   ? 'var(--reception-bg)'
+                  : toast.type === 'order_cancelled'
+                  ? 'rgba(220,38,38,0.08)'
                   : 'var(--card-bg)',
                 border: `1px solid ${
                   toast.type === 'critical'
@@ -62,6 +64,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     ? 'var(--urgency-warning-border)'
                     : toast.type === 'delivery_done'
                     ? 'var(--reception-border)'
+                    : toast.type === 'order_cancelled'
+                    ? 'rgba(220,38,38,0.3)'
                     : 'var(--card-border)'
                 }`,
                 backdropFilter: 'blur(12px)',
@@ -72,6 +76,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               {toast.type === 'new_order' && <Package size={18} style={{ color: 'var(--status-icon-prep)' }} />}
               {toast.type === 'cash_verified' && <DollarSign size={18} style={{ color: 'var(--status-icon-ready)' }} />}
               {toast.type === 'delivery_done' && <Package size={18} style={{ color: 'var(--reception-text)' }} />}
+              {toast.type === 'order_cancelled' && <Ban size={18} style={{ color: '#DC2626' }} />}
 
               {/* Text */}
               <div className="flex-1 min-w-0">
