@@ -58,6 +58,12 @@ export function CartProvider({ children }) {
         refreshCart()
     }, [refreshCart])
 
+    // Clear the entire cart
+    const clearCart = useCallback(() => {
+        clearCurrentOrder()
+        refreshCart()
+    }, [refreshCart])
+
     // Calculate total
     const cartTotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
@@ -66,6 +72,7 @@ export function CartProvider({ children }) {
             cart,
             cartTotal,
             refreshCart,
+            clearCart,
             openOrderSheet,
             closeOrderSheet,
             updateQuantity,

@@ -4,6 +4,7 @@ import { formatPrice } from '../../config/menuData.js'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getGuestToken } from '../../utils/guestToken.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { useCart } from '../../contexts/CartContext.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { formatAddressForDisplay } from '../../utils/logistics.js' // Strike 17 Import
 import {
@@ -102,6 +103,7 @@ const placeholderImages = [
 ]
 
 function Order({ config: configProp }) {
+    const { clearCart } = useCart()
     const { businessId, tenantData, serviceModes } = useTenant()
     const { t } = useLanguage()
     const config = configProp || tenantData?.app_config || {}
@@ -384,7 +386,7 @@ function Order({ config: configProp }) {
 
                     // 🎯 SUCCESS: Redirect to Mercado Pago checkout
                     if (prefData?.init_point) {
-                        clearCurrentOrder()
+                        clearCart()
                         incrementOrderCount()
                         if (isDelivery) clearDeliveryMode()
                         // Add order_id for retry detection on failure
@@ -431,7 +433,7 @@ function Order({ config: configProp }) {
             }
 
             // ─── STEP 6: FINALIZE ─────────────────────────────
-            clearCurrentOrder()
+            clearCart()
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()
 
@@ -522,7 +524,7 @@ function Order({ config: configProp }) {
                 window.open(whatsappUrl, '_blank')
             }
 
-            clearCurrentOrder()
+            clearCart()
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()
 
@@ -595,7 +597,7 @@ function Order({ config: configProp }) {
         setIsRetryMode(false)
         setPendingOrderId(null)
         setRetryError(null)
-        clearCurrentOrder()
+        clearCart()
         navigate(`../menu`)
     }
 
