@@ -281,7 +281,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         .subscribe((status: string, err?: Error) => {
           if (err || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn('[useOrders] Realtime unavailable, falling back to polling:', status, err?.message);
-            // Fallback: poll every 15 seconds
+            // Fallback: poll every 3 seconds for instant staff feedback
             pollInterval = setInterval(() => {
               supabase
                 .from('orders')
@@ -293,11 +293,12 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
                 .then(({ data }: { data: any[] | null }) => {
                   if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
                 });
-            }, 15000);
+            }, 3000);
           }
         });
     } catch (err) {
       console.warn('[useOrders] Realtime init failed, using polling:', (err as Error)?.message);
+      // Fallback: poll every 3 seconds
       pollInterval = setInterval(() => {
         supabase
           .from('orders')
@@ -309,7 +310,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
           .then(({ data }: { data: any[] | null }) => {
             if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
           });
-      }, 15000);
+      }, 3000);
     }
 
     return () => {
@@ -462,14 +463,17 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     if (!order) return;
 
     if (!state.isOnline) queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
-    dispatch({ type: 'CANCEL_ORDER', orderId });
+    dispatch({ type: 'REMOVE_ORDER', orderId });
 
     if (state.isOnline) {
-      dbUpdate(orderId, { status: 'cancelled' })
+      supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId)
         .catch((e: Error) => addToast({ type: 'critical', title: 'Cancel Failed', message: e.message, orderId }));
     }
 
-    addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
+    addToast({ type: 'order_cancelled', title: 'Order Deleted', message: `${order.customerName} — deleted`, orderId });
   }, [state.isOnline, state.orders, businessId, addToast]);
 
   const confirmPayment = useCallback((orderId: string) => {
