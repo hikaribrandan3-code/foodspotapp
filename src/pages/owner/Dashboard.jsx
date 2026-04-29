@@ -65,9 +65,14 @@ function statusToBucket(status, t) {
   return null
 }
 
-function nextActionFor(status) {
+function nextActionFor(status, orderType) {
   const flow = STATUS_FLOW.find(f => f.key === status)
-  return flow?.label ? { label: flow.label, intent: flow.intent || 'blue' } : null
+  if (!flow?.label) return null
+  // Pickup/dine-in at READY skips dispatch — label should reflect the actual action
+  if (status === ORDER_STATUS.READY && orderType !== 'delivery') {
+    return { label: 'Mark Delivered', intent: 'green' }
+  }
+  return { label: flow.label, intent: flow.intent || 'blue' }
 }
 
 function Icon({ type, color = T.muted, size = 16 }) {
@@ -151,7 +156,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const isDineIn = order.order_type === 'dine_in'
   const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
   const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
-  const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'green' } : nextActionFor(order.status)
+  const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'green' } : nextActionFor(order.status, order.order_type)
   const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
   const bucket = statusToBucket(order.status, t)
   const bucketLabel = OWNER_STATS(t).find(s => s.key === bucket)?.label || order.status.toUpperCase()
