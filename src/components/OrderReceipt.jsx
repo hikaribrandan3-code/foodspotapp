@@ -11,11 +11,10 @@ import { PAYMENT_METHOD } from '../constants/database.js';
  * Shows full order breakdown with payment status banner
  */
 
-const PaymentBanner = ({ paymentStatus, paymentMethod, onRetry }) => {
+const PaymentBanner = ({ paymentStatus, paymentMethod, isDineIn, onRetry }) => {
     // Map internal payment method values to display labels
     const isMercadoPago = paymentMethod === PAYMENT_METHOD.MERCADO_PAGO
     const isCash = paymentMethod === PAYMENT_METHOD.CASH
-    const isDineIn = paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === 'dine_in'
 
     if (paymentStatus === 'paid') {
         return (
@@ -73,10 +72,9 @@ const PaymentBanner = ({ paymentStatus, paymentMethod, onRetry }) => {
     )
 }
 
-const PaymentMethodLine = ({ paymentMethod, paymentStatus }) => {
+const PaymentMethodLine = ({ paymentMethod, paymentStatus, isDineIn }) => {
     const isMercadoPago = paymentMethod === PAYMENT_METHOD.MERCADO_PAGO
     const isCash = paymentMethod === PAYMENT_METHOD.CASH
-    const isDineIn = paymentMethod === PAYMENT_METHOD.CASH || paymentMethod === 'dine_in'
 
     if (paymentStatus === 'paid') {
         if (isMercadoPago) {
@@ -107,6 +105,7 @@ function OrderReceipt({ order, tenantData, paymentMethod, paymentStatus, onRetry
     if (!order) return null
 
     const isCancelled = order.status === 'cancelled' || order.status === 'refunded'
+    const isDineIn = order.order_type === 'dine_in' || order.deliveryType === 'dine_in'
     const items = order.items || []
     const subtotal = order.subtotal || 0
     const deliveryFee = order.delivery_fee || 0
@@ -136,6 +135,7 @@ function OrderReceipt({ order, tenantData, paymentMethod, paymentStatus, onRetry
                 <PaymentBanner
                     paymentStatus={paymentStatus}
                     paymentMethod={paymentMethod}
+                    isDineIn={isDineIn}
                     onRetry={onRetryPayment}
                 />
             )}
@@ -185,6 +185,17 @@ function OrderReceipt({ order, tenantData, paymentMethod, paymentStatus, onRetry
                 )}
             </div>
 
+            {/* Special Requests */}
+            {order.notes && (
+                <>
+                    <div className="or-divider" />
+                    <div className="or-notes" style={{ padding: '12px', backgroundColor: 'rgba(59, 130, 246, 0.05)', borderRadius: '8px', marginBottom: '12px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '600', color: '#666', marginBottom: '4px', textTransform: 'uppercase' }}>📝 Special Requests</div>
+                        <div style={{ fontSize: '13px', color: '#333', lineHeight: '1.4' }}>{order.notes}</div>
+                    </div>
+                </>
+            )}
+
             {/* Divider */}
             <div className="or-divider" />
 
@@ -211,7 +222,7 @@ function OrderReceipt({ order, tenantData, paymentMethod, paymentStatus, onRetry
 
             {/* Payment Method */}
             <div className="or-payment">
-                <PaymentMethodLine paymentMethod={paymentMethod} paymentStatus={paymentStatus} />
+                <PaymentMethodLine paymentMethod={paymentMethod} paymentStatus={paymentStatus} isDineIn={isDineIn} />
             </div>
 
             {/* Footer */}
