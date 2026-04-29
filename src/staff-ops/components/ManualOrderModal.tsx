@@ -539,23 +539,28 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                   Next →
                 </button>
               )}
-              {step === 'details' && (
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim())}
-                  className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-opacity"
-                  style={{
-                    backgroundColor: submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim()) ? 'var(--btn-secondary-bg)' : '#10b981',
-                    color: submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim()) ? 'var(--text-tertiary)' : 'white',
-                    opacity: submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim()) ? 0.6 : 1,
-                  }}
-                >
-                  {submitting
-                    ? <><Loader2 size={16} className="animate-spin" /> Placing Order…</>
-                    : `Place Order · $${cartTotal.toFixed(2)}`
-                  }
-                </button>
-              )}
+              {step === 'details' && (() => {
+                const isInvalid = (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim());
+                const isValid = !submitting && !isInvalid;
+                return (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!isValid}
+                    className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+                    style={{
+                      backgroundColor: isValid ? '#10b981' : 'var(--btn-secondary-bg)',
+                      color: isValid ? 'white' : 'var(--text-tertiary)',
+                      cursor: isValid ? 'pointer' : 'not-allowed',
+                      opacity: isValid ? 1 : 0.6,
+                    }}
+                  >
+                    {submitting
+                      ? <><Loader2 size={16} className="animate-spin" /> Placing Order…</>
+                      : `Place Order · $${cartTotal.toFixed(2)}`
+                    }
+                  </button>
+                );
+              })()}
             </div>
           </motion.div>
         </>
