@@ -25,6 +25,8 @@ function OwnerSummary() {
     const appConfig = tenantData?.app_config || {}
     const [showAuditor, setShowAuditor] = useState(false)
     const debounceTimerRef = useRef(null)
+    const [mpAliasInput, setMpAliasInput] = useState('')
+    const mpAliasInitialized = useRef(false)
 
     // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
     const [orders, setOrders] = useState([])
@@ -137,6 +139,14 @@ function OwnerSummary() {
         await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
         await refreshTenantData()
     }
+
+    // Sync mpAliasInput from server only on first load
+    useEffect(() => {
+        if (!mpAliasInitialized.current && appConfig?.payments?.mercadoPagoAlias !== undefined) {
+            setMpAliasInput(appConfig.payments.mercadoPagoAlias || '')
+            mpAliasInitialized.current = true
+        }
+    }, [appConfig?.payments?.mercadoPagoAlias])
 
     const updatePayments = (updates) => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
@@ -344,8 +354,11 @@ function OwnerSummary() {
                             <input
                                 type="text"
                                 placeholder="yourstore.mp"
-                                value={appConfig?.payments?.mercadoPagoAlias || ''}
-                                onChange={(e) => updatePayments({ mercadoPagoAlias: e.target.value })}
+                                value={mpAliasInput}
+                                onChange={(e) => {
+                                    setMpAliasInput(e.target.value)
+                                    updatePayments({ mercadoPagoAlias: e.target.value })
+                                }}
                                 style={{ ...inputStyle, marginBottom: 6 }}
                             />
                             <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{t('mp_alias_info')}</p>
