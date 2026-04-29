@@ -48,8 +48,8 @@ const OWNER_STATS = (t) => [
 ]
 
 const STATUS_FLOW = [
-  { key: ORDER_STATUS.PENDING_PAYMENT, label: 'Confirm Payment', intent: 'green' },
-  { key: ORDER_STATUS.PAID_UNRELEASED, label: 'Confirm Payment', intent: 'green' },
+  { key: ORDER_STATUS.PENDING_PAYMENT, label: 'Confirm Payment', intent: 'orange' },
+  { key: ORDER_STATUS.PAID_UNRELEASED, label: 'Confirm Payment', intent: 'orange' },
   { key: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Start Prep', intent: 'blue' },
   { key: ORDER_STATUS.PREPARING, label: 'Mark Ready', intent: 'blue' },
   { key: ORDER_STATUS.READY, label: 'Hand Off', intent: 'blue' },
@@ -69,7 +69,7 @@ function nextActionFor(status, orderType, paymentStatus) {
   const flow = STATUS_FLOW.find(f => f.key === status)
   // 🛡️ DINE-IN PAY-AFTER: Delivered + unpaid = show payment button
   if (status === ORDER_STATUS.DELIVERED && orderType === 'dine_in' && paymentStatus === 'unpaid') {
-    return { label: '💳 Confirm Payment', intent: 'green', isPaymentConfirm: true }
+    return { label: '💳 Confirm Payment', intent: 'orange', isPaymentConfirm: true }
   }
   if (!flow?.label) return null
   // Pickup/dine-in at READY skips dispatch — label should reflect the actual action
@@ -358,6 +358,8 @@ export default function Dashboard() {
   const [filterBucket, setFilterBucket] = useState(null)
   const [processingOrderId, setProcessingOrderId] = useState(null)
   const [expandedOrderId, setExpandedOrderId] = useState(null)
+  const [paymentModalOrder, setPaymentModalOrder] = useState(null)
+  const [paymentModalProcessing, setPaymentModalProcessing] = useState(false)
 
   // 🚀 OPTIMISTIC STATE: Mirrors fetched orders but allows instant local updates
   const [displayOrders, setDisplayOrders] = useState([])
@@ -396,27 +398,10 @@ export default function Dashboard() {
     const isDineInDelivered = order.order_type === 'dine_in' && order.status === ORDER_STATUS.DELIVERED && order.payment_status !== 'paid'
     const needsPaymentConfirm = (order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed) || isDineInDelivered
 
-    // 🛡️ DINE-IN PAY-AFTER: Confirm payment on a delivered order
+    // 🛡️ DINE-IN PAY-AFTER: Show payment method modal on a delivered order
     const isDineInPayAfterConfirm = order.status === ORDER_STATUS.DELIVERED && order.order_type === 'dine_in' && order.payment_status === 'unpaid'
     if (isDineInPayAfterConfirm) {
-      setProcessingOrderId(order.id)
-      try {
-        const { error } = await supabase
-          .from('orders')
-          .update({ payment_confirmed: true, payment_status: 'paid' })
-          .eq('id', order.id)
-        if (error) {
-          console.error('Dine-in payment confirm failed:', error)
-          alert('Error: ' + error.message)
-        } else {
-          refreshOrders()
-        }
-      } catch (err) {
-        console.error('Dine-in payment confirm exception:', err)
-        alert('Error confirming payment')
-      } finally {
-        setProcessingOrderId(null)
-      }
+      setPaymentModalOrder(order)
       return
     }
 
@@ -507,6 +492,30 @@ export default function Dashboard() {
       setDisplayOrders(prevOrders)
     } finally {
       setProcessingOrderId(null)
+    }
+  }
+
+  const handlePaymentMethodSelect = async (method) => {
+    if (!paymentModalOrder) return
+    setPaymentModalProcessing(true)
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ payment_confirmed: true, payment_status: 'paid', payment_method: method })
+        .eq('id', paymentModalOrder.id)
+      if (error) {
+        console.error('Payment confirm failed:', error)
+        alert('Error: ' + error.message)
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        setPaymentModalOrder(null)
+        refreshOrders()
+      }
+    } catch (err) {
+      console.error('Payment confirm exception:', err)
+      alert('Error confirming payment')
+    } finally {
+      setPaymentModalProcessing(false)
     }
   }
 
@@ -665,6 +674,55 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Payment Method Modal for Dine-In */}
+      {paymentModalOrder && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: T.card, borderRadius: 12, padding: 24, maxWidth: 360, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: '0 0 4px 0', color: T.ink, fontSize: 16, fontWeight: 600 }}>How did they pay?</h3>
+            <p style={{ margin: '0 0 20px 0', color: T.body, fontSize: 13 }}>Order #{paymentModalOrder.order_number}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <button
+                onClick={() => handlePaymentMethodSelect('cash')}
+                disabled={paymentModalProcessing}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
+                  opacity: paymentModalProcessing ? 0.6 : 1,
+                }}
+              >
+                {paymentModalProcessing ? 'Processing...' : '💵 Cash'}
+              </button>
+              <button
+                onClick={() => handlePaymentMethodSelect('mercado_pago')}
+                disabled={paymentModalProcessing}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  backgroundColor: '#f97316',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
+                  opacity: paymentModalProcessing ? 0.6 : 1,
+                }}
+              >
+                {paymentModalProcessing ? 'Verified...' : 'MP Alias'}
+              </button>
+            </div>
+            {paymentModalProcessing && (
+              <p style={{ textAlign: 'center', marginTop: 16, color: T.body, fontSize: 12 }}>Processing payment...</p>
+            )}
+          </div>
+        </div>
+      )}
 
       <BackendNav useRoutes={true} role="owner" />
     </div>
