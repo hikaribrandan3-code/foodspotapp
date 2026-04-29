@@ -383,13 +383,13 @@ export default function OrderCard({
           </div>
         )}
 
-        {/* ── Dine-in payment confirmation (DONE + unpaid) ─────────── */}
+        {/* ── Dine-in payment confirmation (DONE + unpaid) — opens drawer for method selection ─── */}
         {order.deliveryType === 'dine_in' && order.status === 'DONE' && order.paymentStatus !== 'paid' && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <button
-              onClick={() => confirmPayment(order.id)}
+              onClick={(e) => { e.stopPropagation(); selectOrder(order.id); }}
               className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-              style={{ backgroundColor: '#22C55E', color: '#fff' }}
+              style={{ backgroundColor: '#f97316', color: '#fff' }}
             >
               <DollarSign size={16} />
               Confirm Payment

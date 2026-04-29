@@ -135,12 +135,21 @@ export default function OrderDetailDrawer() {
 
               {/* Delivery info */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>Customer & Delivery</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
+                  {isDineIn ? 'Table Info' : 'Customer & Delivery'}
+                </h3>
                 <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: 'var(--detail-item-bg)', border: '1px solid var(--detail-item-border)' }}>
+                  {isDineIn ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin size={14} style={{ color: 'var(--text-tertiary)' }} />
+                      <span style={{ color: 'var(--text-muted)' }}>Table {order.tableNumber}</span>
+                    </div>
+                  ) : (
                   <div className="flex items-center gap-2 text-sm">
                     <User size={14} style={{ color: 'var(--text-tertiary)' }} />
                     <span style={{ color: 'var(--text-muted)' }}>{order.customerName}</span>
                   </div>
+                  )}
 
                   {order.deliveryAddress && (
                     <div className="flex items-start gap-2 text-sm">
