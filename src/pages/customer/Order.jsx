@@ -361,7 +361,7 @@ function Order({ config: configProp }) {
             }
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
-            if (paymentMethod === PAYMENT_METHOD.MERCADO_PAGO) {
+            if (isMercadoPago) {
                 // ========== MERCADO PAGO BRANCH ==========
                 try {
                     const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
