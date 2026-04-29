@@ -114,7 +114,7 @@ export default function OrderView() {
       const isDineIn = orderType === 'dine_in';
       const actualCustomerName = isDineIn ? `Mesa ${tableNumber.trim()}` : customerName.trim();
 
-      await createOrderCloud({
+      const { error } = await createOrderCloud({
         orderNumber: nextNumber,
         items: cart.map(c => ({ name: c.name, quantity: c.quantity, price: c.price })),
         total: cartTotal,
@@ -130,6 +130,13 @@ export default function OrderView() {
         tableNumber: isDineIn && tableNumber ? Number(tableNumber) : null,
         deliveryType: orderType,
       }, businessId);
+
+      if (error) {
+        console.error('[OrderView] createOrderCloud failed:', error);
+        alert('Error placing order: ' + error.message);
+        setSubmitting(false);
+        return;
+      }
 
       setSuccess(true);
       setTimeout(() => { setSuccess(false); reset(); }, 1800);

@@ -165,7 +165,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const getStatusText = () => {
         if (order.status === ORDER_STATUS.CANCELLED) return t('status_cancelled')
         if (order.status === ORDER_STATUS.DELIVERED) return order.order_type === 'dine_in' ? 'Served' : t('status_delivered')
-        if (order.status === ORDER_STATUS.READY) return isDelivery ? t('status_on_the_way') : (order.order_type === 'dine_in' ? 'Preparing' : t('status_ready_pickup'))
+        if (order.status === ORDER_STATUS.READY) return (isDelivery || order.order_type === 'dine_in') ? t('status_on_the_way') : t('status_ready_pickup')
         if (order.status === ORDER_STATUS.DISPATCHED) return t('status_on_the_way')
         if (paid) return '✅ ' + t('status_payment_received')
         if (order.order_type === 'dine_in') return 'Preparing'
@@ -225,7 +225,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     }}>
                         {order.status === ORDER_STATUS.DELIVERED ? (order.order_type === 'dine_in' ? 'Order Served' : t('heading_order_delivered'))
                             : order.status === ORDER_STATUS.CANCELLED ? t('heading_order_cancelled')
-                            : order.status === ORDER_STATUS.READY ? (isDelivery ? t('status_on_the_way') : (order.order_type === 'dine_in' ? 'Preparing' : t('status_ready_pickup')))
+                            : order.status === ORDER_STATUS.READY ? ((isDelivery || order.order_type === 'dine_in') ? t('status_on_the_way') : t('status_ready_pickup'))
                             : order.status === ORDER_STATUS.DISPATCHED ? t('status_on_the_way')
                             : isCashMethod && !paid ? t('heading_confirmed_unpaid')
                             : t('heading_order_confirmed')}
