@@ -36,15 +36,7 @@ function DesktopSidebar() {
       style={{ backgroundColor: 'var(--nav-bg)', borderColor: 'var(--nav-border)' }}
     >
       <div className="px-5 py-6 border-b" style={{ borderColor: 'var(--nav-border)' }}>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold" style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)' }}>
-            🍔
-          </div>
-          <div>
-            <p className="text-xs font-bold tracking-widest" style={{ color: 'var(--text-primary)' }}>FOODSPOT</p>
-            <p className="text-[10px] font-semibold" style={{ color: 'var(--text-tertiary)' }}>OS</p>
-          </div>
-        </div>
+        <p className="text-xs font-bold tracking-widest mb-2" style={{ color: 'var(--text-primary)' }}>FOODSPOT</p>
         <p className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>{t('staff_ops')}</p>
       </div>
       <nav className="flex-1 py-4 space-y-1 px-3">
