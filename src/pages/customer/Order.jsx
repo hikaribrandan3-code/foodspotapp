@@ -9,7 +9,6 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { formatAddressForDisplay } from '../../utils/logistics.js' // Strike 17 Import
 import {
     getCurrentOrder,
-    clearCurrentOrder,
     updateItemQuantity,
     removeFromCurrentOrder,
     generateOrderNumber,

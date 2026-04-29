@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { useCart } from '../../contexts/CartContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
-import { clearCurrentOrder, addToCurrentOrder, getScopedGuestToken } from '../../utils/storage.js'
+import { addToCurrentOrder, getScopedGuestToken } from '../../utils/storage.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
@@ -14,6 +15,7 @@ import { PAYMENT_METHOD } from '../../constants/database.js';
 
 
 function OrderStatus({ config: configProp, featuredItems = [] }) {
+    const { clearCart } = useCart()
     const { businessId, tenantData } = useTenant()
     const { t } = useLanguage()
     const config = configProp || tenantData?.app_config || {}
@@ -124,7 +126,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const handleReorder = () => {
         if (!order || !order.items) return
 
-        clearCurrentOrder()
+        clearCart()
         // Re-read after clear to guarantee fresh cart before adding
         let addedCount = 0
         order.items.forEach(item => {

@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, useCallback } from 'react'
-import { addToCurrentOrder, getCurrentOrder, updateItemQuantity, removeFromCurrentOrder } from '../utils/storage.js'
+import { 
+    addToCurrentOrder, 
+    getCurrentOrder, 
+    updateItemQuantity, 
+    removeFromCurrentOrder, 
+    clearCurrentOrder 
+} from '../utils/storage.js'
 
 const CartContext = createContext(null)
 
