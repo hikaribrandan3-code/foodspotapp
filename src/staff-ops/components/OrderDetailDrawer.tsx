@@ -2,7 +2,18 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
+import { useTenant } from '@/contexts/TenantContext';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
+
+function openWhatsApp(phone: string, customerName: string) {
+  const clean = phone.replace(/\D/g, '');
+  const msg = encodeURIComponent(`Hola ${customerName} 👋, tu pedido está en camino. ¡Gracias por tu compra!`);
+  window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
+}
+
+function callPhone(phone: string) {
+  window.open(`tel:${phone}`, '_self');
+}
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -16,8 +27,10 @@ function callPhone(phone: string) {
 
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
+  const { tenantData } = useTenant();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [showingAlias, setShowingAlias] = useState(false);
   const order = state.orders.find(o => o.id === state.selectedOrderId);
 
   if (!order) return null;
@@ -29,6 +42,7 @@ export default function OrderDetailDrawer() {
   const isDone = order.status === 'DONE';
   const isDineIn = order.deliveryType === 'dine_in';
   const isUnpaid = order.paymentStatus !== 'paid';
+  const mpAlias = tenantData?.app_config?.payments?.mercadoPagoAlias;
 
   // Next status label for the advance button
   const isDeliveryOrder = order.deliveryType === 'delivery';
@@ -76,7 +90,7 @@ export default function OrderDetailDrawer() {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{order.id.slice(0, 8)}…</span>
-                  <h2 className="text-xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{order.customerName}</h2>
+                  <h2 className="text-xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{isDineIn ? `Table ${order.tableNumber}` : order.customerName}</h2>
                 </div>
                 <button
                   onClick={() => selectOrder(null)}
@@ -159,7 +173,7 @@ export default function OrderDetailDrawer() {
                   )}
 
                   {/* Contact buttons */}
-                  {order.customerPhone && (
+                  {!isDineIn && order.customerPhone && (
                     <div className="flex gap-2 pt-1">
                       <button
                         onClick={() => openWhatsApp(order.customerPhone!, order.customerName)}
@@ -253,7 +267,7 @@ export default function OrderDetailDrawer() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 z-[80] flex items-center justify-center"
               style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-              onClick={() => !paymentProcessing && setPaymentModalOpen(false)}
+              onClick={() => !paymentProcessing && !showingAlias && setPaymentModalOpen(false)}
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -261,39 +275,68 @@ export default function OrderDetailDrawer() {
                 className="rounded-2xl p-6 shadow-2xl"
                 style={{ backgroundColor: 'var(--detail-drawer-bg)', maxWidth: 320 }}
               >
-                <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>How did they pay?</h3>
-                <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Order #{order.orderNumber}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={async () => {
-                      setPaymentProcessing(true);
-                      confirmPayment(order.id);
-                      await new Promise(resolve => setTimeout(resolve, 2000));
-                      setPaymentModalOpen(false);
-                      setPaymentProcessing(false);
-                    }}
-                    disabled={paymentProcessing}
-                    className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                    style={{ backgroundColor: '#10b981', color: '#fff', opacity: paymentProcessing ? 0.7 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
-                  >
-                    {paymentProcessing ? 'Processing…' : '💵 Cash'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPaymentProcessing(true);
-                      confirmPayment(order.id);
-                      setTimeout(() => {
+                {!showingAlias ? (
+                  <>
+                    <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>How did they pay?</h3>
+                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Order #{order.orderNumber}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={async () => {
+                          setPaymentProcessing(true);
+                          confirmPayment(order.id);
+                          await new Promise(resolve => setTimeout(resolve, 2000));
+                          setPaymentModalOpen(false);
+                          setPaymentProcessing(false);
+                          setShowingAlias(false);
+                        }}
+                        disabled={paymentProcessing}
+                        className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+                        style={{ backgroundColor: '#10b981', color: '#fff', opacity: paymentProcessing ? 0.7 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                      >
+                        {paymentProcessing ? 'Processing…' : '💵 Cash'}
+                      </button>
+                      <button
+                        onClick={() => setShowingAlias(true)}
+                        disabled={paymentProcessing || !mpAlias}
+                        className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+                        style={{ backgroundColor: '#f97316', color: '#fff', opacity: (paymentProcessing || !mpAlias) ? 0.5 : 1, cursor: (paymentProcessing || !mpAlias) ? 'not-allowed' : 'pointer' }}
+                      >
+                        📲 MP Alias
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>Customer scans to pay</h3>
+                    <div className="mb-4 p-4 rounded-xl text-center" style={{ backgroundColor: 'var(--card-bg)', border: '2px solid #f97316' }}>
+                      <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-tertiary)' }}>MP Alias</p>
+                      <p className="text-2xl font-bold" style={{ color: '#f97316' }}>{mpAlias}</p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setPaymentProcessing(true);
+                        confirmPayment(order.id);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                         setPaymentModalOpen(false);
                         setPaymentProcessing(false);
-                      }, 2000);
-                    }}
-                    disabled={paymentProcessing}
-                    className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                    style={{ backgroundColor: '#f97316', color: '#fff', opacity: paymentProcessing ? 0.7 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
-                  >
-                    {paymentProcessing ? 'Verified…' : '📲 MP Alias'}
-                  </button>
-                </div>
+                        setShowingAlias(false);
+                      }}
+                      disabled={paymentProcessing}
+                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+                      style={{ backgroundColor: '#10b981', color: '#fff', opacity: paymentProcessing ? 0.7 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                    >
+                      {paymentProcessing ? 'Verified…' : '✓ Verified'}
+                    </button>
+                    <button
+                      onClick={() => setShowingAlias(false)}
+                      disabled={paymentProcessing}
+                      className="w-full mt-2 py-2 rounded-xl font-semibold text-sm transition-all"
+                      style={{ backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-primary)' }}
+                    >
+                      Back
+                    </button>
+                  </>
+                )}
               </motion.div>
             </motion.div>
           )}
