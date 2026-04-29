@@ -314,7 +314,7 @@ function Order({ config: configProp }) {
             status: orderStatus,
             payment_status: orderPaymentStatus,
             payment_confirmed: isCash ? false : undefined,
-            delivery_type: orderType,
+            order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
             delivery_address: isDelivery ? (customerInfo.address || null) : null,

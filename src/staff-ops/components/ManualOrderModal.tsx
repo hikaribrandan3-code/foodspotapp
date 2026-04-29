@@ -28,6 +28,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
   const [loadingMenu, setLoadingMenu] = useState(false);
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [tableNumber, setTableNumber] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -96,12 +97,13 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleSubmit = async () => {
-    if (!customerName.trim() || cart.length === 0) return;
+    if (cart.length === 0) return;
+    if (orderType === 'dine_in' && !tableNumber.trim()) return;
+    if (orderType !== 'dine_in' && !customerName.trim()) return;
     if (orderType === 'delivery' && !deliveryAddress.trim()) return;
     setSubmitting(true);
 
     try {
-      // Get next order number
       const { data: lastOrder } = await supabase
         .from('orders')
         .select('order_number')
@@ -111,26 +113,24 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
         .single();
 
       const nextNumber = ((lastOrder?.order_number as number) || 0) + 1;
-
-      // Dine-in orders skip payment confirmation and go straight to kitchen
-      const isPayAfter = orderType === 'dine_in';
-      const initialStatus = isPayAfter ? 'released_to_kitchen' : 'pending_payment';
+      const isDineIn = orderType === 'dine_in';
 
       await createOrderCloud({
         orderNumber: nextNumber,
         items: cart.map(c => ({ name: c.name, quantity: c.quantity, price: c.price })),
         total: cartTotal,
-        status: initialStatus,
-        customerName: customerName.trim(),
+        status: isDineIn ? 'released_to_kitchen' : 'pending_payment',
+        customerName: isDineIn ? `Table ${tableNumber.trim()}` : customerName.trim(),
         customerPhone: customerPhone.trim() || null,
         deliveryType: orderType,
+        tableNumber: isDineIn ? tableNumber.trim() : null,
         deliveryAddress: orderType === 'delivery' ? deliveryAddress.trim() || null : null,
-        paymentMethod,
+        paymentMethod: isDineIn ? 'cash' : paymentMethod,
         notes: notes.trim() || null,
       }, businessId);
 
-      // Reset and close
       setCart([]);
+      setTableNumber('');
       setCustomerName('');
       setCustomerPhone('');
       setDeliveryAddress('');
@@ -147,6 +147,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
   const handleClose = () => {
     setCart([]);
     setSearch('');
+    setTableNumber('');
     setStep('items');
     onClose();
   };
@@ -292,93 +293,115 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                     </div>
                   </div>
 
-                  {/* Customer info */}
-                  <Field icon={<User size={14} />} label="Customer Name *">
-                    <input
-                      value={customerName}
-                      onChange={e => setCustomerName(e.target.value)}
-                      placeholder="Full name"
-                      className="w-full bg-transparent text-sm outline-none"
-                      style={{ color: 'var(--text-primary)' }}
-                    />
-                  </Field>
-
-                  <Field icon={<Phone size={14} />} label="Phone">
-                    <input
-                      value={customerPhone}
-                      onChange={e => setCustomerPhone(e.target.value)}
-                      placeholder="Optional"
-                      type="tel"
-                      className="w-full bg-transparent text-sm outline-none"
-                      style={{ color: 'var(--text-primary)' }}
-                    />
-                  </Field>
-
-                  {/* Order type */}
+                  {/* Order type selector */}
                   <div className="flex gap-2">
                     {(['dine_in', 'pickup', 'delivery'] as const).map(t => (
                       <button
                         key={t}
                         onClick={() => setOrderType(t)}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-semibold capitalize"
+                        className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
                         style={{
                           backgroundColor: orderType === t ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
                           color: orderType === t ? 'var(--filter-active-text)' : 'var(--text-secondary)',
                           border: `1px solid ${orderType === t ? 'var(--filter-active-border)' : 'var(--counter-border)'}`,
                         }}
                       >
-                        {t === 'dine_in' ? 'dine in' : t}
+                        {t === 'dine_in' ? 'Dine In' : t === 'pickup' ? 'Pickup' : 'Delivery'}
                       </button>
                     ))}
                   </div>
 
-                  {orderType === 'delivery' && (
-                    <Field icon={<MapPin size={14} />} label="Delivery Address *">
-                      <input
-                        value={deliveryAddress}
-                        onChange={e => setDeliveryAddress(e.target.value)}
-                        placeholder="Street, number, floor..."
-                        className="w-full bg-transparent text-sm outline-none"
-                        style={{ color: 'var(--text-primary)' }}
-                      />
-                    </Field>
+                  {/* Dine-in: table + special requests only */}
+                  {orderType === 'dine_in' && (
+                    <>
+                      <Field icon={<MapPin size={14} />} label="Table Number *">
+                        <input
+                          value={tableNumber}
+                          onChange={e => setTableNumber(e.target.value)}
+                          placeholder="e.g. 4"
+                          inputMode="numeric"
+                          className="w-full bg-transparent text-sm outline-none"
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                      </Field>
+                      <Field icon={<CreditCard size={14} />} label="Special Requests">
+                        <textarea
+                          value={notes}
+                          onChange={e => setNotes(e.target.value)}
+                          placeholder="Allergies, preferences, special requests..."
+                          rows={2}
+                          className="w-full bg-transparent text-sm outline-none resize-none"
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                      </Field>
+                    </>
                   )}
 
-                  {/* Payment method */}
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1" style={{ color: 'var(--text-tertiary)' }}>Payment Method</p>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {([
-                        { value: 'cash', label: 'Cash' },
-                        { value: 'card_on_delivery', label: 'Card' },
-                        { value: 'transfer', label: 'Transfer' },
-                      ] as const).map(({ value, label }) => (
-                        <button
-                          key={value}
-                          onClick={() => setPaymentMethod(value)}
-                          className="py-2 rounded-xl text-xs font-semibold"
-                          style={{
-                            backgroundColor: paymentMethod === value ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
-                            color: paymentMethod === value ? 'var(--filter-active-text)' : 'var(--text-secondary)',
-                            border: `1px solid ${paymentMethod === value ? 'var(--filter-active-border)' : 'var(--counter-border)'}`,
-                          }}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Notes */}
-                  <Field icon={<CreditCard size={14} />} label="Kitchen Notes">
-                    <textarea
-                      value={notes}
-                      onChange={e => setNotes(e.target.value)}
-                      placeholder="Allergies, special requests..."
-                      rows={2}
-                      className="w-full bg-transparent text-sm outline-none resize-none"
-                      style={{ color: 'var(--text-primary)' }}
-                    />
+                  {/* Pickup / Delivery: full customer fields */}
+                  {orderType !== 'dine_in' && (
+                    <>
+                      <Field icon={<User size={14} />} label="Customer Name *">
+                        <input
+                          value={customerName}
+                          onChange={e => setCustomerName(e.target.value)}
+                          placeholder="Full name"
+                          className="w-full bg-transparent text-sm outline-none"
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                      </Field>
+                      <Field icon={<Phone size={14} />} label="Phone">
+                        <input
+                          value={customerPhone}
+                          onChange={e => setCustomerPhone(e.target.value)}
+                          placeholder="Optional"
+                          type="tel"
+                          className="w-full bg-transparent text-sm outline-none"
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                      </Field>
+                      {orderType === 'delivery' && (
+                        <Field icon={<MapPin size={14} />} label="Delivery Address *">
+                          <input
+                            value={deliveryAddress}
+                            onChange={e => setDeliveryAddress(e.target.value)}
+                            placeholder="Street, number, floor..."
+                            className="w-full bg-transparent text-sm outline-none"
+                            style={{ color: 'var(--text-primary)' }}
+                          />
+                        </Field>
+                      )}
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1" style={{ color: 'var(--text-tertiary)' }}>Payment Method</p>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {([
+                            { value: 'cash', label: 'Cash' },
+                            { value: 'card_on_delivery', label: 'Card' },
+                            { value: 'transfer', label: 'Transfer' },
+                          ] as const).map(({ value, label }) => (
+                            <button
+                              key={value}
+                              onClick={() => setPaymentMethod(value)}
+                              className="py-2 rounded-xl text-xs font-semibold"
+                              style={{
+                                backgroundColor: paymentMethod === value ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
+                                color: paymentMethod === value ? 'var(--filter-active-text)' : 'var(--text-secondary)',
+                                border: `1px solid ${paymentMethod === value ? 'var(--filter-active-border)' : 'var(--counter-border)'}`,
+                              }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <Field icon={<CreditCard size={14} />} label="Kitchen Notes">
+                        <textarea
+                          value={notes}
+                          onChange={e => setNotes(e.target.value)}
+                          placeholder="Allergies, special requests..."
+                          rows={2}
+                          className="w-full bg-transparent text-sm outline-none resize-none"
+                          style={{ color: 'var(--text-primary)' }}
+                        />
                   </Field>
                 </div>
               )}
@@ -402,12 +425,12 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
               ) : (
                 <button
                   onClick={handleSubmit}
-                  disabled={submitting || !customerName.trim() || (orderType === 'delivery' && !deliveryAddress.trim())}
+                  disabled={submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim())}
                   className="w-full py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
                   style={{
                     backgroundColor: 'var(--filter-active-bg)',
                     color: 'var(--filter-active-text)',
-                    opacity: submitting || !customerName.trim() || (orderType === 'delivery' && !deliveryAddress.trim()) ? 0.6 : 1,
+                    opacity: submitting || (orderType === 'dine_in' ? !tableNumber.trim() : !customerName.trim()) || (orderType === 'delivery' && !deliveryAddress.trim()) ? 0.6 : 1,
                   }}
                 >
                   {submitting

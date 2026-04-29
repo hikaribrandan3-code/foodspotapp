@@ -578,7 +578,7 @@ export async function createOrderCloud(orderData, businessId) {
             notes: orderData.notes || null,
             staff_notes: orderData.staffNotes || null,
             table_number: orderData.tableNumber || null,
-            delivery_type: orderData.deliveryType || null,
+            order_type: orderData.deliveryType || orderData.orderType || null,
             created_at: new Date().toISOString()
         })
         .select()
