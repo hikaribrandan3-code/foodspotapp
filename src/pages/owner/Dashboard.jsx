@@ -688,22 +688,28 @@ export default function Dashboard() {
                 <p style={{ margin: '0 0 24px 0', color: T.muted, fontSize: 14 }}>Order #{paymentModalOrder.order_number}</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <button
-                    onClick={() => handlePaymentMethodSelect('cash')}
+                    onClick={async () => {
+                      setPaymentModalProcessing(true);
+                      await handlePaymentMethodSelect('cash');
+                      setPaymentModalOrder(null);
+                      setPaymentModalProcessing(false);
+                      setShowingMpAlias(false);
+                    }}
                     disabled={paymentModalProcessing}
                     style={{
                       padding: '14px 16px',
                       borderRadius: 10,
                       border: 'none',
-                      backgroundColor: T.greenBg,
-                      color: T.greenInk,
+                      backgroundColor: '#f3f4f6',
+                      color: T.ink,
                       fontWeight: 600,
                       fontSize: 15,
                       cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
                       opacity: paymentModalProcessing ? 0.6 : 1,
                       transition: 'all 0.2s',
                     }}
-                    onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#d4f5e9')}
-                    onMouseLeave={(e) => (e.target.style.backgroundColor = T.greenBg)}
+                    onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
+                    onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                   >
                     {paymentModalProcessing ? 'Processing...' : 'Cash'}
                   </button>
@@ -714,16 +720,16 @@ export default function Dashboard() {
                       padding: '14px 16px',
                       borderRadius: 10,
                       border: 'none',
-                      backgroundColor: '#fed7aa',
-                      color: '#b45309',
+                      backgroundColor: '#f3f4f6',
+                      color: T.ink,
                       fontWeight: 600,
                       fontSize: 15,
                       cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
                       opacity: paymentModalProcessing ? 0.6 : 1,
                       transition: 'all 0.2s',
                     }}
-                    onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#feccaa')}
-                    onMouseLeave={(e) => (e.target.style.backgroundColor = '#fed7aa')}
+                    onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
+                    onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                   >
                     MP Alias
                   </button>
@@ -737,13 +743,19 @@ export default function Dashboard() {
                   <p style={{ fontSize: 28, fontWeight: 800, color: '#b45309', margin: 0, fontFamily: 'monospace' }}>{tenantData?.app_config?.payments?.mercadoPagoAlias || 'N/A'}</p>
                 </div>
                 <button
-                  onClick={() => handlePaymentMethodSelect('mercado_pago')}
+                  onClick={async () => {
+                    setPaymentModalProcessing(true);
+                    await handlePaymentMethodSelect('mercado_pago');
+                    setPaymentModalOrder(null);
+                    setPaymentModalProcessing(false);
+                    setShowingMpAlias(false);
+                  }}
                   disabled={paymentModalProcessing}
                   style={{
                     width: '100%',
                     padding: '12px 16px',
-                    backgroundColor: T.greenBg,
-                    color: T.greenInk,
+                    backgroundColor: '#f3f4f6',
+                    color: T.ink,
                     fontWeight: 600,
                     fontSize: 14,
                     border: 'none',
@@ -753,10 +765,10 @@ export default function Dashboard() {
                     marginBottom: 8,
                     transition: 'all 0.2s',
                   }}
-                  onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#d4f5e9')}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = T.greenBg)}
+                  onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                 >
-                  {paymentModalProcessing ? 'Verified...' : '✓ Verified'}
+                  {paymentModalProcessing ? 'Verified...' : 'Verified'}
                 </button>
                 <button
                   onClick={() => setShowingMpAlias(false)}
@@ -776,7 +788,7 @@ export default function Dashboard() {
                   onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                   onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                 >
-                  ← Back
+                  Back
                 </button>
               </>
             )}
