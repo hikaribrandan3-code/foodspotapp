@@ -11,6 +11,7 @@ import BackendHeader from '../../components/BackendHeader'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import { canAdvanceOrder } from '../../utils/orderStateGuard'
+import CreateOrderModal from './CreateOrderModal.jsx'
 
 
 
@@ -362,6 +363,7 @@ export default function Dashboard() {
   const [paymentModalOrder, setPaymentModalOrder] = useState(null)
   const [paymentModalProcessing, setPaymentModalProcessing] = useState(false)
   const [showingMpAlias, setShowingMpAlias] = useState(false)
+  const [showCreateOrder, setShowCreateOrder] = useState(false)
 
   // 🚀 OPTIMISTIC STATE: Mirrors fetched orders but allows instant local updates
   const [displayOrders, setDisplayOrders] = useState([])
@@ -583,11 +585,20 @@ export default function Dashboard() {
 
       <div style={{ overflowY: 'auto' }}>
         <div style={{ padding: '16px 16px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: T.statPrep, marginBottom: 4 }}>
-            <Icon type="grid" color={T.statPrep} size={22} />
-            <h1 style={{ margin: 0, color: T.ink, fontSize: 28, fontWeight: 800, letterSpacing: '-0.025em' }}>
-              Owner HQ
-            </h1>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: T.statPrep }}>
+              <Icon type="grid" color={T.statPrep} size={22} />
+              <h1 style={{ margin: 0, color: T.ink, fontSize: 28, fontWeight: 800, letterSpacing: '-0.025em' }}>
+                Owner HQ
+              </h1>
+            </div>
+            <button
+              onClick={() => setShowCreateOrder(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', backgroundColor: T.blueBg, color: T.blueInk, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Order
+            </button>
           </div>
           <div style={{ color: T.muted, fontSize: 14, marginTop: 4 }}>
             {counts.active} {t('active_orders').toLowerCase()} · {counts.cash} {t('cash').toLowerCase()} {t('pendent_status').toLowerCase()} · {counts.delivered} {t('delivered_status').toLowerCase()} {t('analytics_today').toLowerCase()}
@@ -785,6 +796,13 @@ export default function Dashboard() {
       )}
 
       <BackendNav useRoutes={true} role="owner" />
+
+      {showCreateOrder && (
+        <CreateOrderModal
+          businessId={businessId}
+          onClose={() => { setShowCreateOrder(false); refreshOrders() }}
+        />
+      )}
     </div>
   )
 }
