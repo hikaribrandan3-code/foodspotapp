@@ -311,6 +311,18 @@ function OwnerSummary() {
                 {/* ==================== LINKS EXTERNOS ==================== */}
                 <h3 style={labelStyle}>🔗 {t('external_links')}</h3>
                 <div style={cardStyle}>
+                    {/* Instagram */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 13, color: '#374151' }}>📸 Instagram</span>
+                    </div>
+                    <input type="text" placeholder="https://instagram.com/yourrestaurant" value={appConfig?.externalOrdering?.instagramUrl || ''} onChange={(e) => updateExternalOrdering({ instagramUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
+
+                    {/* TikTok */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 13, color: '#374151' }}>🎵 TikTok</span>
+                    </div>
+                    <input type="text" placeholder="https://tiktok.com/@yourrestaurant" value={appConfig?.externalOrdering?.tiktokUrl || ''} onChange={(e) => updateExternalOrdering({ tiktokUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
                         <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.rappiEnabled ?? false} onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })} /><span className="toggle-slider"></span></label>
@@ -394,7 +406,7 @@ function OwnerSummary() {
                                         whiteSpace: 'nowrap'
                                     }}
                                 >
-                                    {mpAliasSaving ? '⏳' : mpAliasSaved ? '✓' : 'Save'}
+                                    {mpAliasSaved ? '✓' : 'Save'}
                                 </button>
                             </div>
                             {mpAliasSaved && <p style={{ fontSize: 11, color: '#10B981', margin: 0, marginBottom: 12 }}>✓ Alias saved</p>}
