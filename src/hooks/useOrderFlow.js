@@ -43,9 +43,16 @@ export function useOrderFlow() {
             // the caller has not already set it explicitly.
             let status = orderData.status;
             if (!status) {
-                status = orderData.paymentMethod === 'cash'
-                    ? ORDER_STATUS.PAID_UNRELEASED
-                    : 'pending';
+                // For delivery orders, skip upfront payment (pay at door)
+                if (orderData.order_type === 'delivery') {
+                    status = ORDER_STATUS.RELEASED_TO_KITCHEN;
+                } else if (orderData.paymentMethod === 'cash') {
+                    // Dine-in/pickup: cash is paid upfront
+                    status = ORDER_STATUS.PAID_UNRELEASED;
+                } else {
+                    // Other payment methods (MP, card) require verification first
+                    status = 'pending';
+                }
             }
 
             const insertPayload = {
