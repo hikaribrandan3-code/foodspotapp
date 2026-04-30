@@ -24,9 +24,12 @@ export default function OrderDetailDrawer() {
   const order = state.orders.find(o => o.id === state.selectedOrderId);
 
   useEffect(() => {
-    if (paymentModalOpen && !tenantData?.app_config?.payments?.mercadoPagoAlias) {
-      refreshTenantData();
-    }
+    const loadAlias = async () => {
+      if (paymentModalOpen && !tenantData?.app_config?.payments?.mercadoPagoAlias) {
+        await refreshTenantData();
+      }
+    };
+    loadAlias();
   }, [paymentModalOpen, tenantData?.app_config?.payments?.mercadoPagoAlias, refreshTenantData]);
 
   if (!order) return null;
