@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
@@ -17,11 +17,17 @@ function callPhone(phone: string) {
 
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
-  const { tenantData } = useTenant();
+  const { tenantData, refreshTenantData } = useTenant();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showingAlias, setShowingAlias] = useState(false);
   const order = state.orders.find(o => o.id === state.selectedOrderId);
+
+  useEffect(() => {
+    if (paymentModalOpen && !tenantData?.app_config?.payments?.mercadoPagoAlias) {
+      refreshTenantData();
+    }
+  }, [paymentModalOpen, tenantData?.app_config?.payments?.mercadoPagoAlias, refreshTenantData]);
 
   if (!order) return null;
 
