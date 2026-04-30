@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
@@ -11,6 +11,7 @@ import BurgerLoader from '../../components/BurgerLoader'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
+import mapboxgl from 'mapbox-gl';
 
 
 
@@ -29,6 +30,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const [order, setOrder] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const mapContainer = useRef(null)
+    const map = useRef(null)
 
     const primaryColor = tenantData?.primary_color || '#DC2626'
 
@@ -123,6 +126,56 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         }
     }, [order?.status, tenantSlug, navigate])
 
+    useEffect(() => {
+        const isDelivery = order?.order_type === 'delivery'
+        const isDispatched = order?.status === ORDER_STATUS.DISPATCHED
+
+        if (!isDelivery || !isDispatched || !mapContainer.current) return
+
+        if (!mapboxgl.accessToken) {
+            mapboxgl.accessToken = 'pk.eyJ1IjoiZm9vZHNwb3QiLCJhIjoiY201MDM0OWR6MmI1YTJqbXhqemY1bjdlaCJ9.1p8t9k5m3z5q9w2x5r8u'
+        }
+
+        if (map.current) return
+
+        const businessLat = tenantData?.location?.latitude || -34.6037
+        const businessLng = tenantData?.location?.longitude || -58.3816
+        const deliveryLat = order?.delivery_coords?.latitude || null
+        const deliveryLng = order?.delivery_coords?.longitude || null
+
+        map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [businessLng, businessLat],
+            zoom: 14,
+        })
+
+        new mapboxgl.Marker({ color: '#22c55e' })
+            .setLngLat([businessLng, businessLat])
+            .setPopup(new mapboxgl.Popup().setText('Restaurant'))
+            .addTo(map.current)
+
+        if (deliveryLat && deliveryLng) {
+            new mapboxgl.Marker({ color: '#f97316' })
+                .setLngLat([deliveryLng, deliveryLat])
+                .setPopup(new mapboxgl.Popup().setText('Your location'))
+                .addTo(map.current)
+
+            const bounds = new mapboxgl.LngLatBounds(
+                [Math.min(businessLng, deliveryLng), Math.min(businessLat, deliveryLat)],
+                [Math.max(businessLng, deliveryLng), Math.max(businessLat, deliveryLat)]
+            )
+            map.current.fitBounds(bounds, { padding: 60 })
+        }
+
+        return () => {
+            if (map.current) {
+                map.current.remove()
+                map.current = null
+            }
+        }
+    }, [order?.status, order?.order_type, tenantData?.location, order?.delivery_coords])
+
     const handleReorder = () => {
         if (!order || !order.items) return
 
@@ -158,6 +211,12 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
     const orderDate = new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     const orderTime = new Date(order.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+
+    const calculateETA = () => {
+        const distanceKm = order?.distance_km || 0
+        const minPerKm = 5
+        return Math.ceil(distanceKm * minPerKm)
+    }
 
     const subtotal = order.items?.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0) || 0
     const tax = order.tax || 0.01
@@ -449,6 +508,68 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     )}
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
+
+                    {isDelivery && order.status === ORDER_STATUS.DISPATCHED && (
+                        <>
+                            <div style={{
+                                background: '#fef8f0',
+                                border: '1px solid #fed7aa',
+                                borderRadius: 8,
+                                padding: 16,
+                                marginBottom: 16
+                            }}>
+                                <div style={{
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    color: '#b45309',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: 0.5,
+                                    marginBottom: 8
+                                }}>
+                                    🚴 On the Way
+                                </div>
+                                <div style={{
+                                    fontSize: 24,
+                                    fontWeight: 700,
+                                    color: '#0a0a0a',
+                                    marginBottom: 12
+                                }}>
+                                    {calculateETA()} min
+                                </div>
+                                <div style={{
+                                    fontSize: 13,
+                                    color: '#737373',
+                                    marginBottom: 12
+                                }}>
+                                    {order?.distance_km?.toFixed(1)} km · Driver is on the way
+                                </div>
+                                {!paid && (
+                                    <div style={{
+                                        display: 'inline-block',
+                                        background: '#fee2e2',
+                                        color: '#b91c1c',
+                                        padding: '6px 10px',
+                                        borderRadius: 4,
+                                        fontSize: 12,
+                                        fontWeight: 600
+                                    }}>
+                                        💳 Payment pending at door
+                                    </div>
+                                )}
+                            </div>
+                            <div
+                                ref={mapContainer}
+                                style={{
+                                    width: '100%',
+                                    height: 300,
+                                    borderRadius: 8,
+                                    marginBottom: 16,
+                                    border: '1px solid #e5e5e5',
+                                    overflow: 'hidden'
+                                }}
+                            />
+                        </>
+                    )}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <button
