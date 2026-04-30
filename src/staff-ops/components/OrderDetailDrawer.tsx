@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
-import { useTenant } from '../../contexts/TenantContext';
+import { useBusiness } from '@/contexts/BusinessContext';
+import { supabase } from '../../lib/supabaseClient.js';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 
 function openWhatsApp(phone: string, customerName: string) {
@@ -17,11 +18,26 @@ function callPhone(phone: string) {
 
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
-  const { tenantData } = useTenant();
+  const { businessId } = useBusiness();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showingAlias, setShowingAlias] = useState(false);
+  const [mpAlias, setMpAlias] = useState<string | undefined>(undefined);
   const order = state.orders.find(o => o.id === state.selectedOrderId);
+
+  useEffect(() => {
+    if (!businessId) return;
+    supabase
+      .from('branding')
+      .select('app_config')
+      .eq('business_id', businessId)
+      .single()
+      .then(({ data }: { data: any }) => {
+        const alias = data?.app_config?.payments?.mercadoPagoAlias;
+        setMpAlias(alias || undefined);
+      })
+      .catch(() => setMpAlias(undefined));
+  }, [businessId]);
 
   if (!order) return null;
 
@@ -32,7 +48,6 @@ export default function OrderDetailDrawer() {
   const isDone = order.status === 'DONE';
   const isDineIn = order.deliveryType === 'dine_in';
   const isUnpaid = order.paymentStatus !== 'paid';
-  const mpAlias = tenantData?.app_config?.payments?.mercadoPagoAlias;
 
   // Next status label for the advance button
   const isDeliveryOrder = order.deliveryType === 'delivery';
