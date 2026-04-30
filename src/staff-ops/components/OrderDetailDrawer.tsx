@@ -288,17 +288,17 @@ export default function OrderDetailDrawer() {
                       <button
                         onClick={async () => {
                           setPaymentProcessing(true);
-                          confirmPayment(order.id);
-                          await new Promise(resolve => setTimeout(resolve, 2000));
+                          await confirmPayment(order.id, 'cash');
+                          await new Promise(resolve => setTimeout(resolve, 800));
                           setPaymentModalOpen(false);
                           setPaymentProcessing(false);
                           setShowingAlias(false);
                         }}
                         disabled={paymentProcessing}
                         className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                        style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green-ink)', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                        style={{ backgroundColor: '#E2F5EA', color: '#1F7A45', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
                         onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#d4f5e9')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-bg)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#E2F5EA')}
                       >
                         {paymentProcessing ? 'Processing...' : 'Cash'}
                       </button>
@@ -324,17 +324,17 @@ export default function OrderDetailDrawer() {
                     <button
                       onClick={async () => {
                         setPaymentProcessing(true);
-                        confirmPayment(order.id);
-                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        await confirmPayment(order.id, 'mercado_pago');
+                        await new Promise(resolve => setTimeout(resolve, 800));
                         setPaymentModalOpen(false);
                         setPaymentProcessing(false);
                         setShowingAlias(false);
                       }}
                       disabled={paymentProcessing}
                       className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 mb-2"
-                      style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green-ink)', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                      style={{ backgroundColor: '#E2F5EA', color: '#1F7A45', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
                       onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#d4f5e9')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-bg)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#E2F5EA')}
                     >
                       {paymentProcessing ? 'Verified…' : '✓ Verified'}
                     </button>

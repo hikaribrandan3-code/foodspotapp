@@ -66,7 +66,7 @@ export const STATUS_COLORS: Record<OrderStatus, string> = {
 export interface QueuedAction {
   id: string;
   orderId: string;
-  type: 'status_advance' | 'verify_cash' | 'confirm_delivery' | 'cancel_order';
+  type: 'status_advance' | 'verify_cash' | 'confirm_payment' | 'confirm_delivery' | 'cancel_order';
   payload?: Record<string, unknown>;
   timestamp: number;
 }

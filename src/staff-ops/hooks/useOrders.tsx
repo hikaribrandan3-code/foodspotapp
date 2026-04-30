@@ -183,7 +183,7 @@ interface OrderContextValue {
   advanceOrderStatus: (orderId: string) => void;
   verifyCash: (orderId: string) => void;
   confirmDelivery: (orderId: string) => void;
-  confirmPayment: (orderId: string) => void;
+  confirmPayment: (orderId: string, method?: string) => void;
   claimDelivery: (orderId: string) => void;
   cancelOrder: (orderId: string) => void;
   refreshOrders: () => Promise<void>;
@@ -355,7 +355,12 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       actions.forEach(async (qa) => {
         if (qa.type === 'status_advance') dispatch({ type: 'ADVANCE_STATUS', orderId: qa.orderId });
         else if (qa.type === 'verify_cash') dispatch({ type: 'VERIFY_CASH', orderId: qa.orderId });
-        else if (qa.type === 'confirm_payment') dispatch({ type: 'CONFIRM_PAYMENT', orderId: qa.orderId });
+        else if (qa.type === 'confirm_payment') {
+          dispatch({ type: 'CONFIRM_PAYMENT', orderId: qa.orderId });
+          if (state.isOnline && qa.payload?.method) {
+            dbUpdate(qa.orderId, { payment_status: 'paid', payment_confirmed: true, payment_method: qa.payload.method as string, paid_at: new Date().toISOString() }).catch(() => {});
+          }
+        }
         else if (qa.type === 'confirm_delivery') dispatch({ type: 'CONFIRM_DELIVERY', orderId: qa.orderId });
         else if (qa.type === 'cancel_order') dispatch({ type: 'CANCEL_ORDER', orderId: qa.orderId });
         await removeQueuedAction(qa.id);
@@ -498,16 +503,18 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     }
   }, [businessId]);
 
-  const confirmPayment = useCallback(async (orderId: string) => {
+  const confirmPayment = useCallback(async (orderId: string, method?: string) => {
     if (pendingOpsRef.current.has(orderId)) return;
 
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
     pendingOpsRef.current.add(orderId);
+    const paymentMethod = method || 'cash';
+    const now = new Date().toISOString();
 
     if (!state.isOnline) {
-      queueAction({ orderId, type: 'confirm_payment', timestamp: Date.now() });
+      queueAction({ orderId, type: 'confirm_payment', payload: { method: paymentMethod }, timestamp: Date.now() });
       dispatch({ type: 'CONFIRM_PAYMENT', orderId });
       addToast({ type: 'cash_verified', title: 'Payment Confirmed (offline)', message: `${order.customerName} — will sync when online`, orderId });
       if (audioEnabled) audio.alertCashVerified();
@@ -516,7 +523,25 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      await dbUpdate(orderId, { payment_status: 'paid', payment_confirmed: true });
+      const { error: ledgerError } = await supabase
+        .from('transaction_ledger')
+        .insert({
+          order_id: orderId,
+          business_id: businessId,
+          transaction_type: 'payment',
+          status: 'completed',
+          amount_gross_cents: Math.round((Number(order.total) || 0) * 100),
+          currency: 'ARS',
+          payment_method: paymentMethod,
+          external_reference: `${paymentMethod.toUpperCase()}-${orderId}`,
+          processed_at: now,
+          offline_sync: false,
+        });
+      if (ledgerError) {
+        console.error('[Staff] Ledger insert failed:', ledgerError);
+      }
+
+      await dbUpdate(orderId, { payment_status: 'paid', payment_confirmed: true, payment_method: paymentMethod, paid_at: now });
       dispatch({ type: 'CONFIRM_PAYMENT', orderId });
       addToast({ type: 'cash_verified', title: 'Payment Confirmed', message: `${order.customerName} — paid`, orderId });
       if (audioEnabled) audio.alertCashVerified();
@@ -525,7 +550,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     } finally {
       pendingOpsRef.current.delete(orderId);
     }
-  }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled]);
+  }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled, businessId]);
 
   const setTab = useCallback((tab: TabId) => dispatch({ type: 'SET_TAB', tab }), []);
   const selectOrder = useCallback((orderId: string | null) => dispatch({ type: 'SELECT_ORDER', orderId }), []);

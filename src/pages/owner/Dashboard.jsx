@@ -503,15 +503,47 @@ export default function Dashboard() {
     if (!paymentModalOrder) return
     setPaymentModalProcessing(true)
     try {
+      const now = new Date().toISOString()
+
+      // Write to transaction_ledger for analytics
+      const { error: ledgerError } = await supabase
+        .from('transaction_ledger')
+        .insert({
+          order_id: paymentModalOrder.id,
+          business_id: paymentModalOrder.business_id || businessId,
+          transaction_type: 'payment',
+          status: 'completed',
+          amount_gross_cents: Math.round((Number(paymentModalOrder.total) || 0) * 100),
+          currency: 'ARS',
+          payment_method: method,
+          external_reference: `${method.toUpperCase()}-${paymentModalOrder.id}`,
+          processed_at: now,
+          offline_sync: false,
+        })
+      if (ledgerError) {
+        console.error('[Owner] Ledger insert failed:', ledgerError)
+      }
+
+      const updates = {
+        payment_confirmed: true,
+        payment_status: 'paid',
+        payment_method: method,
+        paid_at: now,
+      }
+      if (paymentModalOrder.status === ORDER_STATUS.PENDING_PAYMENT || paymentModalOrder.status === ORDER_STATUS.PAID_UNRELEASED) {
+        updates.status = ORDER_STATUS.RELEASED_TO_KITCHEN
+        updates.owner_status = ORDER_STATUS.RELEASED_TO_KITCHEN
+      }
+
       const { error } = await supabase
         .from('orders')
-        .update({ payment_confirmed: true, payment_status: 'paid', payment_method: method })
+        .update(updates)
         .eq('id', paymentModalOrder.id)
       if (error) {
         console.error('Payment confirm failed:', error)
         alert('Error: ' + error.message)
       } else {
-        await new Promise(resolve => setTimeout(resolve, 3000))
+        await new Promise(resolve => setTimeout(resolve, 1200))
         setPaymentModalOrder(null)
         setShowingMpAlias(false)
         refreshOrders()
