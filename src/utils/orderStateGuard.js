@@ -57,16 +57,10 @@ export const canAdvanceOrder = (order, newStatus, config) => {
     const orderMode = config?.orderMode || 'A1'
 
     // ===========================================
-    // RULE 1: P0 - DELIVERY PREPAYMENT BLOCK
+    // DELIVERY: Kitchen starts immediately (pay on arrival)
     // ===========================================
-    if (orderType === 'delivery') {
-        if ((newStatus === ORDER_STATUS.PREPARING || newStatus === ORDER_STATUS.DISPATCHED) && !paymentConfirmed) {
-            return {
-                allowed: false,
-                reason: '⚠️ REGLA DE DESPACHO: El pedido debe estar PAGADO antes de preparar o enviar.'
-            }
-        }
-    }
+    // Removed: Delivery orders no longer require prepayment.
+    // Kitchen starts when order is confirmed, driver collects payment at delivery.
 
     // ===========================================
     // RULE 2: MODE A2 (CAFÉ) - STRICT PREPAYMENT

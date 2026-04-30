@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
+import QRCode from 'qrcode.react';
 import { useOrders } from '@/hooks/useOrders';
 import { useBusiness } from '@/contexts/BusinessContext';
 import { supabase } from '../../lib/supabaseClient.js';
@@ -239,16 +240,16 @@ export default function OrderDetailDrawer() {
                 </button>
               )}
 
-              {isDone && isDineIn && isUnpaid && (
+              {(isDone && isDineIn && isUnpaid) || (isDispatch && isDeliveryOrder && isUnpaid) ? (
                 <button
                   onClick={() => setPaymentModalOpen(true)}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                   style={{ backgroundColor: '#f97316', color: '#fff' }}
                 >
                   <DollarSign size={16} />
-                  Confirm Payment
+                  {isDispatch ? 'Collect Payment' : 'Confirm Payment'}
                 </button>
-              )}
+              ) : null}
 
               {isDone && !(isDineIn && isUnpaid) && (
                 <div className="text-center text-sm py-2" style={{ color: 'var(--text-tertiary)' }}>
@@ -282,8 +283,8 @@ export default function OrderDetailDrawer() {
               >
                 {!showingAlias ? (
                   <>
-                    <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>How did they pay?</h3>
-                    <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>Order #{order.orderNumber}</p>
+                    <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>{isDispatch ? 'Collect Payment' : 'How did they pay?'}</h3>
+                    <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>Order #{order.orderNumber}{isDispatch && ' — At Door'}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={async () => {
@@ -316,10 +317,10 @@ export default function OrderDetailDrawer() {
                   </>
                 ) : (
                   <>
-                    <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>Customer scans to pay</h3>
-                    <div className="mb-6 p-5 rounded-xl text-center" style={{ backgroundColor: '#fed7aa', border: '2px solid #f97316' }}>
-                      <p className="text-xs font-semibold mb-2" style={{ color: '#92400e', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MP Alias</p>
-                      <p className="text-2xl font-bold" style={{ color: '#b45309', margin: 0, fontFamily: 'monospace', fontSize: 28, fontWeight: 800 }}>{mpAlias}</p>
+                    <h3 className="font-bold mb-4" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>Scan to pay</h3>
+                    <div className="mb-6 p-4 rounded-xl text-center" style={{ backgroundColor: '#fff' }}>
+                      <QRCode value={`https://mp.me/${mpAlias}`} size={200} level="H" includeMargin={true} />
+                      <p className="text-xs font-semibold mt-3" style={{ color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '12px 0 0 0' }}>or type: {mpAlias}</p>
                     </div>
                     <button
                       onClick={async () => {
@@ -336,7 +337,7 @@ export default function OrderDetailDrawer() {
                       onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#d4f5e9')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#E2F5EA')}
                     >
-                      {paymentProcessing ? 'Verified…' : '✓ Verified'}
+                      {paymentProcessing ? 'Received…' : '✓ Received'}
                     </button>
                     <button
                       onClick={() => setShowingAlias(false)}
