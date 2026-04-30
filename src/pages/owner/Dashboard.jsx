@@ -141,8 +141,9 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
     blue: { bg: T.blueBg, fg: T.blueInk },
     green: { bg: T.greenBg, fg: T.greenInk },
     red: { bg: T.redBg, fg: T.redInk },
+    orange: { bg: '#FBECEC', fg: '#D9892F' },
   }
-  const s = styles[intent]
+  const s = styles[intent] || styles.blue
   return (
     <button onClick={onClick} style={{
       width: '100%', border: 'none', background: s.bg, color: s.fg, fontSize: 14.5,
