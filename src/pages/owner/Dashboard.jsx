@@ -688,13 +688,7 @@ export default function Dashboard() {
                 <p style={{ margin: '0 0 24px 0', color: T.muted, fontSize: 14 }}>Order #{paymentModalOrder.order_number}</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <button
-                    onClick={async () => {
-                      setPaymentModalProcessing(true);
-                      await handlePaymentMethodSelect('cash');
-                      setPaymentModalOrder(null);
-                      setPaymentModalProcessing(false);
-                      setShowingMpAlias(false);
-                    }}
+                    onClick={() => handlePaymentMethodSelect('cash')}
                     disabled={paymentModalProcessing}
                     style={{
                       padding: '14px 16px',
@@ -743,13 +737,7 @@ export default function Dashboard() {
                   <p style={{ fontSize: 28, fontWeight: 800, color: '#b45309', margin: 0, fontFamily: 'monospace' }}>{tenantData?.app_config?.payments?.mercadoPagoAlias || 'N/A'}</p>
                 </div>
                 <button
-                  onClick={async () => {
-                    setPaymentModalProcessing(true);
-                    await handlePaymentMethodSelect('mercado_pago');
-                    setPaymentModalOrder(null);
-                    setPaymentModalProcessing(false);
-                    setShowingMpAlias(false);
-                  }}
+                  onClick={() => handlePaymentMethodSelect('mercado_pago')}
                   disabled={paymentModalProcessing}
                   style={{
                     width: '100%',
