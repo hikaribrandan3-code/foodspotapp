@@ -9,8 +9,10 @@ export function toKimiStatus(
   deliveryType?: string,
 ): OrderStatus {
   // Cash orders that haven't been confirmed sit in PENDING_VERIFICATION
-  // UNLESS it's delivery (pay at door)
-  if (dbStatus === 'paid_unreleased' && paymentMethod === 'cash' && !paymentConfirmed && deliveryType !== 'delivery') {
+  // UNLESS it's delivery (pay at door) or dine-in (pay after service)
+  const isDelivery = deliveryType === 'delivery';
+  const isDineIn = deliveryType === 'dine_in';
+  if (dbStatus === 'paid_unreleased' && paymentMethod === 'cash' && !paymentConfirmed && !isDelivery && !isDineIn) {
     return 'PENDING_VERIFICATION';
   }
   switch (dbStatus) {
