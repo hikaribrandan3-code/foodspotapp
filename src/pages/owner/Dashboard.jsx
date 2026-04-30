@@ -723,8 +723,8 @@ export default function Dashboard() {
 
       {/* Payment Method Modal for Dine-In */}
       {paymentModalOrder && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 27, 45, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => !paymentModalProcessing && !showingMpAlias && setPaymentModalOrder(null)}>
-          <div style={{ backgroundColor: T.card, borderRadius: 16, padding: 32, maxWidth: 380, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: `1px solid ${T.line2}` }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 27, 45, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, pointerEvents: 'auto' }} onClick={() => !paymentModalProcessing && !showingMpAlias && setPaymentModalOrder(null)}>
+          <div style={{ backgroundColor: T.card, borderRadius: 16, padding: 32, maxWidth: 380, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: `1px solid ${T.line2}`, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
             {!showingMpAlias ? (
               <>
                 <h2 style={{ margin: '0 0 12px 0', color: T.ink, fontSize: 18, fontWeight: 700 }}>How did they pay?</h2>
@@ -732,6 +732,7 @@ export default function Dashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <button
                     onClick={() => handlePaymentMethodSelect('cash')}
+                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); handlePaymentMethodSelect('cash'); }}
                     disabled={paymentModalProcessing}
                     style={{
                       padding: '14px 16px',
@@ -744,6 +745,9 @@ export default function Dashboard() {
                       cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
                       opacity: paymentModalProcessing ? 0.6 : 1,
                       transition: 'all 0.2s',
+                      touchAction: 'manipulation',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none',
                     }}
                     onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                     onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
@@ -752,6 +756,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={() => setShowingMpAlias(true)}
+                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowingMpAlias(true); }}
                     disabled={paymentModalProcessing}
                     style={{
                       padding: '14px 16px',
@@ -764,6 +769,9 @@ export default function Dashboard() {
                       cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
                       opacity: paymentModalProcessing ? 0.6 : 1,
                       transition: 'all 0.2s',
+                      touchAction: 'manipulation',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none',
                     }}
                     onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                     onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
@@ -781,6 +789,7 @@ export default function Dashboard() {
                 </div>
                 <button
                   onClick={() => handlePaymentMethodSelect('mercado_pago')}
+                  onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); handlePaymentMethodSelect('mercado_pago'); }}
                   disabled={paymentModalProcessing}
                   style={{
                     width: '100%',
@@ -795,6 +804,9 @@ export default function Dashboard() {
                     opacity: paymentModalProcessing ? 0.6 : 1,
                     marginBottom: 8,
                     transition: 'all 0.2s',
+                    touchAction: 'manipulation',
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
                   }}
                   onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                   onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
@@ -803,6 +815,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={() => setShowingMpAlias(false)}
+                  onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowingMpAlias(false); }}
                   disabled={paymentModalProcessing}
                   style={{
                     width: '100%',
@@ -815,6 +828,9 @@ export default function Dashboard() {
                     borderRadius: 10,
                     cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
                     transition: 'all 0.2s',
+                    touchAction: 'manipulation',
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
                   }}
                   onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                   onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
