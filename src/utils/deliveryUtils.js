@@ -60,13 +60,29 @@ export const isWithinDeliveryRadius = (storeCoords, customerCoords, radiusKm) =>
  * @param {string} paymentMethod - Payment method (PAYMENT_METHOD.CASH | PAYMENT_METHOD.CARD_ON_DELIVERY)
  * @returns {string} WhatsApp-formatted summary
  */
-export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMENT_METHOD.CASH) => {
+export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMENT_METHOD.CASH, t = null) => {
     const items = order.items.map(item =>
         `• ${item.quantity}x ${item.name} - $${item.price * item.quantity}`
     ).join('\n');
 
     const paymentNote = paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY ? '\n\n⚠️ *TRAER POS*' : '';
     const paymentLabel = paymentMethod === PAYMENT_METHOD.CASH ? '💵 Efectivo' : '💳 Tarjeta';
+
+    // 🛡️ STRUCTURED ADDRESS FORMATTER
+    let addressDisplay = 'Retiro en local'
+    if (order.customerInfo?.address) {
+        const addr = order.customerInfo.address
+        if (typeof addr === 'object') {
+            const parts = []
+            if (addr.street) parts.push(addr.street)
+            if (addr.number) parts.push(addr.number)
+            if (addr.floor) parts.push(`${t ? t('floor_label') : 'Piso'}: ${addr.floor}`)
+            if (addr.notes) parts.push(`(${addr.notes})`)
+            addressDisplay = parts.join(', ') || 'N/A'
+        } else {
+            addressDisplay = addr
+        }
+    }
 
     return `🍔 *NUEVO PEDIDO - ${businessName}*\n` +
         `📋 Pedido #${order.orderNumber}\n\n` +
@@ -77,7 +93,7 @@ export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMEN
         `💳 *Pago:* ${paymentLabel}\n` +
         `👤 *Cliente:* ${order.customerInfo?.name || 'N/A'}\n` +
         `📞 *Tel:* ${order.customerInfo?.phone || 'N/A'}\n` +
-        `📍 *Dirección:* ${order.customerInfo?.address || 'Retiro en local'}` +
+        `📍 *Dirección:* ${addressDisplay}` +
         paymentNote;
 };
 

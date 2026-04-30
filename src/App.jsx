@@ -56,7 +56,6 @@ import Session from './pages/customer/Session.jsx'
 
 // Staff Pages
 import StaffLogin from './pages/staff/StaffLogin.jsx'
-import StaffDashboard from './pages/staff/StaffDashboard.jsx'
 import StaffKDS from './pages/staff/StaffKDS.jsx'
 
 // Owner Pages

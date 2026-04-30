@@ -355,6 +355,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       actions.forEach(async (qa) => {
         if (qa.type === 'status_advance') dispatch({ type: 'ADVANCE_STATUS', orderId: qa.orderId });
         else if (qa.type === 'verify_cash') dispatch({ type: 'VERIFY_CASH', orderId: qa.orderId });
+        else if (qa.type === 'confirm_payment') dispatch({ type: 'CONFIRM_PAYMENT', orderId: qa.orderId });
         else if (qa.type === 'confirm_delivery') dispatch({ type: 'CONFIRM_DELIVERY', orderId: qa.orderId });
         else if (qa.type === 'cancel_order') dispatch({ type: 'CANCEL_ORDER', orderId: qa.orderId });
         await removeQueuedAction(qa.id);
@@ -497,27 +498,31 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     }
   }, [businessId]);
 
-  const confirmPayment = useCallback((orderId: string) => {
+  const confirmPayment = useCallback(async (orderId: string) => {
     if (pendingOpsRef.current.has(orderId)) return;
 
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
     pendingOpsRef.current.add(orderId);
-    if (!state.isOnline) queueAction({ orderId, type: 'verify_cash', timestamp: Date.now() });
-    dispatch({ type: 'CONFIRM_PAYMENT', orderId });
 
-    if (state.isOnline) {
-      dbUpdate(orderId, { payment_status: 'paid', payment_confirmed: true })
-        .then(() => {
-          addToast({ type: 'cash_verified', title: 'Payment Confirmed', message: `${order.customerName} — paid`, orderId });
-          if (audioEnabled) audio.alertCashVerified();
-        })
-        .catch((e: Error) => addToast({ type: 'critical', title: 'Confirm Failed', message: e.message, orderId }))
-        .finally(() => pendingOpsRef.current.delete(orderId));
-    } else {
+    if (!state.isOnline) {
+      queueAction({ orderId, type: 'confirm_payment', timestamp: Date.now() });
+      dispatch({ type: 'CONFIRM_PAYMENT', orderId });
+      addToast({ type: 'cash_verified', title: 'Payment Confirmed (offline)', message: `${order.customerName} — will sync when online`, orderId });
+      if (audioEnabled) audio.alertCashVerified();
+      pendingOpsRef.current.delete(orderId);
+      return;
+    }
+
+    try {
+      await dbUpdate(orderId, { payment_status: 'paid', payment_confirmed: true });
+      dispatch({ type: 'CONFIRM_PAYMENT', orderId });
       addToast({ type: 'cash_verified', title: 'Payment Confirmed', message: `${order.customerName} — paid`, orderId });
       if (audioEnabled) audio.alertCashVerified();
+    } catch (e: any) {
+      addToast({ type: 'critical', title: 'Confirm Failed', message: e.message, orderId });
+    } finally {
       pendingOpsRef.current.delete(orderId);
     }
   }, [state.isOnline, state.orders, dbUpdate, addToast, audioEnabled]);
