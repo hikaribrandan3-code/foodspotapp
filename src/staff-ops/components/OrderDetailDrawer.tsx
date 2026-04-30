@@ -300,7 +300,7 @@ export default function OrderDetailDrawer() {
                         onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#d4f5e9')}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-bg)')}
                       >
-                        {paymentProcessing ? 'Processing…' : '💵 Cash'}
+                        {paymentProcessing ? 'Processing...' : 'Cash'}
                       </button>
                       <button
                         onClick={() => setShowingAlias(true)}
@@ -310,7 +310,7 @@ export default function OrderDetailDrawer() {
                         onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#feccaa')}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fed7aa')}
                       >
-                        📲 MP Alias
+                        MP Alias
                       </button>
                     </div>
                   </>

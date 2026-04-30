@@ -705,7 +705,7 @@ export default function Dashboard() {
                     onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#d4f5e9')}
                     onMouseLeave={(e) => (e.target.style.backgroundColor = T.greenBg)}
                   >
-                    {paymentModalProcessing ? '⏳ Processing...' : '💵 Cash'}
+                    {paymentModalProcessing ? 'Processing...' : 'Cash'}
                   </button>
                   <button
                     onClick={() => setShowingMpAlias(true)}
@@ -725,7 +725,7 @@ export default function Dashboard() {
                     onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#feccaa')}
                     onMouseLeave={(e) => (e.target.style.backgroundColor = '#fed7aa')}
                   >
-                    📲 MP Alias
+                    MP Alias
                   </button>
                 </div>
               </>
