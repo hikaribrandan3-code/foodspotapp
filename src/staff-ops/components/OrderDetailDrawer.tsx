@@ -302,9 +302,9 @@ export default function OrderDetailDrawer() {
                       </button>
                       <button
                         onClick={() => setShowingAlias(true)}
-                        disabled={paymentProcessing || !mpAlias}
+                        disabled={paymentProcessing}
                         className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                        style={{ backgroundColor: '#f97316', color: '#fff', opacity: (paymentProcessing || !mpAlias) ? 0.5 : 1, cursor: (paymentProcessing || !mpAlias) ? 'not-allowed' : 'pointer' }}
+                        style={{ backgroundColor: '#f97316', color: '#fff', opacity: paymentProcessing ? 0.5 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
                       >
                         📲 MP Alias
                       </button>

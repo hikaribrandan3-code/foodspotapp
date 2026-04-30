@@ -360,6 +360,7 @@ export default function Dashboard() {
   const [expandedOrderId, setExpandedOrderId] = useState(null)
   const [paymentModalOrder, setPaymentModalOrder] = useState(null)
   const [paymentModalProcessing, setPaymentModalProcessing] = useState(false)
+  const [showingMpAlias, setShowingMpAlias] = useState(false)
 
   // 🚀 OPTIMISTIC STATE: Mirrors fetched orders but allows instant local updates
   const [displayOrders, setDisplayOrders] = useState([])
@@ -509,6 +510,7 @@ export default function Dashboard() {
       } else {
         await new Promise(resolve => setTimeout(resolve, 3000))
         setPaymentModalOrder(null)
+        setShowingMpAlias(false)
         refreshOrders()
       }
     } catch (err) {
@@ -677,48 +679,93 @@ export default function Dashboard() {
 
       {/* Payment Method Modal for Dine-In */}
       {paymentModalOrder && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: T.card, borderRadius: 12, padding: 24, maxWidth: 360, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
-            <h3 style={{ margin: '0 0 4px 0', color: T.ink, fontSize: 16, fontWeight: 600 }}>How did they pay?</h3>
-            <p style={{ margin: '0 0 20px 0', color: T.body, fontSize: 13 }}>Order #{paymentModalOrder.order_number}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <button
-                onClick={() => handlePaymentMethodSelect('cash')}
-                disabled={paymentModalProcessing}
-                style={{
-                  padding: '12px 16px',
-                  borderRadius: 8,
-                  border: 'none',
-                  backgroundColor: '#10b981',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: 14,
-                  cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
-                  opacity: paymentModalProcessing ? 0.6 : 1,
-                }}
-              >
-                {paymentModalProcessing ? 'Processing...' : '💵 Cash'}
-              </button>
-              <button
-                onClick={() => handlePaymentMethodSelect('mercado_pago')}
-                disabled={paymentModalProcessing}
-                style={{
-                  padding: '12px 16px',
-                  borderRadius: 8,
-                  border: 'none',
-                  backgroundColor: '#f97316',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: 14,
-                  cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
-                  opacity: paymentModalProcessing ? 0.6 : 1,
-                }}
-              >
-                {paymentModalProcessing ? 'Verified...' : 'MP Alias'}
-              </button>
-            </div>
-            {paymentModalProcessing && (
-              <p style={{ textAlign: 'center', marginTop: 16, color: T.body, fontSize: 12 }}>Processing payment...</p>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => !paymentModalProcessing && !showingMpAlias && setPaymentModalOrder(null)}>
+          <div style={{ backgroundColor: T.card, borderRadius: 12, padding: 24, maxWidth: 360, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+            {!showingMpAlias ? (
+              <>
+                <h3 style={{ margin: '0 0 4px 0', color: T.ink, fontSize: 16, fontWeight: 600 }}>How did they pay?</h3>
+                <p style={{ margin: '0 0 20px 0', color: T.body, fontSize: 13 }}>Order #{paymentModalOrder.order_number}</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <button
+                    onClick={() => handlePaymentMethodSelect('cash')}
+                    disabled={paymentModalProcessing}
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: 8,
+                      border: 'none',
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: 14,
+                      cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
+                      opacity: paymentModalProcessing ? 0.6 : 1,
+                    }}
+                  >
+                    {paymentModalProcessing ? 'Processing...' : '💵 Cash'}
+                  </button>
+                  <button
+                    onClick={() => setShowingMpAlias(true)}
+                    disabled={paymentModalProcessing}
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: 8,
+                      border: 'none',
+                      backgroundColor: '#f97316',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: 14,
+                      cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
+                      opacity: paymentModalProcessing ? 0.6 : 1,
+                    }}
+                  >
+                    📲 MP Alias
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 style={{ margin: '0 0 4px 0', color: T.ink, fontSize: 16, fontWeight: 600 }}>Customer scans to pay</h3>
+                <div style={{ margin: '0 0 20px 0', padding: 16, backgroundColor: '#f97316', borderRadius: 8, textAlign: 'center' }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: '#fff', margin: '0 0 8px 0' }}>MP Alias</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>{tenantData?.app_config?.payments?.mercadoPagoAlias || 'N/A'}</p>
+                </div>
+                <button
+                  onClick={() => handlePaymentMethodSelect('mercado_pago')}
+                  disabled={paymentModalProcessing}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    fontWeight: 600,
+                    fontSize: 14,
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
+                    opacity: paymentModalProcessing ? 0.6 : 1,
+                    marginBottom: 8,
+                  }}
+                >
+                  {paymentModalProcessing ? 'Verified...' : '✓ Verified'}
+                </button>
+                <button
+                  onClick={() => setShowingMpAlias(false)}
+                  disabled={paymentModalProcessing}
+                  style={{
+                    width: '100%',
+                    padding: '8px 16px',
+                    backgroundColor: T.line2,
+                    color: T.ink,
+                    fontWeight: 600,
+                    fontSize: 14,
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Back
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -211,6 +211,27 @@ export function TenantProvider({ children }) {
             )
             .subscribe();
 
+        // 📡 REAL-TIME BRANDING SYNC: Listen for app_config changes (payments, aliases, etc.)
+        const brandingChannel = supabase
+            .channel('branding-sync')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'branding',
+                    filter: businessId ? `business_id=eq.${businessId}` : undefined
+                },
+                (payload) => {
+                    console.log('[TenantLock] 🔄 Branding Update Received:', payload.new);
+                    setTenantData(prev => ({
+                        ...prev,
+                        app_config: payload.new.app_config || prev.app_config
+                    }));
+                }
+            )
+            .subscribe();
+
         if (forceRefresh > 0 && businessId) {
             refreshTenantData()
         }
@@ -218,6 +239,7 @@ export function TenantProvider({ children }) {
         return () => {
             mounted = false;
             supabase.removeChannel(tenantChannel);
+            supabase.removeChannel(brandingChannel);
         }
     }, [forceRefresh, businessId])
 
