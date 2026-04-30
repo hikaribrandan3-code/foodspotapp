@@ -29,6 +29,10 @@ function OwnerSummary() {
     const [mpAliasSaved, setMpAliasSaved] = useState(false)
     const [mpAliasSaving, setMpAliasSaving] = useState(false)
     const mpAliasInitialized = useRef(false)
+    const [discordWebhookInput, setDiscordWebhookInput] = useState('')
+    const [discordWebhookSaved, setDiscordWebhookSaved] = useState(false)
+    const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
+    const discordWebhookInitialized = useRef(false)
 
     // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
     const [orders, setOrders] = useState([])
@@ -150,6 +154,14 @@ function OwnerSummary() {
         }
     }, [appConfig?.payments?.mercadoPagoAlias])
 
+    // Sync discordWebhookInput from server only on first load
+    useEffect(() => {
+        if (!discordWebhookInitialized.current && appConfig?.notifications?.discordWebhookUrl !== undefined) {
+            setDiscordWebhookInput(appConfig.notifications?.discordWebhookUrl || '')
+            discordWebhookInitialized.current = true
+        }
+    }, [appConfig?.notifications?.discordWebhookUrl])
+
     const updatePayments = (updates) => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
         debounceTimerRef.current = setTimeout(async () => {
@@ -173,6 +185,23 @@ function OwnerSummary() {
             console.error('Failed to save MP Alias:', err)
         } finally {
             setMpAliasSaving(false)
+        }
+    }
+
+    const saveDiscordWebhook = async () => {
+        setDiscordWebhookSaving(true)
+        setDiscordWebhookSaved(false)
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+        try {
+            const updatedConfig = { ...appConfig, notifications: { ...appConfig?.notifications, discordWebhookUrl: discordWebhookInput } }
+            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+            await refreshTenantData()
+            setDiscordWebhookSaved(true)
+            setTimeout(() => setDiscordWebhookSaved(false), 3000)
+        } catch (err) {
+            console.error('Failed to save Discord Webhook:', err)
+        } finally {
+            setDiscordWebhookSaving(false)
         }
     }
 
@@ -411,6 +440,40 @@ function OwnerSummary() {
                             </div>
                             {mpAliasSaved && <p style={{ fontSize: 11, color: '#10B981', margin: 0, marginBottom: 12 }}>✓ Alias saved</p>}
                             {!mpAliasSaved && <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, marginBottom: 12 }}>{t('mp_alias_info')}</p>}
+
+                            {/* Discord Webhook for Delivery Payments */}
+                            <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: 14, marginTop: 14 }}>
+                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>🤖 Discord Webhook (Delivery Payments)</label>
+                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: '0 0 8px 0' }}>Send payment requests to Discord channel when drivers deliver</p>
+                                <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                                    <input
+                                        type="password"
+                                        placeholder="https://discord.com/api/webhooks/..."
+                                        value={discordWebhookInput}
+                                        onChange={(e) => setDiscordWebhookInput(e.target.value)}
+                                        style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                                    />
+                                    <button
+                                        onClick={saveDiscordWebhook}
+                                        disabled={discordWebhookSaving}
+                                        style={{
+                                            padding: '12px 16px',
+                                            border: 'none',
+                                            borderRadius: 10,
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            cursor: discordWebhookSaving ? 'not-allowed' : 'pointer',
+                                            background: discordWebhookSaved ? '#10B981' : '#8B5CF6',
+                                            color: '#fff',
+                                            opacity: discordWebhookSaving ? 0.7 : 1,
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {discordWebhookSaved ? '✓' : 'Save'}
+                                    </button>
+                                </div>
+                                {discordWebhookSaved && <p style={{ fontSize: 11, color: '#10B981', margin: 0 }}>✓ Webhook saved</p>}
+                            </div>
                         </div>
                     </div>
                 </div>

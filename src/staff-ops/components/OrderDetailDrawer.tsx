@@ -6,6 +6,7 @@ import { useBusiness } from '@/contexts/BusinessContext';
 import { supabase } from '../../lib/supabaseClient.js';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { ORDER_STATUS } from '../../constants/database.js';
+import { sendPaymentRequestToDiscord } from '../../utils/discordNotifications.js';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -24,6 +25,8 @@ export default function OrderDetailDrawer() {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showingAlias, setShowingAlias] = useState(false);
   const [mpAlias, setMpAlias] = useState<string | undefined>(undefined);
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState<string | undefined>(undefined);
+  const [sendingToDiscord, setSendingToDiscord] = useState(false);
   const order = state.orders.find(o => o.id === state.selectedOrderId);
 
   useEffect(() => {
@@ -35,9 +38,14 @@ export default function OrderDetailDrawer() {
       .single()
       .then(({ data }: { data: any }) => {
         const alias = data?.app_config?.payments?.mercadoPagoAlias;
+        const webhook = data?.app_config?.notifications?.discordWebhookUrl;
         setMpAlias(alias || undefined);
+        setDiscordWebhookUrl(webhook || undefined);
       })
-      .catch(() => setMpAlias(undefined));
+      .catch(() => {
+        setMpAlias(undefined);
+        setDiscordWebhookUrl(undefined);
+      });
   }, [businessId]);
 
   if (!order) return null;
@@ -285,6 +293,38 @@ export default function OrderDetailDrawer() {
                   <>
                     <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>{isDispatch ? 'Collect Payment' : 'How did they pay?'}</h3>
                     <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>Order #{order.orderNumber}{isDispatch && ' — At Door'}</p>
+
+                    {isDispatch && discordWebhookUrl && (
+                      <button
+                        onClick={async () => {
+                          setSendingToDiscord(true);
+                          const result = await sendPaymentRequestToDiscord(discordWebhookUrl, {
+                            orderNumber: order.orderNumber,
+                            customerName: order.customerName,
+                            total: order.total || 0,
+                            paymentMethod: 'cash',
+                            deliveryAddress: order.deliveryAddress,
+                            customerPhone: order.customerPhone,
+                            itemCount: order.items?.length || 0
+                          });
+                          setSendingToDiscord(false);
+                          if (result.success) {
+                            alert('Payment request sent to Discord!');
+                            setPaymentModalOpen(false);
+                          } else {
+                            alert('Failed to send Discord message');
+                          }
+                        }}
+                        disabled={sendingToDiscord || paymentProcessing}
+                        className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 mb-3"
+                        style={{ backgroundColor: '#7c3aed', color: '#fff', opacity: (sendingToDiscord || paymentProcessing) ? 0.6 : 1, cursor: (sendingToDiscord || paymentProcessing) ? 'not-allowed' : 'pointer' }}
+                        onMouseEnter={(e) => !(sendingToDiscord || paymentProcessing) && (e.currentTarget.style.backgroundColor = '#6d28d9')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#7c3aed')}
+                      >
+                        {sendingToDiscord ? 'Sending...' : '🤖 Send to Discord'}
+                      </button>
+                    )}
+
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={async () => {
