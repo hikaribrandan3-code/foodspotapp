@@ -5,6 +5,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useBusiness } from '@/contexts/BusinessContext';
 import { supabase } from '../../lib/supabaseClient.js';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
+import { ORDER_STATUS } from '../../constants/database.js';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -44,8 +45,8 @@ export default function OrderDetailDrawer() {
   const urgency = getUrgencyLevel(order.createdAt);
   const waitMins = getWaitMinutes(order.createdAt);
   const isCashPending = order.status === 'PENDING_VERIFICATION';
-  const isDispatch = order.status === 'DISPATCH';
-  const isDone = order.status === 'DONE';
+  const isDispatch = order.status === ORDER_STATUS.DISPATCHED;
+  const isDone = order.status === ORDER_STATUS.DELIVERED;
   const isDineIn = order.deliveryType === 'dine_in';
   const isUnpaid = order.paymentStatus !== 'paid';
 

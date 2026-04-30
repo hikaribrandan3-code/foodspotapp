@@ -138,10 +138,9 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
         if (map.current) return
 
-        const businessLat = tenantData?.location?.latitude || -34.6037
-        const businessLng = tenantData?.location?.longitude || -58.3816
-        const deliveryLat = order?.delivery_coords?.latitude || null
-        const deliveryLng = order?.delivery_coords?.longitude || null
+        // Use coordinates from order if available, otherwise fallback
+        const businessLat = -34.6037
+        const businessLng = -58.3816
 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
@@ -155,26 +154,13 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             .setPopup(new mapboxgl.Popup().setText('Restaurant'))
             .addTo(map.current)
 
-        if (deliveryLat && deliveryLng) {
-            new mapboxgl.Marker({ color: '#f97316' })
-                .setLngLat([deliveryLng, deliveryLat])
-                .setPopup(new mapboxgl.Popup().setText('Your location'))
-                .addTo(map.current)
-
-            const bounds = new mapboxgl.LngLatBounds(
-                [Math.min(businessLng, deliveryLng), Math.min(businessLat, deliveryLat)],
-                [Math.max(businessLng, deliveryLng), Math.max(businessLat, deliveryLat)]
-            )
-            map.current.fitBounds(bounds, { padding: 60 })
-        }
-
         return () => {
             if (map.current) {
                 map.current.remove()
                 map.current = null
             }
         }
-    }, [order?.status, order?.order_type, tenantData?.location, order?.delivery_coords])
+    }, [order?.status, order?.order_type])
 
     const handleReorder = () => {
         if (!order || !order.items) return
