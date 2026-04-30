@@ -39,19 +39,22 @@ export function useOrderFlow() {
         setError(null);
 
         try {
-            // Derive the correct initial status from the payment method when
-            // the caller has not already set it explicitly.
+            // Status is locked by order type, not payment method
             let status = orderData.status;
             if (!status) {
-                // For delivery orders, skip upfront payment (pay at door)
+                // Delivery: pay at door (kitchen starts immediately)
                 if (orderData.order_type === 'delivery') {
                     status = ORDER_STATUS.RELEASED_TO_KITCHEN;
-                } else if (orderData.paymentMethod === 'cash') {
-                    // Dine-in/pickup: cash is paid upfront
-                    status = ORDER_STATUS.PAID_UNRELEASED;
-                } else {
-                    // Other payment methods (MP, card) require verification first
-                    status = 'pending';
+                }
+                // Dine-in: pay after service (kitchen starts immediately)
+                else if (orderData.order_type === 'dine_in') {
+                    status = ORDER_STATUS.RELEASED_TO_KITCHEN;
+                }
+                // Take-out/pickup: unchanged (owner controls timing)
+                else {
+                    status = orderData.paymentMethod === 'cash'
+                        ? ORDER_STATUS.PAID_UNRELEASED
+                        : 'pending';
                 }
             }
 
