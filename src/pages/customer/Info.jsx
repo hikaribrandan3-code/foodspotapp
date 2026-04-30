@@ -172,9 +172,10 @@ const Info = ({ config }) => {
                     <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                         {t('powered_by')}
                     </p>
-                    <p style={{ color: config?.branding?.poweredByColor || '#C4856A', fontSize: '1.85rem', fontWeight: '800', letterSpacing: '-0.05em' }}>
+                    <a href="https://www.instagram.com/foodspotmobile?igsh=MXgxcDlvcGFtbW93Yw==" target="_blank" rel="noopener noreferrer"
+                        style={{ color: config?.branding?.poweredByColor || '#C4856A', fontSize: '1.85rem', fontWeight: '800', letterSpacing: '-0.05em', textDecoration: 'none', cursor: 'pointer' }}>
                         FoodSpot OS
-                    </p>
+                    </a>
                 </div>
             </div> {/* End Content Container */}
         </div>
