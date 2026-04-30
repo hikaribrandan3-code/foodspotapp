@@ -6,9 +6,11 @@ export function toKimiStatus(
   dbStatus: string,
   paymentMethod?: string,
   paymentConfirmed?: boolean,
+  deliveryType?: string,
 ): OrderStatus {
   // Cash orders that haven't been confirmed sit in PENDING_VERIFICATION
-  if (dbStatus === 'paid_unreleased' && paymentMethod === 'cash' && !paymentConfirmed) {
+  // UNLESS it's delivery (pay at door)
+  if (dbStatus === 'paid_unreleased' && paymentMethod === 'cash' && !paymentConfirmed && deliveryType !== 'delivery') {
     return 'PENDING_VERIFICATION';
   }
   switch (dbStatus) {
@@ -72,8 +74,9 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
 
   const paymentMethod = mapPaymentMethod(dbOrder.payment_method);
   const paymentConfirmed = dbOrder.payment_confirmed ?? false;
+  const deliveryType = dbOrder.delivery_type ?? dbOrder.order_type ?? undefined;
 
-  const status = toKimiStatus(String(dbOrder.status || 'pending_payment'), paymentMethod, paymentConfirmed);
+  const status = toKimiStatus(String(dbOrder.status || 'pending_payment'), paymentMethod, paymentConfirmed, deliveryType);
 
   const rawItems: { name: string; quantity: number; price?: number; specialInstructions?: string }[] =
     Array.isArray(dbOrder.items) ? dbOrder.items : [];
