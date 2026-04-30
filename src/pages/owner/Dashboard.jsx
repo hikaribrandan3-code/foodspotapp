@@ -163,7 +163,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
   const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
   const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'green' } : nextActionFor(order.status, order.order_type, order.payment_status)
-  const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'PICKUP'
+  const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'TAKE OUT'
   const bucket = statusToBucket(order.status, t)
   const bucketLabel = OWNER_STATS(t).find(s => s.key === bucket)?.label || order.status.toUpperCase()
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
@@ -238,7 +238,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
             const text = isPaid
               ? 'Paid'
               : isCash
-                ? order.order_type === 'delivery' ? 'Pay on Delivery' : order.order_type === 'dine_in' ? 'Pay at Table' : 'Pay at Pickup'
+                ? order.order_type === 'delivery' ? 'Pay on Delivery' : order.order_type === 'dine_in' ? 'Pay at Table' : 'Pay at Takeout'
                 : 'Payment Pending'
             const bg = isPaid ? T.greenBg : T.blueBg
             return (

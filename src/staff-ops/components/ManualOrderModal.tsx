@@ -373,7 +373,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                   <div className="grid grid-cols-3 gap-2">
                     {([
                       { value: 'dine_in' as const, label: 'Dine In', icon: '🍽️' },
-                      { value: 'pickup' as const, label: 'Pickup', icon: '🛍️' },
+                      { value: 'pickup' as const, label: 'Take Out', icon: '🛍️' },
                       { value: 'delivery' as const, label: 'Delivery', icon: '🚗' },
                     ]).map(({ value, label, icon }) => (
                       <button
