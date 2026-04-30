@@ -123,13 +123,15 @@ export default function CreateOrderModal({ businessId, onClose }) {
   return (
     /* Backdrop */
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(15,27,45,0.45)' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(15,27,45,0.45)', pointerEvents: 'auto', touchAction: 'none' }}
       onClick={onClose}
+      onTouchMove={(e) => e.stopPropagation()}
     >
       {/* Drawer panel */}
       <div
-        style={{ marginTop: 'auto', backgroundColor: 'var(--detail-drawer-bg, #FFFFFF)', borderRadius: '20px 20px 0 0', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}
+        style={{ marginTop: 'auto', backgroundColor: 'var(--detail-drawer-bg, #FFFFFF)', borderRadius: '20px 20px 0 0', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)', pointerEvents: 'auto' }}
         onClick={e => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
       >
         {/* Handle + Header */}
         <div style={{ padding: '12px 16px 0', flexShrink: 0 }}>
@@ -139,19 +141,20 @@ export default function CreateOrderModal({ businessId, onClose }) {
               <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--text-primary, #0F1B2D)', letterSpacing: '-0.02em' }}>Take Order</h1>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-secondary, #7A8699)' }}>Select items, then fill in customer details.</p>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--text-tertiary, #9AA4B5)', fontSize: 20, lineHeight: 1 }}>✕</button>
+            <button onClick={onClose} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--text-tertiary, #9AA4B5)', fontSize: 20, lineHeight: 1, touchAction: 'manipulation', WebkitTouchCallout: 'none' }}>✕</button>
           </div>
         </div>
 
         {/* Step tabs */}
         <div style={{ display: 'flex', gap: 8, padding: '10px 16px', flexShrink: 0 }}>
           {['items', 'details'].map(s => (
-            <button key={s} onClick={() => s === 'details' && cart.length > 0 ? setStep(s) : setStep('items')}
+            <button key={s} onClick={() => s === 'details' && cart.length > 0 ? setStep(s) : setStep('items')} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); s === 'details' && cart.length > 0 ? setStep(s) : setStep('items'); }}
               style={{
                 flex: 1, padding: '8px 0', borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 backgroundColor: step === s ? 'var(--filter-active-bg, #EAF1FB)' : 'var(--counter-bg, #F4F6F9)',
                 color: step === s ? 'var(--filter-active-text, #1B4FB1)' : 'var(--text-secondary, #7A8699)',
                 border: `1px solid ${step === s ? 'var(--filter-active-border, #C7D8F5)' : 'var(--counter-border, #E6EAF0)'}`,
+                touchAction: 'manipulation', WebkitTouchCallout: 'none',
               }}>
               {s === 'items' ? `Items${cartCount > 0 ? ` (${cartCount})` : ''}` : 'Details'}
             </button>
@@ -165,8 +168,8 @@ export default function CreateOrderModal({ businessId, onClose }) {
               {/* Search */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12, backgroundColor: 'var(--counter-bg, #F4F6F9)', border: '1px solid var(--counter-border, #E6EAF0)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary, #9AA4B5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search menu..."
-                  style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)' }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search menu..." onTouchStart={(e) => e.stopPropagation()}
+                  style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
               </div>
 
               {loadingMenu ? (
@@ -201,13 +204,13 @@ export default function CreateOrderModal({ businessId, onClose }) {
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                                 {inCart && (
                                   <>
-                                    <button onClick={() => removeFromCart(item.id)} style={{ width: 24, height: 24, borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--btn-secondary-bg, #F4F6F9)' }}>
+                                    <button onClick={() => removeFromCart(item.id)} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); removeFromCart(item.id); }} style={{ width: 24, height: 24, borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--btn-secondary-bg, #F4F6F9)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }}>
                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary, #0F1B2D)" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                     </button>
                                     <span style={{ fontSize: 14, fontWeight: 700, width: 16, textAlign: 'center', color: 'var(--text-primary, #0F1B2D)' }}>{inCart.quantity}</span>
                                   </>
                                 )}
-                                <button onClick={() => addToCart(item)} style={{ width: 24, height: 24, borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--filter-active-bg, #EAF1FB)' }}>
+                                <button onClick={() => addToCart(item)} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); addToCart(item); }} style={{ width: 24, height: 24, borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--filter-active-bg, #EAF1FB)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }}>
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--filter-active-text, #1B4FB1)" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                 </button>
                               </div>
@@ -240,14 +243,14 @@ export default function CreateOrderModal({ businessId, onClose }) {
 
               {orderType !== 'dine_in' && (
                 <Field label="Customer Name *">
-                  <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Full name"
-                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)' }} />
+                  <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Full name" onTouchStart={(e) => e.stopPropagation()}
+                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
                 </Field>
               )}
 
               <Field label="Phone (optional)">
-                <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+1 555 000 0000"
-                  type="tel" style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)' }} />
+                <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+1 555 000 0000" onTouchStart={(e) => e.stopPropagation()}
+                  type="tel" style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
               </Field>
 
               {/* Order type */}
@@ -255,12 +258,13 @@ export default function CreateOrderModal({ businessId, onClose }) {
                 <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, paddingLeft: 4, color: 'var(--text-tertiary, #9AA4B5)' }}>Order Type</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
                   {[{ value: 'pickup', label: 'Pickup' }, { value: 'delivery', label: 'Delivery' }, { value: 'dine_in', label: 'Dine In' }].map(({ value, label }) => (
-                    <button key={value} onClick={() => setOrderType(value)}
+                    <button key={value} onClick={() => setOrderType(value)} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setOrderType(value); }}
                       style={{
                         padding: '10px 0', borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                         backgroundColor: orderType === value ? 'var(--filter-active-bg, #EAF1FB)' : 'var(--counter-bg, #F4F6F9)',
                         color: orderType === value ? 'var(--filter-active-text, #1B4FB1)' : 'var(--text-secondary, #7A8699)',
                         border: `1px solid ${orderType === value ? 'var(--filter-active-border, #C7D8F5)' : 'var(--counter-border, #E6EAF0)'}`,
+                        touchAction: 'manipulation', WebkitTouchCallout: 'none',
                       }}>
                       {label}
                     </button>
@@ -270,8 +274,8 @@ export default function CreateOrderModal({ businessId, onClose }) {
 
               {orderType === 'delivery' && (
                 <Field label="Delivery Address">
-                  <input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="Street, number, floor..."
-                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)' }} />
+                  <input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="Street, number, floor..." onTouchStart={(e) => e.stopPropagation()}
+                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
                 </Field>
               )}
 
@@ -279,9 +283,9 @@ export default function CreateOrderModal({ businessId, onClose }) {
                 <Field label="Table Number">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary, #9AA4B5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8.5" y2="21"/><line x1="14" y1="3" x2="15.5" y2="21"/></svg>
-                    <input value={tableNumber} onChange={e => setTableNumber(e.target.value.replace(/\D/g, ''))}
+                    <input value={tableNumber} onChange={e => setTableNumber(e.target.value.replace(/\D/g, ''))} onTouchStart={(e) => e.stopPropagation()}
                       placeholder="e.g. 5" type="text" inputMode="numeric"
-                      style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)' }} />
+                      style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
                   </div>
                 </Field>
               )}
@@ -291,12 +295,13 @@ export default function CreateOrderModal({ businessId, onClose }) {
                   <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, paddingLeft: 4, color: 'var(--text-tertiary, #9AA4B5)' }}>Payment</p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
                     {[{ value: 'cash', label: 'Cash' }, { value: 'card_on_delivery', label: 'Card' }, { value: 'transfer', label: 'Transfer' }].map(({ value, label }) => (
-                      <button key={value} onClick={() => setPaymentMethod(value)}
+                      <button key={value} onClick={() => setPaymentMethod(value)} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setPaymentMethod(value); }}
                         style={{
                           padding: '8px 0', borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                           backgroundColor: paymentMethod === value ? 'var(--filter-active-bg, #EAF1FB)' : 'var(--counter-bg, #F4F6F9)',
                           color: paymentMethod === value ? 'var(--filter-active-text, #1B4FB1)' : 'var(--text-secondary, #7A8699)',
                           border: `1px solid ${paymentMethod === value ? 'var(--filter-active-border, #C7D8F5)' : 'var(--counter-border, #E6EAF0)'}`,
+                          touchAction: 'manipulation', WebkitTouchCallout: 'none',
                         }}>
                         {label}
                       </button>
@@ -306,9 +311,9 @@ export default function CreateOrderModal({ businessId, onClose }) {
               )}
 
               <Field label="Staff Notes (optional)">
-                <textarea value={staffNotes} onChange={e => setStaffNotes(e.target.value)}
+                <textarea value={staffNotes} onChange={e => setStaffNotes(e.target.value)} onTouchStart={(e) => e.stopPropagation()}
                   placeholder="No onions, extra sauce, allergy info..."
-                  rows={2} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', resize: 'none', fontFamily: 'inherit' }} />
+                  rows={2} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', resize: 'none', fontFamily: 'inherit', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
               </Field>
             </div>
           )}
@@ -321,22 +326,24 @@ export default function CreateOrderModal({ businessId, onClose }) {
               Order placed — sent to kitchen
             </div>
           ) : step === 'items' ? (
-            <button onClick={() => setStep('details')} disabled={cart.length === 0}
+            <button onClick={() => setStep('details')} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); cart.length > 0 && setStep('details'); }} disabled={cart.length === 0}
               style={{
                 width: '100%', padding: '16px 0', borderRadius: 14, fontWeight: 600, fontSize: 14, cursor: cart.length === 0 ? 'not-allowed' : 'pointer', border: 'none',
                 backgroundColor: cart.length === 0 ? 'var(--btn-secondary-bg, #F4F6F9)' : 'var(--filter-active-bg, #EAF1FB)',
                 color: cart.length === 0 ? 'var(--text-tertiary, #9AA4B5)' : 'var(--filter-active-text, #1B4FB1)',
                 opacity: cart.length === 0 ? 0.5 : 1,
+                touchAction: 'manipulation', WebkitTouchCallout: 'none',
               }}>
               Continue — {cartCount} item{cartCount !== 1 ? 's' : ''} · ${cartTotal.toFixed(2)}
             </button>
           ) : (
-            <button onClick={handleSubmit} disabled={submitting || !canSubmit}
+            <button onClick={handleSubmit} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); !submitting && canSubmit && handleSubmit(); }} disabled={submitting || !canSubmit}
               style={{
                 width: '100%', padding: '16px 0', borderRadius: 14, fontWeight: 600, fontSize: 14, cursor: (submitting || !canSubmit) ? 'not-allowed' : 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 backgroundColor: 'var(--filter-active-bg, #EAF1FB)',
                 color: 'var(--filter-active-text, #1B4FB1)',
                 opacity: (submitting || !canSubmit) ? 0.6 : 1,
+                touchAction: 'manipulation', WebkitTouchCallout: 'none',
               }}>
               {submitting ? 'Placing order…' : `Place Order · $${cartTotal.toFixed(2)}`}
             </button>
