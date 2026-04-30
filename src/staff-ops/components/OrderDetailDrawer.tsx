@@ -271,19 +271,19 @@ export default function OrderDetailDrawer() {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 z-[80] flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+              style={{ backgroundColor: 'rgba(15, 27, 45, 0.4)' }}
               onClick={() => !paymentProcessing && !showingAlias && setPaymentModalOpen(false)}
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                 onClick={(e) => e.stopPropagation()}
-                className="rounded-2xl p-6 shadow-2xl"
-                style={{ backgroundColor: 'var(--detail-drawer-bg)', maxWidth: 320 }}
+                className="rounded-2xl shadow-2xl"
+                style={{ backgroundColor: 'var(--detail-drawer-bg)', maxWidth: 380, padding: 32, border: '1px solid var(--line-2)' }}
               >
                 {!showingAlias ? (
                   <>
-                    <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>How did they pay?</h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Order #{order.orderNumber}</p>
+                    <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>How did they pay?</h3>
+                    <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>Order #{order.orderNumber}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={async () => {
@@ -296,7 +296,9 @@ export default function OrderDetailDrawer() {
                         }}
                         disabled={paymentProcessing}
                         className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                        style={{ backgroundColor: '#10b981', color: '#fff', opacity: paymentProcessing ? 0.7 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                        style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green-ink)', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                        onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#d4f5e9')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-bg)')}
                       >
                         {paymentProcessing ? 'Processing…' : '💵 Cash'}
                       </button>
@@ -304,7 +306,9 @@ export default function OrderDetailDrawer() {
                         onClick={() => setShowingAlias(true)}
                         disabled={paymentProcessing}
                         className="py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                        style={{ backgroundColor: '#f97316', color: '#fff', opacity: paymentProcessing ? 0.5 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                        style={{ backgroundColor: '#fed7aa', color: '#b45309', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                        onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#feccaa')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fed7aa')}
                       >
                         📲 MP Alias
                       </button>
@@ -312,10 +316,10 @@ export default function OrderDetailDrawer() {
                   </>
                 ) : (
                   <>
-                    <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>Customer scans to pay</h3>
-                    <div className="mb-4 p-4 rounded-xl text-center" style={{ backgroundColor: 'var(--card-bg)', border: '2px solid #f97316' }}>
-                      <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-tertiary)' }}>MP Alias</p>
-                      <p className="text-2xl font-bold" style={{ color: '#f97316' }}>{mpAlias}</p>
+                    <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)', fontSize: 18, margin: 0 }}>Customer scans to pay</h3>
+                    <div className="mb-6 p-5 rounded-xl text-center" style={{ backgroundColor: '#fed7aa', border: '2px solid #f97316' }}>
+                      <p className="text-xs font-semibold mb-2" style={{ color: '#92400e', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MP Alias</p>
+                      <p className="text-2xl font-bold" style={{ color: '#b45309', margin: 0, fontFamily: 'monospace', fontSize: 28, fontWeight: 800 }}>{mpAlias}</p>
                     </div>
                     <button
                       onClick={async () => {
@@ -327,18 +331,22 @@ export default function OrderDetailDrawer() {
                         setShowingAlias(false);
                       }}
                       disabled={paymentProcessing}
-                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-                      style={{ backgroundColor: '#10b981', color: '#fff', opacity: paymentProcessing ? 0.7 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 mb-2"
+                      style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green-ink)', opacity: paymentProcessing ? 0.6 : 1, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                      onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#d4f5e9')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-bg)')}
                     >
                       {paymentProcessing ? 'Verified…' : '✓ Verified'}
                     </button>
                     <button
                       onClick={() => setShowingAlias(false)}
                       disabled={paymentProcessing}
-                      className="w-full mt-2 py-2 rounded-xl font-semibold text-sm transition-all"
-                      style={{ backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-primary)' }}
+                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                      style={{ backgroundColor: '#f3f4f6', color: 'var(--text-primary)', border: '1px solid var(--line-2)', cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}
+                      onMouseEnter={(e) => !paymentProcessing && (e.currentTarget.style.backgroundColor = '#e5e7eb')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
                     >
-                      Back
+                      ← Back
                     </button>
                   </>
                 )}

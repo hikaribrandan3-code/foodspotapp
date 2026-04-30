@@ -680,44 +680,50 @@ export default function Dashboard() {
 
       {/* Payment Method Modal for Dine-In */}
       {paymentModalOrder && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => !paymentModalProcessing && !showingMpAlias && setPaymentModalOrder(null)}>
-          <div style={{ backgroundColor: T.card, borderRadius: 12, padding: 24, maxWidth: 360, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 27, 45, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => !paymentModalProcessing && !showingMpAlias && setPaymentModalOrder(null)}>
+          <div style={{ backgroundColor: T.card, borderRadius: 16, padding: 32, maxWidth: 380, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: `1px solid ${T.line2}` }} onClick={(e) => e.stopPropagation()}>
             {!showingMpAlias ? (
               <>
-                <h3 style={{ margin: '0 0 4px 0', color: T.ink, fontSize: 16, fontWeight: 600 }}>How did they pay?</h3>
-                <p style={{ margin: '0 0 20px 0', color: T.body, fontSize: 13 }}>Order #{paymentModalOrder.order_number}</p>
+                <h2 style={{ margin: '0 0 12px 0', color: T.ink, fontSize: 18, fontWeight: 700 }}>How did they pay?</h2>
+                <p style={{ margin: '0 0 24px 0', color: T.muted, fontSize: 14 }}>Order #{paymentModalOrder.order_number}</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <button
                     onClick={() => handlePaymentMethodSelect('cash')}
                     disabled={paymentModalProcessing}
                     style={{
-                      padding: '12px 16px',
-                      borderRadius: 8,
+                      padding: '14px 16px',
+                      borderRadius: 10,
                       border: 'none',
-                      backgroundColor: '#10b981',
-                      color: 'white',
+                      backgroundColor: T.greenBg,
+                      color: T.greenInk,
                       fontWeight: 600,
-                      fontSize: 14,
+                      fontSize: 15,
                       cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
                       opacity: paymentModalProcessing ? 0.6 : 1,
+                      transition: 'all 0.2s',
                     }}
+                    onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#d4f5e9')}
+                    onMouseLeave={(e) => (e.target.style.backgroundColor = T.greenBg)}
                   >
-                    {paymentModalProcessing ? 'Processing...' : '💵 Cash'}
+                    {paymentModalProcessing ? '⏳ Processing...' : '💵 Cash'}
                   </button>
                   <button
                     onClick={() => setShowingMpAlias(true)}
                     disabled={paymentModalProcessing}
                     style={{
-                      padding: '12px 16px',
-                      borderRadius: 8,
+                      padding: '14px 16px',
+                      borderRadius: 10,
                       border: 'none',
-                      backgroundColor: '#f97316',
-                      color: 'white',
+                      backgroundColor: '#fed7aa',
+                      color: '#b45309',
                       fontWeight: 600,
-                      fontSize: 14,
+                      fontSize: 15,
                       cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
                       opacity: paymentModalProcessing ? 0.6 : 1,
+                      transition: 'all 0.2s',
                     }}
+                    onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#feccaa')}
+                    onMouseLeave={(e) => (e.target.style.backgroundColor = '#fed7aa')}
                   >
                     📲 MP Alias
                   </button>
@@ -725,10 +731,10 @@ export default function Dashboard() {
               </>
             ) : (
               <>
-                <h3 style={{ margin: '0 0 4px 0', color: T.ink, fontSize: 16, fontWeight: 600 }}>Customer scans to pay</h3>
-                <div style={{ margin: '0 0 20px 0', padding: 16, backgroundColor: '#f97316', borderRadius: 8, textAlign: 'center' }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: '#fff', margin: '0 0 8px 0' }}>MP Alias</p>
-                  <p style={{ fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>{tenantData?.app_config?.payments?.mercadoPagoAlias || 'N/A'}</p>
+                <h2 style={{ margin: '0 0 12px 0', color: T.ink, fontSize: 18, fontWeight: 700 }}>Customer scans to pay</h2>
+                <div style={{ margin: '0 0 24px 0', padding: 20, backgroundColor: '#fed7aa', borderRadius: 12, textAlign: 'center', border: '2px solid #f97316' }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: '#92400e', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MP Alias</p>
+                  <p style={{ fontSize: 28, fontWeight: 800, color: '#b45309', margin: 0, fontFamily: 'monospace' }}>{tenantData?.app_config?.payments?.mercadoPagoAlias || 'N/A'}</p>
                 </div>
                 <button
                   onClick={() => handlePaymentMethodSelect('mercado_pago')}
@@ -736,16 +742,19 @@ export default function Dashboard() {
                   style={{
                     width: '100%',
                     padding: '12px 16px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
+                    backgroundColor: T.greenBg,
+                    color: T.greenInk,
                     fontWeight: 600,
                     fontSize: 14,
                     border: 'none',
-                    borderRadius: 8,
+                    borderRadius: 10,
                     cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
                     opacity: paymentModalProcessing ? 0.6 : 1,
                     marginBottom: 8,
+                    transition: 'all 0.2s',
                   }}
+                  onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#d4f5e9')}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = T.greenBg)}
                 >
                   {paymentModalProcessing ? 'Verified...' : '✓ Verified'}
                 </button>
@@ -754,17 +763,20 @@ export default function Dashboard() {
                   disabled={paymentModalProcessing}
                   style={{
                     width: '100%',
-                    padding: '8px 16px',
-                    backgroundColor: T.line2,
+                    padding: '12px 16px',
+                    backgroundColor: '#f3f4f6',
                     color: T.ink,
                     fontWeight: 600,
                     fontSize: 14,
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
+                    border: `1px solid ${T.line2}`,
+                    borderRadius: 10,
+                    cursor: paymentModalProcessing ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
                   }}
+                  onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                 >
-                  Back
+                  ← Back
                 </button>
               </>
             )}
