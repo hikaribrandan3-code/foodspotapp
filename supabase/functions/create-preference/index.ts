@@ -151,7 +151,7 @@ serve(async (req: Request) => {
 
         // Build the frontend base URL for back_urls
         const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://foodspotapp.vercel.app";
-        const statusBase = slug ? `${APP_BASE_URL}/${slug}/status` : `${APP_BASE_URL}/status`;
+        const receiptBase = slug ? `${APP_BASE_URL}/${slug}/receipt` : `${APP_BASE_URL}/receipt`;
 
         const preferenceBody = {
             items: [{
@@ -161,9 +161,9 @@ serve(async (req: Request) => {
                 currency_id: "ARS"
             }],
             back_urls: {
-                success: `${statusBase}/${order.id}?payment=success`,
-                failure: `${statusBase}/${order.id}?payment=failure`,
-                pending: `${statusBase}/${order.id}?payment=pending`
+                success: `${receiptBase}?order_id=${order.id}`,
+                failure: `${receiptBase}?order_id=${order.id}&payment=failure`,
+                pending: `${receiptBase}?order_id=${order.id}&payment=pending`
             },
             auto_return: "approved",
             external_reference: order.id,
