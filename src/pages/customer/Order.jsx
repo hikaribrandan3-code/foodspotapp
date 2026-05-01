@@ -435,7 +435,11 @@ function Order({ config: configProp }) {
 
             setSubmitted(true)
             setTimeout(() => {
-                navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
+                if (isDelivery) {
+                    navigate(`/${tenantSlug}/receipt?order_id=${savedOrder.id}`)
+                } else {
+                    navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
+                }
             }, 1500)
 
         } catch (err) {

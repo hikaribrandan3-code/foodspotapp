@@ -45,6 +45,8 @@ import Menu from './pages/customer/Menu.jsx'
 import Envio from './pages/customer/Envio.jsx'
 import Order from './pages/customer/Order.jsx'
 import OrderStatus from './pages/customer/OrderStatus.jsx'
+import Receipt from './pages/customer/Receipt.jsx'
+import DeliveryTracker from './pages/customer/DeliveryTracker.jsx'
 import Rewards from './pages/customer/Rewards.jsx'
 import ShareFood from './pages/customer/ShareFood.jsx'
 import PerfectPour from './pages/customer/PerfectPour.jsx'
@@ -512,6 +514,8 @@ function App() {
                                             <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
                                             <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
                                             <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
+                                            <Route path="/:tenantSlug/receipt" element={<Receipt />} />
+                                            <Route path="/:tenantSlug/track" element={<DeliveryTracker />} />
                                             <Route path="/:tenantSlug/rewards" element={<Rewards />} />
                                             <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
                                             <Route path="/:tenantSlug/game" element={<PerfectPour />} />
