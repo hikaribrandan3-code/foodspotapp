@@ -5,7 +5,6 @@ import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
 import { ORDER_STATUS } from '../../constants/database.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
-import AuditorOverlay from '../../components/AuditorOverlay.jsx'
 
 export default function OwnerSummary() {
     const navigate = useNavigate()
@@ -25,7 +24,6 @@ export default function OwnerSummary() {
     const [discordWebhookSaved, setDiscordWebhookSaved] = useState(false)
     const [orders, setOrders] = useState([])
     const [ordersLoading, setOrdersLoading] = useState(false)
-    const [showAuditor, setShowAuditor] = useState(false)
 
     const mpAliasInitialized = useRef(false)
     const discordWebhookInitialized = useRef(false)
@@ -174,21 +172,6 @@ export default function OwnerSummary() {
                     }}
                 >
                     🔄 {t('update')}
-                </button>
-                <button
-                    onClick={() => setShowAuditor(true)}
-                    style={{
-                        padding: '10px 16px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        border: '2px solid #1F2937',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        background: '#FFFFFF',
-                        color: '#1F2937'
-                    }}
-                >
-                    🔍 Auditor
                 </button>
             </div>
 
@@ -352,8 +335,6 @@ export default function OwnerSummary() {
                 </div>
             </div>
 
-            {/* Auditor Overlay */}
-            {showAuditor && <AuditorOverlay onClose={() => setShowAuditor(false)} />}
         </div>
     )
 }
