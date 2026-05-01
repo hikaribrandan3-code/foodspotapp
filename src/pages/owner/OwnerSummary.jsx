@@ -402,12 +402,12 @@ function OwnerSummary() {
                             <input
                                 type="password"
                                 placeholder="APP_1234567890abcdef..."
-                                value={appConfig?.mp_access_token || ''}
+                                value={tenantData?.mp_access_token || ''}
                                 onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
-                                style={{ ...inputStyle, borderColor: appConfig?.mp_access_token ? '#10B981' : '#E5E7EB' }}
+                                style={{ ...inputStyle, borderColor: tenantData?.mp_access_token ? '#10B981' : '#E5E7EB' }}
                             />
-                            {appConfig?.mp_access_token && <p style={{ fontSize: 11, color: '#059669', margin: 0, marginBottom: 12 }}>{t('mp_token_saved')}</p>}
-                            {!appConfig?.mp_access_token && <p style={{ fontSize: 11, color: '#DC2626', margin: 0, marginBottom: 12 }}>{t('mp_token_required')}</p>}
+                            {tenantData?.mp_access_token && <p style={{ fontSize: 11, color: '#059669', margin: 0, marginBottom: 12 }}>{t('mp_token_saved')}</p>}
+                            {!tenantData?.mp_access_token && <p style={{ fontSize: 11, color: '#DC2626', margin: 0, marginBottom: 12 }}>{t('mp_token_required')}</p>}
 
                             {/* Alias (Optional) */}
                             <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('mp_alias_optional')}</label>
