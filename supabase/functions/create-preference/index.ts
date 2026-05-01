@@ -15,6 +15,15 @@ serve(async (req: Request) => {
         return new Response("ok", { headers: corsHeaders });
     }
 
+    // Verify JWT / Auth header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+        return new Response(
+            JSON.stringify({ error: "Unauthorized" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+    }
+
     try {
         const payload = await req.json();
         const order_id = payload.order_id;
@@ -26,7 +35,7 @@ serve(async (req: Request) => {
             );
         }
 
-        const supabaseUrl = "https://buendqgmwpxdixwvlkhd.supabase.co";
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -45,7 +54,7 @@ serve(async (req: Request) => {
 
         const { data: branding, error: brandingError } = await supabase
             .from('branding')
-            .select("mp_access_token, business_name, slug")
+            .select("mp_access_token, business_name, slug, currency")
             .eq("business_id", order.business_id)
             .single();
 
@@ -64,7 +73,7 @@ serve(async (req: Request) => {
                 title: `Pedido #${order.order_number} - ${businessName}`,
                 quantity: 1,
                 unit_price: order.total,
-                currency_id: "ARS"
+                currency_id: branding.currency || "ARS"
             }],
             back_urls: {
                 success: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/receipt?payment=success&order_id=${order.id}`,

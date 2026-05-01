@@ -391,9 +391,7 @@ function Order({ config: configProp }) {
                         if (isDelivery) clearDeliveryMode()
                         // Use sandbox_init_point when available (test mode), else init_point
                         const targetUrl = prefData?.redirect_url || prefData?.init_point
-                        const redirectUrl = new URL(targetUrl)
-                        redirectUrl.searchParams.set('order_id', savedOrder.id)
-                        window.location.href = redirectUrl.toString()
+                        window.location.href = targetUrl
                         return
                     }
 

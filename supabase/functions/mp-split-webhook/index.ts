@@ -37,7 +37,7 @@ serve(async (req: Request) => {
 
         // Get payment data
         const payment = payload.data?.id 
-            ? await getPaymentDetails(payload.data.id, supabase)
+            ? await getPaymentDetails(payload.data.id, supabase, payload.user_id)
             : null;
 
         if (!payment) {
@@ -80,26 +80,17 @@ serve(async (req: Request) => {
             })
             .eq("id", split.id);
 
-        // If paid, update ledger totals
+        // If paid, atomically increment ledger total_paid
         if (newStatus === "paid") {
-            const { data: ledger } = await supabase
-                .from("table_ledgers")
-                .select("total_paid, total_due")
-                .eq("id", split.ledger_id)
-                .single();
+            const { error: rpcError } = await supabase.rpc("increment_ledger_total", {
+                p_ledger_id: split.ledger_id,
+                p_amount: split.amount,
+            });
 
-            if (ledger) {
-                const newTotalPaid = (ledger.total_paid || 0) + split.amount;
-                
-                await supabase
-                    .from("table_ledgers")
-                    .update({
-                        total_paid: newTotalPaid,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq("id", split.ledger_id);
-
-                console.log(`✅ Ledger ${split.ledger_id} updated: total_paid = ${newTotalPaid}`);
+            if (rpcError) {
+                console.error(`❌ Failed to atomically update ledger ${split.ledger_id}:`, rpcError);
+            } else {
+                console.log(`✅ Ledger ${split.ledger_id} atomically incremented by ${split.amount}`);
             }
         }
 
@@ -119,20 +110,42 @@ serve(async (req: Request) => {
     }
 });
 
-async function getPaymentDetails(paymentId: number, supabase: any) {
+async function getPaymentDetails(paymentId: number, supabase: any, mpUserId: string | null) {
     try {
-        // Get MP access token from branding
-        const { data: branding } = await supabase
-            .from("branding")
-            .select("mp_access_token")
-            .limit(1)
-            .single();
+        let accessToken: string | null = null;
 
-        if (!branding?.mp_access_token) return null;
+        // Try branding_secrets first (proper multi-tenant path)
+        if (mpUserId) {
+            const { data: secretData } = await supabase
+                .from("branding_secrets")
+                .select("mp_access_token")
+                .eq("mp_user_id", mpUserId)
+                .single();
+            if (secretData?.mp_access_token) {
+                accessToken = secretData.mp_access_token;
+            }
+        }
+
+        // Fallback to branding table by mp_user_id
+        if (!accessToken && mpUserId) {
+            const { data: branding } = await supabase
+                .from("branding")
+                .select("mp_access_token")
+                .eq("mp_user_id", mpUserId)
+                .single();
+            if (branding?.mp_access_token) {
+                accessToken = branding.mp_access_token;
+            }
+        }
+
+        if (!accessToken) {
+            console.error("No MP access token found for split payment");
+            return null;
+        }
 
         const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: {
-                "Authorization": `Bearer ${branding.mp_access_token}`
+                "Authorization": `Bearer ${accessToken}`
             }
         });
 

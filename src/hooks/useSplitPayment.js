@@ -160,21 +160,11 @@ export function useSplitPayment(businessId) {
                 .eq('id', split.id);
 
             if (newStatus === 'paid') {
-                const { data: ledger } = await supabase
-                    .from('table_ledgers')
-                    .select('total_paid, total_due')
-                    .eq('id', split.ledger_id)
-                    .single();
-
-                const newTotalPaid = (ledger?.total_paid || 0) + split.amount;
-
-                await supabase
-                    .from('table_ledgers')
-                    .update({ 
-                        total_paid: newTotalPaid,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', split.ledger_id);
+                const { error: rpcError } = await supabase.rpc('increment_ledger_total', {
+                    p_ledger_id: split.ledger_id,
+                    p_amount: split.amount,
+                });
+                if (rpcError) throw rpcError;
             }
 
             return { success: true };
@@ -235,21 +225,11 @@ export function useSplitPayment(businessId) {
                 })
                 .eq('id', splitId);
 
-            const { data: updatedLedger } = await supabase
-                .from('table_ledgers')
-                .select('total_paid, total_due')
-                .eq('id', split.ledger_id)
-                .single();
-
-            const newTotalPaid = (updatedLedger?.total_paid || 0) + split.amount;
-
-            await supabase
-                .from('table_ledgers')
-                .update({ 
-                    total_paid: newTotalPaid,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', split.ledger_id);
+            const { error: rpcError } = await supabase.rpc('increment_ledger_total', {
+                p_ledger_id: split.ledger_id,
+                p_amount: split.amount,
+            });
+            if (rpcError) throw rpcError;
 
             return { success: true };
         } catch (e) {

@@ -127,6 +127,24 @@ serve(async (req: Request) => {
             return redirectToSettings(state, false, "error=db_update_failed");
         }
 
+        // ============================================
+        // 5b. UPSERT TO BRANDING_SECRETS (sync for webhook lookup)
+        // ============================================
+        const { error: secretsError } = await supabase
+            .from("branding_secrets")
+            .upsert({
+                business_id: state,
+                mp_user_id: mp_user_id?.toString() || null,
+                mp_access_token: access_token,
+                mp_refresh_token: refresh_token,
+                updated_at: now.toISOString(),
+            }, { onConflict: "business_id" });
+
+        if (secretsError) {
+            console.error("Failed to upsert branding_secrets:", secretsError);
+            // Non-fatal: branding table is the source of truth, but log for monitoring
+        }
+
         console.log(`🏦 Saved tokens for business: ${data.business_name}`);
 
         // ============================================

@@ -2,7 +2,7 @@
 // 💳 CREATE SPLIT PREFERENCE - Festival Payment System
 // ============================================
 // Creates individual MP preferences for split payments
-// Deploy: supabase functions deploy create-split-preference --no-verify-jwt
+// Deploy: supabase functions deploy create-split-preference
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -16,6 +16,15 @@ const corsHeaders = {
 serve(async (req: Request) => {
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
+    }
+
+    // Verify JWT / Auth header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+        return new Response(
+            JSON.stringify({ error: "Unauthorized" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
     }
 
     try {
@@ -65,7 +74,7 @@ serve(async (req: Request) => {
         // Get business branding
         const { data: branding, error: brandingError } = await supabase
             .from("branding")
-            .select("mp_access_token, business_name, slug")
+            .select("mp_access_token, business_name, slug, currency")
             .eq("business_id", business_id)
             .single();
 
@@ -90,7 +99,7 @@ serve(async (req: Request) => {
                 title: `Pedido Mesa ${ledger.table_number || '—'} - ${participant_name || 'Comensal'}`,
                 quantity: 1,
                 unit_price: Math.round(amount * 100) / 100,
-                currency_id: "ARS"
+                currency_id: branding.currency || "ARS"
             }],
             back_urls: {
                 success: `${statusBase}?split_id=${split_id}&payment=success`,
