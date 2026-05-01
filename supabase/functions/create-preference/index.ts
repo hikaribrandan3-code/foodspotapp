@@ -161,6 +161,15 @@ serve(async (req: Request) => {
                 unit_price: order.total,
                 currency_id: "ARS"
             }],
+            payer: {
+                name: "Test",
+                surname: "User",
+                email: "test_user_123@testuser.com",
+                identification: {
+                    type: "DNI",
+                    number: "12345678"
+                }
+            },
             back_urls: {
                 success: `${receiptBase}?order_id=${order.id}`,
                 failure: `${receiptBase}?order_id=${order.id}&payment=failure`,
