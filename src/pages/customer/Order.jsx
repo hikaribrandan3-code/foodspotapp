@@ -385,12 +385,13 @@ function Order({ config: configProp }) {
                     }
 
                     // 🎯 SUCCESS: Redirect to Mercado Pago checkout
-                    if (prefData?.init_point) {
+                    if (prefData?.redirect_url || prefData?.init_point) {
                         clearCart()
                         incrementOrderCount()
                         if (isDelivery) clearDeliveryMode()
-                        // Add order_id for retry detection on failure
-                        const redirectUrl = new URL(prefData.init_point)
+                        // Use sandbox_init_point when available (test mode), else init_point
+                        const targetUrl = prefData?.redirect_url || prefData?.init_point
+                        const redirectUrl = new URL(targetUrl)
                         redirectUrl.searchParams.set('order_id', savedOrder.id)
                         window.location.href = redirectUrl.toString()
                         return
@@ -577,9 +578,10 @@ function Order({ config: configProp }) {
 
             if (prefError) throw prefError
 
-            if (prefData?.init_point) {
-                // Redirect to MP checkout
-                window.location.href = prefData.init_point
+            if (prefData?.redirect_url || prefData?.init_point) {
+                // Redirect to MP checkout (sandbox_init_point for test mode)
+                const targetUrl = prefData?.redirect_url || prefData?.init_point
+                window.location.href = targetUrl
                 return
             }
 
