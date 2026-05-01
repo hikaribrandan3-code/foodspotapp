@@ -32,6 +32,9 @@ export default function Receipt() {
 
   const isCash = order?.payment_method === 'cash'
   const isMp = order?.payment_method === 'mercado_pago'
+  const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased'
+  const isPending = order?.status === 'pending' || order?.status === 'pending_payment'
+  const paymentFailed = !isPaid && !isPending && !isCash
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>
@@ -62,24 +65,26 @@ export default function Receipt() {
 
         {/* Header */}
         <div style={{ background: '#fff', borderRadius: 16, padding: 24, textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <CheckCircle size={32} style={{ color: '#10B981' }} />
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: paymentFailed ? '#FEE2E2' : isPaid ? '#D1FAE5' : '#FFEDD5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            {paymentFailed ? <AlertCircle size={32} style={{ color: '#EF4444' }} /> : isPaid ? <CheckCircle size={32} style={{ color: '#10B981' }} /> : <Clock size={32} style={{ color: '#F97316' }} />}
           </div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Order Confirmed!</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+            {paymentFailed ? 'Pago fallido' : isPaid ? 'Order Confirmed!' : 'Confirmando pago...'}
+          </h1>
           <p style={{ color: '#6B7280', fontSize: 14 }}>
             #{order.order_number ? String(order.order_number).padStart(3, '0') : order.id.slice(0, 8).toUpperCase()}
           </p>
         </div>
 
         {/* Payment Status */}
-        <div style={{ background: isCash ? '#FFFBEB' : '#EFF6FF', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          {isCash ? <Banknote size={20} style={{ color: '#D97706', marginTop: 2, flexShrink: 0 }} /> : <CreditCard size={20} style={{ color: '#2563EB', marginTop: 2, flexShrink: 0 }} />}
+        <div style={{ background: isCash ? '#FFFBEB' : paymentFailed ? '#FEF2F2' : isPaid ? '#EFF6FF' : '#FFF7ED', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          {isCash ? <Banknote size={20} style={{ color: '#D97706', marginTop: 2, flexShrink: 0 }} /> : paymentFailed ? <AlertCircle size={20} style={{ color: '#DC2626', marginTop: 2, flexShrink: 0 }} /> : isPaid ? <CreditCard size={20} style={{ color: '#2563EB', marginTop: 2, flexShrink: 0 }} /> : <Clock size={20} style={{ color: '#F97316', marginTop: 2, flexShrink: 0 }} />}
           <div>
-            <p style={{ fontWeight: 600, fontSize: 14, color: isCash ? '#D97706' : '#2563EB' }}>
-              {isCash ? 'Efectivo en la puerta' : 'Pago confirmado — Mercado Pago'}
+            <p style={{ fontWeight: 600, fontSize: 14, color: isCash ? '#D97706' : paymentFailed ? '#DC2626' : isPaid ? '#2563EB' : '#F97316' }}>
+              {isCash ? 'Efectivo en la puerta' : paymentFailed ? 'Pago fallido — Mercado Pago' : isPaid ? 'Pago confirmado — Mercado Pago' : 'Pago pendiente — Confirmando...'}
             </p>
             <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-              {isCash ? 'Tendrás que pagar cuando llegue tu pedido' : 'Tu pago fue procesado correctamente'}
+              {isCash ? 'Tendrás que pagar cuando llegue tu pedido' : paymentFailed ? 'Tu pago no se procesó. Intenta con otro método.' : isPaid ? 'Tu pago fue procesado correctamente' : 'Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.'}
             </p>
           </div>
         </div>
