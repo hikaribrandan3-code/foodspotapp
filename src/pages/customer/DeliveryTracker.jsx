@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom'
-import { CheckCircle, Truck, Clock, MapPin, ChefHat, Package, Phone, Navigation, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, Truck, Clock, MapPin, ChefHat, Package, Phone, Navigation, AlertCircle, Loader2, Camera as CameraIcon, X } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient.js'
+import CameraLayer from '../../components/Camera/CameraLayer.jsx'
+import EditorLayer from '../../components/Camera/EditorLayer.jsx'
 
 const STATUS_STEPS = [
   { key: 'released_to_kitchen', label: 'En cocina', icon: ChefHat },
@@ -31,7 +33,59 @@ export default function DeliveryTracker() {
   const [lastUpdated, setLastUpdated] = useState(new Date())
   const channelRef = useRef(null)
 
+  // Camera state
+  const [showCamera, setShowCamera] = useState(false)
+  const [capturedPhoto, setCapturedPhoto] = useState(null)
+  const [showPhotoEditor, setShowPhotoEditor] = useState(false)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [photoError, setPhotoError] = useState(null)
+
   const driver = SIMULATED_DRIVERS[(orderId?.length || 0) % SIMULATED_DRIVERS.length]
+
+  const handlePhotoCapture = (canvas) => {
+    setCapturedPhoto(canvas)
+    setShowCamera(false)
+    setShowPhotoEditor(true)
+  }
+
+  const handlePhotoConfirm = async (editedCanvas) => {
+    if (!editedCanvas || !orderId) return
+
+    setPhotoUploading(true)
+    setPhotoError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('order_id', orderId)
+
+      editedCanvas.toBlob((blob) => {
+        formData.append('photo', blob, 'delivery-photo.jpg')
+
+        fetch('https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/upload-delivery-photo', {
+          method: 'POST',
+          body: formData
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              setShowPhotoEditor(false)
+              setCapturedPhoto(null)
+              setPhotoUploading(false)
+            } else {
+              setPhotoError(data.error || 'Photo upload failed')
+              setPhotoUploading(false)
+            }
+          })
+          .catch(err => {
+            setPhotoError(err.message || 'Upload error')
+            setPhotoUploading(false)
+          })
+      }, 'image/jpeg', 0.95)
+    } catch (err) {
+      setPhotoError(err.message)
+      setPhotoUploading(false)
+    }
+  }
 
   const updateEta = (o) => {
     if (!o) return
@@ -189,6 +243,49 @@ export default function DeliveryTracker() {
           </div>
         )}
 
+        {/* Delivery Photo Capture */}
+        {order.status === 'dispatched' && !order.delivery_photo_url && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '2px solid #DBEAFE' }}>
+            <h2 style={{ fontWeight: 600, marginBottom: 12, fontSize: 15, display: 'flex', gap: 8, alignItems: 'center', color: '#1E40AF' }}>
+              <CameraIcon size={18} />
+              Prueba de entrega
+            </h2>
+            <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 12 }}>Captura una foto cuando recibas el pedido</p>
+            <button
+              onClick={() => setShowCamera(true)}
+              disabled={photoUploading}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: photoUploading ? '#D1D5DB' : '#3B82F6',
+                color: '#fff',
+                borderRadius: 12,
+                fontWeight: 600,
+                border: 'none',
+                cursor: photoUploading ? 'not-allowed' : 'pointer',
+                transition: 'opacity 0.2s',
+              }}
+            >
+              {photoUploading ? '⏳ Subiendo foto...' : '📸 Tomar foto'}
+            </button>
+            {photoError && (
+              <p style={{ fontSize: 12, color: '#EF4444', marginTop: 8 }}>❌ {photoError}</p>
+            )}
+          </div>
+        )}
+
+        {/* Photo Uploaded Confirmation */}
+        {order.delivery_photo_url && (
+          <div style={{ background: '#F0FDF4', borderRadius: 16, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '2px solid #DCFCE7' }}>
+            <h2 style={{ fontWeight: 600, marginBottom: 12, fontSize: 15, display: 'flex', gap: 8, alignItems: 'center', color: '#166534' }}>
+              <CheckCircle size={18} />
+              Foto de entrega guardada
+            </h2>
+            <img src={order.delivery_photo_url} alt="Delivery proof" style={{ width: '100%', borderRadius: 8, marginBottom: 8, maxHeight: 200, objectFit: 'cover' }} />
+            <p style={{ fontSize: 12, color: '#6B7280' }}>Capturada: {new Date(order.delivery_photo_captured_at).toLocaleTimeString('es-AR')}</p>
+          </div>
+        )}
+
         {/* Driver Card */}
         {order.status === 'on_way' && (
           <div style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
@@ -239,6 +336,48 @@ export default function DeliveryTracker() {
           Volver al inicio
         </button>
       </div>
+
+      {/* Camera Modal */}
+      {showCamera && !showPhotoEditor && (
+        <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 1000 }}>
+          <CameraLayer onCapture={handlePhotoCapture} />
+          <button
+            onClick={() => setShowCamera(false)}
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 44,
+              height: 44,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 1001,
+              color: '#fff',
+            }}
+          >
+            <X size={24} />
+          </button>
+        </div>
+      )}
+
+      {/* Photo Editor Modal */}
+      {showPhotoEditor && capturedPhoto && (
+        <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+          <EditorLayer
+            canvas={capturedPhoto}
+            onConfirm={handlePhotoConfirm}
+            onCancel={() => {
+              setShowPhotoEditor(false)
+              setCapturedPhoto(null)
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }

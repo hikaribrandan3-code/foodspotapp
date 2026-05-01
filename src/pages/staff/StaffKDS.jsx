@@ -72,6 +72,22 @@ export const StaffKDS = () => {
                                             <div key={i}><strong>{item.quantity}x</strong> {item.name}</div>
                                         ))}
                                     </div>
+
+                                    {/* Delivery Photo Status */}
+                                    {order.order_type === 'delivery' && (
+                                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
+                                            {order.delivery_photo_url ? (
+                                                <div>
+                                                    <img src={order.delivery_photo_url} alt="Delivery proof" style={{ width: '100%', borderRadius: 6, maxHeight: 120, objectFit: 'cover', marginBottom: 4 }} />
+                                                    <p style={{ fontSize: 11, color: '#6b7280', margin: 0 }}>✅ Foto: {new Date(order.delivery_photo_captured_at).toLocaleTimeString()}</p>
+                                                </div>
+                                            ) : order.status === 'delivered' ? (
+                                                <p style={{ fontSize: 11, color: '#ef4444', margin: 0 }}>⚠️ Entregado sin foto</p>
+                                            ) : order.status === 'dispatched' ? (
+                                                <p style={{ fontSize: 11, color: '#f59e0b', margin: 0 }}>⏳ Esperando foto de entrega</p>
+                                            ) : null}
+                                        </div>
+                                    )}
                                     <button
                                         disabled={order.isOptimistic}
                                         onClick={() => {
