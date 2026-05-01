@@ -362,9 +362,13 @@ function Order({ config: configProp }) {
             if (isMercadoPago) {
                 // ========== MERCADO PAGO BRANCH ==========
                 try {
-                    const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
-                        body: { order_id: savedOrder.id }
+                    const mpResponse = await fetch('https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/create-preference', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order_id: savedOrder.id })
                     })
+                    const prefData = await mpResponse.json()
+                    const prefError = !mpResponse.ok ? new Error(prefData?.error || 'MP error') : null
 
                     if (prefError) throw prefError
 
@@ -563,9 +567,13 @@ function Order({ config: configProp }) {
             }
 
             // Create NEW Mercado Pago preference for SAME order
-            const { data: prefData, error: prefError } = await supabase.functions.invoke('create-preference', {
-                body: { order_id: order.id }
+            const mpResponse = await fetch('https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/create-preference', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: order.id })
             })
+            const prefData = await mpResponse.json()
+            const prefError = !mpResponse.ok ? new Error(prefData?.error || 'MP error') : null
 
             if (prefError) throw prefError
 
