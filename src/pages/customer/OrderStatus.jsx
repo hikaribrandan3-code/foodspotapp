@@ -36,6 +36,18 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
     const primaryColor = tenantData?.primary_color || '#DC2626'
 
+    // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery)
+    const delayVariant = useMemo(() => {
+      const variants = [45000, 60000, 90000];
+      return variants[Math.floor(Math.random() * variants.length)];
+    }, [])
+
+    // Determine order type: pickup if no delivery address, otherwise delivery
+    // Use optional chaining to avoid errors before order loads
+    const orderType = !order?.delivery_address ? 'takeout' : 'delivery'
+    // For pickup/takeout, use instant trigger (5s); for delivery use variants (45-90s)
+    const finalDelayVariant = orderType === 'takeout' ? 5000 : delayVariant
+
     useEffect(() => {
         const fetchOrder = async () => {
             setLoading(true)
@@ -234,17 +246,6 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
     const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
     const paid = isOrderPaid(order)
-
-    // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery)
-    const delayVariant = useMemo(() => {
-      const variants = [45000, 60000, 90000];
-      return variants[Math.floor(Math.random() * variants.length)];
-    }, [])
-
-    // Determine order type: pickup if no delivery address, otherwise delivery
-    const orderType = !order?.delivery_address ? 'takeout' : 'delivery'
-    // For pickup/takeout, use instant trigger (5s); for delivery use variants (45-90s)
-    const finalDelayVariant = orderType === 'takeout' ? 5000 : delayVariant
 
     return (
       <CameraTrigger orderId={order.id} orderType={orderType} delayMs={finalDelayVariant}>
