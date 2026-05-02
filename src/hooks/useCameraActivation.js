@@ -24,6 +24,8 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
   const subscriptionRef = useRef(null);
   const hasTriggeredRef = useRef(false);
 
+  const effectiveUserId = userId || `guest_${orderId}`;
+
   const clearTimers = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -37,7 +39,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
 
   // Load existing activation record (prevents duplicate triggers on re-mount)
   useEffect(() => {
-    if (!orderId || !userId) return;
+    if (!orderId) return;
 
     let mounted = true;
 
@@ -46,7 +48,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         .from('ugc_activations')
         .select('status, delivered_at, banner_shown_at, captured_at')
         .eq('order_id', orderId)
-        .eq('user_id', userId)
+        .eq('user_id', effectiveUserId)
         .maybeSingle();
 
       if (!mounted) return;
@@ -150,7 +152,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
       const now = new Date().toISOString();
       await supabase.from('ugc_activations').upsert(
         {
-          user_id: userId,
+          user_id: effectiveUserId,
           order_id: orderId,
           status: 'pending',
           delivered_at: new Date(triggerTime).toISOString(),
@@ -173,7 +175,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
             .from('ugc_activations')
             .update({ status: 'shown', banner_shown_at: new Date().toISOString() })
             .eq('order_id', orderId)
-            .eq('user_id', userId)
+            .eq('user_id', effectiveUserId)
             .catch(err => console.error('[useCameraActivation] Failed to update banner_shown_at:', err));
         }
       }, delayMs);
@@ -189,35 +191,35 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         subscriptionRef.current = null;
       }
     };
-  }, [orderId, userId, orderType, delayMs, clearTimers]);
+  }, [orderId, effectiveUserId, orderType, delayMs, clearTimers]);
 
   const dismissBanner = useCallback(async () => {
     clearTimers();
     setActivationStatus('dismissed');
 
-    if (orderId && userId) {
+    if (orderId) {
       await supabase
         .from('ugc_activations')
         .update({ status: 'dismissed', banner_shown_at: new Date().toISOString() })
         .eq('order_id', orderId)
-        .eq('user_id', userId)
+        .eq('user_id', effectiveUserId)
         .catch(err => console.error('[useCameraActivation] Failed to update dismissed:', err));
     }
-  }, [orderId, userId, clearTimers]);
+  }, [orderId, effectiveUserId, clearTimers]);
 
   const onCaptureComplete = useCallback(async () => {
     clearTimers();
     setActivationStatus('captured');
 
-    if (orderId && userId) {
+    if (orderId) {
       await supabase
         .from('ugc_activations')
         .update({ status: 'captured', captured_at: new Date().toISOString() })
         .eq('order_id', orderId)
-        .eq('user_id', userId)
+        .eq('user_id', effectiveUserId)
         .catch(err => console.error('[useCameraActivation] Failed to update captured_at:', err));
     }
-  }, [orderId, userId, clearTimers]);
+  }, [orderId, effectiveUserId, clearTimers]);
 
   // Auto-dismiss banner after 5 minutes if still shown
   useEffect(() => {

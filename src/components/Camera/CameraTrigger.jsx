@@ -39,6 +39,10 @@ export default function CameraTrigger({
     activationStatus,
   } = useCameraActivation(orderId, userId, orderType, delayMs);
 
+  if (!orderId) {
+    return <>{children}</>;
+  }
+
   const [cameraOpen, setCameraOpen] = useState(false);
   const [capturedBlob, setCapturedBlob] = useState(null);
   const [editorOpen, setEditorOpen] = useState(false);
