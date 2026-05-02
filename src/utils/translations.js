@@ -43,6 +43,12 @@ export const translations = {
     "4_digits": { es: "4 dígitos", en: "4 digits", pt: "4 dígitos" },
     language_setting: { es: "Idioma / Lenguaje", en: "Language / Idioma", pt: "Idioma / Língua" },
 
+    // Camera UGC Banner
+    food_arrived: { es: "¡Llegó tu comida!", en: "Your food arrived!", pt: "Sua comida chegou!" },
+    take_photo: { es: "¿Querés sacar una foto?", en: "Want to take a foto?", pt: "Quer tirar uma foto?" },
+    camera_yes: { es: "Sí ✨", en: "Yes ✨", pt: "Sim ✨" },
+    camera_no: { es: "No", en: "No", pt: "Não" },
+
     // Owner Summary
     daily_payments: { es: "PAGOS DEL DÍA", en: "DAILY PAYMENTS", pt: "PAGAMENTOS DO DIA" },
     cash: { es: "Efectivo", en: "Cash", pt: "Dinheiro" },

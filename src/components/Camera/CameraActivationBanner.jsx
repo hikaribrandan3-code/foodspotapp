@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { translations } from '../../utils/translations';
 import './CameraActivationBanner.css';
 
 export default function CameraActivationBanner({
@@ -7,12 +9,18 @@ export default function CameraActivationBanner({
   secondsUntilBanner,
   className = '',
 }) {
+  const { language } = useLanguage();
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
-  const [bubbleText, setBubbleText] = useState('Your food arrived!');
+  const [bubbleText, setBubbleText] = useState(null);
   const progressInterval = useRef(null);
   const bubbleTimeout = useRef(null);
   const BANNER_LIFETIME_MS = 300_000; // 5 min
+
+  // Set initial text based on language
+  useEffect(() => {
+    setBubbleText(translations.food_arrived[language] || 'Your food arrived!');
+  }, [language]);
 
   useEffect(() => {
     // Animate progress bar
@@ -29,14 +37,14 @@ export default function CameraActivationBanner({
     return () => clearInterval(progressInterval.current);
   }, []);
 
-  // Bubble message transition: "Your food arrived!" → "Want to take a foto? ✨"
+  // Bubble message transition: "Your food arrived!" → "Want to take a foto?"
   useEffect(() => {
     bubbleTimeout.current = setTimeout(() => {
-      setBubbleText("Want to take a foto? ✨");
+      setBubbleText(`${translations.take_photo[language] || 'Want to take a foto?'} ✨`);
     }, 2000);
 
     return () => clearTimeout(bubbleTimeout.current);
-  }, []);
+  }, [language]);
 
   const handleDismiss = (e) => {
     e.stopPropagation();
@@ -145,7 +153,7 @@ export default function CameraActivationBanner({
               type="button"
               aria-label="Take a photo"
             >
-              Yes ✨
+              {translations.camera_yes[language] || 'Yes ✨'}
             </button>
             <button
               className="banner-btn banner-btn-no"
@@ -156,7 +164,7 @@ export default function CameraActivationBanner({
               type="button"
               aria-label="No, skip"
             >
-              No
+              {translations.camera_no[language] || 'No'}
             </button>
           </div>
 
