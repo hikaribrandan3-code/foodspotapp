@@ -7,6 +7,7 @@ export default function CameraActivationBanner({
   onCapture,
   onDismiss,
   className = '',
+  orderType = 'delivery',
 }) {
   const { language } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
@@ -22,7 +23,10 @@ export default function CameraActivationBanner({
 
   if (!isVisible) return null;
 
-  const speechText = `${translations.food_arrived[language] || 'Your food arrived!'}\n${translations.take_photo[language] || 'Want to take a foto?'} ✨`;
+  const isDineIn = orderType === 'dine_in';
+  const speechText = isDineIn
+    ? `${translations.selfie_prompt?.[language] || 'Want to take a selfie for the gram?'} 📸`
+    : `${translations.food_arrived[language] || 'Your food arrived!'}\n${translations.take_photo[language] || 'Want to take a foto?'} ✨`;
 
   return (
     <>

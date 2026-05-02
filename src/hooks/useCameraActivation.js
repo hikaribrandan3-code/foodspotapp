@@ -234,16 +234,17 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
     }
   }, [orderId, clearTimers]);
 
-  // Auto-dismiss banner after 5 minutes if still shown
+  // Auto-dismiss banner after 5 minutes if still shown (disabled for dine-in to keep banner visible for payment collection)
   useEffect(() => {
     if (activationStatus !== 'ready') return;
+    if (orderType === 'dine_in') return; // Skip auto-dismiss for dine-in
 
     dismissTimerRef.current = setTimeout(() => {
       dismissBanner();
     }, BANNER_AUTO_DISMISS_MS);
 
     return () => clearTimers();
-  }, [activationStatus, dismissBanner, clearTimers]);
+  }, [activationStatus, dismissBanner, clearTimers, orderType]);
 
   const showBanner = activationStatus === 'ready';
 

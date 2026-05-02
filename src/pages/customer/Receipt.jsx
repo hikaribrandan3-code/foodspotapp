@@ -12,11 +12,13 @@ export default function Receipt() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery)
+  // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery, 2s for dine-in)
   const delayVariant = useMemo(() => {
     const variants = [45000, 60000, 90000];
     return variants[Math.floor(Math.random() * variants.length)];
   }, [])
+
+  const dineinDelayVariant = 2000 // Show banner immediately when food served (2s)
 
   const orderId = searchParams.get('order_id') || searchParams.get('orderId')
 
@@ -45,8 +47,8 @@ export default function Receipt() {
 
   // Use actual order type from database, fallback to inferring from delivery address
   const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')
-  // For pickup/takeout, use instant trigger (5s); for delivery/dine-in use variants (45-90s)
-  const finalDelayVariant = orderType === 'takeout' ? 5000 : delayVariant
+  // For pickup/takeout, use instant trigger (5s); for dine-in use 2s; for delivery use variants (45-90s)
+  const finalDelayVariant = orderType === 'takeout' ? 5000 : orderType === 'dine_in' ? dineinDelayVariant : delayVariant
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>

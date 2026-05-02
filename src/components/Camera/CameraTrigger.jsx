@@ -38,9 +38,9 @@ export default function CameraTrigger({
     activationStatus,
   } = useCameraActivation(orderId, userId, orderType, delayMs);
 
-  // Navigate home when user dismisses banner
+  // Navigate home when user dismisses banner (skip for dine-in - keep receipt visible for payment)
   useEffect(() => {
-    if (activationStatus === 'dismissed') {
+    if (activationStatus === 'dismissed' && orderType !== 'dine_in') {
       const timer = setTimeout(() => {
         const pathSegments = window.location.pathname.split('/').filter(Boolean);
         const slug = pathSegments[0];
@@ -48,7 +48,7 @@ export default function CameraTrigger({
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [activationStatus, navigate]);
+  }, [activationStatus, navigate, orderType]);
 
   if (!orderId) {
     return <>{children}</>;
@@ -71,6 +71,7 @@ export default function CameraTrigger({
           <CameraActivationBanner
             onCapture={openCamera}
             onDismiss={dismissBanner}
+            orderType={orderType}
           />
         )}
       </Suspense>
