@@ -59,7 +59,7 @@ export default function CameraActivationBanner({
             {/* Speech bubble ABOVE donut */}
             <div className="speech-bubble">{speechText}</div>
 
-            <svg width="152" height="177" viewBox="0 0 300 350" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="175" height="204" viewBox="0 0 300 350" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <mask id="biteMask">
                   <rect width="300" height="350" fill="white" />
