@@ -266,7 +266,10 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     width: '90%',
                     maxWidth: 540,
                     background: '#fff',
-                    border: '1px solid #e5e5e5',
+                    border: 'none',
+                    borderRadius: '2px',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                    clipPath: 'polygon(0% 8px, 4% 0%, 8% 8px, 12% 0%, 16% 8px, 20% 0%, 24% 8px, 28% 0%, 32% 8px, 36% 0%, 40% 8px, 44% 0%, 48% 8px, 52% 0%, 56% 8px, 60% 0%, 64% 8px, 68% 0%, 72% 8px, 76% 0%, 80% 8px, 84% 0%, 88% 8px, 92% 0%, 96% 8px, 100% 0%, 100% calc(100% - 8px), 96% 100%, 92% calc(100% - 8px), 88% 100%, 84% calc(100% - 8px), 80% 100%, 76% calc(100% - 8px), 72% 100%, 68% calc(100% - 8px), 64% 100%, 60% calc(100% - 8px), 56% 100%, 52% calc(100% - 8px), 48% 100%, 44% calc(100% - 8px), 40% 100%, 36% calc(100% - 8px), 32% 100%, 28% calc(100% - 8px), 24% 100%, 20% calc(100% - 8px), 16% 100%, 12% calc(100% - 8px), 8% 100%, 4% calc(100% - 8px), 0% 100%)',
                     padding: '60px 32px 48px',
                     flex: 1,
                     display: 'flex',
@@ -585,7 +588,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 background: primaryColor, color: '#fff',
                                 fontFamily: 'inherit', fontSize: 16, fontWeight: 700,
                                 letterSpacing: 0.1, cursor: 'pointer',
-                                borderRadius: 2,
+                                borderRadius: 6,
                             }}
                         >
                             {t('back_to_home')}
@@ -599,7 +602,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 color: '#0a0a0a',
                                 fontFamily: 'inherit', fontSize: 16, fontWeight: 600,
                                 cursor: 'pointer',
-                                borderRadius: 2,
+                                borderRadius: 6,
                             }}
                         >
                             {t('order_again')}
