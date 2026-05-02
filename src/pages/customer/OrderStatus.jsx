@@ -113,7 +113,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             if (tenantSlug) {
                 localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
             }
-            if (order?.status === ORDER_STATUS.DELIVERED && order?.order_type !== 'dine_in') {
+            // Only auto-redirect dine_in orders. Takeout/delivery users get camera activation on 'delivered'.
+            if (order?.status === ORDER_STATUS.DELIVERED && order?.order_type === 'dine_in') {
                 const timer = setTimeout(() => {
                     if (tenantSlug) {
                         navigate(`/${tenantSlug}`)
