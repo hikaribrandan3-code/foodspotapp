@@ -1,12 +1,16 @@
 /* src/components/Camera/CameraActivationBanner.css */
 
 .camera-activation-banner {
-  position: relative;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  margin: 12px 16px;
+  max-width: 420px;
+  width: calc(100% - 32px);
   background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
   border-radius: 16px;
   color: #fff;
@@ -15,6 +19,7 @@
   animation: bannerSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 9999;
 }
 
 .camera-activation-banner:active {

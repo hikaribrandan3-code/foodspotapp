@@ -1,6 +1,6 @@
-import React, { lazy, Suspense, useCallback, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useState, useEffect } from 'react';
 import { useCameraActivation } from '../../hooks/useCameraActivation';
-import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabaseClient';
 
 const CameraActivationBanner = lazy(() => import('./CameraActivationBanner'));
 const CameraLayer = lazy(() => import('./CameraLayer'));
@@ -24,13 +24,20 @@ export default function CameraTrigger({
   delayMs = 60000,
   children,
 }) {
-  const { user } = useAuth();
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id || null);
+    });
+  }, []);
+
   const {
     showBanner,
     dismissBanner,
     onCaptureComplete,
     activationStatus,
-  } = useCameraActivation(orderId, user?.id, orderType, delayMs);
+  } = useCameraActivation(orderId, userId, orderType, delayMs);
 
   const [cameraOpen, setCameraOpen] = useState(false);
   const [capturedBlob, setCapturedBlob] = useState(null);
