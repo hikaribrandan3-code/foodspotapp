@@ -266,15 +266,26 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     width: '90%',
                     maxWidth: 540,
                     background: '#fff',
-                    border: '1px solid #999',
-                    clipPath: 'polygon(0% 24px,4% 0%,8% 24px,12% 0%,16% 24px,20% 0%,24% 24px,28% 0%,32% 24px,36% 0%,40% 24px,44% 0%,48% 24px,52% 0%,56% 24px,60% 0%,64% 24px,68% 0%,72% 24px,76% 0%,80% 24px,84% 0%,88% 24px,92% 0%,96% 24px,100% 0%,100% calc(100% - 24px),96% 100%,92% calc(100% - 24px),88% 100%,84% calc(100% - 24px),80% 100%,76% calc(100% - 24px),72% 100%,68% calc(100% - 24px),64% 100%,60% calc(100% - 24px),56% 100%,52% calc(100% - 24px),48% 100%,44% calc(100% - 24px),40% 100%,36% calc(100% - 24px),32% 100%,28% calc(100% - 24px),24% 100%,20% calc(100% - 24px),16% 100%,12% calc(100% - 24px),8% 100%,4% calc(100% - 24px),0% 100%)',
-                    padding: '72px 32px 60px',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: '2px',
+                    padding: '60px 32px 48px',
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                    position: 'relative',
+                    overflow: 'visible'
                 }}>
+                    {/* Top torn edge */}
+                    <svg style={{position:'absolute',top:-10,left:0,width:'100%',height:12,display:'block'}} viewBox="0 0 100 12" preserveAspectRatio="none">
+                        <path d="M0,12 L5,0 L10,12 L15,0 L20,12 L25,0 L30,12 L35,0 L40,12 L45,0 L50,12 L55,0 L60,12 L65,0 L70,12 L75,0 L80,12 L85,0 L90,12 L95,0 L100,12" fill="#fff" stroke="#999" strokeWidth="0.8"/>
+                    </svg>
+
+                    {/* Bottom torn edge */}
+                    <svg style={{position:'absolute',bottom:-10,left:0,width:'100%',height:12,display:'block'}} viewBox="0 0 100 12" preserveAspectRatio="none">
+                        <path d="M0,0 L5,12 L10,0 L15,12 L20,0 L25,12 L30,0 L35,12 L40,0 L45,12 L50,0 L55,12 L60,0 L65,12 L70,0 L75,12 L80,0 L85,12 L90,0 L95,12 L100,0" fill="#fff" stroke="#999" strokeWidth="0.8"/>
+                    </svg>
                     <div style={{
                         fontSize: 12, color: '#a3a3a3', fontWeight: 500,
                         letterSpacing: 0.3,
