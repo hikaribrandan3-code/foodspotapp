@@ -134,8 +134,10 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
             const newStatus = payload.new.status;
             if (orderType === 'delivery' && newStatus === 'delivered') {
               handleTriggered(payload.new.delivered_at ? new Date(payload.new.delivered_at).getTime() : Date.now());
-            } else if ((orderType === 'dine_in' || orderType === 'takeout') && newStatus === 'ready') {
+            } else if (orderType === 'dine_in' && newStatus === 'ready') {
               handleTriggered(Date.now());
+            } else if (orderType === 'takeout' && newStatus === 'delivered') {
+              handleTriggered(payload.new.delivered_at ? new Date(payload.new.delivered_at).getTime() : Date.now());
             }
           }
         )
