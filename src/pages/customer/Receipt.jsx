@@ -73,7 +73,7 @@ export default function Receipt() {
 
   return (
     <CameraTrigger orderId={order.id} orderType={orderType} delayMs={finalDelayVariant}>
-      <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '24px 16px' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '8px 16px' }}>
         <div style={{ maxWidth: 420, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
           {/* Header */}
