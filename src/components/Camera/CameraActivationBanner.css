@@ -59,15 +59,28 @@
   cursor: pointer;
 }
 
-/* Walk-in from left */
+/* Walk-in from left - viewport relative for all screen sizes */
 @keyframes donutWalkIn {
   0% {
-    transform: translateX(-100px);
+    transform: translateX(calc(-100vw));
     opacity: 0;
   }
   100% {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  @keyframes donutWalkIn {
+    0% {
+      transform: translateX(calc(-60vw));
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 }
 

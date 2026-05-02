@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useCallback, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCameraActivation } from '../../hooks/useCameraActivation';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -24,6 +25,7 @@ export default function CameraTrigger({
   delayMs = 60000,
   children,
 }) {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
@@ -38,6 +40,18 @@ export default function CameraTrigger({
     onCaptureComplete,
     activationStatus,
   } = useCameraActivation(orderId, userId, orderType, delayMs);
+
+  // Navigate home when user dismisses banner
+  useEffect(() => {
+    if (activationStatus === 'dismissed') {
+      const timer = setTimeout(() => {
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const slug = pathSegments[0];
+        navigate(`/${slug}`);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activationStatus, navigate]);
 
   if (!orderId) {
     return <>{children}</>;
