@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
@@ -37,16 +37,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const primaryColor = tenantData?.primary_color || '#DC2626'
 
     // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery)
-    const delayVariant = useMemo(() => {
-      const variants = [45000, 60000, 90000];
-      return variants[Math.floor(Math.random() * variants.length)];
-    }, [])
-
-    // Determine order type: pickup if no delivery address, otherwise delivery
-    // Use optional chaining to avoid errors before order loads
     const orderType = !order?.delivery_address ? 'takeout' : 'delivery'
-    // For pickup/takeout, use instant trigger (5s); for delivery use variants (45-90s)
-    const finalDelayVariant = orderType === 'takeout' ? 5000 : delayVariant
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -248,7 +239,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const paid = isOrderPaid(order)
 
     return (
-      <CameraTrigger orderId={order.id} orderType={orderType} delayMs={finalDelayVariant}>
+      <CameraTrigger orderId={order.id} orderType={orderType}>
         <>
             <HeaderClamp config={config} />
             <div style={{
