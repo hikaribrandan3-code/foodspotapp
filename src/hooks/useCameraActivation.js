@@ -95,8 +95,6 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         .eq('id', orderId)
         .maybeSingle();
 
-      console.log(`[useCameraActivation] Order ${orderId}: type=${orderType}, status=${order?.status}`);
-
       if (!mounted) return;
 
       // Determine trigger condition based on order type
@@ -107,22 +105,19 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         shouldTrigger = true;
         triggerTime = order.delivered_at ? new Date(order.delivered_at).getTime() : Date.now();
       } else if (orderType === 'dine_in' && order?.status === 'ready') {
-        // For dine-in, trigger when marked ready (server just served)
+        // For dine-in, trigger when marked ready (food served)
         shouldTrigger = true;
         triggerTime = Date.now();
-      } else if (orderType === 'takeout' && order?.status === 'ready') {
-        // For takeout, trigger when ready for pickup
+      } else if (orderType === 'takeout' && order?.status === 'delivered') {
+        // For takeout, trigger when delivered (food picked up)
         shouldTrigger = true;
-        triggerTime = Date.now();
+        triggerTime = order.delivered_at ? new Date(order.delivered_at).getTime() : Date.now();
       }
 
       if (shouldTrigger) {
-        console.log(`[useCameraActivation] TRIGGER: shouldTrigger=true, setting activation state`);
         handleTriggered(triggerTime);
         return;
       }
-
-      console.log(`[useCameraActivation] No trigger yet, setting up Realtime subscription`);
 
       // Subscribe to order updates for future changes
       const channel = supabase
@@ -238,10 +233,6 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
   }, [activationStatus, dismissBanner, clearTimers]);
 
   const showBanner = activationStatus === 'ready';
-
-  if (showBanner) {
-    console.log(`[useCameraActivation] showBanner=TRUE, activationStatus=${activationStatus}`);
-  }
 
   return {
     showBanner,
