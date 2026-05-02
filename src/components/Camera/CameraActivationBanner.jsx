@@ -86,31 +86,12 @@ export default function CameraActivationBanner({
                 <circle cx="150" cy="150" r="45" fill="white" opacity="0.5"/>
                 {/* Eyes - bigger, more expressive */}
                 <g className="eyes">
-                  {/* Left eye */}
-                  <circle cx="85" cy="120" r="32" fill="#fff"/>
-                  <circle cx="85" cy="120" r="28" fill="#333"/>
-                  <circle cx="82" cy="115" r="14" fill="white"/>
-                  <circle cx="82" cy="115" r="10" fill="#333"/>
-                  <circle cx="84" cy="113" r="4" fill="white"/>
-                  {/* Left eyebrow */}
-                  <path d="M65 95C75 85 100 85 105 95" stroke="#333" strokeWidth="4" fill="none" strokeLinecap="round"/>
-                  {/* Left eyelashes */}
-                  <line x1="75" y1="92" x2="73" y2="80" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="85" y1="90" x2="85" y2="75" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="95" y1="92" x2="97" y2="80" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-
-                  {/* Right eye */}
-                  <circle cx="215" cy="120" r="32" fill="#fff"/>
-                  <circle cx="215" cy="120" r="28" fill="#333"/>
-                  <circle cx="218" cy="115" r="14" fill="white"/>
-                  <circle cx="218" cy="115" r="10" fill="#333"/>
-                  <circle cx="216" cy="113" r="4" fill="white"/>
-                  {/* Right eyebrow */}
-                  <path d="M235 95C225 85 200 85 195 95" stroke="#333" strokeWidth="4" fill="none" strokeLinecap="round"/>
-                  {/* Right eyelashes */}
-                  <line x1="205" y1="92" x2="203" y2="80" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="215" y1="90" x2="215" y2="75" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="225" y1="92" x2="227" y2="80" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="85" cy="120" r="26" fill="#333"/>
+                  <circle cx="80" cy="110" r="11" fill="white"/>
+                  <circle cx="95" cy="130" r="5" fill="white"/>
+                  <circle cx="215" cy="120" r="26" fill="#333"/>
+                  <circle cx="210" cy="110" r="11" fill="white"/>
+                  <circle cx="225" cy="130" r="5" fill="white"/>
                 </g>
                 <ellipse cx="60" cy="165" rx="18" ry="10" fill="#FFB6C1" opacity="0.8"/>
                 <ellipse cx="240" cy="165" rx="18" ry="10" fill="#FFB6C1" opacity="0.8"/>
