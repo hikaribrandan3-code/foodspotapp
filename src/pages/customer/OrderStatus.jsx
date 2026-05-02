@@ -266,6 +266,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     width: '90%',
                     maxWidth: 540,
                     background: '#fff',
+                    border: '1px solid #e5e5e5',
                     clipPath: 'polygon(0% 16px,4% 0%,8% 16px,12% 0%,16% 16px,20% 0%,24% 16px,28% 0%,32% 16px,36% 0%,40% 16px,44% 0%,48% 16px,52% 0%,56% 16px,60% 0%,64% 16px,68% 0%,72% 16px,76% 0%,80% 16px,84% 0%,88% 16px,92% 0%,96% 16px,100% 0%,100% calc(100% - 16px),96% 100%,92% calc(100% - 16px),88% 100%,84% calc(100% - 16px),80% 100%,76% calc(100% - 16px),72% 100%,68% calc(100% - 16px),64% 100%,60% calc(100% - 16px),56% 100%,52% calc(100% - 16px),48% 100%,44% calc(100% - 16px),40% 100%,36% calc(100% - 16px),32% 100%,28% calc(100% - 16px),24% 100%,20% calc(100% - 16px),16% 100%,12% calc(100% - 16px),8% 100%,4% calc(100% - 16px),0% 100%)',
                     padding: '60px 32px 48px',
                     flex: 1,
