@@ -25,11 +25,12 @@
 .donut-entry {
   position: relative;
   animation: donutWalkIn 2s ease-out forwards;
+  pointer-events: none;
 }
 
 @keyframes donutWalkIn {
   0% {
-    transform: translateX(calc(-100vw));
+    transform: translateX(calc(-50vw));
     opacity: 0;
   }
   100% {
@@ -124,7 +125,7 @@
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
-  animation: bubbleAppear 0.5s ease-in-out 0.8s forwards;
+  animation: bubbleAppear 0.5s ease-in-out 0.3s forwards;
   opacity: 0;
   pointer-events: none;
 }
@@ -208,6 +209,38 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Sprinkles celebration animation */
+.sprinkles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10001;
+  overflow: hidden;
+}
+
+.sprinkle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #FF69B4 0%, #FFB6D9 100%);
+  border-radius: 50%;
+  animation: rainSprinkles 3s ease-in forwards;
+}
+
+@keyframes rainSprinkles {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .donut-entry {
@@ -222,6 +255,9 @@
     opacity: 1;
   }
   .eyes {
+    animation: none;
+  }
+  .sprinkle {
     animation: none;
   }
 }
