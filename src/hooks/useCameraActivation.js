@@ -95,6 +95,8 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         .eq('id', orderId)
         .maybeSingle();
 
+      console.log(`[useCameraActivation] Order ${orderId}: type=${orderType}, status=${order?.status}`);
+
       if (!mounted) return;
 
       // Determine trigger condition based on order type
@@ -115,9 +117,12 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
       }
 
       if (shouldTrigger) {
+        console.log(`[useCameraActivation] TRIGGER: shouldTrigger=true, setting activation state`);
         handleTriggered(triggerTime);
         return;
       }
+
+      console.log(`[useCameraActivation] No trigger yet, setting up Realtime subscription`);
 
       // Subscribe to order updates for future changes
       const channel = supabase
@@ -233,6 +238,10 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
   }, [activationStatus, dismissBanner, clearTimers]);
 
   const showBanner = activationStatus === 'ready';
+
+  if (showBanner) {
+    console.log(`[useCameraActivation] showBanner=TRUE, activationStatus=${activationStatus}`);
+  }
 
   return {
     showBanner,

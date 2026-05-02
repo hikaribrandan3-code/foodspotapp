@@ -39,6 +39,8 @@ export default function CameraTrigger({
     activationStatus,
   } = useCameraActivation(orderId, userId, orderType, delayMs);
 
+  console.log(`[CameraTrigger] orderId=${orderId}, userId=${userId}, orderType=${orderType}, showBanner=${showBanner}, activationStatus=${activationStatus}`);
+
   if (!orderId) {
     return <>{children}</>;
   }
