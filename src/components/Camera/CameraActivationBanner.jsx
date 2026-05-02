@@ -26,22 +26,30 @@ export default function CameraActivationBanner({
 
   return (
     <>
-      {/* Sprinkles rain during donut walk-in */}
+      {/* Confetti rain during donut walk-in */}
       <div className="sprinkles-container">
-        {Array.from({ length: 80 }).map((_, i) => (
-          <div
-            key={i}
-            className="sprinkle"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 30}px`,
-              width: `${Math.random() * 6 + 4}px`,
-              height: `${Math.random() * 6 + 4}px`,
-              animationDelay: `${Math.random() * 0.8}s`,
-              backgroundColor: `hsl(${Math.random() * 60 + 320}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`,
-            }}
-          />
-        ))}
+        {Array.from({ length: 120 }).map((_, i) => {
+          const colors = [
+            `hsl(${Math.random() * 360}, 100%, ${Math.random() * 50 + 50}%)`, // random bright colors
+            `hsl(${Math.random() * 60 + 320}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // pink/red range
+            `hsl(${Math.random() * 60 + 180}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // cyan/blue range
+            `hsl(${Math.random() * 60}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // yellow/orange range
+          ];
+          return (
+            <div
+              key={i}
+              className="sprinkle"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 30}px`,
+                width: `${Math.random() * 8 + 3}px`,
+                height: `${Math.random() * 8 + 3}px`,
+                animationDelay: `${Math.random() * 1}s`,
+                backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+              }}
+            />
+          );
+        })}
       </div>
 
       {/* Donut modal - walks in and bounces */}
@@ -51,7 +59,7 @@ export default function CameraActivationBanner({
             {/* Speech bubble ABOVE donut */}
             <div className="speech-bubble">{speechText}</div>
 
-            <svg width="132" height="154" viewBox="0 0 300 350" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="152" height="177" viewBox="0 0 300 350" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <mask id="biteMask">
                   <rect width="300" height="350" fill="white" />
@@ -98,6 +106,8 @@ export default function CameraActivationBanner({
                 <circle cx="215" cy="217" r="14" fill="#222" stroke="#666" strokeWidth="2"/>
                 <circle cx="215" cy="217" r="8" fill="#000"/>
                 <circle cx="210" cy="212" r="3" fill="white" opacity="0.4"/>
+                {/* Camera flash */}
+                <circle className="camera-flash" cx="215" cy="217" r="10" fill="none" stroke="#ffff00" strokeWidth="1" opacity="0.6"/>
                 <circle cx="240" cy="205" r="3" fill="#ff4d4d"/>
               </g>
             </svg>

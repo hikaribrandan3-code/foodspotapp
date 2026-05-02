@@ -30,11 +30,21 @@
 
 @keyframes donutWalkIn {
   0% {
-    transform: translateX(calc(-50vw));
+    transform: translateX(calc(-50vw)) translateY(0);
     opacity: 0;
   }
+  25% {
+    transform: translateX(calc(-37.5vw)) translateY(-8px);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(calc(-25vw)) translateY(0);
+  }
+  75% {
+    transform: translateX(calc(-12.5vw)) translateY(-8px);
+  }
   100% {
-    transform: translateX(0);
+    transform: translateX(0) translateY(0);
     opacity: 1;
   }
 }
@@ -105,6 +115,24 @@
 
 .donut-entry:active .camera-held {
   transform: scale(1.08) rotate(-8deg);
+}
+
+/* Camera flash pulse */
+.camera-flash {
+  animation: cameraFlash 2s ease-in-out infinite;
+}
+
+@keyframes cameraFlash {
+  0%, 100% {
+    r: 10px;
+    stroke-width: 1;
+    opacity: 0.3;
+  }
+  50% {
+    r: 16px;
+    stroke-width: 2;
+    opacity: 0.9;
+  }
 }
 
 /* Speech bubble ABOVE donut */
