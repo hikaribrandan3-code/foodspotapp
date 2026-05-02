@@ -5,100 +5,36 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 40px 24px;
-  max-width: 360px;
-  width: calc(100% - 48px);
-  background: transparent;
-  border-radius: 24px;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: none;
-  animation: bannerSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  overflow: visible;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
   z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-
-.camera-activation-banner:active {
-  transform: scale(0.98);
-}
-
-@keyframes bannerSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ====================================
-   DONUT WALK-IN ANIMATIONS
-   ==================================== */
 
 .banner-donut-wrapper {
   flex-shrink: 0;
   position: relative;
-  height: 120px;
-  width: 140px;
+  height: 220px;
+  width: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* Single smooth walk-in animation - no bounce, no translateX on bounce */
+.donut-entry {
+  position: relative;
+  animation: donutWalkIn 2s ease-out forwards;
+}
 
-/* Waddle walk-in from left with side-to-side sway */
 @keyframes donutWalkIn {
   0% {
-    transform: translateX(calc(-100vw)) scaleX(1);
+    transform: translateX(calc(-100vw));
     opacity: 0;
   }
-  20% {
-    transform: translateX(calc(-75vw)) translateY(-2px) scaleX(0.98);
-    opacity: 0.7;
-  }
-  40% {
-    transform: translateX(calc(-50vw)) translateY(0) scaleX(1);
-    opacity: 0.85;
-  }
-  60% {
-    transform: translateX(calc(-25vw)) translateY(-2px) scaleX(0.98);
-    opacity: 0.92;
-  }
-  80% {
-    transform: translateX(calc(-5vw)) translateY(0) scaleX(1);
-    opacity: 0.98;
-  }
   100% {
-    transform: translateX(0) translateY(0) scaleX(1);
+    transform: translateX(0);
     opacity: 1;
-  }
-}
-
-/* After walk-in completes, switch to bounce */
-.donut-entry {
-  animation: donutWalkIn 1.2s ease-out forwards, donutBounce 1.5s ease-in-out 1.2s infinite;
-}
-
-@keyframes donutBounce {
-  0%, 100% {
-    transform: translateY(0) scaleY(1);
-  }
-  30% {
-    transform: translateY(-12px) scaleY(1.15);
-  }
-  50% {
-    transform: translateY(-18px) scaleY(1.15);
-  }
-  80% {
-    transform: translateY(0) scaleY(0.85);
   }
 }
 
@@ -135,7 +71,7 @@
   }
 }
 
-/* Shadow under the donut */
+/* Shadow under donut */
 .donut-shadow {
   position: absolute;
   bottom: -20px;
@@ -145,54 +81,6 @@
   height: 12px;
   background: rgba(0, 0, 0, 0.08);
   border-radius: 50%;
-  animation: shadowPulse 1.5s ease-in-out 1.2s infinite;
-}
-
-@keyframes shadowPulse {
-  0%, 100% {
-    transform: translateX(-50%) scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: translateX(-50%) scale(0.6);
-    opacity: 0.1;
-  }
-}
-
-/* Bubble message - below donut */
-.bubble-message {
-  position: relative;
-  top: auto;
-  right: auto;
-  background: rgba(255, 255, 255, 0.95);
-  border: none;
-  padding: 16px 20px;
-  border-radius: 12px;
-  font-size: 18px;
-  color: #333;
-  white-space: normal;
-  text-align: center;
-  box-shadow: none;
-  font-weight: 600;
-  animation: bubbleAppear 0.4s ease-in-out 1.5s forwards;
-  opacity: 0;
-  transform-origin: center;
-}
-
-@keyframes bubbleAppear {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Bubble tail pointer */
-.bubble-message::after {
-  display: none;
 }
 
 /* Eye blink animation */
@@ -209,7 +97,7 @@
   }
 }
 
-/* Camera hands - subtle scale on interaction */
+/* Camera hands */
 .camera-held {
   transition: transform 0.1s ease;
 }
@@ -218,55 +106,78 @@
   transform: scale(1.08) rotate(-8deg);
 }
 
-/* Dismiss button */
-.banner-dismiss {
+/* Speech bubble ABOVE donut */
+.speech-bubble {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.25);
-  border: none;
-  border-radius: 50%;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  padding: 0;
-  z-index: 10000;
-}
-
-.banner-dismiss:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.banner-dismiss svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Action Buttons */
-.banner-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-shrink: 0;
-  animation: actionsAppear 0.4s ease-in-out 1.8s forwards;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 2px solid #333;
+  border-radius: 16px;
+  padding: 12px 20px;
+  width: 200px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  animation: bubbleAppear 0.5s ease-in-out 0.8s forwards;
   opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes bubbleAppear {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* Speech bubble tail */
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid white;
+  filter: drop-shadow(-1px 1px 0 #333);
+}
+
+/* STATIC BUTTONS - fixed position, never move */
+.static-button-bar {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  pointer-events: auto;
 }
 
 .banner-btn {
-  padding: 12px 28px;
+  padding: 14px 32px;
   border: none;
-  border-radius: 24px;
+  border-radius: 28px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition: all 0.2s ease;
   flex-shrink: 0;
+  touch-action: manipulation;
 }
 
 .banner-btn:active {
@@ -277,6 +188,7 @@
   background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  min-width: 120px;
 }
 
 .banner-btn-yes:hover {
@@ -284,41 +196,20 @@
 }
 
 .banner-btn-no {
-  background: rgba(255, 255, 255, 0.85);
+  background: white;
   color: #333;
+  border: 2px solid #ddd;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
 }
 
 .banner-btn-no:hover {
-  background: white;
+  background: #f5f5f5;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-@keyframes actionsAppear {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Progress bar */
-.banner-progress-track {
-  display: none;
-}
-
-.banner-progress-fill {
-  display: none;
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .camera-activation-banner {
-    animation: none;
-  }
   .donut-entry {
     animation: none;
   }
@@ -326,15 +217,11 @@
   .leg-right {
     animation: none;
   }
-  .bubble-message {
+  .speech-bubble {
     animation: none;
     opacity: 1;
   }
-}
-
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .camera-activation-banner {
-    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.25);
+  .eyes {
+    animation: none;
   }
 }
