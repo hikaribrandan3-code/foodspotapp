@@ -84,17 +84,41 @@ export default function CameraActivationBanner({
                 <rect x="50" y="150" width="12" height="4" rx="2" transform="rotate(90 50 150)" fill="#BA68C8"/>
                 <circle cx="150" cy="150" r="55" fill="white" stroke="#D1478B" strokeWidth="2"/>
                 <circle cx="150" cy="150" r="45" fill="white" opacity="0.5"/>
+                {/* Eyes - bigger, more expressive */}
                 <g className="eyes">
-                  <circle cx="85" cy="120" r="26" fill="#333"/>
-                  <circle cx="80" cy="110" r="11" fill="white"/>
-                  <circle cx="95" cy="130" r="5" fill="white"/>
-                  <circle cx="215" cy="120" r="26" fill="#333"/>
-                  <circle cx="210" cy="110" r="11" fill="white"/>
-                  <circle cx="225" cy="130" r="5" fill="white"/>
+                  {/* Left eye */}
+                  <circle cx="85" cy="120" r="32" fill="#fff"/>
+                  <circle cx="85" cy="120" r="28" fill="#333"/>
+                  <circle cx="82" cy="115" r="14" fill="white"/>
+                  <circle cx="82" cy="115" r="10" fill="#333"/>
+                  <circle cx="84" cy="113" r="4" fill="white"/>
+                  {/* Left eyebrow */}
+                  <path d="M65 95C75 85 100 85 105 95" stroke="#333" strokeWidth="4" fill="none" strokeLinecap="round"/>
+                  {/* Left eyelashes */}
+                  <line x1="75" y1="92" x2="73" y2="80" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="85" y1="90" x2="85" y2="75" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="95" y1="92" x2="97" y2="80" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
+
+                  {/* Right eye */}
+                  <circle cx="215" cy="120" r="32" fill="#fff"/>
+                  <circle cx="215" cy="120" r="28" fill="#333"/>
+                  <circle cx="218" cy="115" r="14" fill="white"/>
+                  <circle cx="218" cy="115" r="10" fill="#333"/>
+                  <circle cx="216" cy="113" r="4" fill="white"/>
+                  {/* Right eyebrow */}
+                  <path d="M235 95C225 85 200 85 195 95" stroke="#333" strokeWidth="4" fill="none" strokeLinecap="round"/>
+                  {/* Right eyelashes */}
+                  <line x1="205" y1="92" x2="203" y2="80" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="215" y1="90" x2="215" y2="75" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="225" y1="92" x2="227" y2="80" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
                 </g>
                 <ellipse cx="60" cy="165" rx="18" ry="10" fill="#FFB6C1" opacity="0.8"/>
                 <ellipse cx="240" cy="165" rx="18" ry="10" fill="#FFB6C1" opacity="0.8"/>
-                <path d="M135 180C135 180 145 190 150 190C155 190 165 180 165 180" stroke="#333" strokeWidth="6" strokeLinecap="round" fill="none"/>
+                {/* Improved mouth - bigger smile with tongue */}
+                <path d="M130 190C130 190 140 210 150 210C160 210 170 190 170 190" stroke="#333" strokeWidth="7" strokeLinecap="round" fill="none"/>
+                {/* Tongue */}
+                <ellipse cx="150" cy="215" rx="12" ry="8" fill="#FF1493"/>
+                <path d="M140 215C140 220 145 224 150 224C155 224 160 220 160 215" fill="#FF69B4"/>
                 <path d="M150 50C100 50 60 90 60 140" stroke="white" strokeWidth="8" strokeLinecap="round" opacity="0.4"/>
               </g>
 
