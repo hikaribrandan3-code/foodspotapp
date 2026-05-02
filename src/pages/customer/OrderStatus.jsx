@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
@@ -9,6 +9,7 @@ import { isOrderPaid } from '../../utils/paymentStatus.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
+import CameraTrigger from '../../components/Camera/CameraTrigger'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import mapboxgl from 'mapbox-gl';
@@ -234,7 +235,19 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
     const paid = isOrderPaid(order)
 
+    // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery)
+    const delayVariant = useMemo(() => {
+      const variants = [45000, 60000, 90000];
+      return variants[Math.floor(Math.random() * variants.length)];
+    }, [])
+
+    // Determine order type: pickup if no delivery address, otherwise delivery
+    const orderType = !order?.delivery_address ? 'takeout' : 'delivery'
+    // For pickup/takeout, use instant trigger (5s); for delivery use variants (45-90s)
+    const finalDelayVariant = orderType === 'takeout' ? 5000 : delayVariant
+
     return (
+      <CameraTrigger orderId={order.id} orderType={orderType} delayMs={finalDelayVariant}>
         <>
             <HeaderClamp config={config} />
             <div style={{
@@ -275,6 +288,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             : order.status === ORDER_STATUS.CANCELLED ? t('heading_order_cancelled')
                             : order.status === ORDER_STATUS.READY ? ((isDelivery || order.order_type === 'dine_in') ? t('status_on_the_way') : t('status_ready_pickup'))
                             : order.status === ORDER_STATUS.DISPATCHED ? t('status_on_the_way')
+                            : order.status === 'released_to_kitchen' ? 'Prepping! 👨‍🍳'
                             : isCashMethod && !paid ? t('heading_confirmed_unpaid')
                             : t('heading_order_confirmed')}
                     </h1>
@@ -610,6 +624,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                 </div>
             </div>
         </>
+      </CameraTrigger>
     )
 }
 
