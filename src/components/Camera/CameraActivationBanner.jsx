@@ -134,6 +134,26 @@ export default function CameraActivationBanner({
             {bubbleText}
           </div>
 
+          {/* Action Buttons */}
+          <div className="banner-actions">
+            <button
+              className="banner-btn banner-btn-yes"
+              onClick={handleCapture}
+              type="button"
+              aria-label="Take a photo"
+            >
+              Yes ✨
+            </button>
+            <button
+              className="banner-btn banner-btn-no"
+              onClick={handleDismiss}
+              type="button"
+              aria-label="No, skip"
+            >
+              No
+            </button>
+          </div>
+
           {/* Shadow */}
           <div className="donut-shadow" />
         </div>

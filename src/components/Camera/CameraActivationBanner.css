@@ -2,22 +2,24 @@
 
 .camera-activation-banner {
   position: fixed;
-  bottom: 20px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  max-width: 420px;
-  width: calc(100% - 32px);
+  justify-content: center;
+  gap: 24px;
+  padding: 40px 24px;
+  max-width: 360px;
+  width: calc(100% - 48px);
   background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-  border-radius: 16px;
+  border-radius: 24px;
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   animation: bannerSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  overflow: hidden;
+  overflow: visible;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   z-index: 9999;
 }
@@ -44,8 +46,8 @@
 .banner-donut-wrapper {
   flex-shrink: 0;
   position: relative;
-  height: 80px;
-  width: 90px;
+  height: 120px;
+  width: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -146,23 +148,24 @@
   }
 }
 
-/* Bubble message - slides in after walk-in */
+/* Bubble message - below donut */
 .bubble-message {
-  position: absolute;
-  top: -50px;
-  right: -80px;
-  background: white;
-  border: 3px solid #FF69B4;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  color: #FF69B4;
-  white-space: nowrap;
-  box-shadow: 0 4px 0 #ffd1e8;
+  position: relative;
+  top: auto;
+  right: auto;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 18px;
+  color: #333;
+  white-space: normal;
+  text-align: center;
+  box-shadow: none;
   font-weight: 600;
-  animation: bubbleAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.5s forwards;
+  animation: bubbleAppear 0.4s ease-in-out 1.5s forwards;
   opacity: 0;
-  transform-origin: bottom left;
+  transform-origin: center;
 }
 
 @keyframes bubbleAppear {
@@ -178,13 +181,7 @@
 
 /* Bubble tail pointer */
 .bubble-message::after {
-  content: '';
-  position: absolute;
-  bottom: -12px;
-  left: 12px;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 12px solid #FF69B4;
+  display: none;
 }
 
 /* Eye blink animation */
@@ -212,20 +209,23 @@
 
 /* Dismiss button */
 .banner-dismiss {
+  position: absolute;
+  top: 16px;
+  right: 16px;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.25);
   border: none;
   border-radius: 50%;
   color: #fff;
   cursor: pointer;
   transition: background 0.15s ease;
   padding: 0;
-  margin-left: auto;
+  z-index: 10000;
 }
 
 .banner-dismiss:hover {
@@ -237,23 +237,70 @@
   height: 16px;
 }
 
+/* Action Buttons */
+.banner-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: actionsAppear 0.4s ease-in-out 1.8s forwards;
+  opacity: 0;
+}
+
+.banner-btn {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  flex-shrink: 0;
+}
+
+.banner-btn:active {
+  transform: scale(0.95);
+}
+
+.banner-btn-yes {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.banner-btn-yes:hover {
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.banner-btn-no {
+  background: rgba(255, 255, 255, 0.85);
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.banner-btn-no:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes actionsAppear {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Progress bar */
 .banner-progress-track {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.25);
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
+  display: none;
 }
 
 .banner-progress-fill {
-  height: 100%;
-  background: rgba(255, 255, 255, 0.9);
-  border-bottom-left-radius: 16px;
-  transition: width 1s linear;
+  display: none;
 }
 
 /* Reduced motion support */
