@@ -259,7 +259,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
             }}>
                 <div style={{
@@ -267,7 +267,11 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                     maxWidth: 540,
                     background: '#fff',
                     border: '1px solid #e5e5e5',
-                    padding: '40px 32px 32px'
+                    padding: '60px 32px 48px',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
                 }}>
                     <div style={{
                         fontSize: 12, color: '#a3a3a3', fontWeight: 500,
