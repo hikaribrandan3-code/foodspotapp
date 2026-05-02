@@ -53,11 +53,6 @@
   justify-content: center;
 }
 
-.donut-entry {
-  position: relative;
-  animation: donutWalkIn 1.2s ease-out forwards;
-  cursor: pointer;
-}
 
 /* Waddle walk-in from left with side-to-side sway */
 @keyframes donutWalkIn {
@@ -94,16 +89,16 @@
 
 @keyframes donutBounce {
   0%, 100% {
-    transform: translateY(0) scale(1, 1);
+    transform: translateY(0) scaleY(1);
   }
   30% {
-    transform: translateY(-12px) scale(0.85, 1.15);
+    transform: translateY(-12px) scaleY(1.15);
   }
   50% {
-    transform: translateY(-18px) scale(0.85, 1.15);
+    transform: translateY(-18px) scaleY(1.15);
   }
   80% {
-    transform: translateY(0) scale(1.15, 0.85);
+    transform: translateY(0) scaleY(0.85);
   }
 }
 

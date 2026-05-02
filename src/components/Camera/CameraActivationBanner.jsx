@@ -48,8 +48,9 @@ export default function CameraActivationBanner({
 
   const handleDismiss = (e) => {
     e.stopPropagation();
-    setIsVisible(false);
     onDismiss?.();
+    // Delay hiding to allow parent state updates to complete
+    setTimeout(() => setIsVisible(false), 0);
   };
 
   const handleCapture = () => {
@@ -61,13 +62,7 @@ export default function CameraActivationBanner({
   return (
     <div
       className={`camera-activation-banner ${className}`}
-      role="button"
-      tabIndex={0}
-      onClick={handleCapture}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') handleCapture();
-      }}
-      aria-label="Capture your food moment"
+      aria-label="Camera activation banner"
     >
       {/* Walking Donut Animation */}
       <div className="banner-donut-wrapper">
