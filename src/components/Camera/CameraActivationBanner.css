@@ -155,10 +155,10 @@
   filter: drop-shadow(-1px 1px 0 #333);
 }
 
-/* STATIC BUTTONS - fixed position, never move */
+/* STATIC BUTTONS - fixed position, 30px below donut */
 .static-button-bar {
   position: fixed;
-  bottom: 40px;
+  top: calc(50% + 110px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 10000;
