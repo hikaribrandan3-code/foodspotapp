@@ -191,7 +191,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         subscriptionRef.current = null;
       }
     };
-  }, [orderId, effectiveUserId, orderType, delayMs, clearTimers]);
+  }, [orderId, orderType, delayMs, clearTimers]);
 
   const dismissBanner = useCallback(async () => {
     clearTimers();
@@ -205,7 +205,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         .eq('user_id', effectiveUserId)
         .catch(err => console.error('[useCameraActivation] Failed to update dismissed:', err));
     }
-  }, [orderId, effectiveUserId, clearTimers]);
+  }, [orderId, clearTimers]);
 
   const onCaptureComplete = useCallback(async () => {
     clearTimers();
@@ -219,7 +219,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         .eq('user_id', effectiveUserId)
         .catch(err => console.error('[useCameraActivation] Failed to update captured_at:', err));
     }
-  }, [orderId, effectiveUserId, clearTimers]);
+  }, [orderId, clearTimers]);
 
   // Auto-dismiss banner after 5 minutes if still shown
   useEffect(() => {
