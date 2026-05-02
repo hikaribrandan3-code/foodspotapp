@@ -83,7 +83,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
 
   // Main trigger: watch for order delivered status
   useEffect(() => {
-    if (!orderId || !userId || hasTriggeredRef.current) return;
+    if (!orderId || hasTriggeredRef.current) return;
 
     let mounted = true;
 
