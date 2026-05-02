@@ -1,0 +1,277 @@
+/* src/components/Camera/CameraActivationBanner.css */
+
+.camera-activation-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 12px 16px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+  border-radius: 16px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+  animation: bannerSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.camera-activation-banner:active {
+  transform: scale(0.98);
+}
+
+@keyframes bannerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ====================================
+   DONUT WALK-IN ANIMATIONS
+   ==================================== */
+
+.banner-donut-wrapper {
+  flex-shrink: 0;
+  position: relative;
+  height: 80px;
+  width: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-entry {
+  position: relative;
+  animation: donutWalkIn 1.2s ease-out forwards;
+  cursor: pointer;
+}
+
+/* Walk-in from left */
+@keyframes donutWalkIn {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* After walk-in completes, switch to bounce */
+.donut-entry {
+  animation: donutWalkIn 1.2s ease-out forwards, donutBounce 1.5s ease-in-out 1.2s infinite;
+}
+
+@keyframes donutBounce {
+  0%, 100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  30% {
+    transform: translateY(-12px) scale(0.85, 1.15);
+  }
+  50% {
+    transform: translateY(-18px) scale(0.85, 1.15);
+  }
+  80% {
+    transform: translateY(0) scale(1.15, 0.85);
+  }
+}
+
+/* Leg swinging animations */
+.legs {
+  transform-origin: top center;
+}
+
+.leg-left {
+  animation: legLeftSwing 0.5s ease-in-out infinite;
+  transform-origin: 122px 240px;
+}
+
+.leg-right {
+  animation: legRightSwing 0.5s ease-in-out infinite;
+  transform-origin: 177px 240px;
+}
+
+@keyframes legLeftSwing {
+  0%, 100% {
+    transform: rotate(-20deg);
+  }
+  50% {
+    transform: rotate(20deg);
+  }
+}
+
+@keyframes legRightSwing {
+  0%, 100% {
+    transform: rotate(20deg);
+  }
+  50% {
+    transform: rotate(-20deg);
+  }
+}
+
+/* Shadow under the donut */
+.donut-shadow {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
+  animation: shadowPulse 1.5s ease-in-out 1.2s infinite;
+}
+
+@keyframes shadowPulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0.1;
+  }
+}
+
+/* Bubble message - slides in after walk-in */
+.bubble-message {
+  position: absolute;
+  top: -50px;
+  right: -80px;
+  background: white;
+  border: 3px solid #FF69B4;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #FF69B4;
+  white-space: nowrap;
+  box-shadow: 0 4px 0 #ffd1e8;
+  font-weight: 600;
+  animation: bubbleAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.5s forwards;
+  opacity: 0;
+  transform-origin: bottom left;
+}
+
+@keyframes bubbleAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Bubble tail pointer */
+.bubble-message::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 12px;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 12px solid #FF69B4;
+}
+
+/* Eye blink animation */
+.eyes {
+  animation: eyeBlink 4s infinite;
+}
+
+@keyframes eyeBlink {
+  0%, 90%, 100% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 0.3;
+  }
+}
+
+/* Camera hands - subtle scale on interaction */
+.camera-held {
+  transition: transform 0.1s ease;
+}
+
+.donut-entry:active .camera-held {
+  transform: scale(1.08) rotate(-8deg);
+}
+
+/* Dismiss button */
+.banner-dismiss {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0;
+  margin-left: auto;
+}
+
+.banner-dismiss:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.banner-dismiss svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Progress bar */
+.banner-progress-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.25);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+.banner-progress-fill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom-left-radius: 16px;
+  transition: width 1s linear;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .camera-activation-banner {
+    animation: none;
+  }
+  .donut-entry {
+    animation: none;
+  }
+  .leg-left,
+  .leg-right {
+    animation: none;
+  }
+  .bubble-message {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .camera-activation-banner {
+    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.25);
+  }
+}
