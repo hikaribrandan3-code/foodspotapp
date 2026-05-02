@@ -14,7 +14,7 @@ export default function CameraActivationBanner({
 
   const handleCapture = () => {
     setShowSprinkles(true);
-    setTimeout(() => onCapture?.(), 100);
+    onCapture?.();
   };
 
   const handleDismiss = () => {
