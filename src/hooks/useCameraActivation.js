@@ -95,8 +95,10 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', _de
   // Show banner (with visibility check)
   const showBannerNow = useCallback((isInstant = false) => {
     const delay = isInstant ? 0 : VISUAL_DELAY_MS;
+    console.log(`[camera] showBannerNow called — isInstant=${isInstant}, delay=${delay}ms, orderId=${orderId}`);
 
     timerRef.current = setTimeout(() => {
+      console.log(`[camera] Timer fired — setting activationStatus to 'ready'`);
       setActivationStatus('ready');
       supabase
         .from('ugc_activations')
@@ -109,26 +111,35 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', _de
 
   // Check if there is a pending donut in localStorage (for when user returns to tab)
   const checkPendingDonut = useCallback(() => {
+    console.log(`[camera] checkPendingDonut called — visibilityState=${document.visibilityState}`);
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (!raw) return;
+      if (!raw) {
+        console.log(`[camera] No pending donut in localStorage`);
+        return;
+      }
       const pending = JSON.parse(raw);
-      if (pending.orderId !== orderId) return;
+      if (pending.orderId !== orderId) {
+        console.log(`[camera] Pending donut orderId mismatch: ${pending.orderId} !== ${orderId}`);
+        return;
+      }
 
       // Check not stale (>5min old)
       if (Date.now() - pending.timestamp > 5 * 60 * 1000) {
+        console.log(`[camera] Pending donut stale, removing`);
         localStorage.removeItem(LS_KEY);
         return;
       }
 
       // Already in a terminal state? clear and bail
       if (['ready', 'shown', 'captured', 'dismissed'].includes(activationStatus)) {
+        console.log(`[camera] Already in terminal state '${activationStatus}', clearing pending donut`);
         localStorage.removeItem(LS_KEY);
         return;
       }
 
       // Show instantly — they just came back!
-      console.log('[camera] User returned to tab — showing pending donut instantly');
+      console.log(`[camera] User returned to tab — showing pending donut instantly`);
       showBannerNow(true);
       localStorage.removeItem(LS_KEY);
     } catch (e) {
@@ -142,11 +153,14 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', _de
     let mounted = true;
 
     const setupTrigger = async () => {
+      console.log(`[camera] setupTrigger running — orderId=${orderId}, orderType=${orderType}`);
       const { data: order } = await supabase
         .from('orders')
         .select('status, delivered_at, created_at')
         .eq('id', orderId)
         .maybeSingle();
+
+      console.log(`[camera] Order fetched — status=${order?.status}, orderType=${orderType}`);
 
       if (!mounted) return;
 
@@ -164,10 +178,14 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', _de
         triggerTime = order.delivered_at ? new Date(order.delivered_at).getTime() : Date.now();
       }
 
+      console.log(`[camera] shouldTrigger=${shouldTrigger}`);
+
       if (shouldTrigger) {
         handleTriggered(triggerTime);
         return;
       }
+
+      console.log(`[camera] Setting up Realtime subscription`);
 
       const channel = supabase
         .channel(`order-camera-${orderId}`)
@@ -196,6 +214,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', _de
     };
 
     const handleTriggered = async (triggerTime) => {
+      console.log(`[camera] handleTriggered called — hasTriggered=${hasTriggeredRef.current}, mounted=${mounted}`);
       if (hasTriggeredRef.current || !mounted) return;
       hasTriggeredRef.current = true;
 
@@ -217,18 +236,18 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', _de
 
       // Write to localStorage so if user is away, we can catch them on return
       localStorage.setItem(LS_KEY, JSON.stringify({ orderId, timestamp: Date.now() }));
+      console.log(`[camera] Wrote pendingDonut to localStorage — visibilityState=${document.visibilityState}`);
 
       if (document.visibilityState === 'visible') {
-        // User is looking — brief delay then show
-        console.log('[camera] User is visible — showing donut after 1.5s');
+        console.log(`[camera] User is visible — scheduling donut after ${VISUAL_DELAY_MS}ms`);
         showBannerNow(false);
       } else {
-        // User is away — wait for them to come back
-        console.log('[camera] User tab hidden — donut will show when they return');
+        console.log(`[camera] User tab hidden — donut will show when they return`);
       }
 
       // Set up visibility listener for the "they come back" case
       const handleVisibilityChange = () => {
+        console.log(`[camera] visibilitychange fired — newState=${document.visibilityState}`);
         if (document.visibilityState === 'visible') {
           checkPendingDonut();
         }
@@ -290,6 +309,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', _de
   }, [orderId, clearTimers, effectiveUserId]);
 
   const showBanner = activationStatus === 'ready';
+  console.log(`[camera] Returning — showBanner=${showBanner}, activationStatus=${activationStatus}`);
 
   return {
     showBanner,
