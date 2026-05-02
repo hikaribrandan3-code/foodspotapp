@@ -64,7 +64,7 @@ export default function CameraActivationBanner({
       {/* Walking Donut Animation */}
       <div className="banner-donut-wrapper">
         <div className="donut-entry">
-          <svg width="120" height="140" viewBox="0 0 300 350" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="132" height="154" viewBox="0 0 300 350" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <mask id="biteMask">
                 <rect width="300" height="350" fill="white" />
@@ -138,7 +138,10 @@ export default function CameraActivationBanner({
           <div className="banner-actions">
             <button
               className="banner-btn banner-btn-yes"
-              onClick={handleCapture}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCapture();
+              }}
               type="button"
               aria-label="Take a photo"
             >
@@ -146,7 +149,10 @@ export default function CameraActivationBanner({
             </button>
             <button
               className="banner-btn banner-btn-no"
-              onClick={handleDismiss}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDismiss(e);
+              }}
               type="button"
               aria-label="No, skip"
             >
