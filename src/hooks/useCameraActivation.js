@@ -95,6 +95,8 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         .eq('id', orderId)
         .maybeSingle();
 
+      console.log(`[camera] setupTrigger: orderId=${orderId}, orderType=${orderType}, status=${order?.status}`);
+
       if (!mounted) return;
 
       // Determine trigger condition based on order type
@@ -114,10 +116,15 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         triggerTime = order.delivered_at ? new Date(order.delivered_at).getTime() : Date.now();
       }
 
+      console.log(`[camera] shouldTrigger=${shouldTrigger}`);
+
       if (shouldTrigger) {
+        console.log(`[camera] TRIGGERING NOW`);
         handleTriggered(triggerTime);
         return;
       }
+
+      console.log(`[camera] Setting up Realtime subscription for order ${orderId}`);
 
       // Subscribe to order updates for future changes
       const channel = supabase
@@ -132,11 +139,15 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
           },
           (payload) => {
             const newStatus = payload.new.status;
+            console.log(`[camera] Realtime update: status=${newStatus}, orderType=${orderType}`);
             if (orderType === 'delivery' && newStatus === 'delivered') {
+              console.log(`[camera] REALTIME TRIGGER: delivery delivered`);
               handleTriggered(payload.new.delivered_at ? new Date(payload.new.delivered_at).getTime() : Date.now());
             } else if (orderType === 'dine_in' && newStatus === 'ready') {
+              console.log(`[camera] REALTIME TRIGGER: dine_in ready`);
               handleTriggered(Date.now());
             } else if (orderType === 'takeout' && newStatus === 'delivered') {
+              console.log(`[camera] REALTIME TRIGGER: takeout delivered`);
               handleTriggered(payload.new.delivered_at ? new Date(payload.new.delivered_at).getTime() : Date.now());
             }
           }
