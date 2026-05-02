@@ -43,9 +43,9 @@ export default function Receipt() {
   const isPending = order?.status === 'pending' || order?.status === 'pending_payment'
   const paymentFailed = !isPaid && !isPending && !isCash
 
-  // Determine order type: pickup if no delivery address, otherwise delivery
-  const orderType = !order?.delivery_address ? 'takeout' : 'delivery'
-  // For pickup/takeout, use instant trigger (5s); for delivery use variants (45-90s)
+  // Use actual order type from database, fallback to inferring from delivery address
+  const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')
+  // For pickup/takeout, use instant trigger (5s); for delivery/dine-in use variants (45-90s)
   const finalDelayVariant = orderType === 'takeout' ? 5000 : delayVariant
 
   if (loading) return (
