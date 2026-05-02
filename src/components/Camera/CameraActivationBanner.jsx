@@ -10,10 +10,8 @@ export default function CameraActivationBanner({
 }) {
   const { language } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
-  const [showSprinkles, setShowSprinkles] = useState(false);
 
   const handleCapture = () => {
-    setShowSprinkles(true);
     onCapture?.();
   };
 
@@ -28,23 +26,23 @@ export default function CameraActivationBanner({
 
   return (
     <>
-      {/* Sprinkles celebration */}
-      {showSprinkles && (
-        <div className="sprinkles-container">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <div
-              key={i}
-              className="sprinkle"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 20}px`,
-                animationDelay: `${Math.random() * 0.5}s`,
-                backgroundColor: `hsl(${Math.random() * 60 + 330}, 100%, ${Math.random() * 30 + 50}%)`,
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {/* Sprinkles rain during donut walk-in */}
+      <div className="sprinkles-container">
+        {Array.from({ length: 80 }).map((_, i) => (
+          <div
+            key={i}
+            className="sprinkle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 30}px`,
+              width: `${Math.random() * 6 + 4}px`,
+              height: `${Math.random() * 6 + 4}px`,
+              animationDelay: `${Math.random() * 0.8}s`,
+              backgroundColor: `hsl(${Math.random() * 60 + 320}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Donut modal - walks in and bounces */}
       <div className={`camera-activation-banner ${className}`}>

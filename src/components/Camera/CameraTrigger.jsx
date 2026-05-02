@@ -4,9 +4,6 @@ import { useCameraActivation } from '../../hooks/useCameraActivation';
 import { supabase } from '../../lib/supabaseClient';
 
 const CameraActivationBanner = lazy(() => import('./CameraActivationBanner'));
-const CameraLayer = lazy(() => import('./CameraLayer'));
-const EditorLayer = lazy(() => import('./EditorLayer'));
-const DualPostScreen = lazy(() => import('./DualPostScreen'));
 
 /**
  * CameraTrigger wraps a customer-facing page and conditionally renders:
@@ -57,38 +54,12 @@ export default function CameraTrigger({
     return <>{children}</>;
   }
 
-  const [cameraOpen, setCameraOpen] = useState(false);
-  const [capturedBlob, setCapturedBlob] = useState(null);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [postScreenOpen, setPostScreenOpen] = useState(false);
-
   const openCamera = useCallback(() => {
-    setCameraOpen(true);
-  }, []);
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    const slug = pathSegments[0];
+    navigate(`/${slug}/camera`);
+  }, [navigate]);
 
-  const handleCapture = useCallback((blob) => {
-    setCapturedBlob(blob);
-    setCameraOpen(false);
-    setEditorOpen(true);
-  }, []);
-
-  const handleEditorDone = useCallback((editedBlob) => {
-    setCapturedBlob(editedBlob);
-    setEditorOpen(false);
-    setPostScreenOpen(true);
-  }, []);
-
-  const handleSaveComplete = useCallback(() => {
-    onCaptureComplete();
-    setPostScreenOpen(false);
-    setCapturedBlob(null);
-  }, [onCaptureComplete]);
-
-  const handleShareThenClose = useCallback(() => {
-    onCaptureComplete();
-    setPostScreenOpen(false);
-    setCapturedBlob(null);
-  }, [onCaptureComplete]);
 
   return (
     <>
@@ -104,47 +75,6 @@ export default function CameraTrigger({
         )}
       </Suspense>
 
-      {/* Full camera flow - lazy loaded */}
-      <Suspense fallback={<CameraSkeleton />}>
-        {cameraOpen && (
-          <CameraLayer
-            onCapture={handleCapture}
-            onClose={() => setCameraOpen(false)}
-          />
-        )}
-
-        {editorOpen && (
-          <EditorLayer
-            imageBlob={capturedBlob}
-            onDone={handleEditorDone}
-            onClose={() => {
-              setEditorOpen(false);
-              setCapturedBlob(null);
-            }}
-          />
-        )}
-
-        {postScreenOpen && (
-          <DualPostScreen
-            imageBlob={capturedBlob}
-            orderId={orderId}
-            onSaveComplete={handleSaveComplete}
-            onShareThenClose={handleShareThenClose}
-            onClose={() => {
-              setPostScreenOpen(false);
-              setCapturedBlob(null);
-            }}
-          />
-        )}
-      </Suspense>
     </>
-  );
-}
-
-function CameraSkeleton() {
-  return (
-    <div className="camera-skeleton">
-      <div className="skeleton-viewfinder" />
-    </div>
   );
 }
