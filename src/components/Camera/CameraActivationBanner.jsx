@@ -55,7 +55,7 @@ export default function CameraActivationBanner({
                 width: `${Math.random() * 8 + 3}px`,
                 height: `${Math.random() * 8 + 3}px`,
                 animationDelay: `${Math.random() * 1}s`,
-                backgroundColor: confettiColors[i % confettiColors.length],
+                background: confettiColors[i % confettiColors.length],
               }}
             />
           );
