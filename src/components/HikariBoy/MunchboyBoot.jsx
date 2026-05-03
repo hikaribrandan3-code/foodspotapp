@@ -88,6 +88,17 @@ export default function MunchboyBoot({ onComplete }) {
 
   const handleClick = async () => {
     if (showPressStart) {
+      // ⚡ AUDIO UNLOCK: Unlock AudioContext on press start (mobile-friendly gesture)
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          const dummy = new AudioContext();
+          await dummy.resume().catch(() => {});
+        }
+      } catch (e) {
+        console.warn('[MunchboyBoot] Audio unlock failed:', e);
+      }
+
       // Play chime on user interaction (fixes mobile autoplay restriction)
       await playGbaChime();
       onComplete?.();
