@@ -34,6 +34,11 @@ function OwnerSummary() {
     const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
     const discordWebhookInitialized = useRef(false)
 
+    // 🌍 LANGUAGE SAVE STATE
+    const [pendingLanguage, setPendingLanguage] = useState(null)
+    const [languageSaving, setLanguageSaving] = useState(false)
+    const [languageSaveStatus, setLanguageSaveStatus] = useState(null)
+
     // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
     const [orders, setOrders] = useState([])
     const [ordersLoading, setOrdersLoading] = useState(true)
@@ -106,6 +111,29 @@ function OwnerSummary() {
         await supabase.auth.signOut()
         clearAuth()
         window.location.href = `/${tenantSlug}`
+    }
+
+    const handleLanguageChange = (newLang) => {
+        setPendingLanguage(newLang)
+    }
+
+    const saveLanguage = async () => {
+        if (!pendingLanguage) return
+        setLanguageSaving(true)
+        setLanguageSaveStatus(null)
+
+        try {
+            await changeLanguage(pendingLanguage)
+            setLanguageSaveStatus({ message: t('language_saved') || 'Idioma guardado', type: 'success' })
+            setPendingLanguage(null)
+            setTimeout(() => setLanguageSaveStatus(null), 3000)
+        } catch (err) {
+            console.error('Language save failed:', err)
+            setLanguageSaveStatus({ message: t('save_error') || 'Error al guardar', type: 'error' })
+            setTimeout(() => setLanguageSaveStatus(null), 3000)
+        } finally {
+            setLanguageSaving(false)
+        }
     }
 
     // Stats calculations (from Supabase data)
@@ -490,25 +518,31 @@ function OwnerSummary() {
                         gap: 24,
                         padding: '12px 0'
                     }}>
-                        {['EN', 'ES', 'PT'].map((l) => (
-                            <button
-                                key={l}
-                                onClick={() => changeLanguage(l.toLowerCase())}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: lang === l.toLowerCase() ? '#111827' : '#9CA3AF',
-                                    fontWeight: lang === l.toLowerCase() ? 700 : 500,
-                                    fontSize: 13,
-                                    letterSpacing: '0.1em',
-                                    cursor: 'pointer',
-                                    padding: '4px 8px',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                {l}
-                            </button>
-                        ))}
+                        {['EN', 'ES', 'PT'].map((l) => {
+                            const isSelected = (pendingLanguage || lang) === l.toLowerCase()
+                            const isPending = pendingLanguage === l.toLowerCase()
+                            return (
+                                <button
+                                    key={l}
+                                    onClick={() => handleLanguageChange(l.toLowerCase())}
+                                    style={{
+                                        background: isPending ? '#3B82F6' : 'none',
+                                        border: isPending ? '2px solid #3B82F6' : 'none',
+                                        color: isSelected ? '#111827' : '#9CA3AF',
+                                        fontWeight: isSelected ? 700 : 500,
+                                        fontSize: 13,
+                                        letterSpacing: '0.1em',
+                                        cursor: 'pointer',
+                                        padding: isPending ? '4px 8px' : '4px 8px',
+                                        transition: 'all 0.2s',
+                                        borderRadius: isPending ? 8 : 0,
+                                        color: isPending ? 'white' : isSelected ? '#111827' : '#9CA3AF'
+                                    }}
+                                >
+                                    {l}
+                                </button>
+                            )
+                        })}
                     </div>
                 </div>
 
@@ -536,6 +570,48 @@ function OwnerSummary() {
                         }}
                     >
                         {t('system_admin')}
+                    </button>
+                </div>
+            )}
+
+            {/* 🌍 LANGUAGE SAVE TOAST */}
+            {languageSaveStatus && (
+                <div style={{
+                    position: 'fixed', bottom: 24, left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: languageSaveStatus.type === 'error' ? '#EF4444' : '#22C55E', color: 'white',
+                    padding: '10px 24px', borderRadius: 50,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                    fontWeight: 600, fontSize: 14, zIndex: 9999,
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <span>{languageSaveStatus.type === 'error' ? '⚠️' : '✓'}</span> {languageSaveStatus.message}
+                </div>
+            )}
+
+            {/* 🌍 LANGUAGE UNSAVED CHANGES BAR */}
+            {pendingLanguage && (
+                <div style={{
+                    position: 'fixed', bottom: 95, left: 12, right: 12,
+                    background: '#1E293B', color: 'white', padding: '14px 20px',
+                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>🌍 {t('unsaved_changes_warning') || 'Cambios sin guardar'}</div>
+                    <button
+                        onClick={saveLanguage}
+                        disabled={languageSaving}
+                        style={{
+                            background: '#3B82F6', color: 'white', border: 'none',
+                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
+                            fontSize: 14, cursor: 'pointer',
+                            opacity: languageSaving ? 0.7 : 1
+                        }}
+                    >
+                        {languageSaving ? t('saving_btn') || 'Guardando...' : t('save') || 'Guardar'}
                     </button>
                 </div>
             )}
