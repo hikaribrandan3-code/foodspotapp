@@ -159,6 +159,11 @@ export function HikariBoy({
   }, [showLoader]);
 
   const handleButtonPress = (button) => {
+    // ⚡ AUDIO UNLOCK: Send resume before button press so iframe games can unlock Web Audio
+    if (currentGame && gameFrameRef.current) {
+      gameFrameRef.current.contentWindow?.postMessage({ type: 'AUDIO_RESUME' }, '*');
+    }
+    
     // ⚡ HEAVY HAPTICS: 50-80ms bursts for retro tactile feel
     if (navigator.vibrate) {
       const isAction = button === BUTTONS.A || button === BUTTONS.B;

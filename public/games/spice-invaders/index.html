@@ -829,6 +829,7 @@ class Game{
       }
     });
     window.addEventListener('message',e=>{
+      if(e.data.type==='AUDIO_RESUME'){if(game&&game.audio)game.audio.resume();return;}
       if(e.data.type==='BUTTON_PRESS'){
         const btn=e.data.button;
         if(btn==='dpad-left'||btn==='left'){this.inp.LEFT=1;setTimeout(()=>this.inp.LEFT=0,100);}

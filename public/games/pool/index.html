@@ -223,6 +223,7 @@ function exitGame(){window.parent.postMessage({type:'GAME_EXIT',gameId:'pool'},'
 let lastDpadFrame=0;
 window.addEventListener('message',ev=>{
   const b=ev.data?.button,t=ev.data?.type;
+  if(t==='AUDIO_RESUME'){initAudio();if(AC&&AC.state==='suspended')AC.resume();return;}
   if(t==='BUTTON_PRESS'){
     lastDpadFrame=frameCount;
     if(b==='select')exitGame();

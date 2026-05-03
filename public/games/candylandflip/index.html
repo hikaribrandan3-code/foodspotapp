@@ -315,6 +315,7 @@ canvas.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0]
 canvas.addEventListener('click',e=>{const c=coord(e.clientX,e.clientY);input(c.x,c.y);});
 // ── HikariaBoy button wiring ──
 window.addEventListener('message',(e)=>{
+  if(e.data?.type==='AUDIO_RESUME'){initAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();return;}
   if(e.data?.type==='BUTTON_PRESS'){
     const btn=e.data.button;
     if(btn==='a'||btn==='start'){

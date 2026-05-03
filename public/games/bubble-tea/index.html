@@ -48,7 +48,9 @@ resize();
 window.addEventListener('resize',()=>{ resize(); buildGradientCache(); updPos(); calcAim(); });
 
 window.addEventListener('message',(e)=>{
-  const {type,button}=e.data; if(type!=='BUTTON_PRESS') return;
+  const {type,button}=e.data;
+  if(type==='AUDIO_RESUME'){initAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();return;}
+  if(type!=='BUTTON_PRESS') return;
   if(button==='start'){
     if(gameState==='splash'){gameState='playing';resetGame();initAudio();startMusic();}
     else if(gameState==='playing'){gameState='paused';pauseSelection=0;}
