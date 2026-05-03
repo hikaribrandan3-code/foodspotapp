@@ -201,7 +201,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 </div>
             )}
 
-            {/* ── CINEMA MASK: 9:16 Safe Zone Guides ── -->
+            {/* ── CINEMA MASK: 9:16 Safe Zone Guides ── */}
             <div className="cinema-mask-overlay" style={{
                 position: 'absolute',
                 top: 0,
