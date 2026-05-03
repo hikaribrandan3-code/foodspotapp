@@ -47,7 +47,6 @@ export function HikariBoy({
   munchboyAColor,
   munchboyBColor
 }) {
-  const [audioEnabled, setAudioEnabled] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -228,30 +227,11 @@ export function HikariBoy({
     setIsBooting(false);
   };
 
-  const handleAudioEnable = async () => {
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        const dummy = new AudioContext();
-        await dummy.resume().catch(() => {});
-      }
-    } catch (e) {
-      console.warn('[HikariBoy] Audio unlock failed:', e);
-    }
-    setAudioEnabled(true);
-  };
-
   return (
     <div className="hikariboy-emulator">
       {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
       <div className="hb-screen">
-        {!audioEnabled ? (
-          <div className="audio-enable-popup" onClick={handleAudioEnable}>
-            <div className="audio-popup-content">
-              <div className="audio-popup-text">TAP TO ENABLE AUDIO</div>
-            </div>
-          </div>
-        ) : isBooting ? (
+        {isBooting ? (
           <MunchboyBoot onComplete={handleBootComplete} />
         ) : !currentGame ? (
           <GameSelector 
