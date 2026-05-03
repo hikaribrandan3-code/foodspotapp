@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 
 const BANNER_AUTO_DISMISS_MS = 300_000;   // 5 minutes visible window
 const COOLDOWN_BETWEEN_ACTIVATIONS_MS = 600_000; // 10 min cooldown if dismissed
-const VISUAL_DELAY_MS = 1_500;           // 1.5s when user is actively looking
+const VISUAL_DELAY_MS = 500;             // 0.5s — snappy for 2026 attention spans
 const POLL_INTERVAL_MS = 3_000;          // 3s polling fallback
 const LS_KEY = 'fs_pending_donut';
 

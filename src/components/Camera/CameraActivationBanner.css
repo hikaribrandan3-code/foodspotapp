@@ -24,7 +24,7 @@
 /* Single smooth walk-in animation - no bounce, no translateX on bounce */
 .donut-entry {
   position: relative;
-  animation: donutWalkIn 2s ease-out forwards;
+  animation: donutWalkIn 0.6s ease-out forwards;
   pointer-events: none;
 }
 
@@ -61,16 +61,16 @@
 /* Leg swinging animations with waddle bounce */
 .legs {
   transform-origin: top center;
-  animation: waddle 1s ease-in-out infinite;
+  animation: waddle 0.6s ease-in-out infinite;
 }
 
 .leg-left {
-  animation: legLeftSwing 0.5s ease-in-out infinite;
+  animation: legLeftSwing 0.3s ease-in-out infinite;
   transform-origin: 122px 240px;
 }
 
 .leg-right {
-  animation: legRightSwing 0.5s ease-in-out infinite;
+  animation: legRightSwing 0.3s ease-in-out infinite;
   transform-origin: 177px 240px;
 }
 
@@ -164,7 +164,7 @@
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
-  animation: bubbleAppear 0.5s ease-in-out 0.3s forwards, bubblePulse 2s ease-in-out 1s infinite;
+  animation: bubbleAppear 0.4s ease-in-out 0.15s forwards, bubblePulse 2s ease-in-out 0.8s infinite;
   opacity: 0;
   pointer-events: none;
   box-shadow: 0 8px 32px rgba(255, 105, 180, 0.25),
@@ -218,7 +218,7 @@
   gap: 16px;
   justify-content: center;
   pointer-events: auto;
-  animation: buttonsAppear 0.4s ease-in-out 2.1s forwards;
+  animation: buttonsAppear 0.3s ease-in-out 1.0s forwards;
   opacity: 0;
 }
 
