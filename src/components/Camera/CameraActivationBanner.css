@@ -289,14 +289,16 @@
   position: absolute;
   width: 8px;
   height: 8px;
-  background: radial-gradient(circle, #FF69B4 0%, #FFB6D9 100%);
   border-radius: 50%;
-  animation: rainSprinkles 3s ease-in forwards;
+  animation: rainSprinkles 8s ease-in forwards;
 }
 
 @keyframes rainSprinkles {
   0% {
     transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  85% {
     opacity: 1;
   }
   100% {

@@ -70,13 +70,11 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
           hasTriggeredRef.current = true;
           return;
         }
-        if (data.status === 'dismissed' && data.banner_shown_at) {
-          const since = Date.now() - new Date(data.banner_shown_at).getTime();
-          if (since < COOLDOWN_BETWEEN_ACTIVATIONS_MS) {
-            setActivationStatus('dismissed');
-            hasTriggeredRef.current = true;
-            return;
-          }
+        if (data.status === 'dismissed') {
+          // Once user clicks "No", don't show again for this order
+          setActivationStatus('dismissed');
+          hasTriggeredRef.current = true;
+          return;
         }
         if (data.status === 'shown') {
           // Already shown this session — don't re-show
