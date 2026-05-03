@@ -596,6 +596,16 @@ function Home({ config: configProp }) {
 
         // 🎮 ARCADE: Open HikariBoy modal instead of navigating
         if (actionId === 'game' || actionId === 'arcade' || path === 'arcade') {
+            // ⚡ AUDIO UNLOCK: Unlock AudioContext globally when user clicks arcade icon
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    const dummy = new AudioContext();
+                    dummy.resume().catch(() => {});
+                }
+            } catch (e) {
+                console.warn('[Arcade] Audio unlock failed:', e);
+            }
             setShowArcade(true)
             return
         }
