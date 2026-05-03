@@ -42,6 +42,7 @@ export const translations = {
     role: { es: "Rol", en: "Role", pt: "Função" },
     "4_digits": { es: "4 dígitos", en: "4 digits", pt: "4 dígitos" },
     language_setting: { es: "Idioma / Lenguaje", en: "Language / Idioma", pt: "Idioma / Língua" },
+    owner_mode: { es: "Modo de Dueño", en: "Owner Mode", pt: "Modo de Proprietário" },
 
     // Camera UGC Banner
     food_arrived: { es: "¡Llegó tu comida!", en: "Your food arrived!", pt: "Sua comida chegou!" },
