@@ -147,7 +147,11 @@ export function HikariBoy({
   const handleGameLoad = () => {
     // ⚡ AUDIO UNLOCK: Send signal to game iframe (audio unlocked by arcade icon click)
     if (gameFrameRef.current) {
+      console.log('[HikariBoy] Game iframe loaded, sending AUDIO_UNLOCK...');
       gameFrameRef.current.contentWindow?.postMessage({ type: 'AUDIO_UNLOCK' }, '*');
+      console.log('[HikariBoy] AUDIO_UNLOCK message sent');
+    } else {
+      console.warn('[HikariBoy] gameFrameRef not ready');
     }
 
     const elapsed = Date.now() - loaderStartRef.current;
@@ -257,7 +261,7 @@ export function HikariBoy({
               src={currentGame.url}
               title={currentGame.name}
               className="hb-game-frame"
-              sandbox="allow-scripts allow-same-origin"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-top-navigation allow-forms"
               onLoad={handleGameLoad}
               style={{ opacity: showLoader ? 0 : 1 }}
             />
