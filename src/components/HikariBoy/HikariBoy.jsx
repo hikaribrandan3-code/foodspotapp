@@ -261,7 +261,6 @@ export function HikariBoy({
               src={currentGame.url}
               title={currentGame.name}
               className="hb-game-frame"
-              sandbox="allow-scripts allow-same-origin allow-popups allow-top-navigation allow-forms"
               onLoad={handleGameLoad}
               style={{ opacity: showLoader ? 0 : 1 }}
             />
