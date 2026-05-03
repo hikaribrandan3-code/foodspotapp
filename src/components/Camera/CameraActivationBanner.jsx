@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
+import ChibiLuffy from './ChibiLuffy';
 import './CameraActivationBanner.css';
 
 export default function CameraActivationBanner({
@@ -12,6 +13,14 @@ export default function CameraActivationBanner({
   const { lang } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
 
+  // Rotate every 3rd appearance: donut, donut, Luffy
+  const showLuffy = useMemo(() => {
+    const count = parseInt(localStorage.getItem('fs_banner_counter') || '0', 10);
+    const newCount = count + 1;
+    localStorage.setItem('fs_banner_counter', String(newCount));
+    return newCount % 3 === 0;
+  }, []);
+
   const handleCapture = () => {
     onCapture?.();
   };
@@ -22,6 +31,11 @@ export default function CameraActivationBanner({
   };
 
   if (!isVisible) return null;
+
+  // Show Luffy every 3rd time
+  if (showLuffy) {
+    return <ChibiLuffy onCapture={handleCapture} onDismiss={handleDismiss} />;
+  }
 
   const isDineIn = orderType === 'dine_in';
 
