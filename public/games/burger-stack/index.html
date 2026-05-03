@@ -434,6 +434,7 @@ document.addEventListener('keydown',function(e){
   if(e.code==='Escape'){if(gs==='playing'){gs='paused';stopMusic();}else if(gs==='paused'){gs='playing';startMusic(feverMode?192:curBPM);}}
 });
 window.addEventListener('message',function(e){
+  if(e.data&&e.data.type==='AUDIO_UNLOCK'){initAC();return;}
   if(e.data&&e.data.type==='AUDIO_RESUME'){initAC();if(AC&&AC.state==='suspended')AC.resume();return;}
   if(e.data&&e.data.type==='BUTTON_PRESS'){var btn=e.data.button;
     if(btn==='start'){initAC();if(AC&&AC.state==='suspended')AC.resume();if(gs==='start'||gs==='countdown')startCD();else if(gs==='playing'){gs='paused';stopMusic();}else if(gs==='paused'){gs='playing';startMusic(feverMode?192:curBPM);}else if(gs==='gameover')gs='start';}

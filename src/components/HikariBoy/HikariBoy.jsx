@@ -54,6 +54,7 @@ export function HikariBoy({
   const [showLoader, setShowLoader] = useState(false);
   const gameFrameRef = useRef(null);
   const loaderStartRef = useRef(0);
+  const audioUnlockedRef = useRef(false);
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
   useEffect(() => {
@@ -159,11 +160,25 @@ export function HikariBoy({
   }, [showLoader]);
 
   const handleButtonPress = (button) => {
-    // ⚡ AUDIO UNLOCK: Only START button triggers iframe audio resume (matches original behavior)
-    if (button === BUTTONS.START && currentGame && gameFrameRef.current) {
-      gameFrameRef.current.contentWindow?.postMessage({ type: 'AUDIO_RESUME' }, '*');
+    // ⚡ AUDIO UNLOCK: On first button press, unlock AudioContext globally
+    if (!audioUnlockedRef.current) {
+      audioUnlockedRef.current = true;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          const dummy = new AudioContext();
+          dummy.resume().catch(() => {});
+        }
+      } catch (e) {
+        console.warn('[HikariBoy] Audio unlock failed:', e);
+      }
+
+      // Notify game to initialize audio
+      if (currentGame && gameFrameRef.current) {
+        gameFrameRef.current.contentWindow?.postMessage({ type: 'AUDIO_UNLOCK' }, '*');
+      }
     }
-    
+
     // ⚡ HEAVY HAPTICS: 50-80ms bursts for retro tactile feel
     if (navigator.vibrate) {
       const isAction = button === BUTTONS.A || button === BUTTONS.B;

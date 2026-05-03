@@ -49,6 +49,7 @@ window.addEventListener('resize',()=>{ resize(); buildGradientCache(); updPos();
 
 window.addEventListener('message',(e)=>{
   const {type,button}=e.data;
+  if(type==='AUDIO_UNLOCK'){initAudio();return;}
   if(type==='AUDIO_RESUME'){initAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();return;}
   if(type!=='BUTTON_PRESS') return;
   if(button==='start'){
