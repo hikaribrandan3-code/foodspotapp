@@ -564,46 +564,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             return
         }
 
-        // 2. 🛡️ DUAL-SYNC: UPSERT ALL MENU ITEMS to menu_items table
-        // 🛡️ TENANT-SCOPED IDs: Prevents cross-tenant data collisions
-        const allItems = []
-
-        // Add all regular menu items
-        if (menuToSave?.categories) {
-            let displayOrder = 0
-            for (const category of menuToSave.categories) {
-                for (const item of category.items || []) {
-                    allItems.push({
-                        id: item.id,
-                        business_id: targetBusinessId,
-                        name: item.name,
-                        price: parseInt(item.price) || 0,
-                        image_url: item.image || null,
-                        available: item.available !== false,
-                        description: item.description || '',
-                        category_name: category.name,
-                        display_order: displayOrder++
-                    })
-                }
-            }
-        }
-
-        // Add featured items
-        const itemsToSync = allItems
-
-        if (itemsToSync.length > 0) {
-            const { error: menuError } = await supabase
-                .from('menu_items')
-                .upsert(itemsToSync, { onConflict: 'id' })
-
-            if (menuError) {
-                console.error('❌ Error Syncing Menu Items:', menuError)
-            } else {
-                console.log('✅ All Menu Items Synced to DB:', itemsToSync.length, 'items')
-            }
-        }
-
-        // 3. FINALIZE
+        // 2. FINALIZE (menu_data JSONB in branding is source of truth)
         setMenu(menuToSave) // Update local state with processed URLs
         setPendingFiles({}) // 🗑️ CLEANUP: Clear the file buffer
         setHasChanges(false)
