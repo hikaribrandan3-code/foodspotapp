@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
-import ChibiLuffy from './ChibiLuffy';
-import ChibiNaruto from './ChibiNaruto';
-import BurgerChar from './BurgerChar';
 import './CameraActivationBanner.css';
 
 export default function CameraActivationBanner({
@@ -14,18 +11,6 @@ export default function CameraActivationBanner({
 }) {
   const { lang } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
-  const [characterMode, setCharacterMode] = useState('donut');
-
-  // Rotate: donut → Luffy → Naruto → BurgerChar → donut → ...
-  useEffect(() => {
-    const count = parseInt(localStorage.getItem('fs_banner_counter') || '0', 10);
-    const newCount = count + 1;
-    localStorage.setItem('fs_banner_counter', String(newCount));
-    const mod = newCount % 4;
-    const mode = mod === 1 ? 'luffy' : mod === 2 ? 'naruto' : mod === 3 ? 'burger' : 'donut';
-    console.log(`[banner] counter=${newCount}, characterMode=${mode}`);
-    setCharacterMode(mode);
-  }, []);
 
   const handleCapture = () => {
     onCapture?.();
@@ -38,20 +23,9 @@ export default function CameraActivationBanner({
 
   if (!isVisible) return null;
 
-  // Show character based on rotation cycle
-  if (characterMode === 'luffy') {
-    return <ChibiLuffy onCapture={handleCapture} onDismiss={handleDismiss} />;
-  }
-  if (characterMode === 'naruto') {
-    return <ChibiNaruto onCapture={handleCapture} onDismiss={handleDismiss} />;
-  }
-  if (characterMode === 'burger') {
-    return <BurgerChar onCapture={handleCapture} onDismiss={handleDismiss} />;
-  }
-
   const isDineIn = orderType === 'dine_in';
 
-  // Pick a random UGC prompt (1-8) — different every time the banner mounts
+  // Pick a random UGC prompt (1-8)
   const idx = Math.floor(Math.random() * 8) + 1;
   const randomPrompt = translations[`ugc_prompt_${idx}`]?.[lang] || "Food's here. Snap it?";
 
