@@ -43,7 +43,8 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
         .update({ status: 'shown', banner_shown_at: new Date().toISOString() })
         .eq('order_id', orderId)
         .eq('user_id', effectiveUserId)
-        .catch(() => {});
+        .then(() => {})
+        .then(() => {}).catch(() => {});
     }, delay);
   }, [orderId, effectiveUserId]);
 
@@ -212,7 +213,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
       .update({ status: 'dismissed', banner_shown_at: new Date().toISOString() })
       .eq('order_id', orderId)
       .eq('user_id', effectiveUserId)
-      .catch(() => {});
+      .then(() => {}).catch(() => {});
   }, [orderId, clearTimers, effectiveUserId]);
 
   const onCaptureComplete = useCallback(async () => {
@@ -224,7 +225,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
       .update({ status: 'captured', captured_at: new Date().toISOString() })
       .eq('order_id', orderId)
       .eq('user_id', effectiveUserId)
-      .catch(() => {});
+      .then(() => {}).catch(() => {});
   }, [orderId, clearTimers, effectiveUserId]);
 
   const showBanner = activationStatus === 'ready';
