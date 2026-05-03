@@ -9,7 +9,7 @@ export default function CameraActivationBanner({
   className = '',
   orderType = 'delivery',
 }) {
-  const { language } = useLanguage();
+  const { lang } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
 
   const handleCapture = () => {
@@ -28,11 +28,11 @@ export default function CameraActivationBanner({
   // Pick a random UGC prompt (1-8) — different every time the banner mounts
   const randomPrompt = useMemo(() => {
     const idx = Math.floor(Math.random() * 8) + 1;
-    return translations[`ugc_prompt_${idx}`]?.[language] || "Food's here. Snap it?";
-  }, [language]);
+    return translations[`ugc_prompt_${idx}`]?.[lang] || "Food's here. Snap it?";
+  }, [lang]);
 
   const speechText = isDineIn
-    ? `${translations.selfie_prompt?.[language] || 'Want to take a selfie for the gram?'} 📸`
+    ? `${translations.selfie_prompt?.[lang] || 'Want to take a selfie for the gram?'} 📸`
     : `${randomPrompt} ✨`;
 
 
@@ -141,14 +141,14 @@ export default function CameraActivationBanner({
           onClick={handleCapture}
           type="button"
         >
-          {translations.camera_yes[language] || 'Yes ✨'}
+          {translations.camera_yes[lang] || 'Yes ✨'}
         </button>
         <button
           className="banner-btn banner-btn-no"
           onClick={handleDismiss}
           type="button"
         >
-          {translations.camera_no[language] || 'No'}
+          {translations.camera_no[lang] || 'No'}
         </button>
       </div>
     </>
