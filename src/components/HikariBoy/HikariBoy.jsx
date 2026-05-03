@@ -146,6 +146,11 @@ export function HikariBoy({
 
   // Hide loader when game iframe loads (minimum 2500ms to let animation play)
   const handleGameLoad = () => {
+    // ⚡ AUDIO UNLOCK: Send signal to game iframe when it's ready to receive messages
+    if (audioUnlockedRef.current && gameFrameRef.current) {
+      gameFrameRef.current.contentWindow?.postMessage({ type: 'AUDIO_UNLOCK' }, '*');
+    }
+
     const elapsed = Date.now() - loaderStartRef.current;
     const remaining = Math.max(0, 2500 - elapsed);
     setTimeout(() => setShowLoader(false), remaining);
@@ -171,11 +176,6 @@ export function HikariBoy({
         }
       } catch (e) {
         console.warn('[HikariBoy] Audio unlock failed:', e);
-      }
-
-      // Notify game to initialize audio
-      if (currentGame && gameFrameRef.current) {
-        gameFrameRef.current.contentWindow?.postMessage({ type: 'AUDIO_UNLOCK' }, '*');
       }
     }
 
