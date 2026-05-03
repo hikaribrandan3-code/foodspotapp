@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
 import ChibiLuffy from './ChibiLuffy';
@@ -12,13 +12,16 @@ export default function CameraActivationBanner({
 }) {
   const { lang } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
+  const [showLuffy, setShowLuffy] = useState(false);
 
   // Rotate every 3rd appearance: donut, donut, Luffy
-  const showLuffy = useMemo(() => {
+  useEffect(() => {
     const count = parseInt(localStorage.getItem('fs_banner_counter') || '0', 10);
     const newCount = count + 1;
     localStorage.setItem('fs_banner_counter', String(newCount));
-    return newCount % 3 === 0;
+    const isLuffy = newCount % 3 === 0;
+    console.log(`[banner] counter=${newCount}, showLuffy=${isLuffy}`);
+    setShowLuffy(isLuffy);
   }, []);
 
   const handleCapture = () => {

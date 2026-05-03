@@ -14,21 +14,36 @@ export default function ChibiLuffy({ onCapture, onDismiss }) {
     state: 'entering',
     x: -200,
     targetX: 0,
+    y: 0,
+    rotation: 0,
   });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
+      canvas.width = rect.width;
+      canvas.height = rect.height;
       stateRef.current.targetX = rect.width / 2;
       stateRef.current.y = rect.height / 2 + 50;
+    };
+
+    const drawRoundedRect = (x, y, w, h, r) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
     };
 
     const drawBurger = (x, y, scale) => {
@@ -38,20 +53,17 @@ export default function ChibiLuffy({ onCapture, onDismiss }) {
 
       // Bottom Bun
       ctx.fillStyle = '#E69F52';
-      ctx.beginPath();
-      ctx.roundRect(-30, 10, 60, 15, [2, 2, 8, 8]);
+      drawRoundedRect(-30, 10, 60, 15, 8);
       ctx.fill();
 
       // Lettuce
       ctx.fillStyle = '#4CAF50';
-      ctx.beginPath();
-      ctx.roundRect(-32, 5, 64, 6, 3);
+      drawRoundedRect(-32, 5, 64, 6, 3);
       ctx.fill();
 
       // Patty
       ctx.fillStyle = '#5D4037';
-      ctx.beginPath();
-      ctx.roundRect(-31, -2, 62, 10, 4);
+      drawRoundedRect(-31, -2, 62, 10, 4);
       ctx.fill();
 
       // Cheese
@@ -63,15 +75,12 @@ export default function ChibiLuffy({ onCapture, onDismiss }) {
 
       // Tomato
       ctx.fillStyle = '#E53935';
-      ctx.beginPath();
-      ctx.roundRect(-25, -6, 50, 5, 2);
+      drawRoundedRect(-25, -6, 50, 5, 2);
       ctx.fill();
 
       // Top Bun
       ctx.fillStyle = '#E69F52';
-      ctx.beginPath();
-      ctx.ellipse(0, -10, 32, 22, 0, Math.PI, 0);
-      ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, -10, 32, 22, 0, Math.PI, 0); ctx.fill();
 
       // Sesame Seeds
       ctx.fillStyle = '#FFF9C4';
@@ -116,14 +125,12 @@ export default function ChibiLuffy({ onCapture, onDismiss }) {
 
       // Shorts
       ctx.fillStyle = '#1976D2';
-      ctx.beginPath();
-      ctx.roundRect(-30, 30, 60, 20, 5);
+      drawRoundedRect(-30, 30, 60, 20, 5);
       ctx.fill();
 
       // Body
       ctx.fillStyle = '#E53935';
-      ctx.beginPath();
-      ctx.roundRect(-30, -20, 60, 55, 10);
+      drawRoundedRect(-30, -20, 60, 55, 10);
       ctx.fill();
 
       ctx.fillStyle = '#ffe0bd';
@@ -156,15 +163,19 @@ export default function ChibiLuffy({ onCapture, onDismiss }) {
       camGrad.addColorStop(0, '#444');
       camGrad.addColorStop(1, '#1a1a1a');
       ctx.fillStyle = camGrad;
-      ctx.beginPath(); ctx.roundRect(-25, -18, 55, 36, 6); ctx.fill();
+      drawRoundedRect(-25, -18, 55, 36, 6);
+      ctx.fill();
 
       ctx.fillStyle = '#222';
-      ctx.beginPath(); ctx.roundRect(-5, -24, 25, 10, 3); ctx.fill();
+      drawRoundedRect(-5, -24, 25, 10, 3);
+      ctx.fill();
 
       ctx.fillStyle = '#555';
-      ctx.beginPath(); ctx.roundRect(-15, -22, 10, 6, 2); ctx.fill();
+      drawRoundedRect(-15, -22, 10, 6, 2);
+      ctx.fill();
       ctx.fillStyle = '#999';
-      ctx.beginPath(); ctx.roundRect(-13, -24, 6, 4, 1); ctx.fill();
+      drawRoundedRect(-13, -24, 6, 4, 1);
+      ctx.fill();
 
       ctx.fillStyle = '#000';
       ctx.beginPath(); ctx.arc(10, 2, 15, 0, Math.PI * 2); ctx.fill();
@@ -252,7 +263,8 @@ export default function ChibiLuffy({ onCapture, onDismiss }) {
       ctx.save();
       ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.1)';
       ctx.fillStyle = 'white';
-      ctx.beginPath(); ctx.roundRect(x - bw / 2, y - 280, bw, 50, 15); ctx.fill();
+      drawRoundedRect(x - bw / 2, y - 280, bw, 50, 15);
+      ctx.fill();
       ctx.beginPath(); ctx.moveTo(x, y - 230); ctx.lineTo(x - 10, y - 215); ctx.lineTo(x + 10, y - 230); ctx.fill();
       ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(text, x, y - 255);
@@ -265,7 +277,7 @@ export default function ChibiLuffy({ onCapture, onDismiss }) {
       const width = rect.width;
       const height = rect.height;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, width, height);
 
       if (s.flashIntensity > 0) {
         ctx.fillStyle = `rgba(255, 255, 255, ${Math.pow(s.flashIntensity, 2)})`;
