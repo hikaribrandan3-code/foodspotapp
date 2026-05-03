@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
 import ChibiLuffy from './ChibiLuffy';
+import ChibiNaruto from './ChibiNaruto';
 import './CameraActivationBanner.css';
 
 export default function CameraActivationBanner({
@@ -12,16 +13,17 @@ export default function CameraActivationBanner({
 }) {
   const { lang } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
-  const [showLuffy, setShowLuffy] = useState(false);
+  const [characterMode, setCharacterMode] = useState('donut');
 
-  // Rotate every 3rd appearance: donut, donut, Luffy
+  // Rotate: donut → Luffy → Naruto → donut → ...
   useEffect(() => {
     const count = parseInt(localStorage.getItem('fs_banner_counter') || '0', 10);
     const newCount = count + 1;
     localStorage.setItem('fs_banner_counter', String(newCount));
-    const isLuffy = newCount % 3 === 0;
-    console.log(`[banner] counter=${newCount}, showLuffy=${isLuffy}`);
-    setShowLuffy(isLuffy);
+    const mod = newCount % 3;
+    const mode = mod === 1 ? 'luffy' : mod === 2 ? 'naruto' : 'donut';
+    console.log(`[banner] counter=${newCount}, characterMode=${mode}`);
+    setCharacterMode(mode);
   }, []);
 
   const handleCapture = () => {
@@ -35,9 +37,12 @@ export default function CameraActivationBanner({
 
   if (!isVisible) return null;
 
-  // Show Luffy every 3rd time
-  if (showLuffy) {
+  // Show character based on rotation cycle
+  if (characterMode === 'luffy') {
     return <ChibiLuffy onCapture={handleCapture} onDismiss={handleDismiss} />;
+  }
+  if (characterMode === 'naruto') {
+    return <ChibiNaruto onCapture={handleCapture} onDismiss={handleDismiss} />;
   }
 
   const isDineIn = orderType === 'dine_in';
