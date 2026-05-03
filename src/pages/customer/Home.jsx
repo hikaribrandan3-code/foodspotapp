@@ -1080,7 +1080,7 @@ function Home({ config: configProp }) {
                     position: 'fixed', bottom: 100, right: 24, zIndex: 9999, background: '#22C55E', color: 'white', padding: '12px 20px',
                     borderRadius: 50, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontWeight: 700, fontSize: 14, display: 'flex',
                     alignItems: 'center', gap: 8, cursor: 'pointer'
-                }}><span>{t('owner_mode')}</span></button>
+                }}><span style={{fontWeight: 700}}>{t('owner_mode')}</span></button>
             )}
 
             {/* Edit Mode HUD */}
