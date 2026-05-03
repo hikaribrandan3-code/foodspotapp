@@ -316,7 +316,7 @@ canvas.addEventListener('click',e=>{const c=coord(e.clientX,e.clientY);input(c.x
 // ── HikariaBoy button wiring ──
 window.addEventListener('message',(e)=>{
   if(e.data?.type==='AUDIO_RESUME'){initAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();return;}
-  if(e.data?.type==='BUTTON_PRESS'){
+  if(e.data?.type==='BUTTON_PRESS'){initAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
     const btn=e.data.button;
     if(btn==='a'||btn==='start'){
       initAudio();
