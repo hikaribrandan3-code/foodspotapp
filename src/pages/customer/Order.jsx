@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { formatPrice } from '../../config/menuData.js'
 import { supabase } from '../../lib/supabaseClient.js'
-import { getGuestToken } from '../../utils/guestToken.js'
+import { getScopedGuestToken } from '../../utils/storage.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { useCart } from '../../contexts/CartContext.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
@@ -288,7 +288,7 @@ function Order({ config: configProp }) {
         setIsSubmitting(true)
 
         const orderNumber = generateOrderNumber()
-        const guestToken = getGuestToken()
+        const guestToken = getScopedGuestToken()
         // Dine-in always pays at the end — force cash so order goes straight to kitchen
         const effectivePaymentMethod = orderType === 'dine_in' ? PAYMENT_METHOD.CASH : paymentMethod
         const isCashPath = effectivePaymentMethod === PAYMENT_METHOD.CASH || effectivePaymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
@@ -484,7 +484,7 @@ function Order({ config: configProp }) {
         setIsSubmitting(true)
 
         const orderNumber = generateOrderNumber()
-        const guestToken = getGuestToken()
+        const guestToken = getScopedGuestToken()
 
         const newOrder = {
             business_id: businessId,

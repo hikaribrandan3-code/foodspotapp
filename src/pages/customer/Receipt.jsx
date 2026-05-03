@@ -24,12 +24,36 @@ export default function Receipt() {
 
   useEffect(() => {
     if (!orderId) { setError('No order ID'); setLoading(false); return }
-    supabase.from('orders').select('*').eq('id', orderId).single()
-      .then(({ data, error: e }) => {
-        if (e || !data) setError('Order not found')
-        else setOrder(data)
+
+    async function fetchOrder() {
+      try {
+        const { data, error: e } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .single()
+
+        if (e) {
+          console.error('[Receipt] Order lookup error:', e)
+          if (e.code === 'PGRST116') {
+            setError('Order not found or access denied')
+          } else {
+            setError('Unable to load order. Please try again.')
+          }
+        } else if (!data) {
+          setError('Order not found')
+        } else {
+          setOrder(data)
+        }
+      } catch (err) {
+        console.error('[Receipt] Unexpected error fetching order:', err)
+        setError('Connection error. Please check your network and try again.')
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+
+    fetchOrder()
   }, [orderId])
 
   const calculateETA = () => {
