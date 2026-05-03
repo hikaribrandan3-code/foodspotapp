@@ -215,3 +215,6 @@
 .shutter-button:active .shutter-inner {
     transform: scale(0.9);
 }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

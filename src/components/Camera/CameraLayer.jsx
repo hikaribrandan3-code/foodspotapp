@@ -171,7 +171,37 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 onTouchEnd={handlePinchEnd}
             />
 
-            {/* ── CINEMA MASK: 9:16 Safe Zone Guides ── */}
+            {/* Loading skeleton while camera initializes */}
+            {!isReady && !error && (
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#000',
+                    zIndex: 5,
+                    gap: 16
+                }}>
+                    <div style={{
+                        width: 48,
+                        height: 48,
+                        border: '3px solid rgba(255,255,255,0.1)',
+                        borderTopColor: '#fff',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite'
+                    }} />
+                    <span style={{
+                        color: 'rgba(255,255,255,0.6)',
+                        fontSize: 14,
+                        fontWeight: 500,
+                        letterSpacing: 0.5
+                    }}>Loading camera...</span>
+                </div>
+            )}
+
+            {/* ── CINEMA MASK: 9:16 Safe Zone Guides ── -->
             <div className="cinema-mask-overlay" style={{
                 position: 'absolute',
                 top: 0,

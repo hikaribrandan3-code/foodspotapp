@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
 
 /**
  * useCamera Hook - CamTech v2.1 (Fast Preview + Background Upgrade)
@@ -146,10 +146,7 @@ export function useCamera() {
             // === PHASE 1: FAST PREVIEW (instant) ===
             console.log('--- FAST PREVIEW: starting minimal stream ---')
             const fastConstraints = {
-                video: {
-                    facingMode: facingMode,
-                    aspectRatio: { ideal: 9 / 16 }
-                },
+                video: { facingMode: facingMode },
                 audio: false
             }
 
@@ -160,9 +157,9 @@ export function useCamera() {
 
             if (videoRef.current) {
                 videoRef.current.srcObject = stream
-                await videoRef.current.play()
                 setIsReady(true)
                 setError(null)
+                videoRef.current.play().catch(() => {})
             }
 
             // === PHASE 2: BACKGROUND HIGH-RES UPGRADE ===
@@ -353,7 +350,7 @@ export function useCamera() {
                 stopCamera()
                 setTimeout(() => initCamera(), 100)
             }
-        }, 1500)
+        }, 800)
         if (videoRef.current) {
             videoRef.current.addEventListener('playing', () => clearTimeout(recoveryTimeout), { once: true })
         }
@@ -373,7 +370,7 @@ export function useCamera() {
         return () => stopCamera()
     }, [stopCamera])
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!document.hidden) initCameraWithRecovery()
     }, [facingMode])
 
