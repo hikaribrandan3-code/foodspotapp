@@ -39,11 +39,11 @@ export default function CameraActivationBanner({
       {/* Confetti rain during donut walk-in */}
       <div className="sprinkles-container">
         {Array.from({ length: 120 }).map((_, i) => {
-          const colors = [
-            `hsl(${Math.random() * 360}, 100%, ${Math.random() * 50 + 50}%)`, // random bright colors
-            `hsl(${Math.random() * 60 + 320}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // pink/red range
-            `hsl(${Math.random() * 60 + 180}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // cyan/blue range
-            `hsl(${Math.random() * 60}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // yellow/orange range
+          const confettiColors = [
+            '#FF6B6B', '#FF8E53', '#FFCD56', '#4BC0C0', '#36A2EB',
+            '#9966FF', '#FF99CC', '#FF5E78', '#00D9FF', '#76FF03',
+            '#FFD700', '#FF1744', '#D500F9', '#651FFF', '#00E676',
+            '#FF9100', '#FF4081', '#E040FB', '#7C4DFF', '#18FFFF',
           ];
           return (
             <div
@@ -55,7 +55,7 @@ export default function CameraActivationBanner({
                 width: `${Math.random() * 8 + 3}px`,
                 height: `${Math.random() * 8 + 3}px`,
                 animationDelay: `${Math.random() * 1}s`,
-                backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                backgroundColor: confettiColors[i % confettiColors.length],
               }}
             />
           );
