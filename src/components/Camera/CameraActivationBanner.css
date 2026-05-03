@@ -151,8 +151,8 @@
   top: -115px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-  border: 3px solid #333;
+  background: linear-gradient(135deg, #FFF0F5 0%, #FFFFFF 50%, #FFF8F0 100%);
+  border: 3px dashed #FF69B4;
   border-radius: 28px;
   padding: 20px 28px;
   width: 280px;
@@ -160,14 +160,15 @@
   font-size: 20px;
   font-weight: 800;
   letter-spacing: 0.5px;
-  color: #1a1a1a;
+  color: #8B1C62;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
   animation: bubbleAppear 0.5s ease-in-out 0.3s forwards, bubblePulse 2s ease-in-out 1s infinite;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(255, 105, 180, 0.25),
+              0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes bubbleAppear {
@@ -202,8 +203,8 @@
   height: 0;
   border-left: 12px solid transparent;
   border-right: 12px solid transparent;
-  border-top: 14px solid #ffffff;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  border-top: 14px solid #FFF0F5;
+  filter: drop-shadow(0 2px 4px rgba(255, 105, 180, 0.3));
 }
 
 /* STATIC BUTTONS - fixed position, 30px below donut, appear after donut */
