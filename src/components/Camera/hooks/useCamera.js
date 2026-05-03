@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 
 /**
- * useCamera Hook - CamTech v2.0 (God-Tier Hardware Lock)
- * Implements high-res locking, advanced stability flags, and robust fallbacks.
+ * useCamera Hook - CamTech v2.1 (Fast Preview + Background Upgrade)
+ * Phase 1: Minimal constraints for instant preview
+ * Phase 2: Background high-res upgrade via applyConstraints or re-negotiation
  * Color Science: display-p3 enabled.
  */
 
@@ -37,6 +38,99 @@ export function useCamera() {
     const [zoomSupported, setZoomSupported] = useState(false)
     const zoomRangeRef = useRef({ min: 1, max: 1 })
 
+    const probeCapabilities = useCallback(async (videoTrack) => {
+        if (!videoTrack?.getCapabilities) return
+
+        const capabilities = videoTrack.getCapabilities()
+        const settings = videoTrack.getSettings()
+
+        console.log(`--- HARDWARE VERIFIED: ${settings.width}x${settings.height} @ ${settings.frameRate}fps ---`)
+
+        setFlashSupported(!!capabilities.torch)
+
+        const advanced = {}
+        if (capabilities.videoStabilizationMode?.includes('standard')) {
+            advanced.videoStabilizationMode = 'standard'
+            console.log('--- HARDWARE LOCK: STABILIZATION ACTIVE ---')
+        }
+        if (capabilities.focusMode?.includes('continuous')) {
+            advanced.focusMode = 'continuous'
+            console.log('--- HARDWARE LOCK: CONTINUOUS FOCUS ACTIVE ---')
+        }
+        if (capabilities.exposureMode?.includes('continuous')) {
+            advanced.exposureMode = 'continuous'
+            console.log('--- HARDWARE LOCK: CONTINUOUS EXPOSURE ACTIVE ---')
+        }
+
+        if (Object.keys(advanced).length > 0) {
+            await videoTrack.applyConstraints({ advanced: [advanced] })
+        }
+
+        if (capabilities.zoom) {
+            setZoomSupported(true)
+            zoomRangeRef.current = {
+                min: capabilities.zoom.min || 1,
+                max: Math.min(capabilities.zoom.max || 1, 3)
+            }
+        } else {
+            setZoomSupported(false)
+        }
+    }, [])
+
+    const upgradeResolution = useCallback(async (currentStream) => {
+        const track = currentStream.getVideoTracks()[0]
+        if (!track) return
+
+        // Try 1: Seamless applyConstraints upgrade (no flicker)
+        try {
+            console.log('--- UPGRADE: trying applyConstraints ---')
+            await track.applyConstraints({
+                width: { ideal: 1920 },
+                height: { ideal: 3840 }
+            })
+            const settings = track.getSettings()
+            console.log(`--- UPGRADE: applyConstraints succeeded ${settings.width}x${settings.height} ---`)
+            if (settings.width >= 1080) {
+                await probeCapabilities(track)
+                return
+            }
+        } catch (e) {
+            console.warn('--- UPGRADE: applyConstraints failed, trying re-negotiation ---')
+        }
+
+        // Try 2: Re-negotiate with high-res constraints (brief swap)
+        try {
+            const highResConstraints = {
+                video: {
+                    facingMode: facingMode,
+                    aspectRatio: { ideal: 9 / 16 },
+                    width: { min: 1080, ideal: 1920, max: 3840 },
+                    height: { min: 1920, ideal: 3840, max: 2160 }
+                },
+                audio: false
+            }
+            const newStream = await navigator.mediaDevices.getUserMedia(highResConstraints)
+
+            if (videoRef.current) {
+                const oldStream = streamRef.current
+                videoRef.current.srcObject = newStream
+                await videoRef.current.play()
+
+                if (oldStream) {
+                    oldStream.getTracks().forEach(t => t.stop())
+                }
+
+                streamRef.current = newStream
+                trackRef.current = newStream.getVideoTracks()[0]
+                console.log('--- UPGRADE: re-negotiation succeeded ---')
+            }
+
+            await probeCapabilities(trackRef.current)
+        } catch (err) {
+            console.warn('--- UPGRADE: re-negotiation also failed, keeping preview quality ---')
+        }
+    }, [facingMode, probeCapabilities])
+
     const initCamera = useCallback(async () => {
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -49,79 +143,20 @@ export function useCamera() {
                 streamRef.current.getTracks().forEach(track => track.stop())
             }
 
-            // --- GOD-TIER HARDWARE LOCK (Tier 1: High-Res) ---
-            const highResConstraints = {
+            // === PHASE 1: FAST PREVIEW (instant) ===
+            console.log('--- FAST PREVIEW: starting minimal stream ---')
+            const fastConstraints = {
                 video: {
                     facingMode: facingMode,
-                    aspectRatio: { ideal: 9 / 16 },
-                    width: { min: 1080, ideal: 1920, max: 3840 },
-                    height: { min: 1920, ideal: 3840, max: 2160 }
+                    aspectRatio: { ideal: 9 / 16 }
                 },
                 audio: false
             }
 
-            let stream
-            try {
-                console.log('--- HARDWARE LOCK: ATTEMPTING HIGH-RES (1080p/4K) ---')
-                stream = await navigator.mediaDevices.getUserMedia(highResConstraints)
-            } catch (err) {
-                console.warn('--- HARDWARE LOCK: HIGH-RES FAILED, INITIATING 720p FALLBACK ---', err)
-                // --- FALLBACK (Tier 2: 720p Safety) ---
-                const fallbackConstraints = {
-                    video: {
-                        facingMode: facingMode,
-                        aspectRatio: { ideal: 9 / 16 },
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false
-                }
-                stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints)
-            }
-
+            const stream = await navigator.mediaDevices.getUserMedia(fastConstraints)
             streamRef.current = stream
             const videoTrack = stream.getVideoTracks()[0]
             trackRef.current = videoTrack
-
-            // Hardware Capability Verification & Advanced Flags
-            if (videoTrack.getCapabilities) {
-                const capabilities = videoTrack.getCapabilities()
-                const settings = videoTrack.getSettings()
-
-                console.log(`--- HARDWARE VERIFIED: ${settings.width}x${settings.height} @ ${settings.frameRate}fps ---`)
-
-                setFlashSupported(!!capabilities.torch)
-
-                // Advanced Flags: Stabilization, Focus, Exposure
-                const advanced = {}
-                if (capabilities.videoStabilizationMode?.includes('standard')) {
-                    advanced.videoStabilizationMode = 'standard'
-                    console.log('--- HARDWARE LOCK: STABILIZATION ACTIVE ---')
-                }
-                if (capabilities.focusMode?.includes('continuous')) {
-                    advanced.focusMode = 'continuous'
-                    console.log('--- HARDWARE LOCK: CONTINUOUS FOCUS ACTIVE ---')
-                }
-                if (capabilities.exposureMode?.includes('continuous')) {
-                    advanced.exposureMode = 'continuous'
-                    console.log('--- HARDWARE LOCK: CONTINUOUS EXPOSURE ACTIVE ---')
-                }
-
-                if (Object.keys(advanced).length > 0) {
-                    await videoTrack.applyConstraints({ advanced: [advanced] })
-                }
-
-                // Zoom control
-                if (capabilities.zoom) {
-                    setZoomSupported(true)
-                    zoomRangeRef.current = {
-                        min: capabilities.zoom.min || 1,
-                        max: Math.min(capabilities.zoom.max || 1, 3)
-                    }
-                } else {
-                    setZoomSupported(false)
-                }
-            }
 
             if (videoRef.current) {
                 videoRef.current.srcObject = stream
@@ -129,12 +164,17 @@ export function useCamera() {
                 setIsReady(true)
                 setError(null)
             }
+
+            // === PHASE 2: BACKGROUND HIGH-RES UPGRADE ===
+            upgradeResolution(stream).catch(err => {
+                console.warn('Background upgrade failed, keeping fast preview:', err)
+            })
         } catch (err) {
             console.error('Camera initialization error:', err)
             setError(err.message)
             setIsReady(false)
         }
-    }, [facingMode])
+    }, [facingMode, upgradeResolution])
 
     const flipCamera = useCallback(() => {
         setFacingMode(prev => prev === 'environment' ? 'user' : 'environment')
@@ -277,7 +317,6 @@ export function useCamera() {
 
         if (flashMode === 'on' || flashMode === 'auto') setTimeout(() => applyFlash('off'), 100)
 
-        // Step 4: Convert to Blob (Master Negative: Full Sensor Data)
         return new Promise((resolve, reject) => {
             canvas.toBlob((blob) => {
                 if (blob) {
@@ -286,7 +325,7 @@ export function useCamera() {
                         objectURL: URL.createObjectURL(blob),
                         width: canvas.width,
                         height: canvas.height,
-                        aspectRatio: canvas.width / canvas.height // Store native aspect
+                        aspectRatio: canvas.width / canvas.height
                     })
                 } else {
                     reject(new Error('Failed to create image blob'))
@@ -307,13 +346,14 @@ export function useCamera() {
 
     const initCameraWithRecovery = useCallback(async () => {
         await initCamera()
+        // Fast preview should show immediately; keep a short safety net
         const recoveryTimeout = setTimeout(() => {
             if (videoRef.current && videoRef.current.readyState < 2) {
                 console.warn('Camera black screen detected, retrying...')
                 stopCamera()
                 setTimeout(() => initCamera(), 100)
             }
-        }, 3000)
+        }, 1500)
         if (videoRef.current) {
             videoRef.current.addEventListener('playing', () => clearTimeout(recoveryTimeout), { once: true })
         }
