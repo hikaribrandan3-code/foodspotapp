@@ -463,29 +463,9 @@ export async function getMenuCloud(businessId) {
  * @returns {Promise<{data: object|null, error: Error|null}>}
  */
 export async function updateMenuItemCloud(itemId, updates, businessId) {
-    // 🛡️ STRICT GUARDRAIL: Prevent cross-tenant menu tampering
-    if (!businessId) {
-        throw new Error('[SILO VIOLATION] updateMenuItemCloud requires businessId for tenant isolation')
-    }
-
-    // Map frontend field names to database column names
-    const dbUpdates = {}
-    if (updates.name !== undefined) dbUpdates.name = updates.name
-    if (updates.price !== undefined) dbUpdates.price = updates.price
-    if (updates.available !== undefined) dbUpdates.available = updates.available
-    if (updates.featured !== undefined) dbUpdates.featured = updates.featured
-    if (updates.image !== undefined) dbUpdates.image_url = updates.image
-    if (updates.description !== undefined) dbUpdates.description = updates.description
-
-    const { data, error } = await supabase
-        .from('menu_items')
-        .update(dbUpdates)
-        .eq('id', itemId)
-        .eq('business_id', businessId)
-        .select()
-        .single()
-
-    return { data, error }
+    // 🛡️ DISABLED: menu_data JSONB in branding is source of truth
+    console.warn('[updateMenuItemCloud] Disabled - menu_data JSONB in branding is canonical')
+    return { data: null, error: null }
 }
 
 /**
@@ -519,29 +499,9 @@ export async function updateCategoryCloud(categoryId, updates, businessId) {
  * @returns {Promise<{data: object|null, error: Error|null}>}
  */
 export async function addMenuItemCloud(item, businessId) {
-    // 🛡️ STRICT GUARDRAIL: Prevent cross-tenant menu insertion
-    if (!businessId) {
-        throw new Error('[SILO VIOLATION] addMenuItemCloud requires businessId for tenant isolation')
-    }
-
-    const { data, error } = await supabase
-        .from('menu_items')
-        .insert({
-            id: item.id,
-            business_id: businessId,
-            category_id: item.categoryId,
-            name: item.name,
-            price: item.price || 0,
-            available: item.available ?? true,
-            featured: item.featured ?? false,
-            image_url: item.image || null,
-            display_order: item.displayOrder || 0,
-            sort_order: item.sortOrder || item.displayOrder || 0
-        })
-        .select()
-        .single()
-
-    return { data, error }
+    // 🛡️ DISABLED: menu_data JSONB in branding is source of truth
+    console.warn('[addMenuItemCloud] Disabled - menu_data JSONB in branding is canonical')
+    return { data: null, error: null }
 }
 
 // =========================================================
