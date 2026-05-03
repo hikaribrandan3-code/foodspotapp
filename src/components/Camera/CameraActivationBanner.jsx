@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
 import './CameraActivationBanner.css';
@@ -24,9 +24,17 @@ export default function CameraActivationBanner({
   if (!isVisible) return null;
 
   const isDineIn = orderType === 'dine_in';
+
+  // Pick a random UGC prompt (1-8) — different every time the banner mounts
+  const randomPrompt = useMemo(() => {
+    const idx = Math.floor(Math.random() * 8) + 1;
+    return translations[`ugc_prompt_${idx}`]?.[language] || "Food's here. Snap it?";
+  }, [language]);
+
   const speechText = isDineIn
     ? `${translations.selfie_prompt?.[language] || 'Want to take a selfie for the gram?'} 📸`
-    : `${translations.food_arrived[language] || 'Your food arrived!'}\n${translations.take_photo[language] || 'Want to take a foto?'} ✨`;
+    : `${randomPrompt} ✨`;
+
 
   return (
     <>

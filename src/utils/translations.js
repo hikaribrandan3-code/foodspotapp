@@ -49,6 +49,16 @@ export const translations = {
     camera_yes: { es: "Sí ✨", en: "Yes ✨", pt: "Sim ✨" },
     camera_no: { es: "No", en: "No", pt: "Não" },
 
+    // Rotating donut prompts — 8 variants per language, randomly picked
+    ugc_prompt_1:  { es: "¿Sin foto? No cuenta.",                   en: "Food's here. Snap it?",         pt: "Chegou. Tira uma foto?" },
+    ugc_prompt_2:  { es: "Llegó. Presúmelo.",                       en: "Order arrived. Flex for the gram?", pt: "Pedido chegou. Mostra pro feed!" },
+    ugc_prompt_3:  { es: "Tus amigos lo necesitan ver.",              en: "It's here. Take a pic?",        pt: "Seus amigos precisam ver." },
+    ugc_prompt_4:  { es: "¿Quién come así? Tú. Súbelo.",            en: "Food arrived. Why not?",        pt: "Quem come assim? Você. Posta!" },
+    ugc_prompt_5:  { es: "Come rico, presume más.",                 en: "Looks good. Capture it?",       pt: "Come gostoso, mostra mais." },
+    ugc_prompt_6:  { es: "Llegó caliente. Súbelo antes.",           en: "Order's here. Show it off?",    pt: "Chegou quentinho. Posta já!" },
+    ugc_prompt_7:  { es: "Esto merece likes.",                      en: "It arrived. Pic first?",        pt: "Isso merece likes." },
+    ugc_prompt_8:  { es: "¿Ya sacaste foto? No? Dale.",              en: "Food's here. Post it?",         pt: "Já tirou foto? Não? Vai!" },
+
     // Owner Summary
     daily_payments: { es: "PAGOS DEL DÍA", en: "DAILY PAYMENTS", pt: "PAGAMENTOS DO DIA" },
     cash: { es: "Efectivo", en: "Cash", pt: "Dinheiro" },
