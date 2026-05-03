@@ -159,8 +159,8 @@ export function HikariBoy({
   }, [showLoader]);
 
   const handleButtonPress = (button) => {
-    // ⚡ AUDIO UNLOCK: Send resume before button press so iframe games can unlock Web Audio
-    if (currentGame && gameFrameRef.current) {
+    // ⚡ AUDIO UNLOCK: Only START button triggers iframe audio resume (matches original behavior)
+    if (button === BUTTONS.START && currentGame && gameFrameRef.current) {
       gameFrameRef.current.contentWindow?.postMessage({ type: 'AUDIO_RESUME' }, '*');
     }
     
