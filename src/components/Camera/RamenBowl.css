@@ -1,0 +1,12 @@
+.ramen-bowl-wrapper {
+  width: 175px;
+  height: 204px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.ramen-canvas {
+  display: block;
+}
