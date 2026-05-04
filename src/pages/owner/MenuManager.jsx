@@ -51,7 +51,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
     const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded, refreshTenantData } = useTenant()
-    const { lang } = useLanguage()
+    const { lang, t } = useLanguage()
     // 🛡️ RESOLVED ID: Handles Simulation + Fallback for Dev
     const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
