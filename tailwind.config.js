@@ -1,8 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class'],
-  // Scope Tailwind only to staff-ops files — prevents interference with main app styles
-  content: ['./staff-ops.html', './src/staff-ops/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    './index.html',
+    './staff-ops.html',
+    './src/**/*.{js,ts,jsx,tsx}',
+  ],
   theme: {
     extend: {
       colors: {
