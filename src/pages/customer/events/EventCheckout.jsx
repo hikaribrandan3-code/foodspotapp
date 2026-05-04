@@ -1,24 +1,21 @@
-
-import { ArrowLeft, CreditCard, Lock, Smile, Tag, X, User, Phone } from 'lucide-react';
+import { ArrowLeft, CreditCard, Lock, Smile, Tag, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { useLanguage } from '../../../contexts/LanguageContext.jsx';
 import { eventTranslations } from '../../../lib/eventTranslations.js';
 import { FoodspotFooter } from '../../../components/events/FoodspotFooter.jsx';
-import { supabase } from '../../../lib/supabaseClient.js';
 
-export default function EventCheckout({ event, ticketQuantities, onBack, onComplete, businessId }) {
+export default function EventCheckout({ event, ticketQuantities, onBack, onComplete }) {
   const { lang } = useLanguage();
   const t = (key) => eventTranslations[key][lang] || key;
 
   const selectedTiers = event.ticket_tiers.filter(tier => ticketQuantities[tier.id] > 0);
   const subtotal = selectedTiers.reduce((acc, tier) => acc + (tier.price * ticketQuantities[tier.id]), 0);
 
+  const [isSuccess, setIsSuccess] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [appliedReferral, setAppliedReferral] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
 
   const discountRate = appliedReferral ? 0.025 : 0;
   const discountAmount = subtotal * discountRate;
@@ -32,29 +29,99 @@ export default function EventCheckout({ event, ticketQuantities, onBack, onCompl
     }
   };
 
-  const handleConfirm = async () => {
-    setIsLoading(true);
-    try {
-      // TODO: Edge function 'create-preference-events' needs to be deployed
-      const { data, error } = await supabase.functions.invoke('create-preference-events', {
-        body: {
-          event_id: event.id,
-          business_id: businessId,
-          ticket_tiers: ticketQuantities,
-          referral_code: appliedReferral || null,
-          customer_name: customerName,
-          customer_phone: customerPhone,
+  // Trigger confetti when success starts
+  useEffect(() => {
+    if (isSuccess) {
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 300 };
+
+      const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
         }
-      });
-      if (error) throw error;
-      if (data.init_point) {
-        window.location.href = data.init_point;
-      }
-    } catch (err) {
-      console.error('Payment failed:', err);
-      setIsLoading(false);
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
+
+      return () => clearInterval(interval);
     }
+  }, [isSuccess]);
+
+  const handleConfirm = () => {
+    setIsSuccess(true);
+
+    // Show animation for 2 seconds before completing
+    setTimeout(() => {
+      const primaryTier = selectedTiers[0] || event.ticket_tiers[0];
+      const mockTicket = {
+        id: `TKT-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        event_name: event.name,
+        venue_name: event.venue_name,
+        date: event.start_date,
+        tier_name: primaryTier.name,
+        image_url: event.image_url,
+        qr_code: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=FOODSPOT-${Math.random()}`,
+        table_number: primaryTier.name.toLowerCase().includes('table') ? `VIP-T${Math.floor(Math.random() * 20) + 1}` : undefined
+      };
+      onComplete(mockTicket);
+    }, 2000);
   };
+
+  if (isSuccess) {
+    return (
+      <div className="fixed inset-0 bg-[#faf9ff] dark:bg-slate-950 z-[200] flex flex-col items-center justify-center p-6 text-center transition-colors">
+        <motion.div
+           initial={{ scale: 0.8, opacity: 0 }}
+           animate={{ scale: 1, opacity: 1 }}
+           className="relative"
+        >
+          {/* Animated Canvas-style Success Smile */}
+          <div className="w-48 h-48 bg-orange-100/50 dark:bg-orange-500/10 rounded-full flex items-center justify-center text-[#ff6b35] mb-10 relative">
+            <motion.div
+              initial={{ scale: 0, rotate: -45 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: 0.1
+              }}
+            >
+              <Smile size={100} strokeWidth={1.5} />
+            </motion.div>
+
+            {/* Animated Glow */}
+            <motion.div
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.6, 0.3]
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 bg-[#ff6b35] rounded-full blur-3xl -z-10 opacity-20"
+            />
+          </div>
+
+          <motion.div
+             initial={{ y: 20, opacity: 0 }}
+             animate={{ y: 0, opacity: 1 }}
+             transition={{ delay: 0.4 }}
+          >
+            <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Boom! You're in.</h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs mx-auto leading-relaxed">
+              We've processed your payment. Your tickets are being added to your wallet...
+            </p>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-[#faf9ff] dark:bg-slate-950 z-[100] flex flex-col transition-colors duration-300">
@@ -105,33 +172,6 @@ export default function EventCheckout({ event, ticketQuantities, onBack, onCompl
           </div>
         </section>
 
-        {/* Customer Details Section */}
-        <section className="mb-8">
-          <h2 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Customer Details</h2>
-          <div className="space-y-3">
-            <div className="relative">
-              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Full name"
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-11 pr-5 py-4 text-xs font-bold focus:outline-none focus:border-emerald-500 transition-all"
-              />
-            </div>
-            <div className="relative">
-              <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="tel"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="Phone number"
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-11 pr-5 py-4 text-xs font-bold focus:outline-none focus:border-emerald-500 transition-all"
-              />
-            </div>
-          </div>
-        </section>
-
         {/* Payment Method Section */}
         <section className="mb-8">
           <h2 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Payment Method</h2>
@@ -141,10 +181,11 @@ export default function EventCheckout({ event, ticketQuantities, onBack, onCompl
                 <CreditCard size={20} />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">Mercado Pago</span>
-                <span className="text-[10px] font-medium text-slate-500 uppercase">Secure checkout</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">•••• 4242</span>
+                <span className="text-[10px] font-medium text-slate-500 uppercase">Expires 12/25</span>
               </div>
             </div>
+            <button className="text-xs font-bold text-emerald-600 hover:underline">Edit</button>
           </div>
         </section>
 
@@ -234,13 +275,10 @@ export default function EventCheckout({ event, ticketQuantities, onBack, onCompl
           </div>
           <button
             onClick={handleConfirm}
-            disabled={isLoading || (!customerName.trim() || !customerPhone.trim())}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black h-14 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-3 transition-all active:scale-95 px-4 disabled:opacity-50"
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black h-14 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-3 transition-all active:scale-95 px-4"
           >
             <Lock size={18} fill="currentColor" />
-            <span className="whitespace-nowrap uppercase tracking-widest text-xs">
-              {isLoading ? 'Processing...' : 'Confirm Purchase'}
-            </span>
+            <span className="whitespace-nowrap uppercase tracking-widest text-xs">Confirm Purchase</span>
           </button>
         </div>
       </footer>
