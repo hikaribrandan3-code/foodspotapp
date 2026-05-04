@@ -234,7 +234,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 16, paddingRight: 16, paddingBottom: 112 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '16px 16px 112px 16px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Package size={18} strokeWidth={2.2} style={{ color: BLUE }} />
