@@ -1721,3 +1721,26 @@ div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.came
 .kds-card--optimistic { opacity: 0.6; border: 2px dashed #94a3b8; pointer-events: none; }
 .kds-card-header { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; }
 .kds-card-items { margin-bottom: 1rem; font-size: 0.95rem; }
+/* =============================================
+   FOODSPOT EVENTS MODULE — Standalone Styles
+   ============================================= */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap');
+
+@theme {
+  --font-plus: "Plus Jakarta Sans", sans-serif;
+  --font-outfit: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --color-primary-brand: #ff6b35;
+  --color-surface-soft: #f0f4f8;
+  --color-template-primary: #003d9b;
+  --color-template-bg: #faf9ff;
+  --color-template-surface: #051a3e;
+  --color-template-surface-variant: #434654;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
