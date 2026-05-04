@@ -1,99 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  Package,
-  Trash2,
-  Plus,
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  BarChart3,
-} from 'lucide-react';
+import { Trash2, Plus, Calendar, DollarSign, TrendingUp, Package } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient.js';
 import { useTenant } from '../contexts/TenantContext.jsx';
 
-// --- Utils ---
 const fmtMoney = (n) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
 
 const todayStr = () => new Date().toISOString().split('T')[0];
-
-// --- Components ---
-
-const StatCard = ({ title, value, delta, icon: Icon, large, dark }) => (
-  <div
-    className={`flex flex-col gap-2 border border-outline-variant rounded-3xl p-6 ${
-      dark
-        ? 'bg-on-surface text-surface'
-        : large
-        ? 'bg-gradient-to-br from-surface-container to-primary-container/10 md:col-span-2 md:row-span-2'
-        : 'bg-surface-container'
-    }`}
-  >
-    <p
-      className={`text-xs font-bold uppercase tracking-widest ${
-        dark ? 'text-surface/60' : 'text-outline'
-      }`}
-    >
-      {title}
-    </p>
-    <div className="flex items-center justify-between flex-1">
-      <div>
-        <p
-          className={`font-bold tracking-tight font-heading ${
-            large ? 'text-5xl leading-tight' : 'text-2xl'
-          }`}
-        >
-          {value}
-        </p>
-        {delta && (
-          <div
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold mt-2 ${
-              delta.type === 'positive'
-                ? 'bg-secondary-container/20 text-secondary'
-                : 'bg-error-container/40 text-error'
-            }`}
-          >
-            {delta.type === 'positive' ? (
-              <ArrowDownRight className="w-3 h-3 mr-1" />
-            ) : (
-              <ArrowUpRight className="w-3 h-3 mr-1" />
-            )}
-            {delta.value}
-          </div>
-        )}
-      </div>
-      {Icon && (
-        <div
-          className={`p-3 rounded-2xl flex-shrink-0 ${
-            dark ? 'bg-surface/10' : 'bg-surface-container-low'
-          }`}
-        >
-          <Icon className={`w-6 h-6 ${dark ? 'text-surface' : 'text-outline'}`} />
-        </div>
-      )}
-    </div>
-    {large && (
-      <div className="flex items-center justify-between mt-4">
-        <div className="flex -space-x-2">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="w-8 h-8 rounded-full bg-outline-variant border-2 border-surface"
-            />
-          ))}
-        </div>
-        <p className="text-xs font-medium text-on-surface-variant">
-          Calculated from live orders
-        </p>
-      </div>
-    )}
-  </div>
-);
 
 export default function FinancialTrackerDashboard() {
   const { businessId } = useTenant();
@@ -101,13 +14,23 @@ export default function FinancialTrackerDashboard() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const primaryColor = '#10B981';
+
+  const cardStyle = {
+    padding: 20, background: '#FFFFFF', borderRadius: 16,
+    border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+  };
+  const labelStyle = {
+    display: 'block', color: '#6B7280', fontSize: 11, marginBottom: 8,
+    textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600
+  };
+  const valueStyle = { margin: 0, fontSize: 24, fontWeight: 800, color: '#111827' };
+
   // Expenses stored in localStorage per business
   const storageKey = `fs_expenses_${businessId || 'global'}`;
   const [expenses, setExpenses] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(storageKey)) || [
-        { id: '1', category: 'Operations', description: 'Sample Expense', amount: 120, date: todayStr() },
-      ];
+      return JSON.parse(localStorage.getItem(storageKey)) || [];
     } catch {
       return [];
     }
@@ -144,19 +67,11 @@ export default function FinancialTrackerDashboard() {
     fetchData();
   }, [businessId]);
 
-  // Derived metrics
-  const totalRevenue = useMemo(
-    () => orders.reduce((s, o) => s + (o.total || 0), 0),
-    [orders]
-  );
-  const totalExpenses = useMemo(
-    () => expenses.reduce((s, e) => s + (e.amount || 0), 0),
-    [expenses]
-  );
+  const totalRevenue = useMemo(() => orders.reduce((s, o) => s + (o.total || 0), 0), [orders]);
+  const totalExpenses = useMemo(() => expenses.reduce((s, e) => s + (e.amount || 0), 0), [expenses]);
   const netProfit = totalRevenue - totalExpenses;
   const activeProducts = menuItems.filter((m) => m.active !== false).length;
 
-  // Form state
   const [desc, setDesc] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Operations');
@@ -174,7 +89,6 @@ export default function FinancialTrackerDashboard() {
 
   const deleteExpense = (id) => setExpenses((prev) => prev.filter((e) => e.id !== id));
 
-  // Next payout = upcoming Friday
   const nextPayout = useMemo(() => {
     const d = new Date();
     const daysUntilFri = (5 - d.getDay() + 7) % 7 || 7;
@@ -184,197 +98,203 @@ export default function FinancialTrackerDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF' }}>
+        <div style={{ width: 40, height: 40, border: '4px solid #E5E7EB', borderTopColor: primaryColor, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+        <p style={{ fontSize: 14 }}>Loading finance data...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Bento KPI Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-5">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <StatCard
-            title="Net Profit"
-            value={fmtMoney(netProfit)}
-            delta={{ value: `${((totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0)).toFixed(1)}% margin`, type: netProfit >= 0 ? 'positive' : 'negative' }}
-            large
-          />
-        </motion.div>
+    <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #E5E7EB' }}>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 16 }}>
+        💰 Financial Tracker
+      </h2>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <StatCard
-            title="Expenses"
-            value={fmtMoney(totalExpenses)}
-            delta={{ value: `${expenses.length} entries`, type: 'negative' }}
-            icon={TrendingUp}
-          />
-        </motion.div>
+      {/* KPI Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+        <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
+          <span style={labelStyle}>Net Profit</span>
+          <h3 style={{ ...valueStyle, color: netProfit >= 0 ? primaryColor : '#DC2626' }}>
+            {fmtMoney(netProfit)}
+          </h3>
+          <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
+            {orders.length} orders
+          </p>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-        >
-          <StatCard
-            title="Products"
-            value={activeProducts}
-            delta={{ value: `${menuItems.length} total`, type: 'positive' }}
-            icon={Package}
-          />
-        </motion.div>
+        <div style={cardStyle}>
+          <span style={labelStyle}>Expenses</span>
+          <h3 style={{ ...valueStyle, color: '#DC2626' }}>{fmtMoney(totalExpenses)}</h3>
+          <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
+            {expenses.length} entries
+          </p>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="md:col-span-2"
-        >
-          <StatCard
-            title="Next Payout"
-            value={nextPayout}
-            icon={Calendar}
-            dark
-          />
-        </motion.div>
-      </section>
+        <div style={cardStyle}>
+          <span style={labelStyle}>Products</span>
+          <h3 style={valueStyle}>{activeProducts}</h3>
+          <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
+            {menuItems.length} total
+          </p>
+        </div>
 
-      {/* Recent Activity + Quick Add + Products */}
-      <section className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
-        <div className="space-y-6">
-          {/* Recent Activity */}
-          <div>
-            <div className="flex items-end justify-between border-b border-outline-variant pb-2 mb-4">
-              <h3 className="text-xl font-bold text-on-surface font-heading">Recent Activity</h3>
-            </div>
-            <div className="bg-surface-container border border-outline-variant rounded-3xl overflow-hidden divide-y divide-outline-variant">
-              <AnimatePresence>
-                {expenses.length === 0 ? (
-                  <div className="p-6 text-center text-sm text-on-surface-variant">
-                    No expenses yet. Add one below.
-                  </div>
-                ) : (
-                  expenses.map((expense) => (
-                    <motion.div
-                      key={expense.id}
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="flex items-center justify-between p-4 hover:bg-surface-container-low transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-surface-container-low rounded-xl flex items-center justify-center text-on-surface-variant">
-                          <DollarSign className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-on-surface">{expense.description}</p>
-                          <p className="text-xs text-on-surface-variant">
-                            {expense.category} • {expense.date}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-sm font-bold text-on-surface">
-                          -${expense.amount.toFixed(2)}
-                        </p>
-                        <button
-                          onClick={() => deleteExpense(expense.id)}
-                          className="p-1.5 hover:bg-error-container/40 rounded-lg text-error transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </AnimatePresence>
-            </div>
+        <div style={cardStyle}>
+          <span style={labelStyle}>Next Payout</span>
+          <h3 style={{ ...valueStyle, fontSize: 18 }}>{nextPayout}</h3>
+          <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
+            Auto-deposit
+          </p>
+        </div>
+      </div>
+
+      {/* Revenue Breakdown + Recent Activity */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20 }}>
+        {/* Revenue Card */}
+        <div style={cardStyle}>
+          <span style={{ ...labelStyle, marginBottom: 16 }}>Revenue Breakdown</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #F3F4F6' }}>
+            <span style={{ fontSize: 14, color: '#6B7280' }}>Total Revenue</span>
+            <span style={{ fontSize: 18, fontWeight: 700, color: primaryColor }}>{fmtMoney(totalRevenue)}</span>
           </div>
-
-          {/* Quick Add Form */}
-          <div className="bg-surface-container border border-outline-variant rounded-3xl p-6">
-            <h4 className="text-sm font-bold text-on-surface mb-4">Quick Expense Add</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <input
-                  type="text"
-                  placeholder="Description"
-                  value={desc}
-                  onChange={(e) => setDesc(e.target.value)}
-                  className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors"
-                />
-              </div>
-              <input
-                type="number"
-                placeholder="Amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors"
-              />
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors appearance-none"
-              >
-                <option>Operations</option>
-                <option>Software</option>
-                <option>Marketing</option>
-                <option>Rent</option>
-                <option>Supplies</option>
-              </select>
-              <button
-                onClick={addExpense}
-                className="col-span-2 py-3 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-container hover:text-primary transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Transaction
-              </button>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #F3F4F6' }}>
+            <span style={{ fontSize: 14, color: '#6B7280' }}>Total Expenses</span>
+            <span style={{ fontSize: 18, fontWeight: 700, color: '#DC2626' }}>-{fmtMoney(totalExpenses)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 0' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Net Profit</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: netProfit >= 0 ? primaryColor : '#DC2626' }}>
+              {fmtMoney(netProfit)}
+            </span>
+          </div>
+          <div style={{ height: 6, width: '100%', background: '#F3F4F6', borderRadius: 3, marginTop: 12, overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                background: totalRevenue > 0 && (totalExpenses / totalRevenue) > 1 ? '#DC2626' : primaryColor,
+                borderRadius: 3,
+                width: `${Math.min(totalRevenue > 0 ? (totalExpenses / totalRevenue) * 100 : 0, 100)}%`,
+                transition: 'width 0.5s ease'
+              }}
+            />
           </div>
         </div>
 
-        {/* Revenue Breakdown Card */}
-        <div className="space-y-6">
-          <div className="flex items-end justify-between border-b border-outline-variant pb-2">
-            <h3 className="text-xl font-bold text-on-surface font-heading">Revenue</h3>
+        {/* Recent Activity */}
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={labelStyle}>Recent Activity</span>
+            <span style={{ fontSize: 12, color: '#9CA3AF' }}>{expenses.length} expenses</span>
           </div>
-          <div className="bg-surface-container border border-outline-variant rounded-3xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-on-surface-variant">Total Revenue</span>
-              <span className="text-lg font-bold text-on-surface font-heading">{fmtMoney(totalRevenue)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-on-surface-variant">Total Expenses</span>
-              <span className="text-lg font-bold text-error font-heading">-{fmtMoney(totalExpenses)}</span>
-            </div>
-            <div className="h-px bg-outline-variant" />
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-on-surface">Net Profit</span>
-              <span className={`text-xl font-bold font-heading ${netProfit >= 0 ? 'text-secondary' : 'text-error'}`}>
-                {fmtMoney(netProfit)}
-              </span>
-            </div>
-            <div className="h-1.5 w-full bg-outline-variant rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${Math.min((totalRevenue > 0 ? (totalExpenses / totalRevenue) : 0) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-on-surface-variant">
-              {orders.length} orders processed
+
+          {expenses.length === 0 ? (
+            <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 }}>
+              No expenses yet. Add one below.
             </p>
-          </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {expenses.map((expense) => (
+                <div
+                  key={expense.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: 12, background: '#F9FAFB', borderRadius: 12
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{
+                      width: 36, height: 36, background: '#EFF6FF', borderRadius: 10,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                    }}>
+                      <DollarSign className="w-4 h-4" style={{ color: '#3B82F6' }} />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0 }}>{expense.description}</p>
+                      <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>
+                        {expense.category} • {expense.date}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
+                      -${expense.amount.toFixed(2)}
+                    </span>
+                    <button
+                      onClick={() => deleteExpense(expense.id)}
+                      style={{
+                        padding: 6, background: 'transparent', border: 'none',
+                        cursor: 'pointer', borderRadius: 8, color: '#9CA3AF'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </section>
+      </div>
+
+      {/* Quick Add Form */}
+      <div style={cardStyle}>
+        <span style={{ ...labelStyle, marginBottom: 16 }}>Quick Expense Add</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <input
+              type="text"
+              placeholder="Description"
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              style={{
+                width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB',
+                fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          <input
+            type="number"
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            style={{
+              padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB',
+              fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box', width: '100%'
+            }}
+          />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{
+              padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB',
+              fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box', width: '100%'
+            }}
+          >
+            <option>Operations</option>
+            <option>Software</option>
+            <option>Marketing</option>
+            <option>Rent</option>
+            <option>Supplies</option>
+          </select>
+          <button
+            onClick={addExpense}
+            style={{
+              gridColumn: '1 / -1',
+              padding: '14px', background: primaryColor, color: '#FFFFFF',
+              borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 700,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            <Plus className="w-4 h-4" />
+            Add Transaction
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
